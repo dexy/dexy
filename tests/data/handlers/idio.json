@@ -1,0 +1,8 @@
+{
+  '1' : "<div class=\"highlight\"><pre><span class=\"k\">print</span> <span class=\"s\">&quot;hello, world&quot;</span>
+</pre></div>
+",
+  '2' : "<div class=\"highlight\"><pre><span class=\"k\">print</span> <span class=\"s\">&quot;this is the end&quot;</span>
+</pre></div>
+"
+}

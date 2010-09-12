@@ -1,0 +1,14 @@
+{ 
+    "*.html|jinja|ws" : { "allinputs" : true },
+    "*.tex|jinja|latex" : { "allinputs" : true },
+    "*.c|cint" : { "ifinput" : "%-input.txt|dexy"},
+    "*.c|c" : { "ifnoinput" : "%-input.txt|dexy"},
+    "*.c|pyg" : {},
+    "*.c|pyg|l" : {},
+    "*-input.txt|dexy" : {},
+    "_*.html|jinja" : {},
+    "*.py|pyg" : {},
+    "*.html|pyg" : {},
+    "*.R|jinja|r|pyg" : {},
+    "*.R|pyg" : {}
+}

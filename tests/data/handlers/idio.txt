@@ -1,0 +1,4 @@
+### @export "hello-world"
+print "hello, world"
+### @export "this-is-the-end"
+print "this is the end"
