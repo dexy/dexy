@@ -146,7 +146,7 @@ class WordPressHandler(DexyHandler):
         post_conf = json.loads(self.artifact.input_artifacts_dict[k]['data'])
         
         # Connect to server
-        s = xmlrpclib.ServerProxy(wp_conf["xmlrpc_url"])
+        s = xmlrpclib.ServerProxy(wp_conf["xmlrpc_url"], verbose=False)
         #print s.system.listMethods()
         
         def upload_files_to_wp(regexp, input_text):
