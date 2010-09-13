@@ -47,6 +47,12 @@ class ProcessStdoutHandler(DexyHandler):
         self.artifact.generate_workfile()
         self.artifact.data_dict['1'] = pexpect.run("%s %s" % (self.EXECUTABLE, self.artifact.work_filename()))
 
+class RedclothHandler(ProcessStdoutHandler):
+    EXECUTABLE = '/usr/bin/env redcloth'
+    INPUT_EXTENSIONS = [".txt", ".textile"]
+    OUTPUT_EXTENSIONS = [".html"]
+    ALIASES = ['redcloth', 'textile']
+
 class SloccountHandler(DexyHandler):
     EXECUTABLE = '/usr/bin/env sloccount'
     OUTPUT_EXTENSIONS = [".txt"]
