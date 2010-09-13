@@ -1,4 +1,8 @@
-from collections import OrderedDict
+try:
+    from collections import OrderedDict
+except:
+    from ordereddict import OrderedDict
+
 from dexy.document import Document
 from dexy.handler import DexyHandler
 from dexy.topological_sort import topological_sort

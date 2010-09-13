@@ -1,7 +1,10 @@
+try:
+    from collections import OrderedDict
+except:
+    from ordereddict import OrderedDict
+
 from dexy.handler import DexyHandler
 import simplejson as json
-from collections import OrderedDict
-
 
 from pygments import highlight
 from pygments.formatters import HtmlFormatter
@@ -187,6 +190,7 @@ class WordPressHandler(DexyHandler):
         
         input_text = upload_files_to_wp('(<img src="(artifacts/.+\.(\w{2,4}))")', input_text)
         input_text = upload_files_to_wp('(<embed src="(artifacts/.+\.(\w{2,4}))")', input_text)
+        input_text = upload_files_to_wp('(<audio src="(artifacts/.+\.(\w{2,4}))")', input_text)
 
         # Upload Blog Post
         content = { 'title' : post_conf['title'], 'description' : input_text}
