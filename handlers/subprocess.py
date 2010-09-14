@@ -45,13 +45,36 @@ class ProcessStdoutHandler(DexyHandler):
     
     def process(self):
         self.artifact.generate_workfile()
-        self.artifact.data_dict['1'] = pexpect.run("%s %s" % (self.EXECUTABLE, self.artifact.work_filename()))
+        output, exit_status = pexpect.run("%s %s" % (self.EXECUTABLE, self.artifact.work_filename()), withexitstatus = True)
+        self.artifact.data_dict['1'] = output
+        if exit_status != 0:
+            print "an error occurred", output
+            self.artifact.dirty = True
+
 
 class RedclothHandler(ProcessStdoutHandler):
     EXECUTABLE = '/usr/bin/env redcloth'
     INPUT_EXTENSIONS = [".txt", ".textile"]
     OUTPUT_EXTENSIONS = [".html"]
     ALIASES = ['redcloth', 'textile']
+
+class Rst2HtmlHandler(ProcessStdoutHandler):
+    EXECUTABLE = '/usr/bin/env rst2html.py'
+    INPUT_EXTENSIONS = [".rst", ".txt"]
+    OUTPUT_EXTENSIONS = [".html"]
+    ALIASES = ['rst2html']
+
+class Rst2LatexHandler(ProcessStdoutHandler):
+    EXECUTABLE = '/usr/bin/env rst2latex.py'
+    INPUT_EXTENSIONS = [".rst", ".txt"]
+    OUTPUT_EXTENSIONS = [".tex"]
+    ALIASES = ['rst2latex']
+
+class Rst2BeamerHandler(ProcessStdoutHandler):
+    EXECUTABLE = '/usr/bin/env rst2beamer'
+    INPUT_EXTENSIONS = [".rst", ".txt"]
+    OUTPUT_EXTENSIONS = [".tex"]
+    ALIASES = ['rst2beamer']
 
 class SloccountHandler(DexyHandler):
     EXECUTABLE = '/usr/bin/env sloccount'
@@ -155,11 +178,7 @@ class LatexHandler(DexyHandler):
         has_header = re.search("documentclass", self.artifact.input_text())
 
         f = open(latex_filename, "w")
-        if not has_header:
-            f.write(open("assets/latex-template.txt", "r").read())
         f.write(self.artifact.input_text())
-        if not has_header:
-            f.write('\n\end{document}')
         f.close()
 
         command = "/usr/bin/env pdflatex %s" % latex_basename

@@ -15,6 +15,7 @@ easy_install pexpect
 easy_install pygments
 easy_install http://dexy.it/tmp/idiopidae-0.5.tgz
 easy_install http://dexy.it/tmp/zapps-0.5.tgz
+easy_install http://docutils.sourceforge.net/docutils-snapshot.tgz
 
 hg clone http://bitbucket.org/ananelson/dexy
 cd dexy/
