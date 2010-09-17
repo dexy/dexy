@@ -3,6 +3,9 @@ import sys
 import os
 import simplejson as json
 
+project_base = os.path.abspath(os.curdir)
+os.chdir(project_base)
+
 if not os.path.exists(sys.argv[1]):
     raise Exception("file %s not found!" % sys.argv[1])
 
@@ -19,9 +22,6 @@ if not os.path.exists('logs'):
         please create a logs directory if you want to use
         this location as a dexy project root""" % project_base
     )
-
-project_base = os.path.abspath(os.curdir)
-os.chdir(project_base)
 
 from dexy.controller import Controller
 from dexy.logger import log
