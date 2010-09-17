@@ -2,13 +2,9 @@
 import sys
 import os
 import simplejson as json
-from dexy.logger import log
 
 if not os.path.exists(sys.argv[1]):
     raise Exception("file %s not found!" % sys.argv[1])
-
-project_base = os.path.abspath(os.curdir)
-os.chdir(project_base)
 
 if not os.path.exists('artifacts'):
     raise Exception(
@@ -24,10 +20,13 @@ if not os.path.exists('logs'):
         this location as a dexy project root""" % project_base
     )
 
+project_base = os.path.abspath(os.curdir)
+os.chdir(project_base)
+
 from dexy.controller import Controller
+from dexy.logger import log
 
 recurse = True
-recurse = False
 
 if recurse:
     for root, dirs, files in os.walk(sys.argv[1]):
