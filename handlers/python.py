@@ -4,6 +4,7 @@ except:
     from ordereddict import OrderedDict
 
 from dexy.handler import DexyHandler
+from dexy.logger import log
 import simplejson as json
 
 from pygments import highlight
@@ -27,8 +28,12 @@ class PygHandler(DexyHandler):
         formatter = self.FORMATTERS[self.artifact.ext]()
         output_dict = OrderedDict()
         for k, v in input_dict.items():
-            output_dict[k] = str(highlight(v, lexer, formatter))
-        return output_dict
+            try:
+                output_dict[k] = str(highlight(v, lexer, formatter))
+            except UnicodeEncodeError as e:
+                log.warn("error processing section %s of file %s" % (k, self.artifact.key))
+                raise e
+            return output_dict
 ### @end
 
 from idiopidae.runtime import Composer
@@ -126,7 +131,6 @@ class HeadHandler(DexyHandler):
         return "\n".join(input_text.split("\n")[0:10]) + "\n"
 
 import xmlrpclib
-import base64
 class WordPressHandler(DexyHandler):
     ALIASES = ['wp']
 
@@ -157,7 +161,7 @@ class WordPressHandler(DexyHandler):
             for t in re.findall(regexp, input_text):
                 if url_cache.has_key(t[1]):
                     url = url_cache[t[1]]
-                    print "using cached url for", t[1], url
+                    log.info("using cached url %s %s" % (t[1], url))
                 else:
                     f = open(t[1], 'rb')
                     image_base_64 = xmlrpclib.Binary(f.read())
@@ -182,7 +186,7 @@ class WordPressHandler(DexyHandler):
                     upload_result = s.wp.uploadFile(0, wp_conf["user"], wp_conf["pass"], upload_file)
                     url = upload_result['url']
                     url_cache[t[1]] = url
-                    print "uploaded", t[1], "to", url
+                    log.info("uploaded %s to %s" % (t[1], url))
 
                 replace_string = t[0].replace(t[1], url)
                 input_text = input_text.replace(t[0], replace_string)

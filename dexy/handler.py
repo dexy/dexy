@@ -4,6 +4,7 @@ except:
     from ordereddict import OrderedDict
 
 from dexy.artifact import Artifact
+import dexy.logger
 import inspect
 import os.path
 import pexpect
@@ -53,6 +54,7 @@ class DexyHandler(object):
                 h.artifact.ext = h.OUTPUT_EXTENSIONS[0]
     
         h.artifact.set_hashstring()
+        h.log = dexy.logger.log.getChild(klass.__name__)
         return h
 
 ### @export "process"
@@ -119,12 +121,12 @@ class DexyHandler(object):
             self.generate()
 
         finish = time.time()
-        self.log(start, finish, method)
+        self.log_time(start, finish, method)
 
         return self.artifact
 
-### @export "log"
-    def log(self, start, finish, method):
+### @export "log-time"
+    def log_time(self, start, finish, method):
         doc = self.artifact.doc
 
         elapsed = finish - start
@@ -138,4 +140,4 @@ class DexyHandler(object):
             finish, 
             elapsed
         ]
-        self.artifact.doc.controller.log(row)
+        self.artifact.doc.controller.log_time(row)

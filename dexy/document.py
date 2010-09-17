@@ -4,6 +4,7 @@ except:
     from ordereddict import OrderedDict
 
 from dexy.artifact import Artifact
+from dexy.logger import log
 import os
 import simplejson as json
 
@@ -74,8 +75,8 @@ class Document(object):
         self.step = 0
         
         artifact, artifact_key = self.create_initial_artifact()
-        print artifact_key
-        print artifact.filename()
+        log.info(artifact_key)
+        log.info(artifact.filename())
 
         for f in self.filters:
             artifact_key += "|%s" % f
@@ -94,7 +95,7 @@ class Document(object):
                 raise Exception("no artifact created!")
             self.artifacts.append(artifact)
             
-            print self.key(), f
-            print artifact.filename()
+            log.info("%s %s" % (self.key(), f))
+            log.info(artifact.filename())
 
         return self

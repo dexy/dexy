@@ -5,6 +5,7 @@ except:
 
 from dexy.document import Document
 from dexy.handler import DexyHandler
+from dexy.logger import log
 from dexy.topological_sort import topological_sort
 from inspect import isclass
 import csv
@@ -19,14 +20,14 @@ import sys
 class Controller(object):
     def __init__(self):
         self.handler_dirs = None
-        self.log_filename = "times.csv"
-        self.init_logger()
+        self.time_log_filename = "times.csv"
+        self.init_time_logger()
 
-### @export "init-logger"
-    def init_logger(self):
-        write_header = not os.path.exists(self.log_filename)
-        self.log_file = open(self.log_filename, "a")
-        self.csv_writer = csv.writer(self.log_file)
+### @export "init-time-logger"
+    def init_time_logger(self):
+        write_header = not os.path.exists(self.time_log_filename)
+        self.time_log_file = open(self.time_log_filename, "a")
+        self.csv_writer = csv.writer(self.time_log_file)
         if write_header:
             self.csv_writer.writerow([
                 "artifact_key",
@@ -41,10 +42,10 @@ class Controller(object):
 
 ### @export "close-logger"
     def close_logger(self):
-        self.log_file.close()
+        self.time_log_file.close()
 
 ### @export "log"
-    def log(self, row):
+    def log_time(self, row):
         self.csv_writer.writerow(row)
 
 ### @export "init-handler-dirs"
@@ -63,7 +64,7 @@ class Controller(object):
         if not self.handler_dirs:
             self.init_handler_dirs()
 
-        print "Automatically loading all handlers found in", ", ".join(self.handler_dirs)
+        log.info("Automatically loading all handlers found in %s" % ", ".join(self.handler_dirs))
         
         handlers = {}
 
@@ -85,7 +86,7 @@ class Controller(object):
                                 if handlers.has_key(a):
                                     raise Exception("duplicate key %s called from %s" % (a, k))
                                 handlers[a] = klass
-                                print "registered alias %s for class %s" % (a, k)
+                                log.info("registered alias %s for class %s" % (a, k))
         return handlers
 
 ### @export "register-handlers"
@@ -101,11 +102,11 @@ class Controller(object):
             config_file_path_elements = [rel_to] + path_elements[0:i] + [".dexy"]
             config_filename = os.path.join(*config_file_path_elements)
             if os.path.exists(config_filename):
-                print "loading config", config_filename
+                log.info("loading config %s" % config_filename)
                 config_file = open(config_filename, "r")
                 json_dict = json.load(config_file)
                 config_dict.update(json_dict)
-                print "config dict", config_dict
+                log.info("config dict %s" % config_dict)
         self.json_dict = config_dict
         self.path = path_to_dir
 
@@ -229,7 +230,7 @@ class Controller(object):
   
 ### @export "dot"
     def dot(self):
-        print self.depends
+        log.info(self.depends)
         return pydot.graph_from_edges(self.depends)
 
 ### @export "run"

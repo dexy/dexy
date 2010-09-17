@@ -2,6 +2,9 @@
 import sys
 import os
 import simplejson as json
+from dexy.logger import log
+
+sys.setdefaultencoding = "UTF-8"
 
 if not os.path.exists(sys.argv[1]):
     raise Exception("file %s not found!" % sys.argv[1])
@@ -16,13 +19,24 @@ if not os.path.exists('artifacts'):
         this location as a dexy project root""" % project_base
     )
 
+if not os.path.exists('logs'):
+    raise Exception(
+        """logs directory not found in %s,
+        please create a logs directory if you want to use
+        this location as a dexy project root""" % project_base
+    )
+
 from dexy.controller import Controller
 
 recurse = True
+recurse = False
 
 if recurse:
     for root, dirs, files in os.walk(sys.argv[1]):
-        print "processing dir", root
+        if root.endswith("cache"):
+            log.warn("skipping cache dir")
+            continue
+        log.info("processing dir %s" % root)
         controller = Controller()
         for doc in controller.setup_and_run(root):
             artifact = doc.artifacts[-1]

@@ -48,7 +48,7 @@ class ProcessStdoutHandler(DexyHandler):
         output, exit_status = pexpect.run("%s %s" % (self.EXECUTABLE, self.artifact.work_filename()), withexitstatus = True)
         self.artifact.data_dict['1'] = output
         if exit_status != 0:
-            print "an error occurred", output
+            self.log.warn("an error occurred:\n%s" % output)
             self.artifact.dirty = True
 
 
@@ -158,7 +158,7 @@ class RArtifactHandler(DexyHandler):
         work_file = os.path.basename(self.artifact.work_filename())
         artifact_file = os.path.basename(self.artifact.filename())
         command = "%s %s %s" % (self.EXECUTABLE, work_file, artifact_file)
-        print command
+        self.log.info(command)
         self.artifact.stdout = pexpect.run(command, cwd='artifacts')
         self.artifact.data_dict['1'] = open(self.artifact.filename(), "r").read()
 
@@ -182,8 +182,9 @@ class LatexHandler(DexyHandler):
         f.close()
 
         command = "/usr/bin/env pdflatex %s" % latex_basename
-        print command
+        self.log.info(command)
         self.artifact.stdout = pexpect.run(command, cwd="artifacts", timeout=20)
+        self.artifact.stdout += pexpect.run(command, cwd="artifacts", timeout=20)
 
 class VoiceHandler(DexyHandler):
     INPUT_EXTENSIONS = [".*"]
@@ -197,10 +198,10 @@ class VoiceHandler(DexyHandler):
         artifact_file = os.path.basename(self.artifact.filename())
         aiff_file = artifact_file.replace("mp3", "aiff")
         command = "/usr/bin/env say -f %s -o %s" % (work_file, aiff_file)
-        print command
+        self.log.info(command)
         self.artifact.stdout = pexpect.run(command, cwd='artifacts')
         command = "/usr/bin/env lame %s %s" % (aiff_file, artifact_file)
-        print command
+        self.log.info(command)
         self.artifact.stdout = pexpect.run(command, cwd='artifacts')
 
 
@@ -246,7 +247,7 @@ class DotHandler(DexyHandler):
         wf = self.artifact.work_filename(False)
         af = self.artifact.filename(False)
         command = "/usr/bin/env dot -T%s -o%s %s" % (self.artifact.ext.replace(".", ""), af, wf)
-        print command
+        self.log.info(command)
         self.artifact.data_dict['1'] = pexpect.run(command, cwd="artifacts")
 
 

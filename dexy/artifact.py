@@ -142,7 +142,7 @@ class Artifact(object):
         full_filename = os.path.join("artifacts", filename)
         self.additional_inputs[key] = full_filename
 
-        print "added key", key, "to artifact", self.key, "links to file", full_filename
+        logger.debug("added key %s to artifact %s ; links to file %s" % (key, self.key, full_filename))
 
         if rel_to_artifacts_dir:
             return full_filename

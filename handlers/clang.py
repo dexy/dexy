@@ -12,9 +12,10 @@ class ClangHandler(DexyHandler):
         self.artifact.generate_workfile()
         o_filename = self.artifact.temp_filename(".o")
         command = "/usr/bin/env clang %s -o %s" % (self.artifact.work_filename(), o_filename)
-        print command
+        self.log.debug("running command:\n%s" % command)
         output = pexpect.run(command)
-        print output # output of clang interpreter, save somewhere?
+        self.artifact.stdout = output
+        self.log.debug("output:\n%s" % output)
         
         command = "%s > %s" % (o_filename, self.artifact.filename)
         self.artifact.data_dict['1'] = pexpect.run(command)
@@ -30,7 +31,8 @@ class ClangInteractiveHandler(DexyHandler):
         o_filename = self.artifact.filename().replace(".txt", ".o")
         command = "/usr/bin/env clang %s -o %s" % (self.artifact.work_filename(), o_filename)
         output = pexpect.run(command)
-        print output # output of clang interpreter, save somewhere?
+        self.artifact.stdout = output
+        self.log.debug("output:\n%s" % output)
         
         self.artifact.load_input_artifacts()
         for k, v in self.artifact.input_artifacts_dict.items():
