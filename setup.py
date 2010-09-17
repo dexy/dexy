@@ -8,6 +8,11 @@ setup(name='dexy',
       author='Ana Nelson',
       author_email='ana@ananelson.com',
       url='http://dexy.it',
-      packages=find_packages()
-     )
+      packages=find_packages(),
+      entry_points = {
+          'console_scripts': [
+              'dexy = bin.dexy',
+          ]
+      }
+)
 
