@@ -4,8 +4,6 @@ import os
 import simplejson as json
 from dexy.logger import log
 
-sys.setdefaultencoding = "UTF-8"
-
 if not os.path.exists(sys.argv[1]):
     raise Exception("file %s not found!" % sys.argv[1])
 
