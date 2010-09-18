@@ -183,15 +183,19 @@ class LatexHandler(DexyHandler):
         
         # Detect which LaTeX compiler we have...
         latex_bin = None
-        for e in ["latex", "pdflatex"]:
+        for e in ["pdflatex", "latex"]:
             latex_bin, s = pexpect.run("/usr/bin/env which %s" % e, withexitstatus = True) 
             if s == 0:
-                self.log.info("%s LaTeX FOUND at %s" % (e, latex_bin))
+                self.log.info("%s LaTeX command found" % e)
                 break
             else:
                 self.log.info("%s LaTeX command not found" % e)
+                latex_bin = None
+        
+        if not latex_bin:
+            raise Exception("no executable found for latex")
 
-        command = "/usr/bin/env %s %s" % (latex_bin, latex_basename)
+        command = "/usr/bin/env %s %s" % (e, latex_basename)
         self.log.info(command)
         # run LaTeX twice so TOCs, section number references etc. are correct
         self.artifact.stdout = pexpect.run(command, cwd="artifacts", timeout=20)
@@ -225,7 +229,7 @@ class VoiceHandler(DexyHandler):
         else:
             raise Exception("unknown tts command %s" % e)
 
-        self.log.info("running command:\n%s" % command)
+        self.log.info(command)
         self.artifact.stdout = pexpect.run(command, cwd='artifacts')
 
         # Converting to mp3

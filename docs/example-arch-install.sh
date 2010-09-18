@@ -25,6 +25,7 @@ easy_install http://dexy.it/tmp/idiopidae-0.5.tgz
 easy_install http://dexy.it/tmp/zapps-0.5.tgz
 easy_install http://pypi.python.org/packages/source/d/docutils/docutils-0.6.tar.gz
 easy_install rst2beamer
+easy_install garlicsim garlicsim_lib
 
 # R packages to install
 echo "install.packages(\"seewave\", repos=\"http://cran.r-project.org\")" | R --vanilla
@@ -53,6 +54,7 @@ cd ..
 cd dexy-examples/
 mkdir artifacts
 mkdir logs
+dexy garlicsim
 cd ..
 
 echo "completed install at `date`"

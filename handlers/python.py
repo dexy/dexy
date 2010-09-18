@@ -38,6 +38,7 @@ class PygHandler(DexyHandler):
 
 from idiopidae.runtime import Composer
 import idiopidae.parser
+from pygments.lexers.agile import PythonConsoleLexer
 from pygments.formatters import get_formatter_for_filename
 class IdioHandler(DexyHandler):
     INPUT_EXTENSIONS = [".*"]
@@ -49,7 +50,10 @@ class IdioHandler(DexyHandler):
         builder = idiopidae.parser.parse('Document', input_text + "\n\0")
 
         name = "input_text%s" % self.ext
-        lexer = get_lexer_for_filename(name)
+        if self.ext == 'pycon':
+            lexer = PythonConsoleLexer
+        else:
+            lexer = get_lexer_for_filename(name)
         formatter = get_formatter_for_filename(self.artifact.filename(), linenos=False)
         
         output_dict = OrderedDict()
