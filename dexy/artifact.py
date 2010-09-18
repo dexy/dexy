@@ -3,6 +3,7 @@ try:
 except:
     from ordereddict import OrderedDict
 
+from dexy.logger import log
 import hashlib
 import inspect
 import os
@@ -142,7 +143,7 @@ class Artifact(object):
         full_filename = os.path.join("artifacts", filename)
         self.additional_inputs[key] = full_filename
 
-        logger.debug("added key %s to artifact %s ; links to file %s" % (key, self.key, full_filename))
+        log.debug("added key %s to artifact %s ; links to file %s" % (key, self.key, full_filename))
 
         if rel_to_artifacts_dir:
             return full_filename
