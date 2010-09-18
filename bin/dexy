@@ -1,7 +1,8 @@
 #!/usr/bin/env python
-import sys
 import os
+import re
 import simplejson as json
+import sys
 
 project_base = os.path.abspath(os.curdir)
 os.chdir(project_base)
@@ -30,14 +31,20 @@ recurse = True
 
 if recurse:
     for root, dirs, files in os.walk(sys.argv[1]):
-        if root.endswith("cache"):
-            log.warn("skipping cache dir")
-            continue
-        log.info("processing dir %s" % root)
-        controller = Controller()
-        for doc in controller.setup_and_run(root):
-            artifact = doc.artifacts[-1]
-            artifact.write_cache_output_file()
+        process = True
+        for x in ["cache", "artifacts", "logs", ".hg", ".bzr", ".git"]:
+            if re.search(x, root):
+                process = False
+                break
+
+        if not process:
+            log.warn("skipping dir %s" % root)
+        else:
+            log.info("processing dir %s" % root)
+            controller = Controller()
+            for doc in controller.setup_and_run(root):
+                artifact = doc.artifacts[-1]
+                artifact.write_cache_output_file()
 else:
     controller = Controller()
     for doc in controller.setup_and_run(sys.argv[1]):
