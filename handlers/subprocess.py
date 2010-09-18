@@ -183,7 +183,7 @@ class LatexHandler(DexyHandler):
         
         # Detect which LaTeX compiler we have...
         latex_bin = None
-        for e in ["texlive", "pdflatex"]:
+        for e in ["latex", "pdflatex"]:
             latex_bin, s = pexpect.run("/usr/bin/env which %s" % e, withexitstatus = True) 
             if s == 0:
                 self.log.info("%s LaTeX FOUND at %s" % (e, latex_bin))
