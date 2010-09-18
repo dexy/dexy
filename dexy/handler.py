@@ -54,7 +54,11 @@ class DexyHandler(object):
                 h.artifact.ext = h.OUTPUT_EXTENSIONS[0]
     
         h.artifact.set_hashstring()
-        h.log = dexy.logger.log.getChild(klass.__name__)
+        if hasattr(dexy.logger.log, 'getChild'):
+            # This adds a nice namespacing, only available in Python 2.7
+            h.log = dexy.logger.log.getChild(klass.__name__)
+        else:
+            h.log = dexy.logger.log
         return h
 
 ### @export "process"
