@@ -5,3 +5,5 @@ dexy.egg-info/*
 times.csv
 *.pyc
 *.swp
+build
+dist
