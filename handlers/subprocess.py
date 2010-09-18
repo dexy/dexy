@@ -165,7 +165,7 @@ class RArtifactHandler(DexyHandler):
 class LatexHandler(DexyHandler):
     INPUT_EXTENSIONS = [".tex", ".txt"]
     OUTPUT_EXTENSIONS = [".pdf", ".png"]
-    ALIASES = ['latex', 'tex']
+    ALIASES = ['latex']
     
     def generate(self):
         self.artifact.write_dj()
@@ -180,9 +180,20 @@ class LatexHandler(DexyHandler):
         f = open(latex_filename, "w")
         f.write(self.artifact.input_text())
         f.close()
+        
+        # Detect which LaTeX compiler we have...
+        latex_bin = None
+        for e in ["texlive", "pdflatex"]:
+            latex_bin, s = pexpect.run("/usr/bin/env which %s" % e, withexitstatus = True) 
+            if s == 0:
+                self.log.info("%s LaTeX FOUND at %s" % (e, latex_bin))
+                break
+            else:
+                self.log.info("%s LaTeX command not found" % e)
 
-        command = "/usr/bin/env pdflatex %s" % latex_basename
+        command = "/usr/bin/env %s %s" % (latex_bin, latex_basename)
         self.log.info(command)
+        # run LaTeX twice so TOCs, section number references etc. are correct
         self.artifact.stdout = pexpect.run(command, cwd="artifacts", timeout=20)
         self.artifact.stdout += pexpect.run(command, cwd="artifacts", timeout=20)
 
@@ -196,11 +207,29 @@ class VoiceHandler(DexyHandler):
         self.artifact.generate_workfile()
         work_file = os.path.basename(self.artifact.work_filename())
         artifact_file = os.path.basename(self.artifact.filename())
-        aiff_file = artifact_file.replace("mp3", "aiff")
-        command = "/usr/bin/env say -f %s -o %s" % (work_file, aiff_file)
-        self.log.info(command)
+
+        for e, ext in {"say" : "aiff", "espeak" : "wav"}.items():
+            sound_file = artifact_file.replace('mp3', ext)
+            tts_bin, s = pexpect.run("/usr/bin/env which %s" % e, withexitstatus = True)
+            if s == 0:
+                self.log.info("%s text-to-speech found at %s" % (e, tts_bin))
+                break
+            else:
+                self.log.info("%s text-to-speech not found" % e)
+                e = None
+        
+        if e == "say":
+            command = "/usr/bin/env say -f %s -o %s" % (work_file, sound_file)
+        elif e == "espeak":
+            command = "/usr/bin/env espeak -f %s -w %s" % (work_file, sound_file)
+        else:
+            raise Exception("unknown tts command %s" % e)
+
+        self.log.info("running command:\n%s" % command)
         self.artifact.stdout = pexpect.run(command, cwd='artifacts')
-        command = "/usr/bin/env lame %s %s" % (aiff_file, artifact_file)
+
+        # Converting to mp3
+        command = "/usr/bin/env lame %s %s" % (sound_file, artifact_file)
         self.log.info(command)
         self.artifact.stdout = pexpect.run(command, cwd='artifacts')
 
