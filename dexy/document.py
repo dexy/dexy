@@ -75,8 +75,7 @@ class Document(object):
         self.step = 0
         
         artifact, artifact_key = self.create_initial_artifact()
-        log.info(artifact_key)
-        log.info(artifact.filename())
+        log.info("(step %s) %s -> %s" % (self.step, artifact_key, artifact.filename()))
 
         for f in self.filters:
             artifact_key += "|%s" % f
@@ -95,7 +94,6 @@ class Document(object):
                 raise Exception("no artifact created!")
             self.artifacts.append(artifact)
             
-            log.info("%s %s" % (self.key(), f))
-            log.info(artifact.filename())
+            log.info("(step %s) %s -> %s" % (self.step, artifact_key, artifact.filename()))
 
         return self
