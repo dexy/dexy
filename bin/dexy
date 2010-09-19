@@ -4,6 +4,11 @@ import re
 import simplejson as json
 import sys
 
+if not (sys.getdefaultencoding() == 'UTF-8'):
+    print "changing encoding from %s to UTF-8" % sys.getdefaultencoding()
+    reload(sys)
+    sys.setdefaultencoding("UTF-8")
+
 project_base = os.path.abspath(os.curdir)
 os.chdir(project_base)
 
