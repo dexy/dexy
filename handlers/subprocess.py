@@ -58,6 +58,12 @@ class RedclothHandler(ProcessStdoutHandler):
     OUTPUT_EXTENSIONS = [".html"]
     ALIASES = ['redcloth', 'textile']
 
+class RedclothLatexHandler(ProcessStdoutHandler):
+    EXECUTABLE = '/usr/bin/env redcloth -o latex'
+    INPUT_EXTENSIONS = [".txt", ".textile"]
+    OUTPUT_EXTENSIONS = [".tex"]
+    ALIASES = ['redclothl', 'latextile']
+
 class Rst2HtmlHandler(ProcessStdoutHandler):
     EXECUTABLE = '/usr/bin/env rst2html.py'
     INPUT_EXTENSIONS = [".rst", ".txt"]
