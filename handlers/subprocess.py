@@ -245,13 +245,13 @@ class RagelRubyHandler(DexyHandler):
     
     def process(self):
         self.artifact.auto_write_artifact = False
-
         self.artifact.generate_workfile()
-        wf = self.artifact.work_filename()
-        af = self.artifact.filename()
-        command = "/usr/bin/env ragel -R -o %s %s" % (af, wf)
-        self.artifact.stdout = pexpect.run(command)
-
+        artifact_file = self.artifact.filename(False)
+        work_file = self.artifact.work_filename(False)
+        command = "/usr/bin/env ragel -R -o %s %s" % (artifact_file, work_file)
+        self.log.info(command)
+        self.artifact.stdout = pexpect.run(command, cwd='artifacts')
+        self.artifact.data_dict['1'] = open(self.artifact.filename(), "r").read()
 
 class RagelRubyDotHandler(DexyHandler):
     INPUT_EXTENSIONS = [".rl"]
@@ -259,13 +259,11 @@ class RagelRubyDotHandler(DexyHandler):
     ALIASES = ['rlrbd', 'ragelrubydot']
     
     def process(self):
-        self.auto_write_artifact = False
-
         self.artifact.generate_workfile()
-        wf = self.artifact.work_filename()
-        af = self.artifact.filename()
-        command = "/usr/bin/env ragel -R -V -o %s %s" % (af, wf)
-        self.artifact.stdout = pexpect.run(command)
+        work_file = os.path.basename(self.artifact.work_filename())
+        command = "/usr/bin/env ragel -R -V %s" % (work_file)
+        self.log.info(command)
+        self.artifact.data_dict['1'] = pexpect.run(command, cwd='artifacts')
 
 
 class DotHandler(DexyHandler):
@@ -275,38 +273,42 @@ class DotHandler(DexyHandler):
     
     def process(self):
         self.artifact.auto_write_artifact = False
-
         self.artifact.generate_workfile()
         wf = self.artifact.work_filename(False)
         af = self.artifact.filename(False)
         command = "/usr/bin/env dot -T%s -o%s %s" % (self.artifact.ext.replace(".", ""), af, wf)
         self.log.info(command)
-        self.artifact.data_dict['1'] = pexpect.run(command, cwd="artifacts")
+        self.artifact.stdout = pexpect.run(command, cwd="artifacts")
 
 
 class RubyStdoutHandler(ProcessStdoutHandler):
     EXECUTABLE = '/usr/bin/env ruby'
     INPUT_EXTENSIONS = [".txt", ".rb"]
     OUTPUT_EXTENSIONS = [".txt"]
-    ALIASES = []
+    ALIASES = ['rb']
 
 
 class RubyInteractiveHandler(DexyHandler):
     EXECUTABLE = '/usr/bin/env ruby'
     INPUT_EXTENSIONS = [".txt", ".rb"]
     OUTPUT_EXTENSIONS = [".txt"]
-    ALIASES = ['rb', 'ruby', 'rbout']
+    ALIASES = ['rbint']
 
     def process(self):
         self.artifact.generate_workfile()
-        input_filename = self.artifact.temp_filename(".txt")
+        command = "/usr/bin/env ruby %s" % self.artifact.work_filename(False)
+        self.log.info(command)
 
-        input_file = open(input_filename, "w")
-        input_file.write(self.artifact.input_text())
-        input_file.close()
-
-        command = "/usr/bin/env ruby -r %s %s" % (self.artifact.work_filename(), input_filename)
-        self.artifact.data_dict['1'] = pexpect.run(command)
+        self.artifact.load_input_artifacts()
+        for k, v in self.artifact.input_artifacts_dict.items():
+            self.log.info(k)
+            for s, t in v['data_dict'].items():
+                self.log.info("spawning process for section %s" % s)
+                self.log.info(t)
+                proc = pexpect.spawn(command, cwd='artifacts')
+                proc.send(t)
+                proc.sendcontrol('d') # eof
+                self.artifact.data_dict[s] = proc.read()[:-4] # strip off ^D^H^H
 
 class RspecHandler(ProcessStdoutHandler):
     EXECUTABLE = '/usr/bin/env spec -f s'

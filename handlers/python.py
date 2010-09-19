@@ -7,6 +7,7 @@ from dexy.handler import DexyHandler
 from dexy.logger import log
 import simplejson as json
 
+import sys
 from pygments import highlight
 from pygments.formatters import HtmlFormatter
 from pygments.formatters import LatexFormatter

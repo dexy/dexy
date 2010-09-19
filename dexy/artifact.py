@@ -162,7 +162,10 @@ class Artifact(object):
         """A canonical filename derived by taking input filename and replacing extension with
         final extension."""
         rel_path = os.path.relpath(self.key.replace("|", "-"), rel_to_path)
-        return "%s%s" % (rel_path, self.ext)
+        if rel_path == self.doc.name:
+            return rel_path
+        else:
+            return "%s%s" % (rel_path, self.ext)
 
 ### @export "stdout-name"
     def stdout_name(self, rel_to_path):
