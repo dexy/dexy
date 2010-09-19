@@ -158,7 +158,7 @@ class Artifact(object):
             self.input_artifacts_dict[k] = json.load(open(v, "r"))
 
 ### @export "output-name"
-    def output_name(self, rel_to_path):
+    def output_name(self, rel_to_path = "."):
         """A canonical filename derived by taking input filename and replacing extension with
         final extension."""
         rel_path = os.path.relpath(self.key.replace("|", "-"), rel_to_path)
@@ -181,9 +181,9 @@ class Artifact(object):
 
 ### @export "write-cache-output-file"
     def write_cache_output_file(self):
-        dirname = os.path.dirname(os.path.join('cache', self.doc.name))
+        dirname = os.path.dirname(os.path.join('cache', self.output_name()))
         if not os.path.exists(dirname):
             os.makedirs(dirname)
-        output_filename = os.path.join('cache', self.doc.name)
+        output_filename = os.path.join('cache', self.output_name())
         shutil.copyfile(self.filename(), output_filename)
 

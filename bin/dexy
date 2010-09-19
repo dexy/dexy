@@ -44,9 +44,11 @@ if recurse:
             controller = Controller()
             for doc in controller.setup_and_run(root):
                 artifact = doc.artifacts[-1]
+                log.info("saving %s to cache/%s" % (artifact.filename(), artifact.output_name()))
                 artifact.write_cache_output_file()
 else:
     controller = Controller()
     for doc in controller.setup_and_run(sys.argv[1]):
         artifact = doc.artifacts[-1]
+        log.info("saving %s to cache/%s" % (artifact.key, artifact.output_name()))
         artifact.write_cache_output_file()
