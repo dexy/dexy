@@ -135,34 +135,136 @@ class HeadHandler(DexyHandler):
     def process_text(self, input_text):
         return "\n".join(input_text.split("\n")[0:10]) + "\n"
 
-import xmlrpclib
-class WordPressHandler(DexyHandler):
-    ALIASES = ['wp']
 
-    def process_text(self, input_text):
-        f = open("wp-config.json", "r")
-        wp_conf = json.load(f)
+class BlogHandler(DexyHandler):
+    ALIASES = None
+    BLOG_CONFIG_FILE = 'blog-config.json'
+
+    def load_blog_conf(self):
+        if not os.path.exists(self.BLOG_CONFIG_FILE):
+            raise Exception("Could not find config file called %s" % self.BLOG_CONFIG_FILE)
+        f = open(self.BLOG_CONFIG_FILE, "r")
+        self.blog_conf = json.load(f)
         f.close()
-
-        expected_keys = ["pass", "user", "xmlrpc_url"]
-        actual_keys = sorted(wp_conf.keys())
-        if not (actual_keys == expected_keys):
-            exception_msg = "expected to find wp-config.json file with keys %s, instead found %s"
-            raise Exception(exception_msg % (expected_keys, actual_keys))
-
+    
+    def load_post_conf(self):
         self.artifact.load_input_artifacts()
         matches = [k for k in self.artifact.input_artifacts_dict.keys() if k.endswith("post.json|dexy")]
-        k = matches[0]
+        self.k = matches[0]
+        self.post_conf = json.loads(self.artifact.input_artifacts_dict[self.k]['data'])
 
-        # Read config from file        
-        post_conf = json.loads(self.artifact.input_artifacts_dict[k]['data'])
+    def process_text(self, input_text):
+        self.load_blog_conf()
+        self.load_post_conf()
+        api = self.initialize_api()
         
-        # Connect to server
-        s = xmlrpclib.ServerProxy(wp_conf["xmlrpc_url"], verbose=False)
-        #print s.system.listMethods()
+        if self.post_conf.has_key('post-id'):
+            post_id = self.post_conf['post-id']
+            self.update_post(api, input_text, self.post_conf['post-id'])
+        else:
+            post_id = self.new_post(api, input_text)
+            self.post_conf['post-id'] = post_id
+
+            json_file = re.sub('\|dexy$', "", self.k)
+            f = open(json_file, 'w')
+            json.dump(self.post_conf, f)
+            f.close()
+
+        return "%s" % post_id
+
+# TODO write tumblr access from scratch as e.g. saving as draft raises an error
+# http://code.google.com/p/python-tumblr/
+from tumblr import Api
+class TumblrHandler(BlogHandler):
+    ALIASES = ['tumblr']
+    BLOG_CONFIG_FILE = 'tumblr-config.json'
+
+    def initialize_api(self):
+        blog = self.blog_conf['blog']
+        user = self.blog_conf['user']
+        password = self.blog_conf['password']
+        return Api(blog, user, password)
+    
+    def new_post(self, api, input_text):
+        title = self.post_conf.pop('title')
+        post = api.write_regular(title, input_text, **self.post_conf)
+        return post['post-id']
+    
+    def update_post(self, api, input_text, post_id):
+        raise Exception("not implemented!")
         
+
+# http://github.com/nureineide/posterous-python
+import posterous
+class PosterousHandler(BlogHandler):
+    ALIASES = ['posterous']
+    BLOG_CONFIG_FILE = 'posterous-config.json'
+    
+    def initialize_api(self):
+        user = self.blog_conf['user']
+        password = self.blog_conf['pass']
+        return posterous.API(user, password)
+    
+    def new_post(self, api, input_text):
+        post = api.new_post(title = self.post_conf['title'], body = input_text)
+        return post.id
+
+    def update_post(self, api, input_text, post_id):
+        api.update_post(
+            post_id = post_id,
+            title = self.post_conf['title'],
+            body = input_text
+        )
+
+
+import xmlrpclib
+class WordPressHandler(BlogHandler):
+    ALIASES = ['wp']
+    BLOG_CONFIG_FILE = 'wp-config.json'
+    MIME_TYPES = {
+        'png' : 'image/png',
+        'jpg' : 'image/jpeg',
+        'jpeg' : 'image/jpeg',
+        'aiff' : 'audio/x-aiff',
+        'wav' : 'audio/x-wav',
+        'wave' : 'audio/x-wav',
+        'mp3' : 'audio/mpeg'
+    }
+    BLOG_ID = 0
+
+    def initialize_api(self):
+        api = xmlrpclib.ServerProxy(self.blog_conf["xmlrpc_url"], verbose=False)
+        #print api.system.listMethods()
+        return api
+    
+    def content_dict(self, api, input_text):
+        input_text = self.upload_files_and_replace_links(api, input_text)
+        content = { 'title' : self.post_conf['title'], 'description' : input_text}
+        return content
+
+    def new_post(self, api, input_text):
+        post_id = api.metaWeblog.newPost(
+            self.BLOG_ID, 
+            self.blog_conf["user"], 
+            self.blog_conf["pass"], 
+            self.content_dict(api, input_text), 
+            self.post_conf['publish']
+        )
+        return post_id
+
+    def update_post(self, api, post_id):
+        api.metaWeblog.editPost(
+            post_id, 
+            self.blog_conf["user"], 
+            self.blof_conf["pass"], 
+            self.content_dict(api, input_text), 
+            self.post_conf['publish']
+        )
+
+    def upload_files_and_replace_links(self, api, input_text):
+        url_cache = {}
+
         def upload_files_to_wp(regexp, input_text):
-            url_cache = {} # TODO this could be outside of fn
             for t in re.findall(regexp, input_text):
                 if url_cache.has_key(t[1]):
                     url = url_cache[t[1]]
@@ -172,23 +274,18 @@ class WordPressHandler(DexyHandler):
                     image_base_64 = xmlrpclib.Binary(f.read())
                     f.close()
 
-                    mime_types = {
-                        'png' : 'image/png',
-                        'jpg' : 'image/jpeg',
-                        'jpeg' : 'image/jpeg',
-                        'aiff' : 'audio/x-aiff',
-                        'wav' : 'audio/x-wav',
-                        'wave' : 'audio/x-wav',
-                        'mp3' : 'audio/mpeg'
-                    }
-
                     upload_file = {
                         'name' : t[1].split("/")[1],
-                        'type' : mime_types[t[2]], # *should* raise error if not on whitelist
+                        'type' : self.MIME_TYPES[t[2]], # *should* raise error if not on whitelist
                         'bits' : image_base_64,
                         'overwrite' : 'true'
                     }
-                    upload_result = s.wp.uploadFile(0, wp_conf["user"], wp_conf["pass"], upload_file)
+                    upload_result = api.wp.uploadFile(
+                        self.BLOG_ID, 
+                        self.blog_conf["user"], 
+                        self.blog_conf["pass"], 
+                        upload_file
+                    )
                     url = upload_result['url']
                     url_cache[t[1]] = url
                     log.info("uploaded %s to %s" % (t[1], url))
@@ -200,19 +297,4 @@ class WordPressHandler(DexyHandler):
         input_text = upload_files_to_wp('(<img src="(artifacts/.+\.(\w{2,4}))")', input_text)
         input_text = upload_files_to_wp('(<embed src="(artifacts/.+\.(\w{2,4}))")', input_text)
         input_text = upload_files_to_wp('(<audio src="(artifacts/.+\.(\w{2,4}))")', input_text)
-
-        # Upload Blog Post
-        content = { 'title' : post_conf['title'], 'description' : input_text}
-        publish = post_conf['publish']
-        if post_conf.has_key('post_id'):
-            post_id = post_conf['post_id']
-            s.metaWeblog.editPost(post_id, wp_conf["user"], wp_conf["pass"], content, publish)
-        else:
-            post_id = s.metaWeblog.newPost(0, wp_conf["user"], wp_conf["pass"], content, publish)
-            # Save post_id in JSON file for next revision 
-            post_conf['post_id'] = post_id
-            json_file = re.sub('\|dexy$', "", k)
-            f = open(json_file, 'w')
-            json.dump(post_conf, f)
-            f.close()
-        return "post %s updated" % post_id
+        return input_text

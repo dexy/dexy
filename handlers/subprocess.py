@@ -127,16 +127,6 @@ class ProcessTimingHandler(DexyHandler):
             times.append("%s" % (time.time() - start))
         self.artifact.data_dict['1'] = "\n".join(times)
 
-class RInteractiveHandler(ProcessInteractiveHandler):
-    """
-    Note this produces output files with ASCII formatting codes.
-    """
-    EXECUTABLE = '/usr/bin/env R --vanilla --quiet'
-    PROMPT = '>|\+'
-    INPUT_EXTENSIONS = ['.txt', '.r', '.R']
-    OUTPUT_EXTENSIONS = [".Rout"]
-    ALIASES = ['rint']
-
 class ROutputHandler(DexyHandler):
     EXECUTABLE = '/usr/bin/env R CMD BATCH --vanilla --quiet --no-timing'
     INPUT_EXTENSIONS = ['.txt', '.r', '.R']

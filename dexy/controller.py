@@ -81,7 +81,7 @@ class Controller(object):
                     
                     for k in dir(mod):
                         klass = mod.__dict__[k]
-                        if isclass(klass) and not (klass == DexyHandler) and issubclass(klass, DexyHandler):
+                        if isclass(klass) and not (klass == DexyHandler) and issubclass(klass, DexyHandler) and klass.ALIASES:
                             for a in klass.ALIASES:
                                 if handlers.has_key(a):
                                     raise Exception("duplicate key %s called from %s" % (a, k))
