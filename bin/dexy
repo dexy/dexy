@@ -4,40 +4,135 @@ import re
 import simplejson as json
 import sys
 
-if not (sys.getdefaultencoding() == 'UTF-8'):
-    print "changing encoding from %s to UTF-8" % sys.getdefaultencoding()
-    reload(sys)
-    sys.setdefaultencoding("UTF-8")
+def add_option(parser, *args, **kwargs):
+    if hasattr(parser, 'add_option'):
+        parser.add_option(*args, **kwargs)
+    else:
+        parser.add_argument(*args, **kwargs)
+
+EXCLUDED_DIRS = ['.bzr', '.hg', '.git', '.svn']
+EXCLUDE_DIR_HELP = """Exclude directories from processing by dexy, only relevant
+if recursing. The directories designated for artifacts, logs and cache are
+automatically excluded, as are %s.
+""" % ", ".join(EXCLUDED_DIRS)
+
+try:
+    import argparse
+    option_parser = 'argparse'
+    parser = argparse.ArgumentParser(
+        description="dexy",
+        epilog="epilogue..."
+    )
+    
+    parser.add_argument(
+        'dir',
+        help='directory of files to process with dexy'
+    )
+
+    parser.add_argument(
+        '-x', '--exclude-dir',
+        help=EXCLUDE_DIR_HELP,
+        nargs='+'
+    )
+
+except ImportError:
+    import optparse
+    option_parser = 'optparse'
+    parser = optparse.OptionParser()
+    parser.add_option(
+        '-x', '--exclude-dir',
+        help=EXCLUDE_DIR_HELP + ' Separate multiple directories with commas.'
+    )
+
+add_option(parser,
+    '-n', '--no-recurse',
+    dest='recurse',
+    default=True,
+    action='store_false',
+    help='do not recurse into subdirectories (default: recurse)'
+)
+
+add_option(parser,
+    '-u', '--utf8',
+    default=False,
+    action='store_true',
+    help='switch encoding to UTF-8 (default: don\'t change encoding)'
+)
+
+add_option(parser,
+    '-a', '--artifacts-dir',
+    default='artifacts',
+    help='location of artifacts directory (default: artifacts)'
+)
+
+add_option(parser,
+    '-l', '--logs-dir',
+    default='logs',
+    help='location of logs directory (default: logs) dexy will create a dexy.log file in this directory'
+)
+
+add_option(parser,
+    '-c', '--cache-dir',
+    default='cache',
+    help='location of cache directory (default: cache)'
+)
+
+if (option_parser == 'argparse'):
+    args = parser.parse_args()
+    dir_name = args.dir
+    exclude_dir = args.exclude_dir
+elif (option_parser == 'optparse'):
+    (args, argv) = parser.parse_args()
+    dir_name = argv[0]
+    exclude_dir = args.exclude_dir.split(',')
+else:
+    raise Exception("unexpected option_parser %s" % option_parser)
+
+do_not_process_dirs = EXCLUDED_DIRS
+do_not_process_dirs += exclude_dir
+do_not_process_dirs.append(args.artifacts_dir)
+do_not_process_dirs.append(args.logs_dir)
+do_not_process_dirs.append(args.cache_dir)
+
+if args.utf8:
+    if (sys.getdefaultencoding() == 'UTF-8'):
+        print "encoding is already UTF-8"
+    else:
+        print "changing encoding from %s to UTF-8" % sys.getdefaultencoding()
+        reload(sys)
+        sys.setdefaultencoding("UTF-8")
 
 project_base = os.path.abspath(os.curdir)
 os.chdir(project_base)
 
-if not os.path.exists(sys.argv[1]):
-    raise Exception("file %s not found!" % sys.argv[1])
+if not os.path.exists(dir_name):
+    raise Exception("file %s not found!" % dir_name)
 
-if not os.path.exists('artifacts'):
+if not os.path.exists(args.artifacts_dir):
+    path_to_artifacts_dir = os.path.join(project_base, args.artifacts_dir)
     raise Exception(
-        """artifacts directory not found in %s,
-        please create an artifacts directory if you want to use
-        this location as a dexy project root""" % project_base
+        """artifacts directory not found at %s,
+        please create a directory called %s if you want to use
+        this location as a dexy project root""" % (path_to_artifacts_dir, args.artifacts_dir)
     )
 
-if not os.path.exists('logs'):
+if not os.path.exists(args.logs_dir):
+    path_to_logs_dir = os.path.join(project_base, args.logs_dir)
     raise Exception(
-        """logs directory not found in %s,
-        please create a logs directory if you want to use
-        this location as a dexy project root""" % project_base
+        """logs directory not found at %s,
+        please create a directory called %s if you want to use
+        this location as a dexy project root""" % (path_to_logs_dir, args.logs_dir)
     )
 
 from dexy.controller import Controller
 from dexy.logger import log
 
-recurse = True
-
-if recurse:
-    for root, dirs, files in os.walk(sys.argv[1]):
+if args.recurse:
+    log.info("running dexy with recurse")
+    for root, dirs, files in os.walk(dir_name):
         process = True
-        for x in ["cache", "artifacts", "logs", ".hg", ".bzr", ".git"]:
+        log.info("skipping directories named %s" % ", ".join(do_not_process_dirs))
+        for x in do_not_process_dirs:
             if re.search(x, root):
                 process = False
                 break
@@ -52,8 +147,10 @@ if recurse:
                 log.info("saving %s to cache/%s" % (artifact.filename(), artifact.output_name()))
                 artifact.write_cache_output_file()
 else:
+    log.info("not recursing")
+    log.info("processing dir %s" % dir_name)
     controller = Controller()
-    for doc in controller.setup_and_run(sys.argv[1]):
+    for doc in controller.setup_and_run(dir_name):
         artifact = doc.artifacts[-1]
         log.info("saving %s to cache/%s" % (artifact.key, artifact.output_name()))
         artifact.write_cache_output_file()
