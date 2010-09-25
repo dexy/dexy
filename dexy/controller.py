@@ -76,9 +76,16 @@ class Controller(object):
                 if f.endswith(".py") and f not in ["base.py", "__init__.py"]:
                     basename = f.replace(".py", "")
                     module = "handlers.%s" % basename
-                    __import__(module)
-                    mod = sys.modules[module]
+                    try:
+                        __import__(module)
+                    except ImportError as e:
+                        log.warn("handlers defined in %s will not be available: %s" % (module, e)
                     
+                    if not sys.modules.has_key(module):
+                        continue
+
+                    mod = sys.modules[module]
+
                     for k in dir(mod):
                         klass = mod.__dict__[k]
                         if isclass(klass) and not (klass == DexyHandler) and issubclass(klass, DexyHandler) and klass.ALIASES:
