@@ -1,0 +1,3 @@
+dexy -h
+dexy --version
+
