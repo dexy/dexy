@@ -1,6 +1,6 @@
 from dexy.handler import DexyHandler
-
 from pynliner import Pynliner
+
 class PynlinerHandler(DexyHandler):
     ALIASES = ['pynliner', 'inlinecss']
 

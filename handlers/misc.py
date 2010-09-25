@@ -1,6 +1,3 @@
-import uuid
-import os.path
-import pexpect
 from dexy.handler import DexyHandler
 import shutil
 

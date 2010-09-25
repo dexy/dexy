@@ -1,8 +1,8 @@
 from dexy.handler import DexyHandler
+
 import os
 import pexpect
 import time
-import re
 
 class ProcessInteractiveHandler(DexyHandler):
     """
@@ -169,10 +169,7 @@ class LatexHandler(DexyHandler):
     def process(self):
         latex_filename = self.artifact.filename().replace(".pdf", ".tex")
         latex_basename = os.path.basename(latex_filename)
-        pdf_basename = os.path.basename(self.artifact.filename())
         
-        has_header = re.search("documentclass", self.artifact.input_text())
-
         f = open(latex_filename, "w")
         f.write(self.artifact.input_text())
         f.close()
