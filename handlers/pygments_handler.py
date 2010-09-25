@@ -1,5 +1,5 @@
 from dexy.handler import DexyHandler
-from dexy.log import log
+from dexy.logger import log
 
 try:
     from collections import OrderedDict

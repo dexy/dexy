@@ -1,6 +1,6 @@
 from handlers.blog_handler import BlogHandler
 
-from dexy.logging import log
+from dexy.logger import log
 import re
 import xmlrpclib
 
