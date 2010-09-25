@@ -4,6 +4,13 @@ import re
 import simplejson as json
 import sys
 
+project_base = os.path.abspath(os.curdir)
+os.chdir(project_base)
+
+from dexy.controller import Controller
+from dexy.logger import log
+from dexy.version import VERSION
+
 def add_option(parser, *args, **kwargs):
     if hasattr(parser, 'add_option'):
         parser.add_option(*args, **kwargs)
@@ -20,8 +27,8 @@ try:
     import argparse
     option_parser = 'argparse'
     parser = argparse.ArgumentParser(
-        description="dexy",
-        epilog="epilogue..."
+#        description="",
+#        epilog="epilogue..."
     )
     
     parser.add_argument(
@@ -35,10 +42,16 @@ try:
         nargs='+'
     )
 
+    parser.add_argument(
+        '-v', '--version', 
+        action='version', 
+        version='%%(prog)s %s' % VERSION
+    )
+
 except ImportError:
     import optparse
     option_parser = 'optparse'
-    parser = optparse.OptionParser()
+    parser = optparse.OptionParser(version="%%prog %s" % VERSION)
     parser.add_option(
         '-x', '--exclude-dir',
         help=EXCLUDE_DIR_HELP + ' Separate multiple directories with commas.'
@@ -102,9 +115,6 @@ if args.utf8:
         reload(sys)
         sys.setdefaultencoding("UTF-8")
 
-project_base = os.path.abspath(os.curdir)
-os.chdir(project_base)
-
 if not os.path.exists(dir_name):
     raise Exception("file %s not found!" % dir_name)
 
@@ -123,9 +133,6 @@ if not os.path.exists(args.logs_dir):
         please create a directory called %s if you want to use
         this location as a dexy project root""" % (path_to_logs_dir, args.logs_dir)
     )
-
-from dexy.controller import Controller
-from dexy.logger import log
 
 if args.recurse:
     log.info("running dexy with recurse")

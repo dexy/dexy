@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
 from setuptools import setup, find_packages
+from dexy.version import VERSION
 
 setup(name='dexy',
-      version='0.0.1',
+      version=VERSION,
       description='Document Automation',
       author='Ana Nelson',
       author_email='ana@ananelson.com',

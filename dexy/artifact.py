@@ -4,6 +4,7 @@ except:
     from ordereddict import OrderedDict
 
 from dexy.logger import log
+from dexy.version import VERSION
 import hashlib
 import inspect
 import os
@@ -29,7 +30,7 @@ class Artifact(object):
             art.input_artifacts = previous_artifact.input_artifacts
             art.additional_inputs = previous_artifact.additional_inputs
             art.previous_artifact_filename = previous_artifact.filename()
-        art.artifact_version = 1 # Change this if non-backwards-compatible change.
+        art.dexy_version = VERSION
         if handler:
             art.handler_source = inspect.getsource(handler.__class__)
         return art
