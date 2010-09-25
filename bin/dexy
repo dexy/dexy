@@ -97,7 +97,10 @@ if (option_parser == 'argparse'):
 elif (option_parser == 'optparse'):
     (args, argv) = parser.parse_args()
     dir_name = argv[0]
-    exclude_dir = args.exclude_dir.split(',')
+    if args.exclude_dir:
+        exclude_dir = args.exclude_dir.split(',')
+    else:
+        exclude_dir = []
 else:
     raise Exception("unexpected option_parser %s" % option_parser)
 
