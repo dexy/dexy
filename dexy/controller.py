@@ -1,6 +1,6 @@
 try:
     from collections import OrderedDict
-except:
+except ImportError:
     from ordereddict import OrderedDict
 
 from dexy.document import Document
@@ -79,7 +79,7 @@ class Controller(object):
                     try:
                         __import__(module)
                     except ImportError as e:
-                        log.warn("handlers defined in %s will not be available: %s" % (module, e)
+                        log.warn("handlers defined in %s will not be available: %s" % (module, e))
                     
                     if not sys.modules.has_key(module):
                         continue
@@ -124,8 +124,9 @@ class Controller(object):
                 a, b = input_directive.popitem()
                 input_directive = a
                 args = b
-            except:
-                None
+            except AttributeError:
+                # if we are here, input_directive is not a dict
+                pass
             
             tokens = input_directive.split("|")
             glob_string = os.path.join(self.path, tokens[0])

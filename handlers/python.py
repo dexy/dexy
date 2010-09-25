@@ -1,6 +1,6 @@
 try:
     from collections import OrderedDict
-except:
+except ImportError:
     from ordereddict import OrderedDict
 
 from dexy.handler import DexyHandler
