@@ -7,8 +7,6 @@ import sys
 project_base = os.path.abspath(os.curdir)
 os.chdir(project_base)
 
-from dexy.controller import Controller
-from dexy.logger import log
 from dexy.version import VERSION
 
 def add_option(parser, *args, **kwargs):
@@ -24,6 +22,7 @@ automatically excluded, as are %s.
 """ % ", ".join(EXCLUDED_DIRS)
 
 try:
+    raise ImportError
     import argparse
     option_parser = 'argparse'
     parser = argparse.ArgumentParser(
@@ -136,6 +135,9 @@ if not os.path.exists(args.logs_dir):
         please create a directory called %s if you want to use
         this location as a dexy project root""" % (path_to_logs_dir, args.logs_dir)
     )
+
+from dexy.controller import Controller
+from dexy.logger import log # Only import log after making sure log dir exists
 
 if args.recurse:
     log.info("running dexy with recurse")
