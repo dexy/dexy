@@ -22,13 +22,9 @@ automatically excluded, as are %s.
 """ % ", ".join(EXCLUDED_DIRS)
 
 try:
-    raise ImportError
     import argparse
     option_parser = 'argparse'
-    parser = argparse.ArgumentParser(
-#        description="",
-#        epilog="epilogue..."
-    )
+    parser = argparse.ArgumentParser()
     
     parser.add_argument(
         'dir',
@@ -92,7 +88,11 @@ add_option(parser,
 if (option_parser == 'argparse'):
     args = parser.parse_args()
     dir_name = args.dir
-    exclude_dir = args.exclude_dir
+    if args.exclude_dir:
+        exclude_dir = args.exclude_dir
+    else:
+        exclude_dir = []
+
 elif (option_parser == 'optparse'):
     (args, argv) = parser.parse_args()
     dir_name = argv[0]
