@@ -8,8 +8,6 @@ except ImportError:
 
 from idiopidae.runtime import Composer
 from pygments import highlight
-from pygments.formatters import HtmlFormatter
-from pygments.formatters import LatexFormatter
 from pygments.formatters import get_formatter_for_filename
 from pygments.lexers import get_lexer_for_filename
 from pygments.lexers.agile import PythonConsoleLexer
@@ -20,15 +18,13 @@ class PygHandler(DexyHandler):
     OUTPUT_EXTENSIONS = [".html", ".tex"]
     ALIASES = ['pyg', 'pygments']
 
-    FORMATTERS = {
-        '.html' : HtmlFormatter,
-        '.latex' : LatexFormatter,
-        '.tex' : LatexFormatter,
-    }
-
     def process_dict(self, input_dict):
-        lexer = get_lexer_for_filename("file%s" % self.ext)
-        formatter = self.FORMATTERS[self.artifact.ext]()
+        name = "input_text%s" % self.ext
+        if self.ext == 'pycon':
+            lexer = PythonConsoleLexer
+        else:
+            lexer = get_lexer_for_filename(name)
+        formatter = get_formatter_for_filename(self.artifact.filename(), linenos=False)
         output_dict = OrderedDict()
         for k, v in input_dict.items():
             try:
