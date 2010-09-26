@@ -51,6 +51,11 @@ class ProcessStdoutHandler(DexyHandler):
             self.log.warn("an error occurred:\n%s" % output)
             self.artifact.dirty = True
 
+class BashHandler(ProcessStdoutHandler):
+    EXECUTABLE = '/usr/bin/env bash'
+    INPUT_EXTENSIONS = [".sh", ".bash"]
+    OUTPUT_EXTENSIONS = [".txt"]
+    ALIASES = ['bash']
 
 class RedclothHandler(ProcessStdoutHandler):
     EXECUTABLE = '/usr/bin/env redcloth'
