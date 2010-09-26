@@ -42,7 +42,7 @@ class WordPressHandler(BlogHandler):
         api.metaWeblog.editPost(
             post_id, 
             self.blog_conf["user"], 
-            self.blof_conf["pass"], 
+            self.blog_conf["pass"], 
             self.content_dict(api, input_text), 
             self.post_conf['publish']
         )
