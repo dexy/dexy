@@ -73,7 +73,9 @@ class Document(object):
         for f in self.filters:
             artifact_key += "|%s" % f
             self.step += 1
-    
+            
+            if not self.controller.handlers.has_key(f):
+                raise Exception("""You requested filter alias '%s' but this is not available.""" % f)
             HandlerClass = self.controller.handlers[f]
             h = HandlerClass.setup(
                 self, 
