@@ -1,12 +1,6 @@
-try:
-    from collections import OrderedDict
-except ImportError:
-    from ordereddict import OrderedDict
-
 from dexy.artifact import Artifact
 from dexy.logger import log
 import os
-import simplejson as json
 
 ### @export "init"
 class Document(object):
@@ -50,7 +44,6 @@ class Document(object):
 ### @export "input-artifacts"
     def input_artifacts(self):
         input_artifacts = {}
-        doc_keys = self.controller.members.keys()
         for input_doc in self.inputs:
             artifact = input_doc.artifacts[-1]
             input_artifacts[input_doc.key()] = artifact.dj_filename()

@@ -176,6 +176,8 @@ class Artifact(object):
 
     def write_stdout_file(self):
         f = open(self.stdout_name("artifacts"), "w")
+        f.write(self.stdout)
+        f.close()
 
 ### @export "stderr-name"
     def stderr_name(self, rel_to_path):

@@ -5,10 +5,6 @@ except ImportError:
 
 from dexy.artifact import Artifact
 import dexy.logger
-import inspect
-import os.path
-import pexpect
-import simplejson as json
 import time
 
 ### @export "class"
