@@ -44,8 +44,10 @@ class DexyHandler(object):
                     if e in next_handler.INPUT_EXTENSIONS:
                         h.artifact.ext = e
                 
-                if not h.artifact.ext:
-                    raise Exception("No compatible input extension found in next handler.")
+                if not hasattr(h.artifact, 'ext'):
+                  err_str = "unable to find one of %s in %s for %s %s"
+                  err_str = err_str % (", ".join(h.OUTPUT_EXTENSIONS), ", ".join(next_handler.INPUT_EXTENSIONS), next_handler.__name__, doc.key())
+                  raise Exception(err_str)
             else:
                 h.artifact.ext = h.OUTPUT_EXTENSIONS[0]
     
