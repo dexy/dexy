@@ -1,3 +1,8 @@
+try:
+    from collections import OrderedDict
+except ImportError:
+    from ordereddict import OrderedDict
+
 from dexy.handler import DexyHandler
 
 import os
@@ -16,12 +21,14 @@ class ProcessInteractiveHandler(DexyHandler):
     OUTPUT_EXTENSIONS = [".pycon"]
     ALIASES = ['pycon']
 
-    def process(self):
+    def process_dict(self, input_dict):
+        output_dict = OrderedDict()
+
         proc = pexpect.spawn(self.EXECUTABLE, cwd="artifacts")
         proc.expect(self.PROMPT)
         start = (proc.before + proc.after)
 
-        for k, s in self.artifact.input_data_dict.items():
+        for k, s in input_dict.items():
             section_transcript = start
             start = ""
             for l in s.rstrip().split("\n"):
@@ -31,7 +38,15 @@ class ProcessInteractiveHandler(DexyHandler):
                 proc.expect(self.PROMPT, timeout=30)
                 section_transcript += proc.before
                 start = proc.after
-            self.artifact.data_dict[k] = section_transcript
+            output_dict[k] = section_transcript
+        return output_dict
+
+class RInteractiveHandler(ProcessInteractiveHandler):
+  EXECUTABLE = '/usr/bin/env R --quiet --vanilla'
+  PROMPT = '>'
+  INPUT_EXTENSIONS = ['.txt', '.r', '.R']
+  OUTPUT_EXTENSIONS = ['.Rout']
+  ALIASES = ['rint']
 
 class ProcessStdoutHandler(DexyHandler):
     """
@@ -132,6 +147,7 @@ class ProcessTimingHandler(DexyHandler):
             times.append("%s" % (time.time() - start))
         self.artifact.data_dict['1'] = "\n".join(times)
 
+# Returns a full transcript, commands and output from each line.
 class ROutputHandler(DexyHandler):
     EXECUTABLE = '/usr/bin/env R CMD BATCH --vanilla --quiet --no-timing'
     INPUT_EXTENSIONS = ['.txt', '.r', '.R']
@@ -146,6 +162,7 @@ class ROutputHandler(DexyHandler):
         pexpect.run("%s %s %s" % (self.EXECUTABLE, self.artifact.work_filename(), self.artifact.filename()))
         self.artifact.data_dict['1'] = open(self.artifact.filename(), "r").read()
 
+# Uses the --slave flag so doesn't echo commands, just returns output.
 class RArtifactHandler(DexyHandler):
     EXECUTABLE = '/usr/bin/env R CMD BATCH --vanilla --quiet --slave --no-timing'
     INPUT_EXTENSIONS = ['.txt', '.r', '.R']

@@ -32,7 +32,7 @@ class PygHandler(DexyHandler):
             except UnicodeEncodeError as e:
                 log.warn("error processing section %s of file %s" % (k, self.artifact.key))
                 raise e
-            return output_dict
+        return output_dict
 
 class IdioHandler(DexyHandler):
     INPUT_EXTENSIONS = [".*"]
