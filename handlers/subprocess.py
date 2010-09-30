@@ -34,10 +34,15 @@ class ProcessInteractiveHandler(DexyHandler):
             for l in s.rstrip().split("\n"):
                 section_transcript += start
                 start = ""
+                print "sending", l
                 proc.sendline(l)
-                proc.expect(self.PROMPT, timeout=30)
-                section_transcript += proc.before
-                start = proc.after
+                try:
+                  proc.expect(self.PROMPT, timeout=10)
+                  section_transcript += proc.before
+                  start = proc.after
+                except pexpect.TIMEOUT as e:
+                  pass
+
             output_dict[k] = section_transcript
         return output_dict
 
