@@ -2,6 +2,7 @@
 import os
 import re
 import simplejson as json
+import shutil
 import sys
 
 project_base = os.path.abspath(os.curdir)
@@ -65,6 +66,13 @@ add_option(parser,
     default=False,
     action='store_true',
     help='switch encoding to UTF-8 (default: don\'t change encoding)'
+)
+
+add_option(parser,
+    '-p', '--purge',
+    default=False,
+    action='store_true',
+    help='purge the artifacts and cache directories before running dexy'
 )
 
 add_option(parser,
@@ -139,6 +147,15 @@ if not os.path.exists(args.logs_dir):
 from dexy.controller import Controller
 from dexy.logger import log # Only import log after making sure log dir exists
 
+if args.purge:
+  log.warn("purging contents of %s" % args.artifacts_dir)
+  shutil.rmtree(args.artifacts_dir)
+  os.mkdir(args.artifacts_dir)
+
+  log.warn("purging contents of %s" % args.cache_dir)
+  shutil.rmtree(args.cache_dir)
+  os.mkdir(args.cache_dir)
+
 if args.recurse:
     log.info("running dexy with recurse")
     for root, dirs, files in os.walk(dir_name):
@@ -154,15 +171,17 @@ if args.recurse:
         else:
             log.info("processing dir %s" % root)
             controller = Controller()
+            controller.artifacts_dir = args.artifacts_dir
             for doc in controller.setup_and_run(root):
                 artifact = doc.artifacts[-1]
                 log.info("saving %s to cache/%s" % (artifact.filename(), artifact.output_name()))
-                artifact.write_cache_output_file()
+                artifact.write_cache_output_file(args.cache_dir)
 else:
     log.info("not recursing")
     log.info("processing dir %s" % dir_name)
     controller = Controller()
+    controller.artifacts_dir = args.artifacts_dir
     for doc in controller.setup_and_run(dir_name):
         artifact = doc.artifacts[-1]
         log.info("saving %s to cache/%s" % (artifact.key, artifact.output_name()))
-        artifact.write_cache_output_file()
+        artifact.write_cache_output_file(args.cache_dir)

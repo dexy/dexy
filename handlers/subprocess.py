@@ -24,7 +24,7 @@ class ProcessInteractiveHandler(DexyHandler):
     def process_dict(self, input_dict):
         output_dict = OrderedDict()
 
-        proc = pexpect.spawn(self.EXECUTABLE, cwd="artifacts")
+        proc = pexpect.spawn(self.EXECUTABLE, cwd=self.artifact.artifacts_dir)
         proc.expect(self.PROMPT)
         start = (proc.before + proc.after)
 
@@ -182,7 +182,7 @@ class RArtifactHandler(DexyHandler):
         artifact_file = os.path.basename(self.artifact.filename())
         command = "%s %s %s" % (self.EXECUTABLE, work_file, artifact_file)
         self.log.info(command)
-        self.artifact.stdout = pexpect.run(command, cwd='artifacts')
+        self.artifact.stdout = pexpect.run(command, cwd=self.artifact.artifacts_dir)
         self.artifact.data_dict['1'] = open(self.artifact.filename(), "r").read()
 
 class LatexHandler(DexyHandler):
@@ -218,8 +218,8 @@ class LatexHandler(DexyHandler):
         command = "/usr/bin/env %s %s" % (e, latex_basename)
         self.log.info(command)
         # run LaTeX twice so TOCs, section number references etc. are correct
-        self.artifact.stdout = pexpect.run(command, cwd="artifacts", timeout=20)
-        self.artifact.stdout += pexpect.run(command, cwd="artifacts", timeout=20)
+        self.artifact.stdout = pexpect.run(command, cwd=self.artifact.artifacts_dir, timeout=20)
+        self.artifact.stdout += pexpect.run(command, cwd=self.artifact.artifacts_dir, timeout=20)
 
 class VoiceHandler(DexyHandler):
     INPUT_EXTENSIONS = [".*"]
@@ -250,12 +250,12 @@ class VoiceHandler(DexyHandler):
             raise Exception("unknown tts command %s" % e)
 
         self.log.info(command)
-        self.artifact.stdout = pexpect.run(command, cwd='artifacts')
+        self.artifact.stdout = pexpect.run(command, cwd=self.artifact.artifacts_dir)
 
         # Converting to mp3
         command = "/usr/bin/env lame %s %s" % (sound_file, artifact_file)
         self.log.info(command)
-        self.artifact.stdout = pexpect.run(command, cwd='artifacts')
+        self.artifact.stdout = pexpect.run(command, cwd=self.artifact.artifacts_dir)
 
 
 class RagelRubyHandler(DexyHandler):
@@ -270,7 +270,7 @@ class RagelRubyHandler(DexyHandler):
         work_file = self.artifact.work_filename(False)
         command = "/usr/bin/env ragel -R -o %s %s" % (artifact_file, work_file)
         self.log.info(command)
-        self.artifact.stdout = pexpect.run(command, cwd='artifacts')
+        self.artifact.stdout = pexpect.run(command, cwd=self.artifact.artifacts_dir)
         self.artifact.data_dict['1'] = open(self.artifact.filename(), "r").read()
 
 class RagelRubyDotHandler(DexyHandler):
@@ -283,7 +283,7 @@ class RagelRubyDotHandler(DexyHandler):
         work_file = os.path.basename(self.artifact.work_filename())
         command = "/usr/bin/env ragel -R -V %s" % (work_file)
         self.log.info(command)
-        self.artifact.data_dict['1'] = pexpect.run(command, cwd='artifacts')
+        self.artifact.data_dict['1'] = pexpect.run(command, cwd=self.artifact.artifacts_dir)
 
 
 class DotHandler(DexyHandler):
@@ -298,7 +298,7 @@ class DotHandler(DexyHandler):
         af = self.artifact.filename(False)
         command = "/usr/bin/env dot -T%s -o%s %s" % (self.artifact.ext.replace(".", ""), af, wf)
         self.log.info(command)
-        self.artifact.stdout = pexpect.run(command, cwd="artifacts")
+        self.artifact.stdout = pexpect.run(command, cwd=self.artifact.artifacts_dir)
 
 
 class RubyStdoutHandler(ProcessStdoutHandler):
@@ -325,7 +325,7 @@ class RubyInteractiveHandler(DexyHandler):
             for s, t in v['data_dict'].items():
                 self.log.info("spawning process for section %s" % s)
                 self.log.info(t)
-                proc = pexpect.spawn(command, cwd='artifacts')
+                proc = pexpect.spawn(command, cwd=self.artifact.artifacts_dir)
                 proc.send(t)
                 proc.sendcontrol('d') # eof
                 self.artifact.data_dict[s] = proc.read()[:-4] # strip off ^D^H^H
@@ -339,4 +339,4 @@ class RspecHandler(ProcessStdoutHandler):
     def process(self):
         self.artifact.auto_write_artifact = False
         self.artifact.generate_workfile()
-        self.artifact.data_dict['1'] = pexpect.run("%s %s" % (self.EXECUTABLE, self.artifact.work_filename(False)), cwd="artifacts")
+        self.artifact.data_dict['1'] = pexpect.run("%s %s" % (self.EXECUTABLE, self.artifact.work_filename(False)), cwd=self.artifact.artifacts_dir)

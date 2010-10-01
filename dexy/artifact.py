@@ -24,6 +24,7 @@ class Artifact(object):
         art.dirty = False
         art.auto_write_artifact = True
         art.additional_inputs = {}
+        art.artifacts_dir = art.doc.controller.artifacts_dir
         if previous_artifact:
             art.input_ext = previous_artifact.ext
             art.input_data_dict = previous_artifact.data_dict
@@ -52,14 +53,14 @@ class Artifact(object):
     def filename(self, rel_to_artifacts_dir = True):
         filename = "%s%s" % (self.hashstring, self.ext)
         if rel_to_artifacts_dir:
-            filename = os.path.join('artifacts', filename)
+            filename = os.path.join(self.artifacts_dir, filename)
         return filename
 
 ### @export "dj"
     def dj_filename(self):
         if not self.hashstring:
             raise Exception("hashstring is none")
-        return os.path.join('artifacts', "%s.dexy.json" % self.hashstring)
+        return os.path.join(self.artifacts_dir, "%s.dexy.json" % self.hashstring)
 
     def dj_file_exists(self):
         return os.path.isfile(self.dj_filename())
@@ -117,7 +118,7 @@ class Artifact(object):
     def work_filename(self, rel_to_artifacts_dir = True):
         filename = "%s.work%s" % (self.hashstring, self.input_ext)
         if rel_to_artifacts_dir:
-            filename = os.path.join('artifacts', filename)
+            filename = os.path.join(self.artifacts_dir, filename)
         return filename
 
     def generate_workfile(self):
@@ -129,7 +130,7 @@ class Artifact(object):
     def temp_filename(self, ext, rel_to_artifacts_dir = True):
         temp_filename = "%s.work%s" % (self.hashstring, ext)
         if rel_to_artifacts_dir:
-            temp_filename = os.path.join('artifacts', temp_filename)
+            temp_filename = os.path.join(self.artifacts_dir, temp_filename)
         return temp_filename
 
     def tempfile(self, ext, rel_to_artifacts_dir = True):
@@ -141,7 +142,7 @@ class Artifact(object):
             raise Exception("already have a key %s" % key)
         
         filename = "%s.%s" % (uuid.uuid4(), ext)
-        full_filename = os.path.join("artifacts", filename)
+        full_filename = os.path.join(self.artifacts_dir, filename)
         self.additional_inputs[key] = full_filename
 
         log.debug("added key %s to artifact %s ; links to file %s" % (key, self.key, full_filename))
@@ -175,7 +176,7 @@ class Artifact(object):
         return "%s-stdout.txt" % (rel_path)
 
     def write_stdout_file(self):
-        f = open(self.stdout_name("artifacts"), "w")
+        f = open(self.stdout_name(self.artifacts_dir), "w")
         f.write(self.stdout)
         f.close()
 
@@ -186,10 +187,10 @@ class Artifact(object):
         return "%s-stderr.txt" % (rel_path)
 
 ### @export "write-cache-output-file"
-    def write_cache_output_file(self):
-        dirname = os.path.dirname(os.path.join('cache', self.output_name()))
+    def write_cache_output_file(self, cache_dir):
+        dirname = os.path.dirname(os.path.join(cache_dir, self.output_name()))
         if not os.path.exists(dirname):
             os.makedirs(dirname)
-        output_filename = os.path.join('cache', self.output_name())
+        output_filename = os.path.join(cache_dir, self.output_name())
         shutil.copyfile(self.filename(), output_filename)
 
