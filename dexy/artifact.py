@@ -8,6 +8,7 @@ from dexy.version import VERSION
 import hashlib
 import inspect
 import os
+import re
 import shutil
 import simplejson as json
 import time
@@ -159,16 +160,6 @@ class Artifact(object):
         for k, v in self.input_artifacts.items():
             self.input_artifacts_dict[k] = json.load(open(v, "r"))
 
-### @export "output-name"
-    def output_name(self, rel_to_path = "."):
-        """A canonical filename derived by taking input filename and replacing extension with
-        final extension."""
-        rel_path = os.path.relpath(self.key.replace("|", "-"), rel_to_path)
-        if rel_path == self.doc.name:
-            return rel_path
-        else:
-            return "%s%s" % (rel_path, self.ext)
-
 ### @export "stdout-name"
     def stdout_name(self, rel_to_path):
         """A canonical filename for any stdout text generated."""
@@ -186,11 +177,21 @@ class Artifact(object):
         rel_path = os.path.relpath(self.key.replace("|", "-"), rel_to_path)
         return "%s-stderr.txt" % (rel_path)
 
+### @export "output-name"
+    def output_name(self, use_short_format = False):
+        """A canonical filename derived by taking input filename and replacing extension with
+        final extension."""
+        if use_short_format or not re.search("\|", self.key):
+            name = "%s%s" % (os.path.splitext(self.doc.name)[0], self.ext)
+        else:
+            name = "%s%s" % (self.key.replace("|", "-"), self.ext)
+        return os.path.relpath(name, ".")
+
 ### @export "write-cache-output-file"
-    def write_cache_output_file(self, cache_dir):
-        dirname = os.path.dirname(os.path.join(cache_dir, self.output_name()))
+    def write_cache_output_file(self, cache_dir, use_short_format):
+        output_filename = os.path.join(cache_dir, self.output_name(use_short_format))
+        dirname = os.path.dirname(output_filename)
         if not os.path.exists(dirname):
             os.makedirs(dirname)
-        output_filename = os.path.join(cache_dir, self.output_name())
         shutil.copyfile(self.filename(), output_filename)
 

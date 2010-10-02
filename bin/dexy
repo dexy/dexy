@@ -93,6 +93,13 @@ add_option(parser,
     help='location of cache directory (default: cache)'
 )
 
+add_option(parser,
+    '-s', '--short',
+    default=False,
+    action='store_true',
+    help='Use short names in cache'
+    )
+
 if (option_parser == 'argparse'):
     args = parser.parse_args()
     dir_name = args.dir
@@ -174,8 +181,9 @@ if args.recurse:
             controller.artifacts_dir = args.artifacts_dir
             for doc in controller.setup_and_run(root):
                 artifact = doc.artifacts[-1]
-                log.info("saving %s to cache/%s" % (artifact.filename(), artifact.output_name()))
-                artifact.write_cache_output_file(args.cache_dir)
+                output_name = artifact.output_name(args.short)
+                log.info("saving %s to cache/%s" % (artifact.filename(), output_name))
+                artifact.write_cache_output_file(args.cache_dir, args.short)
 else:
     log.info("not recursing")
     log.info("processing dir %s" % dir_name)
@@ -183,5 +191,6 @@ else:
     controller.artifacts_dir = args.artifacts_dir
     for doc in controller.setup_and_run(dir_name):
         artifact = doc.artifacts[-1]
-        log.info("saving %s to cache/%s" % (artifact.key, artifact.output_name()))
-        artifact.write_cache_output_file(args.cache_dir)
+        output_name = artifact.output_name(args.short)
+        log.info("saving %s to cache/%s" % (artifact.key, output_name))
+        artifact.write_cache_output_file(args.cache_dir, args.short)
