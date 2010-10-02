@@ -20,35 +20,34 @@ class ProcessInteractiveHandler(DexyHandler):
     INPUT_EXTENSIONS = [".txt", ".py"]
     OUTPUT_EXTENSIONS = [".pycon"]
     ALIASES = ['pycon']
+    COMMENT = '#'
+    TRAILING_PROMPT = "\r\n>>> "
 
     def process_dict(self, input_dict):
-        output_dict = OrderedDict()
-
-        proc = pexpect.spawn(self.EXECUTABLE, cwd=self.artifact.artifacts_dir)
-        proc.expect(self.PROMPT)
-        start = (proc.before + proc.after)
-
-        for k, s in input_dict.items():
-            section_transcript = start
-            start = ""
-            for l in s.rstrip().split("\n"):
-                section_transcript += start
-                start = ""
-                print "sending", l
-                proc.sendline(l)
-                try:
-                  proc.expect(self.PROMPT, timeout=10)
-                  section_transcript += proc.before
-                  start = proc.after
-                except pexpect.TIMEOUT as e:
-                  pass
-
-            output_dict[k] = section_transcript
-        return output_dict
+         output_dict = OrderedDict()
+ 
+         proc = pexpect.spawn(self.EXECUTABLE, cwd=self.artifact.artifacts_dir)
+         proc.expect(self.PROMPT)
+         start = (proc.before + proc.after)
+         
+         for k, s in input_dict.items():
+             section_transcript = start
+             start = ""
+             print s 
+             proc.send(s)
+             proc.sendline(self.COMMENT * 5)
+             proc.expect(self.COMMENT * 5, timeout = self.artifact.doc.args['timeout'])
+ 
+             section_transcript += proc.before.rstrip(self.TRAILING_PROMPT)
+             print section_transcript
+             output_dict[k] = section_transcript
+         print output_dict
+         return output_dict
 
 class RInteractiveHandler(ProcessInteractiveHandler):
   EXECUTABLE = '/usr/bin/env R --quiet --vanilla'
   PROMPT = '>'
+  TRAILING_PROMPT = "\r\n> "
   INPUT_EXTENSIONS = ['.txt', '.r', '.R']
   OUTPUT_EXTENSIONS = ['.Rout']
   ALIASES = ['rint']

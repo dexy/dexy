@@ -184,6 +184,7 @@ class Controller(object):
                 if create:
                     # Filters can either be included in the name (separated by |)...
                     doc = Document(f, filters)
+                    doc.args = args
                     # ...or they may be listed explicitly.
                     if args.has_key('filters'):
                         doc.filters += args['filters']
