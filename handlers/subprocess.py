@@ -9,7 +9,7 @@ import os
 import pexpect
 import time
 
-class ProcessInteractiveHandler(DexyHandler):
+class ProcessLinewiseInteractiveHandler(DexyHandler):
     """
     Intended for use with interactive processes, such as python interpreter,
     where your goal is to have a session transcript divided into same sections
@@ -20,8 +20,34 @@ class ProcessInteractiveHandler(DexyHandler):
     INPUT_EXTENSIONS = [".txt", ".py"]
     OUTPUT_EXTENSIONS = [".pycon"]
     ALIASES = ['pycon']
-    COMMENT = '#'
-    TRAILING_PROMPT = "\r\n>>> "
+
+    def process_dict(self, input_dict):
+        output_dict = OrderedDict()
+
+        proc = pexpect.spawn(self.EXECUTABLE, cwd="artifacts")
+        proc.expect(self.PROMPT)
+        start = (proc.before + proc.after)
+
+        for k, s in input_dict.items():
+            section_transcript = start
+            start = ""
+            for l in s.rstrip().split("\n"):
+                section_transcript += start
+                start = ""
+                proc.sendline(l)
+                proc.expect(self.PROMPT, timeout=30)
+                section_transcript += proc.before
+                start = proc.after
+            output_dict[k] = section_transcript
+        return output_dict
+
+class ProcessSectionwiseInteractiveHandler(DexyHandler):
+    EXECUTABLE = '/usr/bin/env R --quiet --vanilla'
+    PROMPT = '>'
+    TRAILING_PROMPT = "\r\n> "
+    INPUT_EXTENSIONS = ['.txt', '.r', '.R']
+    OUTPUT_EXTENSIONS = ['.Rout']
+    ALIASES = ['rint']
 
     def process_dict(self, input_dict):
          output_dict = OrderedDict()
@@ -43,14 +69,6 @@ class ProcessInteractiveHandler(DexyHandler):
              output_dict[k] = section_transcript
          print output_dict
          return output_dict
-
-class RInteractiveHandler(ProcessInteractiveHandler):
-  EXECUTABLE = '/usr/bin/env R --quiet --vanilla'
-  PROMPT = '>'
-  TRAILING_PROMPT = "\r\n> "
-  INPUT_EXTENSIONS = ['.txt', '.r', '.R']
-  OUTPUT_EXTENSIONS = ['.Rout']
-  ALIASES = ['rint']
 
 class ProcessStdoutHandler(DexyHandler):
     """
