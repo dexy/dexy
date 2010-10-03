@@ -47,8 +47,7 @@ class Artifact(object):
         # Remove any items which should not be included in hash calculations.
         del hash_dict['doc']
 
-        hash_json = json.dumps(hash_dict)
-        self.hashstring = hashlib.md5(hash_json).hexdigest()
+        self.hashstring = hashlib.md5(hash_dict.__str__()).hexdigest()
 
 ### @export "filename"
     def filename(self, rel_to_artifacts_dir = True):
@@ -81,7 +80,11 @@ class Artifact(object):
 
     def write_dj(self):
         dj_file = open(self.dj_filename(), "w")
-        json.dump(self.persist_dict(), dj_file)
+        try:
+            json.dump(self.persist_dict(), dj_file)
+        except UnicodeDecodeError as e:
+            log.warn("Unable to persist json dict")
+            log.warn(e)
 
     def load_dj(self):
         dj_file = open(self.dj_filename(), "r")

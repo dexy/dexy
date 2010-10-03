@@ -1,4 +1,15 @@
 from dexy.handler import DexyHandler
+import shutil
+
+class CopyHandler(DexyHandler):
+    INPUT_EXTENSIONS = [".*"]
+    OUTPUT_EXTENSIONS = [".*"]
+    ALIASES = ['cp']
+    
+    # Just copy the file without trying to read the contents.
+    def process(self):
+        self.artifact.auto_write_artifact = False
+        shutil.copyfile(self.doc.name, self.artifact.filename())
 
 class WebsiteHandler(DexyHandler):
     INPUT_EXTENSIONS = [".*"]
