@@ -44,6 +44,7 @@ class ProcessLinewiseInteractiveHandler(DexyHandler):
 class ProcessSectionwiseInteractiveHandler(DexyHandler):
     EXECUTABLE = '/usr/bin/env R --quiet --vanilla'
     PROMPT = '>'
+    COMMENT = '#'
     TRAILING_PROMPT = "\r\n> "
     INPUT_EXTENSIONS = ['.txt', '.r', '.R']
     OUTPUT_EXTENSIONS = ['.Rout']
@@ -59,15 +60,13 @@ class ProcessSectionwiseInteractiveHandler(DexyHandler):
          for k, s in input_dict.items():
              section_transcript = start
              start = ""
-             print s 
              proc.send(s)
              proc.sendline(self.COMMENT * 5)
              proc.expect(self.COMMENT * 5, timeout = self.artifact.doc.args['timeout'])
  
              section_transcript += proc.before.rstrip(self.TRAILING_PROMPT)
-             print section_transcript
              output_dict[k] = section_transcript
-         print output_dict
+
          return output_dict
 
 class ProcessStdoutHandler(DexyHandler):
