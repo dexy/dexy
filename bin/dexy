@@ -155,13 +155,14 @@ from dexy.controller import Controller
 from dexy.logger import log # Only import log after making sure log dir exists
 
 if args.purge:
-  log.warn("purging contents of %s" % args.artifacts_dir)
-  shutil.rmtree(args.artifacts_dir)
-  os.mkdir(args.artifacts_dir)
-
-  log.warn("purging contents of %s" % args.cache_dir)
-  shutil.rmtree(args.cache_dir)
-  os.mkdir(args.cache_dir)
+    log.warn("purging contents of %s" % args.artifacts_dir)
+    shutil.rmtree(args.artifacts_dir)
+    os.mkdir(args.artifacts_dir)
+    
+    if os.path.exists(args.cache_dir): 
+        log.warn("purging contents of %s" % args.cache_dir)
+        shutil.rmtree(args.cache_dir)
+        os.mkdir(args.cache_dir)
 
 if args.recurse:
     log.info("running dexy with recurse")
