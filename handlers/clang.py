@@ -2,6 +2,24 @@ from dexy.handler import DexyHandler
 import pexpect
 import time
 
+### @export "cpp-handler"
+class CppHandler(DexyHandler):
+    INPUT_EXTENSIONS = [".cpp"]
+    OUTPUT_EXTENSIONS = [".txt"]
+    ALIASES = ['cpp']
+    
+    def process(self):
+        self.artifact.generate_workfile()
+        o_filename = self.artifact.temp_filename(".o")
+        command = "/usr/bin/env c++ %s -o %s" % (self.artifact.work_filename(), o_filename)
+        self.log.debug(command)
+        output = pexpect.run(command)
+        self.artifact.stdout = output
+        self.log.debug("\n%s" % output)
+        
+        command = "%s > %s" % (o_filename, self.artifact.filename)
+        self.artifact.data_dict['1'] = pexpect.run(command)
+
 ### @export "clang-handler"
 class ClangHandler(DexyHandler):
     INPUT_EXTENSIONS = [".c"]
