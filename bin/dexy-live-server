@@ -199,7 +199,8 @@ while True:
     if req.is_disconnect():
         print "DISCONNECT"
         continue
-
+    
+    print req.path
     log.info("req.path: %s" % req.path)
     a = req.path
     while len(a) > 0 and a[0] == '/':
@@ -216,7 +217,9 @@ while True:
     else:
         a_is_dir = False
         a_dir = os.path.dirname(a)
-    
+
+    if not a_dir:
+      a_dir = '.'
 
     # Run Dexy, store array of artifacts
     artifacts = OrderedDict()
@@ -237,7 +240,7 @@ while True:
         response_text = "<html><body><ul><h1>%s</h1>" % a
         if len(artifacts) > 0:
             for k, artifact in artifacts.items():
-                response_text += """<li><a href="/%s">%s</a></li>""" % (artifact.filename(), artifact.doc.key())
+                response_text += """<li><a href="/%s">%s</a></li>""" % (artifact.output_name(), artifact.doc.key())
                 if hasattr(artifact, 'stdout'):
                     response_text += """<pre>\n%s\n</pre>""" % artifact.stdout 
         else:

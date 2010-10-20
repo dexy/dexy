@@ -17,6 +17,8 @@ handler section should match the UUID in bin/dexy-live-server. If you change
 this, don't forget to run "python setup.py install" or "python setup.py
 develop" afterwards so the dexy-live-server command is updated on your system.
 
+On some systems, you can generate UUIDs with the command 'uuidgen'
+
 3. If necessary, edit the host in server.conf. By default this is set to
 'localhost'. If you are running this in a virtual machine, you will need to
 change this to be the virtual machine's IP address in order to be able to
