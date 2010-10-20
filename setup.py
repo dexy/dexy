@@ -10,6 +10,6 @@ setup(name='dexy',
       author_email='ana@ananelson.com',
       url='http://dexy.it',
       packages=find_packages(),
-      scripts = ['bin/dexy']
+      scripts = ['bin/dexy', 'bin/dexy-live-server']
 )
 

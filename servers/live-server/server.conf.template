@@ -1,0 +1,29 @@
+dexy_app = Handler(
+    send_spec='tcp://127.0.0.1:9999',
+    send_ident="faffe356-ad9d-4ec1-ba74-09d784cf85a0" ,
+    recv_spec='tcp://127.0.0.1:9998',
+    recv_ident=''
+)
+
+main = Server(
+    uuid='6ce37561-6b53-453b-a321-8c802ac45bfc',
+    access_log="/logs/access.log",
+    error_log="/logs/error.log",
+    chroot="./",
+    default_host="localhost",
+    name="live",
+    pid_file="/run/mongrel2-live.pid",
+    port=6767,
+    hosts = [
+        Host(
+            name='localhost',
+            routes = {
+                '/' : dexy_app
+            }
+        )
+    ]
+)
+
+
+servers = [main]
+

@@ -1,0 +1,67 @@
+This directory contains a configuration file for a mongrel2 server which will
+serve live Dexy pages which are automatically rebuilt whenever contents change.
+
+You need to install ZeroMQ and mongrel2 before you can run this.
+
+Please read the mongrel2 documentation carefully and get the mongrel2 example
+servers running before you try to run this.
+
+======================
+Setup (the first time)
+======================
+
+1. Copy the server.conf.template to server.conf
+
+2. For security, edit the UUIDs in server.conf. The UUID in the dexy_app
+handler section should match the UUID in bin/dexy-live-server. If you change
+this, don't forget to run "python setup.py install" or "python setup.py
+develop" afterwards so the dexy-live-server command is updated on your system.
+
+3. If necessary, edit the host in server.conf. By default this is set to
+'localhost'. If you are running this in a virtual machine, you will need to
+change this to be the virtual machine's IP address in order to be able to
+browse the contents from your host operating system. You can add multiple hosts
+and other fancy things if you know what you are doing, consult the mongrel2
+documentation for more options.
+
+4. Use the m2sh interface to generate a config.sqlite file which will store the
+server configuration. Probably just:
+
+m2sh load -config server.conf
+
+5. Create directories called logs, run and tmp for mongrel2.
+
+========================================
+Starting the Server (first & every time)
+========================================
+
+6. Use the m2sh interface to start the mongrel2 server
+
+sudo m2sh start -host localhost
+
+or
+
+sudo m2sh start -host 192.168.1.XXX # Needs to match IP specified in server.conf
+
+7. Now we need to set up the handler in our Dexy project directory. Navigate to
+the Dexy project directory where you want to serve files from. In the dexy
+project root, type:
+
+dexy-live-server .
+
+
+That should be it, you can start browsing your files by visiting:
+
+http://localhost:6767/
+
+or
+
+http://192.168.1.XXX:6767/
+
+As appropriate.
+
+
+
+If you run into problems, check both the Dexy logs in your project directory
+and the mongrel2 logs in the logs subdirectory of this directory.
+

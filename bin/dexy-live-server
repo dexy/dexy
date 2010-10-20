@@ -183,7 +183,7 @@ signal.signal(signal.SIGINT, signal_handler)
 print 'Press Ctrl+C to Exit (may not take effect until next request received)'
 
 # TODO pass sender id, ports as options
-sender_id = "b23f15ab-3307-449b-869f-f888c1e29cb6"
+sender_id = "faffe356-ad9d-4ec1-ba74-09d784cf85a0"
 
 conn = handler.Connection(
     sender_id, 
@@ -207,24 +207,25 @@ while True:
 
     log.info("a: %s" % a)
 
+    if not a:
+      a = '.'
+
     if os.path.isdir(a):
         a_is_dir = True
         a_dir = a
     else:
         a_is_dir = False
         a_dir = os.path.dirname(a)
+    
 
     # Run Dexy, store array of artifacts
     artifacts = OrderedDict()
     controller = Controller()
     controller.artifacts_dir = args.artifacts_dir
-    for doc in controller.setup_and_run(a):
+    for doc in controller.setup_and_run(a_dir):
         artifact = doc.artifacts[-1]
         artifacts[artifact.output_name(args.short)] = artifact
-
-    if a_is_dir:
-        a = os.path.join(a, "index.html")
-
+    
     if artifacts.has_key(a):
         # render the processed file
         response_text = artifacts[a].output_text()
@@ -239,15 +240,15 @@ while True:
                 response_text += """<li><a href="/%s">%s</a></li>""" % (artifact.filename(), artifact.doc.key())
                 if hasattr(artifact, 'stdout'):
                     response_text += """<pre>\n%s\n</pre>""" % artifact.stdout 
-                else:
-                    # not a dexy dir, show raw files in the dir
-                    for f in os.listdir(a):
-                        url = os.path.join(req.path, f)
-                        response_text += """<li><a href="%s">%s</a></li>""" % (url, f)
-                        response_text += "</ul></body></html>"
         else:
-            # TODO make a real 404
-            response_text = "404 not found!"
+            # not a dexy dir, show raw files in the dir
+            for f in os.listdir(a):
+                url = os.path.join(req.path, f)
+                response_text += """<li><a href="%s">%s</a></li>""" % (url, f)
+                response_text += "</ul></body></html>"
+    else:
+        # TODO make a real 404
+        response_text = "404 not found!"
 
     response = "<pre>\nSENDER: %r\nIDENT:%r\nPATH: %r\nHEADERS:%r\nBODY:%r</pre>" % (
         req.sender, req.conn_id, req.path, 
@@ -255,35 +256,3 @@ while True:
     response += response_text 
     conn.reply_http(req, response_text)
 
-#if args.recurse:
-    #    log.info("running dexy with recurse")
-    #    for root, dirs, files in os.walk(dir_name):
-        #        process = True
-        #        log.info("skipping directories named %s" % ", ".join(do_not_process_dirs))
-        #        for x in do_not_process_dirs:
-            #            if re.search(x, root):
-                #                process = False
-                #                break
-                #
-                #        if not process:
-                    #            log.warn("skipping dir %s" % root)
-                    #        else:
-                        #            log.info("processing dir %s" % root)
-                        #            controller = Controller()
-                        #            controller.artifacts_dir = args.artifacts_dir
-                        #            for doc in controller.setup_and_run(root):
-                            #                artifact = doc.artifacts[-1]
-                            #                output_name = artifact.output_name(args.short)
-                            #                log.info("saving %s to cache/%s" % (artifact.filename(), output_name))
-                            #                artifact.write_cache_output_file(args.cache_dir, args.short)
-                            #else:
-                                #    log.info("not recursing")
-                                #    log.info("processing dir %s" % dir_name)
-                                #    controller = Controller()
-                                #    controller.artifacts_dir = args.artifacts_dir
-                                #    for doc in controller.setup_and_run(dir_name):
-                                    #        artifact = doc.artifacts[-1]
-                                    #        output_name = artifact.output_name(args.short)
-                                    #        log.info("saving %s to cache/%s" % (artifact.key, output_name))
-                                    #        artifact.write_cache_output_file(args.cache_dir, args.short)
-                                    #
