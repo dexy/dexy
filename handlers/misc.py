@@ -10,6 +10,11 @@ class PdfFormatHandler(DexyHandler):
         self.artifact.auto_write_artifact = False
         shutil.copyfile(self.artifact.previous_artifact_filename, self.artifact.filename())
 
+class TextFormatHandler(DexyHandler):
+    INPUT_EXTENSIONS = [".*"]
+    OUTPUT_EXTENSIONS = [".txt"]
+    ALIASES = ['t', 'forcetext']
+
 class LatexFormatHandler(DexyHandler):
     INPUT_EXTENSIONS = [".tex"]
     OUTPUT_EXTENSIONS = [".tex"]

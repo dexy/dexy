@@ -225,11 +225,23 @@ while True:
     artifacts = OrderedDict()
     controller = Controller()
     controller.artifacts_dir = args.artifacts_dir
-    for doc in controller.setup_and_run(a_dir):
-        artifact = doc.artifacts[-1]
-        artifacts[artifact.output_name(args.short)] = artifact
+    try:
+        for doc in controller.setup_and_run(a_dir):
+            artifact = doc.artifacts[-1]
+            artifacts[artifact.output_name(args.short)] = artifact
+        error = False
+    except Exception as e:
+        print e
+        error_message = ""
+        error_message += "<h1>%s</h1>" % type(e).__name__
+        for line in sys.exc_info():
+            error_message += "<pre>%s</pre>" % line
+        error = True
     
-    if artifacts.has_key(a):
+    if error:
+        # TODO 500?
+        response_text = error_message
+    elif artifacts.has_key(a):
         # render the processed file
         response_text = artifacts[a].output_text()
     elif os.path.exists(a) and not a_is_dir:
