@@ -10,13 +10,18 @@ class PdfFormatHandler(DexyHandler):
         self.artifact.auto_write_artifact = False
         shutil.copyfile(self.artifact.previous_artifact_filename, self.artifact.filename())
 
-class BashFormatHandler(DexyHandler):
+class ConvertBashFormatHandler(DexyHandler):
     INPUT_EXTENSIONS = [".*", "*"]
     OUTPUT_EXTENSIONS = [".sh"]
     ALIASES = ['b', 'forcebash']
 
-class TextFormatHandler(DexyHandler):
+class ConvertTextFormatHandler(DexyHandler):
     INPUT_EXTENSIONS = [".*"]
+    OUTPUT_EXTENSIONS = [".txt"]
+    ALIASES = ['ct']
+
+class TextFormatHandler(DexyHandler):
+    INPUT_EXTENSIONS = [".txt"]
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['t', 'forcetext']
 
