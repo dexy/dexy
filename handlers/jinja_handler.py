@@ -1,9 +1,14 @@
 from dexy.handler import DexyHandler
 
-from jinja2 import Template
+from jinja2 import Template, Environment
 import os
 import re
 import simplejson as json
+
+class JinjaHelper:
+  def read_file(self, filename):
+    f = open(filename, "r")
+    return f.read()
 
 class JinjaHandler(DexyHandler):
     INPUT_EXTENSIONS = [".*"]
@@ -35,5 +40,22 @@ class JinjaHandler(DexyHandler):
                 if v.endswith('.json') and os.path.exists(v):
                     document_data[k] = json.load(open(v, "r"))
         
-        template = Template(input_text)
-        return str(template.render({'d' : document_data, 'a' : self.artifact}))
+        if self.artifact.ext == ".tex":
+            print "changing jinja tags for", self.artifact.key
+            env = Environment(
+                block_start_string = '<%',
+                block_end_string = '%>',
+                variable_start_string = '<<',
+                variable_end_string = '>>',
+                comment_start_string = '<#',
+                comment_end_string = '#>'
+                )
+        else:
+            env = Environment()
+        template = env.from_string(input_text)
+        template_hash = {
+            'd' : document_data, 
+            'a' : self.artifact,
+            'h' : JinjaHelper()
+        }
+        return str(template.render(template_hash))
