@@ -31,8 +31,8 @@ class DexyHandler(object):
         # Determine file extension.
         ext = previous_artifact.ext
         if set([ext, ".*"]).isdisjoint(set(h.INPUT_EXTENSIONS)):
-            exception_text = """Extension %s is not supported.
-            Supported extensions are: %s""" % (ext, ', '.join(h.INPUT_EXTENSIONS))
+            exception_text = """Error in %s for %s. Extension %s is not supported.
+            Supported extensions are: %s""" % (klass.__name__, doc.key(), ext, ', '.join(h.INPUT_EXTENSIONS))
             raise Exception(exception_text)
         h.ext = ext
         
