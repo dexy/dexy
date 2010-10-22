@@ -52,10 +52,16 @@ class Controller(object):
     def init_handler_dirs(self):
         install_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         cur_dir = os.curdir
+        sys.path.append(cur_dir)
         
         self.handler_dirs = []
-        for d in [install_dir, cur_dir]:
-            h = os.path.abspath(os.path.join(d, 'handlers'))
+        # Need to give local directory (in which we place custom per-project filters)
+        # a different name or else Python can't see modules in that dir.
+        # This handler/filter switching is confusing, should be improved.
+        h1 = os.path.abspath(os.path.join(install_dir, 'handlers'))
+        h2 = os.path.abspath(os.path.join(cur_dir, 'filters'))
+
+        for h in [h1, h2]:
             if os.path.exists(h) and not h in self.handler_dirs:
                 self.handler_dirs.append(h)
 
@@ -75,10 +81,17 @@ class Controller(object):
             for f in os.listdir(d):
                 if f.endswith(".py") and f not in ["base.py", "__init__.py"]:
                     basename = f.replace(".py", "")
-                    module = "handlers.%s" % basename
+                    if d.endswith('handlers'):
+                        module = "handlers.%s" % basename
+                    elif d.endswith('filters'):
+                        module = "filters.%s" % basename
+                    else:
+                        raise Exception(d)
+
                     try:
                         __import__(module)
                     except ImportError as e:
+                        log.warn("ImportError %s" % e)
                         log.warn("handlers defined in %s will not be available: %s" % (module, e))
                     
                     if not sys.modules.has_key(module):
