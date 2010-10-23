@@ -1,0 +1,289 @@
+#!/usr/bin/env python
+try:
+    from collections import OrderedDict
+except ImportError:
+    from ordereddict import OrderedDict
+
+import os
+import re
+import simplejson as json
+import shutil
+import sys
+
+project_base = os.path.abspath(os.curdir)
+os.chdir(project_base)
+
+from dexy.version import VERSION
+
+def add_option(parser, *args, **kwargs):
+    if hasattr(parser, 'add_option'):
+        parser.add_option(*args, **kwargs)
+    else:
+        parser.add_argument(*args, **kwargs)
+
+EXCLUDED_DIRS = ['.bzr', '.hg', '.git', '.svn']
+EXCLUDE_DIR_HELP = """Exclude directories from processing by dexy, only relevant
+if recursing. The directories designated for artifacts, logs and cache are
+automatically excluded, as are %s.
+""" % ", ".join(EXCLUDED_DIRS)
+
+try:
+    import argparse
+    option_parser = 'argparse'
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        'dir',
+        help='directory of files to process with dexy'
+    )
+
+    parser.add_argument(
+        '-x', '--exclude-dir',
+        help=EXCLUDE_DIR_HELP,
+        nargs='+'
+    )
+
+    parser.add_argument(
+        '-v', '--version', 
+        action='version', 
+        version='%%(prog)s %s' % VERSION
+    )
+
+except ImportError:
+    import optparse
+    option_parser = 'optparse'
+    parser = optparse.OptionParser(version="%%prog %s" % VERSION)
+    parser.add_option(
+        '-x', '--exclude-dir',
+        help=EXCLUDE_DIR_HELP + ' Separate multiple directories with commas.'
+    )
+
+add_option(parser,
+           '-n', '--no-recurse',
+           dest='recurse',
+           default=True,
+           action='store_false',
+           help='do not recurse into subdirectories (default: recurse)'
+          )
+
+add_option(parser,
+           '-u', '--utf8',
+           default=False,
+           action='store_true',
+           help='switch encoding to UTF-8 (default: don\'t change encoding)'
+          )
+
+add_option(parser,
+           '-p', '--purge',
+           default=False,
+           action='store_true',
+           help='purge the artifacts and cache directories before running dexy'
+          )
+
+add_option(parser,
+           '-a', '--artifacts-dir',
+           default='artifacts',
+           help='location of artifacts directory (default: artifacts)'
+          )
+
+add_option(parser,
+           '-l', '--logs-dir',
+           default='logs',
+           help='location of logs directory (default: logs) dexy will create a dexy.log file in this directory'
+          )
+
+add_option(parser,
+           '-c', '--cache-dir',
+           default='cache',
+           help='location of cache directory (default: cache)'
+          )
+
+add_option(parser,
+           '-s', '--short',
+           default=False,
+           action='store_true',
+           help='Use short names in cache'
+          )
+
+if (option_parser == 'argparse'):
+    args = parser.parse_args()
+    dir_name = args.dir
+    if args.exclude_dir:
+        exclude_dir = args.exclude_dir
+    else:
+        exclude_dir = []
+
+elif (option_parser == 'optparse'):
+    (args, argv) = parser.parse_args()
+    dir_name = argv[0]
+    if args.exclude_dir:
+        exclude_dir = args.exclude_dir.split(',')
+    else:
+        exclude_dir = []
+else:
+    raise Exception("unexpected option_parser %s" % option_parser)
+
+do_not_process_dirs = EXCLUDED_DIRS
+do_not_process_dirs += exclude_dir
+do_not_process_dirs.append(args.artifacts_dir)
+do_not_process_dirs.append(args.logs_dir)
+do_not_process_dirs.append(args.cache_dir)
+
+if args.utf8:
+    if (sys.getdefaultencoding() == 'UTF-8'):
+        print "encoding is already UTF-8"
+    else:
+        print "changing encoding from %s to UTF-8" % sys.getdefaultencoding()
+        reload(sys)
+        sys.setdefaultencoding("UTF-8")
+
+if not os.path.exists(dir_name):
+    raise Exception("file %s not found!" % dir_name)
+
+if not os.path.exists(args.artifacts_dir):
+    path_to_artifacts_dir = os.path.join(project_base, args.artifacts_dir)
+    raise Exception(
+        """artifacts directory not found at %s,
+        please create a directory called %s if you want to use
+        this location as a dexy project root""" % (path_to_artifacts_dir, args.artifacts_dir)
+    )
+
+if not os.path.exists(args.logs_dir):
+    path_to_logs_dir = os.path.join(project_base, args.logs_dir)
+    raise Exception(
+        """logs directory not found at %s,
+        please create a directory called %s if you want to use
+        this location as a dexy project root""" % (path_to_logs_dir, args.logs_dir)
+    )
+
+from dexy.controller import Controller
+from dexy.logger import log # Only import log after making sure log dir exists
+
+if args.purge:
+    log.warn("purging contents of %s" % args.artifacts_dir)
+    shutil.rmtree(args.artifacts_dir)
+    os.mkdir(args.artifacts_dir)
+
+    if os.path.exists(args.cache_dir): 
+        log.warn("purging contents of %s" % args.cache_dir)
+        shutil.rmtree(args.cache_dir)
+        os.mkdir(args.cache_dir)
+
+
+
+# Server-related code now...
+from mongrel2 import handler
+import signal
+
+def signal_handler(signal, frame):
+    print 'You pressed Ctrl+C!'
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
+print 'Press Ctrl+C to Exit (may not take effect until next request received)'
+
+# TODO pass sender id, ports as options
+sender_id = "b23f15ab-3307-449b-869f-f888c1e29cb6"
+
+conn = handler.Connection(
+    sender_id, 
+    "tcp://127.0.0.1:9999",
+    "tcp://127.0.0.1:9998"
+)
+
+while True:
+    print "WAITING FOR REQUEST"
+
+    req = conn.recv()
+
+    if req.is_disconnect():
+        print "DISCONNECT"
+        continue
+
+    log.info("req.path: %s" % req.path)
+    a = req.path
+    while len(a) > 0 and a[0] == '/':
+        a = a[1:]
+
+    log.info("a: %s" % a)
+
+    if os.path.isdir(a):
+        a_is_dir = True
+        a_dir = a
+    else:
+        a_is_dir = False
+        a_dir = os.path.dirname(a)
+
+    # Run Dexy, store array of artifacts
+    artifacts = OrderedDict()
+    controller = Controller()
+    controller.artifacts_dir = args.artifacts_dir
+    for doc in controller.setup_and_run(a):
+        artifact = doc.artifacts[-1]
+        artifacts[artifact.output_name(args.short)] = artifact
+
+    if a_is_dir:
+        a = os.path.join(a, "index.html")
+
+    if artifacts.has_key(a):
+        # render the processed file
+        response_text = artifacts[a].output_text()
+    elif os.path.exists(a) and not a_is_dir:
+        # render the raw source file
+        response_text = open(a, "r").read()
+    elif a_is_dir:
+        # render a list of files
+        response_text = "<html><body><ul><h1>%s</h1>" % a
+        if len(artifacts) > 0:
+            for k, artifact in artifacts.items():
+                response_text += """<li><a href="/%s">%s</a></li>""" % (artifact.filename(), artifact.doc.key())
+                if hasattr(artifact, 'stdout'):
+                    response_text += """<pre>\n%s\n</pre>""" % artifact.stdout 
+                else:
+                    # not a dexy dir, show raw files in the dir
+                    for f in os.listdir(a):
+                        url = os.path.join(req.path, f)
+                        response_text += """<li><a href="%s">%s</a></li>""" % (url, f)
+                        response_text += "</ul></body></html>"
+        else:
+            # TODO make a real 404
+            response_text = "404 not found!"
+
+    response = "<pre>\nSENDER: %r\nIDENT:%r\nPATH: %r\nHEADERS:%r\nBODY:%r</pre>" % (
+        req.sender, req.conn_id, req.path, 
+        json.dumps(req.headers), req.body)
+    response += response_text 
+    conn.reply_http(req, response_text)
+
+#if args.recurse:
+    #    log.info("running dexy with recurse")
+    #    for root, dirs, files in os.walk(dir_name):
+        #        process = True
+        #        log.info("skipping directories named %s" % ", ".join(do_not_process_dirs))
+        #        for x in do_not_process_dirs:
+            #            if re.search(x, root):
+                #                process = False
+                #                break
+                #
+                #        if not process:
+                    #            log.warn("skipping dir %s" % root)
+                    #        else:
+                        #            log.info("processing dir %s" % root)
+                        #            controller = Controller()
+                        #            controller.artifacts_dir = args.artifacts_dir
+                        #            for doc in controller.setup_and_run(root):
+                            #                artifact = doc.artifacts[-1]
+                            #                output_name = artifact.output_name(args.short)
+                            #                log.info("saving %s to cache/%s" % (artifact.filename(), output_name))
+                            #                artifact.write_cache_output_file(args.cache_dir, args.short)
+                            #else:
+                                #    log.info("not recursing")
+                                #    log.info("processing dir %s" % dir_name)
+                                #    controller = Controller()
+                                #    controller.artifacts_dir = args.artifacts_dir
+                                #    for doc in controller.setup_and_run(dir_name):
+                                    #        artifact = doc.artifacts[-1]
+                                    #        output_name = artifact.output_name(args.short)
+                                    #        log.info("saving %s to cache/%s" % (artifact.key, output_name))
+                                    #        artifact.write_cache_output_file(args.cache_dir, args.short)
+                                    #
