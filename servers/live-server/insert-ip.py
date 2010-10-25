@@ -12,7 +12,7 @@ r = re.compile("inet addr\:\s*([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)")
 m = re.search(r, ifconfig)
 
 ip = m.groups(1)[0]
-print "detected ip address", ip
+print ip
 
 o = open("server.conf", "w")
 o.write(config.replace("localhost", ip))
