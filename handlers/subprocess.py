@@ -263,7 +263,7 @@ class VoiceHandler(DexyHandler):
         elif e == "espeak":
             command = "/usr/bin/env espeak -f %s -w %s" % (work_file, sound_file)
         else:
-            raise Exception("unknown tts command %s" % e)
+            raise Exception("unknown text-to-speech command %s" % e)
 
         self.log.info(command)
         self.artifact.stdout = pexpect.run(command, cwd=self.artifact.artifacts_dir)
