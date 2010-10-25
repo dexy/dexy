@@ -22,21 +22,18 @@ server configuration. Probably just:
 
 m2sh load -config server.conf
 
-Create directories called logs, run and tmp for mongrel2.
+Then create directories called logs, run and tmp for mongrel2.
 
 ========================================
 Starting the Server (first & every time)
 ========================================
 
-6. Use the m2sh interface to start the mongrel2 server
+Use the m2sh interface to start the mongrel2 server
 
 sudo m2sh start -host localhost
 
-or
 
-sudo m2sh start -host 192.168.1.XXX # Needs to match IP specified in server.conf
-
-7. Now we need to set up the handler in our Dexy project directory. Navigate to
+Now we need to set up the handler in our Dexy project directory. Navigate to
 the Dexy project directory where you want to serve files from. In the dexy
 project root, type:
 
