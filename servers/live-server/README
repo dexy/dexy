@@ -10,28 +10,19 @@ servers running before you try to run this.
 Setup (the first time)
 ======================
 
-1. Copy the server.conf.template to server.conf
-
-2. For security, edit the UUIDs in server.conf. The UUID in the dexy_app
+For security, edit the UUIDs in server.conf. The UUID in the dexy_app
 handler section should match the UUID in bin/dexy-live-server. If you change
 this, don't forget to run "python setup.py install" or "python setup.py
 develop" afterwards so the dexy-live-server command is updated on your system.
 
 On some systems, you can generate UUIDs with the command 'uuidgen'
 
-3. If necessary, edit the host in server.conf. By default this is set to
-'localhost'. If you are running this in a virtual machine, you will need to
-change this to be the virtual machine's IP address in order to be able to
-browse the contents from your host operating system. You can add multiple hosts
-and other fancy things if you know what you are doing, consult the mongrel2
-documentation for more options.
-
-4. Use the m2sh interface to generate a config.sqlite file which will store the
+Use the m2sh interface to generate a config.sqlite file which will store the
 server configuration. Probably just:
 
 m2sh load -config server.conf
 
-5. Create directories called logs, run and tmp for mongrel2.
+Create directories called logs, run and tmp for mongrel2.
 
 ========================================
 Starting the Server (first & every time)
