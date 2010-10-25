@@ -191,6 +191,22 @@ conn = handler.Connection(
     "tcp://127.0.0.1:9998"
 )
 
+from ansi2html import Ansi2HTMLConverter
+from pynliner import Pynliner
+from BeautifulSoup import BeautifulSoup
+def ansi_output_to_html(ansi_text):
+    converter = Ansi2HTMLConverter()
+    html = converter.convert(ansi_text)
+
+    p = Pynliner()
+    p.from_string(html)
+    html_with_css_inline = p.run()
+    
+    # Ansi2HTMLConverter returns a complete HTML document, we just want body
+    doc = BeautifulSoup(html_with_css_inline)
+    return doc.body.renderContents()
+
+
 while True:
     print "WAITING FOR REQUEST"
 
@@ -265,7 +281,8 @@ while True:
             for k, artifact in artifacts.items():
                 response_text += """<li><a href="/%s">%s</a></li>""" % (artifact.output_name(), artifact.doc.key())
                 if hasattr(artifact, 'stdout'):
-                    response_text += """<pre>\n%s\n</pre>""" % artifact.stdout 
+                    stdout = ansi_output_to_html(artifact.stdout)
+                    response_text += """<pre>\n%s\n</pre>""" % stdout
 	    response_text += "</ul>"
         response_text += "</body></html>"
     else:
