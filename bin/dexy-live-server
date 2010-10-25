@@ -243,7 +243,8 @@ while True:
         response_text = error_message
     elif artifacts.has_key(a):
         # render the processed file
-        response_text = artifacts[a].output_text()
+	log.debug(artifacts[a].filename())
+	response_text = open(artifacts[a].filename(), "r").read()
     elif os.path.exists(a) and not a_is_dir:
         # render the raw source file
         response_text = open(a, "r").read()
