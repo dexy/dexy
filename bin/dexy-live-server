@@ -250,18 +250,24 @@ while True:
         response_text = open(a, "r").read()
     elif a_is_dir:
         # render a list of files
-        response_text = "<html><body><ul><h1>%s</h1>" % a
+        response_text = "<html><body><h1>%s</h1>" % os.path.abspath(a)
+
+	# List subdirectories.
+	response_text += "<h2>Subdirectories</h2><ul>"
+	for f in os.listdir(a):
+	    if os.path.isdir(f):
+		 url = os.path.join(req.path, f)
+		 response_text += """<li><a href="%s">%s</a></li>""" % (url, f)
+	response_text += "</ul>"
+
         if len(artifacts) > 0:
+	    response_text += "<h2>Dexy Artifacts</h2><ul>"
             for k, artifact in artifacts.items():
                 response_text += """<li><a href="/%s">%s</a></li>""" % (artifact.output_name(), artifact.doc.key())
                 if hasattr(artifact, 'stdout'):
                     response_text += """<pre>\n%s\n</pre>""" % artifact.stdout 
-        else:
-            # not a dexy dir, show raw files in the dir
-            for f in os.listdir(a):
-                url = os.path.join(req.path, f)
-                response_text += """<li><a href="%s">%s</a></li>""" % (url, f)
-                response_text += "</ul></body></html>"
+	    response_text += "</ul>"
+        response_text += "</body></html>"
     else:
         # TODO make a real 404
         response_text = "404 not found!"
