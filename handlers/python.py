@@ -11,29 +11,39 @@ class CopyHandler(DexyHandler):
         self.artifact.auto_write_artifact = False
         shutil.copyfile(self.doc.name, self.artifact.filename())
 
-class WebsiteHandler(DexyHandler):
+class FooterHandler(DexyHandler):
     INPUT_EXTENSIONS = [".*"]
     OUTPUT_EXTENSIONS = [".*"]
-    ALIASES = ['ws']
+    ALIASES = ['ft', 'footer']
 
     def process_text(self, input_text):
         self.artifact.load_input_artifacts()
-        
-        header_keys = [k for k in self.artifact.input_artifacts_dict.keys() if k.endswith("_header.html|jinja")]
-        if len(header_keys) > 0:
-            header_key = header_keys[0]
-            header_text = self.artifact.input_artifacts_dict[header_key]['data']
-        else:
-            header_text = "header not found"
-
-        footer_keys = [k for k in self.artifact.input_artifacts_dict.keys() if k.endswith("_footer.html|jinja")]
+        footer_key = "_footer%s|jinja" % self.artifact.ext
+        footer_keys = [k for k in self.artifact.input_artifacts_dict.keys() if k.find(footer_key) > 0]
         if len(footer_keys) > 0:
             footer_key = footer_keys[0]
             footer_text = self.artifact.input_artifacts_dict[footer_key]['data']
         else:
-            footer_text = "footer not found"
+            raise Exception("No file matching %s was found to work as a footer." % footer_key)
+                            
+        return "%s\n%s" % (footer_text, input_text)
 
-        return "%s %s %s" % (header_text, input_text, footer_text)
+class HeaderHandler(DexyHandler):
+    INPUT_EXTENSIONS = [".*"]
+    OUTPUT_EXTENSIONS = [".*"]
+    ALIASES = ['hd', 'header']
+
+    def process_text(self, input_text):
+        self.artifact.load_input_artifacts()
+        header_key = "_header%s|jinja" % self.artifact.ext
+        header_keys = [k for k in self.artifact.input_artifacts_dict.keys() if k.find(header_key) > 0]
+        if len(header_keys) > 0:
+            header_key = header_keys[0]
+            header_text = self.artifact.input_artifacts_dict[header_key]['data']
+        else:
+            raise Exception("No file matchine %s was found to work as a header." % header_key)
+                            
+        return "%s\n%s" % (header_text, input_text)
 
 
 class HeadHandler(DexyHandler):
