@@ -11,6 +11,14 @@ class CopyHandler(DexyHandler):
         self.artifact.auto_write_artifact = False
         shutil.copyfile(self.doc.name, self.artifact.filename())
 
+class JoinHandler(DexyHandler):
+    INPUT_EXTENSIONS = [".*"]
+    OUTPUT_EXTENSIONS = [".*"]
+    ALIASES = ['join']
+
+    def process_dict(input_dict):
+        return {'1' : self.artifact.input_text()}
+
 class FooterHandler(DexyHandler):
     INPUT_EXTENSIONS = [".*"]
     OUTPUT_EXTENSIONS = [".*"]

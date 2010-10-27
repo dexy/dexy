@@ -15,13 +15,13 @@ def read_input_file(filename):
     return read_file(filename)
 
 def read_output_dict(filename):
-    out_filename = filename.replace('.txt', '.out.')
+    out_filename = filename.replace('.txt', '.out')
     json_filename = filename.replace('.txt', '.json')
-    if os.path.exists(out_filename):
-        output_text = read_file(filepath(out_filename))
+    if os.path.exists(filepath(out_filename)):
+        output_text = read_file(out_filename)
         output_dict = { '1' : output_text }
     elif os.path.exists(filepath(json_filename)):
-        output_dict = json.load(json_filename)
+        output_dict = json.load(open(filepath(json_filename), "r"))
     else:
         raise Exception("either %s or %s should exist" % (out_filename, json_filename))
 
@@ -32,7 +32,7 @@ def read_output_text(filename):
 
 def test_process_text(h, input_filename):
     input_text = read_file(input_filename)
-    output_text = read_outout_text(input_filename)
+    output_text = read_output_text(input_filename)
     assert h.process_text(input_text) == output_text
 
 def test_process_dict(h, input_filename):
@@ -52,7 +52,7 @@ def test_process(h, input_filename, expected_method = None):
         h.artifact.input_data_dict = input_dict
         
     process_result = h.process()
-
+    
     assert h.artifact.output_text() == output_text
     if expected_method:
         assert process_result == expected_method

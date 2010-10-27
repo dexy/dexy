@@ -1,6 +1,6 @@
 from dexy.artifact import Artifact
 from dexy.handler import DexyHandler
-from handlers.python import JinjaHandler
+from handlers.jinja_handler import JinjaHandler
 
 input_text = """
 One plus one equals {{ 1+1 }}
