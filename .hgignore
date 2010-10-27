@@ -7,3 +7,4 @@ times.csv
 *.swp
 build
 dist
+docs/old-install

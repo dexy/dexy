@@ -1,9 +1,9 @@
 from dexy.artifact import Artifact
-from handlers.subprocess import ProcessInteractiveHandler
+from handlers.subprocess import ProcessLinewiseInteractiveHandler
 import helper
 
 def setup_handler():
-    h = ProcessInteractiveHandler()
+    h = ProcessLinewiseInteractiveHandler()
     h.ext = '.py'
     h.artifact = Artifact()
     h.artifact.data_dict = {}

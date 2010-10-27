@@ -1,5 +1,5 @@
 from dexy.artifact import Artifact
-from handlers.python import PygHandler
+from handlers.pyg_handler import PygHandler
 import helper
 
 def setup_handler():
@@ -7,6 +7,8 @@ def setup_handler():
     h.ext = '.rb'
     h.artifact = Artifact()
     h.artifact.ext = '.tex'
+    h.artifact.hashstring = "abc"
+    h.artifact.artifacts_dir = 'artifacts'
     return h
 
 def test_process_dict():

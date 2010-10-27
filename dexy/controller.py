@@ -248,6 +248,8 @@ class Controller(object):
 
 ### @export "setup-and-run"
     def setup_and_run(self, path_to_dir):
+        if not hasattr(self, 'artifacts_dir'):
+            self.artifacts_dir = 'artifacts'
         self.register_handlers()
         self.load_config(path_to_dir)
         self.process_config()
