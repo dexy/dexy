@@ -180,6 +180,9 @@ class Controller(object):
                     if len(input_docs) > 0:
                         create = False
                 
+                if args.has_key('except'):
+                    if re.search(args['except'], f):
+                        create = False
 
                 if create:
                     # Filters can either be included in the name (separated by |)...
