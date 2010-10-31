@@ -19,7 +19,7 @@ class JoinHandler(DexyHandler):
     OUTPUT_EXTENSIONS = [".*"]
     ALIASES = ['join']
 
-    def process_dict(input_dict):
+    def process_dict(self, input_dict):
         return {'1' : self.artifact.input_text()}
 
 class FooterHandler(DexyHandler):
