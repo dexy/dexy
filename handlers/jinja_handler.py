@@ -1,14 +1,21 @@
 from dexy.handler import DexyHandler
 
-from jinja2 import Template, Environment
+from jinja2 import Environment
 import os
+import pexpect
 import re
 import simplejson as json
 
+
 class JinjaHelper:
-  def read_file(self, filename):
-    f = open(filename, "r")
-    return f.read()
+    def ri(self, query):
+        # --system flag needed or else ri complains about multiple versions
+        command = "ri --system -T -f simple %s" % query
+        return pexpect.run(command)
+
+    def read_file(self, filename):
+        f = open(filename, "r")
+        return f.read()
 
 class JinjaHandler(DexyHandler):
     INPUT_EXTENSIONS = [".*"]
