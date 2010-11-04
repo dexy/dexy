@@ -172,15 +172,19 @@ class Controller(object):
                 # the specified pattern, we should create this document and it
                 # will depend on the specified input.
                 if args.has_key('ifinput'):
+                    log.debug(f)
                     if isinstance(args['ifinput'], str):
                         ifinputs = (args['ifinput'])
                     else:
                         ifinputs = args['ifinput']
                     
                     for s in ifinputs:
+                        log.debug("evaluating ifinput %s" % s)
                         ifinput = s.replace("%", rootname)
+                        log.debug("evaluating ifinput %s" % ifinput)
                         input_docs = parse_doc(ifinput)
                         for input_doc in input_docs:
+                            log.debug(input_doc.key())
                             inputs.append(input_doc.key())
 
                     if len(input_docs) == 0:
