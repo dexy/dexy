@@ -146,13 +146,14 @@ class Artifact(object):
 ### @export "create-input-file"
     def create_input_file(self, key, ext, rel_to_artifacts_dir = True):
         if key in self.additional_inputs.keys():
-            raise Exception("already have a key %s" % key)
-        
-        filename = "%s.%s" % (uuid.uuid4(), ext)
-        full_filename = os.path.join(self.artifacts_dir, filename)
-        self.additional_inputs[key] = full_filename
+            filename = self.additional_inputs[key]
+            log.debug("existing key %s in artifact %s links to file %s" % (key, self.key, filename))
+        else:
+            filename = "%s.%s" % (uuid.uuid4(), ext)
+            self.additional_inputs[key] = filename
+            log.debug("added key %s to artifact %s ; links to file %s" % (key, self.key, filename))
 
-        log.debug("added key %s to artifact %s ; links to file %s" % (key, self.key, full_filename))
+        full_filename = os.path.join(self.artifacts_dir, filename)
 
         if rel_to_artifacts_dir:
             return full_filename
