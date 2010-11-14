@@ -8,3 +8,4 @@ times.csv
 build
 dist
 docs/old-install
+.DS_Store

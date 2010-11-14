@@ -144,7 +144,7 @@ class Artifact(object):
         open(self.temp_filename(ext, rel_to_artifacts_dir), "w")
 
 ### @export "create-input-file"
-    def create_input_file(self, key, ext, rel_to_artifacts_dir = True):
+    def create_input_file(self, key, ext, rel_to_artifacts_dir = False):
         if key in self.additional_inputs.keys():
             filename = self.additional_inputs[key]
             log.debug("existing key %s in artifact %s links to file %s" % (key, self.key, filename))

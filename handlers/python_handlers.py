@@ -63,7 +63,7 @@ class HeaderHandler(DexyHandler):
             header_key = header_keys[0]
             header_text = self.artifact.input_artifacts_dict[header_key]['data']
         else:
-            raise Exception("No file matching %s was found to work as a header." % header_key)
+            raise Exception("No file matching %s was found to work as a header for %s." % (header_key, self.artifact.key))
                             
         return "%s\n%s" % (header_text, input_text)
 

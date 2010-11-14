@@ -174,7 +174,7 @@ class Controller(object):
                 if args.has_key('ifinput'):
                     log.debug(f)
                     if isinstance(args['ifinput'], str):
-                        ifinputs = (args['ifinput'])
+                        ifinputs = [args['ifinput']]
                     else:
                         ifinputs = args['ifinput']
                     
