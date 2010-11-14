@@ -180,7 +180,9 @@ class ROutputHandler(DexyHandler):
 
     def process(self):
         self.artifact.generate_workfile()
-        pexpect.run("%s %s %s" % (self.EXECUTABLE, self.artifact.work_filename(), self.artifact.filename()))
+        wf = self.artifact.work_filename(False)
+        af = self.artifact.filename(False)
+        pexpect.run("%s %s %s" % (self.EXECUTABLE, wf, af), cwd=self.artifact.artifacts_dir)
         self.artifact.data_dict['1'] = open(self.artifact.filename(), "r").read()
 
 # Uses the --slave flag so doesn't echo commands, just returns output.

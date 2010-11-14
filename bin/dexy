@@ -16,7 +16,7 @@ def add_option(parser, *args, **kwargs):
     else:
         parser.add_argument(*args, **kwargs)
 
-EXCLUDED_DIRS = ['.bzr', '.hg', '.git', '.svn']
+EXCLUDED_DIRS = ['.bzr', '.hg', '.git', '.svn', 'ignore']
 EXCLUDE_DIR_HELP = """Exclude directories from processing by dexy, only relevant
 if recursing. The directories designated for artifacts, logs and cache are
 automatically excluded, as are %s.

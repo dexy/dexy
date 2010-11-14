@@ -62,7 +62,15 @@ class JinjaHandler(DexyHandler):
         template = env.from_string(input_text)
         template_hash = {
             'd' : document_data, 
+            'dk' : sorted(document_data.keys()),
             'a' : self.artifact,
             'h' : JinjaHelper()
         }
-        return str(template.render(template_hash))
+
+        try:
+            result = str(template.render(template_hash))
+        except Exception as e:
+            print "error occurred while processing", self.artifact.key
+            raise e
+        
+        return result
