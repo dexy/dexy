@@ -23,14 +23,14 @@ class CucumberHandler(DexyHandler):
         
         key = matches[0]
         rf = self.artifact.input_artifacts_dict[key]['fn']
-
         self.artifact.generate_workfile()
-        wf = self.artifact.work_filename()
-        # TODO should chdir to artifacts?
-        command = "/usr/bin/env cucumber -r artifacts/%s %s" % (rf, wf)
+        wf = self.artifact.work_filename(False)
+        command = "/usr/bin/env cucumber -r %s %s" % (rf, wf)
         self.log.debug(command)
-        output = pexpect.run(command)
+        output = pexpect.run(command, cwd=self.artifact.artifacts_dir)
+
         # TODO detect output extension and convert appropriately
+        # for now assume HTML
         html = ansi_output_to_html(output)
         self.artifact.data_dict['1'] = html
 
