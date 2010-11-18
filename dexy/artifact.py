@@ -38,6 +38,7 @@ class Artifact(object):
         art.dexy_version = VERSION
         if handler:
             art.handler_source = inspect.getsource(handler.__class__)
+            art.handler_version = handler.version()
         return art
 
 ### @export "set-hashstring"

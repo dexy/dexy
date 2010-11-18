@@ -24,7 +24,7 @@ class ProcessLinewiseInteractiveHandler(DexyHandler):
     def process_dict(self, input_dict):
         output_dict = OrderedDict()
 
-        proc = pexpect.spawn(self.EXECUTABLE, cwd="artifacts")
+        proc = pexpect.spawn(self.EXECUTABLE, cwd=self.artifact.artifacts_dir)
         proc.expect(self.PROMPT)
         start = (proc.before + proc.after)
 
@@ -43,13 +43,14 @@ class ProcessLinewiseInteractiveHandler(DexyHandler):
 
 class ProcessSectionwiseInteractiveHandler(DexyHandler):
     EXECUTABLE = '/usr/bin/env R --quiet --vanilla'
+    VERSION = "/usr/bin/env R --version"
     PROMPT = '>'
     COMMENT = '#'
     TRAILING_PROMPT = "\r\n> "
     INPUT_EXTENSIONS = ['.txt', '.r', '.R']
     OUTPUT_EXTENSIONS = ['.Rout']
     ALIASES = ['rint']
-
+    
     def process_dict(self, input_dict):
          output_dict = OrderedDict()
  
@@ -154,6 +155,7 @@ class ProcessTimingHandler(DexyHandler):
     Runs code N times and reports timings.
     """
     EXECUTABLE = '/usr/bin/env python'
+    VERSION = '/usr/bin/env python --version'
     N = 10
     INPUT_EXTENSIONS = [".txt", ".py"]
     OUTPUT_EXTENSIONS = [".times"]
@@ -171,6 +173,7 @@ class ProcessTimingHandler(DexyHandler):
 # Returns a full transcript, commands and output from each line.
 class ROutputHandler(DexyHandler):
     EXECUTABLE = '/usr/bin/env R CMD BATCH --vanilla --quiet --no-timing'
+    VERSION = "/usr/bin/env R --version"
     INPUT_EXTENSIONS = ['.txt', '.r', '.R']
     OUTPUT_EXTENSIONS = [".Rout"]
     ALIASES = ['r', 'R']

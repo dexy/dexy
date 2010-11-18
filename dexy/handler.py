@@ -6,6 +6,7 @@ except ImportError:
 from dexy.artifact import Artifact
 import dexy.logger
 import time
+import pexpect
 
 ### @export "class"
 class DexyHandler(object):
@@ -18,6 +19,19 @@ class DexyHandler(object):
     INPUT_EXTENSIONS = [".*"]
     OUTPUT_EXTENSIONS = [".*"]
     ALIASES = ['dexy', '']
+
+### @export "version"
+    def version(self):
+        if hasattr(self, 'VERSION'):
+            output, exit_status = pexpect.run(self.VERSION, withexitstatus=True)
+            if exit_status > 0:
+                print output
+                print exit_status
+                raise Exception("An error occurred running %s" % self.VERSION)
+            else:
+                return output
+        else:
+            return "unspecified"
 
 ### @export "setup"
     @classmethod
