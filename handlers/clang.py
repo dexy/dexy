@@ -4,6 +4,7 @@ import time
 
 ### @export "cpp-handler"
 class CppHandler(DexyHandler):
+    VERSION = "/usr/bin/env c++ --version"
     INPUT_EXTENSIONS = [".cpp"]
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['cpp']
@@ -22,6 +23,7 @@ class CppHandler(DexyHandler):
 
 ### @export "clang-handler"
 class ClangHandler(DexyHandler):
+    VERSION = "/usr/bin/env clang --version"
     INPUT_EXTENSIONS = [".c"]
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['c', 'clang']
