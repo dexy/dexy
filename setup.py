@@ -10,6 +10,11 @@ setup(name='dexy',
       author_email='ana@ananelson.com',
       url='http://dexy.it',
       packages=find_packages(),
-      scripts = ['bin/dexy', 'bin/dexy-live-server']
+      entry_points = {
+          'console_scripts' : [
+              'dexy = dexy.interface:dexy_command',
+              'dexy-live-server = dexy.interface:dexy_live_server'
+          ]
+      }
 )
 
