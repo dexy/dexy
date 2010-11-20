@@ -4,9 +4,13 @@ try:
 except ImportError:
     from ordereddict import OrderedDict
 
+try:
+    import json # Included in Python 2.6 and up
+except ImportError:
+    import simplejson as json # For Python 2.5
+
 import os
 import re
-import simplejson as json
 import shutil
 import sys
 

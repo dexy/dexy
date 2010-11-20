@@ -9,3 +9,9 @@ http://bitbucket.org/ananelson/dexy-examples
 For detailed installation instructions:
 http://bitbucket.org/ananelson/dexy-install
 
+
+Dexy should work on Python 2.5-Python 2.7. Dexy will not work on Windows due to
+dependency on pexpect but we are working on removing this restriction, in the
+mean time if you are working on Windows then you can run Dexy within a Linux
+VM.
+
