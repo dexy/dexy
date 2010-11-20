@@ -12,7 +12,6 @@ import csv
 import fnmatch
 import glob
 import os
-import pydot
 import re
 import simplejson as json
 import sys
@@ -256,11 +255,6 @@ class Controller(object):
             key = self.members.keys()[i]
             ordered_members[key] = self.members[key]
         self.members = ordered_members
-  
-### @export "dot"
-    def dot(self):
-        log.info(self.depends)
-        return pydot.graph_from_edges(self.depends)
 
 ### @export "run"
     def run(self):
