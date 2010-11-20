@@ -21,14 +21,13 @@ setup(name='dexy',
           'jinja2',
           'idiopidae',
           'zapps',
+          'pygments',
+          'BeautifulSoup',
+          'pynliner',
+          'ansi2html',
           'ordereddict', # only used for Python < 2.7, otherwise ignored
           'simplejson' # only used for Python < 2.6, otherwise ignored
       ],
-      dependency_links = [ "http://dexy.it/external-dependencies/" ],
-      extras_require = {
-          'html-utils' : [ 'ansi2html', 'pynliner', 'BeautifulSoup' ], # highly recommended
-          'syntax' : ['pygments'], # highly recommended
-          'nose' : ['nose'] # if you want to run the tests
-      }
+      dependency_links = [ "http://dexy.it/external-dependencies/" ]
 )
 
