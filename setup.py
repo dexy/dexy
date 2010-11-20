@@ -15,6 +15,20 @@ setup(name='dexy',
               'dexy = dexy.interface:dexy_command',
               'dexy-live-server = dexy.interface:dexy_live_server'
           ]
+      },
+      install_requires = [
+          'pexpect',
+          'jinja2',
+          'idiopidae',
+          'zapps',
+          'ordereddict', # only used for Python < 2.7, otherwise ignored
+          'simplejson' # only used for Python < 2.6, otherwise ignored
+      ],
+      dependency_links = [ "http://dexy.it/external-dependencies/" ],
+      extras_require = {
+          'html-utils' : [ 'ansi2html', 'pynliner', 'BeautifulSoup' ], # highly recommended
+          'syntax' : ['pygments'], # highly recommended
+          'nose' : ['nose'] # if you want to run the tests
       }
 )
 
