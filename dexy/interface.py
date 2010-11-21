@@ -15,8 +15,6 @@ import shutil
 import sys
 from dexy.version import VERSION
 
-from dexy.controller import Controller
-from dexy.logger import log # Only import log after making sure log dir exists
 
 EXCLUDED_DIRS = ['.bzr', '.hg', '.git', '.svn', 'ignore']
 EXCLUDE_DIR_HELP = """Exclude directories from processing by dexy, only relevant
@@ -113,6 +111,13 @@ def setup_option_parser():
         help='Use short names in cache'
         )
     
+    add_option(parser,
+        '--setup',
+        default=False,
+        action='store_true',
+        help='Create artifacts and logs directory and generic .dexy file'
+        )
+
     if (option_parser == 'argparse'):
         args = parser.parse_args()
         dir_name = args.dir
@@ -142,7 +147,17 @@ def setup_option_parser():
     
     if not os.path.exists(dir_name):
         raise Exception("file %s not found!" % dir_name)
-    
+
+    if args.setup:
+        if not os.path.exists(args.artifacts_dir):
+            os.mkdir(args.artifacts_dir)
+        if not os.path.exists(args.logs_dir):
+            os.mkdir(args.logs_dir)
+        if not os.path.exists(".dexy"):
+            f = open(".dexy", "w")
+            f.write("{\n}\n")
+            f.close()
+
     if not os.path.exists(args.artifacts_dir):
         path_to_artifacts_dir = os.path.join(project_base, args.artifacts_dir)
         raise Exception(
@@ -175,13 +190,17 @@ def setup_option_parser():
 
 def dexy_command():
     args, dir_name, exclude_dir = setup_option_parser()
-    
+
+    # Only import these after making sure log dir exists
+    from dexy.controller import Controller
+    from dexy.logger import log 
+
     do_not_process_dirs = EXCLUDED_DIRS
     do_not_process_dirs += exclude_dir
     do_not_process_dirs.append(args.artifacts_dir)
     do_not_process_dirs.append(args.logs_dir)
     do_not_process_dirs.append(args.cache_dir)
-    
+
     if args.recurse:
         log.info("running dexy with recurse")
         for root, dirs, files in os.walk(dir_name):
@@ -217,6 +236,10 @@ def dexy_command():
 
 def dexy_live_server():
     args, dir_name, exclude_dir = setup_option_parser()
+
+    # Only import these after making sure log dir exists
+    from dexy.controller import Controller
+    from dexy.logger import log 
 
     from mongrel2 import handler
     import signal
