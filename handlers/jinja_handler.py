@@ -60,11 +60,19 @@ class JinjaHandler(DexyHandler):
         else:
             env = Environment()
         template = env.from_string(input_text)
+        
+        # TODO test that we are in textile or other format where this makes sense
+        if re.search("latex", self.artifact.doc.key()):
+            is_latex = True
+        else:
+            is_latex = False
+
         template_hash = {
             'd' : document_data, 
             'dk' : sorted(document_data.keys()),
             'a' : self.artifact,
-            'h' : JinjaHelper()
+            'h' : JinjaHelper(),
+            'is_latex' : is_latex
         }
 
         try:

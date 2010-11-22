@@ -174,6 +174,7 @@ def setup_option_parser():
             this location as a dexy project root""" % (path_to_logs_dir, args.logs_dir)
         )
 
+    from dexy.logger import log 
 
     if args.purge:
         log.warn("purging contents of %s" % args.artifacts_dir)
