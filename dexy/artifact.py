@@ -17,7 +17,7 @@ import uuid
 ### @export "setup"
 class Artifact(object):
     """
-    This is the Artifact class blah blah
+    This is the Artifact class ... just testing docstrings... 
     """
     @classmethod
     def setup(klass, doc, key, handler, previous_artifact = None):
