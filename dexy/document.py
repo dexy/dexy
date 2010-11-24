@@ -1,6 +1,7 @@
 from dexy.artifact import Artifact
 from dexy.logger import log
 import os
+import urllib
 
 ### @export "init"
 class Document(object):
@@ -54,7 +55,14 @@ class Document(object):
         artifact_key = self.name
         artifact = Artifact.setup(self, artifact_key, None)
         artifact.ext = os.path.splitext(self.name)[1]
-        artifact.data = open(self.name, "r").read()
+
+        if artifact.doc.args.has_key('url'):
+            f = urllib.urlopen(artifact.doc.args['url'])
+            artifact.data = f.read()
+            f.close()
+        else:
+            artifact.data = open(self.name, "r").read()
+
         artifact.data_dict['1'] = artifact.data
         artifact.input_artifacts = self.input_artifacts()
         artifact.set_hashstring()
