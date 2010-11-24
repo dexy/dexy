@@ -147,9 +147,16 @@ class Controller(object):
 
             regex = fnmatch.translate(glob_string).replace(".*", "(.*)")
             matcher = re.compile(regex)
+            
+            if args.has_key('url'):
+                # This is a pseudo-file
+                files = [glob_string]
+            else:
+                # This is a normal local file or glob
+                files = glob.glob(glob_string)
 
-            for f in glob.glob(glob_string):
-                if not os.path.isfile(f):
+            for f in files:
+                if not os.path.isfile(f) and not args.has_key('url'):
                     continue
                 if f.endswith("__init__.py"):
                     continue
@@ -199,7 +206,7 @@ class Controller(object):
                 if args.has_key('except'):
                     if re.search(args['except'], f):
                         create = False
-
+                
                 if create:
                     # Filters can either be included in the name (separated by |)...
                     doc = Document(f, filters)
