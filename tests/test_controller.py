@@ -36,7 +36,9 @@ def test_r():
     assert isinstance(artifact, Artifact)
     
     assert artifact.additional_inputs.has_key('graph')
-    assert os.path.exists(artifact.additional_inputs['graph'])
-    image_type = imghdr.what(artifact.additional_inputs['graph'])
+
+    full_path = os.path.join(controller.artifacts_dir, artifact.additional_inputs['graph'])
+    assert os.path.exists(full_path)
+    image_type = imghdr.what(full_path)
     assert image_type == 'jpeg'
     
