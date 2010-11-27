@@ -24,7 +24,7 @@ class JinjaHandler(DexyHandler):
 
     def process_text(self, input_text):
         document_data = {}
-        document_data['filename'] = {}
+        document_data['filenames'] = {}
         document_data['sections'] = {}
         document_data['a'] = {}
         
@@ -36,10 +36,10 @@ class JinjaHandler(DexyHandler):
             if re.search("..", k):
                 relpath = os.path.basename(k)
             
-            if document_data['filename'].has_key(relpath):
+            if document_data['filenames'].has_key(relpath):
                 raise Exception("Duplicate key %s" % relpath)
-
-            document_data['filename'][relpath] = a['fn']
+            
+            document_data['filenames'][relpath] = a['fn']
             document_data['sections'][relpath] = a['data_dict']
             document_data[relpath] = a['data']
             for k, v in a['additional_inputs'].items():
@@ -66,9 +66,11 @@ class JinjaHandler(DexyHandler):
             is_latex = True
         else:
             is_latex = False
-
+        
+        document_data['filename'] = document_data['filenames']
         template_hash = {
             'd' : document_data, 
+            'filenames' : document_data['filenames'],
             'dk' : sorted(document_data.keys()),
             'a' : self.artifact,
             'h' : JinjaHelper(),

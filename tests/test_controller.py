@@ -5,8 +5,10 @@ from dexy.handler import DexyHandler
 import os.path
 import imghdr
 
-def setup_controller():
+def setup_controller(config_file = None):
     controller = Controller()
+    if config_file:
+        controller.config_file = config_file
     controller.setup_and_run("tests/data")
     return controller
 
@@ -26,6 +28,7 @@ def test_members():
         'tests/data/graph.R|jinja|r|pyg'
     ]
 
+
 def test_r():
     """controller: jpeg should have been generated and added to additional_inputs"""
     controller = setup_controller()
@@ -41,4 +44,25 @@ def test_r():
     assert os.path.exists(full_path)
     image_type = imghdr.what(full_path)
     assert image_type == 'jpeg'
-    
+
+
+def test_config_list_filters_separately():
+    controller = setup_controller("list-filters-separately.dexy")
+    assert controller.members.keys() == [
+        'tests/data/simple.R|pyg|l',
+        'tests/data/graph.R|pyg|l'
+    ]
+
+def test_config_nested_doc():
+    controller = setup_controller("nested-doc.dexy")
+    assert controller.members.keys() == [
+        'tests/data/graph.R|R',
+        'tests/data/simple.R|R'
+    ]
+
+def test_config_both_filter_styles():
+    controller = setup_controller("both-filter-styles.dexy")
+    assert controller.members.keys() == [
+        'tests/data/simple.R|pyg|l',
+        'tests/data/graph.R|pyg|l'
+    ]

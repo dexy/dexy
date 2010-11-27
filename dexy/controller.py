@@ -131,33 +131,33 @@ class Controller(object):
 
 ### @export "process-config"
     def process_config(self):
-        def parse_doc(input_directive, args = {}):
-#            try:
-#                a, b = input_directive.popitem()
-#                input_directive = a
-#                args = b
-#            except AttributeError:
-#                # if we are here, input_directive is not a dict
-#                pass
+        def parse_doc(input_directive, args = {}, strict = False):
+            # If a specification is nested in a dependency, then input_directive
+            # may be a dict. If so, split it into parts before continuing.
+            try:
+                a, b = input_directive.popitem()
+                input_directive = a
+                args = b
+            except AttributeError:
+                pass
             
             tokens = input_directive.split("|")
             glob_string = os.path.join(self.path, tokens[0])
             filters = tokens[1:]
+
             docs = []
             
             regex = fnmatch.translate(glob_string).replace(".*", "(.*)")
             matcher = re.compile(regex)
-            
-            if args.has_key('url'):
-                # This is a pseudo-file
+
+            files = glob.glob(glob_string)
+
+            if len(files) == 0 and not re.search(re.compile("\*"), glob_string) and not strict:
+                # Assume this is a 'virtual' file. If not, we'll get an error
+                # later when we try to read from this file so it'll be caught there.
                 files = [glob_string]
-            else:
-                # This is a normal local file or glob
-                files = glob.glob(glob_string)
 
             for f in files:
-                if not os.path.isfile(f) and not args.has_key('url'):
-                    continue
                 if f.endswith("__init__.py"):
                     continue
                 
@@ -188,7 +188,7 @@ class Controller(object):
                         log.debug("evaluating ifinput %s" % s)
                         ifinput = s.replace("%", rootname)
                         log.debug("evaluating ifinput %s" % ifinput)
-                        input_docs = parse_doc(ifinput)
+                        input_docs = parse_doc(ifinput, {}, True)
                         for input_doc in input_docs:
                             log.debug(input_doc.key())
                             inputs.append(input_doc.key())
@@ -198,7 +198,7 @@ class Controller(object):
 
                 if args.has_key('ifnoinput'):
                     ifinput = args['ifnoinput'].replace("%", rootname)
-                    input_docs = parse_doc(ifinput)
+                    input_docs = parse_doc(ifinput, {}, True)
 
                     if len(input_docs) > 0:
                         create = False
@@ -215,16 +215,24 @@ class Controller(object):
                     if args.has_key('filters'):
                         doc.filters += args['filters']
 
-                    # Once all filters have been added, the key will be correct
-                    # so the doc can be added to the members list.
-                    doc = add_to_members_list(doc)
-                    
+                    # Here we are assuming that if we get a key with blank args
+                    # this should not override a previous key. A key which does
+                    # have args should override any previous key.
+                    key = doc.key()
+                    if len(args) == 0:
+                        if self.members.has_key(key):
+                            doc = self.members[key]
+                        else:
+                            self.members[key] = doc
+                    else:
+                        self.members[key] = doc
+
                     is_partial = os.path.basename(doc.name).startswith("_")
                     if args.has_key('allinputs') and not is_partial:
                         doc.use_all_inputs = True
                     for i in inputs:
-                        input_doc = self.members[i]
-                        doc.add_input(input_doc)
+                        doc.add_input_key(i)
+
                     
                     docs.append(doc)
             return docs
@@ -233,15 +241,8 @@ class Controller(object):
             key = member.key()
             return self.members.keys().index(key)
 
-        def add_to_members_list(member):
-            key = member.key()
-            if not self.members.has_key(key):
-                self.members[key] = member
-            return self.members[key]
-
         def depend(parent, child):
             self.depends.append((get_pos(child), get_pos(parent)))
-       
 
         self.members = OrderedDict()
         self.depends = []
