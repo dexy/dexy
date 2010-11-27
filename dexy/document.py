@@ -1,7 +1,12 @@
 from dexy.artifact import Artifact
 from dexy.logger import log
 import os
-import urllib
+import urllib2
+
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 ### @export "init"
 class Document(object):
@@ -57,11 +62,65 @@ class Document(object):
         artifact.ext = os.path.splitext(self.name)[1]
 
         if artifact.doc.args.has_key('url'):
-            f = urllib.urlopen(artifact.doc.args['url'])
+            url = artifact.doc.args['url']
+            filename = os.path.join(self.controller.artifacts_dir, self.name)
+            header_filename = "%s.headers" % filename
+
+            if not os.path.exists(os.path.dirname(filename)):
+                os.makedirs(os.path.dirname(filename))
+            
+            header_dict = {}
+            if os.path.exists(header_filename):
+                header_file = open(header_filename, "r")
+                header_dict = json.load(header_file)
+                header_file.close()
+          
+            request = urllib2.Request(url)
+
+            # TODO add an md5 of the file to the header dict so we can check
+            # that the etag/last-modified header is the corresponding one
+            # TODO invalidate the hash if URL has changed
+
+            # Add any custom headers...
+            if header_dict.has_key('ETag') and os.path.exists(filename):
+                request.add_header('If-None-Match', header_dict['ETag'])
+            elif header_dict.has_key('Last-Modified') and os.path.exists(filename):
+                request.add_header('If-Modifed-Since', header_dict['Last-Modified'])
+            
+            try:
+                u = urllib2.urlopen(request)
+
+                url_contents = u.read()
+                
+                # Save the contents in our local cache
+                f = open(filename, "w")
+                f.write(url_contents)
+                f.close()
+
+                # Save header info in our local cache
+                header_dict = {}
+                for s in u.info().headers:
+                    a = s.partition(":")
+                    header_dict[a[0]] = a[2].strip()
+                json.dump(header_dict, open(header_filename, "w"))
+
+                artifact.data = url_contents
+            except urllib2.HTTPError as err:
+                if err.code == 304:
+                    print "received http status code %s, using contents of %s" % (err.code, filename)
+                    f = open(filename, "r")
+                    artifact.data = f.read()
+                    f.close()
+                else:
+                    # Some other http error, we want to know about it.
+                    raise err
+            
+
+        else:
+            # Normal local file, just read the contents.
+            f = open(self.name, "r")
             artifact.data = f.read()
             f.close()
-        else:
-            artifact.data = open(self.name, "r").read()
 
         artifact.data_dict['1'] = artifact.data
         artifact.input_artifacts = self.input_artifacts()
