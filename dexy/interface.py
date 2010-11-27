@@ -34,6 +34,7 @@ def setup_option_parser():
             parser.add_argument(*args, **kwargs)
     
     try:
+        # These are argparse-specific
         import argparse
         option_parser = 'argparse'
         parser = argparse.ArgumentParser()
@@ -56,6 +57,7 @@ def setup_option_parser():
         )
     
     except ImportError:
+        # These are optparse-specific
         import optparse
         option_parser = 'optparse'
         parser = optparse.OptionParser(version="%%prog %s" % VERSION)
@@ -64,6 +66,7 @@ def setup_option_parser():
             help=EXCLUDE_DIR_HELP + ' Separate multiple directories with commas.'
         )
     
+    # Remaining options are the same for argparse and optparse
     add_option(parser,
         '-n', '--no-recurse',
         dest='recurse',
@@ -117,6 +120,12 @@ def setup_option_parser():
         action='store_true',
         help='Create artifacts and logs directory and generic .dexy file'
         )
+
+    add_option(parser,
+        '-g', '--config',
+        default='.dexy',
+        help='name of configuration file'
+    )
 
     if (option_parser == 'argparse'):
         args = parser.parse_args()
@@ -228,6 +237,7 @@ def dexy_command():
         log.info("processing dir %s" % dir_name)
         controller = Controller()
         controller.artifacts_dir = args.artifacts_dir
+        controller.config_file = args.config
         for doc in controller.setup_and_run(dir_name):
             artifact = doc.artifacts[-1]
             output_name = artifact.output_name(args.short)

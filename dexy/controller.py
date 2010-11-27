@@ -118,7 +118,7 @@ class Controller(object):
         path_elements = relative_path.split(os.sep)
         config_dict = {}
         for i in range(0,len(path_elements)+1):
-            config_file_path_elements = [rel_to] + path_elements[0:i] + [".dexy"]
+            config_file_path_elements = [rel_to] + path_elements[0:i] + [self.config_file]
             config_filename = os.path.join(*config_file_path_elements)
             if os.path.exists(config_filename):
                 log.info("loading config %s" % config_filename)
@@ -132,19 +132,19 @@ class Controller(object):
 ### @export "process-config"
     def process_config(self):
         def parse_doc(input_directive, args = {}):
-            try:
-                a, b = input_directive.popitem()
-                input_directive = a
-                args = b
-            except AttributeError:
-                # if we are here, input_directive is not a dict
-                pass
+#            try:
+#                a, b = input_directive.popitem()
+#                input_directive = a
+#                args = b
+#            except AttributeError:
+#                # if we are here, input_directive is not a dict
+#                pass
             
             tokens = input_directive.split("|")
             glob_string = os.path.join(self.path, tokens[0])
             filters = tokens[1:]
             docs = []
-
+            
             regex = fnmatch.translate(glob_string).replace(".*", "(.*)")
             matcher = re.compile(regex)
             
@@ -271,6 +271,8 @@ class Controller(object):
     def setup_and_run(self, path_to_dir):
         if not hasattr(self, 'artifacts_dir'):
             self.artifacts_dir = 'artifacts'
+        if not hasattr(self, 'config_file'):
+            self.config_file = '.dexy'
         self.register_handlers()
         self.load_config(path_to_dir)
         self.process_config()
