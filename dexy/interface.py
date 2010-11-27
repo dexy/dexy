@@ -227,6 +227,7 @@ def dexy_command():
                 log.info("processing dir %s" % root)
                 controller = Controller()
                 controller.artifacts_dir = args.artifacts_dir
+                controller.config_file = args.config
                 for doc in controller.setup_and_run(root):
                     artifact = doc.artifacts[-1]
                     output_name = artifact.output_name(args.short)
@@ -307,6 +308,7 @@ def dexy_live_server():
         artifacts = OrderedDict()
         controller = Controller()
         controller.artifacts_dir = args.artifacts_dir
+        controller.config_file = args.config
         try:
             for doc in controller.setup_and_run(a_dir):
                 artifact = doc.artifacts[-1]
