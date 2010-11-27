@@ -63,7 +63,12 @@ class ProcessSectionwiseInteractiveHandler(DexyHandler):
              start = ""
              proc.send(s)
              proc.sendline(self.COMMENT * 5)
-             proc.expect(self.COMMENT * 5, timeout = self.artifact.doc.args['timeout'])
+             if self.artifact.doc.args.has_key('timeout'):
+                 timeout = self.artifact.doc.args['timeout']
+             else:
+                 timeout = None
+
+             proc.expect(self.COMMENT * 5, timeout = timeout)
  
              section_transcript += proc.before.rstrip(self.TRAILING_PROMPT)
              output_dict[k] = section_transcript

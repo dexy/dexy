@@ -87,6 +87,7 @@ class Artifact(object):
         try:
             json.dump(self.persist_dict(), dj_file)
         except UnicodeDecodeError as e:
+            # TODO re-raise this error??
             log.warn("Unable to persist json dict")
             log.warn(e)
 

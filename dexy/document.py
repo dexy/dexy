@@ -15,6 +15,7 @@ class Document(object):
         self.filters = name_or_key.split("|")[1:]
         self.filters += filters
         self.inputs = []
+        self.input_keys = []
         self.artifacts = []
         self.use_all_inputs = False
 
@@ -23,15 +24,17 @@ class Document(object):
         return "%s|%s" % (self.name, "|".join(self.filters))
 
 ### @export "inputs"
-    def add_input(self, input_doc):
-        if not input_doc in self.inputs:
-            self.inputs.append(input_doc)
+    def add_input_key(self, input_key):
+        if not input_key in self.input_keys:
+            self.input_keys.append(input_key)
 
     def finalize_inputs(self, members_dict):
         if self.use_all_inputs:
             for doc in members_dict.values():
                 if not doc.use_all_inputs: # this would create mutual dependency
-                    self.add_input(doc)
+                    self.inputs.append(doc)
+        else:
+            self.inputs = [members_dict[k] for k in self.input_keys]
 
 ### @export "steps"
     def next_handler_name(self):
@@ -80,8 +83,12 @@ class Document(object):
             # TODO add an md5 of the file to the header dict so we can check
             # that the etag/last-modified header is the corresponding one
             # TODO invalidate the hash if URL has changed
+            # TODO get modification time of file via ftplib
+            # TODO implement handlers for version control systems
+            # TODO use FileHandler for default case?
 
             # Add any custom headers...
+            # note that headers are ignored by anything other than http
             if header_dict.has_key('ETag') and os.path.exists(filename):
                 request.add_header('If-None-Match', header_dict['ETag'])
             elif header_dict.has_key('Last-Modified') and os.path.exists(filename):
@@ -89,11 +96,11 @@ class Document(object):
             
             try:
                 u = urllib2.urlopen(request)
-
+                print "downloading contents of %s" % url
                 url_contents = u.read()
                 
                 # Save the contents in our local cache
-                f = open(filename, "w")
+                f = open(filename, "wb")
                 f.write(url_contents)
                 f.close()
 
@@ -121,7 +128,7 @@ class Document(object):
             f = open(self.name, "r")
             artifact.data = f.read()
             f.close()
-
+        
         artifact.data_dict['1'] = artifact.data
         artifact.input_artifacts = self.input_artifacts()
         artifact.set_hashstring()
