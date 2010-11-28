@@ -66,7 +66,7 @@ class JinjaHandler(DexyHandler):
             is_latex = True
         else:
             is_latex = False
-        
+
         document_data['filename'] = document_data['filenames']
         template_hash = {
             'd' : document_data, 

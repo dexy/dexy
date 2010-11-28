@@ -131,7 +131,7 @@ class Controller(object):
 
 ### @export "process-config"
     def process_config(self):
-        def parse_doc(input_directive, args = {}, strict = False):
+        def parse_doc(input_directive, args = {}):
             # If a specification is nested in a dependency, then input_directive
             # may be a dict. If so, split it into parts before continuing.
             try:
@@ -147,20 +147,22 @@ class Controller(object):
 
             docs = []
             
+            # virtual document
+            if re.search("@", glob_string):
+                virtual = True
+                glob_string = glob_string.replace("@", "")
+            else:
+                virtual = False
+
             regex = fnmatch.translate(glob_string).replace(".*", "(.*)")
             matcher = re.compile(regex)
 
             files = glob.glob(glob_string)
 
-            if len(files) == 0 and not re.search(re.compile("\*"), glob_string) and not strict:
-                # Assume this is a 'virtual' file. If not, we'll get an error
-                # later when we try to read from this file so it'll be caught there.
+            if len(files) == 0 and virtual:
                 files = [glob_string]
 
             for f in files:
-                if f.endswith("__init__.py"):
-                    continue
-                
                 create = True
 
                 inputs = []
