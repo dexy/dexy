@@ -14,6 +14,7 @@ import re
 import shutil
 import sys
 from dexy.version import VERSION
+import urllib
 
 
 EXCLUDED_DIRS = ['.bzr', '.hg', '.git', '.svn', 'ignore']
@@ -173,6 +174,18 @@ def setup_option_parser():
             f = open(".dexy", "w")
             f.write("{\n}\n")
             f.close()
+
+    if args.config.startswith("http"):
+        print "fetching remote config file %s" % args.config
+        filename = os.path.basename(args.config)
+        print "writing to %s" % filename
+        f = urllib.urlopen(args.config)
+        config_file = open(filename, "w")
+        config_file.write(f.read())
+        config_file.close()
+        f.close()
+        args.config = filename
+
 
     if not os.path.exists(args.artifacts_dir):
         path_to_artifacts_dir = os.path.join(project_base, args.artifacts_dir)
