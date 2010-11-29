@@ -162,6 +162,13 @@ def setup_option_parser():
             os.mkdir(args.artifacts_dir)
         if not os.path.exists(args.logs_dir):
             os.mkdir(args.logs_dir)
+        if not os.path.exists('filters'):
+            os.mkdir('filters')
+            f = open('filters/__init__.py', 'w')
+            f.close()
+            f = open('filters/README', 'w')
+            f.write("Custom filters go in this directory.\n")
+            f.close()
         if not os.path.exists(".dexy"):
             f = open(".dexy", "w")
             f.write("{\n}\n")
