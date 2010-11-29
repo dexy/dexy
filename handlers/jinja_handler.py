@@ -33,19 +33,16 @@ class JinjaHandler(DexyHandler):
             common_path = os.path.dirname(os.path.commonprefix([self.artifact.doc.name, k]))
             relpath = os.path.relpath(k, common_path)
             
-            if re.search("..", k):
-                relpath = os.path.basename(k)
-            
             if document_data['filenames'].has_key(relpath):
                 raise Exception("Duplicate key %s" % relpath)
             
             document_data['filenames'][relpath] = a['fn']
             document_data['sections'][relpath] = a['data_dict']
             document_data[relpath] = a['data']
-            for k, v in a['additional_inputs'].items():
-                document_data['a'][k] = v
-                if v.endswith('.json') and os.path.exists(v):
-                    document_data[k] = json.load(open(v, "r"))
+            for ak, av in a['additional_inputs'].items():
+                document_data['a'][ak] = av
+                if v.endswith('.json') and os.path.exists(av):
+                    document_data[ak] = json.load(open(av, "r"))
         
         if self.artifact.ext == ".tex":
             print "changing jinja tags for", self.artifact.key
