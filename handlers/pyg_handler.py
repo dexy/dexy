@@ -52,9 +52,7 @@ class IdioHandler(DexyHandler):
         
         output_dict = OrderedDict()
 
-        i = -1
-        for s in builder.sections:
-            i += 1
+        for i, s in enumerate(builder.sections):
             formatted_lines = composer.format(builder.statements[i]['lines'], lexer, formatter) 
             output_dict[s] = formatted_lines
 
