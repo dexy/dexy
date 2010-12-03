@@ -190,7 +190,7 @@ class Controller(object):
                         log.debug("evaluating ifinput %s" % s)
                         ifinput = s.replace("%", rootname)
                         log.debug("evaluating ifinput %s" % ifinput)
-                        input_docs = parse_doc(ifinput, {}, True)
+                        input_docs = parse_doc(ifinput, {})
                         for input_doc in input_docs:
                             log.debug(input_doc.key())
                             inputs.append(input_doc.key())
@@ -200,7 +200,7 @@ class Controller(object):
 
                 if args.has_key('ifnoinput'):
                     ifinput = args['ifnoinput'].replace("%", rootname)
-                    input_docs = parse_doc(ifinput, {}, True)
+                    input_docs = parse_doc(ifinput, {})
 
                     if len(input_docs) > 0:
                         create = False
