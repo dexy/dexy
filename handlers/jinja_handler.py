@@ -41,8 +41,9 @@ class JinjaHandler(DexyHandler):
             document_data[relpath] = a['data']
             for ak, av in a['additional_inputs'].items():
                 document_data['a'][ak] = av
-                if av.endswith('.json') and os.path.exists(av):
-                    document_data[ak] = json.load(open(av, "r"))
+                fullpath_av = os.path.join('artifacts', av)
+                if av.endswith('.json') and os.path.exists(fullpath_av):
+                    document_data[ak] = json.load(open(fullpath_av, "r"))
         
         if self.artifact.ext == ".tex":
             print "changing jinja tags for", self.artifact.key
