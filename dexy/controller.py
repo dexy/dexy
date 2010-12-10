@@ -150,6 +150,11 @@ class Controller(object):
             # virtual document
             if re.search("@", glob_string):
                 virtual = True
+                if not self.allow_remote:
+                    raise Exception("""You are attempting to access a remote file.
+                                    You must enable --dangerous mode to do this.
+                                    Please check Dexy help and call the dexy
+                                    command again.""")
                 glob_string = glob_string.replace("@", "")
             else:
                 virtual = False

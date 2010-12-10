@@ -128,6 +128,13 @@ def setup_option_parser():
         help='name of configuration file'
     )
 
+    add_option(parser,
+        '-d', '--dangerous',
+        default=False,
+        action='store_true',
+        help='Allow running remote URLs which may execute dangerous code, use with care.'
+     )
+
     if (option_parser == 'argparse'):
         args = parser.parse_args()
         dir_name = args.dir
@@ -246,6 +253,7 @@ def dexy_command():
             else:
                 log.info("processing dir %s" % root)
                 controller = Controller()
+                controller.allow_remote = args.dangerous
                 controller.artifacts_dir = args.artifacts_dir
                 controller.config_file = args.config
                 for doc in controller.setup_and_run(root):
@@ -257,6 +265,7 @@ def dexy_command():
         log.info("not recursing")
         log.info("processing dir %s" % dir_name)
         controller = Controller()
+        controller.allow_remote = args.dangerous
         controller.artifacts_dir = args.artifacts_dir
         controller.config_file = args.config
         for doc in controller.setup_and_run(dir_name):
@@ -327,6 +336,7 @@ def dexy_live_server():
         # Run Dexy, store array of artifacts
         artifacts = OrderedDict()
         controller = Controller()
+        controller.allow_remote = args.dangerous
         controller.artifacts_dir = args.artifacts_dir
         controller.config_file = args.config
         try:
