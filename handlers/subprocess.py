@@ -75,6 +75,13 @@ class ProcessSectionwiseInteractiveHandler(DexyHandler):
 
          return output_dict
 
+class ClojureInteractiveHandler(ProcessLinewiseInteractiveHandler):
+    EXECUTABLE = 'java clojure.main'
+    INPUT_EXTENSIONS = [".clj"]
+    OUTPUT_EXTENSIONS = [".txt"]
+    ALIASES = ['clj', 'cljint']
+    PROMPT = "user=> "
+
 class ProcessStdoutHandler(DexyHandler):
     """
     Intended for use with command line processes where your only interest is in
