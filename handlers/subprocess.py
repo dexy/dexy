@@ -149,25 +149,9 @@ class Rst2BeamerHandler(ProcessStdoutHandler):
 ### @export "sloccount"
 class SloccountHandler(ProcessStdoutHandler):
     EXECUTABLE = '/usr/bin/env sloccount'
+    INPUT_EXTENSIONS = [".*"]
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['sloc', 'sloccount']
-    
-### @export "artifact"
-class ProcessArtifactHandler(DexyHandler):
-    """
-    Intended for use with command line processes where the process will write
-    data directly to the artifact file which is passed as an argument.
-    """
-    EXECUTABLE = '/usr/bin/env python'
-    INPUT_EXTENSIONS = [".txt", ".py"]
-    OUTPUT_EXTENSIONS = [".txt"]
-    ALIASES = ['pyart']
-
-    def process(self):
-        self.artifact.auto_write_artifact = False
-        wf = self.artifact.work_filename()
-        af = self.artifact.filename()
-        self.artifact.stdout = pexpect.run("%s %s %s" % (self.EXECUTABLE, af, wf))
 
 ### @export "timing"
 class ProcessTimingHandler(DexyHandler):
