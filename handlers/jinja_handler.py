@@ -6,7 +6,6 @@ import pexpect
 import re
 import simplejson as json
 
-
 class JinjaHelper:
     def ri(self, query):
         # --system flag needed or else ri complains about multiple versions
@@ -27,7 +26,11 @@ class JinjaHandler(DexyHandler):
         document_data['filenames'] = {}
         document_data['sections'] = {}
         document_data['a'] = {}
-        
+
+        # TODO move to separate 'index' handler for websites
+        doc_dir = os.path.dirname(self.artifact.doc.name)
+        document_data['children'] = sorted([f for f in os.listdir(doc_dir) if os.path.isdir(os.path.join(doc_dir, f))])
+    
         self.artifact.load_input_artifacts()
         for k, a in self.artifact.input_artifacts_dict.items():
             common_path = os.path.dirname(os.path.commonprefix([self.artifact.doc.name, k]))

@@ -25,6 +25,11 @@ class TextFormatHandler(DexyHandler):
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['t', 'forcetext']
 
+class XmlFormatHandler(DexyHandler):
+    INPUT_EXTENSIONS = [".xml"]
+    OUTPUT_EXTENSIONS = [".xml"]
+    ALIASES = ['x', 'forcexml']
+
 class LatexFormatHandler(DexyHandler):
     INPUT_EXTENSIONS = [".tex"]
     OUTPUT_EXTENSIONS = [".tex"]
