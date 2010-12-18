@@ -77,14 +77,6 @@ class ProcessSectionwiseInteractiveHandler(DexyHandler):
 
          return output_dict
 
-### @export "clojure-handler"
-class ClojureInteractiveHandler(ProcessLinewiseInteractiveHandler):
-    EXECUTABLE = 'java clojure.main'
-    INPUT_EXTENSIONS = [".clj"]
-    OUTPUT_EXTENSIONS = [".txt"]
-    ALIASES = ['clj', 'cljint']
-    PROMPT = "user=> "
-
 ### @export "stdout"
 class ProcessStdoutHandler(DexyHandler):
     """
@@ -110,6 +102,14 @@ class BashHandler(ProcessStdoutHandler):
     INPUT_EXTENSIONS = [".sh", ".bash"]
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['bash']
+
+### @export "clojure"
+class ClojureInteractiveHandler(ProcessLinewiseInteractiveHandler):
+    EXECUTABLE = 'java clojure.main'
+    INPUT_EXTENSIONS = [".clj"]
+    OUTPUT_EXTENSIONS = [".txt"]
+    ALIASES = ['clj', 'cljint']
+    PROMPT = "user=> "
 
 ### @export "redcloth"
 class RedclothHandler(ProcessStdoutHandler):
@@ -147,15 +147,11 @@ class Rst2BeamerHandler(ProcessStdoutHandler):
     ALIASES = ['rst2beamer']
 
 ### @export "sloccount"
-class SloccountHandler(DexyHandler):
+class SloccountHandler(ProcessStdoutHandler):
     EXECUTABLE = '/usr/bin/env sloccount'
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['sloc', 'sloccount']
     
-    def process(self):
-        self.artifact.generate_workfile()
-        self.artifact.data_dict['1'] = pexpect.run("%s %s" % (self.EXECUTABLE, self.artifact.work_filename()))
-
 ### @export "artifact"
 class ProcessArtifactHandler(DexyHandler):
     """
