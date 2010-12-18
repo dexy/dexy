@@ -177,6 +177,7 @@ def setup_option_parser():
             f = open('filters/README', 'w')
             f.write("Custom filters go in this directory.\n")
             f.close()
+            # TODO write a com.example.bar filter for people to play with
         if not os.path.exists(".dexy"):
             f = open(".dexy", "w")
             f.write("{\n}\n")

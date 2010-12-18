@@ -9,6 +9,7 @@ import os
 import pexpect
 import time
 
+### @export "linewise"
 class ProcessLinewiseInteractiveHandler(DexyHandler):
     """
     Intended for use with interactive processes, such as python interpreter,
@@ -41,6 +42,7 @@ class ProcessLinewiseInteractiveHandler(DexyHandler):
             output_dict[k] = section_transcript
         return output_dict
 
+### @export "sectionwise"
 class ProcessSectionwiseInteractiveHandler(DexyHandler):
     EXECUTABLE = '/usr/bin/env R --quiet --vanilla'
     VERSION = "/usr/bin/env R --version"
@@ -82,8 +84,8 @@ class ClojureInteractiveHandler(ProcessLinewiseInteractiveHandler):
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['clj', 'cljint']
     PROMPT = "user=> "
-### @end
 
+### @export "stdout"
 class ProcessStdoutHandler(DexyHandler):
     """
     Intended for use with command line processes where your only interest is in
@@ -102,42 +104,49 @@ class ProcessStdoutHandler(DexyHandler):
             self.log.warn("an error occurred:\n%s" % output)
             self.artifact.dirty = True
 
+### @export "bash"
 class BashHandler(ProcessStdoutHandler):
     EXECUTABLE = '/usr/bin/env bash'
     INPUT_EXTENSIONS = [".sh", ".bash"]
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['bash']
 
+### @export "redcloth"
 class RedclothHandler(ProcessStdoutHandler):
     EXECUTABLE = '/usr/bin/env redcloth'
     INPUT_EXTENSIONS = [".txt", ".textile"]
     OUTPUT_EXTENSIONS = [".html"]
     ALIASES = ['redcloth', 'textile']
 
+### @export "redclothl"
 class RedclothLatexHandler(ProcessStdoutHandler):
     EXECUTABLE = '/usr/bin/env redcloth -o latex'
     INPUT_EXTENSIONS = [".txt", ".textile"]
     OUTPUT_EXTENSIONS = [".tex"]
     ALIASES = ['redclothl', 'latextile']
 
+### @export "rst2html"
 class Rst2HtmlHandler(ProcessStdoutHandler):
     EXECUTABLE = '/usr/bin/env rst2html.py'
     INPUT_EXTENSIONS = [".rst", ".txt"]
     OUTPUT_EXTENSIONS = [".html"]
     ALIASES = ['rst2html']
 
+### @export "rst2latex"
 class Rst2LatexHandler(ProcessStdoutHandler):
     EXECUTABLE = '/usr/bin/env rst2latex.py'
     INPUT_EXTENSIONS = [".rst", ".txt"]
     OUTPUT_EXTENSIONS = [".tex"]
     ALIASES = ['rst2latex']
 
+### @export "rst2beamer"
 class Rst2BeamerHandler(ProcessStdoutHandler):
     EXECUTABLE = '/usr/bin/env rst2beamer'
     INPUT_EXTENSIONS = [".rst", ".txt"]
     OUTPUT_EXTENSIONS = [".tex"]
     ALIASES = ['rst2beamer']
 
+### @export "sloccount"
 class SloccountHandler(DexyHandler):
     EXECUTABLE = '/usr/bin/env sloccount'
     OUTPUT_EXTENSIONS = [".txt"]
@@ -147,7 +156,7 @@ class SloccountHandler(DexyHandler):
         self.artifact.generate_workfile()
         self.artifact.data_dict['1'] = pexpect.run("%s %s" % (self.EXECUTABLE, self.artifact.work_filename()))
 
-
+### @export "artifact"
 class ProcessArtifactHandler(DexyHandler):
     """
     Intended for use with command line processes where the process will write
@@ -164,6 +173,7 @@ class ProcessArtifactHandler(DexyHandler):
         af = self.artifact.filename()
         self.artifact.stdout = pexpect.run("%s %s %s" % (self.EXECUTABLE, af, wf))
 
+### @export "timing"
 class ProcessTimingHandler(DexyHandler):
     """
     Runs code N times and reports timings.
@@ -184,8 +194,9 @@ class ProcessTimingHandler(DexyHandler):
             times.append("%s" % (time.time() - start))
         self.artifact.data_dict['1'] = "\n".join(times)
 
-# Returns a full transcript, commands and output from each line.
+### @export "rout"
 class ROutputHandler(DexyHandler):
+    """Returns a full transcript, commands and output from each line."""
     EXECUTABLE = '/usr/bin/env R CMD BATCH --vanilla --quiet --no-timing'
     VERSION = "/usr/bin/env R --version"
     INPUT_EXTENSIONS = ['.txt', '.r', '.R']
@@ -202,8 +213,9 @@ class ROutputHandler(DexyHandler):
         pexpect.run("%s %s %s" % (self.EXECUTABLE, wf, af), cwd=self.artifact.artifacts_dir)
         self.artifact.data_dict['1'] = open(self.artifact.filename(), "r").read()
 
-# Uses the --slave flag so doesn't echo commands, just returns output.
+### @export "rartifact"
 class RArtifactHandler(DexyHandler):
+    """Uses the --slave flag so doesn't echo commands, just returns output."""
     EXECUTABLE = '/usr/bin/env R CMD BATCH --vanilla --quiet --slave --no-timing'
     INPUT_EXTENSIONS = ['.txt', '.r', '.R']
     OUTPUT_EXTENSIONS = [".txt"]
@@ -220,6 +232,7 @@ class RArtifactHandler(DexyHandler):
         self.artifact.stdout = pexpect.run(command, cwd=self.artifact.artifacts_dir)
         self.artifact.data_dict['1'] = open(self.artifact.filename(), "r").read()
 
+### @export "latex"
 class LatexHandler(DexyHandler):
     INPUT_EXTENSIONS = [".tex", ".txt"]
     OUTPUT_EXTENSIONS = [".pdf", ".png"]
@@ -256,6 +269,7 @@ class LatexHandler(DexyHandler):
         self.artifact.stdout = pexpect.run(command, cwd=self.artifact.artifacts_dir, timeout=20)
         self.artifact.stdout += pexpect.run(command, cwd=self.artifact.artifacts_dir, timeout=20)
 
+### @export "voice"
 class VoiceHandler(DexyHandler):
     INPUT_EXTENSIONS = [".*"]
     OUTPUT_EXTENSIONS = [".mp3"]
@@ -292,7 +306,7 @@ class VoiceHandler(DexyHandler):
         self.log.info(command)
         self.artifact.stdout = pexpect.run(command, cwd=self.artifact.artifacts_dir)
 
-
+### @export "ragelruby"
 class RagelRubyHandler(DexyHandler):
     INPUT_EXTENSIONS = [".rl"]
     OUTPUT_EXTENSIONS = [".rb"]
@@ -308,6 +322,7 @@ class RagelRubyHandler(DexyHandler):
         self.artifact.stdout = pexpect.run(command, cwd=self.artifact.artifacts_dir)
         self.artifact.data_dict['1'] = open(self.artifact.filename(), "r").read()
 
+### @export "ragelrubydot"
 class RagelRubyDotHandler(DexyHandler):
     INPUT_EXTENSIONS = [".rl"]
     OUTPUT_EXTENSIONS = [".dot"]
@@ -320,7 +335,7 @@ class RagelRubyDotHandler(DexyHandler):
         self.log.info(command)
         self.artifact.data_dict['1'] = pexpect.run(command, cwd=self.artifact.artifacts_dir)
 
-
+### @export "dot"
 class DotHandler(DexyHandler):
     INPUT_EXTENSIONS = [".dot"]
     OUTPUT_EXTENSIONS = [".png", ".pdf"]
@@ -335,14 +350,14 @@ class DotHandler(DexyHandler):
         self.log.info(command)
         self.artifact.stdout = pexpect.run(command, cwd=self.artifact.artifacts_dir)
 
-
+### @export "rb"
 class RubyStdoutHandler(ProcessStdoutHandler):
     EXECUTABLE = '/usr/bin/env ruby'
     INPUT_EXTENSIONS = [".txt", ".rb"]
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['rb']
 
-
+### @export "rbint"
 class RubyInteractiveHandler(DexyHandler):
     EXECUTABLE = '/usr/bin/env ruby'
     INPUT_EXTENSIONS = [".txt", ".rb"]
@@ -365,6 +380,7 @@ class RubyInteractiveHandler(DexyHandler):
                 proc.sendcontrol('d') # eof
                 self.artifact.data_dict[s] = proc.read()[:-4] # strip off ^D^H^H
 
+### @export "rspec"
 class RspecHandler(ProcessStdoutHandler):
     EXECUTABLE = '/usr/bin/env spec -f s'
     INPUT_EXTENSIONS = [".txt", ".rb"]
