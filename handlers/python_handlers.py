@@ -38,7 +38,7 @@ class FooterHandler(DexyHandler):
                 footer_keys.append(k)
 
         if len(footer_keys) > 0:
-            footer_key = footer_keys[0]
+            footer_key = footer_keys[-1]
             footer_text = self.artifact.input_artifacts_dict[footer_key]['data']
         else:
             raise Exception("No file matching %s was found to work as a footer." % footer_key)
@@ -60,7 +60,7 @@ class HeaderHandler(DexyHandler):
             if contains_header and not contains_pyg:
                 header_keys.append(k)
         if len(header_keys) > 0:
-            header_key = header_keys[0]
+            header_key = header_keys[-1]
             header_text = self.artifact.input_artifacts_dict[header_key]['data']
         else:
             raise Exception("No file matching %s was found to work as a header for %s." % (header_key, self.artifact.key))
