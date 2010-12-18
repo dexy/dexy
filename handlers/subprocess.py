@@ -51,7 +51,7 @@ class ProcessSectionwiseInteractiveHandler(DexyHandler):
     TRAILING_PROMPT = "\r\n> "
     INPUT_EXTENSIONS = ['.txt', '.r', '.R']
     OUTPUT_EXTENSIONS = ['.Rout']
-    ALIASES = ['rint']
+    ALIASES = ['rint', 'r']
     
     def process_dict(self, input_dict):
          output_dict = OrderedDict()
@@ -193,25 +193,6 @@ class ProcessTimingHandler(DexyHandler):
             pexpect.run("%s %s" % (self.EXECUTABLE, self.artifact.work_filename()))
             times.append("%s" % (time.time() - start))
         self.artifact.data_dict['1'] = "\n".join(times)
-
-### @export "rout"
-class ROutputHandler(DexyHandler):
-    """Returns a full transcript, commands and output from each line."""
-    EXECUTABLE = '/usr/bin/env R CMD BATCH --vanilla --quiet --no-timing'
-    VERSION = "/usr/bin/env R --version"
-    INPUT_EXTENSIONS = ['.txt', '.r', '.R']
-    OUTPUT_EXTENSIONS = [".Rout"]
-    ALIASES = ['r', 'R']
-
-    def generate(self):
-        self.artifact.write_dj()
-
-    def process(self):
-        self.artifact.generate_workfile()
-        wf = self.artifact.work_filename(False)
-        af = self.artifact.filename(False)
-        pexpect.run("%s %s %s" % (self.EXECUTABLE, wf, af), cwd=self.artifact.artifacts_dir)
-        self.artifact.data_dict['1'] = open(self.artifact.filename(), "r").read()
 
 ### @export "rartifact"
 class RArtifactHandler(DexyHandler):
