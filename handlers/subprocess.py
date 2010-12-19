@@ -111,6 +111,25 @@ class ClojureInteractiveHandler(ProcessLinewiseInteractiveHandler):
     ALIASES = ['clj', 'cljint']
     PROMPT = "user=> "
 
+### @export "lua"
+# TODO Add support for lua-style comments to idiopidae fork
+class LuaHandler(ProcessSectionwiseInteractiveHandler):
+    EXECUTABLE = '/usr/bin/env lua'
+    VERSION = '/usr/bin/env lua -v'
+    INPUT_EXTENSIONS = ['.lua', '.txt']
+    OUTPUT_EXTENSIONS = ['.txt']
+    ALIASES = ['lua']
+    PROMPT = '>'
+    TRAILING_PROMPT = '>>'
+
+### @export "luaout"
+class LuaStdoutHandler(ProcessStdoutHandler):
+    EXECUTABLE = '/usr/bin/env lua'
+    VERSION = '/usr/bin/env lua -v'
+    INPUT_EXTENSIONS = ['.lua']
+    OUTPUT_EXTENSIONS = ['.txt']
+    ALIASES = ['luaout']
+
 ### @export "redcloth"
 class RedclothHandler(ProcessStdoutHandler):
     EXECUTABLE = '/usr/bin/env redcloth'
