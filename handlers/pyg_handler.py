@@ -13,6 +13,7 @@ from pygments.lexers import get_lexer_for_filename
 from pygments.lexers.agile import PythonConsoleLexer
 import idiopidae.parser
 
+### @export "pyg"
 class PygHandler(DexyHandler):
     INPUT_EXTENSIONS = [".*"]
     OUTPUT_EXTENSIONS = [".html", ".tex"]
@@ -34,6 +35,7 @@ class PygHandler(DexyHandler):
                 raise e
         return output_dict
 
+### @export "idio"
 class IdioHandler(DexyHandler):
     INPUT_EXTENSIONS = [".*"]
     OUTPUT_EXTENSIONS = [".html", ".tex", ".txt"]
