@@ -163,7 +163,7 @@ class ProcessTimingHandler(DexyHandler):
     N = 10
     INPUT_EXTENSIONS = [".txt", ".py"]
     OUTPUT_EXTENSIONS = [".times"]
-    ALIASES = ['pytime']
+    ALIASES = ['timing', 'pytime']
     
     def process(self):
         self.artifact.generate_workfile()
@@ -318,37 +318,3 @@ class RubyStdoutHandler(ProcessStdoutHandler):
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['rb']
 
-### @export "rbint"
-class RubyInteractiveHandler(DexyHandler):
-    EXECUTABLE = '/usr/bin/env ruby'
-    INPUT_EXTENSIONS = [".txt", ".rb"]
-    OUTPUT_EXTENSIONS = [".txt"]
-    ALIASES = ['rbint']
-
-    def process(self):
-        self.artifact.generate_workfile()
-        command = "/usr/bin/env ruby %s" % self.artifact.work_filename(False)
-        self.log.info(command)
-
-        self.artifact.load_input_artifacts()
-        for k, v in self.artifact.input_artifacts_dict.items():
-            self.log.info(k)
-            for s, t in v['data_dict'].items():
-                self.log.info("spawning process for section %s" % s)
-                self.log.info(t)
-                proc = pexpect.spawn(command, cwd=self.artifact.artifacts_dir)
-                proc.send(t)
-                proc.sendcontrol('d') # eof
-                self.artifact.data_dict[s] = proc.read()[:-4] # strip off ^D^H^H
-
-### @export "rspec"
-class RspecHandler(ProcessStdoutHandler):
-    EXECUTABLE = '/usr/bin/env spec -f s'
-    INPUT_EXTENSIONS = [".txt", ".rb"]
-    OUTPUT_EXTENSIONS = [".txt"]
-    ALIASES = ['spec', 'rspec']
-
-    def process(self):
-        self.artifact.auto_write_artifact = False
-        self.artifact.generate_workfile()
-        self.artifact.data_dict['1'] = pexpect.run("%s %s" % (self.EXECUTABLE, self.artifact.work_filename(False)), cwd=self.artifact.artifacts_dir)
