@@ -166,6 +166,7 @@ class Document(object):
                 raise Exception("no artifact created!")
             self.artifacts.append(artifact)
             
-            log.info("(step %s) %s -> %s" % (self.step, artifact_key, artifact.filename()))
+            log.info("(step %s) %s -> %s" % \
+                     (self.step, artifact_key, artifact.filename()))
 
         return self
