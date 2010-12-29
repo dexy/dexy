@@ -254,7 +254,8 @@ class LatexHandler(DexyHandler):
         # Detect which LaTeX compiler we have...
         latex_bin = None
         for e in ["pdflatex", "latex"]:
-            latex_bin, s = pexpect.run("/usr/bin/env which %s" % e, withexitstatus = True) 
+            which_cmd = "/usr/bin/env which %s" % e
+            latex_bin, s = pexpect.run(which_cmd, withexitstatus = True) 
             if s == 0:
                 self.log.info("%s LaTeX command found" % e)
                 break
@@ -268,8 +269,9 @@ class LatexHandler(DexyHandler):
         command = "/usr/bin/env %s %s" % (e, latex_basename)
         self.log.info(command)
         # run LaTeX twice so TOCs, section number references etc. are correct
-        self.artifact.stdout = pexpect.run(command, cwd=self.artifact.artifacts_dir, timeout=20)
-        self.artifact.stdout += pexpect.run(command, cwd=self.artifact.artifacts_dir, timeout=20)
+        ad = self.artifact.artifacts_dir
+        self.artifact.stdout = pexpect.run(command, cwd=ad, timeout=20)
+        self.artifact.stdout += pexpect.run(command, cwd=ad, timeout=20)
 
 ### @export "voice"
 class VoiceHandler(DexyHandler):
