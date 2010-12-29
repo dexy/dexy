@@ -150,7 +150,8 @@ class Document(object):
             
             if not self.controller.handlers.has_key(f):
                 print self.controller.handlers.keys()
-                raise Exception("""You requested filter alias '%s' but this is not available.""" % f)
+                raise Exception("""You requested filter alias '%s'
+                                but this is not available.""" % f)
             HandlerClass = self.controller.handlers[f]
             h = HandlerClass.setup(
                 self, 
