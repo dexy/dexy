@@ -86,8 +86,8 @@ class DexyHandler(object):
             if method_used:
                 raise Exception("%s has already been called" % method_used)
             if len(self.artifact.input_data_dict.keys()) > 1:
-                raise Exception("""You have passed input with multiple sections to
-                                the %s handler. This handler does not preserve
+                raise Exception("""You have passed input with multiple sections
+                                to the %s handler. This handler does not preserve
                                 sections. Either remove sectioning or add a call
                                 to the join filter before this handler.""")
             input_text = self.artifact.input_text()
