@@ -1,4 +1,5 @@
-# Original topological sort code written by Ofer Faigon (www.bitformation.com) and used with permission
+# Original topological sort code written by Ofer Faigon
+# (www.bitformation.com) and used with permission
 
 def topological_sort(items, partial_order):
     """
@@ -14,7 +15,10 @@ def topological_sort(items, partial_order):
             graph[node] = [0] # 0 = number of arcs coming into this node. 
 
     def add_arc(graph, fromnode, tonode):
-        """Add an arc to a graph. Can create multiple arcs. The end nodes must already exist."""
+        """
+        Add an arc to a graph. Can create multiple arcs.
+        The end nodes must already exist.
+        """
         graph[fromnode].append(tonode)
         graph[tonode][0] = graph[tonode][0] + 1
 
