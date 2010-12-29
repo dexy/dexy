@@ -142,7 +142,8 @@ class Document(object):
         self.step = 0
         
         artifact, artifact_key = self.create_initial_artifact()
-        log.info("(step %s) %s -> %s" % (self.step, artifact_key, artifact.filename()))
+        log.info("(step %s) %s -> %s" % \
+                 (self.step, artifact_key, artifact.filename()))
 
         for f in self.filters:
             artifact_key += "|%s" % f
