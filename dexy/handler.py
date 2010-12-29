@@ -112,6 +112,7 @@ class DexyHandler(object):
             method_used = "process_text_to_dict"
         
         if not method_used:
+            # This code implements the neutral 'dexy' handler.
             self.artifact.data_dict = self.artifact.input_data_dict
             method_used = "process"
         
