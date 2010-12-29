@@ -51,7 +51,7 @@ class ProcessSectionwiseInteractiveHandler(DexyHandler):
     TRAILING_PROMPT = "\r\n> "
     INPUT_EXTENSIONS = ['.txt', '.r', '.R']
     OUTPUT_EXTENSIONS = ['.Rout']
-    ALIASES = ['rint', 'r']
+    ALIASES = ['rint']
     
     def process_dict(self, input_dict):
          output_dict = OrderedDict()
@@ -193,6 +193,28 @@ class ProcessTimingHandler(DexyHandler):
             times.append("%s" % (time.time() - start))
         self.artifact.data_dict['1'] = "\n".join(times)
 
+### @export "rout"
+# This is sort of a duplicate of the Sectionwise Interactive Handler
+# but the 
+class ROutputHandler(DexyHandler):
+    """Returns a full transcript, commands and output from each line."""
+    EXECUTABLE = '/usr/bin/env R CMD BATCH --vanilla --quiet --no-timing'
+    VERSION = "/usr/bin/env R --version"
+    INPUT_EXTENSIONS = ['.txt', '.r', '.R']
+    OUTPUT_EXTENSIONS = [".Rout"]
+    ALIASES = ['r', 'R']
+
+    def generate(self):
+        self.artifact.write_dj()
+
+    def process(self):
+        self.artifact.generate_workfile()
+        wf = self.artifact.work_filename(False)
+        af = self.artifact.filename(False)
+        pexpect.run("%s %s %s" % (self.EXECUTABLE, wf, af), cwd=self.artifact.artifacts_dir)
+        self.artifact.data_dict['1'] = open(self.artifact.filename(), "r").read()
+
+
 ### @export "rartifact"
 class RArtifactHandler(DexyHandler):
     """Uses the --slave flag so doesn't echo commands, just returns output."""
@@ -313,7 +335,8 @@ class RagelRubyDotHandler(DexyHandler):
         work_file = os.path.basename(self.artifact.work_filename())
         command = "/usr/bin/env ragel -R -V %s" % (work_file)
         self.log.info(command)
-        self.artifact.data_dict['1'] = pexpect.run(command, cwd=self.artifact.artifacts_dir)
+        ad = self.artifact.artifacts_dir
+        self.artifact.data_dict['1'] = pexpect.run(command, cwd=ad)
 
 ### @export "dot"
 class DotHandler(DexyHandler):
@@ -326,9 +349,11 @@ class DotHandler(DexyHandler):
         self.artifact.generate_workfile()
         wf = self.artifact.work_filename(False)
         af = self.artifact.filename(False)
-        command = "/usr/bin/env dot -T%s -o%s %s" % (self.artifact.ext.replace(".", ""), af, wf)
+        ex = self.artifact.ext.replace(".", "")
+        command = "/usr/bin/env dot -T%s -o%s %s" % (ex, af, wf)
         self.log.info(command)
-        self.artifact.stdout = pexpect.run(command, cwd=self.artifact.artifacts_dir)
+        ad = self.artifact.artifacts_dir
+        self.artifact.stdout = pexpect.run(command, cwd=ad)
 
 ### @export "rb"
 class RubyStdoutHandler(ProcessStdoutHandler):
