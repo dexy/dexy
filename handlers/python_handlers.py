@@ -69,8 +69,31 @@ class HeaderHandler(DexyHandler):
 
 # TODO implement combined header/footer handler as a shortcut
 
+### @export "head-handler"
 class HeadHandler(DexyHandler):
     ALIASES = ['head']
     def process_text(self, input_text):
         return "\n".join(input_text.split("\n")[0:10]) + "\n"
 
+### @export "word-wrap"
+class WordWrapHandler(DexyHandler):
+    ALIASES = ['ww', 'wrap']
+
+    #http://code.activestate.com/recipes/148061-one-liner-word-wrap-function/
+    def wrap_text(self, text, width):
+        """
+        A word-wrap function that preserves existing line breaks
+        and most spaces in the text. Expects that existing line
+        breaks are posix newlines (\n).
+        """
+        return reduce(lambda line, word, width=width: '%s%s%s' %
+                 (line,
+                   ' \n'[(len(line)-line.rfind('\n')-1
+                         + len(word.split('\n',1)[0]
+                              ) >= width)],
+                   word),
+                  text.split(' ')
+                 )
+
+    def process_text(self, input_text):
+        return self.wrap_text(input_text, 79)
