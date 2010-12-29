@@ -28,12 +28,16 @@ class JinjaHandler(DexyHandler):
         document_data['a'] = {}
 
         # TODO move to separate 'index' handler for websites
+        # create a list of subdirectories of this directory
         doc_dir = os.path.dirname(self.artifact.doc.name)
-        document_data['children'] = sorted([f for f in os.listdir(doc_dir) if os.path.isdir(os.path.join(doc_dir, f))])
+        children = [f for f in os.listdir(doc_dir) \
+                    if os.path.isdir(os.path.join(doc_dir, f))]
+        document_data['children'] = sorted(children)
     
         self.artifact.load_input_artifacts()
         for k, a in self.artifact.input_artifacts_dict.items():
-            common_path = os.path.dirname(os.path.commonprefix([self.artifact.doc.name, k]))
+            common_prefix = os.path.commonprefix([self.artifact.doc.name, k])
+            common_path = os.path.dirname(common_prefix)
             relpath = os.path.relpath(k, common_path)
             
             if document_data['filenames'].has_key(relpath):
@@ -46,6 +50,7 @@ class JinjaHandler(DexyHandler):
                 document_data['a'][ak] = av
                 fullpath_av = os.path.join('artifacts', av)
                 if av.endswith('.json') and os.path.exists(fullpath_av):
+                    print "loading JSON for %s" % fullpath_av
                     document_data[ak] = json.load(open(fullpath_av, "r"))
         
         if self.artifact.ext == ".tex":
