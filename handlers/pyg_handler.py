@@ -50,12 +50,15 @@ class IdioHandler(DexyHandler):
             lexer = PythonConsoleLexer()
         else:
             lexer = get_lexer_for_filename(name)
-        formatter = get_formatter_for_filename(self.artifact.filename(), linenos=False)
+
+        fn = self.artifact.filename()
+        formatter = get_formatter_for_filename(fn, linenos=False)
         
         output_dict = OrderedDict()
 
         for i, s in enumerate(builder.sections):
-            formatted_lines = composer.format(builder.statements[i]['lines'], lexer, formatter) 
+            lines = builder.statements[i]['lines']
+            formatted_lines = composer.format(lines, lexer, formatter) 
             output_dict[s] = formatted_lines
 
         return output_dict
