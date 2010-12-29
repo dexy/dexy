@@ -173,7 +173,8 @@ class Controller(object):
                 inputs = []
                 if args.has_key('inputs'):
                     if isinstance(args['inputs'], str):
-                        raise Exception("this input should be an array, not a string: %s" % args['inputs'])
+                        raise Exception("""this input should be an array,
+                                        not a string: %s""" % args['inputs'])
                     for i in args['inputs']:
                         for doc in parse_doc(i):
                             inputs.append(doc.key())
@@ -215,7 +216,7 @@ class Controller(object):
                         create = False
                 
                 if create:
-                    # Filters can either be included in the name (separated by |)...
+                    # Filters can either be included in the name...
                     doc = Document(f, filters)
                     doc.args = args
                     # ...or they may be listed explicitly.
