@@ -90,9 +90,17 @@ class ProcessStdoutHandler(DexyHandler):
     
     def process(self):
         self.artifact.generate_workfile()
-        output, exit_status = pexpect.run("%s %s" % (self.EXECUTABLE, self.artifact.work_filename()), withexitstatus = True)
+        if self.artifact.doc.args.has_key('timeout'):
+            timeout = self.artifact.doc.args['timeout']
+        else:
+            timeout = None
+        command = "%s %s" % (self.EXECUTABLE, self.artifact.work_filename())
+        self.log.debug(command)
+        output, exit_status = pexpect.run(command, withexitstatus = True, timeout=timeout)
         self.artifact.data_dict['1'] = output
         if exit_status != 0:
+            # TODO rework this - probably want to raise error + not write
+            # artifact, or have option to ignore errors.
             self.log.warn("an error occurred:\n%s" % output)
             self.artifact.dirty = True
 
@@ -233,6 +241,41 @@ class RArtifactHandler(DexyHandler):
         self.log.info(command)
         self.artifact.stdout = pexpect.run(command, cwd=self.artifact.artifacts_dir)
         self.artifact.data_dict['1'] = open(self.artifact.filename(), "r").read()
+
+### @export "pdf2png"
+class Pdf2Png(DexyHandler):
+    INPUT_EXTENSIONS = ['.pdf']
+    OUTPUT_EXTENSIONS = ['.png']
+    ALIASES = ['pdf2png']
+
+    def generate(self):
+        self.artifact.write_dj()
+
+    def process(self):
+        # Can't use generate_workfile as input is binary, not text-based.
+        # TODO should we be doing this in general rather than generating workfiles?
+        wf = self.artifact.previous_artifact_filename
+        of = self.artifact.filename(False)
+        command = "/usr/bin/env gs -dSAFER -dNOPAUSE -dBATCH -sDEVICE=png16m -sOutputFile=%s ../%s" % (of, wf)
+        self.log.debug(command)
+        self.artifact.stdout = pexpect.run(command, cwd=self.artifact.artifacts_dir)
+
+### @export "ps2pdf"
+class Ps2Pdf(DexyHandler):
+    INPUT_EXTENSIONS = [".ps", ".txt"]
+    OUTPUT_EXTENSIONS = [".pdf"]
+    ALIASES = ['ps2pdf']
+
+    def generate(self):
+        self.artifact.write_dj()
+    
+    def process(self):
+        self.artifact.generate_workfile()
+        wf = self.artifact.work_filename(False)
+        of = self.artifact.filename(False)
+        command = "/usr/bin/env ps2pdf %s %s" % (wf, of)
+        self.log.debug(command)
+        self.artifact.stdout = pexpect.run(command, cwd=self.artifact.artifacts_dir)
 
 ### @export "latex"
 class LatexHandler(DexyHandler):
