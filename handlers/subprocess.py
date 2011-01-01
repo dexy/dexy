@@ -30,9 +30,10 @@ class ProcessLinewiseInteractiveHandler(DexyHandler):
         start = (proc.before + proc.after)
 
         for k, s in input_dict.items():
+            # TODO Should stop processing if an error is raised.
             section_transcript = start
             start = ""
-            for l in s.rstrip().split("\n"):
+            for l in s.split("\n"):
                 section_transcript += start
                 start = ""
                 proc.sendline(l)
