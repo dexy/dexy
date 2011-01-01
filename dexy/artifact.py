@@ -93,7 +93,9 @@ class Artifact(object):
 
     def load_dj(self):
         dj_file = open(self.dj_filename(), "r")
-        for k, v in json.load(dj_file).items():
+        def load_ordered_dict(x):
+            return OrderedDict(x)
+        for k, v in json.load(dj_file, object_pairs_hook=load_ordered_dict).items():
             setattr(self, k, v)
 
 ### @export "input-text"
