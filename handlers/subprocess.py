@@ -37,7 +37,12 @@ class ProcessLinewiseInteractiveHandler(DexyHandler):
                 section_transcript += start
                 start = ""
                 proc.sendline(l)
-                proc.expect(self.PROMPT, timeout=30)
+                if self.artifact.doc.args.has_key('timeout'):
+                    timeout = self.artifact.doc.args['timeout']
+                    print "using custom timeout %s" % timeout
+                else:
+                    timeout = None
+                proc.expect(self.PROMPT, timeout=timeout)
                 section_transcript += proc.before
                 start = proc.after
             output_dict[k] = section_transcript
@@ -95,9 +100,11 @@ class ProcessStdoutHandler(DexyHandler):
             timeout = self.artifact.doc.args['timeout']
         else:
             timeout = None
-        command = "%s %s" % (self.EXECUTABLE, self.artifact.work_filename())
+        command = "%s %s" % (self.EXECUTABLE, self.artifact.work_filename(False))
         self.log.debug(command)
-        output, exit_status = pexpect.run(command, withexitstatus = True, timeout=timeout)
+        output, exit_status = pexpect.run(command, withexitstatus = True,
+                                          timeout=timeout,
+                                          cwd=self.artifact.artifacts_dir)
         self.artifact.data_dict['1'] = output
         if exit_status != 0:
             # TODO rework this - probably want to raise error + not write
@@ -111,6 +118,13 @@ class BashHandler(ProcessStdoutHandler):
     INPUT_EXTENSIONS = [".sh", ".bash"]
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['bash']
+
+### @export "php"
+class PhpHandler(ProcessStdoutHandler):
+    EXECUTABLE = '/usr/bin/env php'
+    INPUT_EXTENSIONS = [".php"]
+    OUTPUT_EXTENSIONS = [".html", ".txt"]
+    ALIASES = ['php']
 
 ### @export "clojure"
 class ClojureInteractiveHandler(ProcessLinewiseInteractiveHandler):
