@@ -101,6 +101,9 @@ class ProcessStdoutHandler(DexyHandler):
         else:
             timeout = None
         command = "%s %s" % (self.EXECUTABLE, self.artifact.work_filename(False))
+        cla = self.artifact.command_line_args()
+        if cla:
+            command = "%s %s" % (command, cla)
         self.log.debug(command)
         output, exit_status = pexpect.run(command, withexitstatus = True,
                                           timeout=timeout,
@@ -125,6 +128,13 @@ class PhpHandler(ProcessStdoutHandler):
     INPUT_EXTENSIONS = [".php"]
     OUTPUT_EXTENSIONS = [".html", ".txt"]
     ALIASES = ['php']
+
+### @export "escript"
+class EscriptHandler(ProcessStdoutHandler):
+    EXECUTABLE = '/usr/bin/env escript'
+    INPUT_EXTENSIONS = [".erl"]
+    OUTPUT_EXTENSIONS = [".txt"]
+    ALIASES = ['escript']
 
 ### @export "clojure"
 class ClojureInteractiveHandler(ProcessLinewiseInteractiveHandler):
