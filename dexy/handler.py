@@ -6,7 +6,7 @@ except ImportError:
 from dexy.artifact import Artifact
 import dexy.logger
 import time
-import pexpect
+import subprocess
 
 ### @export "class"
 class DexyHandler(object):
@@ -23,10 +23,14 @@ class DexyHandler(object):
 ### @export "version"
     def version(self):
         if hasattr(self, 'VERSION'):
-            output, exit_status = pexpect.run(self.VERSION, withexitstatus=True)
-            if exit_status > 0:
+            proc = subprocess.Popen(self.VERSION, shell=True,
+                                    stdout=subprocess.PIPE)
+            
+            output, e = proc.communicate()
+             
+            if proc.returncode > 0:
                 print output
-                print exit_status
+                print proc.returncode
                 raise Exception("An error occurred running %s" % self.VERSION)
             else:
                 return output
