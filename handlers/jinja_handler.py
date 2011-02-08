@@ -3,7 +3,6 @@ from dexy.handler import DexyHandler
 from jinja2 import Environment
 import json
 import os
-import pexpect
 import re
 import uuid
 
@@ -34,11 +33,6 @@ class FilenameHandler(DexyHandler):
 
 
 class JinjaHelper:
-    def ri(self, query):
-        # --system flag needed or else ri complains about multiple versions
-        command = "ri --system -T -f simple %s" % query
-        return pexpect.run(command)
-
     def read_file(self, filename):
         f = open(filename, "r")
         return f.read()
