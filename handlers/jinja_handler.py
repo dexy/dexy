@@ -1,10 +1,37 @@
 from dexy.handler import DexyHandler
 
 from jinja2 import Environment
+import json
 import os
 import pexpect
 import re
-import simplejson as json
+import uuid
+
+class FilenameHandler(DexyHandler):
+    """Generate random filenames from keys to track provenance of data."""
+    ALIASES = ['fn']
+    def process_text(self, input_text):
+        self.artifact.load_input_artifacts()
+        for k, a in self.artifact.input_artifacts_dict.items():
+            for ak, av in a['additional_inputs'].items():
+                self.artifact.additional_inputs[ak] = av
+
+        for m in re.finditer("dexy--(.+)\.([a-z]+)", input_text):
+            key = m.groups()[0]
+            ext = m.groups()[1]
+            if key in self.artifact.additional_inputs.keys():
+                filename = self.artifact.additional_inputs[key]
+                self.log.debug("existing key %s in artifact %s links to file %s" %
+                          (key, self.artifact.key, filename))
+            else:
+                filename = "%s.%s" % (uuid.uuid4(), ext)
+                self.artifact.additional_inputs[key] = filename
+                self.log.debug("added key %s to artifact %s ; links to file %s" %
+                          (key, self.artifact.key, filename))
+
+            input_text = input_text.replace(m.group(), filename)
+        return input_text
+
 
 class JinjaHelper:
     def ri(self, query):
