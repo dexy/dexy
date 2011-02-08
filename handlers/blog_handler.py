@@ -2,7 +2,7 @@ from dexy.handler import DexyHandler
 
 import os
 import re
-import simplejson as json
+import json
 
 class BlogHandler(DexyHandler):
     ALIASES = None

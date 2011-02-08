@@ -1,12 +1,8 @@
 from dexy.artifact import Artifact
 from dexy.logger import log
+import json
 import os
 import urllib2
-
-try:
-    import json
-except ImportError:
-    import simplejson as json
 
 ### @export "init"
 class Document(object):

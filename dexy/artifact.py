@@ -10,7 +10,7 @@ import inspect
 import os
 import re
 import shutil
-import simplejson as json
+import json
 import time
 import uuid
 
@@ -52,6 +52,19 @@ class Artifact(object):
         del hash_dict['doc']
 
         self.hashstring = hashlib.md5(hash_dict.__str__()).hexdigest()
+
+### @export "command-line-args"
+    def command_line_args(self):
+        """
+        Allow specifying command line arguments which are passed to the filter
+        with the given key. Note that this does not currently allow
+        differentiating between 2 calls to the same filter in a single document.
+        """
+        if self.doc.args.has_key('args'):
+            args = self.doc.args['args']
+            last_key = self.key.rpartition("|")[-1]
+            if args.has_key(last_key):
+                return args[last_key]
 
 ### @export "filename"
     def filename(self, rel_to_artifacts_dir = True):
@@ -149,6 +162,7 @@ class Artifact(object):
 
 ### @export "create-input-file"
     def create_input_file(self, key, ext, rel_to_artifacts_dir = False):
+        print "the create_input_file method is deprecated, please use the FilenameHandler instead in", self.key
         if key in self.additional_inputs.keys():
             filename = self.additional_inputs[key]
             log.debug("existing key %s in artifact %s links to file %s" % (key, self.key, filename))

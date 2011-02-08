@@ -13,7 +13,7 @@ import fnmatch
 import glob
 import os
 import re
-import simplejson as json
+import json
 import sys
 
 class Controller(object):

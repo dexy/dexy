@@ -4,16 +4,12 @@ try:
 except ImportError:
     from ordereddict import OrderedDict
 
-try:
-    import json # Included in Python 2.6 and up
-except ImportError:
-    import simplejson as json # For Python 2.5
-
+from dexy.version import VERSION
+import json
 import os
 import re
 import shutil
 import sys
-from dexy.version import VERSION
 import urllib
 
 
