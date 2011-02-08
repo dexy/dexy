@@ -19,17 +19,14 @@ setup(name='dexy',
       install_requires = [
           'pexpect',
           'jinja2',
-          'idiopidae',
-          'zapps',
           'pygments',
-          'nose',
-          'cssutils',
-          'BeautifulSoup',
-          'pynliner',
-          'ansi2html',
-          'ordereddict', # only used for Python < 2.7, otherwise ignored
-          'simplejson' # only used for Python < 2.6, otherwise ignored
+          'idiopidae', #TODO remove dependency
+          'zapps', #TODO remove dependency
+          'ordereddict' # only used for Python < 2.7, otherwise ignored
       ],
+      extras_require = {
+          'liveserver': ['cssutils', 'BeautifulSoup', 'pynliner', 'ansi2html']
+      },
       dependency_links = [ "http://dexy.it/external-dependencies/" ]
 )
 
