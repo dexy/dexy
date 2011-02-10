@@ -1,5 +1,6 @@
 from dexy.artifact import Artifact
 from dexy.logger import log
+import glob
 import json
 import os
 import urllib2
@@ -156,8 +157,20 @@ class Document(object):
                 artifact, 
                 self.next_handler_class()
             )
-            
-            artifact = h.generate_artifact()
+
+            try: 
+                artifact = h.generate_artifact()
+            except Exception as e:
+                print "Error occurred while applying", f, "for", artifact_key
+                if hasattr(h.artifact, 'hashstring'):
+                    pattern = os.path.join(self.controller.artifacts_dir, h.artifact.hashstring)
+                    files_matching = glob.glob(pattern)
+                    if len(files_matching) > 0:
+                        print "Here are working files which might have clues about this error:"
+                        for f in files_matching:
+                            print f
+                raise e
+
             if not artifact:
                 raise Exception("no artifact created!")
             self.artifacts.append(artifact)
