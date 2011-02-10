@@ -17,9 +17,9 @@ import json
 import sys
 
 class Controller(object):
-    def __init__(self):
+    def __init__(self, logs_dir):
         self.handler_dirs = None
-        self.time_log_filename = "times.csv"
+        self.time_log_filename = os.path.join(logs_dir, "times.csv")
         self.init_time_logger()
 
 ### @export "init-time-logger"

@@ -85,6 +85,13 @@ def setup_option_parser():
         action='store_true',
         help='purge the artifacts and cache directories before running dexy'
     )
+
+    add_option(parser,
+        '--cleanup',
+        default=False,
+        action='store_true',
+        help='delete all dexy-generated directories and files (does not run dexy)'
+    )
     
     add_option(parser,
         '-a', '--artifacts-dir',
@@ -149,6 +156,7 @@ def setup_option_parser():
     else:
         raise Exception("unexpected option_parser %s" % option_parser)
     
+    args.run_dexy = True
     
     if args.utf8:
         if (sys.getdefaultencoding() == 'UTF-8'):
@@ -219,6 +227,20 @@ def setup_option_parser():
             shutil.rmtree(args.cache_dir)
             os.mkdir(args.cache_dir)
     
+    if args.cleanup:
+        log.warn("purging contents of %s" % args.artifacts_dir)
+        shutil.rmtree(args.artifacts_dir)
+        
+        if os.path.exists(args.cache_dir): 
+            log.warn("purging contents of %s" % args.cache_dir)
+            shutil.rmtree(args.cache_dir)
+
+        if os.path.exists(args.logs_dir): 
+            log.warn("purging contents of %s" % args.logs_dir)
+            shutil.rmtree(args.logs_dir)
+
+        args.run_dexy = False
+
     return args, dir_name, exclude_dir
 
 
@@ -235,6 +257,9 @@ def dexy_command():
     do_not_process_dirs.append(args.logs_dir)
     do_not_process_dirs.append(args.cache_dir)
 
+    if not args.run_dexy:
+        return
+
     if args.recurse:
         log.info("running dexy with recurse")
         for root, dirs, files in os.walk(dir_name):
@@ -249,7 +274,7 @@ def dexy_command():
                 log.warn("skipping dir %s" % root)
             else:
                 log.info("processing dir %s" % root)
-                controller = Controller()
+                controller = Controller(args.logs_dir)
                 controller.allow_remote = args.dangerous
                 controller.artifacts_dir = args.artifacts_dir
                 controller.config_file = args.config
