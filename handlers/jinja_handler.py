@@ -93,7 +93,19 @@ class JinjaHandler(DexyHandler):
             is_latex = True
         else:
             is_latex = False
+        
+        # Wrap HTML content in <notextile> tags if requested
+        if self.artifact.doc.args.has_key('notextile'):
+            for k, v in document_data.items():
+                if k.find("|") > 0:
+                    if document_data['filenames'][k].endswith(".html"):
+                        document_data[k] = "\n<notextile>\n%s\n</notextile>\n" % v.rstrip()
 
+            for file_key, data_hash in document_data['sections'].items():
+                if document_data['filenames'][file_key].endswith(".html"):
+                    for k, v in data_hash.items():
+                        document_data['sections'][file_key][k] = "\n<notextile>\n%s\n</notextile>\n" % v.rstrip()
+        
         document_data['filename'] = document_data['filenames']
         template_hash = {
             'd' : document_data, 
@@ -104,10 +116,6 @@ class JinjaHandler(DexyHandler):
             'is_latex' : is_latex
         }
 
-        try:
-            result = str(template.render(template_hash))
-        except Exception as e:
-            print "error occurred while processing", self.artifact.key
-            raise e
+        result = str(template.render(template_hash))
         
         return result
