@@ -1,6 +1,14 @@
 from dexy.handler import DexyHandler
 import shutil
 
+class LineNumberHandler(DexyHandler):
+    ALIASES = ['lines']
+    def process_text_to_dict(self, input_text):
+        lines = input_text.split("\n")
+        # TODO remove newline at end of last element.
+        lines_with_newline = [ "%s\n" % l for l in lines]
+        return dict(enumerate(lines_with_newline))
+
 class CopyHandler(DexyHandler):
     INPUT_EXTENSIONS = [".*"]
     OUTPUT_EXTENSIONS = [".*"]
