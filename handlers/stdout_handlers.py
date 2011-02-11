@@ -5,7 +5,6 @@ except ImportError:
 
 from dexy.handler import DexyHandler
 
-import os
 import subprocess
 import platform
 
@@ -23,16 +22,12 @@ class ProcessStdoutHandler(DexyHandler):
 
     def executable(self):
         if platform.system() == 'Windows':
-            return WINDOWS_EXECUTABLE
+            return self.WINDOWS_EXECUTABLE
         else:
-            return EXECUTABLE
+            return self.EXECUTABLE
     
     def process(self):
         self.artifact.generate_workfile()
-        if self.artifact.doc.args.has_key('timeout'):
-            timeout = self.artifact.doc.args['timeout']
-        else:
-            timeout = None
         command = "%s %s" % (self.executable(), self.artifact.work_filename(False))
         cla = self.artifact.command_line_args()
         if cla:
@@ -43,7 +38,7 @@ class ProcessStdoutHandler(DexyHandler):
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
         proc.wait()
-        self.artifact.data_dict['1'] = proc.stdout
+        self.artifact.data_dict['1'] = proc.stdout.read()
         if proc.returncode != 0:
             if self.artifact.doc.args.has_key('raiseerrors'):
                 raise "return code not 0!"
