@@ -45,9 +45,3 @@ class JsonFormatHandler(DexyHandler):
     OUTPUT_EXTENSIONS = [".json"]
     ALIASES = ['j', 'forcejson']
 
-class CleanNonPrinting(DexyHandler):
-    ALIASES = ['cl']
-
-    def process_text(self, input_text):
-        return input_text.replace("\b", "")
-

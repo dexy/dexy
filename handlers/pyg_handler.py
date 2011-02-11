@@ -21,6 +21,7 @@ class PygHandler(DexyHandler):
 
     def process_dict(self, input_dict):
         name = "input_text%s" % self.ext
+        # List any file extensions which don't map neatly to lexers.
         if self.ext == '.pycon':
             lexer = PythonConsoleLexer()
         else:
@@ -34,6 +35,17 @@ class PygHandler(DexyHandler):
                 log.warn("error processing section %s of file %s" % (k, self.artifact.key))
                 raise e
         return output_dict
+
+### @export "id"
+class IdHandler(DexyHandler):
+    """
+    Simplified comment-based sectioning parser.
+    """
+    ALIASES = ['id']
+
+    def process_text_to_dict(self, input_text):
+        output_dict = OrderedDict()
+
 
 ### @export "idio"
 class IdioHandler(DexyHandler):
@@ -60,5 +72,5 @@ class IdioHandler(DexyHandler):
             lines = builder.statements[i]['lines']
             formatted_lines = composer.format(lines, lexer, formatter) 
             output_dict[s] = formatted_lines
-
+        
         return output_dict
