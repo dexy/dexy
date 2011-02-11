@@ -113,12 +113,12 @@ class ProcessStdoutHandler(DexyHandler):
             # TODO rework this - probably want to raise error + not write
             # artifact, or have option to ignore errors.
             self.log.warn("an error occurred:\n%s" % output)
-            self.artifact.dirty = True
+            self.artifact.dirty = True # not sure this has any effect, hashcode already generated?
 
 ### @export "bash"
 class BashHandler(ProcessStdoutHandler):
     EXECUTABLE = '/usr/bin/env bash'
-    INPUT_EXTENSIONS = [".sh", ".bash"]
+    INPUT_EXTENSIONS = [".sh", ".bash", ".txt"]
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['bash']
 
