@@ -238,6 +238,15 @@ def setup_option_parser():
         if os.path.exists(args.logs_dir): 
             log.warn("purging contents of %s" % args.logs_dir)
             shutil.rmtree(args.logs_dir)
+        
+        filters_dir = 'filters'
+        # TODO improve this so it detects __init__.py customizations etc.
+        if os.path.exists(filters_dir):
+            if os.listdir(filters_dir) == ['__init__.py', 'README']:
+                log.warn("purging contents of %s" % filters_dir)
+                shutil.rmtree(filters_dir)
+            else:
+                print("Directory %s has been modified, not removing." % filters_dir)
 
         args.run_dexy = False
 
