@@ -1,6 +1,6 @@
 import os
 import difflib
-import simplejson as json
+import json
 
 d = difflib.Differ()
 
