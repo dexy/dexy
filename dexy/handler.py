@@ -56,8 +56,6 @@ class DexyHandler(object):
             output, e = proc.communicate()
 
             if proc.returncode > 0:
-                print output
-                print proc.returncode
                 raise Exception("An error occurred running %s" % vc)
             else:
                 return output
