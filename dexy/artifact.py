@@ -47,6 +47,7 @@ class Artifact(object):
             self.dirty_string = time.gmtime()
 
         hash_dict = self.__dict__.copy()
+        hash_dict['args'] = self.doc.args
 
         # Remove any items which should not be included in hash calculations.
         del hash_dict['doc']
