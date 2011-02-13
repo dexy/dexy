@@ -4,6 +4,9 @@ from handlers.blog_handler import BlogHandler
 # http://code.google.com/p/python-tumblr/
 from tumblr import Api
 class TumblrHandler(BlogHandler):
+    """
+    Posts to a tumblr blog.
+    """
     ALIASES = ['tumblr']
     BLOG_CONFIG_FILE = 'tumblr-config.json'
 

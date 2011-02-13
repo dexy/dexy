@@ -7,7 +7,7 @@ import re
 import uuid
 
 class FilenameHandler(DexyHandler):
-    """Generate random filenames from keys to track provenance of data."""
+    """Generate random filenames to track provenance of data."""
     ALIASES = ['fn']
     def process_text(self, input_text):
         self.artifact.load_input_artifacts()
@@ -38,6 +38,11 @@ class JinjaHelper:
         return f.read()
 
 class JinjaHandler(DexyHandler):
+    """
+    Runs the Jinja templating engine on your document. The primary way to
+    incorporate dynamic content into your documents.
+    """
+
     INPUT_EXTENSIONS = [".*"]
     OUTPUT_EXTENSIONS = [".*"]
     ALIASES = ['jinja']

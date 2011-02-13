@@ -1,5 +1,0 @@
-\begin{Verbatim}[commandchars=\\\{\}]
-\PY{k}{for} \PY{n}{i} \PY{k}{in} \PY{l+m+mi}{1}\PY{o}{.}\PY{n}{.}\PY{l+m+mi}{9}
-  \PY{n+nb}{puts} \PY{n}{i}
-\PY{k}{end}
-\end{Verbatim}

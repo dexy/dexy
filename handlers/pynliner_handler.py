@@ -7,6 +7,10 @@ from dexy.handler import DexyHandler
 from pynliner import Pynliner
 
 class PynlinerHandler(DexyHandler):
+    """
+    Move CSS inline, for posting to web without a stylesheet or for emailing.
+    For now hard-coded to look for a pastie.css file in project root.
+    """
     ALIASES = ['pynliner', 'inlinecss']
 
     def process_dict(self, input_dict):

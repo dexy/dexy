@@ -14,7 +14,7 @@ class ProcessLinewiseInteractiveHandler(DexyHandler):
     """
     Intended for use with interactive processes, such as python interpreter,
     where your goal is to have a session transcript divided into same sections
-    as input.
+    as input. Sends input line-by-line.
     """
     EXECUTABLE = '/usr/bin/env python'
     PROMPT = '>>>|\.\.\.' # Python uses >>> prompt normally and ... when in multi-line structures like loops
@@ -50,6 +50,11 @@ class ProcessLinewiseInteractiveHandler(DexyHandler):
 
 ### @export "sectionwise"
 class ProcessSectionwiseInteractiveHandler(DexyHandler):
+    """
+    Intended for use with interactive processes, such as R interpreter,
+    where your goal is to have a session transcript divided into same sections
+    as input. Sends input section-by-section.
+    """
     EXECUTABLE = '/usr/bin/env R --quiet --vanilla'
     VERSION = "/usr/bin/env R --version"
     PROMPT = '>'
@@ -85,6 +90,9 @@ class ProcessSectionwiseInteractiveHandler(DexyHandler):
 
 ### @export "clojure"
 class ClojureInteractiveHandler(ProcessLinewiseInteractiveHandler):
+    """
+    Runs clojure.
+    """
     EXECUTABLE = 'java clojure.main'
     INPUT_EXTENSIONS = [".clj"]
     OUTPUT_EXTENSIONS = [".txt"]
@@ -94,6 +102,9 @@ class ClojureInteractiveHandler(ProcessLinewiseInteractiveHandler):
 ### @export "lua"
 # TODO Add support for lua-style comments to idiopidae fork
 class LuaHandler(ProcessSectionwiseInteractiveHandler):
+    """
+    Runs lua.
+    """
     EXECUTABLE = '/usr/bin/env lua'
     VERSION = '/usr/bin/env lua -v'
     INPUT_EXTENSIONS = ['.lua', '.txt']
@@ -105,7 +116,7 @@ class LuaHandler(ProcessSectionwiseInteractiveHandler):
 ### @export "timing"
 class ProcessTimingHandler(DexyHandler):
     """
-    Runs code N times and reports timings.
+    Runs python code N times and reports timings.
     """
     EXECUTABLE = '/usr/bin/env python'
     VERSION = '/usr/bin/env python --version'
@@ -127,12 +138,12 @@ class ProcessTimingHandler(DexyHandler):
 # This is sort of a duplicate of the Sectionwise Interactive Handler
 # but the 
 class ROutputHandler(DexyHandler):
-    """Returns a full transcript, commands and output from each line."""
+    """Runs R code in batch mode. Returns a full transcript, including commands and output from each line."""
     EXECUTABLE = '/usr/bin/env R CMD BATCH --vanilla --quiet --no-timing'
     VERSION = "/usr/bin/env R --version"
     INPUT_EXTENSIONS = ['.txt', '.r', '.R']
     OUTPUT_EXTENSIONS = [".Rout"]
-    ALIASES = ['r', 'R']
+    ALIASES = ['r']
 
     def generate(self):
         self.artifact.write_dj()
@@ -147,8 +158,9 @@ class ROutputHandler(DexyHandler):
 
 ### @export "rartifact"
 class RArtifactHandler(DexyHandler):
-    """Uses the --slave flag so doesn't echo commands, just returns output."""
+    """Runs R code in batch mode. Uses the --slave flag so doesn't echo commands, just returns output."""
     EXECUTABLE = '/usr/bin/env R CMD BATCH --vanilla --quiet --slave --no-timing'
+    VERSION = "/usr/bin/env R --version"
     INPUT_EXTENSIONS = ['.txt', '.r', '.R']
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['rart']
@@ -166,9 +178,14 @@ class RArtifactHandler(DexyHandler):
 
 ### @export "pdf2png"
 class Pdf2Png(DexyHandler):
+    """
+    Converts a PDF file to PNG format.
+    """
     INPUT_EXTENSIONS = ['.pdf']
     OUTPUT_EXTENSIONS = ['.png']
     ALIASES = ['pdf2png']
+    EXECUTABLE = "/usr/bin/env gs"
+    VERSION = "/usr/bin/env gs --version"
 
     def generate(self):
         self.artifact.write_dj()
@@ -178,15 +195,19 @@ class Pdf2Png(DexyHandler):
         # TODO should we be doing this in general rather than generating workfiles?
         wf = self.artifact.previous_artifact_filename
         of = self.artifact.filename(False)
-        command = "/usr/bin/env gs -dSAFER -dNOPAUSE -dBATCH -sDEVICE=png16m -sOutputFile=%s ../%s" % (of, wf)
+        command = "%s -dSAFER -dNOPAUSE -dBATCH -sDEVICE=png16m -sOutputFile=%s ../%s" % (self.executable(), of, wf)
         self.log.debug(command)
         self.artifact.stdout = pexpect.run(command, cwd=self.artifact.artifacts_dir)
 
 ### @export "ps2pdf"
 class Ps2Pdf(DexyHandler):
+    """
+    Converts a PS file to PDF format.
+    """
     INPUT_EXTENSIONS = [".ps", ".txt"]
     OUTPUT_EXTENSIONS = [".pdf"]
     ALIASES = ['ps2pdf']
+    EXECUTABLE = '/usr/bin/env ps2pdf'
 
     def generate(self):
         self.artifact.write_dj()
@@ -195,12 +216,15 @@ class Ps2Pdf(DexyHandler):
         self.artifact.generate_workfile()
         wf = self.artifact.work_filename(False)
         of = self.artifact.filename(False)
-        command = "/usr/bin/env ps2pdf %s %s" % (wf, of)
+        command = "%s %s %s" % (self.executable(), wf, of)
         self.log.debug(command)
         self.artifact.stdout = pexpect.run(command, cwd=self.artifact.artifacts_dir)
 
 ### @export "latex"
 class LatexHandler(DexyHandler):
+    """
+    Generates a PDF file from LaTeX source.
+    """
     INPUT_EXTENSIONS = [".tex", ".txt"]
     OUTPUT_EXTENSIONS = [".pdf", ".png"]
     ALIASES = ['latex']
@@ -240,6 +264,10 @@ class LatexHandler(DexyHandler):
 
 ### @export "voice"
 class VoiceHandler(DexyHandler):
+    """
+    Use text-to-speech to generate mp3 file from a text file. Uses whichever of
+    say, aiff, espeak, wav tools is found, then lame to convert to mp3.
+    """
     INPUT_EXTENSIONS = [".*"]
     OUTPUT_EXTENSIONS = [".mp3"]
     ALIASES = ['voice', 'say']
@@ -277,36 +305,49 @@ class VoiceHandler(DexyHandler):
 
 ### @export "ragelruby"
 class RagelRubyHandler(DexyHandler):
+    """
+    Runs ragel for ruby.
+    """
     INPUT_EXTENSIONS = [".rl"]
     OUTPUT_EXTENSIONS = [".rb"]
     ALIASES = ['rlrb', 'ragelruby']
+    VERSION = '/usr/bin/env ragel --version'
+    EXECUTABLE = '/usr/bin/env ragel -R'
     
     def process(self):
         self.artifact.auto_write_artifact = False
         self.artifact.generate_workfile()
         artifact_file = self.artifact.filename(False)
         work_file = self.artifact.work_filename(False)
-        command = "/usr/bin/env ragel -R -o %s %s" % (artifact_file, work_file)
+        command = "%s -o %s %s" % (self.executable(), artifact_file, work_file)
         self.log.info(command)
         self.artifact.stdout = pexpect.run(command, cwd=self.artifact.artifacts_dir)
         self.artifact.data_dict['1'] = open(self.artifact.filename(), "r").read()
 
 ### @export "ragelrubydot"
 class RagelRubyDotHandler(DexyHandler):
+    """
+    Generates state chart in .dot format of ragel state machine for ruby.
+    """
     INPUT_EXTENSIONS = [".rl"]
     OUTPUT_EXTENSIONS = [".dot"]
     ALIASES = ['rlrbd', 'ragelrubydot']
+    VERSION = '/usr/bin/env ragel --version'
+    EXECUTABLE = '/usr/bin/env ragel -R'
     
     def process(self):
         self.artifact.generate_workfile()
-        work_file = os.path.basename(self.artifact.work_filename())
-        command = "/usr/bin/env ragel -R -V %s" % (work_file)
+        wf = self.artifact.work_filename(False)
+        command = "%s -V %s" % (self.executable(), wf)
         self.log.info(command)
         ad = self.artifact.artifacts_dir
         self.artifact.data_dict['1'] = pexpect.run(command, cwd=ad)
 
 ### @export "dot"
 class DotHandler(DexyHandler):
+    """
+    Renders .dot files to either PNG or PDF images.
+    """
     INPUT_EXTENSIONS = [".dot"]
     OUTPUT_EXTENSIONS = [".png", ".pdf"]
     ALIASES = ['dot', 'graphviz']

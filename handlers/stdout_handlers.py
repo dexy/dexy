@@ -6,25 +6,18 @@ except ImportError:
 from dexy.handler import DexyHandler
 
 import subprocess
-import platform
 
 ### @export "stdout"
 class ProcessStdoutHandler(DexyHandler):
     """
-    Intended for use with command line processes where your only interest is in
-    the contents of stdout.
+    Runs python script and returns STDOUT.
     """
     EXECUTABLE = '/usr/bin/env python'
+    VERSION = '/usr/bin/env python --version'
     WINDOWS_EXECUTABLE = 'python'
     INPUT_EXTENSIONS = [".txt", ".py"]
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['py', 'python', 'pyout']
-
-    def executable(self):
-        if platform.system() == 'Windows':
-            return self.WINDOWS_EXECUTABLE
-        else:
-            return self.EXECUTABLE
     
     def process(self):
         self.artifact.generate_workfile()
@@ -47,20 +40,31 @@ class ProcessStdoutHandler(DexyHandler):
 
 ### @export "bash"
 class BashHandler(ProcessStdoutHandler):
+    """
+    Runs bash script and returns STDOUT.
+    """
     EXECUTABLE = '/usr/bin/env bash'
+    VERSION = '/usr/bin/env bash --version'
     INPUT_EXTENSIONS = [".sh", ".bash", ".txt"]
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['bash']
 
 ### @export "php"
 class PhpHandler(ProcessStdoutHandler):
+    """
+    Runs php script and returns STDOUT.
+    """
     EXECUTABLE = '/usr/bin/env php'
+    VERSION = '/usr/bin/env php --version'
     INPUT_EXTENSIONS = [".php"]
     OUTPUT_EXTENSIONS = [".html", ".txt"]
     ALIASES = ['php']
 
 ### @export "escript"
 class EscriptHandler(ProcessStdoutHandler):
+    """
+    Runs escript (erlang) and returns STDOUT.
+    """
     EXECUTABLE = '/usr/bin/env escript'
     INPUT_EXTENSIONS = [".erl"]
     OUTPUT_EXTENSIONS = [".txt"]
@@ -68,6 +72,9 @@ class EscriptHandler(ProcessStdoutHandler):
 
 ### @export "luaout"
 class LuaStdoutHandler(ProcessStdoutHandler):
+    """
+    Runs lua script and returns STDOUT.
+    """
     EXECUTABLE = '/usr/bin/env lua'
     VERSION = '/usr/bin/env lua -v'
     INPUT_EXTENSIONS = ['.lua']
@@ -76,14 +83,22 @@ class LuaStdoutHandler(ProcessStdoutHandler):
 
 ### @export "redcloth"
 class RedclothHandler(ProcessStdoutHandler):
+    """
+    Runs redcloth, converts textile markup to HTML.
+    """
     EXECUTABLE = '/usr/bin/env redcloth'
+    VERSION = '/usr/bin/env redcloth --version'
     INPUT_EXTENSIONS = [".txt", ".textile"]
     OUTPUT_EXTENSIONS = [".html"]
     ALIASES = ['redcloth', 'textile']
 
 ### @export "redclothl"
 class RedclothLatexHandler(ProcessStdoutHandler):
+    """
+    Runs redcloth, converts textile markup to LaTeX.
+    """
     EXECUTABLE = '/usr/bin/env redcloth -o latex'
+    VERSION = '/usr/bin/env redcloth --version'
     INPUT_EXTENSIONS = [".txt", ".textile"]
     OUTPUT_EXTENSIONS = [".tex"]
     ALIASES = ['redclothl', 'latextile']
@@ -112,6 +127,7 @@ class Rst2BeamerHandler(ProcessStdoutHandler):
 ### @export "sloccount"
 class SloccountHandler(ProcessStdoutHandler):
     EXECUTABLE = '/usr/bin/env sloccount'
+    VERSION = '/usr/bin/env sloccount --version'
     INPUT_EXTENSIONS = [".*"]
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['sloc', 'sloccount']
@@ -119,6 +135,7 @@ class SloccountHandler(ProcessStdoutHandler):
 ### @export "rb"
 class RubyStdoutHandler(ProcessStdoutHandler):
     EXECUTABLE = '/usr/bin/env ruby'
+    VERSION = '/usr/bin/env ruby --version'
     INPUT_EXTENSIONS = [".txt", ".rb"]
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['rb']

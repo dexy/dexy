@@ -7,6 +7,7 @@ from dexy.artifact import Artifact
 import dexy.logger
 import time
 import subprocess
+import platform
 
 ### @export "class"
 class DexyHandler(object):
@@ -18,20 +19,46 @@ class DexyHandler(object):
     """
     INPUT_EXTENSIONS = [".*"]
     OUTPUT_EXTENSIONS = [".*"]
-    ALIASES = ['dexy', '']
+    ALIASES = ['dexy']
+
+### @export "executable"
+    @classmethod
+    def executable(self):
+        """A standard way of specifying a command line executable. For usage
+        example see stdout filter. This does not need to be used, and is not
+        relevant for many filters, but is intended to allow introspection for
+        those which do use it."""
+        if platform.system() == 'Windows':
+            if hasattr(self, 'WINDOWS_EXECUTABLE'):
+                return self.WINDOWS_EXECUTABLE
+        else:
+            if hasattr(self, 'EXECUTABLE'):
+                return self.EXECUTABLE
+
+### @export "version_command"
+    @classmethod
+    def version_command(self):
+        if platform.system() == 'Windows':
+            if hasattr(self, 'WINDOWS_VERSION'):
+                return self.WINDOWS_VERSION
+        else:
+            if hasattr(self, 'VERSION'):
+                return self.VERSION
 
 ### @export "version"
+    @classmethod
     def version(self):
-        if hasattr(self, 'VERSION'):
-            proc = subprocess.Popen(self.VERSION, shell=True,
-                                    stdout=subprocess.PIPE)
-            
+        vc = self.version_command()
+        if vc:
+            proc = subprocess.Popen(vc, shell=True,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.STDOUT)
             output, e = proc.communicate()
-             
+
             if proc.returncode > 0:
                 print output
                 print proc.returncode
-                raise Exception("An error occurred running %s" % self.VERSION)
+                raise Exception("An error occurred running %s" % vc)
             else:
                 return output
         else:
