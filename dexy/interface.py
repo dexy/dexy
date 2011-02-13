@@ -246,7 +246,7 @@ def setup_option_parser():
         filters_dir = 'filters'
         # TODO improve this so it detects __init__.py customizations etc.
         if os.path.exists(filters_dir):
-            if os.listdir(filters_dir) == ['__init__.py', 'README']:
+            if sorted(os.listdir(filters_dir)) == ['README', '__init__.py']:
                 log.warn("purging contents of %s" % filters_dir)
                 shutil.rmtree(filters_dir)
             else:
