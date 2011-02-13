@@ -1,12 +1,16 @@
 from dexy.handler import DexyHandler
 from dexy.utils import ansi_output_to_html
 
-import pexpect
+import pexpect # TODO replace with subprocess
 import re
+
 class CucumberHandler(DexyHandler):
+    """Run cucumber features."""
     INPUT_EXTENSIONS = [".feature"]
     OUTPUT_EXTENSIONS = [".html", ".txt"]
     ALIASES = ["cuke"]
+    EXECUTABLE = "/usr/bin/env cucumber"
+    VERSION = "/usr/bin/env cucumber --version"
 
     def process(self):
         self.artifact.load_input_artifacts()
@@ -25,7 +29,7 @@ class CucumberHandler(DexyHandler):
         rf = self.artifact.input_artifacts_dict[key]['fn']
         self.artifact.generate_workfile()
         wf = self.artifact.work_filename(False)
-        command = "/usr/bin/env cucumber -r %s %s" % (rf, wf)
+        command = "%s -r %s %s" % (self.executable(), rf, wf)
         self.log.debug(command)
         output = pexpect.run(command, cwd=self.artifact.artifacts_dir)
 

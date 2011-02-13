@@ -15,6 +15,9 @@ import idiopidae.parser
 
 ### @export "pyg"
 class PygHandler(DexyHandler):
+    """
+    Apply Pygments syntax highlighting.
+    """
     INPUT_EXTENSIONS = [".*"]
     OUTPUT_EXTENSIONS = [".html", ".tex"]
     ALIASES = ['pyg', 'pygments']
@@ -36,19 +39,12 @@ class PygHandler(DexyHandler):
                 raise e
         return output_dict
 
-### @export "id"
-class IdHandler(DexyHandler):
-    """
-    Simplified comment-based sectioning parser.
-    """
-    ALIASES = ['id']
-
-    def process_text_to_dict(self, input_text):
-        output_dict = OrderedDict()
-
-
 ### @export "idio"
 class IdioHandler(DexyHandler):
+    """
+    Apply idiopidae to split document into sections at ### @export
+    "section-name" comments.
+    """
     INPUT_EXTENSIONS = [".*"]
     OUTPUT_EXTENSIONS = [".html", ".tex", ".txt"]
     ALIASES = ['idio', 'idiopidae']

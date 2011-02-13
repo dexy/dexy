@@ -1,0 +1,25 @@
+{
+  "*|pyg" : {},
+  "index.html|jinja" : { "allinputs" : true},
+  "hello.cpp|cpp|test" : {
+    "expects" : "Hello, c++ world!"
+  },
+  "hello.c|gcc|test" : {
+    "expects" : "Hello, C world!"
+  },
+  "hello.c|clang|test" : {
+    "expects" : "Hello, C world!"
+  },
+  "hello.c|ctime" : {},
+  "read_input.c|cint|test" : {
+    "inputs" : ["read_input.txt|dexy"],
+    "expects" : "here is input\r\nhere is input\r\n"
+  },
+  "read_input.c|ctimeint" : {
+    "inputs" : ["read_input.txt|dexy"]
+  },
+  "hello.py|py|test" : {
+    "expects" : "python says 1 + 1 = 2\n"
+  },
+  "hello.py|pytime" : {}
+}

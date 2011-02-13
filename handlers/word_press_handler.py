@@ -5,6 +5,9 @@ import re
 import xmlrpclib
 
 class WordPressHandler(BlogHandler):
+    """
+    Posts to a WordPress blog.
+    """
     ALIASES = ['wp']
     BLOG_CONFIG_FILE = 'wp-config.json'
     MIME_TYPES = {

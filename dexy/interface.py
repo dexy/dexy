@@ -93,6 +93,21 @@ def setup_option_parser():
         action='store_true',
         help='delete all dexy-generated directories and files (does not run dexy)'
     )
+
+    add_option(parser,
+        '--filters',
+        default=False,
+        action='store_true',
+        help='list all available filters (does not run dexy)'
+    )
+
+    add_option(parser,
+        '--filter-versions',
+        default=False,
+        action='store_true',
+        help="""print installed version of external software needed (only
+               effective when combined with --filters)"""
+    )
     
     add_option(parser,
         '-a', '--artifacts-dir',
@@ -232,6 +247,7 @@ def setup_option_parser():
             os.mkdir(args.cache_dir)
     
     if args.cleanup:
+        args.run_dexy = False
         log.warn("purging contents of %s" % args.artifacts_dir)
         shutil.rmtree(args.artifacts_dir)
         
@@ -251,8 +267,32 @@ def setup_option_parser():
                 shutil.rmtree(filters_dir)
             else:
                 print("Directory %s has been modified, not removing." % filters_dir)
-
+    
+    if args.filters:
         args.run_dexy = False
+        from dexy.controller import Controller
+        controller = Controller(args.logs_dir)
+        handlers = controller.find_handlers()
+        for k in sorted(handlers.keys()):
+            klass = handlers[k]
+            print
+            print k, ":", klass.__name__
+            if klass.executable():
+                print "    calls", klass.executable()
+            if klass.version_command() and args.filter_versions:
+                try:
+                    raw_version = klass.version().strip()
+                    if raw_version.find("\n") > 0:
+                        # Clean up long version strings like R's
+                        version = raw_version.split("\n")[0]
+                    else:
+                        version = raw_version
+
+                    print "    version", version, "detected"
+                except Exception as e: # TODO raise/catch specific Exception
+                    print "    ERROR RUNNING", klass.version_command()
+            if klass.__doc__:
+                print "   ", klass.__doc__.strip()
 
     return args, dir_name, exclude_dir
 

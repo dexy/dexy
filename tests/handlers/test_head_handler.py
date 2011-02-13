@@ -1,4 +1,4 @@
-from handlers.python import HeadHandler
+from handlers.python_handlers import HeadHandler
 import helper
 
 def test_process_text():

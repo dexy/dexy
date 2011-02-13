@@ -3,6 +3,10 @@ from handlers.blog_handler import BlogHandler
 # http://github.com/nureineide/posterous-python
 import posterous
 class PosterousHandler(BlogHandler):
+    """
+    IN DEVELOPMENT. Post to a posterous blog. (Due to posterous' stripping out
+    formatting, is difficult to apply syntax highlighting in usual way.)
+    """
     ALIASES = ['posterous']
     BLOG_CONFIG_FILE = 'posterous-config.json'
     

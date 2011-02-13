@@ -1,6 +1,0 @@
-Python 2.7 (r27:82508, Jul  3 2010, 21:12:11) 
-[GCC 4.0.1 (Apple Inc. build 5493)] on darwin
-Type "help", "copyright", "credits" or "license" for more information.
->>> x = 5
->>> print x
-5
