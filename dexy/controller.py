@@ -69,7 +69,7 @@ class Controller(object):
         if not self.handler_dirs:
             self.init_handler_dirs()
 
-        log.info("Automatically loading all handlers found in %s" % ", ".join(self.handler_dirs))
+        log.info("Automatically loading all filters found in %s" % ", ".join(self.handler_dirs))
         
         handlers = {}
 
@@ -90,8 +90,7 @@ class Controller(object):
                     try:
                         __import__(module)
                     except ImportError as e:
-                        log.warn("ImportError %s" % e)
-                        log.warn("handlers defined in %s will not be available: %s" % (module, e))
+                        log.warn("filters defined in %s are not available: %s" % (module, e))
                     
                     if not sys.modules.has_key(module):
                         continue
