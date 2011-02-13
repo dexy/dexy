@@ -149,7 +149,7 @@ def setup_option_parser():
     
     elif (option_parser == 'optparse'):
         (args, argv) = parser.parse_args()
-        if len(argv) = 0:
+        if len(argv) == 0:
             dir_name = '.'
         else:
             dir_name = argv[0]
