@@ -38,7 +38,8 @@ def setup_option_parser():
         
         parser.add_argument(
             'dir',
-            help='directory of files to process with dexy'
+            help='directory of files to process with dexy',
+            default='.', nargs='?'
         )
     
         parser.add_argument(
@@ -148,7 +149,10 @@ def setup_option_parser():
     
     elif (option_parser == 'optparse'):
         (args, argv) = parser.parse_args()
-        dir_name = argv[0]
+        if len(argv) = 0:
+            dir_name = '.'
+        else:
+            dir_name = argv[0]
         if args.exclude_dir:
             exclude_dir = args.exclude_dir.split(',')
         else:
