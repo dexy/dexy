@@ -148,6 +148,8 @@ class Controller(object):
             
             # virtual document
             if re.search("@", glob_string):
+                # TODO some virtual files are local, not remote. test on
+                # presence of 'url' or something more appropriate.
                 virtual = True
                 if not self.allow_remote:
                     raise Exception("""You are attempting to access a remote file.
@@ -165,6 +167,11 @@ class Controller(object):
 
             if len(files) == 0 and virtual:
                 files = [glob_string]
+            
+            if len(files) == 0 and not virtual:
+                if glob_string.find("*") < 0:
+                    # TODO raise specific class of Exception
+                    raise Exception("file %s not found!" % glob_string)
 
             for f in files:
                 create = True
