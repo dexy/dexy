@@ -102,14 +102,6 @@ def setup_option_parser():
     )
 
     add_option(parser,
-        '--filter-versions',
-        default=False,
-        action='store_true',
-        help="""print installed version of external software needed (only
-               effective when combined with --filters)"""
-    )
-    
-    add_option(parser,
         '-a', '--artifacts-dir',
         default='artifacts',
         help='location of artifacts directory (default: artifacts)'
@@ -279,7 +271,7 @@ def setup_option_parser():
             print k, ":", klass.__name__
             if klass.executable():
                 print "    calls", klass.executable()
-            if klass.version_command() and args.filter_versions:
+            if klass.version_command():
                 try:
                     raw_version = klass.version().strip()
                     if raw_version.find("\n") > 0:
@@ -288,9 +280,9 @@ def setup_option_parser():
                     else:
                         version = raw_version
 
-                    print "    version", version, "detected"
+                    print "    version", version, "detected using",klass.version_command()
                 except Exception as e: # TODO raise/catch specific Exception
-                    print "    ERROR RUNNING", klass.version_command()
+                    print "    may not be installed, was unable to run", klass.version_command()
             if klass.__doc__:
                 print "   ", klass.__doc__.strip()
 
