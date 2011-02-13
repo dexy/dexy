@@ -118,7 +118,9 @@ class Document(object):
                 else:
                     # Some other http error, we want to know about it.
                     raise err
-            
+
+        elif artifact.doc.args.has_key('contents'):
+            artifact.data = artifact.doc.args['contents']
 
         else:
             # Normal local file, just read the contents.
