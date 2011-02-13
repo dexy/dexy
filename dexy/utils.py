@@ -15,6 +15,5 @@ try:
         return doc.body.renderContents()
 
 except ImportError as e:
-   print e
-   print "ansi_output_to_html not available"
+    pass
 
