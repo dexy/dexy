@@ -5,6 +5,7 @@ except ImportError:
 
 from dexy.handler import DexyHandler
 
+import os
 import subprocess
 
 ### @export "stdout"
@@ -23,13 +24,23 @@ class ProcessStdoutHandler(DexyHandler):
         self.artifact.generate_workfile()
         command = "%s %s" % (self.executable(), self.artifact.work_filename(False))
         cla = self.artifact.command_line_args()
+
+        if self.artifact.doc.args.has_key('env'):
+            env = os.environ
+            env.update(self.artifact.doc.args['env'])
+        else:
+            env = None
+
         if cla:
             command = "%s %s" % (command, cla)
         self.log.debug(command)
+
+
         proc = subprocess.Popen(command, shell=True,
                                 cwd=self.artifact.artifacts_dir,
                                 stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
+                                stderr=subprocess.PIPE,
+                                env=env)
         proc.wait()
         self.artifact.data_dict['1'] = proc.stdout.read()
         if proc.returncode != 0:
