@@ -85,24 +85,24 @@ class ProcessSectionwiseInteractiveHandler(DexyHandler):
         else:
             env = None
  
-         proc = pexpect.spawn(self.EXECUTABLE, 
-                              cwd=self.artifact.artifacts_dir, 
-                              env=env)
-         proc.expect(self.PROMPT)
-         start = (proc.before + proc.after)
-         
-         for k, s in input_dict.items():
-             section_transcript = start
-             start = ""
-             proc.send(s)
-             proc.sendline(self.COMMENT * 5)
+        proc = pexpect.spawn(self.EXECUTABLE, 
+                             cwd=self.artifact.artifacts_dir, 
+                             env=env)
+        proc.expect(self.PROMPT)
+        start = (proc.before + proc.after)
+        
+        for k, s in input_dict.items():
+            section_transcript = start
+            start = ""
+            proc.send(s)
+            proc.sendline(self.COMMENT * 5)
 
-             proc.expect(self.COMMENT * 5, timeout = timeout)
- 
-             section_transcript += proc.before.rstrip(self.TRAILING_PROMPT)
-             output_dict[k] = section_transcript
+            proc.expect(self.COMMENT * 5, timeout = timeout)
 
-         return output_dict
+            section_transcript += proc.before.rstrip(self.TRAILING_PROMPT)
+            output_dict[k] = section_transcript
+
+        return output_dict
 
 ### @export "clojure"
 class ClojureInteractiveHandler(ProcessLinewiseInteractiveHandler):
