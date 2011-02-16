@@ -122,7 +122,11 @@ class Controller(object):
             if os.path.exists(config_filename):
                 log.info("loading config %s" % config_filename)
                 config_file = open(config_filename, "r")
-                json_dict = json.load(config_file)
+                try:
+                    json_dict = json.load(config_file)
+                except ValueError as e:
+                    raise Exception("""Your config file %s has invalid JSON. Details: %s""" %
+                                    (config_filename, e.message))
                 config_dict.update(json_dict)
                 log.info("config dict %s" % config_dict)
         self.json_dict = config_dict
