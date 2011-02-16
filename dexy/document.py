@@ -115,8 +115,11 @@ class Document(object):
                     f = open(filename, "r")
                     artifact.data = f.read()
                     f.close()
+                elif err.code == 404:
+                    raise Exception("received http status code %s while trying to fetch %s" % (err.code, url))
                 else:
                     # Some other http error, we want to know about it.
+                    print url
                     raise err
 
         elif artifact.doc.args.has_key('contents'):
