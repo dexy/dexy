@@ -165,13 +165,17 @@ class Controller(object):
 
             files = glob.glob(glob_string)
 
-            if len(files) == 0 and virtual:
+            nofiles = len(files) == 0
+            in_proj_root = self.path == '.'
+            not_wildcard = glob_string.find("*") < 0
+
+            if nofiles and virtual:
                 files = [glob_string]
             
-            if len(files) == 0 and not virtual:
-                if glob_string.find("*") < 0:
-                    # TODO raise specific class of Exception
-                    raise Exception("file %s not found!" % glob_string)
+            # If we mention a specific file in .dexy it should be there...
+            if nofiles and not virtual and in_proj_root and not_wildcard:
+                # TODO raise specific class of Exception
+                raise Exception("file %s not found!" % glob_string)
 
             for f in files:
                 create = True

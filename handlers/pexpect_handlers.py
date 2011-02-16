@@ -24,8 +24,19 @@ class ProcessLinewiseInteractiveHandler(DexyHandler):
 
     def process_dict(self, input_dict):
         output_dict = OrderedDict()
+        if self.artifact.doc.args.has_key('timeout'):
+            timeout = self.artifact.doc.args['timeout']
+            self.log.info("using custom timeout %s for %s" % (timeout, self.artifact.key))
+        else:
+            timeout = None
+        if self.artifact.doc.args.has_key('env'):
+            env = os.environ
+            env.update(self.artifact.doc.args['env'])
+            self.log.info("adding to env: %s" % self.artifact.doc.args['env'])
+        else:
+            env = None
 
-        proc = pexpect.spawn(self.EXECUTABLE, cwd=self.artifact.artifacts_dir)
+        proc = pexpect.spawn(self.EXECUTABLE, cwd=self.artifact.artifacts_dir, env=env)
         proc.expect(self.PROMPT)
         start = (proc.before + proc.after)
 
@@ -37,11 +48,6 @@ class ProcessLinewiseInteractiveHandler(DexyHandler):
                 section_transcript += start
                 start = ""
                 proc.sendline(l)
-                if self.artifact.doc.args.has_key('timeout'):
-                    timeout = self.artifact.doc.args['timeout']
-                    print "using custom timeout %s" % timeout
-                else:
-                    timeout = None
                 proc.expect(self.PROMPT, timeout=timeout)
                 section_transcript += proc.before
                 start = proc.after
@@ -65,9 +71,23 @@ class ProcessSectionwiseInteractiveHandler(DexyHandler):
     ALIASES = ['rint']
     
     def process_dict(self, input_dict):
-         output_dict = OrderedDict()
+        output_dict = OrderedDict()
+
+        if self.artifact.doc.args.has_key('timeout'):
+            timeout = self.artifact.doc.args['timeout']
+            self.log.info("using custom timeout %s for %s" % (timeout, self.artifact.key))
+        else:
+            timeout = None
+        if self.artifact.doc.args.has_key('env'):
+            env = os.environ
+            env.update(self.artifact.doc.args['env'])
+            self.log.info("adding to env: %s" % self.artifact.doc.args['env'])
+        else:
+            env = None
  
-         proc = pexpect.spawn(self.EXECUTABLE, cwd=self.artifact.artifacts_dir)
+         proc = pexpect.spawn(self.EXECUTABLE, 
+                              cwd=self.artifact.artifacts_dir, 
+                              env=env)
          proc.expect(self.PROMPT)
          start = (proc.before + proc.after)
          
@@ -76,10 +96,6 @@ class ProcessSectionwiseInteractiveHandler(DexyHandler):
              start = ""
              proc.send(s)
              proc.sendline(self.COMMENT * 5)
-             if self.artifact.doc.args.has_key('timeout'):
-                 timeout = self.artifact.doc.args['timeout']
-             else:
-                 timeout = None
 
              proc.expect(self.COMMENT * 5, timeout = timeout)
  
