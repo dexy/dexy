@@ -120,6 +120,13 @@ def setup_option_parser():
     )
     
     add_option(parser,
+        '--local',
+        default=False,
+        action='store_true',
+        help='Use cached local copies of remote urls - faster but might not be up to date'
+        )
+
+    add_option(parser,
         '-s', '--short',
         default=False,
         action='store_true',
@@ -281,7 +288,7 @@ def setup_option_parser():
                         version = raw_version
 
                     print "    version", version, "detected using",klass.version_command()
-                except Exception as e: # TODO raise/catch specific Exception
+                except Exception: # TODO raise/catch specific Exception
                     print "    may not be installed, was unable to run", klass.version_command()
             if klass.__doc__:
                 print "   ", klass.__doc__.strip()
@@ -323,6 +330,7 @@ def dexy_command():
                 controller.allow_remote = args.dangerous
                 controller.artifacts_dir = args.artifacts_dir
                 controller.config_file = args.config
+                controller.use_local_files = args.local
                 for doc in controller.setup_and_run(root):
                     artifact = doc.artifacts[-1]
                     output_name = artifact.output_name(args.short)
@@ -335,6 +343,7 @@ def dexy_command():
         controller.allow_remote = args.dangerous
         controller.artifacts_dir = args.artifacts_dir
         controller.config_file = args.config
+        controller.use_local_files = args.local
         for doc in controller.setup_and_run(dir_name):
             artifact = doc.artifacts[-1]
             output_name = artifact.output_name(args.short)
