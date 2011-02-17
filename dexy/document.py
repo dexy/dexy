@@ -90,38 +90,53 @@ class Document(object):
                 request.add_header('If-None-Match', header_dict['ETag'])
             elif header_dict.has_key('Last-Modified') and os.path.exists(filename):
                 request.add_header('If-Modifed-Since', header_dict['Last-Modified'])
-            
-            try:
-                u = urllib2.urlopen(request)
-                print "downloading contents of %s" % url
-                url_contents = u.read()
-                
-                # Save the contents in our local cache
-                f = open(filename, "wb")
-                f.write(url_contents)
+
+            if self.controller.use_local_files and os.path.exists(filename):
+                f = open(filename, "r")
+                artifact.data = f.read()
                 f.close()
-
-                # Save header info in our local cache
-                header_dict = {}
-                for s in u.info().headers:
-                    a = s.partition(":")
-                    header_dict[a[0]] = a[2].strip()
-                json.dump(header_dict, open(header_filename, "w"))
-
-                artifact.data = url_contents
-            except urllib2.HTTPError as err:
-                if err.code == 304:
-                    print "received http status code %s, using contents of %s" % (err.code, filename)
+            else:
+                if self.controller.use_local_files:
+                    print "local file %s not found, fetching remote url" % filename
+                try:
+                    u = urllib2.urlopen(request)
+                    print "downloading contents of %s" % url
+                    url_contents = u.read()
+                    
+                    # Save the contents in our local cache
+                    f = open(filename, "wb")
+                    f.write(url_contents)
+                    f.close()
+    
+                    # Save header info in our local cache
+                    header_dict = {}
+                    for s in u.info().headers:
+                        a = s.partition(":")
+                        header_dict[a[0]] = a[2].strip()
+                    json.dump(header_dict, open(header_filename, "w"))
+    
+                    artifact.data = url_contents
+                except urllib2.URLError as err:
+                    if os.path.exists(filename):
+                        print "unable to fetch remote url %s because %s using contents of %s" % (url, err, filename)
+                    else:
+                        raise err
                     f = open(filename, "r")
                     artifact.data = f.read()
                     f.close()
-                elif err.code == 404:
-                    raise Exception("""received http status code %s while trying to fetch %s for %s""" % 
-                                    (err.code, url, self.name))
-                else:
-                    # Some other http error, we want to know about it.
-                    print url
-                    raise err
+                except urllib2.HTTPError as err:
+                    if err.code == 304:
+                        print "received http status code %s, using contents of %s" % (err.code, filename)
+                        f = open(filename, "r")
+                        artifact.data = f.read()
+                        f.close()
+                    elif err.code == 404:
+                        raise Exception("""received http status code %s while trying to fetch %s for %s""" % 
+                                        (err.code, url, self.name))
+                    else:
+                        # Some other http error, we want to know about it.
+                        print url
+                        raise err
 
         elif artifact.doc.args.has_key('contents'):
             artifact.data = artifact.doc.args['contents']
