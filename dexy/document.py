@@ -116,7 +116,8 @@ class Document(object):
                     artifact.data = f.read()
                     f.close()
                 elif err.code == 404:
-                    raise Exception("received http status code %s while trying to fetch %s" % (err.code, url))
+                    raise Exception("""received http status code %s while trying to fetch %s for %s""" % 
+                                    (err.code, url, self.name))
                 else:
                     # Some other http error, we want to know about it.
                     print url

@@ -177,7 +177,7 @@ class Controller(object):
                 files = [glob_string]
             
             # If we mention a specific file in .dexy it should be there...
-            if nofiles and not virtual and in_proj_root and not_wildcard:
+            if nofiles and not virtual and in_proj_root and not_wildcard and False:
                 # TODO raise specific class of Exception
                 raise Exception("file %s not found!" % glob_string)
 
