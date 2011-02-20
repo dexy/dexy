@@ -109,8 +109,15 @@ class Artifact(object):
         dj_file = open(self.dj_filename(), "r")
         def load_ordered_dict(x):
             return OrderedDict(x)
-        for k, v in json.load(dj_file, object_pairs_hook=load_ordered_dict).items():
-            setattr(self, k, v)
+
+        if sys.version_info < (2, 7):
+            for k, v in json.load(dj_file).items():
+                # This will return elements in the wrong order..
+                setattr(self, k, v)
+        else:
+            for k, v in json.load(dj_file, object_pairs_hook=load_ordered_dict).items():
+                setattr(self, k, v)
+
 
 ### @export "input-text"
     def input_text(self):
@@ -160,6 +167,12 @@ class Artifact(object):
 
     def tempfile(self, ext, rel_to_artifacts_dir = True):
         open(self.temp_filename(ext, rel_to_artifacts_dir), "w")
+    
+    def temp_dir(self):
+        os.path.join(self.artifacts_dir, self.hashstring)
+
+    def create_temp_dir(self):
+        os.path.mkdir(self.temp_dir())
 
 ### @export "create-input-file"
     def create_input_file(self, key, ext, rel_to_artifacts_dir = False):
