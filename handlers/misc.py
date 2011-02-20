@@ -29,6 +29,14 @@ class ConvertTextFormatHandler(DexyHandler):
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['ct']
 
+class ConvertHTMLFormatHandler(DexyHandler):
+    """
+    Changes whatever file extension is input to be .html.
+    """
+    INPUT_EXTENSIONS = [".*"]
+    OUTPUT_EXTENSIONS = [".html"]
+    ALIASES = ['ch']
+
 class TextFormatHandler(DexyHandler):
     """
     Does nothing, just forces previous filter to output .txt extension if able.
