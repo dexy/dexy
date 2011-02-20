@@ -7,10 +7,11 @@ from dexy.logger import log
 from dexy.version import VERSION
 import hashlib
 import inspect
+import json
 import os
 import re
 import shutil
-import json
+import sys
 import time
 import uuid
 
