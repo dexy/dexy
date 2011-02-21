@@ -184,6 +184,11 @@ class Controller(object):
             for f in files:
                 create = True
 
+                if args.has_key('disabled'):
+                    if args['disabled']:
+                        create = False
+                        print "document %s disabled" % f
+
                 inputs = []
                 if args.has_key('inputs'):
                     if isinstance(args['inputs'], str):
