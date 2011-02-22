@@ -16,23 +16,24 @@ def test_handlers():
     """controller: find_handlers() should not raise errors"""
     controller = Controller()
     handlers = controller.find_handlers()
-    assert handlers[''] == DexyHandler
+    assert handlers['dexy'] == DexyHandler
 
 def test_members():
     """controller: files and filters to be run should be identified correctly"""
     controller = setup_controller()
+    print controller.members.keys()
     assert controller.members.keys() == [
+        'tests/data/simple.R|fn|r|pyg',
+        'tests/data/graph.R|fn|r|pyg',
         'tests/data/simple.R|pyg',
-        'tests/data/graph.R|pyg',
-        'tests/data/simple.R|jinja|r|pyg',
-        'tests/data/graph.R|jinja|r|pyg'
+        'tests/data/graph.R|pyg'
     ]
 
 
 def test_r():
     """controller: jpeg should have been generated and added to additional_inputs"""
     controller = setup_controller()
-    doc = controller.members['tests/data/graph.R|jinja|r|pyg']
+    doc = controller.members['tests/data/graph.R|fn|r|pyg']
     assert isinstance(doc, Document)
 
     artifact = doc.artifacts[-1]
@@ -56,8 +57,8 @@ def test_config_list_filters_separately():
 def test_config_nested_doc():
     controller = setup_controller("nested-doc.dexy")
     assert controller.members.keys() == [
-        'tests/data/graph.R|R',
-        'tests/data/simple.R|R'
+        'tests/data/graph.R|r',
+        'tests/data/simple.R|r'
     ]
 
 def test_config_both_filter_styles():
