@@ -170,17 +170,12 @@ class Controller(object):
             files = glob.glob(glob_string)
 
             nofiles = len(files) == 0
-            in_proj_root = self.path == '.'
+            in_proj_root = (self.path == '.')
             not_wildcard = glob_string.find("*") < 0
 
             if nofiles and virtual:
                 files = [glob_string]
             
-            # If we mention a specific file in .dexy it should be there...
-            if nofiles and not virtual and in_proj_root and not_wildcard and False:
-                # TODO raise specific class of Exception
-                raise Exception("file %s not found!" % glob_string)
-
             for f in files:
                 create = True
 
@@ -206,9 +201,11 @@ class Controller(object):
                 # will depend on the specified input.
                 if args.has_key('ifinput'):
                     log.debug(f)
-                    if isinstance(args['ifinput'], str):
+                    if isinstance(args['ifinput'], str) or isinstance(args['ifinput'], unicode):
                         ifinputs = [args['ifinput']]
                     else:
+                        log.debug("treating input %s as iterable. class: %s" % (
+                            args['ifinput'], args['ifinput'].__class__.__name__))
                         ifinputs = args['ifinput']
                     
                     for s in ifinputs:
