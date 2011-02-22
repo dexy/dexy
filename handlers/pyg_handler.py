@@ -11,6 +11,7 @@ from pygments import highlight
 from pygments.formatters import get_formatter_for_filename
 from pygments.lexers import get_lexer_for_filename
 from pygments.lexers.agile import PythonConsoleLexer
+from pygments.lexers.agile import RubyConsoleLexer
 import idiopidae.parser
 
 ### @export "pyg"
@@ -27,6 +28,8 @@ class PygHandler(DexyHandler):
         # List any file extensions which don't map neatly to lexers.
         if self.ext == '.pycon':
             lexer = PythonConsoleLexer()
+        elif self.ext == '.rbcon':
+            lexer = RubyConsoleLexer()
         else:
             lexer = get_lexer_for_filename(name)
         formatter = get_formatter_for_filename(self.artifact.filename(), linenos=False)
