@@ -18,7 +18,7 @@ class JirbHandler(handlers.pexpect_handlers.ProcessLinewiseInteractiveHandler):
     EXECUTABLE = "/usr/bin/env jirb --prompt-mode simple"
     INPUT_EXTENSIONS = [".rb"]
     PROMPT = ">>|\?>"
-    OUTPUT_EXTENSIONS = [".txt"]
+    OUTPUT_EXTENSIONS = [".rbcon"]
     ALIASES = ['jirb']
 
 ### @export "jython-handler"
