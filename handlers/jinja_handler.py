@@ -76,7 +76,7 @@ class JinjaHandler(DexyHandler):
                 document_data['a'][ak] = av
                 fullpath_av = os.path.join('artifacts', av)
                 if av.endswith('.json') and os.path.exists(fullpath_av):
-                    print "loading JSON for %s" % fullpath_av
+                    self.log.debug("loading JSON for %s" % fullpath_av)
                     document_data[ak] = json.load(open(fullpath_av, "r"))
         
         if self.artifact.ext == ".tex":
