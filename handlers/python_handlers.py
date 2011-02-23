@@ -1,6 +1,45 @@
 from dexy.handler import DexyHandler
-import shutil
 from dexy.utils import print_string_diff
+import shutil
+import tarfile
+import zipfile
+
+class ArchiveHandler(DexyHandler):
+    """The archive handler creates .tgz archives of the input files. Create an
+    empty file in the location you wish to have the archive."""
+    OUTPUT_EXTENSIONS = [".tgz"]
+    ALIASES = ['archive', 'tgz']
+
+    def generate(self):
+        self.artifact.write_dj()
+
+    def process(self):
+        af = self.artifact.filename()
+        tar = tarfile.open(af, mode="w:gz")
+        for k,v in self.artifact.input_artifacts.items():
+            fn = k.split("|")[0]
+            self.log.debug("Adding file %s to archive %s." % (fn, af))
+            tar.add(fn)
+        tar.close()
+
+class ZipArchiveHandler(DexyHandler):
+    """The archive handler creates .zip archives of the input files. Create an
+    empty file in the location you wish to have the archive."""
+    OUTPUT_EXTENSIONS = [".zip"]
+    ALIASES = ['zip']
+
+    def generate(self):
+        self.artifact.write_dj()
+
+    def process(self):
+        af = self.artifact.filename()
+        zf = zipfile.ZipFile(af, mode="w")
+        for k,v in self.artifact.input_artifacts.items():
+            fn = k.split("|")[0]
+            self.log.debug("Adding file %s to archive %s." % (fn, af))
+            zf.write(fn)
+        zf.close()
+
 
 class TestHandler(DexyHandler):
     """The test handler raises an error if output is not as expected. Handy for
