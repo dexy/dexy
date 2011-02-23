@@ -89,12 +89,18 @@ class Artifact(object):
         self.fn = self.filename(False)
 
         # Whitelist data to be serialized.
-        attrs = ['data_dict', 'data', 'fn', 'input_artifacts', 'additional_inputs', 'stdout']
+        attrs = ['data_dict', 'data', 'fn', 'input_artifacts',
+                 'additional_inputs', 'stdout', 'short_output_name',
+                 'output_name']
 
         persist_dict = {}
         for a in attrs:
             if hasattr(self, a):
-                persist_dict[a] = getattr(self, a)
+                at = getattr(self, a)
+                if inspect.ismethod(at):
+                    persist_dict[a.replace('_','-')] = at()
+                else:
+                    persist_dict[a] = at
         return persist_dict
 
     def write_dj(self):
@@ -226,6 +232,9 @@ class Artifact(object):
         else:
             name = "%s%s" % (self.key.replace("|", "-"), self.ext)
         return os.path.relpath(name, ".")
+    
+    def short_output_name(self):
+        return self.output_name(True)
 
 ### @export "write-cache-output-file"
     def write_cache_output_file(self, cache_dir, use_short_format):
