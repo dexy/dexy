@@ -1,5 +1,13 @@
 {
-  "*|pyg" : {},
+  "example.tgz|tgz" : {
+    "allinputs" : true
+  },
+  "example.tgz|zip" : {
+    "allinputs" : true
+  },
+  "*|pyg" : {
+    "except" : ".*.tgz"
+  },
   "index.html|jinja" : { "allinputs" : true},
   "hello.rb|rb|test" : {
     "expects" : "hello from Ruby\n"
@@ -25,5 +33,10 @@
     "expects" : "python says 1 + 1 = 2\n"
   },
   "hello.py|pytime" : {},
-  "hello.py|pycon|pyg" : {}
+  "hello.py|pycon|pyg" : {},
+  "hello-jruby.rb|jruby|test" : {
+    "expects" : "value: Bar\nvalue: baz\nvalue: foo\n"
+  },
+  "hello-jruby.rb|jirb|pyg" : {
+  }
 }
