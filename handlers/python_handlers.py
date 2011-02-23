@@ -1,12 +1,13 @@
 from dexy.handler import DexyHandler
 from dexy.utils import print_string_diff
+import os
 import shutil
 import tarfile
 import zipfile
 
 class ArchiveHandler(DexyHandler):
-    """The archive handler creates .tgz archives of the input files. Create an
-    empty file in the location you wish to have the archive."""
+    """The archive handler creates .tgz archives of processed files. Create an
+    empty/dummy file in the location you wish to have the archive."""
     OUTPUT_EXTENSIONS = [".tgz"]
     ALIASES = ['archive', 'tgz']
 
@@ -14,12 +15,23 @@ class ArchiveHandler(DexyHandler):
         self.artifact.write_dj()
 
     def process(self):
+        if self.artifact.doc.args.has_key('use-short-names'):
+            use_short_names = self.artifact.doc.args['use-short-names']
+        else:
+            use_short_names = False
         af = self.artifact.filename()
         tar = tarfile.open(af, mode="w:gz")
-        for k,v in self.artifact.input_artifacts.items():
-            fn = k.split("|")[0]
+        self.artifact.load_input_artifacts()
+        for k, f in self.artifact.input_artifacts.items():
+            fn = os.path.join('artifacts', self.artifact.input_artifacts_dict[k]['fn'])
+            if not os.path.exists(fn):
+                raise Exception("File %s does not exist!" % fn)
+            if use_short_names:
+                arcname = self.artifact.input_artifacts_dict[k]['short-output-name']
+            else:
+                arcname = self.artifact.input_artifacts_dict[k]['output-name']
             self.log.debug("Adding file %s to archive %s." % (fn, af))
-            tar.add(fn)
+            tar.add(fn, arcname=arcname)
         tar.close()
 
 class ZipArchiveHandler(DexyHandler):
@@ -32,12 +44,20 @@ class ZipArchiveHandler(DexyHandler):
         self.artifact.write_dj()
 
     def process(self):
+        use_short_names = False
         af = self.artifact.filename()
         zf = zipfile.ZipFile(af, mode="w")
+        self.artifact.load_input_artifacts()
         for k,v in self.artifact.input_artifacts.items():
-            fn = k.split("|")[0]
+            fn = os.path.join('artifacts', self.artifact.input_artifacts_dict[k]['fn'])
+            if not os.path.exists(fn):
+                raise Exception("File %s does not exist!" % fn)
+            if use_short_names:
+                arcname = self.artifact.input_artifacts_dict[k]['short-output-name']
+            else:
+                arcname = self.artifact.input_artifacts_dict[k]['output-name']
             self.log.debug("Adding file %s to archive %s." % (fn, af))
-            zf.write(fn)
+            zf.write(fn, arcname=arcname)
         zf.close()
 
 
