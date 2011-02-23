@@ -15,6 +15,7 @@ import os
 import re
 import json
 import sys
+import sre_constants
 
 class Controller(object):
     def __init__(self, logs_dir='logs'):
@@ -228,7 +229,15 @@ class Controller(object):
                         create = False
                 
                 if args.has_key('except'):
-                    if re.search(args['except'], f):
+                    try:
+                        except_re = re.compile(args['except'])
+                    except sre_constants.error as e:
+                        raise Exception("""You passed 'except' value of %s.
+Please pass a valid Python-style regular expression for
+'except', NOT a glob-style matcher. Error message from
+re.compile: %s""" % (args['except'], e))
+                    if re.match(except_re, f):
+                        print "skipping %s as it matches except pattern %s" % (f, args['except'])
                         create = False
                 
                 if create:
