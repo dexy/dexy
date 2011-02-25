@@ -1,5 +1,5 @@
-from StringIO import StringIO
 from dexy.handler import DexyHandler
+from StringIO import StringIO
 
 import json
 import os
@@ -7,9 +7,11 @@ import pycurl
 import re
 import urllib
 
+
 class VanillaForumHandler(DexyHandler):
     ALIASES = ['vanilla']
     FORUM_CONFIG_FILE = 'vanilla-config.json'
+    DISCUSSION_CONFIG_FILE = 'discuss.json|dexy'
 
     def load_forum_conf(self):
         if not os.path.exists(self.FORUM_CONFIG_FILE):
@@ -17,38 +19,51 @@ class VanillaForumHandler(DexyHandler):
                             self.FORUM_CONFIG_FILE)
 
         f = open(self.FORUM_CONFIG_FILE, "r")
+
         try:
             self.forum_conf = json.load(f)
         except ValueError as e:
             print "error parsing JSON in", self.FORUM_CONFIG_FILE
             raise e
         f.close()
+        self.user_cookie = self.forum_conf['user-cookie']
+        self.api = self.forum_conf['api'].rstrip('/')
 
     def load_discussion_conf(self):
         self.artifact.load_input_artifacts()
-        matches = [k for k in self.artifact.input_artifacts_dict.keys() if k.endswith("discuss.json|dexy")]
+        matches = [k for k in self.artifact.input_artifacts_dict.keys() if k.endswith(self.DISCUSSION_CONFIG_FILE)]
         try:
             self.k = matches[0]
         except IndexError as e:
-            raise Exception("""no files called discuss.json|dexy were available as
-                            inputs to %s""" % self.doc.name)
+            raise Exception("""no files matching %s were available as
+                            inputs to %s""" % (self.DISCUSSION_CONFIG_FILE, self.doc.name))
 
         try:
             self.discussion_conf = json.loads(self.artifact.input_artifacts_dict[self.k]['data'])
         except ValueError as e:
             print "error parsing JSON in", self.k
             raise e
-        
     
+    def obtain_transient_key(self):
+        c = pycurl.Curl()
+        b = StringIO()
+        c.setopt(c.URL, "%s/session" % self.api)
+        c.setopt(c.COOKIE, "Vanilla=%s" % self.user_cookie)
+        c.setopt(c.WRITEFUNCTION, b.write)
+        c.perform()
+
+        session_info = json.loads(b.getvalue())
+        self.transient_key = session_info['user']['TransientKey']
+
     def process_text(self, input_text):
         self.load_forum_conf()
         self.load_discussion_conf()
+        self.obtain_transient_key()
         
         if self.discussion_conf.has_key('Name'):
             discussion_name = self.discussion_conf['Name']
         else:
-            print "No 'Name' specified, using default"
-            discussion_name = self.artifact.doc.name
+            raise Exception("Please specify a 'Name' for your discussion.")
 
         if self.discussion_conf.has_key('CategoryID'):
             discussion_category_id = self.discussion_conf['CategoryID']
@@ -56,27 +71,11 @@ class VanillaForumHandler(DexyHandler):
             print "No 'CategoryID' specified, using default"
             discussion_category_id = 1
 
-        user_cookie = self.forum_conf['user-cookie']
-        api = self.forum_conf['api'].rstrip("/")
-
-        print "using user_cookie %s" % user_cookie
-        print "using api %s" % api
-
-        c = pycurl.Curl()
-        b = StringIO()
-        c.setopt(c.URL, "%s/session" % api)
-        c.setopt(c.COOKIE, "Vanilla=%s" % user_cookie)
-        c.setopt(c.WRITEFUNCTION, b.write)
-        c.perform()
-
-        session_info = json.loads(b.getvalue())
-        transient_key = session_info['user']['TransientKey']
-        print "transient key", transient_key
 
         discussion_data = [
           ("Discussion/Name", discussion_name),
           ("Discussion/CategoryID", discussion_category_id),
-          ("Discussion/TransientKey", transient_key),
+          ("Discussion/TransientKey", self.transient_key),
           ("Discussion/Body", input_text)
           ]
 
@@ -88,7 +87,7 @@ class VanillaForumHandler(DexyHandler):
         c = pycurl.Curl()
         b = StringIO()
         c.setopt(c.URL, "http://discuss.dexy.it/api/discussion/add")
-        c.setopt(c.COOKIE, "Vanilla=%s" % user_cookie)
+        c.setopt(c.COOKIE, "Vanilla=%s" % self.user_cookie)
         c.setopt(c.POST, 1)
         c.setopt(c.POSTFIELDS, urllib.urlencode(discussion_data))
         c.setopt(c.WRITEFUNCTION, b.write)
@@ -97,6 +96,59 @@ class VanillaForumHandler(DexyHandler):
         result = json.loads(b.getvalue())
         print result
         self.discussion_conf['DiscussionID'] = result['DiscussionID']
+
+        json_file = re.sub('\|dexy$', "", self.k)
+        f = open(json_file, 'w')
+        json.dump(self.discussion_conf, f)
+        f.close()
+        return "ok"
+
+class VanillaForumCommentHandler(VanillaForumHandler):
+    ALIASES = ['vanillacomment']
+    DISCUSSION_CONFIG_FILE = 'comment.json|dexy'
+
+    def process_text(self, input_text):
+        self.load_forum_conf()
+        self.load_discussion_conf()
+
+        self.obtain_transient_key()
+        
+        if self.discussion_conf.has_key('CategoryID'):
+            comment_category_id = self.discussion_conf['CategoryID']
+        else:
+            print "No 'CategoryID' specified, using default"
+            comment_category_id = 1
+
+        if self.discussion_conf.has_key('DiscussionID'):
+            comment_discussion_id = self.discussion_conf['DiscussionID']
+        else:
+            raise Exception("You must specify a valid DiscussionID")
+
+
+        comment_data = [
+          ("Comment/CategoryID", comment_category_id),
+          ("Comment/DiscussionID", comment_discussion_id),
+          ("Comment/TransientKey", self.transient_key),
+          ("Comment/Body", input_text)
+          ]
+
+        if self.discussion_conf.has_key('CommentID'):
+           comment_data.append(('Comment/CommentID', self.discussion_conf['CommentID']))
+        else:
+           print "no 'CommentID' specified, creating new comment"
+    
+        c = pycurl.Curl()
+        b = StringIO()
+        c.setopt(c.URL, "http://discuss.dexy.it/api/comment/add")
+        c.setopt(c.COOKIE, "Vanilla=%s" % self.user_cookie)
+        c.setopt(c.POST, 1)
+        c.setopt(c.POSTFIELDS, urllib.urlencode(comment_data))
+        c.setopt(c.WRITEFUNCTION, b.write)
+        c.perform()
+        
+        result = json.loads(b.getvalue())
+        print result
+        self.discussion_conf['CommentID'] = result['CommentID']
 
         json_file = re.sub('\|dexy$', "", self.k)
         f = open(json_file, 'w')
