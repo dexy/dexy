@@ -98,6 +98,7 @@ class Document(object):
             else:
                 if self.controller.use_local_files:
                     print "local file %s not found, fetching remote url" % filename
+
                 try:
                     u = urllib2.urlopen(request)
                     print "downloading contents of %s" % url
@@ -118,9 +119,10 @@ class Document(object):
                     artifact.data = url_contents
                 except urllib2.URLError as err:
                     if os.path.exists(filename):
-                        print "unable to fetch remote url %s because %s using contents of %s" % (url, err, filename)
+                        print "unable to fetch remote url %s because %s\nusing contents of %s" % (url, err, filename)
                     else:
-                        raise err
+                        raise Exception("unable to fetch remote url %s because %s\nno cache found in %s" % (url, err, filename))
+
                     f = open(filename, "r")
                     artifact.data = f.read()
                     f.close()
