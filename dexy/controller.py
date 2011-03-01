@@ -53,7 +53,7 @@ class Controller(object):
         install_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         cur_dir = os.curdir
         sys.path.append(cur_dir)
-        
+
         self.handler_dirs = []
         # Need to give local directory (in which we place custom per-project filters)
         # a different name or else Python can't see modules in that dir.
@@ -70,16 +70,16 @@ class Controller(object):
         if not self.handler_dirs:
             self.init_handler_dirs()
 
-        log.info("Automatically loading all filters found in %s" % ", ".join(self.handler_dirs))
-        
         handlers = {}
 
         for a in DexyHandler.ALIASES:
             handlers[a] = DexyHandler
 
         for d in self.handler_dirs:
+            log.info("Automatically loading all filters found in %s" % d)
             for f in os.listdir(d):
                 if f.endswith(".py") and f not in ["base.py", "__init__.py"]:
+                    log.info("Loading filters in %s" % os.path.join(d, f))
                     basename = f.replace(".py", "")
                     if d.endswith('handlers'):
                         module = "handlers.%s" % basename
@@ -92,7 +92,7 @@ class Controller(object):
                         __import__(module)
                     except ImportError as e:
                         log.warn("filters defined in %s are not available: %s" % (module, e))
-                    
+
                     if not sys.modules.has_key(module):
                         continue
 
@@ -103,9 +103,10 @@ class Controller(object):
                         if isclass(klass) and not (klass == DexyHandler) and issubclass(klass, DexyHandler) and klass.ALIASES:
                             for a in klass.ALIASES:
                                 if handlers.has_key(a):
-                                    raise Exception("duplicate key %s called from %s" % (a, k))
+                                    raise Exception("duplicate key %s called from %s in %s" % (a, k, f))
                                 handlers[a] = klass
                                 log.info("registered alias %s for class %s" % (a, k))
+            log.info("...finished loading filters from %s" % d)
         return handlers
 
 ### @export "register-handlers"
@@ -144,13 +145,13 @@ class Controller(object):
                 args = b
             except AttributeError:
                 pass
-            
+
             tokens = input_directive.split("|")
             glob_string = os.path.join(self.path, tokens[0])
             filters = tokens[1:]
 
             docs = []
-            
+
             # virtual document
             if re.search("@", glob_string):
                 # TODO some virtual files are local, not remote. test on
@@ -176,7 +177,7 @@ class Controller(object):
 
             if nofiles and virtual:
                 files = [glob_string]
-            
+
             for f in files:
                 create = True
 
@@ -196,7 +197,7 @@ class Controller(object):
                 m = matcher.match(f)
                 if m and len(m.groups()) > 0:
                     rootname = matcher.match(f).group(1)
-                
+
                 # The 'ifinput' directive says that if an input exists matching
                 # the specified pattern, we should create this document and it
                 # will depend on the specified input.
@@ -208,7 +209,7 @@ class Controller(object):
                         log.debug("treating input %s as iterable. class: %s" % (
                             args['ifinput'], args['ifinput'].__class__.__name__))
                         ifinputs = args['ifinput']
-                    
+
                     for s in ifinputs:
                         log.debug("evaluating ifinput %s" % s)
                         ifinput = s.replace("%", rootname)
@@ -227,7 +228,7 @@ class Controller(object):
 
                     if len(input_docs) > 0:
                         create = False
-                
+
                 if args.has_key('except'):
                     try:
                         except_re = re.compile(args['except'])
@@ -239,7 +240,7 @@ re.compile: %s""" % (args['except'], e))
                     if re.match(except_re, f):
                         print "skipping %s as it matches except pattern %s" % (f, args['except'])
                         create = False
-                
+
                 if create:
                     # Filters can either be included in the name...
                     doc = Document(f, filters)
@@ -266,7 +267,7 @@ re.compile: %s""" % (args['except'], e))
                     for i in inputs:
                         doc.add_input_key(i)
 
-                    
+
                     docs.append(doc)
             return docs
 
@@ -283,13 +284,13 @@ re.compile: %s""" % (args['except'], e))
         # Create Document objects for all docs.
         for k, v in self.json_dict.items():
             parse_doc(k, v)
-        
+
         # Determine dependencies
         for doc in self.members.values():
             doc.finalize_inputs(self.members)
             for input_doc in doc.inputs:
                 depend(doc, input_doc)
-        
+
         ordering = topological_sort(range(len(self.members)), self.depends)
         ordered_members = OrderedDict()
         for i in ordering:
