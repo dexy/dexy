@@ -59,26 +59,33 @@ class JinjaHandler(DexyHandler):
         children = [f for f in os.listdir(doc_dir) \
                     if os.path.isdir(os.path.join(doc_dir, f))]
         document_data['children'] = sorted(children)
-    
+        document_data['json'] = {}
+
         self.artifact.load_input_artifacts()
         for k, a in self.artifact.input_artifacts_dict.items():
             common_prefix = os.path.commonprefix([self.artifact.doc.name, k])
             common_path = os.path.dirname(common_prefix)
             relpath = os.path.relpath(k, common_path)
-            
+
             if document_data['filenames'].has_key(relpath):
                 raise Exception("Duplicate key %s" % relpath)
-            
+
             document_data['filenames'][relpath] = a['fn']
             document_data['sections'][relpath] = a['data_dict']
             document_data[relpath] = a['data']
+
+            if a['fn'].endswith('.json'):
+                self.log.debug("loading JSON for %s" % (relpath))
+                path_to_file = os.path.join('artifacts', a['fn'])
+                document_data['json'][relpath] = json.load(open(path_to_file, "r"))
+
             for ak, av in a['additional_inputs'].items():
                 document_data['a'][ak] = av
                 fullpath_av = os.path.join('artifacts', av)
                 if av.endswith('.json') and os.path.exists(fullpath_av):
                     self.log.debug("loading JSON for %s" % fullpath_av)
                     document_data[ak] = json.load(open(fullpath_av, "r"))
-        
+
         if self.artifact.ext == ".tex":
             print "changing jinja tags for", self.artifact.key
             env = Environment(
@@ -92,13 +99,13 @@ class JinjaHandler(DexyHandler):
         else:
             env = Environment()
         template = env.from_string(input_text)
-        
+
         # TODO test that we are in textile or other format where this makes sense
         if re.search("latex", self.artifact.doc.key()):
             is_latex = True
         else:
             is_latex = False
-        
+
         # Wrap HTML content in <notextile> tags if requested
         if self.artifact.doc.args.has_key('notextile'):
             for k, v in document_data.items():
@@ -110,10 +117,10 @@ class JinjaHandler(DexyHandler):
                 if document_data['filenames'][file_key].endswith(".html"):
                     for k, v in data_hash.items():
                         document_data['sections'][file_key][k] = "\n<notextile>\n%s\n</notextile>\n" % v.rstrip()
-        
+
         document_data['filename'] = document_data['filenames']
         template_hash = {
-            'd' : document_data, 
+            'd' : document_data,
             'filenames' : document_data['filenames'],
             'dk' : sorted(document_data.keys()),
             'a' : self.artifact,
@@ -122,5 +129,5 @@ class JinjaHandler(DexyHandler):
         }
 
         result = str(template.render(template_hash))
-        
+
         return result
