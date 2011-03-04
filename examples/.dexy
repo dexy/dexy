@@ -42,7 +42,6 @@
   "hello-jruby.rb|jirb|pyg" : {
   },
   "hello.java|java|test" : {
-    "main" : "hello",
     "expects" : "Java Hello World!\n"
   }
 }
