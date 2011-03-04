@@ -52,10 +52,10 @@ class JavaHandler(dexy.handler.DexyHandler):
     ALIASES = ['java']
 
     def process(self):
-        if self.artifact.doc.args.has_key('main'):
-            main_method = self.artifact.doc.args['main']
+        if self.doc.args.has_key('main'):
+            main_method = self.doc.args['main']
         else:
-            raise Exception("""You must specify the fully qualified class name of the 'main' method you wish to run.""")
+            main_method = os.path.splitext(os.path.basename(self.doc.name))[0]
 
         if self.artifact.doc.args.has_key('env'):
             env = os.environ
