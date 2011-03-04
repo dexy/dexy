@@ -174,12 +174,13 @@ class Artifact(object):
 
     def tempfile(self, ext, rel_to_artifacts_dir = True):
         open(self.temp_filename(ext, rel_to_artifacts_dir), "w")
-    
+
     def temp_dir(self):
-        os.path.join(self.artifacts_dir, self.hashstring)
+        return os.path.join(self.artifacts_dir, self.hashstring)
 
     def create_temp_dir(self):
-        os.path.mkdir(self.temp_dir())
+        shutil.rmtree(self.temp_dir(), ignore_errors=True)
+        os.mkdir(self.temp_dir())
 
 ### @export "create-input-file"
     def create_input_file(self, key, ext, rel_to_artifacts_dir = False):
@@ -232,7 +233,7 @@ class Artifact(object):
         else:
             name = "%s%s" % (self.key.replace("|", "-"), self.ext)
         return os.path.relpath(name, ".")
-    
+
     def short_output_name(self):
         return self.output_name(True)
 

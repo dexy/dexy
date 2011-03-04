@@ -101,7 +101,7 @@ class CopyHandler(DexyHandler):
     INPUT_EXTENSIONS = [".*"]
     OUTPUT_EXTENSIONS = [".*"]
     ALIASES = ['cp']
-    
+
     def process(self):
         self.artifact.auto_write_artifact = False
         shutil.copyfile(self.doc.name, self.artifact.filename())
@@ -145,7 +145,7 @@ class FooterHandler(DexyHandler):
             footer_text = self.artifact.input_artifacts_dict[footer_key]['data']
         else:
             raise Exception("No file matching %s was found to work as a footer." % footer_key)
-                            
+
         return "%s\n%s" % (input_text, footer_text)
 
 class HeaderHandler(DexyHandler):
@@ -172,7 +172,7 @@ class HeaderHandler(DexyHandler):
             header_text = self.artifact.input_artifacts_dict[header_key]['data']
         else:
             raise Exception("No file matching %s was found to work as a header for %s." % (header_key, self.artifact.key))
-                            
+
         return "%s\n%s" % (header_text, input_text)
 
 # TODO implement combined header/footer handler as a shortcut

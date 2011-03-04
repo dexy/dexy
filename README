@@ -3,15 +3,13 @@ Dexy is software for document automation.
 http://dexy.it
 http://blog.dexy.it
 
-For examples using dexy:
-http://bitbucket.org/ananelson/dexy-examples
-
 For detailed installation instructions:
-http://bitbucket.org/ananelson/dexy-install
+http://dexy.it/install
 
+For tutorials:
+http://dexy.it/docs/tutorials
 
-Dexy should work on Python 2.5-Python 2.7. Dexy will not work on Windows due to
-dependency on pexpect but we are working on removing this restriction, in the
-mean time if you are working on Windows then you can run Dexy within a Linux
-VM.
+Dexy should work on Python 2.6-Python 2.7.
+
+Dexy runs on Windows (though it's not comprehensively tested so you may run into issues). Not all of the Dexy filters are windows-compatible, however.
 

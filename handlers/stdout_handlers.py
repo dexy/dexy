@@ -19,7 +19,7 @@ class ProcessStdoutHandler(DexyHandler):
     INPUT_EXTENSIONS = [".txt", ".py"]
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['py', 'python', 'pyout']
-    
+
     def process(self):
         self.artifact.generate_workfile()
         command = "%s %s" % (self.executable(), self.artifact.work_filename(False))
