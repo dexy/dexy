@@ -1,6 +1,11 @@
+try:
+    from collections import OrderedDict
+except ImportError:
+    from ordereddict import OrderedDict
 from dexy.handler import DexyHandler
 
 from jinja2 import Environment
+import jinja2
 import json
 import os
 import re
@@ -59,7 +64,7 @@ class JinjaHandler(DexyHandler):
         children = [f for f in os.listdir(doc_dir) \
                     if os.path.isdir(os.path.join(doc_dir, f))]
         document_data['children'] = sorted(children)
-        document_data['json'] = {}
+        document_data['json'] = OrderedDict()
 
         self.artifact.load_input_artifacts()
         for k, a in self.artifact.input_artifacts_dict.items():
@@ -77,7 +82,19 @@ class JinjaHandler(DexyHandler):
             if a['fn'].endswith('.json'):
                 self.log.debug("loading JSON for %s" % (relpath))
                 path_to_file = os.path.join('artifacts', a['fn'])
-                document_data['json'][relpath] = json.load(open(path_to_file, "r"))
+                unsorted_json = json.load(open(path_to_file), "r")
+
+                def sort_dict(d):
+                    od = OrderedDict()
+                    for k in sorted(d.keys()):
+                        v = d[k]
+                        if isinstance(v, dict):
+                            od[k] = sort_dict(v)
+                        else:
+                            od[k] = v
+                    return od
+
+                document_data['json'][relpath] = sort_dict(unsorted_json)
 
             for ak, av in a['additional_inputs'].items():
                 document_data['a'][ak] = av
@@ -87,7 +104,7 @@ class JinjaHandler(DexyHandler):
                     document_data[ak] = json.load(open(fullpath_av, "r"))
 
         if self.artifact.ext == ".tex":
-            print "changing jinja tags for", self.artifact.key
+            self.log.debug("changing jinja tags to << >> etc. for %s" % self.artifact.key)
             env = Environment(
                 block_start_string = '<%',
                 block_end_string = '%>',
@@ -98,7 +115,7 @@ class JinjaHandler(DexyHandler):
                 )
         else:
             env = Environment()
-        template = env.from_string(input_text)
+
 
         # TODO test that we are in textile or other format where this makes sense
         if re.search("latex", self.artifact.doc.key()):
@@ -128,6 +145,14 @@ class JinjaHandler(DexyHandler):
             'is_latex' : is_latex
         }
 
-        result = str(template.render(template_hash))
+        try:
+            template = env.from_string(input_text)
+            result = str(template.render(template_hash))
+        except jinja2.exceptions.TemplateSyntaxError as e:
+            print "jinja error occurred processing line", e.lineno
+            raise e
+        except Exception as e:
+            print e.__class__.__name__
+            raise e
 
         return result
