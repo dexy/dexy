@@ -5,81 +5,86 @@ except ImportError:
 
 from dexy.document import Document
 from dexy.handler import DexyHandler
-from dexy.logger import log
+from dexy.reporter import Reporter
 from dexy.topological_sort import topological_sort
 from inspect import isclass
 import csv
 import fnmatch
 import glob
+import json
+import logging
 import os
 import re
-import json
-import sys
 import sre_constants
+import sys
 
 class Controller(object):
-    def __init__(self, logs_dir='logs'):
-        self.handler_dirs = None
-        self.time_log_filename = os.path.join(logs_dir, "times.csv")
-        self.init_time_logger()
+    def __init__(self):
+        self.config = {}
+        self.install_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        if not hasattr(self, 'log'):
+            self.log = logging.getLogger('dexy')
 
-### @export "init-time-logger"
-    def init_time_logger(self):
-        write_header = not os.path.exists(self.time_log_filename)
-        self.time_log_file = open(self.time_log_filename, "a")
-        self.csv_writer = csv.writer(self.time_log_file)
-        if write_header:
-            self.csv_writer.writerow([
-                "artifact_key",
-                "hashstring",
-                "doc_key",
-                "handler_class",
-                "method",
-                "start",
-                "finish",
-                "elapsed"
-            ])
+    def find_reporters(self):
+        d1 = os.path.abspath(os.path.join(self.install_dir, 'reporters'))
+        d2 = os.path.abspath(os.path.join(os.curdir, 'reporters'))
 
-### @export "close-logger"
-    def close_logger(self):
-        self.time_log_file.close()
+        if d1 == d2:
+            reporter_dirs = [d1]
+        else:
+            reporter_dirs = [d1,d2]
 
-### @export "log"
-    def log_time(self, row):
-        self.csv_writer.writerow(row)
+        reporters = []
 
-### @export "init-handler-dirs"
-    def init_handler_dirs(self):
-        install_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-        cur_dir = os.curdir
-        sys.path.append(cur_dir)
+        for d in reporter_dirs:
+            if os.path.exists(d):
+                for f in os.listdir(d):
+                    if f.endswith(".py") and f not in ["base.py", "__init__.py"]:
+                        self.log.info("Loading reporters in %s" % os.path.join(d, f))
+                        basename = f.replace(".py", "")
+                        module = "reporters.%s" % basename
 
-        self.handler_dirs = []
+                        try:
+                            __import__(module)
+                        except ImportError as e:
+                            self.log.warn("reporters defined in %s are not available: %s" % (module, e))
+
+                        if not sys.modules.has_key(module):
+                            continue
+
+                        mod = sys.modules[module]
+
+                        for k in dir(mod):
+                            klass = mod.__dict__[k]
+                            if isclass(klass) and not (klass == Reporter) and issubclass(klass, Reporter):
+                                reporters.append(klass)
+        self.reports_dirs = [r.REPORTS_DIR for r in reporters]
+        return reporters
+
+    def find_handlers(self):
+        sys.path.append(os.curdir)
+
+        handler_dirs = []
         # Need to give local directory (in which we place custom per-project filters)
         # a different name or else Python can't see modules in that dir.
         # This handler/filter switching is confusing, should be improved.
-        h1 = os.path.abspath(os.path.join(install_dir, 'handlers'))
-        h2 = os.path.abspath(os.path.join(cur_dir, 'filters'))
+        h1 = os.path.abspath(os.path.join(self.install_dir, 'handlers'))
+        h2 = os.path.abspath(os.path.join(os.curdir, 'filters'))
 
         for h in [h1, h2]:
-            if os.path.exists(h) and not h in self.handler_dirs:
-                self.handler_dirs.append(h)
-
-### @export "find-handlers"
-    def find_handlers(self):
-        if not self.handler_dirs:
-            self.init_handler_dirs()
+            if os.path.exists(h) and not h in handler_dirs:
+                handler_dirs.append(h)
 
         handlers = {}
 
         for a in DexyHandler.ALIASES:
             handlers[a] = DexyHandler
 
-        for d in self.handler_dirs:
-            log.info("Automatically loading all filters found in %s" % d)
+        for d in handler_dirs:
+            self.log.info("Automatically loading all filters found in %s" % d)
             for f in os.listdir(d):
                 if f.endswith(".py") and f not in ["base.py", "__init__.py"]:
-                    log.info("Loading filters in %s" % os.path.join(d, f))
+                    self.log.info("Loading filters in %s" % os.path.join(d, f))
                     basename = f.replace(".py", "")
                     if d.endswith('handlers'):
                         module = "handlers.%s" % basename
@@ -91,7 +96,7 @@ class Controller(object):
                     try:
                         __import__(module)
                     except ImportError as e:
-                        log.warn("filters defined in %s are not available: %s" % (module, e))
+                        self.log.warn("filters defined in %s are not available: %s" % (module, e))
 
                     if not sys.modules.has_key(module):
                         continue
@@ -105,16 +110,18 @@ class Controller(object):
                                 if handlers.has_key(a):
                                     raise Exception("duplicate key %s called from %s in %s" % (a, k, f))
                                 handlers[a] = klass
-                                log.info("registered alias %s for class %s" % (a, k))
-            log.info("...finished loading filters from %s" % d)
+                                self.log.info("registered alias %s for class %s" % (a, k))
+            self.log.info("...finished loading filters from %s" % d)
         return handlers
 
-### @export "register-handlers"
     def register_handlers(self):
         self.handlers = self.find_handlers()
 
-### @export "load-config"
+    def register_reporters(self):
+        self.reporters = self.find_reporters()
+
     def load_config(self, path_to_dir, rel_to=os.curdir):
+        # This looks in every parent directory for a config file and combines them.
         relative_path = os.path.relpath(path_to_dir, rel_to)
         path_elements = relative_path.split(os.sep)
         config_dict = {}
@@ -122,7 +129,7 @@ class Controller(object):
             config_file_path_elements = [rel_to] + path_elements[0:i] + [self.config_file]
             config_filename = os.path.join(*config_file_path_elements)
             if os.path.exists(config_filename):
-                log.info("loading config %s" % config_filename)
+                self.log.info("loading config %s" % config_filename)
                 config_file = open(config_filename, "r")
                 try:
                     json_dict = json.load(config_file)
@@ -130,13 +137,10 @@ class Controller(object):
                     raise Exception("""Your config file %s has invalid JSON. Details: %s""" %
                                     (config_filename, e.message))
                 config_dict.update(json_dict)
-                log.info("config dict %s" % config_dict)
-        self.json_dict = config_dict
-        self.path = path_to_dir
+        self.config[path_to_dir] = config_dict
 
-### @export "process-config"
     def process_config(self):
-        def parse_doc(input_directive, args = {}):
+        def parse_doc(path, input_directive, args = {}):
             # If a specification is nested in a dependency, then input_directive
             # may be a dict. If so, split it into parts before continuing.
             try:
@@ -147,7 +151,12 @@ class Controller(object):
                 pass
 
             tokens = input_directive.split("|")
-            glob_string = os.path.join(self.path, tokens[0])
+            if "/" in tokens[0]:
+                raise Exception("paths not allowed in tokens: %s" % tokens[0])
+            if path == '.':
+                glob_string = tokens[0]
+            else:
+                glob_string = os.path.join(re.sub("^\./", "", path), tokens[0])
             filters = tokens[1:]
 
             docs = []
@@ -172,7 +181,6 @@ class Controller(object):
             files = glob.glob(glob_string)
 
             nofiles = len(files) == 0
-            in_proj_root = (self.path == '.')
             not_wildcard = glob_string.find("*") < 0
 
             if nofiles and virtual:
@@ -180,6 +188,9 @@ class Controller(object):
 
             for f in files:
                 create = True
+                if not virtual:
+                    if os.path.isdir(f):
+                        create = False
 
                 if args.has_key('disabled'):
                     if args['disabled']:
@@ -192,7 +203,7 @@ class Controller(object):
                         raise Exception("""this input should be an array,
                                         not a string: %s""" % args['inputs'])
                     for i in args['inputs']:
-                        for doc in parse_doc(i):
+                        for doc in parse_doc(path, i):
                             inputs.append(doc.key())
                 m = matcher.match(f)
                 if m and len(m.groups()) > 0:
@@ -202,21 +213,21 @@ class Controller(object):
                 # the specified pattern, we should create this document and it
                 # will depend on the specified input.
                 if args.has_key('ifinput'):
-                    log.debug(f)
+                    self.log.debug(f)
                     if isinstance(args['ifinput'], str) or isinstance(args['ifinput'], unicode):
                         ifinputs = [args['ifinput']]
                     else:
-                        log.debug("treating input %s as iterable. class: %s" % (
+                        self.log.debug("treating input %s as iterable. class: %s" % (
                             args['ifinput'], args['ifinput'].__class__.__name__))
                         ifinputs = args['ifinput']
 
                     for s in ifinputs:
-                        log.debug("evaluating ifinput %s" % s)
+                        self.log.debug("evaluating ifinput %s" % s)
                         ifinput = s.replace("%", rootname)
-                        log.debug("evaluating ifinput %s" % ifinput)
-                        input_docs = parse_doc(ifinput, {})
+                        self.log.debug("evaluating ifinput %s" % ifinput)
+                        input_docs = parse_doc(path, ifinput, {})
                         for input_doc in input_docs:
-                            log.debug(input_doc.key())
+                            self.log.debug(input_doc.key())
                             inputs.append(input_doc.key())
 
                     if len(input_docs) == 0:
@@ -224,7 +235,7 @@ class Controller(object):
 
                 if args.has_key('ifnoinput'):
                     ifinput = args['ifnoinput'].replace("%", rootname)
-                    input_docs = parse_doc(ifinput, {})
+                    input_docs = parse_doc(path, ifinput, {})
 
                     if len(input_docs) > 0:
                         create = False
@@ -243,7 +254,7 @@ re.compile: %s""" % (args['except'], e))
 
                 if create:
                     # Filters can either be included in the name...
-                    doc = Document(f, filters)
+                    doc = Document(self.artifact_class, f, filters)
                     doc.args = args
                     # ...or they may be listed explicitly.
                     if args.has_key('filters'):
@@ -282,8 +293,11 @@ re.compile: %s""" % (args['except'], e))
         self.depends = []
 
         # Create Document objects for all docs.
-        for k, v in self.json_dict.items():
-            parse_doc(k, v)
+        self.log.debug("About to process config\n")
+        self.log.debug(self.config)
+        for path, config in self.config.items():
+            for k, v in config.items():
+                parse_doc(path, k, v)
 
         # Determine dependencies
         for doc in self.members.values():
@@ -298,19 +312,16 @@ re.compile: %s""" % (args['except'], e))
             ordered_members[key] = self.members[key]
         self.members = ordered_members
 
-### @export "run"
     def run(self):
         return [doc.run(self) for doc in self.members.values()]
 
-### @export "setup-and-run"
-    def setup_and_run(self, path_to_dir):
+    def setup_and_run(self):
         if not hasattr(self, 'artifacts_dir'):
             self.artifacts_dir = 'artifacts'
         if not hasattr(self, 'config_file'):
             self.config_file = '.dexy'
         self.register_handlers()
-        self.load_config(path_to_dir)
+        self.register_reporters()
         self.process_config()
-        docs = self.run()
-        self.close_logger()
-        return docs
+        self.docs = self.run()
+        return self.docs

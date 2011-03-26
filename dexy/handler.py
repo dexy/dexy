@@ -3,13 +3,12 @@ try:
 except ImportError:
     from ordereddict import OrderedDict
 
-from dexy.artifact import Artifact
-import dexy.logger
-import time
-import subprocess
+import inspect
+import logging
 import platform
+import subprocess
+import time
 
-### @export "class"
 class DexyHandler(object):
     """
     This is the main DexyHandler class. To make custom handlers you should
@@ -20,8 +19,9 @@ class DexyHandler(object):
     INPUT_EXTENSIONS = [".*"]
     OUTPUT_EXTENSIONS = [".*"]
     ALIASES = ['dexy']
+    BINARY = False
+    FINAL = False
 
-### @export "executable"
     @classmethod
     def executable(self):
         """A standard way of specifying a command line executable. For usage
@@ -35,7 +35,6 @@ class DexyHandler(object):
             if hasattr(self, 'EXECUTABLE'):
                 return self.EXECUTABLE
 
-### @export "version_command"
     @classmethod
     def version_command(self):
         if platform.system() == 'Windows':
@@ -45,7 +44,6 @@ class DexyHandler(object):
             if hasattr(self, 'VERSION'):
                 return self.VERSION
 
-### @export "version"
     @classmethod
     def version(self):
         vc = self.version_command()
@@ -62,47 +60,63 @@ class DexyHandler(object):
         else:
             return "unspecified"
 
-### @export "setup"
     @classmethod
-    def setup(klass, doc, artifact_key, previous_artifact = None, next_handler = None):
-        h = klass()
-        h.doc = doc
-        h.artifact = Artifact.setup(doc, artifact_key, h, previous_artifact)
-        if next_handler:
-            h.artifact.next_handler_name = next_handler.__name__
+    def output_file_extension(klass, ext, key, next_handler_class):
+        out_ext = None
 
-        # Determine file extension.
-        ext = previous_artifact.ext
-        if set([ext, ".*"]).isdisjoint(set(h.INPUT_EXTENSIONS)):
+        if set([ext, ".*"]).isdisjoint(set(klass.INPUT_EXTENSIONS)):
             exception_text = """Error in %s for %s. Extension %s is not supported.
-            Supported extensions are: %s""" % (klass.__name__, doc.key(), ext, ', '.join(h.INPUT_EXTENSIONS))
+            Supported extensions are: %s""" % (klass.__name__, key, ext, ', '.join(klass.INPUT_EXTENSIONS))
             raise Exception(exception_text)
-        h.ext = ext
-        
-        if ".*" in h.OUTPUT_EXTENSIONS:
-            h.artifact.ext = ext
+
+        if ".*" in klass.OUTPUT_EXTENSIONS:
+            out_ext = ext
         else:
-            if next_handler and not ".*" in next_handler.INPUT_EXTENSIONS:
-                for e in h.OUTPUT_EXTENSIONS:
-                    if e in next_handler.INPUT_EXTENSIONS:
-                        h.artifact.ext = e
-                
-                if not hasattr(h.artifact, 'ext'):
+            if next_handler_class and not ".*" in next_handler_class.INPUT_EXTENSIONS:
+                for e in klass.OUTPUT_EXTENSIONS:
+                    if e in next_handler_class.INPUT_EXTENSIONS:
+                        out_ext = e
+
+                if not out_ext:
                   err_str = "unable to find one of %s in %s for %s %s"
-                  err_str = err_str % (", ".join(h.OUTPUT_EXTENSIONS), ", ".join(next_handler.INPUT_EXTENSIONS), next_handler.__name__, doc.key())
+                  prev_out = ", ".join(klass.OUTPUT_EXTENSIONS)
+                  next_in = ", ".join(next_handler_class.INPUT_EXTENSIONS)
+                  next_handler_name = next_handler_class.__name__
+                  err_str = err_str % (prev_out, next_in, next_handler_name, key)
                   raise Exception(err_str)
             else:
-                h.artifact.ext = h.OUTPUT_EXTENSIONS[0]
-    
-        h.artifact.set_hashstring()
-        if hasattr(dexy.logger.log, 'getChild'):
-            # This adds a nice namespacing, only available in Python 2.7
-            h.log = dexy.logger.log.getChild(klass.__name__)
-        else:
-            h.log = dexy.logger.log
+                out_ext = klass.OUTPUT_EXTENSIONS[0]
+
+        return out_ext
+
+    @classmethod
+    def setup(klass, doc, artifact_key, previous_artifact, next_handler_class):
+        h = klass()
+        h.doc = doc
+        h.log = doc.log
+
+        artifact_class = previous_artifact.__class__
+
+        artifact = artifact_class.setup(doc, artifact_key, previous_artifact)
+        artifact.handler = h
+        artifact.handler_source = inspect.getsource(klass)
+        artifact.handler_version = klass.version()
+        if not artifact.final:
+            artifact.final = klass.FINAL
+        artifact.binary = klass.BINARY
+
+        if next_handler_class:
+            artifact.next_handler_name = next_handler_class.__name__
+
+        artifact.ext = klass.output_file_extension(
+            previous_artifact.ext, doc.key(), next_handler_class)
+
+        artifact.set_hashstring()
+
+        h.ext = artifact.ext
+        h.artifact = artifact
         return h
 
-### @export "process"
     def process(self):
         """This is the method that does the "work" of the handler, that is
         filtering the input and producing output. This method can be overridden
@@ -139,56 +153,35 @@ class DexyHandler(object):
             output_dict = self.process_text_to_dict(input_text)
             self.artifact.data_dict = output_dict
             method_used = "process_text_to_dict"
-        
+
         if not method_used:
             # This code implements the neutral 'dexy' handler.
             self.artifact.data_dict = self.artifact.input_data_dict
             method_used = "process"
-        
+
         return method_used
 
-### @export "set-input-text"
     def set_input_text(self, input_text):
         if hasattr(self, 'artifact'):
             raise Exception("already have an artifact!")
-        self.artifact = Artifact()
+        self.artifact = self.doc.artifact_class()
         self.artifact.input_data_dict = {'1' : input_text}
         self.artifact.data_dict = OrderedDict()
 
-### @export "generate"
-    def generate(self):
-        self.artifact.generate()
-
-### @export "generate-artifact"
-    def generate_artifact(self): 
-        start = time.time()
-
-        if self.artifact.dj_file_exists():
-            method = 'cached'
-            self.artifact.load_dj()
+    def generate_artifact(self):
+        self.artifact.start_time = time.time()
+        if self.artifact.is_cached():
+            self.artifact.method = 'cached'
+            if not self.artifact.is_loaded():
+                self.artifact.load()
         else:
-            method = 'generated'
+            self.artifact.method = 'generated'
             self.process()
-            self.generate()
+#            self.artifact.binary = self.BINARY
+#            if not hasattr(self.artifact, 'final') or not self.artifact.final:
+#                self.artifact.final = self.FINAL
+            self.artifact.save()
 
-        finish = time.time()
-        self.log_time(start, finish, method)
-
+        self.artifact.finish_time = time.time()
         return self.artifact
 
-### @export "log-time"
-    def log_time(self, start, finish, method):
-        doc = self.artifact.doc
-
-        elapsed = finish - start
-        row = [
-            self.artifact.key,
-            self.artifact.hashstring,
-            doc.key(),
-            self.__class__.__name__,
-            method,
-            start, 
-            finish, 
-            elapsed
-        ]
-        self.artifact.doc.controller.log_time(row)

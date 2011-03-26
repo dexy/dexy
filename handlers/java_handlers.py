@@ -6,12 +6,12 @@ import dexy.handler
 import handlers.pexpect_handlers
 import handlers.stdout_handlers
 import json
+import markdown
 import os
 import pexpect
 import subprocess
 import time
 
-### @export "jruby-handler"
 class JrubyHandler(handlers.stdout_handlers.ProcessStdoutHandler):
     VERSION = "/usr/bin/env jruby --version"
     EXECUTABLE = "/usr/bin/env jruby"
@@ -19,7 +19,6 @@ class JrubyHandler(handlers.stdout_handlers.ProcessStdoutHandler):
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['jruby']
 
-### @export "jirb-handler"
 class JirbHandler(handlers.pexpect_handlers.ProcessLinewiseInteractiveHandler):
     VERSION = "/usr/bin/env jirb --version"
     EXECUTABLE = "/usr/bin/env jirb --prompt-mode simple"
@@ -28,7 +27,6 @@ class JirbHandler(handlers.pexpect_handlers.ProcessLinewiseInteractiveHandler):
     OUTPUT_EXTENSIONS = [".rbcon"]
     ALIASES = ['jirb']
 
-### @export "jython-handler"
 class JythonHandler(handlers.stdout_handlers.ProcessStdoutHandler):
     VERSION = "/usr/bin/env jython --version"
     EXECUTABLE = "/usr/bin/env jython"
@@ -36,7 +34,6 @@ class JythonHandler(handlers.stdout_handlers.ProcessStdoutHandler):
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['jython']
 
-### @export "jython-interactive-handler"
 class JythonInteractiveHandler(handlers.pexpect_handlers.ProcessLinewiseInteractiveHandler):
     VERSION = "/usr/bin/env jython --version"
     EXECUTABLE = "/usr/bin/env jython -i"
@@ -44,7 +41,6 @@ class JythonInteractiveHandler(handlers.pexpect_handlers.ProcessLinewiseInteract
     OUTPUT_EXTENSIONS = [".pycon"]
     ALIASES = ['jythoni']
 
-### @export "java-handler"
 class JavaHandler(dexy.handler.DexyHandler):
     VERSION = "/usr/bin/env java -version"
     INPUT_EXTENSIONS = [".java"]
@@ -65,43 +61,74 @@ class JavaHandler(dexy.handler.DexyHandler):
 
         self.artifact.create_temp_dir()
 
-        compile_command = "/usr/bin/env javac -d %s %s" % (
+        command = "/usr/bin/env javac -d %s %s" % (
             self.artifact.temp_dir(), self.doc.name)
 
-        self.log.debug(compile_command)
-        proc = subprocess.Popen(compile_command, shell=True,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
-                                env=env)
-        proc.wait()
-
-
-        command = "/usr/bin/env java -cp %s %s" % (
-            self.artifact.temp_dir(), main_method)
         self.log.debug(command)
         proc = subprocess.Popen(command, shell=True,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
                                 env=env)
-        proc.wait()
-        self.artifact.data_dict['1'] = proc.stdout.read()
+        stdout, stderr = proc.communicate()
+        self.log.debug("stdout from compiler:\n%s" % stdout)
+        self.log.debug("stderr from compiler:\n%s" % stderr)
+        if proc.returncode > 0:
+            raise Exception("a problem occurred running %s.\ndetails:\n%s" % (
+                command, stderr))
 
-### @export "javadoc-json-handler"
+        cp = self.artifact.temp_dir()
+        if self.doc.args.has_key('env'):
+            if self.doc.args['env'].has_key('CLASSPATH'):
+                cp = "%s:%s" % (self.artifact.temp_dir(),
+                                self.doc.args['env']['CLASSPATH'])
+
+        command = "/usr/bin/env java -cp %s %s" % (cp, main_method)
+        self.log.debug(command)
+        proc = subprocess.Popen(command, shell=True,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE,
+                                env=env)
+        stdout, stderr = proc.communicate()
+        if proc.returncode > 0:
+            raise Exception("a problem occurred running %s.\ndetails:\n%s" % (
+                command, stderr))
+
+        self.artifact.data_dict['1'] = stdout
+
 class JavadocsJsonFilter(dexy.handler.DexyHandler):
-    ALIASES = ['javadocs']
+    ALIASES = ['javadoc', 'javadocs']
     def process_text(self, input_text):
         j = json.loads(input_text)
+
+        # Update our JSON array with each input data file.
+        def update_dict(o, n):
+            for k in o.keys():
+                if n.has_key(k):
+                    v = o[k]
+                    if isinstance(v, dict):
+                        o[k] = update_dict(v, n[k])
+                    else:
+                        o[k].update(n[k])
+            return o
+
+        self.artifact.load_input_artifacts()
+        for k, a in self.artifact.input_artifacts_dict.items():
+            new_data = json.loads(a['data'])
+            j = update_dict(j, new_data)
+
+
         for p in j['packages']:
             for k in j['packages'][p]['classes'].keys():
                 for m in j['packages'][p]['classes'][k]['methods'].keys():
                     source = j['packages'][p]['classes'][k]['methods'][m]['source']
+
+                    # TODO - try running comment text through Textile
+                    # interpreter for HTML and LaTeX options
+                    comment = j['packages'][p]['classes'][k]['methods'][m]['comment-text']
+
                     html_formatter = HtmlFormatter()
                     latex_formatter = LatexFormatter()
                     lexer = JavaLexer()
-
-                    source_array = source.split("\n")
-                    if source_array[-1] == "@Override":
-                        source = source_array[:-1].join("\n")
 
                     j['packages'][p]['classes'][k]['methods'][m]['source'] = source
                     j['packages'][p]['classes'][k]['methods'][m]['source-html'] = str(highlight(source, lexer, html_formatter))

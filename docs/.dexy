@@ -1,0 +1,10 @@
+{
+  "index.textile|fn|jinja|textile|hd|ft" : {
+    "allinputs" : true,
+    "notextile" : true
+  },
+  "*.R|fn|idio|rint|pyg" : {},
+  "_*.html|jinja" : {},
+  "*.py|pyg" : {},
+  "*.py|fn|py" : {}
+}

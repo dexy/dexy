@@ -1,0 +1,73 @@
+h1. Documentation Driven Testing
+
+h2. Artifacts
+
+h3. Initializing Artifacts
+
+Artifacts are usually created via the setup() class method which is intended to be used in the course of creating a document, so many attributes are set based on the document which is creating the artifact. However sometimes artifacts are created on their own, as when creating additional artifacts.
+
+The 'key' argument is required to be passed when creating a new artifact.
+
+{{ d.source.artifact['__init__'] }}
+
+When the artifact is part of a document, the key consists of the original filename plus any filters that have been run up to this point, the final filter in the list being the filter which this artifact represents. The artifact class is responsible for generating canonical filenames based on this key:
+
+{{ d.nose.test_artifact_filenames_file_key_with_filters }}
+
+The long canonical form is intended to be unique, whereas the short form is more friendly and may make more intuitive sense in some cases, but may not be unique.
+
+{{ d.source.artifact.canonical_filename }}
+{{ d.source.artifact.long_canonical_filename }}
+
+Where an Artifact is used outside of a document, the key may not have an extension:
+
+{{ d.nose.test_artifact_filenames_simple_key }}
+
+Where an artifact is part of a document, the extension will be determined automatically, however in the case of a standalone file, the extension will need to be specified.
+
+h3. Artifact Setup
+
+The setup method associates a new artifact with its doc, and, if applicable, a previous artifact:
+
+{{ d.source.artifact.setup }}
+
+The setup method is called by the create initial artifact method in the Document class:
+
+{{ d.source.document.create_initial_artifact }}
+
+And also by the setup method in the Handler class:
+
+{{ d.source.handler.setup }}
+
+
+
+{% if False %}
+{{ d.source.artifact['META_ATTRS'] }}
+h1. Keys
+
+h3. Nose
+
+<pre>
+{% for k in d.nose.keys() %}
+{{ k }}
+{% endfor %}
+</pre>
+
+h3. Artifact
+
+<pre>
+{% for k in d.source.artifact.keys() %}
+{{ k }}
+{% endfor %}
+</pre>
+
+h3. Controller
+
+<pre>
+{% for k in d.source.controller.keys() %}
+{{ k }}
+{% endfor %}
+</pre>
+
+{% endif %}
+

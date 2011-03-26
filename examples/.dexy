@@ -26,9 +26,11 @@
   "hello.c|ctime" : {},
   "read_input.c|cint|test" : {
     "inputs" : ["read_input.txt|dexy"],
-    "expects" : "here is input\r\nhere is input\r\n"
+    "expects" : "here is input\r\nhere is input\r\n",
+    "disabled" : true
   },
   "read_input.c|ctimeint" : {
+    "disabled" : true,
     "inputs" : ["read_input.txt|dexy"]
   },
   "hello.py|py|test" : {

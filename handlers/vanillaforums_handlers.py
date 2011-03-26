@@ -7,7 +7,6 @@ import pycurl
 import re
 import urllib
 
-
 class VanillaForumHandler(DexyHandler):
     ALIASES = ['vanilla']
     FORUM_CONFIG_FILE = 'vanilla-config.json'
@@ -27,7 +26,7 @@ class VanillaForumHandler(DexyHandler):
             raise e
         f.close()
         self.user_cookie = self.forum_conf['user-cookie']
-        self.api = self.forum_conf['api'].rstrip('/')
+        self.site = self.forum_conf['site'].rstrip('/')
 
     def load_discussion_conf(self):
         self.artifact.load_input_artifacts()
@@ -43,11 +42,11 @@ class VanillaForumHandler(DexyHandler):
         except ValueError as e:
             print "error parsing JSON in", self.k
             raise e
-    
+
     def obtain_transient_key(self):
         c = pycurl.Curl()
         b = StringIO()
-        c.setopt(c.URL, "%s/session" % self.api)
+        c.setopt(c.URL, "%s/api/session" % self.site)
         c.setopt(c.COOKIE, "Vanilla=%s" % self.user_cookie)
         c.setopt(c.WRITEFUNCTION, b.write)
         c.perform()
@@ -59,7 +58,7 @@ class VanillaForumHandler(DexyHandler):
         self.load_forum_conf()
         self.load_discussion_conf()
         self.obtain_transient_key()
-        
+
         if self.discussion_conf.has_key('Name'):
             discussion_name = self.discussion_conf['Name']
         else:
@@ -83,16 +82,16 @@ class VanillaForumHandler(DexyHandler):
            discussion_data.append(('Discussion/DiscussionID', self.discussion_conf['DiscussionID']))
         else:
            print "no 'DiscussionID' specified, creating new discussion"
-    
+
         c = pycurl.Curl()
         b = StringIO()
-        c.setopt(c.URL, "http://discuss.dexy.it/api/discussion/add")
+        c.setopt(c.URL, "%s/api/discussion/add" % self.site)
         c.setopt(c.COOKIE, "Vanilla=%s" % self.user_cookie)
         c.setopt(c.POST, 1)
         c.setopt(c.POSTFIELDS, urllib.urlencode(discussion_data))
         c.setopt(c.WRITEFUNCTION, b.write)
         c.perform()
-        
+
         result = json.loads(b.getvalue())
         print result
         self.discussion_conf['DiscussionID'] = result['DiscussionID']
@@ -112,7 +111,7 @@ class VanillaForumCommentHandler(VanillaForumHandler):
         self.load_discussion_conf()
 
         self.obtain_transient_key()
-        
+
         if self.discussion_conf.has_key('CategoryID'):
             comment_category_id = self.discussion_conf['CategoryID']
         else:
@@ -136,16 +135,16 @@ class VanillaForumCommentHandler(VanillaForumHandler):
            comment_data.append(('Comment/CommentID', self.discussion_conf['CommentID']))
         else:
            print "no 'CommentID' specified, creating new comment"
-    
+
         c = pycurl.Curl()
         b = StringIO()
-        c.setopt(c.URL, "http://discuss.dexy.it/api/comment/add")
+        c.setopt(c.URL, "%s/api/comment/add" % self.site)
         c.setopt(c.COOKIE, "Vanilla=%s" % self.user_cookie)
         c.setopt(c.POST, 1)
         c.setopt(c.POSTFIELDS, urllib.urlencode(comment_data))
         c.setopt(c.WRITEFUNCTION, b.write)
         c.perform()
-        
+
         result = json.loads(b.getvalue())
         print result
         self.discussion_conf['CommentID'] = result['CommentID']

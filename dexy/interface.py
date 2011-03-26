@@ -4,8 +4,13 @@ try:
 except ImportError:
     from ordereddict import OrderedDict
 
+from dexy.artifact import Artifact
+from dexy.controller import Controller
 from dexy.version import VERSION
+from inspect import isclass
+from logging.handlers import RotatingFileHandler
 import json
+import logging
 import os
 import re
 import shutil
@@ -13,11 +18,41 @@ import sys
 import urllib
 
 
-EXCLUDED_DIRS = ['.bzr', '.hg', '.git', '.svn', 'ignore']
+EXCLUDED_DIRS = ['.bzr', '.hg', '.git', '.svn', 'ignore', 'filters']
 EXCLUDE_DIR_HELP = """Exclude directories from processing by dexy, only relevant
 if recursing. The directories designated for artifacts, logs and cache are
 automatically excluded, as are %s.
 """ % ", ".join(EXCLUDED_DIRS)
+
+def artifact_class(artifact_class_name, log):
+    artifact_classes = {}
+
+    d = os.path.join(os.path.dirname(__file__), 'artifacts') # yes 'artifacts' not artifacts_dir
+    for f in os.listdir(d):
+        if f.endswith(".py") and f not in ["base.py", "__init__.py"]:
+            log.debug("Loading artifacts in %s" % os.path.join(d, f))
+            basename = f.replace(".py", "")
+            module = "dexy.artifacts.%s" % basename
+            try:
+                __import__(module)
+            except ImportError as e:
+                log.warn("artifact defined in %s are not available: %s" % (module, e))
+
+            if not sys.modules.has_key(module):
+                continue
+
+            mod = sys.modules[module]
+
+            for k in dir(mod):
+                klass = mod.__dict__[k]
+                if isclass(klass) and not (klass == Artifact) and issubclass(klass, Artifact):
+                    if artifact_classes.has_key(k):
+                        raise Exception("duplicate artifact class name %s called from %s in %s" % (a, k, f))
+                    artifact_classes[klass.__name__] = klass
+
+    if not artifact_class_name in artifact_classes.keys():
+        raise Exception("artifact class %s not available, maybe check dexy.log for clues" % artifact_class_name)
+    return artifact_classes[artifact_class_name]
 
 
 def setup_option_parser():
@@ -29,31 +64,31 @@ def setup_option_parser():
             parser.add_option(*args, **kwargs)
         else:
             parser.add_argument(*args, **kwargs)
-    
+
     try:
         # These are argparse-specific
         import argparse
         option_parser = 'argparse'
         parser = argparse.ArgumentParser()
-        
+
         parser.add_argument(
             'dir',
             help='directory of files to process with dexy',
             default='.', nargs='?'
         )
-    
+
         parser.add_argument(
             '-x', '--exclude-dir',
             help=EXCLUDE_DIR_HELP,
             nargs='+'
         )
-    
+
         parser.add_argument(
-            '-v', '--version', 
-            action='version', 
+            '-v', '--version',
+            action='version',
             version='%%(prog)s %s' % VERSION
         )
-    
+
     except ImportError:
         # These are optparse-specific
         import optparse
@@ -63,7 +98,7 @@ def setup_option_parser():
             '-x', '--exclude-dir',
             help=EXCLUDE_DIR_HELP + ' Separate multiple directories with commas.'
         )
-    
+
     # Remaining options are the same for argparse and optparse
     add_option(parser,
         '-n', '--no-recurse',
@@ -72,19 +107,19 @@ def setup_option_parser():
         action='store_false',
         help='do not recurse into subdirectories (default: recurse)'
     )
-    
+
     add_option(parser,
         '-u', '--utf8',
         default=False,
         action='store_true',
         help='switch encoding to UTF-8 (default: don\'t change encoding)'
     )
-    
+
     add_option(parser,
         '-p', '--purge',
         default=False,
         action='store_true',
-        help='purge the artifacts and cache directories before running dexy'
+        help='purge all artifacts before running dexy'
     )
 
     add_option(parser,
@@ -102,23 +137,38 @@ def setup_option_parser():
     )
 
     add_option(parser,
+        '--reporters',
+        default=False,
+        action='store_true',
+        help='list all available reporters (does not run dexy)'
+    )
+
+    add_option(parser,
+        '--artifact-class',
+        default='FileSystemJsonArtifact',
+        help='name of artifact class to use (default: FileSystemJsonArtifact)'
+    )
+
+    add_option(parser,
         '-a', '--artifacts-dir',
         default='artifacts',
         help='location of artifacts directory (default: artifacts)'
     )
-    
+
     add_option(parser,
         '-l', '--logs-dir',
         default='logs',
-        help='location of logs directory (default: logs) dexy will create a dexy.log file in this directory'
+        help="""location of logs directory (default: logs)
+               dexy will create a dexy.log file in this directory
+               reporters may create reports in this directory"""
     )
-    
+
     add_option(parser,
         '-c', '--cache-dir',
         default='cache',
         help='location of cache directory (default: cache)'
     )
-    
+
     add_option(parser,
         '--local',
         default=False,
@@ -132,7 +182,7 @@ def setup_option_parser():
         action='store_true',
         help='Use short names in cache'
         )
-    
+
     add_option(parser,
         '--setup',
         default=False,
@@ -153,6 +203,13 @@ def setup_option_parser():
         help='Allow running remote URLs which may execute dangerous code, use with care.'
      )
 
+    add_option(parser,
+        '--no-reports',
+        default=False,
+        action='store_true',
+        help='Don\t run reports when finished running Dexy.'
+     )
+
     if (option_parser == 'argparse'):
         args = parser.parse_args()
         dir_name = args.dir
@@ -160,7 +217,7 @@ def setup_option_parser():
             exclude_dir = args.exclude_dir
         else:
             exclude_dir = []
-    
+
     elif (option_parser == 'optparse'):
         (args, argv) = parser.parse_args()
         if len(argv) == 0:
@@ -173,9 +230,9 @@ def setup_option_parser():
             exclude_dir = []
     else:
         raise Exception("unexpected option_parser %s" % option_parser)
-    
+
     args.run_dexy = True
-    
+
     if args.utf8:
         if (sys.getdefaultencoding() == 'UTF-8'):
             print "encoding is already UTF-8"
@@ -183,7 +240,7 @@ def setup_option_parser():
             print "changing encoding from %s to UTF-8" % sys.getdefaultencoding()
             reload(sys)
             sys.setdefaultencoding("UTF-8")
-    
+
     if not os.path.exists(dir_name):
         raise Exception("file %s not found!" % dir_name)
 
@@ -192,14 +249,6 @@ def setup_option_parser():
             os.mkdir(args.artifacts_dir)
         if not os.path.exists(args.logs_dir):
             os.mkdir(args.logs_dir)
-        if not os.path.exists('filters'):
-            os.mkdir('filters')
-            f = open('filters/__init__.py', 'w')
-            f.close()
-            f = open('filters/README', 'w')
-            f.write("Custom filters go in this directory.\n")
-            f.close()
-            # TODO write a com.example.bar filter for people to play with
         if not os.path.exists(".dexy"):
             f = open(".dexy", "w")
             f.write("{\n}\n")
@@ -224,7 +273,7 @@ def setup_option_parser():
             please create a directory called %s if you want to use
             this location as a dexy project root""" % (path_to_artifacts_dir, args.artifacts_dir)
         )
-    
+
     if not os.path.exists(args.logs_dir):
         path_to_logs_dir = os.path.join(project_base, args.logs_dir)
         raise Exception(
@@ -233,44 +282,78 @@ def setup_option_parser():
             this location as a dexy project root""" % (path_to_logs_dir, args.logs_dir)
         )
 
-    from dexy.logger import log 
+    # Set up main dexy log
+    dexy_log = logging.getLogger("dexy")
+    dexy_log.setLevel(logging.DEBUG)
+
+    logfile = os.path.join(args.logs_dir, 'dexy.log')
+    handler = RotatingFileHandler(logfile)
+    dexy_log.addHandler(handler)
+
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    handler.setFormatter(formatter)
+
+    args.artifact_class = artifact_class(args.artifact_class, dexy_log)
 
     if args.purge:
-        log.warn("purging contents of %s" % args.artifacts_dir)
+        dexy_log.warn("purging contents of %s" % args.artifacts_dir)
         shutil.rmtree(args.artifacts_dir)
         os.mkdir(args.artifacts_dir)
-        
-        if os.path.exists(args.cache_dir): 
-            log.warn("purging contents of %s" % args.cache_dir)
-            shutil.rmtree(args.cache_dir)
-            os.mkdir(args.cache_dir)
-    
+
+        # Each artifact class may need to do its own purging also
+        if hasattr(args.artifact_class, 'purge'):
+            args.artifact_class.purge()
+
     if args.cleanup:
         args.run_dexy = False
-        log.warn("purging contents of %s" % args.artifacts_dir)
+        print "purging contents of %s" % args.artifacts_dir
         shutil.rmtree(args.artifacts_dir)
-        
-        if os.path.exists(args.cache_dir): 
-            log.warn("purging contents of %s" % args.cache_dir)
+
+        if os.path.exists(args.cache_dir):
+            print "purging contents of %s" % args.cache_dir
             shutil.rmtree(args.cache_dir)
 
-        if os.path.exists(args.logs_dir): 
-            log.warn("purging contents of %s" % args.logs_dir)
+        if os.path.exists(args.logs_dir):
+            print "purging contents of %s" % args.logs_dir
             shutil.rmtree(args.logs_dir)
-        
+
+        controller = Controller()
+        controller.find_reporters()
+        for d in controller.reports_dirs:
+            if d and os.path.exists(d):
+                print "purging contents of %s" % d
+                shutil.rmtree(d)
+
+
         filters_dir = 'filters'
         # TODO improve this so it detects __init__.py customizations etc.
         if os.path.exists(filters_dir):
             if sorted(os.listdir(filters_dir)) == ['README', '__init__.py']:
-                log.warn("purging contents of %s" % filters_dir)
+                dexy_log.warn("purging contents of %s" % filters_dir)
                 shutil.rmtree(filters_dir)
             else:
                 print("Directory %s has been modified, not removing." % filters_dir)
-    
+
+    if args.reporters:
+        args.run_dexy = False
+        controller = Controller()
+        reporters = controller.find_reporters()
+        for r in reporters:
+            print r.__name__
+            if r.REPORTS_DIR:
+                print "any generated reports will be saved in", r.REPORTS_DIR
+            else:
+                print "any generated reports will be saved in", args.logs_dir
+            if r.__doc__:
+                print r.__doc__
+            else:
+                print "no documentation available"
+            print # finish with blank line
+        print "Running reports can be disabled with the --no-reports option"
+
     if args.filters:
         args.run_dexy = False
-        from dexy.controller import Controller
-        controller = Controller(args.logs_dir)
+        controller = Controller()
         handlers = controller.find_handlers()
         for k in sorted(handlers.keys()):
             klass = handlers[k]
@@ -293,15 +376,11 @@ def setup_option_parser():
             if klass.__doc__:
                 print "   ", klass.__doc__.strip()
 
-    return args, dir_name, exclude_dir
+    return args, dir_name, exclude_dir, dexy_log
 
 
 def dexy_command():
-    args, dir_name, exclude_dir = setup_option_parser()
-
-    # Only import these after making sure log dir exists
-    from dexy.controller import Controller
-    from dexy.logger import log 
+    args, dir_name, exclude_dir, log = setup_option_parser()
 
     do_not_process_dirs = EXCLUDED_DIRS
     do_not_process_dirs += exclude_dir
@@ -312,162 +391,54 @@ def dexy_command():
     if not args.run_dexy:
         return
 
+    log.info("running dexy with recurse")
+    controller = Controller()
+    controller.allow_remote = args.dangerous
+    controller.artifact_class = args.artifact_class
+    controller.artifacts_dir = args.artifacts_dir
+    controller.cache_dir = args.cache_dir
+    controller.logs_dir = args.logs_dir
+    controller.log = log
+    controller.short_output_format = args.short
+    controller.config_file = args.config
+    controller.use_local_files = args.local
+    controller.find_reporters()
+    for r in controller.reports_dirs:
+        if r:
+            do_not_process_dirs.append(r)
+
+    log.info("skipping directories named %s" % ", ".join(do_not_process_dirs))
     if args.recurse:
-        log.info("running dexy with recurse")
         for root, dirs, files in os.walk(dir_name):
             process = True
-            log.info("skipping directories named %s" % ", ".join(do_not_process_dirs))
             for x in do_not_process_dirs:
-                if re.search(x, root):
+                if root.startswith(x) or root.startswith("./%s" % x):
                     process = False
                     break
-    
+
             if not process:
                 log.warn("skipping dir %s" % root)
             else:
                 log.info("processing dir %s" % root)
-                controller = Controller(args.logs_dir)
-                controller.allow_remote = args.dangerous
-                controller.artifacts_dir = args.artifacts_dir
-                controller.config_file = args.config
-                controller.use_local_files = args.local
-                for doc in controller.setup_and_run(root):
-                    artifact = doc.artifacts[-1]
-                    output_name = artifact.output_name(args.short)
-                    log.info("saving %s to cache/%s" % (artifact.filename(), output_name))
-                    artifact.write_cache_output_file(args.cache_dir, args.short)
+                controller.load_config(root)
     else:
         log.info("not recursing")
-        log.info("processing dir %s" % dir_name)
-        controller = Controller()
-        controller.allow_remote = args.dangerous
-        controller.artifacts_dir = args.artifacts_dir
-        controller.config_file = args.config
-        controller.use_local_files = args.local
-        for doc in controller.setup_and_run(dir_name):
-            artifact = doc.artifacts[-1]
-            output_name = artifact.output_name(args.short)
-            log.info("saving %s to cache/%s" % (artifact.key, output_name))
-            artifact.write_cache_output_file(args.cache_dir, args.short)
+        process = True
+        for x in do_not_process_dirs:
+            if dir_name.startswith(x) or dirname.startswith("./%s" % x):
+                process = False
+                break
 
-
-def dexy_live_server():
-    args, dir_name, exclude_dir = setup_option_parser()
-
-    # Only import these after making sure log dir exists
-    from dexy.controller import Controller
-    from dexy.logger import log 
-
-    from mongrel2 import handler
-    import signal
-    
-    def signal_handler(signal, frame):
-        print 'You pressed Ctrl+C!'
-        sys.exit(0)
-    
-    signal.signal(signal.SIGINT, signal_handler)
-    print 'Press Ctrl+C to Exit (may not take effect until next request received)'
-    
-    # TODO pass sender id, ports as options
-    sender_id = "faffe356-ad9d-4ec1-ba74-09d784cf85a0"
-    
-    conn = handler.Connection(
-        sender_id, 
-        "tcp://127.0.0.1:9999",
-        "tcp://127.0.0.1:9998"
-    )
-    
-    from dexy.utils import ansi_output_to_html
-    
-    while True:
-        print "WAITING FOR REQUEST"
-    
-        req = conn.recv()
-    
-        if req.is_disconnect():
-            print "DISCONNECT"
-            continue
-        
-        print req.path
-        log.info("req.path: %s" % req.path)
-        a = req.path
-        while len(a) > 0 and a[0] == '/':
-            a = a[1:]
-    
-        log.info("a: %s" % a)
-    
-        if not a:
-          a = '.'
-    
-        if os.path.isdir(a):
-            a_is_dir = True
-            a_dir = a
+        if not process:
+            log.warn("skipping dir %s" % dir_name)
         else:
-            a_is_dir = False
-            a_dir = os.path.dirname(a)
-    
-        if not a_dir:
-          a_dir = '.'
-    
-        # Run Dexy, store array of artifacts
-        artifacts = OrderedDict()
-        controller = Controller()
-        controller.allow_remote = args.dangerous
-        controller.artifacts_dir = args.artifacts_dir
-        controller.config_file = args.config
-        try:
-            for doc in controller.setup_and_run(a_dir):
-                artifact = doc.artifacts[-1]
-                artifacts[artifact.output_name(args.short)] = artifact
-            error = False
-        except Exception as e:
-            print e
-            error_message = ""
-            error_message += "<h1>%s</h1>" % type(e).__name__
-            for line in sys.exc_info():
-                error_message += "<pre>%s</pre>" % line
-            log.warn(error_message)
-            error = True
-        
-        if error:
-            # TODO 500?
-            response_text = error_message
-        elif artifacts.has_key(a):
-            # render the processed file
-    	    log.debug(artifacts[a].filename())
-    	    response_text = open(artifacts[a].filename(), "r").read()
-        elif os.path.exists(a) and not a_is_dir:
-            # render the raw source file
-            response_text = open(a, "r").read()
-        elif a_is_dir:
-            # render a list of files
-            response_text = "<html><body><h1>%s</h1>" % os.path.abspath(a)
-    
-    	    # List subdirectories.
-    	    response_text += "<h2>Subdirectories</h2><ul>"
-    	    for f in os.listdir(a):
-    	        if os.path.isdir(f):
-    	    	 url = os.path.join(req.path, f)
-    	    	 response_text += """<li><a href="%s">%s</a></li>""" % (url, f)
-    	    response_text += "</ul>"
-    
-            if len(artifacts) > 0:
-    	        response_text += "<h2>Dexy Artifacts</h2><ul>"
-                # TODO sort artifacts alphabetically
-                for k, artifact in artifacts.items():
-                    response_text += """<li><a href="/%s">%s</a></li>""" % (artifact.output_name(), artifact.doc.key())
-                    if hasattr(artifact, 'stdout'):
-                        stdout = ansi_output_to_html(artifact.stdout)
-                        response_text += """<pre>\n%s\n</pre>""" % stdout
-                response_text += "</ul>"
-            response_text += "</body></html>"
-        else:
-            # TODO make a real 404
-            response_text = "404 not found!"
-    
-        response = "<pre>\nSENDER: %r\nIDENT:%r\nPATH: %r\nHEADERS:%r\nBODY:%r</pre>" % (
-            req.sender, req.conn_id, req.path, 
-            json.dumps(req.headers), req.body)
-        response += response_text 
-        conn.reply_http(req, response_text)
-    
+            log.info("processing dir %s" % dir_name)
+            controller.load_config(dir_name)
+
+    controller.setup_and_run()
+    if not args.no_reports:
+        for reporter_klass in controller.reporters:
+            reporter_klass(controller).run()
+    else:
+        print 'reports not run'
+

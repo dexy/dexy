@@ -9,7 +9,7 @@ try:
         p = Pynliner()
         p.from_string(html)
         html_with_css_inline = p.run()
-    
+
         # Ansi2HTMLConverter returns a complete HTML document, we just want body
         doc = BeautifulSoup(html_with_css_inline)
         return doc.body.renderContents()
