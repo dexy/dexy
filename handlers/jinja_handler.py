@@ -3,33 +3,14 @@ try:
 except ImportError:
     from ordereddict import OrderedDict
 
-from boto.s3.key import Key
 from dexy.artifact import Artifact
 from dexy.handler import DexyHandler
 from jinja2 import Environment
-import boto
 import jinja2
 import json
 import os
 import re
 import uuid
-
-class BotoUploadHandler(DexyHandler):
-    """Uses boto library to upload content to S3."""
-    ALIASES = ['botoup']
-
-    # set your bucket name, env should have keys as per boto docs
-    BUCKET_NAME = None
-
-    def process_text(self, input_text):
-        conn = boto.connect_s3()
-        b = conn.get_bucket(self.BUCKET_NAME)
-        k = Key(b)
-        fn = self.artifact.filename(False)
-        k.key = fn
-        k.set_contents_from_filename(self.artifact.previous_artifact_filename)
-        k.set_acl('public-read')
-        return "https://s3.amazonaws.com/%s/%s" % (self.BUCKET_NAME, fn)
 
 class FilenameHandler(DexyHandler):
     """Generate random filenames to track provenance of data."""
