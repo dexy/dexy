@@ -10,7 +10,7 @@ py_lexer = PythonLexer()
 fm = HtmlFormatter()
 
 loader = nose.loader.TestLoader()
-tests = loader.loadTestsFromDir('/Users/ana/code/dexy/tests/')
+tests = loader.loadTestsFromDir('../tests/')
 
 test_info = {}
 
