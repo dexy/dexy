@@ -1,11 +1,11 @@
 syntax: glob
-artifacts/*
+artifacts
 cache/*
 logs/*
 dexy.egg-info/*
 times.csv
 *.pyc
-*.swp
+*.sw*
 build
 dist
 docs/old-install

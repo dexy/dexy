@@ -1,4 +1,5 @@
 from dexy.artifact import Artifact
+from dexy.artifacts.file_system_artifact import FileSystemJsonArtifact
 from dexy.controller import Controller
 from dexy.document import Document
 from dexy.handler import DexyHandler
@@ -7,9 +8,13 @@ import imghdr
 
 def setup_controller(config_file = None):
     controller = Controller()
+    controller.artifact_class = FileSystemJsonArtifact
     if config_file:
         controller.config_file = config_file
-    controller.setup_and_run("tests/data")
+    else:
+        controller.config_file = '.dexy'
+    controller.load_config("tests/data")
+    controller.setup_and_run()
     return controller
 
 def test_handlers():
@@ -21,7 +26,6 @@ def test_handlers():
 def test_members():
     """controller: files and filters to be run should be identified correctly"""
     controller = setup_controller()
-    print controller.members.keys()
     assert controller.members.keys() == [
         'tests/data/simple.R|fn|r|pyg',
         'tests/data/graph.R|fn|r|pyg',
@@ -29,22 +33,21 @@ def test_members():
         'tests/data/graph.R|pyg'
     ]
 
-
 def test_r():
     """controller: jpeg should have been generated and added to additional_inputs"""
     controller = setup_controller()
     doc = controller.members['tests/data/graph.R|fn|r|pyg']
     assert isinstance(doc, Document)
 
-    artifact = doc.artifacts[-1]
+    artifact = doc.final_artifact()
     assert isinstance(artifact, Artifact)
-    
-    assert artifact.additional_inputs.has_key('graph')
 
-    full_path = os.path.join(controller.artifacts_dir, artifact.additional_inputs['graph'])
-    assert os.path.exists(full_path)
-    image_type = imghdr.what(full_path)
+    graph_artifact = artifact.additional_inputs['graph']
+    assert os.path.exists(graph_artifact.filepath())
+    image_type = imghdr.what(graph_artifact.filepath())
     assert image_type == 'jpeg'
+
+    print dir(graph_artifact)
 
 
 def test_config_list_filters_separately():

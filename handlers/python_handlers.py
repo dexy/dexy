@@ -1,6 +1,12 @@
+try:
+    from collections import OrderedDict
+except ImportError:
+    from ordereddict import OrderedDict
+
 from dexy.handler import DexyHandler
 from dexy.utils import print_string_diff
 import os
+import re
 import shutil
 import tarfile
 import zipfile
@@ -10,6 +16,7 @@ class ArchiveHandler(DexyHandler):
     empty/dummy file in the location you wish to have the archive."""
     OUTPUT_EXTENSIONS = [".tgz"]
     ALIASES = ['archive', 'tgz']
+    BINARY = True
 
     def generate(self):
         self.artifact.write_dj()
@@ -19,17 +26,16 @@ class ArchiveHandler(DexyHandler):
             use_short_names = self.artifact.doc.args['use-short-names']
         else:
             use_short_names = False
-        af = self.artifact.filename()
+        af = self.artifact.filepath()
         tar = tarfile.open(af, mode="w:gz")
-        self.artifact.load_input_artifacts()
-        for k, f in self.artifact.input_artifacts.items():
-            fn = os.path.join('artifacts', self.artifact.input_artifacts_dict[k]['fn'])
+        for k, a in self.artifact.input_artifacts.items():
+            fn = a.filepath()
             if not os.path.exists(fn):
                 raise Exception("File %s does not exist!" % fn)
             if use_short_names:
-                arcname = self.artifact.input_artifacts_dict[k]['short-output-name']
+                arcname = a.canonical_filename()
             else:
-                arcname = self.artifact.input_artifacts_dict[k]['output-name']
+                arcname = a.long_canonical_filename()
             self.log.debug("Adding file %s to archive %s." % (fn, af))
             tar.add(fn, arcname=arcname)
         tar.close()
@@ -39,23 +45,26 @@ class ZipArchiveHandler(DexyHandler):
     empty file in the location you wish to have the archive."""
     OUTPUT_EXTENSIONS = [".zip"]
     ALIASES = ['zip']
+    BINARY = True
 
     def generate(self):
         self.artifact.write_dj()
 
     def process(self):
-        use_short_names = False
-        af = self.artifact.filename()
+        if self.artifact.doc.args.has_key('use-short-names'):
+            use_short_names = self.artifact.doc.args['use-short-names']
+        else:
+            use_short_names = False
+        af = self.artifact.filepath()
         zf = zipfile.ZipFile(af, mode="w")
-        self.artifact.load_input_artifacts()
-        for k,v in self.artifact.input_artifacts.items():
-            fn = os.path.join('artifacts', self.artifact.input_artifacts_dict[k]['fn'])
+        for k, a in self.artifact.input_artifacts.items():
+            fn = a.filepath()
             if not os.path.exists(fn):
                 raise Exception("File %s does not exist!" % fn)
             if use_short_names:
-                arcname = self.artifact.input_artifacts_dict[k]['short-output-name']
+                arcname = a.canonical_filename()
             else:
-                arcname = self.artifact.input_artifacts_dict[k]['output-name']
+                arcname = a.long_canonical_filename()
             self.log.debug("Adding file %s to archive %s." % (fn, af))
             zf.write(fn, arcname=arcname)
         zf.close()
@@ -101,10 +110,12 @@ class CopyHandler(DexyHandler):
     INPUT_EXTENSIONS = [".*"]
     OUTPUT_EXTENSIONS = [".*"]
     ALIASES = ['cp']
+    BINARY = True
+    FINAL = True
 
     def process(self):
         self.artifact.auto_write_artifact = False
-        shutil.copyfile(self.doc.name, self.artifact.filename())
+        shutil.copyfile(self.doc.name, self.artifact.filepath())
 
 class JoinHandler(DexyHandler):
     """
@@ -131,19 +142,19 @@ class FooterHandler(DexyHandler):
     ALIASES = ['ft', 'footer']
 
     def process_text(self, input_text):
-        self.artifact.load_input_artifacts()
         footer_key = "_footer%s" % self.artifact.ext
         footer_keys = []
-        for k in self.artifact.input_artifacts_dict.keys():
-            contains_footer = k.find(footer_key) > 0
+        for k in self.artifact.input_artifacts.keys():
+            contains_footer = k.find(footer_key) > -1
             contains_pyg = k.find('|pyg') > 0
             if contains_footer and not contains_pyg:
                 footer_keys.append(k)
 
         if len(footer_keys) > 0:
             footer_key = sorted(footer_keys)[-1]
-            footer_text = self.artifact.input_artifacts_dict[footer_key]['data']
+            footer_text = self.artifact.input_artifacts[footer_key].output_text()
         else:
+            print self.artifact.input_artifacts.keys()
             raise Exception("No file matching %s was found to work as a footer." % footer_key)
 
         return "%s\n%s" % (input_text, footer_text)
@@ -159,17 +170,16 @@ class HeaderHandler(DexyHandler):
     ALIASES = ['hd', 'header']
 
     def process_text(self, input_text):
-        self.artifact.load_input_artifacts()
         header_key = "_header%s" % self.artifact.ext
         header_keys = []
-        for k in self.artifact.input_artifacts_dict.keys():
-            contains_header = k.find(header_key) > 0
+        for k in self.artifact.input_artifacts.keys():
+            contains_header = k.find(header_key) > -1
             contains_pyg = k.find('|pyg') > 0
             if contains_header and not contains_pyg:
                 header_keys.append(k)
         if len(header_keys) > 0:
             header_key = sorted(header_keys)[-1]
-            header_text = self.artifact.input_artifacts_dict[header_key]['data']
+            header_text = self.artifact.input_artifacts[header_key].output_text()
         else:
             raise Exception("No file matching %s was found to work as a header for %s." % (header_key, self.artifact.key))
 
@@ -177,7 +187,6 @@ class HeaderHandler(DexyHandler):
 
 # TODO implement combined header/footer handler as a shortcut
 
-### @export "head-handler"
 class HeadHandler(DexyHandler):
     """
     Returns just the first 10 lines of input.
@@ -186,7 +195,6 @@ class HeadHandler(DexyHandler):
     def process_text(self, input_text):
         return "\n".join(input_text.split("\n")[0:10]) + "\n"
 
-### @export "word-wrap"
 class WordWrapHandler(DexyHandler):
     """
     Wraps text after 79 characters (tries to preserve existing line breaks and
@@ -212,3 +220,41 @@ class WordWrapHandler(DexyHandler):
 
     def process_text(self, input_text):
         return self.wrap_text(input_text, 79)
+
+class SplitHtmlHandler(DexyHandler):
+    """Splits a HTML page into multiple HTML pages. The original page becomes an
+    index page."""
+
+    ALIASES = ['split']
+
+    def process(self):
+        parent_dir = os.path.dirname(os.path.join(self.artifact.controller.cache_dir,
+                                  self.artifact.output_name()))
+        if not os.path.exists(parent_dir):
+            os.mkdir(parent_dir)
+        input_text = self.artifact.input_text()
+        if input_text.find("<!-- endsplit -->") > 0:
+            body, footer = re.split("<!-- endsplit -->", input_text, maxsplit=1)
+            sections = re.split("<!-- split \"(\S+)\" -->", body)
+            header = sections[0]
+            pages = OrderedDict()
+            for i in range(1, len(sections), 2):
+                section_name = sections[i]
+                filename = "%s.html" % section_name
+                pages[section_name] = filename
+                filepath = os.path.join(parent_dir, filename)
+                f = open(filepath, "w")
+                f.write(header)
+                f.write(sections[i+1])
+                f.write(footer)
+                f.close()
+
+            index_items = ["""<li><a href="%s">%s</a></li>""" % (url, name) for
+                           name, url in pages.items()]
+            output_dict = OrderedDict()
+            output_dict['header'] = header
+            output_dict['index'] = "<ul>\n%s\n<ul>" % "\n".join(index_items)
+            output_dict['footer'] = footer
+        else:
+            output_dict = self.artifact.input_data_dict
+        self.artifact.data_dict = output_dict

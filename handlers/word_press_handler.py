@@ -1,6 +1,5 @@
 from handlers.blog_handler import BlogHandler
 
-from dexy.logger import log
 import re
 import xmlrpclib
 
@@ -25,7 +24,7 @@ class WordPressHandler(BlogHandler):
         api = xmlrpclib.ServerProxy(self.blog_conf["xmlrpc_url"], verbose=False)
         #print api.system.listMethods()
         return api
-    
+
     def content_dict(self, api, input_text):
         input_text = self.upload_files_and_replace_links(api, input_text)
         content = { 'title' : self.post_conf['title'], 'description' : input_text}
@@ -33,20 +32,20 @@ class WordPressHandler(BlogHandler):
 
     def new_post(self, api, input_text):
         post_id = api.metaWeblog.newPost(
-            self.BLOG_ID, 
-            self.blog_conf["user"], 
-            self.blog_conf["pass"], 
-            self.content_dict(api, input_text), 
+            self.BLOG_ID,
+            self.blog_conf["user"],
+            self.blog_conf["pass"],
+            self.content_dict(api, input_text),
             self.post_conf['publish']
         )
         return post_id
 
     def update_post(self, api, input_text, post_id):
         api.metaWeblog.editPost(
-            post_id, 
-            self.blog_conf["user"], 
-            self.blog_conf["pass"], 
-            self.content_dict(api, input_text), 
+            post_id,
+            self.blog_conf["user"],
+            self.blog_conf["pass"],
+            self.content_dict(api, input_text),
             self.post_conf['publish']
         )
 
@@ -57,7 +56,7 @@ class WordPressHandler(BlogHandler):
             for t in re.findall(regexp, input_text):
                 if url_cache.has_key(t[1]):
                     url = url_cache[t[1]]
-                    log.info("using cached url %s %s" % (t[1], url))
+                    self.log.info("using cached url %s %s" % (t[1], url))
                 else:
                     f = open(t[1], 'rb')
                     image_base_64 = xmlrpclib.Binary(f.read())
@@ -70,9 +69,9 @@ class WordPressHandler(BlogHandler):
                         'overwrite' : 'true'
                     }
                     upload_result = api.wp.uploadFile(
-                        self.BLOG_ID, 
-                        self.blog_conf["user"], 
-                        self.blog_conf["pass"], 
+                        self.BLOG_ID,
+                        self.blog_conf["user"],
+                        self.blog_conf["pass"],
                         upload_file
                     )
                     url = upload_result['url']
@@ -82,7 +81,7 @@ class WordPressHandler(BlogHandler):
                 replace_string = t[0].replace(t[1], url)
                 input_text = input_text.replace(t[0], replace_string)
             return input_text
-        
+
         input_text = upload_files_to_wp('(<img src="(artifacts/.+\.(\w{2,4}))")', input_text)
         input_text = upload_files_to_wp('(<embed src="(artifacts/.+\.(\w{2,4}))")', input_text)
         input_text = upload_files_to_wp('(<audio src="(artifacts/.+\.(\w{2,4}))")', input_text)

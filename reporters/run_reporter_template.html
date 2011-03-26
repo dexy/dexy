@@ -1,0 +1,134 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+<head>
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+	<title>Report</title>
+	<link href="./lib/css/zp-compressed.css" type="text/css" media="screen, print" rel="stylesheet" />
+	<link href="./lib/css/zp-print.css" type="text/css" media="print" rel="stylesheet" />
+	<!--[if IE]>
+	<link href="./lib/css/zp-ie.css" type="text/css" media="screen" rel="stylesheet" />
+  <![endif]-->
+  <link href="./lib/pastie.css" type="text/css" media="all" rel="stylesheet" />
+	<style type="text/css">
+		.sidebar {
+			font-size: 11px;
+		}
+		
+		p.intro { 
+			font-style: bold;
+		} 
+		
+		.content .padding {
+			padding: 0 36px 0 0;
+		}
+		
+		.item .padding {
+			padding: 0 12px 0 0;
+		}
+		
+		.list-item h2 {
+			margin: 0;
+			line-height: 27px;
+		}
+		
+	</style>
+</head>
+<body>
+
+<div class="skip">
+	<a href="#content" title="Go directly to page content">Go to page content</a>
+</div>
+
+<div class="zp-wrapper">
+	<div class="zp-70 content">
+		<div class="padding">
+			<h1>Dexy Run Report</h1>
+			<h2>Results of your Run</h2>
+      <p class="intro">Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+
+      <p>Controller path: {{ controller.path }}</p>
+
+      <h3>Config</h3>
+      <p>This is the configuration which was used for this run:</p>
+      {{ dexy_config }}
+
+      <h1>Documents</h1>
+      {% for doc in docs %}
+      <hr />
+
+      <h2 id="{{ doc.key() }}">{{ doc.key() }}</h2>
+      {% if doc.args.__len__() > 0 %}
+      <br />
+      <h4>Arguments</h4>
+      {{ doc.args_html }}
+      {% endif %}
+
+      {% if doc.inputs.__len__() > 0 %}
+      <br />
+      <h4>Inputs</h4>
+      <ul>
+        {% for i in doc.inputs %}
+        <li><a href="#{{i.key()}}">{{ i.key() }}</a></li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+
+      <br />
+      <h4>Artifacts</h4>
+      <ul>
+        {% for a in doc.artifacts %}
+        <li>{{ a.key }} : <a href="../../{{ a.filepath() }}">{{ a.filepath() }}</a></li>
+        {{ a.stdout_html }}
+        {% endfor %}
+      </ul>
+
+      <br />
+      <h4>Document Log</h4>
+<pre>
+{{ doc.logstream.getvalue() }}
+</pre>
+      <br />
+      {% endfor %}
+
+
+		</div>
+	</div>
+
+	<div class="zp-30 sidebar">
+		<h1>Sidebar</h1>
+		<h2>A title in the sidebar</h2>
+		<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+		
+		<h3>What a nice rhythm</h3>
+		<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+
+		<hr />
+		
+		<div class="list-item">
+			<h2>Some other stuff</h2>
+			<h3>With a sweet subtitle. Yes it is a sweet one.</h3>
+			<p>
+				<img src="./lib/images/example.jpg" alt="Helvetica" />
+				Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+			</p>
+		</div>
+		
+		<div class="notification notice">
+			<h5>Atatonic notice</h5>
+			This is a basic notice message, without a header it might even look nicer. 
+		</div>
+		
+		<div class="notification success">
+			<h5>Success</h5>
+			This is a basic success message
+		</div>
+		
+		<div class="notification error">
+			<h5>Error</h5>
+			Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+		</div>
+	</div>
+</div>
+
+</body>
+</html>

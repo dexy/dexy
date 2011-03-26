@@ -1,5 +1,4 @@
 from dexy.handler import DexyHandler
-from dexy.logger import log
 
 try:
     from collections import OrderedDict
@@ -12,9 +11,9 @@ from pygments.formatters import get_formatter_for_filename
 from pygments.lexers import get_lexer_for_filename
 from pygments.lexers.agile import PythonConsoleLexer
 from pygments.lexers.agile import RubyConsoleLexer
+from pygments.lexers.web import JavascriptLexer
 import idiopidae.parser
 
-### @export "pyg"
 class PygHandler(DexyHandler):
     """
     Apply Pygments syntax highlighting.
@@ -30,6 +29,8 @@ class PygHandler(DexyHandler):
             lexer = PythonConsoleLexer()
         elif self.ext == '.rbcon':
             lexer = RubyConsoleLexer()
+        elif self.ext in ('.json', '.dexy'):
+            lexer = JavascriptLexer()
         else:
             lexer = get_lexer_for_filename(name)
         formatter = get_formatter_for_filename(self.artifact.filename(), linenos=False)
@@ -38,11 +39,10 @@ class PygHandler(DexyHandler):
             try:
                 output_dict[k] = str(highlight(v, lexer, formatter))
             except UnicodeEncodeError as e:
-                log.warn("error processing section %s of file %s" % (k, self.artifact.key))
+                self.log.warn("error processing section %s of file %s" % (k, self.artifact.key))
                 raise e
         return output_dict
 
-### @export "idio"
 class IdioHandler(DexyHandler):
     """
     Apply idiopidae to split document into sections at ### @export
@@ -64,12 +64,12 @@ class IdioHandler(DexyHandler):
 
         fn = self.artifact.filename()
         formatter = get_formatter_for_filename(fn, linenos=False)
-        
+
         output_dict = OrderedDict()
 
         for i, s in enumerate(builder.sections):
             lines = builder.statements[i]['lines']
             formatted_lines = composer.format(lines, lexer, formatter) 
             output_dict[s] = formatted_lines
-        
+
         return output_dict
