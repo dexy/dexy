@@ -104,7 +104,6 @@ class DexyHandler(object):
         artifact.handler_version = klass.version()
         if os.path.basename(artifact.doc.name).startswith("_"):
             artifact.final = False
-            previous_artifact.final = False
         elif not artifact.final:
             artifact.final = klass.FINAL
         artifact.binary = klass.BINARY
@@ -165,13 +164,6 @@ class DexyHandler(object):
 
         return method_used
 
-    def set_input_text(self, input_text):
-        if hasattr(self, 'artifact'):
-            raise Exception("already have an artifact!")
-        self.artifact = self.doc.artifact_class()
-        self.artifact.input_data_dict = {'1' : input_text}
-        self.artifact.data_dict = OrderedDict()
-
     def generate_artifact(self):
         self.artifact.start_time = time.time()
         if self.artifact.is_cached():
@@ -181,9 +173,6 @@ class DexyHandler(object):
         else:
             self.artifact.method = 'generated'
             self.process()
-#            self.artifact.binary = self.BINARY
-#            if not hasattr(self.artifact, 'final') or not self.artifact.final:
-#                self.artifact.final = self.FINAL
             self.artifact.save()
 
         self.artifact.finish_time = time.time()
