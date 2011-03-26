@@ -13,7 +13,7 @@ setup(name='dexy',
       include_package_data = True,
       install_requires = [
           'BeautifulSoup==3.2.0',
-          'ansi2html'
+          'ansi2html',
           'cssutils',
           'idiopidae',
           'jinja2',
@@ -21,7 +21,7 @@ setup(name='dexy',
           'pexpect',
           'pygments',
           'pynliner',
-          'zapps',
+          'zapps'
       ],
       entry_points = {
           'console_scripts' : [
