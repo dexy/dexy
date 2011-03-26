@@ -76,7 +76,7 @@ class WordPressHandler(BlogHandler):
                     )
                     url = upload_result['url']
                     url_cache[t[1]] = url
-                    log.info("uploaded %s to %s" % (t[1], url))
+                    self.log.info("uploaded %s to %s" % (t[1], url))
 
                 replace_string = t[0].replace(t[1], url)
                 input_text = input_text.replace(t[0], replace_string)

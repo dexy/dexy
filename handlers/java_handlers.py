@@ -6,11 +6,8 @@ import dexy.handler
 import handlers.pexpect_handlers
 import handlers.stdout_handlers
 import json
-import markdown
 import os
-import pexpect
 import subprocess
-import time
 
 class JrubyHandler(handlers.stdout_handlers.ProcessStdoutHandler):
     VERSION = "/usr/bin/env jruby --version"

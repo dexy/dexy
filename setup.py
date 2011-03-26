@@ -10,6 +10,7 @@ setup(name='dexy',
       author_email='ana@ananelson.com',
       url='http://dexy.it',
       packages=find_packages(),
+      include_package_data = True,
       entry_points = {
           'console_scripts' : [
               'dexy = dexy.interface:dexy_command',
