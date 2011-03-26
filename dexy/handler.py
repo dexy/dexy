@@ -5,6 +5,7 @@ except ImportError:
 
 import inspect
 import logging
+import os
 import platform
 import subprocess
 import time
@@ -101,7 +102,10 @@ class DexyHandler(object):
         artifact.handler = h
         artifact.handler_source = inspect.getsource(klass)
         artifact.handler_version = klass.version()
-        if not artifact.final:
+        if os.path.basename(artifact.doc.name).startswith("_"):
+            artifact.final = False
+            previous_artifact.final = False
+        elif not artifact.final:
             artifact.final = klass.FINAL
         artifact.binary = klass.BINARY
 
