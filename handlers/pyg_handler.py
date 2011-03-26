@@ -20,13 +20,14 @@ class PygHandler(DexyHandler):
     ALIASES = ['pyg', 'pygments']
 
     def process_dict(self, input_dict):
-        name = "input_text%s" % self.ext
+        ext = self.artifact.input_ext
+        name = "input_text%s" % ext
         # List any file extensions which don't map neatly to lexers.
-        if self.ext == '.pycon':
+        if ext == '.pycon':
             lexer = PythonConsoleLexer()
-        elif self.ext == '.rbcon':
+        elif ext == '.rbcon':
             lexer = RubyConsoleLexer()
-        elif self.ext in ('.json', '.dexy'):
+        elif ext in ('.json', '.dexy'):
             lexer = JavascriptLexer()
         else:
             lexer = get_lexer_for_filename(name)
