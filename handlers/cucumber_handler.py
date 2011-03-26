@@ -13,22 +13,21 @@ class CucumberHandler(DexyHandler):
     VERSION = "/usr/bin/env cucumber --version"
 
     def process(self):
-        self.artifact.load_input_artifacts()
-        keys = self.artifact.input_artifacts_dict.keys() 
+        keys = self.artifact.input_artifacts.keys()
         rb_file = self.artifact.doc.name.replace(".feature", "\.rb")
         matches = [k for k in keys if re.match(re.compile("^%s" % rb_file), k)]
-        
+
         if len(matches) == 0:
             err_msg = "no file matching %s was found in %s" % (rb_file, keys)
             raise Exception(err_msg)
         if len(matches) > 1:
             err_msg = "too many files matching %s were found in %s: %s" % (rb_file, keys, matches)
             raise Exception(err_msg)
-        
+
         key = matches[0]
-        rf = self.artifact.input_artifacts_dict[key]['fn']
+        rf = self.artifact.input_artifacts[key].filename()
         self.artifact.generate_workfile()
-        wf = self.artifact.work_filename(False)
+        wf = self.artifact.work_filename()
         command = "%s -r %s %s" % (self.executable(), rf, wf)
         self.log.debug(command)
         output = pexpect.run(command, cwd=self.artifact.artifacts_dir)
