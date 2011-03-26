@@ -272,9 +272,7 @@ re.compile: %s""" % (args['except'], e))
                     else:
                         self.members[key] = doc
 
-                    is_partial = os.path.basename(doc.name).startswith("_")
-                    if args.has_key('allinputs') and not is_partial:
-                        doc.use_all_inputs = True
+                    doc.use_all_inputs = args.has_key('allinputs')
                     for i in inputs:
                         doc.add_input_key(i)
 
