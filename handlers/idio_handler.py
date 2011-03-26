@@ -23,15 +23,18 @@ class IdioHandler(DexyHandler):
         composer = Composer()
         builder = idiopidae.parser.parse('Document', input_text + "\n\0")
 
-        name = "input_text%s" % self.ext
-        if self.ext == '.pycon':
+        ext = self.artifact.input_ext
+        name = "input_text%s" % ext
+        # List any file extensions which don't map neatly to lexers.
+        if ext == '.pycon':
             lexer = PythonConsoleLexer()
+        elif ext == '.rbcon':
+            lexer = RubyConsoleLexer()
+        elif ext in ('.json', '.dexy'):
+            lexer = JavascriptLexer()
         else:
             lexer = get_lexer_for_filename(name)
-
-        fn = self.artifact.filename()
-        formatter = get_formatter_for_filename(fn, linenos=False)
-
+        formatter = get_formatter_for_filename(self.artifact.filename(), linenos=False)
         output_dict = OrderedDict()
 
         for i, s in enumerate(builder.sections):
