@@ -26,11 +26,11 @@ def test_handlers():
 def test_members():
     """controller: files and filters to be run should be identified correctly"""
     controller = setup_controller()
-    assert controller.members.keys() == [
-        'tests/data/simple.R|fn|r|pyg',
+    assert sorted(controller.members.keys()) == [
         'tests/data/graph.R|fn|r|pyg',
-        'tests/data/simple.R|pyg',
-        'tests/data/graph.R|pyg'
+        'tests/data/graph.R|pyg',
+        'tests/data/simple.R|fn|r|pyg',
+        'tests/data/simple.R|pyg'
     ]
 
 def test_r():
@@ -52,14 +52,14 @@ def test_r():
 
 def test_config_list_filters_separately():
     controller = setup_controller("list-filters-separately.dexy")
-    assert controller.members.keys() == [
-        'tests/data/simple.R|pyg|l',
-        'tests/data/graph.R|pyg|l'
+    assert sorted(controller.members.keys()) == [
+        'tests/data/graph.R|pyg|l',
+        'tests/data/simple.R|pyg|l'
     ]
 
 def test_config_nested_doc():
     controller = setup_controller("nested-doc.dexy")
-    assert controller.members.keys() == [
+    assert sorted(controller.members.keys()) == [
         'tests/data/graph.R|r',
         'tests/data/simple.R|r'
     ]
