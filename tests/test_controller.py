@@ -66,7 +66,7 @@ def test_config_nested_doc():
 
 def test_config_both_filter_styles():
     controller = setup_controller("both-filter-styles.dexy")
-    assert controller.members.keys() == [
-        'tests/data/simple.R|pyg|l',
-        'tests/data/graph.R|pyg|l'
+    assert sorted(controller.members.keys()) == [
+        'tests/data/graph.R|pyg|l',
+        'tests/data/simple.R|pyg|l'
     ]
