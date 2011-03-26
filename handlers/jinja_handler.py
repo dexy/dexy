@@ -3,7 +3,6 @@ try:
 except ImportError:
     from ordereddict import OrderedDict
 
-from dexy.artifact import Artifact
 from dexy.handler import DexyHandler
 from jinja2 import Environment
 import jinja2

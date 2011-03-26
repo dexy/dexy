@@ -425,7 +425,7 @@ def dexy_command():
         log.info("not recursing")
         process = True
         for x in do_not_process_dirs:
-            if dir_name.startswith(x) or dirname.startswith("./%s" % x):
+            if dir_name.startswith(x) or dir_name.startswith("./%s" % x):
                 process = False
                 break
 
