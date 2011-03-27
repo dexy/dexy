@@ -25,8 +25,6 @@ Where an Artifact is used outside of a document, the key may not have an extensi
 
 Where an artifact is part of a document, the extension will be determined automatically, however in the case of a standalone file, the extension will need to be specified.
 
-h3. Artifact Setup
-
 The setup method associates a new artifact with its doc, and, if applicable, a previous artifact:
 
 {{ d.source.artifact.setup }}
@@ -39,6 +37,37 @@ And also by the setup method in the Handler class:
 
 {{ d.source.handler.setup }}
 
+h3. Persisting and Restoring Artifacts
+
+Artifacts are an important part of Dexy's caching system, so that documents need only be regenerated when necessary. Each artifact calculates a hashstring for itself, and later stores its data under this hashstring. If a later run of the artifact results in an identical hashstring, then it is safe to use the cached data. So the hashstring calculation should take into account all information which may have an impact on the final output.
+
+The hashstring function:
+
+{{ d.source.artifact.set_hashstring }}
+
+relies on the hash_dict function:
+
+{{ d.source.artifact.hash_dict }}
+
+which restricts items to the whitelist:
+
+<ul>
+{% for k in d.source.artifact.HASH_WHITELIST.split(",") %}
+<li>{{ k | replace("'","") | replace("[","") | replace("]","") }}</li>
+{% endfor %}
+</ul>
+
+{{ d.nose.test_artifact_hash_dict }}
+
+Dexy allows for different caching mechanisms. The options currently available are the default file system caching mechanism which writes data to files in the artifacts directory, and an experimental Riak (distributed key-value database) caching mechanism. Caching mechanisms are implemented by subclassing the Artifact class and implementing a save() and load() method (among others). It should be noted that, for now, an artifacts directory will still be needed even if using a caching mechanism that doesn't write data to that location, as many filters will write working files to the artifacts directory.
+
+h3. FileSystemJsonArtifact save()
+
+{{ d.source.file_system_json_artifact.save }}
+
+h3. RiakArtifact save()
+
+{{ d.source.riak_artifact.save }}
 
 
 {% if False %}

@@ -21,6 +21,22 @@ class Artifact(object):
         'stdout'
     ]
 
+    HASH_WHITELIST = [
+        'additional-inputs',
+        'args',
+        'article_class_source',
+        'dexy_version',
+        'dirty',
+        'dirty_string',
+        'ext',
+        'handler_source',
+        'handler_version',
+        'input-artifacts',
+        'input_data_dict',
+        'input_ext',
+        'key'
+    ]
+
     def __init__(self, key):
         self.key = key
         self.dirty = False
@@ -75,16 +91,12 @@ class Artifact(object):
     def is_loaded(self):
         return hasattr(self, 'data_dict') and len(self.data_dict) > 0
 
-    def set_hashstring(self):
+    def hash_dict(self):
+        """Return the elements for calculating the hashstring."""
         if self.dirty:
             self.dirty_string = time.gmtime()
 
         hash_dict = self.__dict__.copy()
-
-        # Remove any items which should not be included in hash calculations.
-        del hash_dict['doc']
-        del hash_dict['controller']
-        del hash_dict['data_dict']
 
         hash_dict['input-artifacts'] = {}
         for k, a in hash_dict.pop('input_artifacts').items():
@@ -94,7 +106,16 @@ class Artifact(object):
         for k, a in hash_dict.pop('additional_inputs').items():
             hash_dict['additional-inputs'][k] = a.hashstring
 
-        self.hashstring = hashlib.md5(hash_dict.__str__()).hexdigest()
+        # Remove any items which should not be included in hash calculations.
+        for k in hash_dict.keys():
+            if not k in self.HASH_WHITELIST:
+                del hash_dict[k]
+
+        return hash_dict
+
+    def set_hashstring(self):
+        hash_data = str(self.hash_dict())
+        self.hashstring = hashlib.md5(hash_data).hexdigest()
 
     def command_line_args(self):
         """

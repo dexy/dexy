@@ -314,8 +314,6 @@ re.compile: %s""" % (args['except'], e))
         return [doc.run(self) for doc in self.members.values()]
 
     def setup_and_run(self):
-        if not hasattr(self, 'artifacts_dir'):
-            self.artifacts_dir = 'artifacts'
         if not hasattr(self, 'config_file'):
             self.config_file = '.dexy'
         self.register_handlers()

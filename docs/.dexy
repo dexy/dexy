@@ -6,5 +6,6 @@
   "*.R|fn|idio|rint|pyg" : {},
   "_*.html|jinja" : {},
   "*.py|pyg" : {},
-  "*.py|fn|py" : {}
+  "*.py|fn|py" : {},
+  "*.css|cp" : {}
 }
