@@ -151,8 +151,10 @@ class Artifact(object):
     def work_filename(self):
         return "%s.work%s" % (self.hashstring, self.input_ext)
 
-    def generate_workfile(self):
-        work_path = os.path.join(self.artifacts_dir, self.work_filename())
+    def generate_workfile(self, work_filename = None):
+        if not work_filename:
+            self.work_filename()
+        work_path = os.path.join(self.artifacts_dir, work_filename)
         work_file = open(work_path, "w")
         work_file.write(self.input_text())
         work_file.close()
