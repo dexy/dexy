@@ -18,12 +18,9 @@ class ArchiveHandler(DexyHandler):
     ALIASES = ['archive', 'tgz']
     BINARY = True
 
-    def generate(self):
-        self.artifact.write_dj()
-
     def process(self):
-        if self.artifact.doc.args.has_key('use-short-names'):
-            use_short_names = self.artifact.doc.args['use-short-names']
+        if self.artifact.args.has_key('use-short-names'):
+            use_short_names = self.artifact.args['use-short-names']
         else:
             use_short_names = False
         af = self.artifact.filepath()
@@ -47,12 +44,9 @@ class ZipArchiveHandler(DexyHandler):
     ALIASES = ['zip']
     BINARY = True
 
-    def generate(self):
-        self.artifact.write_dj()
-
     def process(self):
-        if self.artifact.doc.args.has_key('use-short-names'):
-            use_short_names = self.artifact.doc.args['use-short-names']
+        if self.artifact.args.has_key('use-short-names'):
+            use_short_names = self.artifact.args['use-short-names']
         else:
             use_short_names = False
         af = self.artifact.filepath()
