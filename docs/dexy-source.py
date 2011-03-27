@@ -3,7 +3,6 @@ import dexy
 import dexy.controller
 import dexy.artifact
 from dexy.artifacts.file_system_json_artifact import FileSystemJsonArtifact
-from dexy.artifacts.riak_artifact import RiakArtifact
 import dexy.document
 import dexy.handler
 
@@ -18,7 +17,6 @@ fm = HtmlFormatter()
 handler_info = {
     'artifact' : {},
     'file_system_json_artifact' : {},
-    'riak_artifact' : {},
     'document' : {},
     'handler' : {},
     'controller' : {}
@@ -30,7 +28,6 @@ klasses = {
     'document' : dexy.document.Document,
     'handler' : dexy.handler.DexyHandler,
     'file_system_json_artifact' : FileSystemJsonArtifact,
-    'riak_artifact' : RiakArtifact
 }
 
 for a, b in klasses.items():

@@ -66,6 +66,7 @@ class FileSystemJsonArtifact(Artifact):
             iak[k] = v.hashstring
         metadata['input-artifacts'] = iak
 
+        ia = {}
         for k, a in self.additional_inputs.items():
             if len(a.data_dict) == 0:
                 if os.path.isfile(a.filepath()):
@@ -73,31 +74,41 @@ class FileSystemJsonArtifact(Artifact):
                     a.data_dict['1'] = f.read()
                     f.close()
                     a.save()
+            ia[k] = a.hashstring
+        metadata['additional-inputs'] = ia
 
         f = open(self.meta_filepath(), "w")
         json.dump(metadata, f)
         f.close()
 
     def is_cached(self):
+        mfexists = os.path.isfile(self.meta_filepath())
+
         if os.path.isfile(self.data_filepath()):
             dfexists = True
             df = self.data_filepath()
-        elif os.path.isfile(self.filepath()):
-            dfexists = True
-            df = self.filepath()
-            # TODO verify that this is a binary file
+        elif mfexists:
+            # need to determine file extension
+            f = open(self.meta_filepath(), "r")
+            m = json.load(f)
+            f.close()
+            self.ext = m['ext']
+
+            if os.path.isfile(self.filepath()):
+                dfexists = True
+                df = self.filepath()
+            else:
+                dfexists = False
         else:
             dfexists = False
-            df = ''
 
-        mfexists = os.path.isfile(self.meta_filepath())
         if dfexists and not mfexists:
             locs = (df, self.meta_filepath())
             exception_text = "have a data file %s and no meta file %s!" % locs
             raise Exception(exception_text)
         if mfexists and not dfexists:
-            locs = (self.meta_filepath(), df)
-            exception_text = "have a meta file %s and no data file %s!" % locs
+            locs = (self.meta_filepath())
+            exception_text = "have a meta file %s and no data file!" % locs
             raise Exception(exception_text)
         return dfexists and mfexists
 
@@ -121,6 +132,18 @@ class FileSystemJsonArtifact(Artifact):
             if not a.is_loaded():
                 a.load()
             self.input_artifacts[k] = a
+
+        # Remove additional-inputs from metadata and process.
+        self.additional_inputs = {}
+        for k, h in m.pop('additional-inputs').items():
+            a = self.__class__(k) # create a new artifact
+            a.hashstring = h
+            a.artifacts_dir = self.artifacts_dir # needed to load
+            if not a.is_cached():
+                raise Exception("additional input not cached!")
+            if not a.is_loaded():
+                a.load()
+            self.additional_inputs[k] = a
 
         for k, v in m.items():
             setattr(self, k, v)
