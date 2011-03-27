@@ -66,7 +66,7 @@
   <body>
 
     {% for k in dk %}
-    {% if k.find("dexy") < 0 and k.find("|") > 0 and not k=="index.html|pyg" %}
+    {% if k.startswith('examples') and k.find("dexy") < 0 and k.find("|") > 0 and not k=="index.html|pyg" %}
 
     <h1>{{ k }}</h1>
   
