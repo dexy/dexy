@@ -248,47 +248,6 @@ class Ps2Pdf(DexyHandler):
         self.log.debug(command)
         self.artifact.stdout = pexpect.run(command, cwd=self.artifact.artifacts_dir)
 
-class LatexHandler(DexyHandler):
-    """
-    Generates a PDF file from LaTeX source.
-    """
-    INPUT_EXTENSIONS = [".tex", ".txt"]
-    OUTPUT_EXTENSIONS = [".pdf", ".png"]
-    ALIASES = ['latex']
-
-    def generate(self):
-        self.artifact.write_dj()
-
-    def process(self):
-        latex_filename = self.artifact.filename().replace(".pdf", ".tex")
-        latex_basename = os.path.basename(latex_filename)
-
-        f = open(latex_filename, "w")
-        f.write(self.artifact.input_text())
-        f.close()
-
-        # Detect which LaTeX compiler we have...
-        latex_bin = None
-        for e in ["pdflatex", "latex"]:
-            which_cmd = "/usr/bin/env which %s" % e
-            latex_bin, s = pexpect.run(which_cmd, withexitstatus = True)
-            if s == 0:
-                self.log.info("%s LaTeX command found" % e)
-                break
-            else:
-                self.log.info("%s LaTeX command not found" % e)
-                latex_bin = None
-
-        if not latex_bin:
-            raise Exception("no executable found for latex")
-
-        command = "/usr/bin/env %s %s" % (e, latex_basename)
-        self.log.info(command)
-        # run LaTeX twice so TOCs, section number references etc. are correct
-        ad = self.artifact.artifacts_dir
-        self.artifact.stdout = pexpect.run(command, cwd=ad, timeout=20)
-        self.artifact.stdout += pexpect.run(command, cwd=ad, timeout=20)
-
 class VoiceHandler(DexyHandler):
     """
     Use text-to-speech to generate mp3 file from a text file. Uses whichever of
