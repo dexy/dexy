@@ -207,7 +207,7 @@ def setup_option_parser():
         '--no-reports',
         default=False,
         action='store_true',
-        help='Don\t run reports when finished running Dexy.'
+        help="""Don't run reports when finished running Dexy."""
      )
 
     if (option_parser == 'argparse'):
