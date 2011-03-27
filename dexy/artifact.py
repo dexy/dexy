@@ -153,7 +153,7 @@ class Artifact(object):
 
     def generate_workfile(self, work_filename = None):
         if not work_filename:
-            self.work_filename()
+            work_filename = self.work_filename()
         work_path = os.path.join(self.artifacts_dir, work_filename)
         work_file = open(work_path, "w")
         work_file.write(self.input_text())
