@@ -18,6 +18,7 @@ class Artifact(object):
     META_ATTRS = [
         'binary',
         'key',
+        'ext',
         'stdout'
     ]
 
@@ -178,6 +179,8 @@ class Artifact(object):
         return "%s%s" % (self.key.replace("|", "-"), self.ext)
 
     def filename(self):
+        if not hasattr(self, 'ext'):
+            raise Exception("artifact %s has no ext" % self.key)
         return "%s%s" % (self.hashstring, self.ext)
 
     def filepath(self):

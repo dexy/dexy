@@ -44,7 +44,7 @@ class FilenameHandler(DexyHandler):
                 artifact.set_binary_from_ext()
                 artifact.artifacts_dir = self.artifact.artifacts_dir
 
-                artifact.hashstring = uuid.uuid4()
+                artifact.hashstring = str(uuid.uuid4())
                 self.artifact.additional_inputs[key] = artifact
                 self.log.debug("added key %s to artifact %s ; links to file %s" %
                           (key, self.artifact.key, artifact.filename()))
