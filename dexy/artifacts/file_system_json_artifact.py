@@ -115,6 +115,7 @@ class FileSystemJsonArtifact(Artifact):
         for k, h in m.pop('input-artifacts').items():
             a = self.__class__(k) # create a new artifact
             a.hashstring = h
+            a.artifacts_dir = self.artifacts_dir # needed to load
             if not a.is_cached():
                 raise Exception("input artifact not cached!")
             if not a.is_loaded():
