@@ -88,6 +88,9 @@ class FileSystemJsonArtifact(Artifact):
             dfexists = True
             df = self.data_filepath()
         elif mfexists:
+            # TODO this is messy - would be easier to just store binary data in
+            # standard location so don't need extension until later
+
             # need to determine file extension
             f = open(self.meta_filepath(), "r")
             m = json.load(f)
