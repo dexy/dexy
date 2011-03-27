@@ -105,6 +105,7 @@ class JinjaHandler(DexyHandler):
             common_path = os.path.dirname(common_prefix)
             relpath = os.path.relpath(k, common_path)
             if not "/" in relpath:
+                document_data['filenames'][relpath] = a.filename()
                 document_data['sections'][relpath] = a.data_dict
                 document_data[relpath] = a.output_text()
 

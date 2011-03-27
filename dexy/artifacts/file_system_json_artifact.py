@@ -79,12 +79,26 @@ class FileSystemJsonArtifact(Artifact):
         f.close()
 
     def is_cached(self):
-        dfexists = os.path.isfile(self.data_filepath())
+        if os.path.isfile(self.data_filepath()):
+            dfexists = True
+            df = self.data_filepath()
+        elif os.path.isfile(self.filepath()):
+            dfexists = True
+            df = self.filepath()
+            # TODO verify that this is a binary file
+        else:
+            dfexists = False
+            df = ''
+
         mfexists = os.path.isfile(self.meta_filepath())
         if dfexists and not mfexists:
-            raise Exception("have a data file and no meta file!")
+            locs = (df, self.meta_filepath())
+            exception_text = "have a data file %s and no meta file %s!" % locs
+            raise Exception(exception_text)
         if mfexists and not dfexists:
-            raise Exception("have a meta file and no data file!")
+            locs = (self.meta_filepath(), df)
+            exception_text = "have a meta file %s and no data file %s!" % locs
+            raise Exception(exception_text)
         return dfexists and mfexists
 
     def load(self):
@@ -99,7 +113,7 @@ class FileSystemJsonArtifact(Artifact):
         # Remove input-artifacts from metadata and process.
         self.input_artifacts = {}
         for k, h in m.pop('input-artifacts').items():
-            a = self.__class__() # create a new artifact
+            a = self.__class__(k) # create a new artifact
             a.hashstring = h
             if not a.is_cached():
                 raise Exception("input artifact not cached!")

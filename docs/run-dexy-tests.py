@@ -1,16 +1,16 @@
-import nose
-import inspect
-import json
-
 from pygments import highlight
 from pygments.formatters.html import HtmlFormatter
 from pygments.lexers.agile import PythonLexer
+import inspect
+import json
+import nose
+import os
 
 py_lexer = PythonLexer()
 fm = HtmlFormatter()
 
 loader = nose.loader.TestLoader()
-tests = loader.loadTestsFromDir('../tests/')
+tests = loader.loadTestsFromDir(os.path.join(os.path.dirname(__file__),  '..', 'tests'))
 
 test_info = {}
 
