@@ -9,6 +9,7 @@ import os
 import re
 import shutil
 import tarfile
+import uuid
 import zipfile
 
 class ArchiveHandler(DexyHandler):
@@ -108,7 +109,6 @@ class CopyHandler(DexyHandler):
     FINAL = True
 
     def process(self):
-        self.artifact.auto_write_artifact = False
         shutil.copyfile(self.doc.name, self.artifact.filepath())
 
 class JoinHandler(DexyHandler):
@@ -218,36 +218,57 @@ class WordWrapHandler(DexyHandler):
 class SplitHtmlHandler(DexyHandler):
     """Splits a HTML page into multiple HTML pages. The original page becomes an
     index page."""
-
     ALIASES = ['split']
+    INPUT_EXTENSIONS = [".html"]
+    OUTPUT_EXTENSIONS = [".html"]
+    FINAL = True
 
     def process(self):
-        parent_dir = os.path.dirname(os.path.join(self.artifact.controller.cache_dir,
-                                  self.artifact.output_name()))
-        if not os.path.exists(parent_dir):
-            os.mkdir(parent_dir)
+        parent_dir = os.path.dirname(self.artifact.canonical_filename())
         input_text = self.artifact.input_text()
+
         if input_text.find("<!-- endsplit -->") > 0:
             body, footer = re.split("<!-- endsplit -->", input_text, maxsplit=1)
-            sections = re.split("<!-- split \"(\S+)\" -->", body)
+            sections = re.split("<!-- split \"(.+)\" -->", body)
             header = sections[0]
-            pages = OrderedDict()
-            for i in range(1, len(sections), 2):
-                section_name = sections[i]
-                filename = "%s.html" % section_name
-                pages[section_name] = filename
-                filepath = os.path.join(parent_dir, filename)
-                f = open(filepath, "w")
-                f.write(header)
-                f.write(sections[i+1])
-                f.write(footer)
-                f.close()
 
-            index_items = ["""<li><a href="%s">%s</a></li>""" % (url, name) for
-                           name, url in pages.items()]
+            pages = OrderedDict()
+            index_content = None
+            for i in range(1, len(sections), 2):
+                if sections[i] == 'index':
+                    index_content = sections[i+1]
+                else:
+                    section_name = sections[i]
+                    # TODO proper url/filename escaping
+                    section_url = section_name.replace(" ","-")
+
+                    filename = "%s.html" % section_url
+                    filepath = os.path.join(parent_dir, filename)
+                    pages[section_name] = filename
+
+                    artifact = self.artifact.__class__(filepath)
+                    artifact.ext = '.html'
+                    artifact.binary = False
+                    artifact.final = True
+                    artifact.artifacts_dir = self.artifact.artifacts_dir
+                    artifact.set_data(header + sections[i+1] + footer)
+                    artifact.hashstring = str(uuid.uuid4())
+                    artifact.save()
+
+                    self.artifact.additional_inputs[filepath] = artifact
+                    self.log.debug("added key %s to artifact %s ; links to file %s" %
+                              (filepath, self.artifact.key, artifact.filename()))
+
+            index_items = []
+            for k in sorted(pages.keys()):
+                index_items.append("""<li><a href="%s">%s</a></li>""" %
+                                   (pages[k], k))
+
             output_dict = OrderedDict()
             output_dict['header'] = header
-            output_dict['index'] = "<ul>\n%s\n<ul>" % "\n".join(index_items)
+            if index_content:
+                output_dict['index-page-content'] = index_content
+            output_dict['index'] = "<ul>\n%s\n</ul>" % "\n".join(index_items)
             output_dict['footer'] = footer
         else:
             output_dict = self.artifact.input_data_dict
