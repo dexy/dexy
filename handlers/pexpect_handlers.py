@@ -152,9 +152,6 @@ class ROutputHandler(DexyHandler):
     OUTPUT_EXTENSIONS = [".Rout"]
     ALIASES = ['r']
 
-    def generate(self):
-        self.artifact.write_dj()
-
     def process(self):
         self.artifact.generate_workfile()
         wf = self.artifact.work_filename()
@@ -172,7 +169,6 @@ class RArtifactHandler(DexyHandler):
     ALIASES = ['rart']
 
     def process(self):
-        self.artifact.auto_write_artifact = False
         self.artifact.generate_workfile()
 
         work_file = os.path.basename(self.artifact.work_filename())
@@ -192,9 +188,6 @@ class Pdf2Jpg(DexyHandler):
     EXECUTABLE = "/usr/bin/env gs"
     VERSION = "/usr/bin/env gs --version"
     BINARY = True
-
-    def generate(self):
-        self.artifact.write_dj()
 
     def process(self):
         # Can't use generate_workfile as input is binary, not text-based.
@@ -216,9 +209,6 @@ class Pdf2Png(DexyHandler):
     VERSION = "/usr/bin/env gs --version"
     BINARY = True
 
-    def generate(self):
-        self.artifact.write_dj()
-
     def process(self):
         # Can't use generate_workfile as input is binary, not text-based.
         # TODO should we be doing this in general rather than generating workfiles?
@@ -236,9 +226,6 @@ class Ps2Pdf(DexyHandler):
     OUTPUT_EXTENSIONS = [".pdf"]
     ALIASES = ['ps2pdf']
     EXECUTABLE = '/usr/bin/env ps2pdf'
-
-    def generate(self):
-        self.artifact.write_dj()
 
     def process(self):
         self.artifact.generate_workfile()
@@ -258,7 +245,6 @@ class VoiceHandler(DexyHandler):
     ALIASES = ['voice', 'say']
 
     def process(self):
-        self.artifact.auto_write_artifact = False
         self.artifact.generate_workfile()
         work_file = os.path.basename(self.artifact.work_filename())
         artifact_file = os.path.basename(self.artifact.filename())
@@ -299,7 +285,6 @@ class RagelRubyHandler(DexyHandler):
     EXECUTABLE = '/usr/bin/env ragel -R'
 
     def process(self):
-        self.artifact.auto_write_artifact = False
         self.artifact.generate_workfile()
         artifact_file = self.artifact.filename(False)
         work_file = self.artifact.work_filename(False)
@@ -335,7 +320,6 @@ class DotHandler(DexyHandler):
     ALIASES = ['dot', 'graphviz']
 
     def process(self):
-        self.artifact.auto_write_artifact = False
         self.artifact.generate_workfile()
         wf = self.artifact.work_filename(False)
         af = self.artifact.filename()
