@@ -110,9 +110,6 @@ class DexyHandler(object):
         if next_handler_class:
             artifact.next_handler_name = next_handler_class.__name__
 
-        if not previous_artifact.ext:
-            raise Exception("previous artifact %s has no extension" %
-                            previous_artifact.key)
         artifact.ext = klass.output_file_extension(
             previous_artifact.ext, doc.key(), next_handler_class)
 
