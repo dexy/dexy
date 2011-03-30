@@ -60,7 +60,7 @@ class Artifact(object):
 
     def set_binary_from_ext(self):
         # TODO list more binary extensions or find better way to do this
-        if self.ext in ['.jpg', '.png', '.pdf', '.zip', '.tgz', '.gz']:
+        if self.ext in ['.gif', '.jpg', '.png', '.pdf', '.zip', '.tgz', '.gz']:
             self.binary = True
         else:
             self.binary = False
