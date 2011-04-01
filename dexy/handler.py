@@ -49,13 +49,16 @@ class DexyHandler(object):
     def version(self):
         vc = self.version_command()
         if vc:
+            # TODO make custom env available here...
             proc = subprocess.Popen(vc, shell=True,
                                     stdout=subprocess.PIPE,
                                     stderr=subprocess.STDOUT)
             output, e = proc.communicate()
 
             if proc.returncode > 0:
-                raise Exception("An error occurred running %s" % vc)
+                self.log.warn("""An error occurred running %s, this may be due to
+                              a path issue""" % vc)
+                return "unspecified"
             else:
                 return output
         else:
