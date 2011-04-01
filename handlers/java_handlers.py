@@ -23,6 +23,7 @@ class JirbHandler(handlers.pexpect_handlers.ProcessLinewiseInteractiveHandler):
     PROMPT = ">>|\?>"
     OUTPUT_EXTENSIONS = [".rbcon"]
     ALIASES = ['jirb']
+    IGNORE_ERRORS = True
 
 class JythonHandler(handlers.stdout_handlers.ProcessStdoutHandler):
     VERSION = "/usr/bin/env jython --version"
