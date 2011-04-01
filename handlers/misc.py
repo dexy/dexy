@@ -9,10 +9,6 @@ class PdfFormatHandler(DexyHandler):
     OUTPUT_EXTENSIONS = [".pdf"]
     ALIASES = ['p', 'forcepdf']
 
-    def process(self):
-        self.artifact.auto_write_artifact = False
-        shutil.copyfile(self.artifact.previous_artifact_filename, self.artifact.filename())
-
 class ConvertBashFormatHandler(DexyHandler):
     """
     Does nothing, just forces previous filter to output .bash extension if able.

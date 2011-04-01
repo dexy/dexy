@@ -41,7 +41,7 @@ class Artifact(object):
     def __init__(self, key):
         self.key = key
         self.dirty = False
-        self.final = False
+        self.final = None
         self.binary = None
         self.args = {}
         self.input_artifacts = {}
@@ -70,6 +70,8 @@ class Artifact(object):
         self.controller = doc.controller
         self.artifacts_dir = doc.controller.artifacts_dir
         self.args = self.doc.args
+        if self.args.has_key('final'):
+            self.final = self.args['final']
 
         # These values will be overwritten later if handler or previous
         # artifact is available.
@@ -78,7 +80,7 @@ class Artifact(object):
         self.input_artifacts = doc.input_artifacts()
 
     def setup_from_previous_artifact(self, previous_artifact):
-        if not self.final:
+        if self.final is None:
             self.final = previous_artifact.final
         self.input_ext = previous_artifact.ext
         self.input_data_dict = previous_artifact.data_dict

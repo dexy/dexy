@@ -177,10 +177,11 @@ def setup_option_parser():
         )
 
     add_option(parser,
-        '-s', '--short',
+        '--ignore-errors',
         default=False,
         action='store_true',
-        help='Use short names in cache'
+        help="""Don't raise an error if scripts return nonzero exit status
+               (depends on the filter being written to support this)"""
         )
 
     add_option(parser,
@@ -393,13 +394,13 @@ def dexy_command():
 
     log.info("running dexy with recurse")
     controller = Controller()
+    controller.args = args
     controller.allow_remote = args.dangerous
     controller.artifact_class = args.artifact_class
     controller.artifacts_dir = args.artifacts_dir
     controller.cache_dir = args.cache_dir
     controller.logs_dir = args.logs_dir
     controller.log = log
-    controller.short_output_format = args.short
     controller.config_file = args.config
     controller.use_local_files = args.local
     controller.find_reporters()

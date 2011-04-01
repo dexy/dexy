@@ -41,11 +41,16 @@ class ProcessStdoutHandler(DexyHandler):
         stdout, stderr = proc.communicate()
         self.artifact.data_dict['1'] = stdout
         self.artifact.stdout = stderr
-        if proc.returncode != 0:
-            if self.artifact.doc.args.has_key('raiseerrors'):
-                raise "return code not 0!"
+
+        if proc.returncode is None:
+            raise Exception("no return code, proc not finished!")
+        elif proc.returncode != 0:
+            if self.doc.controller.args.ignore_errors:
+                self.log.warn(stderr)
             else:
-                self.log.warn("an error occurred:\n%s" % proc.stderr)
+                print stderr
+                raise Exception("""proc returned nonzero status code! if you don't
+want dexy to raise errors on failed scripts then pass the --ignore-errors option""")
 
 class BashHandler(ProcessStdoutHandler):
     """
@@ -76,7 +81,7 @@ class EscriptHandler(ProcessStdoutHandler):
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['escript']
 
-class LuaStdoutHandler(ProcessStdoutHandler):
+class LuaHandler(ProcessStdoutHandler):
     """
     Runs lua script and returns STDOUT.
     """
@@ -84,7 +89,7 @@ class LuaStdoutHandler(ProcessStdoutHandler):
     VERSION = '/usr/bin/env lua -v'
     INPUT_EXTENSIONS = ['.lua']
     OUTPUT_EXTENSIONS = ['.txt']
-    ALIASES = ['luaout']
+    ALIASES = ['lua']
 
 class RedclothHandler(ProcessStdoutHandler):
     """

@@ -66,14 +66,13 @@ class ClangInteractiveHandler(DexyHandler):
             for s, t in a.data_dict.items():
                 proc = subprocess.Popen(command, shell=True,
                                         cwd=self.artifact.artifacts_dir,
+                                        stdin=subprocess.PIPE,
                                         stdout=subprocess.PIPE,
                                         stderr=subprocess.PIPE,
                                        )
                 stdout, stderr = proc.communicate(t)
                 self.artifact.data_dict[s] = stdout
-#                output = proc.read()
-#                # Strip off what the EOT gets mangled to...
-#                self.artifact.data_dict[s] = output.rstrip("^D\x08\x08")
+                self.artifact.stdout = self.artifact.stdout + "\n" + stderr
 
 ### @export "clang-timing-handler"
 class ClangTimingHandler(DexyHandler):
