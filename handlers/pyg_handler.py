@@ -18,6 +18,7 @@ class PygHandler(DexyHandler):
     INPUT_EXTENSIONS = [".*"]
     OUTPUT_EXTENSIONS = [".html", ".tex"]
     ALIASES = ['pyg', 'pygments']
+    FINAL = False
 
     def process_dict(self, input_dict):
         ext = self.artifact.input_ext

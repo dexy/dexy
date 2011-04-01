@@ -144,9 +144,18 @@ class FooterHandler(DexyHandler):
             if contains_footer and not contains_pyg:
                 footer_keys.append(k)
 
+        if self.artifact.args.has_key('footer'):
+            requested_footer = self.artifact.args['footer']
+            if not requested_footer in footer_keys:
+                raise Exception("requested footer %s not found in %s" %
+                                (requested_footer, ", ".join(footer_keys)))
+            footer_keys = [requested_footer]
+
         if len(footer_keys) > 0:
             footer_key = sorted(footer_keys)[-1]
-            footer_text = self.artifact.input_artifacts[footer_key].output_text()
+            self.log.debug("using %s as footer for %s" % (footer_key, self.artifact.key))
+            footer_artifact = self.artifact.input_artifacts[footer_key]
+            footer_text = footer_artifact.output_text()
         else:
             print self.artifact.input_artifacts.keys()
             raise Exception("No file matching %s was found to work as a footer." % footer_key)
@@ -171,9 +180,19 @@ class HeaderHandler(DexyHandler):
             contains_pyg = k.find('|pyg') > 0
             if contains_header and not contains_pyg:
                 header_keys.append(k)
+
+        if self.artifact.args.has_key('header'):
+            requested_header = self.artifact.args['header']
+            if not requested_header in header_keys:
+                raise Exception("requested header %s not found in %s" %
+                                (requested_header, ", ".join(header_keys)))
+            header_keys = [requested_header]
+
         if len(header_keys) > 0:
             header_key = sorted(header_keys)[-1]
-            header_text = self.artifact.input_artifacts[header_key].output_text()
+            self.log.debug("using %s as header for %s" % (header_key, self.artifact.key))
+            header_artifact = self.artifact.input_artifacts[header_key]
+            header_text = header_artifact.output_text()
         else:
             raise Exception("No file matching %s was found to work as a header for %s." % (header_key, self.artifact.key))
 

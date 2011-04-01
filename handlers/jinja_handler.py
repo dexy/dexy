@@ -41,6 +41,7 @@ class FilenameHandler(DexyHandler):
             else:
                 artifact = self.artifact.__class__(key_with_ext)
                 artifact.ext = ".%s" % ext
+                artifact.final = True
                 artifact.set_binary_from_ext()
                 artifact.artifacts_dir = self.artifact.artifacts_dir
 
@@ -96,6 +97,7 @@ class JinjaHandler(DexyHandler):
         short_names = {}
 
         for k, a in self.artifact.input_artifacts.items():
+            a.load() # reload
             document_data['filenames'][k] = a.filename()
             document_data['sections'][k] = a.data_dict
             document_data[k] = a.output_text()
@@ -131,7 +133,9 @@ class JinjaHandler(DexyHandler):
                 document_data['json'][k] = sort_dict(unsorted_json)
 
             for ak, av in a.additional_inputs.items():
-                document_data['a'][ak] = av.output_text()
+                document_data['filenames'][ak] = av.filename()
+                if not av.binary:
+                    document_data['a'][ak] = av.output_text()
                 if av.ext == '.json' and os.path.exists(av.filepath()):
                     self.log.debug("loading JSON for %s" % av.filepath())
                     document_data[ak] = json.load(open(av.filepath(), "r"))
@@ -157,7 +161,9 @@ class JinjaHandler(DexyHandler):
             is_latex = False
 
         # Wrap HTML content in <notextile> tags if requested
-        if self.artifact.doc.args.has_key('notextile'):
+        notextile = self.artifact.args.has_key('notextile') and self.artifact.args['notextile']
+        next_handler_textile = hasattr(self.artifact, 'next_handler_name') and self.artifact.next_handler_name == 'RedclothHandler'
+        if notextile and next_handler_textile:
             if document_data.has_key('nose'):
                 for k, v in document_data['nose'].items():
                     document_data['nose'][k] = "\n<notextile>\n%s\n</notextile>\n" % v.rstrip()
@@ -169,18 +175,20 @@ class JinjaHandler(DexyHandler):
 
             for k, v in document_data.items():
                 if k.find("|") > 0:
-                    if document_data['filenames'][k].endswith(".html"):
+                    if document_data['filenames'][k].endswith(".html") and not "<notextile>" in v:
                         document_data[k] = "\n<notextile>\n%s\n</notextile>\n" % v.rstrip()
 
             for k, v in short_names.items():
-                if k.endswith(".html") or "<span" in v:
+                # TODO does this work? Does it detect <span in dict?
+                if (k.endswith(".html") or "<span" in v) and not "<notextile>" in v:
                     for s, d in v.items():
                         short_names[k][s] = "\n<notextile>\n%s\n</notextile>\n" % d.rstrip()
 
             for file_key, data_hash in document_data['sections'].items():
                 if document_data['filenames'][file_key].endswith(".html"):
                     for k, v in data_hash.items():
-                        document_data['sections'][file_key][k] = "\n<notextile>\n%s\n</notextile>\n" % v.rstrip()
+                        if not "<notextile>" in v:
+                            document_data['sections'][file_key][k] = "\n<notextile>\n%s\n</notextile>\n" % v.rstrip()
 
         document_data['filename'] = document_data['filenames']
         template_hash = {

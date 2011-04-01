@@ -50,6 +50,12 @@ class ProcessLinewiseInteractiveHandler(DexyHandler):
                 section_transcript += proc.before
                 start = proc.after
             output_dict[k] = section_transcript
+        proc.close()
+        if proc.exitstatus is not None and proc.exitstatus != 0:
+            if not self.doc.controller.args.ignore_errors:
+                print proc.exitstatus
+                raise Exception("""proc returned nonzero status code! if you don't
+want dexy to raise errors on failed scripts then pass the --ignore-errors option""")
         return output_dict
 
 class ProcessSectionwiseInteractiveHandler(DexyHandler):
@@ -110,19 +116,6 @@ class ClojureInteractiveHandler(ProcessLinewiseInteractiveHandler):
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['clj', 'cljint']
     PROMPT = "user=> "
-
-# TODO Add support for lua-style comments to idiopidae fork
-class LuaHandler(ProcessSectionwiseInteractiveHandler):
-    """
-    Runs lua.
-    """
-    EXECUTABLE = '/usr/bin/env lua'
-    VERSION = '/usr/bin/env lua -v'
-    INPUT_EXTENSIONS = ['.lua', '.txt']
-    OUTPUT_EXTENSIONS = ['.txt']
-    ALIASES = ['lua']
-    PROMPT = '>'
-    TRAILING_PROMPT = '>>'
 
 class ProcessTimingHandler(DexyHandler):
     """
@@ -318,10 +311,11 @@ class DotHandler(DexyHandler):
     INPUT_EXTENSIONS = [".dot"]
     OUTPUT_EXTENSIONS = [".png", ".pdf"]
     ALIASES = ['dot', 'graphviz']
+    FINAL = True
 
     def process(self):
         self.artifact.generate_workfile()
-        wf = self.artifact.work_filename(False)
+        wf = self.artifact.work_filename()
         af = self.artifact.filename()
         ex = self.artifact.ext.replace(".", "")
         command = "/usr/bin/env dot -T%s -o%s %s" % (ex, af, wf)

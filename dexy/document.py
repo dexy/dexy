@@ -168,6 +168,8 @@ class Document(object):
 
     def create_initial_artifact(self):
         artifact = self.artifact_class.setup(self, self.name)
+        if os.path.basename(self.name).startswith("_"):
+            artifact.final = False
         artifact.set_data(self.initial_artifact_data())
         artifact.set_hashstring()
         artifact.save()

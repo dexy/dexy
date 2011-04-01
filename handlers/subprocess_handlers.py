@@ -10,6 +10,7 @@ class LatexHandler(DexyHandler):
     OUTPUT_EXTENSIONS = [".pdf", ".png"]
     ALIASES = ['latex']
     BINARY = True
+    FINAL = True
 
     def process(self):
         latex_filename = self.artifact.filename().replace(".pdf", ".tex")

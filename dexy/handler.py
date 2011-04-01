@@ -21,7 +21,7 @@ class DexyHandler(object):
     OUTPUT_EXTENSIONS = [".*"]
     ALIASES = ['dexy']
     BINARY = False
-    FINAL = False
+    FINAL = None
 
     @classmethod
     def executable(self):
@@ -101,9 +101,7 @@ class DexyHandler(object):
         artifact.handler = h
         artifact.handler_source = inspect.getsource(klass)
         artifact.handler_version = klass.version()
-        if os.path.basename(artifact.doc.name).startswith("_"):
-            artifact.final = False
-        elif not artifact.final:
+        if klass.FINAL is not None:
             artifact.final = klass.FINAL
         artifact.binary = klass.BINARY
 
