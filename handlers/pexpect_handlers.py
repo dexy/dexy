@@ -19,6 +19,7 @@ class ProcessLinewiseInteractiveHandler(DexyHandler):
     INPUT_EXTENSIONS = [".txt", ".py"]
     OUTPUT_EXTENSIONS = [".pycon"]
     ALIASES = ['pycon']
+    IGNORE_ERRORS = False # Allow overriding default per-handler.
 
     def process_dict(self, input_dict):
         output_dict = OrderedDict()
@@ -52,8 +53,7 @@ class ProcessLinewiseInteractiveHandler(DexyHandler):
             output_dict[k] = section_transcript
         proc.close()
         if proc.exitstatus is not None and proc.exitstatus != 0:
-            if not self.doc.controller.args.ignore_errors:
-                print proc.exitstatus
+            if not (self.IGNORE_ERRORS or self.doc.controller.args.ignore_errors):
                 raise Exception("""proc returned nonzero status code! if you don't
 want dexy to raise errors on failed scripts then pass the --ignore-errors option""")
         return output_dict
