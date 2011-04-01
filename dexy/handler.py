@@ -46,7 +46,7 @@ class DexyHandler(object):
                 return self.VERSION
 
     @classmethod
-    def version(self):
+    def version(self, log=None):
         vc = self.version_command()
         if vc:
             # TODO make custom env available here...
@@ -56,8 +56,11 @@ class DexyHandler(object):
             output, e = proc.communicate()
 
             if proc.returncode > 0:
-                self.log.warn("""An error occurred running %s, this may be due to
-                              a path issue""" % vc)
+                err_msg = """An error occurred running %s, this may be due to a path issue""" % vc
+                if log:
+                    log.debug(err_msg)
+                else:
+                    print err_msg
                 return "unspecified"
             else:
                 return output
@@ -103,7 +106,7 @@ class DexyHandler(object):
         artifact = artifact_class.setup(doc, artifact_key, previous_artifact)
         artifact.handler = h
         artifact.handler_source = inspect.getsource(klass)
-        artifact.handler_version = klass.version()
+        artifact.handler_version = klass.version(h.log)
         if klass.FINAL is not None:
             artifact.final = klass.FINAL
         artifact.binary = klass.BINARY
