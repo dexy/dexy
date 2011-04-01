@@ -97,7 +97,8 @@ class JinjaHandler(DexyHandler):
         short_names = {}
 
         for k, a in self.artifact.input_artifacts.items():
-            a.load() # reload
+            if a.is_cached():
+                a.load() # reload
             document_data['filenames'][k] = a.filename()
             document_data['sections'][k] = a.data_dict
             document_data[k] = a.output_text()
