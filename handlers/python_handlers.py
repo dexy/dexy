@@ -1,10 +1,6 @@
-try:
-    from collections import OrderedDict
-except ImportError:
-    from ordereddict import OrderedDict
-
 from dexy.handler import DexyHandler
 from dexy.utils import print_string_diff
+from ordereddict import OrderedDict
 import os
 import re
 import shutil

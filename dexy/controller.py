@@ -1,14 +1,9 @@
-try:
-    from collections import OrderedDict
-except ImportError:
-    from ordereddict import OrderedDict
-
 from dexy.document import Document
 from dexy.handler import DexyHandler
 from dexy.reporter import Reporter
 from dexy.topological_sort import topological_sort
 from inspect import isclass
-import csv
+from ordereddict import OrderedDict
 import fnmatch
 import glob
 import json
@@ -181,7 +176,6 @@ class Controller(object):
             files = glob.glob(glob_string)
 
             nofiles = len(files) == 0
-            not_wildcard = glob_string.find("*") < 0
 
             if nofiles and virtual:
                 files = [glob_string]

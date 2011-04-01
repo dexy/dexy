@@ -1,22 +1,13 @@
-#!/usr/bin/env python
-try:
-    from collections import OrderedDict
-except ImportError:
-    from ordereddict import OrderedDict
-
 from dexy.artifact import Artifact
 from dexy.controller import Controller
 from dexy.version import VERSION
 from inspect import isclass
 from logging.handlers import RotatingFileHandler
-import json
 import logging
 import os
-import re
 import shutil
 import sys
 import urllib
-
 
 EXCLUDED_DIRS = ['.bzr', '.hg', '.git', '.svn', 'ignore', 'filters']
 EXCLUDE_DIR_HELP = """Exclude directories from processing by dexy, only relevant
@@ -47,7 +38,7 @@ def artifact_class(artifact_class_name, log):
                 klass = mod.__dict__[k]
                 if isclass(klass) and not (klass == Artifact) and issubclass(klass, Artifact):
                     if artifact_classes.has_key(k):
-                        raise Exception("duplicate artifact class name %s called from %s in %s" % (a, k, f))
+                        raise Exception("duplicate artifact class name %s called from %s in %s" % (k, f, d))
                     artifact_classes[klass.__name__] = klass
 
     if not artifact_class_name in artifact_classes.keys():

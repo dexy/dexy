@@ -1,5 +1,4 @@
 from dexy.handler import DexyHandler
-import shutil
 
 class PdfFormatHandler(DexyHandler):
     """

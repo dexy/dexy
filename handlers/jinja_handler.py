@@ -1,10 +1,6 @@
-try:
-    from collections import OrderedDict
-except ImportError:
-    from ordereddict import OrderedDict
-
 from dexy.handler import DexyHandler
 from jinja2 import Environment
+from ordereddict import OrderedDict
 import jinja2
 import json
 import os

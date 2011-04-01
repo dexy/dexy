@@ -23,7 +23,6 @@ class JirbHandler(handlers.pexpect_handlers.ProcessLinewiseInteractiveHandler):
     PROMPT = ">>|\?>"
     OUTPUT_EXTENSIONS = [".rbcon"]
     ALIASES = ['jirb']
-    IGNORE_ERRORS = True
 
 class JythonHandler(handlers.stdout_handlers.ProcessStdoutHandler):
     VERSION = "/usr/bin/env jython --version"
@@ -128,6 +127,7 @@ class JavadocsJsonFilter(dexy.handler.DexyHandler):
                     latex_formatter = LatexFormatter()
                     lexer = JavaLexer()
 
+                    j['packages'][p]['classes'][k]['methods'][m]['comment'] = comment
                     j['packages'][p]['classes'][k]['methods'][m]['source'] = source
                     j['packages'][p]['classes'][k]['methods'][m]['source-html'] = str(highlight(source, lexer, html_formatter))
                     j['packages'][p]['classes'][k]['methods'][m]['source-latex'] = str(highlight(source, lexer, latex_formatter))
