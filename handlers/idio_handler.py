@@ -1,13 +1,11 @@
-try:
-    from collections import OrderedDict
-except ImportError:
-    from ordereddict import OrderedDict
-
 from dexy.handler import DexyHandler
-from pygments.lexers.agile import PythonConsoleLexer
 from idiopidae.runtime import Composer
+from ordereddict import OrderedDict
 from pygments.formatters import get_formatter_for_filename
 from pygments.lexers import get_lexer_for_filename
+from pygments.lexers.agile import PythonConsoleLexer
+from pygments.lexers.agile import RubyConsoleLexer
+from pygments.lexers.web import JavascriptLexer
 import idiopidae.parser
 
 class IdioHandler(DexyHandler):

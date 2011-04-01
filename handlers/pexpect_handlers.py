@@ -1,9 +1,5 @@
-try:
-    from collections import OrderedDict
-except ImportError:
-    from ordereddict import OrderedDict
-
 from dexy.handler import DexyHandler
+from ordereddict import OrderedDict
 import os
 import pexpect
 import time

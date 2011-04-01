@@ -1,9 +1,5 @@
-try:
-    from collections import OrderedDict
-except ImportError:
-    from ordereddict import OrderedDict
-
 from dexy.handler import DexyHandler
+from ordereddict import OrderedDict
 from pygments import highlight
 from pygments.formatters import get_formatter_for_filename
 from pygments.lexers import get_lexer_for_filename

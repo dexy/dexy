@@ -1,11 +1,4 @@
-try:
-    from collections import OrderedDict
-except ImportError:
-    from ordereddict import OrderedDict
-
 import inspect
-import logging
-import os
 import platform
 import subprocess
 import time

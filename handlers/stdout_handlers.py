@@ -1,10 +1,4 @@
-try:
-    from collections import OrderedDict
-except ImportError:
-    from ordereddict import OrderedDict
-
 from dexy.handler import DexyHandler
-
 import os
 import subprocess
 

@@ -1,9 +1,5 @@
-try:
-    from collections import OrderedDict
-except ImportError:
-    from ordereddict import OrderedDict
-
 from dexy.artifact import Artifact
+from ordereddict import OrderedDict
 import mimetypes
 import os
 import riak

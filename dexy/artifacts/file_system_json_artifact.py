@@ -1,14 +1,7 @@
-try:
-    from collections import OrderedDict
-except ImportError:
-    from ordereddict import OrderedDict
-
 from dexy.artifact import Artifact
-import inspect
+from ordereddict import OrderedDict
 import json
 import os
-import shutil
-import sys
 
 class FileSystemJsonArtifact(Artifact):
     """Artifact which persists data by writing to the file system (default type

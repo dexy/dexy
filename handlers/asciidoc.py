@@ -1,4 +1,5 @@
 from dexy.handler import DexyHandler
+import os
 import subprocess
 
 class AsciidocHandler(DexyHandler):

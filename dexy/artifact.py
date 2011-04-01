@@ -1,18 +1,10 @@
-try:
-    from collections import OrderedDict
-except ImportError:
-    from ordereddict import OrderedDict
-
 from dexy.version import VERSION
+from ordereddict import OrderedDict
 import hashlib
 import inspect
-import json
 import os
-import re
 import shutil
-import sys
 import time
-import uuid
 
 class Artifact(object):
     META_ATTRS = [
