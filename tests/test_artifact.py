@@ -1,11 +1,4 @@
 from dexy.artifact import Artifact
-from dexy.artifacts.file_system_json_artifact import FileSystemJsonArtifact
-from dexy.controller import Controller
-from dexy.document import Document
-from dexy.handler import DexyHandler
-import os.path
-import imghdr
-import uuid
 
 def test_artifact_filenames_simple_key():
     artifact = Artifact('abc')
