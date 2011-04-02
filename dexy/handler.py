@@ -34,7 +34,7 @@ class DexyHandler(object):
         """Determine whether the specified executable is available."""
         if self.executable():
             cmd = self.executable().split()[0]
-            which = "which -s %s" % cmd
+            which = "which %s" % cmd
             proc = subprocess.Popen(which, shell=True)
             proc.wait()
             if proc.returncode == 0:
