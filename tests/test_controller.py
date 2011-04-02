@@ -1,10 +1,7 @@
-from dexy.artifact import Artifact
 from dexy.artifacts.file_system_json_artifact import FileSystemJsonArtifact
 from dexy.controller import Controller
-from dexy.document import Document
 from dexy.handler import DexyHandler
 import os.path
-import imghdr
 
 def setup_controller(config_file = None):
     controller = Controller()
