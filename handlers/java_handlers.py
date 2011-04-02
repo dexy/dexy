@@ -10,15 +10,15 @@ import os
 import subprocess
 
 class JrubyHandler(handlers.stdout_handlers.ProcessStdoutHandler):
-    VERSION = "/usr/bin/env jruby --version"
-    EXECUTABLE = "/usr/bin/env jruby"
+    VERSION = "jruby --version"
+    EXECUTABLE = "jruby"
     INPUT_EXTENSIONS = [".rb"]
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['jruby']
 
 class JirbHandler(handlers.pexpect_handlers.ProcessLinewiseInteractiveHandler):
-    VERSION = "/usr/bin/env jirb --version"
-    EXECUTABLE = "/usr/bin/env jirb --prompt-mode simple"
+    VERSION = "jirb --version"
+    EXECUTABLE = "jirb --prompt-mode simple"
     INPUT_EXTENSIONS = [".rb"]
     PROMPT = ">>|\?>"
     OUTPUT_EXTENSIONS = [".rbcon"]
@@ -26,21 +26,22 @@ class JirbHandler(handlers.pexpect_handlers.ProcessLinewiseInteractiveHandler):
     IGNORE_ERRORS = True
 
 class JythonHandler(handlers.stdout_handlers.ProcessStdoutHandler):
-    VERSION = "/usr/bin/env jython --version"
-    EXECUTABLE = "/usr/bin/env jython"
+    VERSION = "jython --version"
+    EXECUTABLE = "jython"
     INPUT_EXTENSIONS = [".py"]
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['jython']
 
 class JythonInteractiveHandler(handlers.pexpect_handlers.ProcessLinewiseInteractiveHandler):
-    VERSION = "/usr/bin/env jython --version"
-    EXECUTABLE = "/usr/bin/env jython -i"
+    VERSION = "jython --version"
+    EXECUTABLE = "jython -i"
     INPUT_EXTENSIONS = [".py", ".txt"]
     OUTPUT_EXTENSIONS = [".pycon"]
     ALIASES = ['jythoni']
 
 class JavaHandler(dexy.handler.DexyHandler):
-    VERSION = "/usr/bin/env java -version"
+    EXECUTABLE = "javac"
+    VERSION = "java -version"
     INPUT_EXTENSIONS = [".java"]
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['java']
@@ -59,7 +60,7 @@ class JavaHandler(dexy.handler.DexyHandler):
 
         self.artifact.create_temp_dir()
 
-        command = "/usr/bin/env javac -d %s %s" % (
+        command = "javac -d %s %s" % (
             self.artifact.temp_dir(), self.doc.name)
 
         self.log.debug(command)
@@ -80,7 +81,7 @@ class JavaHandler(dexy.handler.DexyHandler):
                 cp = "%s:%s" % (self.artifact.temp_dir(),
                                 self.doc.args['env']['CLASSPATH'])
 
-        command = "/usr/bin/env java -cp %s %s" % (cp, main_method)
+        command = "java -cp %s %s" % (cp, main_method)
         self.log.debug(command)
         proc = subprocess.Popen(command, shell=True,
                                 stdout=subprocess.PIPE,

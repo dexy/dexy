@@ -5,8 +5,8 @@ import subprocess
 class AsciidocHandler(DexyHandler):
     """IN DEVELOPMENT. Converts .txt files with asciidoc markup to HTML or
     XML."""
-    VERSION = "/usr/bin/env asciidoc --version"
-    EXECUTABLE = "/usr/bin/env asciidoc -b"
+    VERSION = "asciidoc --version"
+    EXECUTABLE = "asciidoc -b"
     INPUT_EXTENSIONS = [".txt"]
     OUTPUT_EXTENSIONS = [".html", ".xml"]
     ALIASES = ['asciidoc']

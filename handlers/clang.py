@@ -5,8 +5,8 @@ import time
 ### @export "clang-handler"
 class ClangHandler(DexyHandler):
     """Compiles C code using clang compiler, then runs compiled program."""
-    VERSION = "/usr/bin/env clang --version"
-    EXECUTABLE = "/usr/bin/env clang"
+    VERSION = "clang --version"
+    EXECUTABLE = "clang"
     INPUT_EXTENSIONS = [".c"]
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['clang']
@@ -40,8 +40,8 @@ class ClangHandler(DexyHandler):
 class ClangInteractiveHandler(DexyHandler):
     """Compiles C code using clang compiler, then runs compiled program, reading
     input from any input files."""
-    VERSION = "/usr/bin/env clang --version"
-    EXECUTABLE = "/usr/bin/env clang"
+    VERSION = "clang --version"
+    EXECUTABLE = "clang"
     INPUT_EXTENSIONS = [".c"]
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['cint']
@@ -82,7 +82,8 @@ class ClangTimingHandler(DexyHandler):
     INPUT_EXTENSIONS = [".txt", ".c"]
     OUTPUT_EXTENSIONS = [".times"]
     ALIASES = ['ctime']
-    EXECUTABLE = '/usr/bin/env clang'
+    EXECUTABLE = 'clang'
+    VERSION = "clang --version"
 
     def process(self):
         self.artifact.generate_workfile()
@@ -115,8 +116,8 @@ class ClangTimingHandler(DexyHandler):
 ### @export "cpp-handler"
 class CppHandler(ClangHandler):
     """Compiles and then runs C++ code."""
-    VERSION = "/usr/bin/env c++ --version"
-    EXECUTABLE ="/usr/bin/env c++"
+    VERSION = "c++ --version"
+    EXECUTABLE ="c++"
     INPUT_EXTENSIONS = [".cpp"]
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['cpp']
@@ -124,8 +125,8 @@ class CppHandler(ClangHandler):
 ### @export "gcc-handler"
 class CHandler(ClangHandler):
     """Compiles C code using gcc compiler, then runs compiled program."""
-    VERSION = "/usr/bin/env gcc --version"
-    EXECUTABLE = "/usr/bin/env gcc"
+    VERSION = "gcc --version"
+    EXECUTABLE = "gcc"
     INPUT_EXTENSIONS = [".c"]
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['c', 'gcc']

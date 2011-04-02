@@ -100,12 +100,18 @@ class Controller(object):
 
                     for k in dir(mod):
                         klass = mod.__dict__[k]
-                        if isclass(klass) and not (klass == DexyHandler) and issubclass(klass, DexyHandler) and klass.ALIASES:
-                            for a in klass.ALIASES:
-                                if handlers.has_key(a):
-                                    raise Exception("duplicate key %s called from %s in %s" % (a, k, f))
-                                handlers[a] = klass
-                                self.log.info("registered alias %s for class %s" % (a, k))
+                        if isclass(klass) and not (klass == DexyHandler) and issubclass(klass, DexyHandler):
+                            if not klass.ALIASES:
+                                self.log.info("class %s is not available because it has no aliases" % klass.__name__)
+                            elif not klass.executable_present():
+                                self.log.info("class %s is not available because %s not found" %
+                                              (klass.__name__, klass.executable()))
+                            else:
+                                for a in klass.ALIASES:
+                                    if handlers.has_key(a):
+                                        raise Exception("duplicate key %s called from %s in %s" % (a, k, f))
+                                    handlers[a] = klass
+                                    self.log.info("registered alias %s for class %s" % (a, k))
             self.log.info("...finished loading filters from %s" % d)
         return handlers
 

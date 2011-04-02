@@ -10,7 +10,7 @@ class ProcessLinewiseInteractiveHandler(DexyHandler):
     where your goal is to have a session transcript divided into same sections
     as input. Sends input line-by-line.
     """
-    EXECUTABLE = '/usr/bin/env python'
+    EXECUTABLE = 'python'
     PROMPT = '>>>|\.\.\.' # Python uses >>> prompt normally and ... when in multi-line structures like loops
     INPUT_EXTENSIONS = [".txt", ".py"]
     OUTPUT_EXTENSIONS = [".pycon"]
@@ -60,8 +60,8 @@ class ProcessSectionwiseInteractiveHandler(DexyHandler):
     where your goal is to have a session transcript divided into same sections
     as input. Sends input section-by-section.
     """
-    EXECUTABLE = '/usr/bin/env R --quiet --vanilla'
-    VERSION = "/usr/bin/env R --version"
+    EXECUTABLE = 'R --quiet --vanilla'
+    VERSION = "R --version"
     PROMPT = '>'
     COMMENT = '#'
     TRAILING_PROMPT = "\r\n> "
@@ -117,8 +117,8 @@ class ProcessTimingHandler(DexyHandler):
     """
     Runs python code N times and reports timings.
     """
-    EXECUTABLE = '/usr/bin/env python'
-    VERSION = '/usr/bin/env python --version'
+    EXECUTABLE = 'python'
+    VERSION = 'python --version'
     N = 10
     INPUT_EXTENSIONS = [".txt", ".py"]
     OUTPUT_EXTENSIONS = [".times"]
@@ -135,8 +135,8 @@ class ProcessTimingHandler(DexyHandler):
 
 class ROutputHandler(DexyHandler):
     """Runs R code in batch mode. Returns a full transcript, including commands and output from each line."""
-    EXECUTABLE = '/usr/bin/env R CMD BATCH --vanilla --quiet --no-timing'
-    VERSION = "/usr/bin/env R --version"
+    EXECUTABLE = 'R CMD BATCH --vanilla --quiet --no-timing'
+    VERSION = "R --version"
     INPUT_EXTENSIONS = ['.txt', '.r', '.R']
     OUTPUT_EXTENSIONS = [".Rout"]
     ALIASES = ['r']
@@ -151,8 +151,8 @@ class ROutputHandler(DexyHandler):
 
 class RArtifactHandler(DexyHandler):
     """Runs R code in batch mode. Uses the --slave flag so doesn't echo commands, just returns output."""
-    EXECUTABLE = '/usr/bin/env R CMD BATCH --vanilla --quiet --slave --no-timing'
-    VERSION = "/usr/bin/env R --version"
+    EXECUTABLE = 'R CMD BATCH --vanilla --quiet --slave --no-timing'
+    VERSION = "R --version"
     INPUT_EXTENSIONS = ['.txt', '.r', '.R']
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['rart']
@@ -174,8 +174,8 @@ class Pdf2Jpg(DexyHandler):
     INPUT_EXTENSIONS = ['.pdf']
     OUTPUT_EXTENSIONS = ['.jpg']
     ALIASES = ['pdf2jpg', 'pdf2jpeg']
-    EXECUTABLE = "/usr/bin/env gs"
-    VERSION = "/usr/bin/env gs --version"
+    EXECUTABLE = "gs"
+    VERSION = "gs --version"
     BINARY = True
 
     def process(self):
@@ -194,8 +194,8 @@ class Pdf2Png(DexyHandler):
     INPUT_EXTENSIONS = ['.pdf']
     OUTPUT_EXTENSIONS = ['.png']
     ALIASES = ['pdf2png']
-    EXECUTABLE = "/usr/bin/env gs"
-    VERSION = "/usr/bin/env gs --version"
+    EXECUTABLE = "gs"
+    VERSION = "gs --version"
     BINARY = True
 
     def process(self):
@@ -214,7 +214,7 @@ class Ps2Pdf(DexyHandler):
     INPUT_EXTENSIONS = [".ps", ".txt"]
     OUTPUT_EXTENSIONS = [".pdf"]
     ALIASES = ['ps2pdf']
-    EXECUTABLE = '/usr/bin/env ps2pdf'
+    EXECUTABLE = 'ps2pdf'
 
     def process(self):
         self.artifact.generate_workfile()
@@ -240,7 +240,8 @@ class VoiceHandler(DexyHandler):
 
         for e, ext in {"say" : "aiff", "espeak" : "wav"}.items():
             sound_file = artifact_file.replace('mp3', ext)
-            tts_bin, s = pexpect.run("/usr/bin/env which %s" % e, withexitstatus = True)
+            # TODO replace pexpect with subprocess
+            tts_bin, s = pexpect.run("which %s" % e, withexitstatus = True)
             if s == 0:
                 self.log.info("%s text-to-speech found at %s" % (e, tts_bin))
                 break
@@ -249,9 +250,9 @@ class VoiceHandler(DexyHandler):
                 e = None
 
         if e == "say":
-            command = "/usr/bin/env say -f %s -o %s" % (work_file, sound_file)
+            command = "say -f %s -o %s" % (work_file, sound_file)
         elif e == "espeak":
-            command = "/usr/bin/env espeak -f %s -w %s" % (work_file, sound_file)
+            command = "espeak -f %s -w %s" % (work_file, sound_file)
         else:
             raise Exception("unknown text-to-speech command %s" % e)
 
@@ -259,7 +260,7 @@ class VoiceHandler(DexyHandler):
         self.artifact.stdout = pexpect.run(command, cwd=self.artifact.artifacts_dir)
 
         # Converting to mp3
-        command = "/usr/bin/env lame %s %s" % (sound_file, artifact_file)
+        command = "lame %s %s" % (sound_file, artifact_file)
         self.log.info(command)
         self.artifact.stdout = pexpect.run(command, cwd=self.artifact.artifacts_dir)
 
@@ -270,8 +271,8 @@ class RagelRubyHandler(DexyHandler):
     INPUT_EXTENSIONS = [".rl"]
     OUTPUT_EXTENSIONS = [".rb"]
     ALIASES = ['rlrb', 'ragelruby']
-    VERSION = '/usr/bin/env ragel --version'
-    EXECUTABLE = '/usr/bin/env ragel -R'
+    VERSION = 'ragel --version'
+    EXECUTABLE = 'ragel -R'
 
     def process(self):
         self.artifact.generate_workfile()
@@ -289,8 +290,8 @@ class RagelRubyDotHandler(DexyHandler):
     INPUT_EXTENSIONS = [".rl"]
     OUTPUT_EXTENSIONS = [".dot"]
     ALIASES = ['rlrbd', 'ragelrubydot']
-    VERSION = '/usr/bin/env ragel --version'
-    EXECUTABLE = '/usr/bin/env ragel -R'
+    VERSION = 'ragel --version'
+    EXECUTABLE = 'ragel -R'
 
     def process(self):
         self.artifact.generate_workfile()
@@ -306,6 +307,8 @@ class DotHandler(DexyHandler):
     """
     INPUT_EXTENSIONS = [".dot"]
     OUTPUT_EXTENSIONS = [".png", ".pdf"]
+    EXECUTABLE = 'dot'
+    VERSION = 'dot -V'
     ALIASES = ['dot', 'graphviz']
     FINAL = True
 
@@ -314,7 +317,7 @@ class DotHandler(DexyHandler):
         wf = self.artifact.work_filename()
         af = self.artifact.filename()
         ex = self.artifact.ext.replace(".", "")
-        command = "/usr/bin/env dot -T%s -o%s %s" % (ex, af, wf)
+        command = "%s -T%s -o%s %s" % (self.executable(), ex, af, wf)
         self.log.info(command)
         ad = self.artifact.artifacts_dir
         self.artifact.stdout = pexpect.run(command, cwd=ad)
