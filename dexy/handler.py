@@ -30,6 +30,21 @@ class DexyHandler(object):
                 return self.EXECUTABLE
 
     @classmethod
+    def executable_present(self):
+        """Determine whether the specified executable is available."""
+        if self.executable():
+            cmd = self.executable().split()[0]
+            which = "which -s %s" % cmd
+            proc = subprocess.Popen(which, shell=True)
+            proc.wait()
+            if proc.returncode == 0:
+                return True
+            else:
+                return False
+        else:
+            return True
+
+    @classmethod
     def version_command(self):
         if platform.system() == 'Windows':
             if hasattr(self, 'WINDOWS_VERSION'):
@@ -54,11 +69,11 @@ class DexyHandler(object):
                     log.debug(err_msg)
                 else:
                     print err_msg
-                return "unspecified"
+                return "error"
             else:
                 return output
         else:
-            return "unspecified"
+            return None
 
     @classmethod
     def output_file_extension(klass, ext, key, next_handler_class):

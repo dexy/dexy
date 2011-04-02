@@ -9,8 +9,8 @@ class CucumberHandler(DexyHandler):
     INPUT_EXTENSIONS = [".feature"]
     OUTPUT_EXTENSIONS = [".html", ".txt"]
     ALIASES = ["cuke"]
-    EXECUTABLE = "/usr/bin/env cucumber"
-    VERSION = "/usr/bin/env cucumber --version"
+    EXECUTABLE = "cucumber"
+    VERSION = "cucumber --version"
 
     def process(self):
         keys = self.artifact.input_artifacts.keys()
