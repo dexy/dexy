@@ -35,8 +35,10 @@ class DexyHandler(object):
         if self.executable():
             cmd = self.executable().split()[0]
             which = "which %s" % cmd
-            proc = subprocess.Popen(which, shell=True)
-            proc.wait()
+            proc = subprocess.Popen(which, shell=True,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE)
+            proc.communicate()
             if proc.returncode == 0:
                 return True
             else:
