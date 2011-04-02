@@ -4,12 +4,8 @@ from jinja2 import Environment
 from jinja2 import FileSystemLoader
 from pygments import highlight
 from pygments.formatters.html import HtmlFormatter
-from pygments.lexers.agile import PythonLexer
 from pygments.lexers.web import JavascriptLexer
-from pygments.styles import get_style_by_name
-from pynliner import Pynliner
 import datetime
-import jinja2
 import json
 import os
 import shutil
@@ -27,15 +23,13 @@ class RunReporter(Reporter):
         formatter = HtmlFormatter()
         js_lexer = JavascriptLexer()
 
-        print "you may see some harmless but annoying error messages..."
         for doc in self.controller.docs:
             if len(doc.args) > 0:
                 doc.args_html = highlight(json.dumps(doc.args, sort_keys=True, indent=4), js_lexer, formatter)
             for a in doc.artifacts:
                 if hasattr(a, 'stdout'):
-                    html = ansi_output_to_html(a.stdout)
+                    html = ansi_output_to_html(a.stdout, self.controller.log)
                     a.stdout_html = """stdout:<br />%s""" % html
-        print "...done"
 
         env_data = {}
         j = json.dumps(self.controller.config, sort_keys = True, indent=4)

@@ -26,7 +26,8 @@ class LatexHandler(DexyHandler):
         latex_bin = None
         for e in ["pdflatex", "latex"]:
             which_cmd = ['which', e]
-            if subprocess.call(which_cmd) == 0:
+            if subprocess.call(which_cmd,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0:
                 latex_bin = e
                 self.log.info("%s LaTeX command found" % e)
                 break

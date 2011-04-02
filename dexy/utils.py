@@ -1,22 +1,20 @@
-try:
-    from ansi2html import Ansi2HTMLConverter
-    from pynliner import Pynliner
-    from BeautifulSoup import BeautifulSoup
-    def ansi_output_to_html(ansi_text):
-        converter = Ansi2HTMLConverter()
-        html = converter.convert(ansi_text)
+from ansi2html import Ansi2HTMLConverter
+from pynliner import Pynliner
+from BeautifulSoup import BeautifulSoup
 
-        p = Pynliner()
-        p.from_string(html)
-        html_with_css_inline = p.run()
+def ansi_output_to_html(ansi_text, log=None):
+    converter = Ansi2HTMLConverter()
+    html = converter.convert(ansi_text)
 
-        # Ansi2HTMLConverter returns a complete HTML document, we just want body
-        doc = BeautifulSoup(html_with_css_inline)
-        return doc.body.renderContents()
+    p = Pynliner()
+    if log:
+        p.log = log
+    p.from_string(html)
+    html_with_css_inline = p.run()
 
-except ImportError as e:
-    pass
-
+    # Ansi2HTMLConverter returns a complete HTML document, we just want body
+    doc = BeautifulSoup(html_with_css_inline)
+    return doc.body.renderContents()
 
 def print_string_diff(str1, str2):
     msg = ""
