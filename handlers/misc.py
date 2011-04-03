@@ -1,5 +1,13 @@
 from dexy.handler import DexyHandler
 
+class RFormatHandler(DexyHandler):
+    """
+    Does nothing, just forces previous filter to output .R extension if able.
+    """
+    INPUT_EXTENSIONS = [".R"]
+    OUTPUT_EXTENSIONS = [".R"]
+    ALIASES = ['forcer']
+
 class PdfFormatHandler(DexyHandler):
     """
     Does nothing, just forces previous filter to output .pdf extension if able.

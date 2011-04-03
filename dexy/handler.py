@@ -22,9 +22,8 @@ class DexyHandler(object):
         example see stdout filter. This does not need to be used, and is not
         relevant for many filters, but is intended to allow introspection for
         those which do use it."""
-        if platform.system() == 'Windows':
-            if hasattr(self, 'WINDOWS_EXECUTABLE'):
-                return self.WINDOWS_EXECUTABLE
+        if platform.system() == 'Windows' and hasattr(self, 'WINDOWS_EXECUTABLE'):
+            return self.WINDOWS_EXECUTABLE
         else:
             if hasattr(self, 'EXECUTABLE'):
                 return self.EXECUTABLE

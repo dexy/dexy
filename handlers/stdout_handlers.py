@@ -15,7 +15,10 @@ class ProcessStdoutHandler(DexyHandler):
 
     def process(self):
         self.artifact.generate_workfile()
-        command = "%s %s" % (self.executable(), self.artifact.work_filename())
+        if hasattr(self, 'instance_executable'):
+            command = "%s %s" % (self.instance_executable(), self.artifact.work_filename())
+        else:
+            command = "%s %s" % (self.executable(), self.artifact.work_filename())
         cla = self.artifact.command_line_args()
         if self.doc.args.has_key('env'):
             env = os.environ
@@ -136,4 +139,21 @@ class RubyStdoutHandler(ProcessStdoutHandler):
     INPUT_EXTENSIONS = [".txt", ".rb"]
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['rb']
+
+class RdConvHandler(ProcessStdoutHandler):
+    """Convert R documentation to other formats."""
+    EXECUTABLE = "R CMD Rdconv"
+    VERSION = "R CMD Rdconv -v"
+    INPUT_EXTENSIONS = ['.Rd']
+    OUTPUT_EXTENSIONS = ['.txt', '.html', '.tex', '.R']
+    ALIASES = ['rdconv']
+    EXTENSION_TO_FORMAT = {
+        '.txt' : 'txt',
+        '.html' : 'html',
+        '.tex' : 'latex',
+        '.R' : 'example'
+    }
+
+    def instance_executable(self):
+        return "%s --type=%s" % (self.EXECUTABLE, self.EXTENSION_TO_FORMAT[self.artifact.ext])
 

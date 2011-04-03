@@ -59,3 +59,26 @@ class LatexHandler(DexyHandler):
 
         stdout, stderr = proc.communicate()
         self.artifact.stdout += stdout
+
+class Rd2PdfHandler(DexyHandler):
+    INPUT_EXTENSIONS = [".Rd"]
+    OUTPUT_EXTENSIONS = [".pdf", ".dvi"]
+    EXECUTABLE = 'R CMD Rd2pdf'
+    VERSION = 'R CMD Rd2pdf -v'
+    ALIASES = ['rd2pdf', 'Rd2pdf']
+    FINAL = True
+
+    def process(self):
+        self.artifact.generate_workfile()
+        wf = self.artifact.work_filename()
+        af = self.artifact.filename()
+        title = os.path.splitext(self.doc.name)[0].replace("_", " ")
+        command = "%s --output=%s --title=\"%s\" %s" % (self.executable(), af,
+                                                    title, wf)
+        self.log.info(command)
+        proc = subprocess.Popen(command, shell=True,
+                                cwd=self.artifact.artifacts_dir,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT)
+        stdout, stderr = proc.communicate()
+        self.artifact.stdout = stdout
