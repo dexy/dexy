@@ -5,6 +5,7 @@ from pygments.formatters import get_formatter_for_filename
 from pygments.lexers import get_lexer_for_filename
 from pygments.lexers.agile import PythonConsoleLexer
 from pygments.lexers.agile import RubyConsoleLexer
+from pygments.lexers.special import TextLexer
 from pygments.lexers.web import JavascriptLexer
 
 class PygHandler(DexyHandler):
@@ -26,6 +27,8 @@ class PygHandler(DexyHandler):
             lexer = RubyConsoleLexer()
         elif ext in ('.json', '.dexy'):
             lexer = JavascriptLexer()
+        elif ext == '.Rd':
+            lexer = TextLexer()
         else:
             lexer = get_lexer_for_filename(name)
         formatter = get_formatter_for_filename(self.artifact.filename(), linenos=False)
