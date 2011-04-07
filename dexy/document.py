@@ -50,7 +50,9 @@ class Document(object):
     def finalize_inputs(self, members_dict):
         if self.use_all_inputs:
             for doc in members_dict.values():
-                if not doc.use_all_inputs: # this would create mutual dependency
+                also_all_inputs = doc.use_all_inputs
+                specified = doc.key() in self.input_keys
+                if specified or not also_all_inputs:
                     self.inputs.append(doc)
         else:
             self.inputs = [members_dict[k] for k in self.input_keys]
