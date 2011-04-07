@@ -67,7 +67,7 @@ class ProcessSectionwiseInteractiveHandler(DexyHandler):
     TRAILING_PROMPT = "\r\n> "
     INPUT_EXTENSIONS = ['.txt', '.r', '.R']
     OUTPUT_EXTENSIONS = ['.Rout']
-    ALIASES = ['rint']
+    ALIASES = ['r', 'rint']
 
     def process_dict(self, input_dict):
         output_dict = OrderedDict()
@@ -132,40 +132,6 @@ class ProcessTimingHandler(DexyHandler):
             pexpect.run("%s %s" % (self.EXECUTABLE, self.artifact.work_filename()))
             times.append("%s" % (time.time() - start))
         self.artifact.data_dict['1'] = "\n".join(times)
-
-class ROutputHandler(DexyHandler):
-    """Runs R code in batch mode. Returns a full transcript, including commands and output from each line."""
-    EXECUTABLE = 'R CMD BATCH --vanilla --quiet --no-timing'
-    VERSION = "R --version"
-    INPUT_EXTENSIONS = ['.txt', '.r', '.R']
-    OUTPUT_EXTENSIONS = [".Rout"]
-    ALIASES = ['r']
-
-    def process(self):
-        self.artifact.generate_workfile()
-        wf = self.artifact.work_filename()
-        af = self.artifact.filename()
-        pexpect.run("%s %s %s" % (self.EXECUTABLE, wf, af), cwd=self.artifact.artifacts_dir)
-        self.artifact.data_dict['1'] = open(self.artifact.filepath(), "r").read()
-
-
-class RArtifactHandler(DexyHandler):
-    """Runs R code in batch mode. Uses the --slave flag so doesn't echo commands, just returns output."""
-    EXECUTABLE = 'R CMD BATCH --vanilla --quiet --slave --no-timing'
-    VERSION = "R --version"
-    INPUT_EXTENSIONS = ['.txt', '.r', '.R']
-    OUTPUT_EXTENSIONS = [".txt"]
-    ALIASES = ['rart']
-
-    def process(self):
-        self.artifact.generate_workfile()
-
-        work_file = os.path.basename(self.artifact.work_filename())
-        artifact_file = os.path.basename(self.artifact.filename())
-        command = "%s %s %s" % (self.EXECUTABLE, work_file, artifact_file)
-        self.log.info(command)
-        self.artifact.stdout = pexpect.run(command, cwd=self.artifact.artifacts_dir)
-        self.artifact.data_dict['1'] = open(self.artifact.filename(), "r").read()
 
 class Pdf2Jpg(DexyHandler):
     """
