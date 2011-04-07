@@ -82,3 +82,47 @@ class Rd2PdfHandler(DexyHandler):
                                 stderr=subprocess.STDOUT)
         stdout, stderr = proc.communicate()
         self.artifact.stdout = stdout
+
+class RBatchHandler(DexyHandler):
+    """Runs R code in batch mode."""
+    EXECUTABLE = 'R CMD BATCH --vanilla --quiet --no-timing'
+    VERSION = "R --version"
+    INPUT_EXTENSIONS = ['.txt', '.r', '.R']
+    OUTPUT_EXTENSIONS = [".txt"]
+    ALIASES = ['rintbatch']
+
+    def process(self):
+        self.artifact.generate_workfile()
+        work_file = os.path.basename(self.artifact.work_filename())
+        artifact_file = os.path.basename(self.artifact.filename())
+        command = "%s %s %s" % (self.EXECUTABLE, work_file, artifact_file)
+        self.log.info(command)
+        proc = subprocess.Popen(command, shell=True,
+                                cwd=self.artifact.artifacts_dir,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT)
+        stdout, stderr = proc.communicate()
+        self.artifact.stdout = stdout
+        self.artifact.set_data_from_artifact()
+
+class ROutputBatchHandler(DexyHandler):
+    """Runs R code in batch mode. Uses the --slave flag so doesn't echo commands, just returns output."""
+    EXECUTABLE = 'R CMD BATCH --vanilla --quiet --slave --no-timing'
+    VERSION = "R --version"
+    INPUT_EXTENSIONS = ['.txt', '.r', '.R']
+    OUTPUT_EXTENSIONS = [".txt"]
+    ALIASES = ['routbatch']
+
+    def process(self):
+        self.artifact.generate_workfile()
+        work_file = os.path.basename(self.artifact.work_filename())
+        artifact_file = os.path.basename(self.artifact.filename())
+        command = "%s %s %s" % (self.EXECUTABLE, work_file, artifact_file)
+        self.log.info(command)
+        proc = subprocess.Popen(command, shell=True,
+                                cwd=self.artifact.artifacts_dir,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT)
+        stdout, stderr = proc.communicate()
+        self.artifact.stdout = stdout
+        self.artifact.set_data_from_artifact()

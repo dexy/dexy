@@ -30,6 +30,19 @@ class Artifact(object):
         'key'
     ]
 
+    BINARY_EXTENSIONS = [
+        '.gif',
+        '.jpg',
+        '.png',
+        '.pdf',
+        '.zip',
+        '.tgz',
+        '.gz',
+        '.eot',
+        '.ttf',
+        '.woff'
+    ]
+
     def __init__(self, key):
         self.key = key
         self.dirty = False
@@ -52,7 +65,7 @@ class Artifact(object):
 
     def set_binary_from_ext(self):
         # TODO list more binary extensions or find better way to do this
-        if self.ext in ['.gif', '.jpg', '.png', '.pdf', '.zip', '.tgz', '.gz']:
+        if self.ext in self.BINARY_EXTENSIONS:
             self.binary = True
         else:
             self.binary = False
@@ -82,6 +95,10 @@ class Artifact(object):
 
     def set_data(self, data):
         self.data_dict['1'] = data
+
+    def set_data_from_artifact(self):
+        f = open(self.filepath())
+        self.data_dict['1'] = f.read()
 
     def is_loaded(self):
         return hasattr(self, 'data_dict') and len(self.data_dict) > 0
