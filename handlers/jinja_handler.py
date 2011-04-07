@@ -114,7 +114,7 @@ class JinjaHandler(DexyHandler):
 
             if a.filename().endswith('.json'):
                 self.log.debug("loading JSON for %s" % (k))
-                path_to_file = os.path.join(self.artifact.artifacts_dir(), a.filename())
+                path_to_file = os.path.join(self.artifact.artifacts_dir, a.filename())
                 unsorted_json = json.load(open(path_to_file), "r")
 
                 def sort_dict(d):
@@ -134,7 +134,7 @@ class JinjaHandler(DexyHandler):
                 if not av.binary:
                     document_data['a'][ak] = av.output_text()
                 if av.ext == '.json' and os.path.exists(av.filepath()):
-                    self.log.debug("loading JSON for %s" % av.filepath())
+                    self.log.debug("loading JSON for additional input %s" % av.filepath())
                     document_data[ak] = json.load(open(av.filepath(), "r"))
 
         if self.artifact.ext == ".tex":
