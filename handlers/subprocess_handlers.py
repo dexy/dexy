@@ -60,6 +60,41 @@ class LatexHandler(DexyHandler):
         stdout, stderr = proc.communicate()
         self.artifact.stdout += stdout
 
+class EmbedFonts(DexyHandler):
+    INPUT_EXTENSIONS = [".pdf"]
+    OUTPUT_EXTENSIONS = [".pdf"]
+    EXECUTABLE = 'ps2pdf'
+    ALIASES = ['embedfonts', 'prepress']
+    FINAL = True
+
+    def process(self):
+        pf = self.artifact.previous_artifact_filename
+        af = self.artifact.filename()
+
+        env = None
+
+        command = "%s -dPDFSETTINGS=/prepress %s %s" % (self.EXECUTABLE, pf, af)
+        self.log.info(command)
+
+        proc = subprocess.Popen(command, shell=True,
+                                cwd=self.artifact.artifacts_dir,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT,
+                                env=env)
+
+        stdout, stderr = proc.communicate()
+        self.artifact.stdout = stdout
+
+        command = "%s %s" % ("pdffonts", af)
+        proc = subprocess.Popen(command, shell=True,
+                                cwd=self.artifact.artifacts_dir,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT,
+                                env=env)
+
+        stdout, stderr = proc.communicate()
+        self.artifact.stdout += stdout
+
 class Rd2PdfHandler(DexyHandler):
     INPUT_EXTENSIONS = [".Rd"]
     OUTPUT_EXTENSIONS = [".pdf", ".dvi"]

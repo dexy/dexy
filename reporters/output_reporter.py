@@ -17,11 +17,11 @@ class OutputReporter(Reporter):
             if artifact.final:
                 artifact.write_to_file(fp)
 
-            for k, a in artifact.additional_inputs.items():
-                fn = a.canonical_filename()
-                fp = os.path.join(self.REPORTS_DIR, fn)
-                a.write_to_file(fp)
-
+            for k, a in artifact._inputs.items():
+                if a.additional and a.final:
+                    fn = a.canonical_filename()
+                    fp = os.path.join(self.REPORTS_DIR, fn)
+                    a.write_to_file(fp)
 
 class LongOutputReporter(Reporter):
     """This is the LongOutputReporter"""
@@ -37,7 +37,7 @@ class LongOutputReporter(Reporter):
 
             artifact.write_to_file(fp)
 
-            for k, a in artifact.additional_inputs.items():
+            for k, a in artifact._inputs.items():
                 fn = a.canonical_filename()
                 fp = os.path.join(self.REPORTS_DIR, fn)
                 a.write_to_file(fp)

@@ -28,6 +28,7 @@ class FileSystemJsonArtifact(Artifact):
             self.binary = True
 
         if not os.path.isfile(self.filepath()):
+            print "writing", self.key, "to", self.filepath()
             f = open(self.filepath(), "w")
             f.write(self.output_text())
             f.close()
@@ -54,21 +55,16 @@ class FileSystemJsonArtifact(Artifact):
                 v = getattr(self, a)
                 metadata[a] = v
 
-        iak = {}
-        for k, v in self.input_artifacts.items():
-            iak[k] = v.hashstring
-        metadata['input-artifacts'] = iak
-
-        ia = {}
-        for k, a in self.additional_inputs.items():
+        inputs = {}
+        for k, a in self._inputs.items():
             if len(a.data_dict) == 0:
                 if os.path.isfile(a.filepath()):
                     f = open(a.filepath(), "r")
                     a.data_dict['1'] = f.read()
                     f.close()
                     a.save()
-            ia[k] = a.hashstring
-        metadata['additional-inputs'] = ia
+            inputs[k] = a.hashstring
+        metadata['inputs'] = inputs
 
         f = open(self.meta_filepath(), "w")
         json.dump(metadata, f)
@@ -111,35 +107,24 @@ class FileSystemJsonArtifact(Artifact):
     def load(self):
         # Load artifact from the cache.
         if not self.is_cached():
-            raise Exception("trying to load an artifact which isn't cached")
+            raise Exception("trying to load an artifact %s which isn't cached" % self.key)
 
         f = open(self.meta_filepath(), "r")
         m = json.load(f)
         f.close()
 
         # Remove input-artifacts from metadata and process.
-        self.input_artifacts = {}
-        for k, h in m.pop('input-artifacts').items():
+        self._inputs = {}
+        for k, h in m.pop('inputs').items():
             a = self.__class__(k) # create a new artifact
             a.hashstring = h
             a.artifacts_dir = self.artifacts_dir # needed to load
             if not a.is_cached():
-                raise Exception("input artifact not cached!")
+                pass
+                #raise Exception("input artifact %s not cached!" % self.key)
             if not a.is_loaded():
                 a.load()
-            self.input_artifacts[k] = a
-
-        # Remove additional-inputs from metadata and process.
-        self.additional_inputs = {}
-        for k, h in m.pop('additional-inputs').items():
-            a = self.__class__(k) # create a new artifact
-            a.hashstring = h
-            a.artifacts_dir = self.artifacts_dir # needed to load
-            if not a.is_cached():
-                raise Exception("additional input not cached!")
-            if not a.is_loaded():
-                a.load()
-            self.additional_inputs[k] = a
+            self._inputs[k] = a
 
         for k, v in m.items():
             setattr(self, k, v)

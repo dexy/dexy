@@ -22,7 +22,7 @@ class ArchiveHandler(DexyHandler):
             use_short_names = False
         af = self.artifact.filepath()
         tar = tarfile.open(af, mode="w:gz")
-        for k, a in self.artifact.input_artifacts.items():
+        for k, a in self.artifact.inputs().items():
             fn = a.filepath()
             if not os.path.exists(fn):
                 raise Exception("File %s does not exist!" % fn)
@@ -48,7 +48,7 @@ class ZipArchiveHandler(DexyHandler):
             use_short_names = False
         af = self.artifact.filepath()
         zf = zipfile.ZipFile(af, mode="w")
-        for k, a in self.artifact.input_artifacts.items():
+        for k, a in self.artifact.inputs().items():
             fn = a.filepath()
             if not os.path.exists(fn):
                 raise Exception("File %s does not exist!" % fn)
@@ -134,7 +134,7 @@ class FooterHandler(DexyHandler):
     def process_text(self, input_text):
         footer_key = "_footer%s" % self.artifact.ext
         footer_keys = []
-        for k in self.artifact.input_artifacts.keys():
+        for k in self.artifact.inputs().keys():
             contains_footer = k.find(footer_key) > -1
             contains_pyg = k.find('|pyg') > 0
             if contains_footer and not contains_pyg:
@@ -150,10 +150,10 @@ class FooterHandler(DexyHandler):
         if len(footer_keys) > 0:
             footer_key = sorted(footer_keys)[-1]
             self.log.debug("using %s as footer for %s" % (footer_key, self.artifact.key))
-            footer_artifact = self.artifact.input_artifacts[footer_key]
+            footer_artifact = self.artifact.inputs()[footer_key]
             footer_text = footer_artifact.output_text()
         else:
-            print self.artifact.input_artifacts.keys()
+            print self.artifact.inputs().keys()
             raise Exception("No file matching %s was found to work as a footer." % footer_key)
 
         return "%s\n%s" % (input_text, footer_text)
@@ -171,7 +171,7 @@ class HeaderHandler(DexyHandler):
     def process_text(self, input_text):
         header_key = "_header%s" % self.artifact.ext
         header_keys = []
-        for k in self.artifact.input_artifacts.keys():
+        for k in self.artifact.inputs().keys():
             contains_header = k.find(header_key) > -1
             contains_pyg = k.find('|pyg') > 0
             if contains_header and not contains_pyg:
@@ -187,7 +187,7 @@ class HeaderHandler(DexyHandler):
         if len(header_keys) > 0:
             header_key = sorted(header_keys)[-1]
             self.log.debug("using %s as header for %s" % (header_key, self.artifact.key))
-            header_artifact = self.artifact.input_artifacts[header_key]
+            header_artifact = self.artifact.inputs()[header_key]
             header_text = header_artifact.output_text()
         else:
             raise Exception("No file matching %s was found to work as a header for %s." % (header_key, self.artifact.key))
@@ -233,7 +233,7 @@ class WordWrapHandler(DexyHandler):
 class SplitHtmlHandler(DexyHandler):
     """Splits a HTML page into multiple HTML pages. The original page becomes an
     index page."""
-    ALIASES = ['split']
+    ALIASES = ['split', 'splithtml']
     INPUT_EXTENSIONS = [".html"]
     OUTPUT_EXTENSIONS = [".html"]
     FINAL = True
@@ -265,12 +265,13 @@ class SplitHtmlHandler(DexyHandler):
                     artifact.ext = '.html'
                     artifact.binary = False
                     artifact.final = True
+                    artifact.additional = True
                     artifact.artifacts_dir = self.artifact.artifacts_dir
                     artifact.set_data(header + sections[i+1] + footer)
                     artifact.hashstring = str(uuid.uuid4())
                     artifact.save()
 
-                    self.artifact.additional_inputs[filepath] = artifact
+                    self.artifact.inputs()[filepath] = artifact
                     self.log.debug("added key %s to artifact %s ; links to file %s" %
                               (filepath, self.artifact.key, artifact.filename()))
 
@@ -288,3 +289,54 @@ class SplitHtmlHandler(DexyHandler):
         else:
             output_dict = self.artifact.input_data_dict
         self.artifact.data_dict = output_dict
+
+class SplitLatexHandler(DexyHandler):
+    """Splits a latex doc into multiple latex docs."""
+    ALIASES = ['splitlatex']
+    INPUT_EXTENSIONS = [".tex"]
+    OUTPUT_EXTENSIONS = [".tex"]
+    FINAL = True
+
+    def process(self):
+        parent_dir = os.path.dirname(self.artifact.canonical_filename())
+        input_text = self.artifact.input_text()
+
+        if input_text.find("%% endsplit\n") > 0:
+            body, footer = re.split("%% endsplit\n", input_text, maxsplit=1)
+            sections = re.split("%% split \"(.+)\"\n", body)
+            header = sections[0]
+
+            pages = OrderedDict()
+            for i in range(1, len(sections), 2):
+                section_name = sections[i]
+                # TODO proper url/filename escaping
+                section_url = section_name.replace(" ","-")
+                source = header + sections[i+1] + footer
+
+                ext = '.tex'
+
+                filename = "%s%s" % (section_url, ext)
+                filepath = os.path.join(parent_dir, filename)
+                pages[section_name] = filename
+
+                artifact = self.artifact.__class__(filepath)
+                artifact.ext = ext
+                artifact.binary = False
+                artifact.final = True
+                artifact.artifacts_dir = self.artifact.artifacts_dir
+                artifact.hashstring = str(uuid.uuid4())
+                artifact.set_data(source)
+                artifact.save()
+
+                self.artifact.inputs()[filepath] = artifact
+                self.log.debug("added key %s to artifact %s ; links to file %s" %
+                          (filepath, self.artifact.key, artifact.filename()))
+
+            index_items = []
+            for k in sorted(pages.keys()):
+                index_items.append("""<li><a href="%s">%s</a></li>""" %
+                                   (pages[k], k))
+
+        output_dict = self.artifact.input_data_dict
+        self.artifact.data_dict = output_dict
+

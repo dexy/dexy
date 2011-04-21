@@ -77,7 +77,7 @@
       <h4>Artifacts</h4>
       <ul>
         {% for a in doc.artifacts %}
-        <li>{{ a.key }} : <a href="../../{{ a.filepath() }}">{{ a.filepath() }}</a></li>
+        <li>{{ a.key }} : <a href="../../{{ a.filepath() }}">{{ a.filepath() }}</a> final: {{ a.final }}</li>
         {{ a.stdout_html }}
         {% endfor %}
       </ul>
