@@ -96,6 +96,19 @@ class JavaHandler(dexy.handler.DexyHandler):
 
 class JavadocsJsonFilter(dexy.handler.DexyHandler):
     ALIASES = ['javadoc', 'javadocs']
+
+    def nested_subclasses(self, j, qualified_class_name, nest=None, indent = 0):
+        if not nest:
+            nest = [[indent, qualified_class_name]]
+        package_name, x, class_name = qualified_class_name.rpartition(".")
+        subclasses = j['packages'][package_name]['classes'][class_name]['subclasses']
+        for qualified_subclass_name in subclasses:
+            nest.append([indent+1, qualified_subclass_name])
+            subclass_package_name, x, subclass_name = qualified_subclass_name.rpartition(".")
+            if j['packages'][subclass_package_name]['classes'][subclass_name].has_key('subclasses'):
+                self.nested_subclasses(j, qualified_subclass_name, nest, indent+1)
+        return nest
+
     def process_text(self, input_text):
         j = json.loads(input_text)
 
@@ -110,14 +123,26 @@ class JavadocsJsonFilter(dexy.handler.DexyHandler):
                         o[k].update(n[k])
             return o
 
-        self.artifact.load_input_artifacts()
-        for k, a in self.artifact.input_artifacts_dict.items():
-            new_data = json.loads(a['data'])
+        for k, a in self.artifact.inputs().items():
+            new_data = json.loads(a.output_text())
             j = update_dict(j, new_data)
-
 
         for p in j['packages']:
             for k in j['packages'][p]['classes'].keys():
+
+                klass = j['packages'][p]['classes'][k]
+                if klass.has_key('superclass'):
+                    superclass_package, _, superclass_name = klass['superclass'].rpartition(".")
+                    if j['packages'].has_key(superclass_package):
+                        if not j['packages'][superclass_package]['classes'].has_key(superclass_name):
+                            print "Can't find", superclass_name, "in package", superclass_package
+                        else:
+                            superclass = j['packages'][superclass_package]['classes'][superclass_name]
+                            if not superclass.has_key('subclasses'):
+                                superclass['subclasses'] = []
+
+                            superclass['subclasses'].append("%s.%s" % (p, k))
+
                 for m in j['packages'][p]['classes'][k]['methods'].keys():
                     source = j['packages'][p]['classes'][k]['methods'][m]['source']
 

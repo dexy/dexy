@@ -208,6 +208,7 @@ class Document(object):
             except Exception as e:
                 print "Error occurred while applying", f, "for", artifact_key
                 x, y, tb = sys.exc_info()
+                print "Original traceback:"
                 traceback.print_tb(tb)
                 if hasattr(h.artifact, 'hashstring'):
                     pattern = os.path.join(self.controller.artifacts_dir, h.artifact.hashstring)

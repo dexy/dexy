@@ -15,7 +15,6 @@ class Artifact(object):
     ]
 
     HASH_WHITELIST = [
-        'additional-inputs',
         'args',
         'article_class_source',
         'dexy_version',
@@ -24,7 +23,7 @@ class Artifact(object):
         'ext',
         'handler_source',
         'handler_version',
-        'input-artifacts',
+        'inputs',
         'input_data_dict',
         'input_ext',
         'key'
@@ -47,10 +46,10 @@ class Artifact(object):
         self.key = key
         self.dirty = False
         self.final = None
+        self.additional = None
         self.binary = None
         self.args = {}
-        self.input_artifacts = {}
-        self.additional_inputs = {}
+        self._inputs = {}
         self.data_dict = OrderedDict()
         self.dexy_version = VERSION
         self.article_class_source = inspect.getsource(self.__class__)
@@ -62,6 +61,14 @@ class Artifact(object):
         if previous_artifact:
             art.setup_from_previous_artifact(previous_artifact)
         return art
+
+    def add_input(self, key, artifact):
+        print "adding input", key
+        print "canonical filename", artifact.canonical_filename()
+        self._inputs[key] = artifact
+
+    def inputs(self):
+        return self._inputs
 
     def set_binary_from_ext(self):
         # TODO list more binary extensions or find better way to do this
@@ -77,21 +84,22 @@ class Artifact(object):
         self.args = self.doc.args
         if self.args.has_key('final'):
             self.final = self.args['final']
-
-        # These values will be overwritten later if handler or previous
-        # artifact is available.
         self.ext = os.path.splitext(doc.name)[1]
         self.set_binary_from_ext()
-        self.input_artifacts = doc.input_artifacts()
+        self._inputs = doc.input_artifacts()
 
     def setup_from_previous_artifact(self, previous_artifact):
         if self.final is None:
             self.final = previous_artifact.final
         self.input_ext = previous_artifact.ext
         self.input_data_dict = previous_artifact.data_dict
-        self.input_artifacts = previous_artifact.input_artifacts
-        self.additional_inputs = previous_artifact.additional_inputs
         self.previous_artifact_filename = previous_artifact.filename()
+
+        self._inputs.update(previous_artifact.inputs())
+        # Need to loop over each artifact's inputs in case extra ones have been
+        # added anywhere.
+        for k, a in previous_artifact.inputs().items():
+            self._inputs.update(a.inputs())
 
     def set_data(self, data):
         self.data_dict['1'] = data
@@ -110,13 +118,9 @@ class Artifact(object):
 
         hash_dict = self.__dict__.copy()
 
-        hash_dict['input-artifacts'] = {}
-        for k, a in hash_dict.pop('input_artifacts').items():
-            hash_dict['input-artifacts'][k] = a.hashstring
-
-        hash_dict['additional-inputs'] = {}
-        for k, a in hash_dict.pop('additional_inputs').items():
-            hash_dict['additional-inputs'][k] = a.hashstring
+        hash_dict['inputs'] = {}
+        for k, a in hash_dict.pop('_inputs').items():
+            hash_dict['inputs'][k] = a.hashstring
 
         # Remove any items which should not be included in hash calculations.
         for k in hash_dict.keys():
@@ -183,6 +187,9 @@ class Artifact(object):
     def create_temp_dir(self):
         shutil.rmtree(self.temp_dir(), ignore_errors=True)
         os.mkdir(self.temp_dir())
+
+    def canonical_basename(self):
+        return os.path.basename(self.canonical_filename())
 
     def canonical_filename(self):
         fn = os.path.splitext(self.key.split("|")[0])[0]

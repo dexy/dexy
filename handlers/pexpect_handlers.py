@@ -47,7 +47,11 @@ class ProcessLinewiseInteractiveHandler(DexyHandler):
                 section_transcript += proc.before
                 start = proc.after
             output_dict[k] = section_transcript
-        proc.close()
+        try:
+            proc.close()
+        except pexpect.ExceptionPexpect:
+            print "process %s may not have closed" % proc.pid
+
         if proc.exitstatus is not None and proc.exitstatus != 0:
             if not (self.IGNORE_ERRORS or self.doc.controller.args.ignore_errors):
                 raise Exception("""proc returned nonzero status code! if you don't
@@ -99,7 +103,7 @@ class ProcessSectionwiseInteractiveHandler(DexyHandler):
             proc.expect(self.COMMENT * 5, timeout = timeout)
 
             section_transcript += proc.before.rstrip(self.TRAILING_PROMPT)
-            output_dict[k] = section_transcript
+            output_dict[k] = ''.join([c for c in section_transcript if ord(c) > 31 or ord(c) in [9, 10]])
 
         return output_dict
 

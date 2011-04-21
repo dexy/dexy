@@ -45,5 +45,7 @@
   },
   "hello.java|java|test" : {
     "expects" : "Java Hello World!\n"
-  }
+  },
+  "hello.R|rintbatch" : {},
+  "hello.R|routbatch" : {}
 }
