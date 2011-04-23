@@ -17,7 +17,7 @@ class FilenameHandler(DexyHandler):
                 datafiles[a.canonical_filename()] = a
 
         # TODO this should not match more than two dashes
-        for m in re.finditer("dexy--(.+)\.([a-z]+)", input_text):
+        for m in re.finditer("dexy--(\S+)\.([a-z]+)", input_text):
             key = m.groups()[0]
             ext = m.groups()[1]
             key_with_ext = "%s.%s" % (key, ext)
@@ -77,9 +77,11 @@ class JinjaHandler(DexyHandler):
             keys = [key, artifact.canonical_filename()]
 
             # Shortcut keys if in common directory
-            if os.path.dirname(self.doc.name) == os.path.dirname(key):
+            if os.path.dirname(self.doc.name) == os.path.dirname(key) or not os.path.dirname(key):
                 keys.append(os.path.basename(key))
-                keys.append(os.path.basename(artifact.canonical_filename()))
+                fn = artifact.canonical_filename()
+                keys.append(os.path.basename(fn))
+                keys.append(os.path.splitext(fn)[0]) # TODO deal with collisions
 
             # Do special handling of data
             if artifact.ext == '.json':

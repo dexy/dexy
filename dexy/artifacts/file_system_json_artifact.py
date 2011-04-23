@@ -27,8 +27,7 @@ class FileSystemJsonArtifact(Artifact):
                 raise Exception("should be marked binary", self.key)
             self.binary = True
 
-        if not os.path.isfile(self.filepath()):
-            print "writing", self.key, "to", self.filepath()
+        if not os.path.isfile(self.filepath()) or os.path.getsize(self.filepath()) == 0:
             f = open(self.filepath(), "w")
             f.write(self.output_text())
             f.close()
