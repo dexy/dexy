@@ -1,8 +1,7 @@
 from dexy.handler import DexyHandler
 from dexy.utils import ansi_output_to_html
-
-import pexpect # TODO replace with subprocess
 import re
+import subprocess
 
 class CucumberHandler(DexyHandler):
     """Run cucumber features."""
@@ -13,7 +12,7 @@ class CucumberHandler(DexyHandler):
     VERSION = "cucumber --version"
 
     def process(self):
-        keys = self.artifact.input_artifacts.keys()
+        keys = self.artifact.inputs().keys()
         rb_file = self.artifact.doc.name.replace(".feature", "\.rb")
         matches = [k for k in keys if re.match(re.compile("^%s" % rb_file), k)]
 
@@ -25,15 +24,22 @@ class CucumberHandler(DexyHandler):
             raise Exception(err_msg)
 
         key = matches[0]
-        rf = self.artifact.input_artifacts[key].filename()
+        rb_art = self.artifact.inputs()[key]
+        rf = rb_art.filename()
         self.artifact.generate_workfile()
         wf = self.artifact.work_filename()
         command = "%s -r %s %s" % (self.executable(), rf, wf)
         self.log.debug(command)
-        output = pexpect.run(command, cwd=self.artifact.artifacts_dir)
+        env=None
+        proc = subprocess.Popen(command, shell=True,
+                                cwd=self.artifact.artifacts_dir,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT,
+                                env=env)
+        stdout, stderr = proc.communicate()
 
         # TODO detect output extension and convert appropriately
         # for now assume HTML
-        html = ansi_output_to_html(output)
+        html = ansi_output_to_html(stdout)
         self.artifact.data_dict['1'] = html
 
