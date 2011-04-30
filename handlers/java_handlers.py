@@ -101,12 +101,13 @@ class JavadocsJsonFilter(dexy.handler.DexyHandler):
         if not nest:
             nest = [[indent, qualified_class_name]]
         package_name, x, class_name = qualified_class_name.rpartition(".")
-        subclasses = j['packages'][package_name]['classes'][class_name]['subclasses']
-        for qualified_subclass_name in subclasses:
-            nest.append([indent+1, qualified_subclass_name])
-            subclass_package_name, x, subclass_name = qualified_subclass_name.rpartition(".")
-            if j['packages'][subclass_package_name]['classes'][subclass_name].has_key('subclasses'):
-                self.nested_subclasses(j, qualified_subclass_name, nest, indent+1)
+        if j['packages'][package_name]['classes'][class_name].has_key('subclasses'):
+            subclasses = j['packages'][package_name]['classes'][class_name]['subclasses']
+            for qualified_subclass_name in subclasses:
+                nest.append([indent+1, qualified_subclass_name])
+                subclass_package_name, x, subclass_name = qualified_subclass_name.rpartition(".")
+                if j['packages'][subclass_package_name]['classes'][subclass_name].has_key('subclasses'):
+                    self.nested_subclasses(j, qualified_subclass_name, nest, indent+1)
         return nest
 
     def process_text(self, input_text):
@@ -142,6 +143,18 @@ class JavadocsJsonFilter(dexy.handler.DexyHandler):
                                 superclass['subclasses'] = []
 
                             superclass['subclasses'].append("%s.%s" % (p, k))
+
+                if klass.has_key('interfaces'):
+                    for iface in klass['interfaces']:
+                        iface_package, _, iface_name = iface.rpartition(".")
+                        if j['packages'].has_key(iface_package):
+                            if not j['packages'][iface_package]['classes'].has_key(iface_name):
+                                print "Can't find", iface_name, "in package", iface_package
+                            else:
+                                iface_dict = j['packages'][iface_package]['classes'][iface_name]
+                                if not iface_dict.has_key('implementers'):
+                                    iface_dict['implementers'] = []
+                                iface_dict['implementers'].append(klass['qualified-name'])
 
                 for m in j['packages'][p]['classes'][k]['methods'].keys():
                     source = j['packages'][p]['classes'][k]['methods'][m]['source']

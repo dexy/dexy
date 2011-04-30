@@ -195,7 +195,7 @@ class Controller(object):
                 if args.has_key('disabled'):
                     if args['disabled']:
                         create = False
-                        print "document %s disabled" % f
+                        print "document %s|%s disabled" % (f, "|".join(filters))
 
                 inputs = []
                 if args.has_key('inputs'):
@@ -255,29 +255,35 @@ re.compile: %s""" % (args['except'], e))
                 if create:
                     # Filters can either be included in the name...
                     doc = Document(self.artifact_class, f, filters)
-                    doc.args = args
                     # ...or they may be listed explicitly.
                     if args.has_key('filters'):
                         doc.filters += args['filters']
+
 
                     # Here we are assuming that if we get a key with blank args
                     # this should not override a previous key. A key which does
                     # have args should override any previous key.
                     key = doc.key()
-                    if len(args) == 0:
-                        if self.members.has_key(key):
-                            doc = self.members[key]
-                        else:
-                            self.members[key] = doc
+                    self.log.debug("creating doc %s for glob %s" % (key, glob_string))
+
+                    if self.members.has_key(key):
+                        self.log.debug("found existing key %s" % key)
+                        doc = self.members[key]
                     else:
-                        self.members[key] = doc
+                        self.log.debug("no existing key %s" % key)
 
-                    doc.use_all_inputs = args.has_key('allinputs')
-                    for i in inputs:
-                        doc.add_input_key(i)
+                    if len(args) > 0:
+                        self.log.debug("args: %s" % args)
+                        doc.args = args
+                        doc.use_all_inputs = args.has_key('allinputs')
+                        for i in inputs:
+                            doc.add_input_key(i)
 
+                    if not hasattr(doc, 'args'):
+                        doc.args = args
 
-                    docs.append(doc)
+                    self.members[key] = doc
+                    docs.append(doc) # just a local list
             return docs
 
         def get_pos(member):

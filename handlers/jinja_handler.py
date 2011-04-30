@@ -5,17 +5,11 @@ import jinja2
 import json
 import os
 import re
-import uuid
 
 class FilenameHandler(DexyHandler):
     """Generate random filenames to track provenance of data."""
     ALIASES = ['fn']
     def process_text(self, input_text):
-        datafiles = {}
-        for k, a in self.artifact.inputs().items():
-            if k.endswith("|dexy"):
-                datafiles[a.canonical_filename()] = a
-
         # TODO this should not match more than two dashes
         for m in re.finditer("dexy--(\S+)\.([a-z]+)", input_text):
             key = m.groups()[0]
@@ -26,19 +20,8 @@ class FilenameHandler(DexyHandler):
                 artifact = self.artifact.inputs()[key_with_ext]
                 self.log.debug("existing key %s in artifact %s links to file %s" %
                           (key, self.artifact.key, artifact.filename()))
-            elif key_with_ext in datafiles.keys():
-                artifact = datafiles[key_with_ext]
             else:
-                artifact = self.artifact.__class__(key_with_ext)
-                artifact.ext = ".%s" % ext
-                artifact.final = True
-                artifact.additional = True
-                artifact.set_binary_from_ext()
-                artifact.artifacts_dir = self.artifact.artifacts_dir
-
-                artifact.hashstring = str(uuid.uuid4())
-                self.artifact.add_input(key_with_ext, artifact)
-                self.artifact.save()
+                artifact = self.artifact.add_additional_artifact(key_with_ext, ext)
                 self.log.debug("added key %s to artifact %s ; links to file %s" %
                           (key, self.artifact.key, artifact.filename()))
 
@@ -135,6 +118,7 @@ class JinjaHandler(DexyHandler):
             env = Environment()
 
         template_hash = {
+            's' : self.artifact,
             'a' : self.artifact._inputs,
             'd' : document_data,
             'dk' : sorted(document_data.keys()),

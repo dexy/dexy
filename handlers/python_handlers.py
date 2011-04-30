@@ -259,7 +259,9 @@ class SplitHtmlHandler(DexyHandler):
 
                     filename = "%s.html" % section_url
                     filepath = os.path.join(parent_dir, filename)
-                    pages[section_name] = filename
+                    # TODO remove this temporary OpenGamma hack
+                    if section_name.islower():
+                        pages[section_name] = filename
 
                     artifact = self.artifact.__class__(filepath)
                     artifact.ext = '.html'
