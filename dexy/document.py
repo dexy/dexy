@@ -182,6 +182,14 @@ class Document(object):
         self.controller = controller
         self.step = 0
 
+        self.log.info("starting to process document")
+        self.log.info("args:")
+        for k, v in self.args.items():
+            self.log.info("%s: %s" % (k, v))
+        self.log.info("list of inputs:")
+        for i in self.inputs:
+            self.log.info(i.key())
+
         artifact = self.create_initial_artifact()
         artifact_key = artifact.key
         self.log.info("(step %s) %s -> %s" % \

@@ -5,6 +5,7 @@ import inspect
 import os
 import shutil
 import time
+import uuid
 
 class Artifact(object):
     META_ATTRS = [
@@ -62,13 +63,28 @@ class Artifact(object):
             art.setup_from_previous_artifact(previous_artifact)
         return art
 
+    def add_additional_artifact(self, key_with_ext, ext):
+        """create an 'additional' artifact with random hashstring"""
+        new_artifact = self.__class__(key_with_ext)
+        new_artifact.ext = ".%s" % ext
+        new_artifact.final = True
+        new_artifact.additional = True
+        new_artifact.set_random_hashstring()
+        new_artifact.set_binary_from_ext()
+        new_artifact.artifacts_dir = self.artifacts_dir
+        self.add_input(key_with_ext, new_artifact)
+        self.save()
+        return new_artifact
+
     def add_input(self, key, artifact):
-        print "adding input", key
-        print "canonical filename", artifact.canonical_filename()
         self._inputs[key] = artifact
 
     def inputs(self):
         return self._inputs
+
+    def save(self):
+        """override in subclass"""
+        pass
 
     def set_binary_from_ext(self):
         # TODO list more binary extensions or find better way to do this
@@ -132,6 +148,9 @@ class Artifact(object):
     def set_hashstring(self):
         hash_data = str(self.hash_dict())
         self.hashstring = hashlib.md5(hash_data).hexdigest()
+
+    def set_random_hashstring(self):
+        self.hashstring = str(uuid.uuid4())
 
     def command_line_args(self):
         """
