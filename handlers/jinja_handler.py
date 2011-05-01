@@ -70,7 +70,7 @@ class JinjaHandler(DexyHandler):
             if artifact.ext == '.json':
                 path_to_file = os.path.join(self.artifact.artifacts_dir, artifact.filename())
                 # TODO read this from memory rather than loading from file?
-                unsorted_json = json.load(open(path_to_file), "r")
+                unsorted_json = json.load(open(path_to_file, "r"))
 
                 def sort_dict(d):
                     od = OrderedDict()
