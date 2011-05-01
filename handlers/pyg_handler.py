@@ -31,7 +31,8 @@ class PygHandler(DexyHandler):
             lexer = TextLexer()
         else:
             lexer = get_lexer_for_filename(name)
-        formatter = get_formatter_for_filename(self.artifact.filename(), linenos=False)
+        formatter = get_formatter_for_filename(self.artifact.filename(),
+                                               lineanchors='l')
         output_dict = OrderedDict()
         for k, v in input_dict.items():
             try:
