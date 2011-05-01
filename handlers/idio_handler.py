@@ -32,7 +32,8 @@ class IdioHandler(DexyHandler):
             lexer = JavascriptLexer()
         else:
             lexer = get_lexer_for_filename(name)
-        formatter = get_formatter_for_filename(self.artifact.filename(), linenos=False)
+        formatter = get_formatter_for_filename(self.artifact.filename(),
+                                               lineanchors='l')
         output_dict = OrderedDict()
 
         for i, s in enumerate(builder.sections):
