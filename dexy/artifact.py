@@ -176,6 +176,13 @@ class Artifact(object):
             text += v
         return text
 
+    def use_canonical_filename(self):
+        """Returns the canonical filename after saving contents under this name
+        in the artifacts directory."""
+        self.write_to_file(os.path.join(self.artifacts_dir,
+                                        self.canonical_filename()))
+        return self.canonical_filename()
+
     def write_to_file(self, filename):
         dirname = os.path.dirname(filename)
         if not os.path.exists(dirname):
