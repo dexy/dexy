@@ -157,7 +157,7 @@ def setup_option_parser():
     add_option(parser,
         '-c', '--cache-dir',
         default='cache',
-        help='location of cache directory (default: cache)'
+        help='DEPRECATED - does not do anything anymore, will be removed soon'
     )
 
     add_option(parser,
