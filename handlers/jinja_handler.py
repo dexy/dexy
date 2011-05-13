@@ -125,6 +125,10 @@ class JinjaHandler(DexyHandler):
             'r' : raw_data
         }
 
+        if self.artifact.args.has_key('jinjavars'):
+            for k, v in self.artifact.args['jinjavars'].items():
+                template_hash[k] = v
+
         try:
             template = env.from_string(input_text)
             result = str(template.render(template_hash))
