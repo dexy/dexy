@@ -1,0 +1,19 @@
+Let's play with some jinja variables.
+
+A is 5
+x is [1, 2, 3]
+y is blue
+
+
+here is how to set these:
+
+{
+  "*.txt|jinja" : {
+    "jinjavars" : {
+      "A" : 5,
+      "x" : [1,2, 3],
+      "y" : "blue"
+    },
+    "inputs" : [".dexy|dexy"]
+  }
+}

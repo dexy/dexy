@@ -1,0 +1,10 @@
+{
+  "*.txt|jinja" : {
+    "jinjavars" : {
+      "A" : 5,
+      "x" : [1,2, 3],
+      "y" : "blue"
+    },
+    "inputs" : [".dexy|dexy"]
+  }
+}

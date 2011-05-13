@@ -1,0 +1,10 @@
+Let's play with some jinja variables.
+
+A is {{ A }}
+x is {{ x }}
+y is {{ y }}
+
+
+here is how to set these:
+
+{{ d['.dexy|dexy'] }}
