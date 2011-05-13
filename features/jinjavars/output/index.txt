@@ -14,6 +14,28 @@ here is how to set these:
       "x" : [1,2, 3],
       "y" : "blue"
     },
-    "inputs" : [".dexy|dexy"]
+    "inputs" : [".dexy|dexy", "*.txt|dexy"]
   }
 }
+
+
+
+
+here is the source of this document:
+
+Let's play with some jinja variables.
+
+A is {{ A }}
+x is {{ x }}
+y is {{ y }}
+
+
+here is how to set these:
+
+{{ d['.dexy|dexy'] }}
+
+
+
+here is the source of this document:
+
+{{ d['index.txt|dexy'] }}

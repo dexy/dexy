@@ -5,6 +5,6 @@
       "x" : [1,2, 3],
       "y" : "blue"
     },
-    "inputs" : [".dexy|dexy"]
+    "inputs" : [".dexy|dexy", "*.txt|dexy"]
   }
 }

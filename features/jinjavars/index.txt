@@ -8,3 +8,9 @@ y is {{ y }}
 here is how to set these:
 
 {{ d['.dexy|dexy'] }}
+
+
+
+here is the source of this document:
+
+{{ d['index.txt|dexy'] }}
