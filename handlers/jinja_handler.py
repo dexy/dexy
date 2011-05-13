@@ -127,6 +127,8 @@ class JinjaHandler(DexyHandler):
 
         if self.artifact.args.has_key('jinjavars'):
             for k, v in self.artifact.args['jinjavars'].items():
+                if template_hash.has_key(k):
+                    raise Exception("Please do not set a jinjavar for %s as this conflicts with standard vars: %s" % (k, ', '.join(template_hash.keys())))
                 template_hash[k] = v
 
         try:
