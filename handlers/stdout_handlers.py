@@ -14,24 +14,35 @@ class ProcessStdoutHandler(DexyHandler):
     ALIASES = ['py', 'python', 'pyout']
 
     def process(self):
+        # allow running code from different directory
+        cwd = self.artifact.artifacts_dir
+        if self.doc.args.has_key('cwd'):
+            cwd = os.path.join(cwd, self.doc.args['cwd'])
+            print "running from", os.path.abspath(cwd)
+
         self.artifact.generate_workfile()
+        wf = os.path.abspath(os.path.join(self.artifact.artifacts_dir,
+                                          self.artifact.work_filename()))
+
         if hasattr(self, 'instance_executable'):
-            command = "%s %s" % (self.instance_executable(), self.artifact.work_filename())
+            command = "%s %s" % (self.instance_executable(), wf)
         else:
-            command = "%s %s" % (self.executable(), self.artifact.work_filename())
+            command = "%s %s" % (self.executable(), wf)
+
         cla = self.artifact.command_line_args()
+        if cla:
+            command = "%s %s" % (command, cla)
+
         if self.doc.args.has_key('env'):
             env = os.environ
             env.update(self.doc.args['env'])
         else:
             env = None
 
-        if cla:
-            command = "%s %s" % (command, cla)
         self.log.debug(command)
 
         proc = subprocess.Popen(command, shell=True,
-                                cwd=self.artifact.artifacts_dir,
+                                cwd=cwd,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
                                 env=env)
