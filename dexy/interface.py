@@ -370,8 +370,7 @@ def setup_option_parser():
 
     return args, dir_name, exclude_dir, dexy_log
 
-
-def dexy_command():
+def setup_controller():
     args, dir_name, exclude_dir, log = setup_option_parser()
 
     do_not_process_dirs = EXCLUDED_DIRS
@@ -381,10 +380,10 @@ def dexy_command():
     do_not_process_dirs.append(args.cache_dir)
 
     if not args.run_dexy:
-        return
+        return None, args, log
 
-    log.info("running dexy with recurse")
     controller = Controller()
+    controller.dir_name = dir_name
     controller.args = args
     controller.allow_remote = args.dangerous
     controller.artifact_class = args.artifact_class
@@ -398,12 +397,28 @@ def dexy_command():
     for r in controller.reports_dirs:
         if r:
             do_not_process_dirs.append(r)
-
+    controller.skip_dirs = do_not_process_dirs
     log.info("skipping directories named %s" % ", ".join(do_not_process_dirs))
+
+    return controller, args, log
+
+def dexy_command():
+    controller, args, log = setup_controller()
+
+    if not controller:
+        return False
+
     if args.recurse:
-        for root, dirs, files in os.walk(dir_name):
+        log.info("running dexy with recurse")
+        for root, dirs, files in os.walk(controller.dir_name):
             process = True
-            for x in do_not_process_dirs:
+            if os.path.isfile(os.path.join(root, '.nodexy')):
+                print "nodexy file found in", root
+                controller.skip_dirs.append(root)
+                process = False
+
+            for x in controller.skip_dirs:
+                # TODO clarify where in path this applies
                 if root.startswith(x) or root.startswith("./%s" % x):
                     process = False
                     break
@@ -416,16 +431,16 @@ def dexy_command():
     else:
         log.info("not recursing")
         process = True
-        for x in do_not_process_dirs:
-            if dir_name.startswith(x) or dir_name.startswith("./%s" % x):
+        for x in controller.skip_dirs:
+            if controller.dir_name.startswith(x) or controller.dir_name.startswith("./%s" % x):
                 process = False
                 break
 
         if not process:
-            log.warn("skipping dir %s" % dir_name)
+            log.warn("skipping dir %s" % controller.dir_name)
         else:
-            log.info("processing dir %s" % dir_name)
-            controller.load_config(dir_name)
+            log.info("processing dir %s" % controller.dir_name)
+            controller.load_config(controller.dir_name)
 
     controller.setup_and_run()
     if not args.no_reports:
