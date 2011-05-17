@@ -281,6 +281,10 @@ def setup_option_parser():
     logfile = os.path.join(args.logs_dir, 'dexy.log')
     handler = RotatingFileHandler(logfile)
     dexy_log.addHandler(handler)
+    if args.setup:
+        # This might be the first time someone has run Dexy,
+        # let them know where the logfile is
+        print "dexy will log debugging information to", logfile
 
     formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     handler.setFormatter(formatter)
