@@ -38,7 +38,7 @@ class LatexHandler(DexyHandler):
         if not latex_bin:
             raise Exception("no executable found for latex")
 
-        command = "%s %s" % (e, latex_filename)
+        command = "%s -interaction=batchmode %s" % (e, latex_filename)
         self.log.info(command)
 
         proc = subprocess.Popen(command, shell=True,
@@ -49,6 +49,9 @@ class LatexHandler(DexyHandler):
 
         stdout, stderr = proc.communicate()
         self.artifact.stdout = stdout
+        if proc.returncode > 0:
+            raise Exception("latex error, look for information in %s" %
+                            latex_filename.replace(".tex", ".log"))
 
         # Run LaTeX again for TOC numbering etc.
         proc = subprocess.Popen(command, shell=True,
@@ -59,6 +62,9 @@ class LatexHandler(DexyHandler):
 
         stdout, stderr = proc.communicate()
         self.artifact.stdout += stdout
+        if proc.returncode > 0:
+            raise Exception("latex error, look for information in %s" %
+                            latex_filename.replace(".tex", ".log"))
 
 class EmbedFonts(DexyHandler):
     INPUT_EXTENSIONS = [".pdf"]
