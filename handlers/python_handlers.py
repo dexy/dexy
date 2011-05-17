@@ -342,3 +342,8 @@ class SplitLatexHandler(DexyHandler):
         output_dict = self.artifact.input_data_dict
         self.artifact.data_dict = output_dict
 
+class SillyHandler(DexyHandler):
+    ALIASES =['silly']
+
+    def process_text(self, input_text):
+        return "you said: '%s'\n that's silly!\n" % input_text
