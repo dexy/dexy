@@ -12,7 +12,9 @@ class Artifact(object):
         'binary',
         'key',
         'ext',
-        'stdout'
+        'stdout',
+        'final',
+        'additional'
     ]
 
     HASH_WHITELIST = [
