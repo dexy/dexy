@@ -6,9 +6,12 @@ def ansi_output_to_html(ansi_text, log=None):
     converter = Ansi2HTMLConverter()
     html = converter.convert(ansi_text)
 
-    p = Pynliner()
-    if log:
-        p.log = log
+    try:
+        p = Pynliner(log)
+    except TypeError:
+        print "dexy says: please upgrade to the latest version of pynliner (e.g. easy_install -U pynliner)"
+        p = Pynliner()
+
     p.from_string(html)
     html_with_css_inline = p.run()
 
