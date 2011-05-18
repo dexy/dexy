@@ -29,8 +29,7 @@ class VanillaForumHandler(DexyHandler):
         self.site = self.forum_conf['site'].rstrip('/')
 
     def load_discussion_conf(self):
-        self.artifact.load_input_artifacts()
-        matches = [k for k in self.artifact.input_artifacts_dict.keys() if k.endswith(self.DISCUSSION_CONFIG_FILE)]
+        matches = [k for k in self.artifact.inputs().keys() if k.endswith(self.DISCUSSION_CONFIG_FILE)]
         try:
             self.k = matches[0]
         except IndexError as e:
@@ -38,7 +37,7 @@ class VanillaForumHandler(DexyHandler):
                             inputs to %s""" % (self.DISCUSSION_CONFIG_FILE, self.doc.name))
 
         try:
-            self.discussion_conf = json.loads(self.artifact.input_artifacts_dict[self.k]['data'])
+            self.discussion_conf = json.loads(self.artifact.inputs()[self.k]['data'])
         except ValueError as e:
             print "error parsing JSON in", self.k
             raise e
