@@ -7,6 +7,9 @@ def ansi_output_to_html(ansi_text, log=None):
     html = converter.convert(ansi_text)
 
     try:
+        if not log:
+            print """a custom log has not been passed to dexy.utils.ansi_output_to_html,
+            harmless but annoying CSS errors will appear on the console."""
         p = Pynliner(log)
     except TypeError:
         print "dexy says: please upgrade to the latest version of pynliner (e.g. easy_install -U pynliner)"
