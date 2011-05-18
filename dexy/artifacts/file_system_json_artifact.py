@@ -24,8 +24,7 @@ class FileSystemJsonArtifact(Artifact):
             json.dumps(self.data_dict)
         except UnicodeDecodeError:
             if not self.binary:
-                raise Exception("should be marked binary", self.key)
-            self.binary = True
+                raise Exception("artifact %s should be marked binary" % self.key)
 
         if not os.path.isfile(self.filepath()) or os.path.getsize(self.filepath()) == 0:
             f = open(self.filepath(), "w")
