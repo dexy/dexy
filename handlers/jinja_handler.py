@@ -9,6 +9,7 @@ import re
 class FilenameHandler(DexyHandler):
     """Generate random filenames to track provenance of data."""
     ALIASES = ['fn']
+
     def process_text(self, input_text):
         # TODO this should not match more than two dashes
         for m in re.finditer("dexy--(\S+)\.([a-z]+)", input_text):
@@ -79,7 +80,7 @@ class JinjaHandler(DexyHandler):
                         if isinstance(v, dict) or isinstance(v, OrderedDict):
                             od[k] = sort_dict(v)
                         else:
-                            if notextile and "<span" in v and not "<notextile>" in v:
+                            if notextile and isinstance(v, str) and "<span" in v and not "<notextile>" in v:
                                 od[k] = "<notextile>\n%s\n</notextile>" % v
                             else:
                                 od[k] = v
