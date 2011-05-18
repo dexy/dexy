@@ -40,6 +40,6 @@ class CucumberHandler(DexyHandler):
 
         # TODO detect output extension and convert appropriately
         # for now assume HTML
-        html = ansi_output_to_html(stdout)
+        html = ansi_output_to_html(stdout, self.log)
         self.artifact.data_dict['1'] = html
 
