@@ -271,24 +271,3 @@ class RagelRubyDotHandler(DexyHandler):
         ad = self.artifact.artifacts_dir
         self.artifact.data_dict['1'] = pexpect.run(command, cwd=ad)
 
-class DotHandler(DexyHandler):
-    """
-    Renders .dot files to either PNG or PDF images.
-    """
-    INPUT_EXTENSIONS = [".dot"]
-    OUTPUT_EXTENSIONS = [".png", ".pdf"]
-    EXECUTABLE = 'dot'
-    VERSION = 'dot -V'
-    ALIASES = ['dot', 'graphviz']
-    FINAL = True
-
-    def process(self):
-        self.artifact.generate_workfile()
-        wf = self.artifact.work_filename()
-        af = self.artifact.filename()
-        ex = self.artifact.ext.replace(".", "")
-        command = "%s -T%s -o%s %s" % (self.executable(), ex, af, wf)
-        self.log.info(command)
-        ad = self.artifact.artifacts_dir
-        self.artifact.stdout = pexpect.run(command, cwd=ad)
-

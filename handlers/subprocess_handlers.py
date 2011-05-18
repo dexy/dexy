@@ -167,3 +167,31 @@ class ROutputBatchHandler(DexyHandler):
         stdout, stderr = proc.communicate()
         self.artifact.stdout = stdout
         self.artifact.set_data_from_artifact()
+
+class DotHandler(DexyHandler):
+    """
+    Renders .dot files to either PNG or PDF images.
+    """
+    INPUT_EXTENSIONS = [".dot"]
+    OUTPUT_EXTENSIONS = [".png", ".pdf"]
+    EXECUTABLE = 'dot'
+    VERSION = 'dot -V'
+    ALIASES = ['dot', 'graphviz']
+    FINAL = True
+    BINARY = True
+
+    def process(self):
+        self.artifact.generate_workfile()
+        wf = self.artifact.work_filename()
+        af = self.artifact.filename()
+        ex = self.artifact.ext.replace(".", "")
+        command = "%s -T%s -o%s %s" % (self.executable(), ex, af, wf)
+        self.log.info(command)
+        proc = subprocess.Popen(command, shell=True,
+                                cwd=self.artifact.artifacts_dir,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT)
+
+        stdout, stderr = proc.communicate()
+        self.artifact.stdout = stdout
+        self.artifact.set_data_from_artifact()
