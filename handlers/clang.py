@@ -62,7 +62,7 @@ class ClangInteractiveHandler(DexyHandler):
 
         command = "./%s" % of
         self.log.debug(command)
-        for k, a in self.artifact.input_artifacts.items():
+        for k, a in self.artifact.inputs().items():
             for s, t in a.data_dict.items():
                 proc = subprocess.Popen(command, shell=True,
                                         cwd=self.artifact.artifacts_dir,
