@@ -16,7 +16,11 @@ class PynlinerHandler(DexyHandler):
 
         output_dict = OrderedDict()
         for k, v in input_dict.items():
-            p = Pynliner()
+            try:
+                p = Pynliner(self.log)
+            except TypeError:
+                print "the pynliner filter says: please upgrade to the latest version of pynliner (e.g. easy_install -U pynliner)"
+                p = Pynliner()
             p.from_string(v).with_cssString(css)
             output_dict[k] = p.run()
         return output_dict
