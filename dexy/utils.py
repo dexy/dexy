@@ -1,18 +1,26 @@
+from BeautifulSoup import BeautifulSoup
 from ansi2html import Ansi2HTMLConverter
 from pynliner import Pynliner
-from BeautifulSoup import BeautifulSoup
+import re
 
 def ansi_output_to_html(ansi_text, log=None):
-    converter = Ansi2HTMLConverter()
-    html = converter.convert(ansi_text)
+    try:
+        converter = Ansi2HTMLConverter()
+        html = converter.convert(ansi_text)
+    except IOError as e:
+        if re.search("templates/header.mak", str(e)):
+            print e
+            raise Exception("Your installation of ansi2html is missing some template files, please try 'pip install --upgrade ansi2html' or install from source.")
+        raise e
 
     try:
-        if not log:
+        p = Pynliner(log)
+        if not log: # put after call to Pynliner() so it doesn't print in case of error
             print """a custom log has not been passed to dexy.utils.ansi_output_to_html,
             harmless but annoying CSS errors will appear on the console."""
-        p = Pynliner(log)
     except TypeError:
-        print "dexy says: please upgrade to the latest version of pynliner (e.g. easy_install -U pynliner)"
+        print "========== Start of harmless but annoying CSS errors..."
+        print "You can install pynliner from source or version > 0.2.1 to get rid of these"
         p = Pynliner()
 
     p.from_string(html)
