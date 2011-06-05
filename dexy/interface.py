@@ -5,13 +5,14 @@ from inspect import isclass
 from logging.handlers import RotatingFileHandler
 import logging
 import os
+import re
 import shutil
 import sys
 import urllib
 
-EXCLUDED_DIRS = ['.bzr', '.hg', '.git', '.svn', 'ignore', 'filters']
+EXCLUDED_DIRS = ['.bzr', '.hg', '.git', '.svn', '^(./)?ignore', '^(./)?filters']
 EXCLUDE_DIR_HELP = """Exclude directories from processing by dexy, only relevant
-if recursing. The directories designated for artifacts, logs and cache are
+if recursing. The directories designated for artifacts and logs are
 automatically excluded, as are %s.
 """ % ", ".join(EXCLUDED_DIRS)
 
@@ -379,9 +380,8 @@ def setup_controller():
 
     do_not_process_dirs = EXCLUDED_DIRS
     do_not_process_dirs += exclude_dir
-    do_not_process_dirs.append(args.artifacts_dir)
-    do_not_process_dirs.append(args.logs_dir)
-    do_not_process_dirs.append(args.cache_dir)
+    do_not_process_dirs.append("^(./)?%s" % args.artifacts_dir)
+    do_not_process_dirs.append("^(./)?%s" % args.logs_dir)
 
     if not args.run_dexy:
         return None, args, log
@@ -392,7 +392,6 @@ def setup_controller():
     controller.allow_remote = args.dangerous
     controller.artifact_class = args.artifact_class
     controller.artifacts_dir = args.artifacts_dir
-    controller.cache_dir = args.cache_dir
     controller.logs_dir = args.logs_dir
     controller.log = log
     controller.config_file = args.config
@@ -400,9 +399,9 @@ def setup_controller():
     controller.find_reporters()
     for r in controller.reports_dirs:
         if r:
-            do_not_process_dirs.append(r)
+            do_not_process_dirs.append("^(./)?%s" % r)
     controller.skip_dirs = do_not_process_dirs
-    log.info("skipping directories named %s" % ", ".join(do_not_process_dirs))
+    log.info("skipping directories matching %s" % ", ".join(do_not_process_dirs))
 
     return controller, args, log
 
@@ -418,12 +417,15 @@ def dexy_command():
             process = True
             if os.path.isfile(os.path.join(root, '.nodexy')):
                 print "nodexy file found in", root
-                controller.skip_dirs.append(root)
+                # Skip this dir
                 process = False
+                # Skip any children TODO Test
+                controller.skip_dirs.append(root)
 
             for x in controller.skip_dirs:
-                # TODO clarify where in path this applies
-                if root.startswith(x) or root.startswith("./%s" % x):
+                m = re.match(x, root)
+                if m:
+                    print "found a match of pattern %s with dir %s" % (x, root)
                     process = False
                     break
 
