@@ -10,11 +10,20 @@ import shutil
 import sys
 import urllib
 
-EXCLUDED_DIRS = ['.bzr', '.hg', '.git', '.svn', '^(./)?ignore', '^(./)?filters']
-EXCLUDE_DIR_HELP = """Exclude directories from processing by dexy, only relevant
-if recursing. The directories designated for artifacts and logs are
-automatically excluded, as are %s.
-""" % ", ".join(EXCLUDED_DIRS)
+# Directories with this name should be excluded anywhere
+EXCLUDE_DIRS_ALL_LEVELS = ['.bzr', '.hg', '.git', '.svn']
+
+# Directories with these names should be excluded only at the project root
+EXCLUDE_DIRS_ROOT = ['ignore', 'filters']
+
+EXCLUDE_HELP = """Specify directory names to exclude from processing by dexy.
+Directories with these names will be skipped anywhere in your project.
+The following patterns are automatically excluded anywhere in your project: %s.
+The directories designated for artifacts and logs are automatically excluded,
+and the following directory names are also excluded if they appear at the root
+level of your project: %s.
+Any directory with a file named .nodexy will be skipped, and subdirectories of this will also be skipped.
+""" % (", ".join(EXCLUDE_DIRS_ALL_LEVELS), ", ".join(EXCLUDE_DIRS_ROOT))
 
 def artifact_class(artifact_class_name, log):
     artifact_classes = {}
@@ -70,8 +79,8 @@ def setup_option_parser():
         )
 
         parser.add_argument(
-            '-x', '--exclude-dir',
-            help=EXCLUDE_DIR_HELP,
+            '-x', '--exclude',
+            help=EXCLUDE_HELP,
             nargs='+'
         )
 
@@ -206,10 +215,10 @@ def setup_option_parser():
     if (option_parser == 'argparse'):
         args = parser.parse_args()
         dir_name = args.dir
-        if args.exclude_dir:
-            exclude_dir = args.exclude_dir
+        if args.exclude:
+            additional_excludes = args.exclude
         else:
-            exclude_dir = []
+            additional_excludes = []
 
     elif (option_parser == 'optparse'):
         (args, argv) = parser.parse_args()
@@ -217,10 +226,10 @@ def setup_option_parser():
             dir_name = '.'
         else:
             dir_name = argv[0]
-        if args.exclude_dir:
-            exclude_dir = args.exclude_dir.split(',')
+        if args.exclude:
+            additional_excludes = args.exclude.split(',')
         else:
-            exclude_dir = []
+            additional_excludes = []
     else:
         raise Exception("unexpected option_parser %s" % option_parser)
 
@@ -373,15 +382,10 @@ def setup_option_parser():
             if klass.__doc__:
                 print "   ", klass.__doc__.strip()
 
-    return args, dir_name, exclude_dir, dexy_log
+    return args, dir_name, additional_excludes, dexy_log
 
 def setup_controller():
-    args, dir_name, exclude_dir, log = setup_option_parser()
-
-    do_not_process_dirs = EXCLUDED_DIRS
-    do_not_process_dirs += exclude_dir
-    do_not_process_dirs.append("^(./)?%s" % args.artifacts_dir)
-    do_not_process_dirs.append("^(./)?%s" % args.logs_dir)
+    args, dir_name, additional_excludes, log = setup_option_parser()
 
     if not args.run_dexy:
         return None, args, log
@@ -397,11 +401,7 @@ def setup_controller():
     controller.config_file = args.config
     controller.use_local_files = args.local
     controller.find_reporters()
-    for r in controller.reports_dirs:
-        if r:
-            do_not_process_dirs.append("^(./)?%s" % r)
-    controller.skip_dirs = do_not_process_dirs
-    log.info("skipping directories matching %s" % ", ".join(do_not_process_dirs))
+    controller.additional_excludes = additional_excludes
 
     return controller, args, log
 
@@ -413,27 +413,66 @@ def dexy_command():
 
     if args.recurse:
         log.info("running dexy with recurse")
-        for root, dirs, files in os.walk(controller.dir_name):
-            process = True
-            if os.path.isfile(os.path.join(root, '.nodexy')):
-                print "nodexy file found in", root
-                # Skip this dir
-                process = False
-                # Skip any children TODO Test
-                controller.skip_dirs.append(root)
+        for dirpath, dirnames, filenames in os.walk(controller.dir_name):
+            process_dir = True
 
-            for x in controller.skip_dirs:
-                m = re.match(x, root)
+            if dirpath == ".":
+                # We only exclude these dirs if they occur at project root level
+                for x in EXCLUDE_DIRS_ROOT:
+                    if x in dirnames:
+                        log.debug("removing %s from list of child dirs %s of %s because it is in EXCLUDE_DIRS_ROOT" % (x, dirnames, dirpath))
+                        dirnames.remove(x)
+
+                for x in [controller.artifacts_dir, controller.logs_dir]:
+                    if x in dirnames:
+                        log.debug("removing %s from list of child dirs %s of %s because it is a dexy dir" % (x, dirnames, dirpath))
+                        dirnames.remove(x)
+
+                for x in controller.reports_dirs:
+                    if x in dirnames:
+                        log.debug("removing %s from list of child dirs %s of %s because it is a dexy report dir" % (x, dirnames, dirpath))
+                        dirnames.remove(x)
+
+
+            for x in EXCLUDE_DIRS_ALL_LEVELS:
+                if x in dirnames:
+                    log.debug("removing %s from list of child dirs %s of %s because it is in EXCLUDE_DIRS_ALL_LEVELS" % (x, dirnames, dirpath))
+                    dirnames.remove(x)
+
+            # If there is a file called .nodexy, this dir and all children are skipped.
+            if os.path.isfile(os.path.join(dirpath, '.nodexy')):
+                log.info("nodexy file found in %s" % dirpath)
+                for d in dirnames:
+                    # Remove all child dirs from processing.
+                    dirnames.remove(d)
+                process_dir = False
+
+            # Now process any additional excludes specified on the command line
+            for x in controller.additional_excludes:
+                pattern = x
+                m = re.match(pattern, dirpath)
+                if not m:
+                    pattern = "./%s" % x
+                    m = re.match(pattern, dirpath)
                 if m:
-                    print "found a match of pattern %s with dir %s" % (x, root)
-                    process = False
-                    break
+                    log.debug("removing %s because it matches pattern %s" % (dirpath, pattern))
+                    for d in dirnames:
+                        # Remove all child dirs from processing.
+                        dirnames.remove(d)
+                    process_dir = False
+                else:
+                    # check if children match pattern
+                    for d in dirnames:
+                        if x == d:
+                            fullpath = os.path.join(dirpath, d)
+                            log.debug("removing %s because it matches pattern %s" % (fullpath, pattern))
+                            dirnames.remove(d)
 
-            if not process:
-                log.warn("skipping dir %s" % root)
+            if not process_dir:
+                log.warn("skipping dir %s" % dirpath)
             else:
-                log.info("processing dir %s" % root)
-                controller.load_config(root)
+                log.info("processing dir %s" % dirpath)
+                controller.load_config(dirpath)
     else:
         log.info("not recursing")
         process = True
