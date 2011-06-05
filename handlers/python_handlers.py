@@ -244,7 +244,7 @@ class SplitHtmlHandler(DexyHandler):
 
         if input_text.find("<!-- endsplit -->") > 0:
             body, footer = re.split("<!-- endsplit -->", input_text, maxsplit=1)
-            sections = re.split("<!-- split \"(.+)\" -->", body)
+            sections = re.split("<!-- split \"(.+)\" -->\n", body)
             header = sections[0]
 
             pages = OrderedDict()
@@ -259,9 +259,7 @@ class SplitHtmlHandler(DexyHandler):
 
                     filename = "%s.html" % section_url
                     filepath = os.path.join(parent_dir, filename)
-                    # TODO remove this temporary OpenGamma hack
-                    if section_name.islower():
-                        pages[section_name] = filename
+                    pages[section_name] = filename
 
                     artifact = self.artifact.__class__(filepath)
                     artifact.ext = '.html'
@@ -289,6 +287,7 @@ class SplitHtmlHandler(DexyHandler):
             output_dict['index'] = "<ul>\n%s\n</ul>" % "\n".join(index_items)
             output_dict['footer'] = footer
         else:
+            # No endsplit found, do nothing.
             output_dict = self.artifact.input_data_dict
         self.artifact.data_dict = output_dict
 
