@@ -20,7 +20,7 @@ def ansi_output_to_html(ansi_text, log=None):
             harmless but annoying CSS errors will appear on the console."""
     except TypeError:
         print "========== Start of harmless but annoying CSS errors..."
-        print "You can install pynliner from source or version > 0.2.1 to get rid of these"
+        print "You can install pynliner from source (https://github.com/rennat/pynliner.git) or version > 0.2.1 to get rid of these"
         p = Pynliner()
 
     p.from_string(html)
