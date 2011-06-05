@@ -97,7 +97,7 @@ def setup_option_parser():
         parser = optparse.OptionParser(version="%%prog %s" % VERSION)
         parser.add_option(
             '-x', '--exclude-dir',
-            help=EXCLUDE_DIR_HELP + ' Separate multiple directories with commas.'
+            help=EXCLUDE_HELP + ' Separate multiple directories with commas.'
         )
 
     # Remaining options are the same for argparse and optparse
