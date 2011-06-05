@@ -14,6 +14,7 @@ class RunReporter(Reporter):
     def run(self):
         report_dir = os.path.join(self.controller.logs_dir, "run-%s" %
                                   datetime.datetime.now().strftime("%Y-%m-%d--%H-%M-%S"))
+        latest_report_dir = os.path.join(self.controller.logs_dir, "run-latest")
         report_filename = os.path.join(report_dir, 'index.html')
         shutil.rmtree(report_dir, ignore_errors=True)
 
@@ -44,3 +45,5 @@ class RunReporter(Reporter):
         template = env.get_template('run_reporter_template.html')
         template.stream(env_data).dump(report_filename)
 
+        shutil.rmtree(latest_report_dir, ignore_errors=True)
+        shutil.copytree(report_dir, latest_report_dir)
