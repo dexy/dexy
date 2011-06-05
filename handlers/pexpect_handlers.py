@@ -111,7 +111,8 @@ class ClojureInteractiveHandler(ProcessLinewiseInteractiveHandler):
     """
     Runs clojure.
     """
-    EXECUTABLE = 'java clojure.main'
+    EXECUTABLE = None
+    EXECUTABLES = ['clojure', 'clj -r', 'java clojure.main']
     INPUT_EXTENSIONS = [".clj"]
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['clj', 'cljint']

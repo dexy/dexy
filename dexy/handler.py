@@ -27,12 +27,28 @@ class DexyHandler(object):
         else:
             if hasattr(self, 'EXECUTABLE'):
                 return self.EXECUTABLE
+            elif hasattr(self, 'EXECUTABLES'):
+                return self.find_present_executable()
+
 
     @classmethod
-    def executable_present(self):
+    def find_present_executable(klass):
+        # determine which executable to use
+        for exe in klass.EXECUTABLES:
+            if klass.executable_present(exe):
+                return exe
+                print "found", exe
+                break
+        return None
+
+    @classmethod
+    def executable_present(klass, exe=None):
         """Determine whether the specified executable is available."""
-        if self.executable():
-            cmd = self.executable().split()[0]
+        if not exe:
+            exe = klass.executable()
+
+        if exe:
+            cmd = exe.split()[0]
             which = "which %s" % cmd
             proc = subprocess.Popen(which, shell=True,
                                     stdout=subprocess.PIPE,

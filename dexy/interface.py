@@ -482,17 +482,8 @@ def dexy_command():
                 controller.load_config(dirpath)
     else:
         log.info("not recursing")
-        process = True
-        for x in controller.skip_dirs:
-            if controller.dir_name.startswith(x) or controller.dir_name.startswith("./%s" % x):
-                process = False
-                break
-
-        if not process:
-            log.warn("skipping dir %s" % controller.dir_name)
-        else:
-            log.info("processing dir %s" % controller.dir_name)
-            controller.load_config(controller.dir_name)
+        log.info("processing dir %s" % controller.dir_name)
+        controller.load_config(controller.dir_name)
 
     controller.setup_and_run()
     if not args.no_reports:

@@ -55,6 +55,7 @@ class JinjaHandler(DexyHandler):
 
         for key, artifact in self.artifact.inputs().items():
             if artifact.is_cached():
+                self.log.debug("Loading artifact %s" % key)
                 artifact.load() # reload
 
             # Full path keys

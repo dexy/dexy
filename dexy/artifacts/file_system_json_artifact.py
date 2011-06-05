@@ -105,6 +105,8 @@ class FileSystemJsonArtifact(Artifact):
     def load(self):
         # Load artifact from the cache.
         if not self.is_cached():
+            if self.additional:
+                print "this is an additional artifact, check the script in which is was supposed to be generated for errors"
             raise Exception("trying to load an artifact %s which isn't cached" % self.key)
 
         f = open(self.meta_filepath(), "r")
