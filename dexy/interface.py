@@ -193,6 +193,13 @@ def setup_option_parser():
         )
 
     add_option(parser,
+        '--serve',
+        default=False,
+        action='store_true',
+        help='Start a static server within the output directory, will be visible on port 8000. (similar to python -m SimpleHTTPServer)'
+        )
+
+    add_option(parser,
         '-g', '--config',
         default='.dexy',
         help='name of configuration file'
@@ -493,4 +500,18 @@ def dexy_command():
             reporter_klass(controller).run()
     else:
         print 'reports not run'
+
+    if args.serve:
+        import SimpleHTTPServer
+        import SocketServer
+
+        os.chdir('output')
+
+        PORT = 8000
+        Handler = SimpleHTTPServer.SimpleHTTPRequestHandler
+
+        httpd = SocketServer.TCPServer(("", PORT), Handler)
+
+        print "serving at port", PORT
+        httpd.serve_forever()
 
