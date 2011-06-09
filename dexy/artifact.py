@@ -42,7 +42,8 @@ class Artifact(object):
         '.gz',
         '.eot',
         '.ttf',
-        '.woff'
+        '.woff',
+        '.swf'
     ]
 
     def __init__(self, key):
@@ -112,6 +113,7 @@ class Artifact(object):
         self.input_ext = previous_artifact.ext
         self.input_data_dict = previous_artifact.data_dict
         self.previous_artifact_filename = previous_artifact.filename()
+        self.previous_artifact_filepath = previous_artifact.filepath()
 
         self._inputs.update(previous_artifact.inputs())
         # Need to loop over each artifact's inputs in case extra ones have been
