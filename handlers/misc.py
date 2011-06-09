@@ -1,4 +1,5 @@
 from dexy.handler import DexyHandler
+import shutil
 
 class RFormatHandler(DexyHandler):
     """
@@ -16,9 +17,21 @@ class PdfFormatHandler(DexyHandler):
     OUTPUT_EXTENSIONS = [".pdf"]
     ALIASES = ['p', 'forcepdf']
 
+class ForcePngFormatHandler(DexyHandler):
+    """
+    Does nothing, just forces previous filter to output .png extension if able.
+    """
+    INPUT_EXTENSIONS = [".png"]
+    OUTPUT_EXTENSIONS = [".png"]
+    ALIASES = ['pn', 'forcepng']
+    BINARY = True
+
+    def process(self):
+        shutil.copyfile(self.artifact.previous_artifact_filepath, self.artifact.filepath())
+
 class ConvertBashFormatHandler(DexyHandler):
     """
-    Does nothing, just forces previous filter to output .bash extension if able.
+    Converts whatever file extension is input to be .bash.
     """
     INPUT_EXTENSIONS = [".*", "*"]
     OUTPUT_EXTENSIONS = [".sh"]
