@@ -13,7 +13,8 @@ class PygHandler(DexyHandler):
     Apply Pygments syntax highlighting.
     """
     INPUT_EXTENSIONS = [".*"]
-    OUTPUT_EXTENSIONS = [".html", ".tex"]
+    IMAGE_OUTPUT_EXTENSIONS = ['.png', '.bmp', '.gif', '.jpg', '.svg']
+    OUTPUT_EXTENSIONS = [".html", ".tex"] + IMAGE_OUTPUT_EXTENSIONS
     ALIASES = ['pyg', 'pygments']
     FINAL = False
 
@@ -33,11 +34,17 @@ class PygHandler(DexyHandler):
             lexer = get_lexer_for_filename(name)
         formatter = get_formatter_for_filename(self.artifact.filename(),
                                                lineanchors='l')
-        output_dict = OrderedDict()
-        for k, v in input_dict.items():
-            try:
-                output_dict[k] = str(highlight(v, lexer, formatter))
-            except UnicodeEncodeError as e:
-                self.log.warn("error processing section %s of file %s" % (k, self.artifact.key))
-                raise e
-        return output_dict
+        if self.ext in self.IMAGE_OUTPUT_EXTENSIONS:
+            self.artifact.binary = True
+            f = open(self.artifact.filepath(), 'w')
+            f.write(highlight(self.artifact.input_text(), lexer, formatter))
+            f.close()
+        else:
+            output_dict = OrderedDict()
+            for k, v in input_dict.items():
+                try:
+                    output_dict[k] = str(highlight(v, lexer, formatter))
+                except UnicodeEncodeError as e:
+                    self.log.warn("error processing section %s of file %s" % (k, self.artifact.key))
+                    raise e
+            return output_dict
