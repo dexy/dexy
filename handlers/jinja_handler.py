@@ -5,6 +5,7 @@ import jinja2
 import json
 import os
 import re
+import urllib
 
 class FilenameHandler(DexyHandler):
     """Generate random filenames to track provenance of data."""
@@ -38,7 +39,6 @@ class FilenameHandler(DexyHandler):
 
         return input_text
 
-
 class JinjaHandler(DexyHandler):
     """
     Runs the Jinja templating engine on your document to incorporate dynamic
@@ -46,6 +46,37 @@ class JinjaHandler(DexyHandler):
     """
     ALIASES = ['jinja']
     FINAL = True
+
+    def pre_and_clippy(self, text):
+        return """<pre>
+%s
+</pre>%s
+""" % (text, self.clippy_helper(text))
+
+    def clippy_helper(self, text):
+        quoted_text = urllib.quote(text)
+        return """<object classid="clsid:d27cdb6e-ae6d-11cf-96b8-444553540000"
+                width="110"
+                height="14"
+                id="clippy" >
+        <param name="movie" value="/clippy.swf"/>
+        <param name="allowScriptAccess" value="always" />
+        <param name="quality" value="high" />
+        <param name="scale" value="noscale" />
+        <param NAME="FlashVars" value="text=%s">
+        <param name="bgcolor" value="#ffffff">
+        <embed src="/clippy.swf"
+               width="110"
+               height="14"
+               name="clippy"
+               quality="high"
+               allowScriptAccess="always"
+               type="application/x-shockwave-flash"
+               pluginspage="http://www.macromedia.com/go/getflashplayer"
+               FlashVars="text=%s"
+               bgcolor="#ffffff"
+        />
+        </object>""" % (quoted_text, quoted_text)
 
     def process_text(self, input_text):
         document_data = {}
@@ -121,6 +152,7 @@ class JinjaHandler(DexyHandler):
 
         template_hash = {
             's' : self.artifact,
+            'h' : self,
             'a' : self.artifact._inputs,
             'd' : document_data,
             'dk' : sorted(document_data.keys()),
