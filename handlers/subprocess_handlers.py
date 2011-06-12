@@ -13,7 +13,7 @@ class LatexHandler(DexyHandler):
     FINAL = True
 
     def process(self):
-        latex_filename = self.artifact.filename().replace(".pdf", ".tex")
+        latex_filename = self.artifact.filename().replace(self.ext, ".tex")
         self.artifact.generate_workfile(latex_filename)
 
         if self.doc.args.has_key('env'):
@@ -72,6 +72,7 @@ class EmbedFonts(DexyHandler):
     EXECUTABLE = 'ps2pdf'
     ALIASES = ['embedfonts', 'prepress']
     FINAL = True
+    BINARY = True
 
     def process(self):
         pf = self.artifact.previous_artifact_filename

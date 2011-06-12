@@ -174,7 +174,7 @@ class Pdf2Png(DexyHandler):
         # TODO should we be doing this in general rather than generating workfiles?
         wf = self.artifact.previous_artifact_filename
         of = self.artifact.filename()
-        command = "%s -dSAFER -dNOPAUSE -dBATCH -sDEVICE=png16m -sOutputFile=%s ../%s" % (self.executable(), of, wf)
+        command = "%s -dSAFER -dNOPAUSE -dBATCH -sDEVICE=png16m -r300 -sOutputFile=%s %s" % (self.executable(), of, wf)
         self.log.debug(command)
         self.artifact.stdout = pexpect.run(command, cwd=self.artifact.artifacts_dir)
 
@@ -186,6 +186,7 @@ class Ps2Pdf(DexyHandler):
     OUTPUT_EXTENSIONS = [".pdf"]
     ALIASES = ['ps2pdf']
     EXECUTABLE = 'ps2pdf'
+    BINARY = True
 
     def process(self):
         self.artifact.generate_workfile()
