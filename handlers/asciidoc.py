@@ -6,7 +6,7 @@ class AsciidocHandler(DexyHandler):
     """IN DEVELOPMENT. Converts .txt files with asciidoc markup to HTML or
     XML."""
     VERSION = "asciidoc --version"
-    EXECUTABLE = "asciidoc -b"
+    EXECUTABLE = "asciidoc"
     INPUT_EXTENSIONS = [".txt"]
     OUTPUT_EXTENSIONS = [".html", ".xml"]
     ALIASES = ['asciidoc']
@@ -20,13 +20,13 @@ class AsciidocHandler(DexyHandler):
         extension = self.artifact.ext
 
         if extension == ".html":
-            backend = "html"
+            backend = "html5"
         elif extension == ".xml":
-            backend = "docbook"
+            backend = "docbook45"
         else:
             raise Exception("unexpected file extension in asciidoc handler %s" % extension)
 
-        command = "%s %s -o %s %s" % (self.EXECUTABLE, backend, outfile, workfile)
+        command = "%s -b %s -d book -o %s %s" % (self.EXECUTABLE, backend, outfile, workfile)
         self.log.debug(command)
 
         if self.doc.args.has_key('env'):
