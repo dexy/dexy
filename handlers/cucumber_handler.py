@@ -1,9 +1,9 @@
-from dexy.handler import DexyHandler
+from dexy.dexy_filter import DexyFilter
 from dexy.utils import ansi_output_to_html
 import re
 import subprocess
 
-class CucumberHandler(DexyHandler):
+class CucumberHandler(DexyFilter):
     """Run cucumber features."""
     INPUT_EXTENSIONS = [".feature"]
     OUTPUT_EXTENSIONS = [".html", ".txt"]
@@ -13,7 +13,7 @@ class CucumberHandler(DexyHandler):
 
     def process(self):
         keys = self.artifact.inputs().keys()
-        rb_file = self.artifact.doc.name.replace(".feature", "\.rb")
+        rb_file = self.artifact.name.replace(".feature", "\.rb")
         matches = [k for k in keys if re.match(re.compile("^%s" % rb_file), k)]
 
         if len(matches) == 0:

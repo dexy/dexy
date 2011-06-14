@@ -1,7 +1,6 @@
 {
-  "index.textile|fn|jinja|textile|hd|ft" : {
-    "allinputs" : true,
-    "notextile" : true
+  "index.md|fn|jinja|markdown|hd|ft" : {
+    "allinputs" : true
   },
   "*.R|fn|idio|rint|pyg" : {},
   "_*.html|jinja" : {},

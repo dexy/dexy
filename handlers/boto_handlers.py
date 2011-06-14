@@ -1,8 +1,8 @@
 from boto.s3.key import Key
-from dexy.handler import DexyHandler
+from dexy.dexy_filter import DexyFilter
 import boto
 
-class BotoUploadHandler(DexyHandler):
+class BotoUploadHandler(DexyFilter):
     """Uses boto library to upload content to S3."""
     ALIASES = ['botoup']
 

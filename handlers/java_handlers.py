@@ -1,8 +1,8 @@
+from dexy.dexy_filter import DexyFilter
 from pygments import highlight
 from pygments.formatters.html import HtmlFormatter
 from pygments.formatters.latex import LatexFormatter
 from pygments.lexers.compiled import JavaLexer
-import dexy.handler
 import handlers.pexpect_handlers
 import handlers.stdout_handlers
 import json
@@ -39,7 +39,7 @@ class JythonInteractiveHandler(handlers.pexpect_handlers.ProcessLinewiseInteract
     OUTPUT_EXTENSIONS = [".pycon"]
     ALIASES = ['jythoni']
 
-class JavaHandler(dexy.handler.DexyHandler):
+class JavaHandler(DexyFilter):
     EXECUTABLE = "javac"
     VERSION = "java -version"
     INPUT_EXTENSIONS = [".java"]
@@ -47,21 +47,21 @@ class JavaHandler(dexy.handler.DexyHandler):
     ALIASES = ['java']
 
     def process(self):
-        if self.doc.args.has_key('main'):
-            main_method = self.doc.args['main']
+        if self.artifact.args.has_key('main'):
+            main_method = self.artifact.args['main']
         else:
-            main_method = os.path.splitext(os.path.basename(self.doc.name))[0]
+            main_method = os.path.splitext(os.path.basename(self.artifact.name))[0]
 
-        if self.artifact.doc.args.has_key('env'):
+        if self.artifact.args.has_key('env'):
             env = os.environ
-            env.update(self.artifact.doc.args['env'])
+            env.update(self.artifact.args['env'])
         else:
             env = None
 
         self.artifact.create_temp_dir()
 
         command = "javac -d %s %s" % (
-            self.artifact.temp_dir(), self.doc.name)
+            self.artifact.temp_dir(), self.artifact.name)
 
         self.log.debug(command)
         proc = subprocess.Popen(command, shell=True,
@@ -76,10 +76,10 @@ class JavaHandler(dexy.handler.DexyHandler):
                 command, stderr))
 
         cp = self.artifact.temp_dir()
-        if self.doc.args.has_key('env'):
-            if self.doc.args['env'].has_key('CLASSPATH'):
+        if self.artifact.args.has_key('env'):
+            if self.artifact.args['env'].has_key('CLASSPATH'):
                 cp = "%s:%s" % (self.artifact.temp_dir(),
-                                self.doc.args['env']['CLASSPATH'])
+                                self.artifact.args['env']['CLASSPATH'])
 
         command = "java -cp %s %s" % (cp, main_method)
         self.log.debug(command)
@@ -94,7 +94,7 @@ class JavaHandler(dexy.handler.DexyHandler):
 
         self.artifact.data_dict['1'] = stdout
 
-class JavadocsJsonFilter(dexy.handler.DexyHandler):
+class JavadocsJsonFilter(DexyFilter):
     ALIASES = ['javadoc', 'javadocs']
 
     def nested_subclasses(self, j, qualified_class_name, nest=None, indent = 0):
@@ -158,6 +158,8 @@ class JavadocsJsonFilter(dexy.handler.DexyHandler):
 
                 for m in j['packages'][p]['classes'][k]['methods'].keys():
                     source = j['packages'][p]['classes'][k]['methods'][m]['source']
+                    if not source:
+                        source = ""
 
                     # TODO - try running comment text through Textile
                     # interpreter for HTML and LaTeX options

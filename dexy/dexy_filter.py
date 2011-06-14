@@ -1,11 +1,9 @@
-import inspect
 import platform
 import subprocess
-import time
 
-class DexyHandler(object):
+class DexyFilter(object):
     """
-    This is the main DexyHandler class. To make custom handlers you should
+    This is the main DexyFilter class. To make custom filters you should
     subclass this and override the process() method. You may also want to
     specify INPUT_EXTENSIONS and OUTPUT_EXTENSIONS. You must define unique
     ALIASES in each handler, use java-style namespacing, e.g. com.abc.alias
@@ -28,6 +26,9 @@ class DexyHandler(object):
             if hasattr(self, 'EXECUTABLE'):
                 return self.EXECUTABLE
             elif hasattr(self, 'EXECUTABLES'):
+                # Allows you to specify multiple options for an executable and,
+                # at runtime, use whichever one is present on the system. The
+                # first listed executable to be found is the one used.
                 return self.find_present_executable()
 
 
@@ -93,7 +94,7 @@ class DexyHandler(object):
             return None
 
     @classmethod
-    def output_file_extension(klass, ext, key, next_handler_class):
+    def output_file_extension(klass, ext, key, next_filter_class):
         out_ext = None
 
         if set([ext, ".*"]).isdisjoint(set(klass.INPUT_EXTENSIONS)):
@@ -104,49 +105,21 @@ class DexyHandler(object):
         if ".*" in klass.OUTPUT_EXTENSIONS:
             out_ext = ext
         else:
-            if next_handler_class and not ".*" in next_handler_class.INPUT_EXTENSIONS:
+            if next_filter_class and not ".*" in next_filter_class.INPUT_EXTENSIONS:
                 for e in klass.OUTPUT_EXTENSIONS:
-                    if e in next_handler_class.INPUT_EXTENSIONS:
+                    if e in next_filter_class.INPUT_EXTENSIONS:
                         out_ext = e
 
                 if not out_ext:
                   err_str = "unable to find one of %s in %s for %s %s"
                   prev_out = ", ".join(klass.OUTPUT_EXTENSIONS)
-                  next_in = ", ".join(next_handler_class.INPUT_EXTENSIONS)
-                  next_handler_name = next_handler_class.__name__
-                  err_str = err_str % (prev_out, next_in, next_handler_name, key)
+                  next_in = ", ".join(next_filter_class.INPUT_EXTENSIONS)
+                  next_filter_name = next_filter_class.__name__
+                  err_str = err_str % (prev_out, next_in, next_filter_name, key)
                   raise Exception(err_str)
             else:
                 out_ext = klass.OUTPUT_EXTENSIONS[0]
         return out_ext
-
-    @classmethod
-    def setup(klass, doc, artifact_key, previous_artifact, next_handler_class):
-        h = klass()
-        h.doc = doc
-        h.log = doc.log
-
-        artifact_class = previous_artifact.__class__
-
-        artifact = artifact_class.setup(doc, artifact_key, previous_artifact)
-        artifact.handler = h
-        artifact.handler_source = inspect.getsource(klass)
-        artifact.handler_version = klass.version(h.log)
-        if klass.FINAL is not None:
-            artifact.final = klass.FINAL
-        artifact.binary = klass.BINARY
-
-        if next_handler_class:
-            artifact.next_handler_name = next_handler_class.__name__
-
-        artifact.ext = klass.output_file_extension(
-            previous_artifact.ext, doc.key(), next_handler_class)
-
-        artifact.set_hashstring()
-
-        h.ext = artifact.ext
-        h.artifact = artifact
-        return h
 
     def process(self):
         """This is the method that does the "work" of the handler, that is
@@ -191,18 +164,4 @@ class DexyHandler(object):
             method_used = "process"
 
         return method_used
-
-    def generate_artifact(self):
-        self.artifact.start_time = time.time()
-        if self.artifact.is_cached():
-            self.artifact.method = 'cached'
-            if not self.artifact.is_loaded():
-                self.artifact.load()
-        else:
-            self.artifact.method = 'generated'
-            self.process()
-            self.artifact.save()
-
-        self.artifact.finish_time = time.time()
-        return self.artifact
 

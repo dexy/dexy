@@ -1,4 +1,4 @@
-from dexy.handler import DexyHandler
+from dexy.dexy_filter import DexyFilter
 from idiopidae.runtime import Composer
 from ordereddict import OrderedDict
 from pygments.formatters import get_formatter_for_filename
@@ -10,7 +10,7 @@ from pygments.lexers.web import JavascriptLexer
 from pygments.lexers.web import PhpLexer
 import idiopidae.parser
 
-class IdioHandler(DexyHandler):
+class IdioHandler(DexyFilter):
     """
     Apply idiopidae to split document into sections at ### @export
     "section-name" comments.
@@ -26,8 +26,8 @@ class IdioHandler(DexyHandler):
         ext = self.artifact.input_ext
         name = "input_text%s" % ext
 
-        if self.doc.args.has_key('pyg-lexer'):
-            lexer = get_lexer_by_name(self.doc.args['pyg-lexer'])
+        if self.artifact.args.has_key('pyg-lexer'):
+            lexer = get_lexer_by_name(self.artifact.args['pyg-lexer'])
         elif ext == '.pycon':
             lexer = PythonConsoleLexer()
         elif ext == '.rbcon':

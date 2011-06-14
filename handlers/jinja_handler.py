@@ -1,4 +1,4 @@
-from dexy.handler import DexyHandler
+from dexy.dexy_filter import DexyFilter
 from jinja2 import Environment
 from ordereddict import OrderedDict
 import jinja2
@@ -7,7 +7,7 @@ import os
 import re
 import urllib
 
-class FilenameHandler(DexyHandler):
+class FilenameHandler(DexyFilter):
     """Generate random filenames to track provenance of data."""
     ALIASES = ['fn']
 
@@ -20,11 +20,11 @@ class FilenameHandler(DexyHandler):
 
             if key_with_ext in self.artifact.inputs().keys():
                 artifact = self.artifact.inputs()[key_with_ext]
-                self.log.debug("existing key %s in artifact %s links to file %s" %
+                self.artifact.log.debug("existing key %s in artifact %s links to file %s" %
                           (key, self.artifact.key, artifact.filename()))
             else:
                 artifact = self.artifact.add_additional_artifact(key_with_ext, ext)
-                self.log.debug("added key %s to artifact %s ; links to file %s" %
+                self.artifact.log.debug("added key %s to artifact %s ; links to file %s" %
                           (key, self.artifact.key, artifact.filename()))
 
             input_text = input_text.replace(m.group(), artifact.filename())
@@ -39,7 +39,7 @@ class FilenameHandler(DexyHandler):
 
         return input_text
 
-class JinjaHandler(DexyHandler):
+class JinjaHandler(DexyFilter):
     """
     Runs the Jinja templating engine on your document to incorporate dynamic
     content.
@@ -85,15 +85,15 @@ class JinjaHandler(DexyHandler):
         notextile = self.artifact.args.has_key('notextile') and self.artifact.args['notextile']
 
         for key, artifact in self.artifact.inputs().items():
-            if artifact.is_cached():
-                self.log.debug("Loading artifact %s" % key)
+            if artifact.is_output_cached():
+                self.artifact.log.debug("Loading artifact %s" % key)
                 artifact.load() # reload
 
             # Full path keys
             keys = [key, artifact.canonical_filename()]
 
             # Shortcut keys if in common directory
-            if os.path.dirname(self.doc.name) == os.path.dirname(key) or not os.path.dirname(key):
+            if os.path.dirname(self.artifact.name) == os.path.dirname(key) or not os.path.dirname(key):
                 keys.append(os.path.basename(key))
                 fn = artifact.canonical_filename()
                 keys.append(os.path.basename(fn))
@@ -102,7 +102,11 @@ class JinjaHandler(DexyHandler):
             # Do special handling of data
             if artifact.ext == '.json':
                 path_to_file = os.path.join(self.artifact.artifacts_dir, artifact.filename())
+                if not os.path.exists(path_to_file):
+                    artifact.state = 'complete'
+                    artifact.save()
                 # TODO read this from memory rather than loading from file?
+                # TODO capture load errors
                 unsorted_json = json.load(open(path_to_file, "r"))
 
                 def sort_dict(d):
@@ -118,7 +122,10 @@ class JinjaHandler(DexyHandler):
                                 od[k] = v
                     return od
 
-                data = sort_dict(unsorted_json)
+                if hasattr(unsorted_json, 'keys'):
+                    data = sort_dict(unsorted_json)
+                else:
+                    data = unsorted_json
 
             elif notextile and artifact.ext == '.html':
                 data = OrderedDict()
@@ -138,7 +145,7 @@ class JinjaHandler(DexyHandler):
                     document_data[k] = data
 
         if self.artifact.ext == ".tex":
-            self.log.debug("changing jinja tags to << >> etc. for %s" % self.artifact.key)
+            self.artifact.log.debug("changing jinja tags to << >> etc. for %s" % self.artifact.key)
             env = Environment(
                 block_start_string = '<%',
                 block_end_string = '%>',
@@ -152,7 +159,7 @@ class JinjaHandler(DexyHandler):
 
         template_hash = {
             's' : self.artifact,
-            'h' : self,
+            'f' : self,
             'a' : self.artifact._inputs,
             'd' : document_data,
             'dk' : sorted(document_data.keys()),

@@ -1,7 +1,7 @@
-from dexy.handler import DexyHandler
+from dexy.dexy_filter import DexyFilter
 import markdown
 
-class MarkdownHandler(DexyHandler):
+class MarkdownHandler(DexyFilter):
     INPUT_EXTENSIONS = ['.*']
     OUTPUT_EXTENSIONS = ['.html']
     ALIASES = ['markdown']

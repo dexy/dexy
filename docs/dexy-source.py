@@ -4,7 +4,7 @@ import dexy.controller
 import dexy.artifact
 from dexy.artifacts.file_system_json_artifact import FileSystemJsonArtifact
 import dexy.document
-import dexy.handler
+import dexy.dexy_filter
 
 import inspect
 from pygments import highlight
@@ -12,13 +12,13 @@ from pygments.formatters.html import HtmlFormatter
 from pygments.lexers.agile import PythonLexer
 
 py_lexer = PythonLexer()
-fm = HtmlFormatter()
+fm = HtmlFormatter(lineanchors='l')
 
 handler_info = {
     'artifact' : {},
     'file_system_json_artifact' : {},
     'document' : {},
-    'handler' : {},
+    'filter' : {},
     'controller' : {}
 }
 
@@ -26,7 +26,7 @@ klasses = {
     'controller' : dexy.controller.Controller,
     'artifact' : dexy.artifact.Artifact,
     'document' : dexy.document.Document,
-    'handler' : dexy.handler.DexyHandler,
+    'filter' : dexy.dexy_filter.DexyFilter,
     'file_system_json_artifact' : FileSystemJsonArtifact,
 }
 

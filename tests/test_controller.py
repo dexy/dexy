@@ -1,6 +1,6 @@
 from dexy.artifacts.file_system_json_artifact import FileSystemJsonArtifact
 from dexy.controller import Controller
-from dexy.handler import DexyHandler
+from dexy.dexy_filter import DexyFilter
 import os.path
 
 def setup_controller(config_file = None):
@@ -21,7 +21,7 @@ def test_handlers():
     """controller: find_handlers() should not raise errors"""
     controller = Controller()
     handlers = controller.find_handlers()
-    assert handlers['dexy'] == DexyHandler
+    assert handlers['dexy'] == DexyFilter
 
 def test_members():
     """controller: files and filters to be run should be identified correctly"""

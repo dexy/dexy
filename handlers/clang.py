@@ -1,9 +1,9 @@
-from dexy.handler import DexyHandler
+from dexy.dexy_filter import DexyFilter
 import subprocess
 import time
 
 ### @export "clang-handler"
-class ClangHandler(DexyHandler):
+class ClangHandler(DexyFilter):
     """Compiles C code using clang compiler, then runs compiled program."""
     VERSION = "clang --version"
     EXECUTABLE = "clang"
@@ -37,7 +37,7 @@ class ClangHandler(DexyHandler):
         self.artifact.stdout += stderr
 
 ### @export "clang-interactive-handler"
-class ClangInteractiveHandler(DexyHandler):
+class ClangInteractiveHandler(DexyFilter):
     """Compiles C code using clang compiler, then runs compiled program, reading
     input from any input files."""
     VERSION = "clang --version"
@@ -75,7 +75,7 @@ class ClangInteractiveHandler(DexyHandler):
                 self.artifact.stdout = self.artifact.stdout + "\n" + stderr
 
 ### @export "clang-timing-handler"
-class ClangTimingHandler(DexyHandler):
+class ClangTimingHandler(DexyFilter):
     """Compiles C code using clang compiler, then runs compiled program N times
     reporting timings."""
     N = 10

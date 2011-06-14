@@ -1,7 +1,7 @@
-from dexy.handler import DexyHandler
+from dexy.dexy_filter import DexyFilter
 import shutil
 
-class RFormatHandler(DexyHandler):
+class RFormatHandler(DexyFilter):
     """
     Does nothing, just forces previous filter to output .R extension if able.
     """
@@ -9,7 +9,7 @@ class RFormatHandler(DexyHandler):
     OUTPUT_EXTENSIONS = [".R"]
     ALIASES = ['forcer']
 
-class PdfFormatHandler(DexyHandler):
+class PdfFormatHandler(DexyFilter):
     """
     Does nothing, just forces previous filter to output .pdf extension if able.
     """
@@ -17,7 +17,7 @@ class PdfFormatHandler(DexyHandler):
     OUTPUT_EXTENSIONS = [".pdf"]
     ALIASES = ['p', 'forcepdf']
 
-class ForcePngFormatHandler(DexyHandler):
+class ForcePngFormatHandler(DexyFilter):
     """
     Does nothing, just forces previous filter to output .png extension if able.
     """
@@ -29,7 +29,7 @@ class ForcePngFormatHandler(DexyHandler):
     def process(self):
         shutil.copyfile(self.artifact.previous_artifact_filepath, self.artifact.filepath())
 
-class ConvertBashFormatHandler(DexyHandler):
+class ConvertBashFormatHandler(DexyFilter):
     """
     Converts whatever file extension is input to be .bash.
     """
@@ -37,7 +37,7 @@ class ConvertBashFormatHandler(DexyHandler):
     OUTPUT_EXTENSIONS = [".sh"]
     ALIASES = ['b', 'forcebash']
 
-class ConvertTextFormatHandler(DexyHandler):
+class ConvertTextFormatHandler(DexyFilter):
     """
     Changes whatever file extension is input to be .txt.
     """
@@ -45,7 +45,7 @@ class ConvertTextFormatHandler(DexyHandler):
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['ct']
 
-class ConvertHTMLFormatHandler(DexyHandler):
+class ConvertHTMLFormatHandler(DexyFilter):
     """
     Changes whatever file extension is input to be .html.
     """
@@ -53,7 +53,7 @@ class ConvertHTMLFormatHandler(DexyHandler):
     OUTPUT_EXTENSIONS = [".html"]
     ALIASES = ['ch']
 
-class TextFormatHandler(DexyHandler):
+class TextFormatHandler(DexyFilter):
     """
     Does nothing, just forces previous filter to output .txt extension if able.
     """
@@ -61,7 +61,7 @@ class TextFormatHandler(DexyHandler):
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['t', 'forcetext']
 
-class XmlFormatHandler(DexyHandler):
+class XmlFormatHandler(DexyFilter):
     """
     Does nothing, just forces previous filter to output .xml extension if able.
     """
@@ -69,7 +69,7 @@ class XmlFormatHandler(DexyHandler):
     OUTPUT_EXTENSIONS = [".xml"]
     ALIASES = ['x', 'forcexml']
 
-class LatexFormatHandler(DexyHandler):
+class LatexFormatHandler(DexyFilter):
     """
     Does nothing, just forces previous filter to output .tex extension if able.
     """
@@ -77,7 +77,7 @@ class LatexFormatHandler(DexyHandler):
     OUTPUT_EXTENSIONS = [".tex"]
     ALIASES = ['l', 'forcelatex']
 
-class HtmlFormatHandler(DexyHandler):
+class HtmlFormatHandler(DexyFilter):
     """
     Does nothing, just forces previous filter to output .html extension if able.
     """
@@ -85,7 +85,7 @@ class HtmlFormatHandler(DexyHandler):
     OUTPUT_EXTENSIONS = [".html"]
     ALIASES = ['h', 'forcehtml']
 
-class JsonFormatHandler(DexyHandler):
+class JsonFormatHandler(DexyFilter):
     """
     Does nothing, just forces previous filter to output .json extension if able.
     """

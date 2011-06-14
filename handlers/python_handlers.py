@@ -1,4 +1,4 @@
-from dexy.handler import DexyHandler
+from dexy.dexy_filter import DexyFilter
 from dexy.utils import print_string_diff
 from ordereddict import OrderedDict
 import os
@@ -8,7 +8,7 @@ import tarfile
 import uuid
 import zipfile
 
-class ArchiveHandler(DexyHandler):
+class ArchiveHandler(DexyFilter):
     """The archive handler creates .tgz archives of processed files. Create an
     empty/dummy file in the location you wish to have the archive."""
     OUTPUT_EXTENSIONS = [".tgz"]
@@ -30,11 +30,11 @@ class ArchiveHandler(DexyHandler):
                 arcname = a.canonical_filename()
             else:
                 arcname = a.long_canonical_filename()
-            self.log.debug("Adding file %s to archive %s." % (fn, af))
+            self.artifact.log.debug("Adding file %s to archive %s." % (fn, af))
             tar.add(fn, arcname=arcname)
         tar.close()
 
-class ZipArchiveHandler(DexyHandler):
+class ZipArchiveHandler(DexyFilter):
     """The archive handler creates .zip archives of the input files. Create an
     empty file in the location you wish to have the archive."""
     OUTPUT_EXTENSIONS = [".zip"]
@@ -56,12 +56,12 @@ class ZipArchiveHandler(DexyHandler):
                 arcname = a.canonical_filename()
             else:
                 arcname = a.long_canonical_filename()
-            self.log.debug("Adding file %s to archive %s." % (fn, af))
+            self.artifact.log.debug("Adding file %s to archive %s." % (fn, af))
             zf.write(fn, arcname=arcname)
         zf.close()
 
 
-class TestHandler(DexyHandler):
+class TestHandler(DexyFilter):
     """The test handler raises an error if output is not as expected. Handy for
     testing your custom filters or for ensuring that examples in your
     documentation stay correct."""
@@ -70,10 +70,10 @@ class TestHandler(DexyHandler):
 
     def process(self):
         print "testing", self.artifact.key, "...",
-        if not self.artifact.doc.args.has_key('expects'):
+        if not self.artifact.args.has_key('expects'):
             raise "You need to pass 'expects' to the test filter."
 
-        expects = self.artifact.doc.args['expects']
+        expects = self.artifact.args['expects']
         # TODO check if expects is a filename and if so load contents of file
         # TODO handle different types of expectation, e.g. when don't know exact
         # output but can look for type of data returned
@@ -93,7 +93,7 @@ class TestHandler(DexyHandler):
         # Don't change the output so we can use end result still...
         self.artifact.data_dict = self.artifact.input_data_dict
 
-class CopyHandler(DexyHandler):
+class CopyHandler(DexyFilter):
     """
     Like 'dexy' filter for binary files. Copies the file without trying to read
     the contents. Hacky!
@@ -105,9 +105,9 @@ class CopyHandler(DexyHandler):
     FINAL = True
 
     def process(self):
-        shutil.copyfile(self.doc.name, self.artifact.filepath())
+        shutil.copyfile(self.artifact.name, self.artifact.filepath())
 
-class JoinHandler(DexyHandler):
+class JoinHandler(DexyFilter):
     """
     Takes sectioned code and joins it into a single section. Some filters which
     don't preserve sections will raise an error if they receive multiple
@@ -121,7 +121,7 @@ class JoinHandler(DexyHandler):
     def process_dict(self, input_dict):
         return {'1' : self.artifact.input_text()}
 
-class FooterHandler(DexyHandler):
+class FooterHandler(DexyFilter):
     """
     Adds a footer to file. Looks for a file named _footer.ext where ext is the
     same extension as the file this is being applied to. So _footer.html for a
@@ -149,7 +149,7 @@ class FooterHandler(DexyHandler):
 
         if len(footer_keys) > 0:
             footer_key = sorted(footer_keys)[-1]
-            self.log.debug("using %s as footer for %s" % (footer_key, self.artifact.key))
+            self.artifact.log.debug("using %s as footer for %s" % (footer_key, self.artifact.key))
             footer_artifact = self.artifact.inputs()[footer_key]
             footer_text = footer_artifact.output_text()
         else:
@@ -158,7 +158,7 @@ class FooterHandler(DexyHandler):
 
         return "%s\n%s" % (input_text, footer_text)
 
-class HeaderHandler(DexyHandler):
+class HeaderHandler(DexyFilter):
     """
     Adds a header to file. Looks for a file named _header.ext where ext is the
     same extension as the file this is being applied to. So _header.html for a
@@ -186,7 +186,7 @@ class HeaderHandler(DexyHandler):
 
         if len(header_keys) > 0:
             header_key = sorted(header_keys)[-1]
-            self.log.debug("using %s as header for %s" % (header_key, self.artifact.key))
+            self.artifact.log.debug("using %s as header for %s" % (header_key, self.artifact.key))
             header_artifact = self.artifact.inputs()[header_key]
             header_text = header_artifact.output_text()
         else:
@@ -196,7 +196,7 @@ class HeaderHandler(DexyHandler):
 
 # TODO implement combined header/footer handler as a shortcut
 
-class HeadHandler(DexyHandler):
+class HeadHandler(DexyFilter):
     """
     Returns just the first 10 lines of input.
     """
@@ -204,7 +204,7 @@ class HeadHandler(DexyHandler):
     def process_text(self, input_text):
         return "\n".join(input_text.split("\n")[0:10]) + "\n"
 
-class WordWrapHandler(DexyHandler):
+class WordWrapHandler(DexyFilter):
     """
     Wraps text after 79 characters (tries to preserve existing line breaks and
     spaces).
@@ -230,7 +230,7 @@ class WordWrapHandler(DexyHandler):
     def process_text(self, input_text):
         return self.wrap_text(input_text, 79)
 
-class SplitHtmlHandler(DexyHandler):
+class SplitHtmlHandler(DexyFilter):
     """Splits a HTML page into multiple HTML pages. The original page becomes an
     index page."""
     ALIASES = ['split', 'splithtml']
@@ -261,18 +261,11 @@ class SplitHtmlHandler(DexyHandler):
                     filepath = os.path.join(parent_dir, filename)
                     pages[section_name] = filename
 
-                    artifact = self.artifact.__class__(filepath)
-                    artifact.ext = '.html'
-                    artifact.binary = False
-                    artifact.final = True
-                    artifact.additional = True
-                    artifact.artifacts_dir = self.artifact.artifacts_dir
+                    artifact = self.artifact.add_additional_artifact(filepath, 'html')
                     artifact.set_data(header + sections[i+1] + footer)
-                    artifact.hashstring = str(uuid.uuid4())
                     artifact.save()
 
-                    self.artifact.inputs()[filepath] = artifact
-                    self.log.debug("added key %s to artifact %s ; links to file %s" %
+                    self.artifact.log.debug("added key %s to artifact %s ; links to file %s" %
                               (filepath, self.artifact.key, artifact.filename()))
 
             index_items = []
@@ -291,7 +284,7 @@ class SplitHtmlHandler(DexyHandler):
             output_dict = self.artifact.input_data_dict
         self.artifact.data_dict = output_dict
 
-class SplitLatexHandler(DexyHandler):
+class SplitLatexHandler(DexyFilter):
     """Splits a latex doc into multiple latex docs."""
     ALIASES = ['splitlatex']
     INPUT_EXTENSIONS = [".tex"]
@@ -330,7 +323,7 @@ class SplitLatexHandler(DexyHandler):
                 artifact.save()
 
                 self.artifact.inputs()[filepath] = artifact
-                self.log.debug("added key %s to artifact %s ; links to file %s" %
+                self.artifact.log.debug("added key %s to artifact %s ; links to file %s" %
                           (filepath, self.artifact.key, artifact.filename()))
 
             index_items = []
@@ -341,7 +334,7 @@ class SplitLatexHandler(DexyHandler):
         output_dict = self.artifact.input_data_dict
         self.artifact.data_dict = output_dict
 
-class SillyHandler(DexyHandler):
+class SillyHandler(DexyFilter):
     ALIASES =['silly']
 
     def process_text(self, input_text):

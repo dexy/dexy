@@ -1,5 +1,5 @@
 from dexy.document import Document
-from dexy.handler import DexyHandler
+from dexy.dexy_filter import DexyFilter
 from dexy.reporter import Reporter
 from dexy.topological_sort import topological_sort
 from inspect import isclass
@@ -12,6 +12,7 @@ import os
 import re
 import sre_constants
 import sys
+import web
 
 class Controller(object):
     def __init__(self):
@@ -72,8 +73,8 @@ class Controller(object):
 
         handlers = {}
 
-        for a in DexyHandler.ALIASES:
-            handlers[a] = DexyHandler
+        for a in DexyFilter.ALIASES:
+            handlers[a] = DexyFilter
 
         for d in handler_dirs:
             self.log.info("Automatically loading all filters found in %s" % d)
@@ -100,7 +101,7 @@ class Controller(object):
 
                     for k in dir(mod):
                         klass = mod.__dict__[k]
-                        if isclass(klass) and not (klass == DexyHandler) and issubclass(klass, DexyHandler):
+                        if isclass(klass) and not (klass == DexyFilter) and issubclass(klass, DexyFilter):
                             if not klass.ALIASES:
                                 self.log.info("class %s is not available because it has no aliases" % klass.__name__)
                             elif not klass.executable_present():
@@ -310,10 +311,20 @@ re.compile: %s""" % (args['except'], e))
                 depend(doc, input_doc)
 
         ordering = topological_sort(range(len(self.members)), self.depends)
+
+#        self.db = web.database(dbn='sqlite', db='testdb')
+        # TODO Replace with UUID?
+#        self.batch_id = self.db.select("tasks", what="max(batch_id)")[0]["max(batch_id)"] + 1
+
         ordered_members = OrderedDict()
         for i in ordering:
             key = self.members.keys()[i]
             ordered_members[key] = self.members[key]
+#            self.db.insert("tasks",
+#                    batch_id=self.batch_id,
+#                    batch_order=i,
+#                    document_key=key
+#                    )
         self.members = ordered_members
 
     def run(self):

@@ -7,7 +7,7 @@ import nose
 import os
 
 py_lexer = PythonLexer()
-fm = HtmlFormatter()
+fm = HtmlFormatter(lineanchors='1')
 
 loader = nose.loader.TestLoader()
 tests = loader.loadTestsFromDir(os.path.join(os.path.dirname(__file__),  '..', 'tests'))

@@ -1,8 +1,8 @@
+from dexy.dexy_filter import DexyFilter
 from ordereddict import OrderedDict
-from dexy.handler import DexyHandler
 from pynliner import Pynliner
 
-class PynlinerHandler(DexyHandler):
+class PynlinerHandler(DexyFilter):
     """
     Move CSS inline, for posting to web without a stylesheet or for emailing.
     For now hard-coded to look for a pastie.css file in project root.

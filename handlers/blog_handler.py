@@ -1,10 +1,10 @@
-from dexy.handler import DexyHandler
+from dexy.dexy_filter import DexyFilter
 
 import os
 import re
 import json
 
-class BlogHandler(DexyHandler):
+class BlogHandler(DexyFilter):
     ALIASES = None
     BLOG_CONFIG_FILE = 'blog-config.json'
 

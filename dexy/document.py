@@ -11,6 +11,7 @@ class Document(object):
     def __init__(self, artifact_class, name_or_key, filters = []):
         self.artifact_class = artifact_class
         self.name = name_or_key.split("|")[0]
+        self.ext = os.path.splitext(self.name)[1]
         self.filters = name_or_key.split("|")[1:]
         self.filters += filters
         self.inputs = []
@@ -57,11 +58,16 @@ class Document(object):
         else:
             self.inputs = [members_dict[k] for k in self.input_keys]
 
-    def next_handler_name(self):
+    def next_filter_alias(self):
         if self.at_last_step():
-            return 'None'
+            return None
         else:
             return self.filters[self.step]
+
+    def next_filter_class(self):
+        alias = self.next_filter_alias()
+        if alias:
+            return self.controller.handlers[alias]
 
     def next_handler_class(self):
         if not self.at_last_step():
@@ -169,13 +175,12 @@ class Document(object):
         return data
 
     def create_initial_artifact(self):
+        # Create and set up the new artifact.
         artifact = self.artifact_class.setup(self, self.name)
-        if os.path.basename(self.name).startswith("_"):
-            artifact.final = False
-        artifact.set_data(self.initial_artifact_data())
-        artifact.set_hashstring()
-        artifact.save()
+
+        # Add the new artifact to the document's list of artifacts.
         self.artifacts.append(artifact)
+
         return artifact
 
     def run(self, controller):
@@ -203,23 +208,20 @@ class Document(object):
             if not self.controller.handlers.has_key(f):
                 raise Exception("""You requested filter alias '%s'
                                 but this is not available.""" % f)
-            HandlerClass = self.controller.handlers[f]
-            h = HandlerClass.setup(
-                self,
-                artifact_key,
-                previous_artifact,
-                self.next_handler_class()
-            )
+
+            FilterClass = self.controller.handlers[f]
+
+            artifact = self.artifact_class.setup(self, artifact_key, FilterClass, previous_artifact)
 
             try:
-                artifact = h.generate_artifact()
+                artifact.run()
             except Exception as e:
                 print "Error occurred while applying", f, "for", artifact_key
                 x, y, tb = sys.exc_info()
                 print "Original traceback:"
                 traceback.print_tb(tb)
-                if hasattr(h.artifact, 'hashstring'):
-                    pattern = os.path.join(self.controller.artifacts_dir, h.artifact.hashstring)
+                if hasattr(artifact, 'hashstring'):
+                    pattern = os.path.join(self.controller.artifacts_dir, artifact.hashstring)
                     files_matching = glob.glob(pattern)
                     if len(files_matching) > 0:
                         print "Here are working files which might have clues about this error:"
@@ -233,5 +235,12 @@ class Document(object):
 
             self.log.info("(step %s) %s -> %s" % \
                      (self.step, artifact_key, artifact.filename()))
+
+        # Make sure all additional inputs are saved.
+        for k, a in artifact._inputs.items():
+            print "finalizing input", k
+            print a.binary_output
+            a.state = 'complete'
+            a.save()
 
         return self

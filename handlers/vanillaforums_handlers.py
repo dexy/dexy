@@ -1,4 +1,4 @@
-from dexy.handler import DexyHandler
+from dexy.dexy_filter import DexyFilter
 from StringIO import StringIO
 
 import json
@@ -7,7 +7,7 @@ import pycurl
 import re
 import urllib
 
-class VanillaForumHandler(DexyHandler):
+class VanillaForumHandler(DexyFilter):
     ALIASES = ['vanilla']
     FORUM_CONFIG_FILE = 'vanilla-config.json'
     DISCUSSION_CONFIG_FILE = 'discuss.json|dexy'
@@ -34,7 +34,7 @@ class VanillaForumHandler(DexyHandler):
             self.k = matches[0]
         except IndexError as e:
             raise Exception("""no files matching %s were available as
-                            inputs to %s""" % (self.DISCUSSION_CONFIG_FILE, self.doc.name))
+                            inputs to %s""" % (self.DISCUSSION_CONFIG_FILE, self.artifact.key))
 
         try:
             self.discussion_conf = json.loads(self.artifact.inputs()[self.k]['data'])

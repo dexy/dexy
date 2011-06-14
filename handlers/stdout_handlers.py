@@ -1,8 +1,8 @@
-from dexy.handler import DexyHandler
+from dexy.dexy_filter import DexyFilter
 import os
 import subprocess
 
-class ProcessStdoutHandler(DexyHandler):
+class ProcessStdoutHandler(DexyFilter):
     """
     Runs python script and returns STDOUT.
     """
@@ -16,8 +16,8 @@ class ProcessStdoutHandler(DexyHandler):
     def process(self):
         # allow running code from different directory
         cwd = self.artifact.artifacts_dir
-        if self.doc.args.has_key('cwd'):
-            cwd = os.path.join(cwd, self.doc.args['cwd'])
+        if self.artifact.args.has_key('cwd'):
+            cwd = os.path.join(cwd, self.artifact.args['cwd'])
             print "running from", os.path.abspath(cwd)
 
         self.artifact.generate_workfile()
@@ -33,13 +33,13 @@ class ProcessStdoutHandler(DexyHandler):
         if cla:
             command = "%s %s" % (command, cla)
 
-        if self.doc.args.has_key('env'):
+        if self.artifact.args.has_key('env'):
             env = os.environ
-            env.update(self.doc.args['env'])
+            env.update(self.artifact.args['env'])
         else:
             env = None
 
-        self.log.debug(command)
+        self.artifact.log.debug(command)
 
         proc = subprocess.Popen(command, shell=True,
                                 cwd=cwd,
@@ -53,8 +53,8 @@ class ProcessStdoutHandler(DexyHandler):
         if proc.returncode is None:
             raise Exception("no return code, proc not finished!")
         elif proc.returncode != 0:
-            if self.doc.controller.args.ignore_errors:
-                self.log.warn(stderr)
+            if self.artifact.args.ignore_errors:
+                self.artifact.log.warn(stderr)
             else:
                 print stderr
                 raise Exception("""proc returned nonzero status code! if you don't

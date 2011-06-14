@@ -18,10 +18,16 @@ class OutputReporter(Reporter):
                 artifact.write_to_file(fp)
 
             for k, a in artifact._inputs.items():
-                if a.additional and a.final:
-                    fn = a.canonical_filename()
-                    fp = os.path.join(self.REPORTS_DIR, fn)
-                    a.write_to_file(fp)
+                if not a:
+                    print "no artifact exists for key", k
+                else:
+                    if a.additional and a.final:
+                        if not a.is_complete():
+                            a.state = 'complete'
+                            a.save()
+                        fn = a.canonical_filename()
+                        fp = os.path.join(self.REPORTS_DIR, fn)
+                        a.write_to_file(fp)
 
 class LongOutputReporter(Reporter):
     """This is the LongOutputReporter"""
@@ -35,9 +41,16 @@ class LongOutputReporter(Reporter):
             fn = artifact.long_canonical_filename()
             fp = os.path.join(self.REPORTS_DIR, fn)
 
+            if not artifact.is_complete():
+                artifact.state = 'complete'
+                artifact.save()
+
             artifact.write_to_file(fp)
 
             for k, a in artifact._inputs.items():
-                fn = a.canonical_filename()
-                fp = os.path.join(self.REPORTS_DIR, fn)
-                a.write_to_file(fp)
+                if not a:
+                    print "no artifact exists for key", k
+                else:
+                    fn = a.canonical_filename()
+                    fp = os.path.join(self.REPORTS_DIR, fn)
+                    a.write_to_file(fp)

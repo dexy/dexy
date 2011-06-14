@@ -1,4 +1,4 @@
-from dexy.handler import DexyHandler
+from dexy.dexy_filter import DexyFilter
 
-def test_handler():
-    DexyHandler()
+def test_filter():
+    filter_instance = DexyFilter()

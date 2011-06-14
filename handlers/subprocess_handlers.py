@@ -1,8 +1,8 @@
-from dexy.handler import DexyHandler
+from dexy.dexy_filter import DexyFilter
 import os
 import subprocess
 
-class LatexHandler(DexyHandler):
+class LatexHandler(DexyFilter):
     """
     Generates a PDF file from LaTeX source.
     """
@@ -13,12 +13,12 @@ class LatexHandler(DexyHandler):
     FINAL = True
 
     def process(self):
-        latex_filename = self.artifact.filename().replace(self.ext, ".tex")
+        latex_filename = self.artifact.filename().replace(self.artifact.ext, ".tex")
         self.artifact.generate_workfile(latex_filename)
 
-        if self.doc.args.has_key('env'):
+        if self.artifact.args.has_key('env'):
             env = os.environ
-            env.update(self.doc.args['env'])
+            env.update(self.artifact.args['env'])
         else:
             env = None
 
@@ -66,7 +66,7 @@ class LatexHandler(DexyHandler):
             raise Exception("latex error, look for information in %s" %
                             latex_filename.replace(".tex", ".log"))
 
-class EmbedFonts(DexyHandler):
+class EmbedFonts(DexyFilter):
     INPUT_EXTENSIONS = [".pdf"]
     OUTPUT_EXTENSIONS = [".pdf"]
     EXECUTABLE = 'ps2pdf'
@@ -102,7 +102,7 @@ class EmbedFonts(DexyHandler):
         stdout, stderr = proc.communicate()
         self.artifact.stdout += stdout
 
-class Rd2PdfHandler(DexyHandler):
+class Rd2PdfHandler(DexyFilter):
     INPUT_EXTENSIONS = [".Rd"]
     OUTPUT_EXTENSIONS = [".pdf", ".dvi"]
     EXECUTABLE = 'R CMD Rd2pdf'
@@ -114,7 +114,7 @@ class Rd2PdfHandler(DexyHandler):
         self.artifact.generate_workfile()
         wf = self.artifact.work_filename()
         af = self.artifact.filename()
-        title = os.path.splitext(self.doc.name)[0].replace("_", " ")
+        title = os.path.splitext(self.artifact.name)[0].replace("_", " ")
         command = "%s --output=%s --title=\"%s\" %s" % (self.executable(), af,
                                                     title, wf)
         self.log.info(command)
@@ -125,7 +125,7 @@ class Rd2PdfHandler(DexyHandler):
         stdout, stderr = proc.communicate()
         self.artifact.stdout = stdout
 
-class RBatchHandler(DexyHandler):
+class RBatchHandler(DexyFilter):
     """Runs R code in batch mode."""
     EXECUTABLE = 'R CMD BATCH --vanilla --quiet --no-timing'
     VERSION = "R --version"
@@ -147,7 +147,7 @@ class RBatchHandler(DexyHandler):
         self.artifact.stdout = stdout
         self.artifact.set_data_from_artifact()
 
-class ROutputBatchHandler(DexyHandler):
+class ROutputBatchHandler(DexyFilter):
     """Runs R code in batch mode. Uses the --slave flag so doesn't echo commands, just returns output."""
     EXECUTABLE = 'R CMD BATCH --vanilla --quiet --slave --no-timing'
     VERSION = "R --version"
@@ -169,7 +169,7 @@ class ROutputBatchHandler(DexyHandler):
         self.artifact.stdout = stdout
         self.artifact.set_data_from_artifact()
 
-class DotHandler(DexyHandler):
+class DotHandler(DexyFilter):
     """
     Renders .dot files to either PNG or PDF images.
     """

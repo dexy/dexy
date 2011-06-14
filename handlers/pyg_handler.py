@@ -1,4 +1,4 @@
-from dexy.handler import DexyHandler
+from dexy.dexy_filter import DexyFilter
 from ordereddict import OrderedDict
 from pygments import highlight
 from pygments.formatters import get_formatter_for_filename
@@ -8,7 +8,7 @@ from pygments.lexers.agile import RubyConsoleLexer
 from pygments.lexers.special import TextLexer
 from pygments.lexers.web import JavascriptLexer
 
-class PygHandler(DexyHandler):
+class PygHandler(DexyFilter):
     """
     Apply Pygments syntax highlighting.
     """
@@ -34,7 +34,7 @@ class PygHandler(DexyHandler):
             lexer = get_lexer_for_filename(name)
         formatter = get_formatter_for_filename(self.artifact.filename(),
                                                lineanchors='l')
-        if self.ext in self.IMAGE_OUTPUT_EXTENSIONS:
+        if self.artifact.ext in self.IMAGE_OUTPUT_EXTENSIONS:
             self.artifact.binary = True
             f = open(self.artifact.filepath(), 'w')
             f.write(highlight(self.artifact.input_text(), lexer, formatter))
@@ -45,6 +45,6 @@ class PygHandler(DexyHandler):
                 try:
                     output_dict[k] = str(highlight(v, lexer, formatter))
                 except UnicodeEncodeError as e:
-                    self.log.warn("error processing section %s of file %s" % (k, self.artifact.key))
+                    self.artifact.log.warn("error processing section %s of file %s" % (k, self.artifact.key))
                     raise e
             return output_dict

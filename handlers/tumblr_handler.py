@@ -15,12 +15,12 @@ class TumblrHandler(BlogHandler):
         user = self.blog_conf['user']
         password = self.blog_conf['password']
         return Api(blog, user, password)
-    
+
     def new_post(self, api, input_text):
         title = self.post_conf.pop('title')
         post = api.write_regular(title, input_text, **self.post_conf)
         return post['post-id']
-    
+
     def update_post(self, api, input_text, post_id):
         raise Exception("not implemented!")
 
