@@ -6,7 +6,6 @@ from inspect import isclass
 from ordereddict import OrderedDict
 import fnmatch
 import glob
-import inspect
 import json
 import logging
 import os

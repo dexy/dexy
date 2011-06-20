@@ -1,6 +1,5 @@
 import platform
 import subprocess
-import inspect
 
 class DexyFilter(object):
     """
@@ -140,8 +139,6 @@ class DexyFilter(object):
             input_text = self.artifact.input_text()
             output_text = self.process_text(input_text)
             self.artifact.data_dict['1'] = output_text
-            print "completed process_text for", self.artifact.key
-            print len(self.artifact.data_dict)
             method_used = "process_text"
 
         if hasattr(self, "process_dict"):
