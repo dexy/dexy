@@ -25,7 +25,7 @@ setup(name='dexy',
       ],
       entry_points = {
           'console_scripts' : [
-              'dexy = dexy.interface:dexy_command',
+              'dexy = dexy.interface:run_dexy_command',
               'dexy-live-server = dexy.interface:dexy_live_server'
           ]
       },

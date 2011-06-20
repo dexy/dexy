@@ -1,6 +1,12 @@
 from dexy.artifact import Artifact
 from dexy.artifacts.file_system_json_artifact import FileSystemJsonArtifact
 
+def test_artifact_init():
+    artifact = Artifact()
+    assert artifact.artifact_class_source
+    assert artifact.__class__.SOURCE_CODE
+    assert artifact.state == 'new'
+
 def test_artifact_filenames_simple_key():
     artifact = Artifact()
     artifact.key = 'abc'
@@ -43,3 +49,4 @@ def test_simple_metadata():
     assert not a2.key
     a2.load_meta()
     assert a2.key == 'xyz'
+

@@ -80,7 +80,10 @@ class Document(object):
         input_artifacts = {}
         for i in self.inputs:
             k = i.key()
-            input_artifacts[k] = i.final_artifact()
+            a = i.final_artifact()
+            if not a:
+                raise Exception("No final artifact for document %s" % i.key())
+            input_artifacts[k] = a
         return input_artifacts
 
     def initial_artifact_data(self):
@@ -187,13 +190,13 @@ class Document(object):
         self.controller = controller
         self.step = 0
 
-        self.log.info("starting to process document")
-        self.log.info("args:")
-        for k, v in self.args.items():
-            self.log.info("%s: %s" % (k, v))
-        self.log.info("list of inputs:")
-        for i in self.inputs:
-            self.log.info(i.key())
+#        self.log.info("starting to process document")
+#        self.log.info("args:")
+#        for k, v in self.args.items():
+#            self.log.info("%s: %s" % (k, v))
+#        self.log.info("list of inputs:")
+#        for i in self.inputs:
+#            self.log.info(i.key())
 
         artifact = self.create_initial_artifact()
         artifact_key = artifact.key
@@ -238,9 +241,8 @@ class Document(object):
 
         # Make sure all additional inputs are saved.
         for k, a in artifact._inputs.items():
-            print "finalizing input", k
-            print a.binary_output
-            a.state = 'complete'
-            a.save()
+            if not a.is_complete():
+                a.state = 'complete'
+                a.save()
 
         return self

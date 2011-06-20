@@ -113,6 +113,10 @@ class JavadocsJsonFilter(DexyFilter):
     def process_text(self, input_text):
         j = json.loads(input_text)
 
+        html_formatter = HtmlFormatter()
+        latex_formatter = LatexFormatter()
+        lexer = JavaLexer()
+
         # Update our JSON array with each input data file.
         def update_dict(o, n):
             for k in o.keys():
@@ -155,6 +159,10 @@ class JavadocsJsonFilter(DexyFilter):
                                 if not iface_dict.has_key('implementers'):
                                     iface_dict['implementers'] = []
                                 iface_dict['implementers'].append(klass['qualified-name'])
+                if klass.has_key('source') and klass['source']:
+                    source = klass['source']
+                    j['packages'][p]['classes'][k]['source-html'] = str(highlight(source, lexer, html_formatter))
+                    j['packages'][p]['classes'][k]['source-latex'] = str(highlight(source, lexer, latex_formatter))
 
                 for m in j['packages'][p]['classes'][k]['methods'].keys():
                     source = j['packages'][p]['classes'][k]['methods'][m]['source']
@@ -165,9 +173,6 @@ class JavadocsJsonFilter(DexyFilter):
                     # interpreter for HTML and LaTeX options
                     comment = j['packages'][p]['classes'][k]['methods'][m]['comment-text']
 
-                    html_formatter = HtmlFormatter()
-                    latex_formatter = LatexFormatter()
-                    lexer = JavaLexer()
 
                     j['packages'][p]['classes'][k]['methods'][m]['comment'] = comment
                     j['packages'][p]['classes'][k]['methods'][m]['source'] = source

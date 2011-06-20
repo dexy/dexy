@@ -84,27 +84,27 @@ class JinjaHandler(DexyFilter):
 
         notextile = self.artifact.args.has_key('notextile') and self.artifact.args['notextile']
 
-        for key, artifact in self.artifact.inputs().items():
-            if artifact.is_output_cached():
+        for key, a in self.artifact.inputs().items():
+            if a.is_output_cached():
                 self.artifact.log.debug("Loading artifact %s" % key)
-                artifact.load() # reload
+                a.load() # reload
 
             # Full path keys
-            keys = [key, artifact.canonical_filename()]
+            keys = [key, a.canonical_filename()]
 
             # Shortcut keys if in common directory
             if os.path.dirname(self.artifact.name) == os.path.dirname(key) or not os.path.dirname(key):
                 keys.append(os.path.basename(key))
-                fn = artifact.canonical_filename()
+                fn = a.canonical_filename()
                 keys.append(os.path.basename(fn))
                 keys.append(os.path.splitext(fn)[0]) # TODO deal with collisions
 
             # Do special handling of data
-            if artifact.ext == '.json':
-                path_to_file = os.path.join(self.artifact.artifacts_dir, artifact.filename())
-                if not os.path.exists(path_to_file):
-                    artifact.state = 'complete'
-                    artifact.save()
+            if a.ext == '.json':
+                path_to_file = os.path.join(self.artifact.artifacts_dir, a.filename())
+#                if not os.path.exists(path_to_file):
+#                    a.state = 'complete'
+#                    a.save()
                 # TODO read this from memory rather than loading from file?
                 # TODO capture load errors
                 unsorted_json = json.load(open(path_to_file, "r"))
@@ -127,18 +127,18 @@ class JinjaHandler(DexyFilter):
                 else:
                     data = unsorted_json
 
-            elif notextile and artifact.ext == '.html':
+            elif notextile and a.ext == '.html':
                 data = OrderedDict()
-                for s, h in artifact.data_dict.items():
+                for s, h in a.data_dict.items():
                     if "<notextile>" in h:
                         data[s] = h
                     else:
                         data[s] = "<notextile>\n%s\n</notextile>" % h
             else:
-                data = artifact.data_dict
+                data = a.data_dict
 
             for k in keys:
-                raw_data[k] = artifact.output_text()
+                raw_data[k] = a.output_text()
                 if data.keys() == ['1']:
                     document_data[k] = data['1']
                 else:

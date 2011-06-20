@@ -19,7 +19,7 @@ class PynlinerHandler(DexyFilter):
             try:
                 p = Pynliner(self.log)
             except TypeError:
-                print "the pynliner filter says: please upgrade to the latest version of pynliner (e.g. easy_install -U pynliner)"
+                print "the pynliner filter says: please install pynliner from source (https://github.com/rennat/pynliner.git) or version > 0.2.1"
                 p = Pynliner()
             p.from_string(v).with_cssString(css)
             output_dict[k] = p.run()

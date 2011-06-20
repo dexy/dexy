@@ -22,7 +22,10 @@ class FileSystemJsonArtifact(Artifact):
                 v = getattr(self, a)
                 m[a] = v
 
-        m['inputs'] = dict((k, a.hashstring) for (k,a) in self._inputs.items() if a)
+        m['inputs'] = {}
+        for k, a in self.inputs().items():
+            a.save()
+            m['inputs'][k] = a.hashstring
 
         f = open(self.meta_filepath(), "w")
         try:
@@ -38,7 +41,7 @@ class FileSystemJsonArtifact(Artifact):
         m = json.load(f)
         f.close()
 
-        self._inputs = dict((k, self.retrieve(h)) for (k, h) in m.pop('inputs').items())
+        self._inputs = dict((k, self.__class__.retrieve(h)) for (k, h) in m.pop('inputs').items())
 
         for k, v in m.items():
             setattr(self, k, v)
@@ -46,17 +49,21 @@ class FileSystemJsonArtifact(Artifact):
     # Input
     def load_input(self):
         """Load input data into memory, if applicable."""
-        print "calling load_input for", self.key
         if self.binary_input:
-            print "not loading non-binary input"
+            #not loading non-binary input
+            pass
         elif self.initial:
-            print "initial artifact has no input"
+            #initial artifact has no input
+            pass
         elif self.additional:
-            print "additional artifact has no input"
+            #additional artifact has no input
+            pass
         elif len(self.input_data_dict) > 0:
-            print "we already have input data in memory"
+            #we already have input data in memory
+            pass
         elif not hasattr(self, 'previous_cached_output_filepath'):
-            print "no previous cached output, can't load"
+            #no previous cached output, can't load
+            pass
         else:
             f = open(self.previous_cached_output_filepath, "r")
             data_dict = json.load(f)

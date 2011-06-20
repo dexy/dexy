@@ -49,7 +49,7 @@ class LatexHandler(DexyFilter):
 
         stdout, stderr = proc.communicate()
         self.artifact.stdout = stdout
-        if proc.returncode > 0:
+        if proc.returncode > 1:
             raise Exception("latex error, look for information in %s" %
                             latex_filename.replace(".tex", ".log"))
 
@@ -62,7 +62,7 @@ class LatexHandler(DexyFilter):
 
         stdout, stderr = proc.communicate()
         self.artifact.stdout += stdout
-        if proc.returncode > 0:
+        if proc.returncode > 1:
             raise Exception("latex error, look for information in %s" %
                             latex_filename.replace(".tex", ".log"))
 

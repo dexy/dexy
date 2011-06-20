@@ -1,11 +1,13 @@
 {
   "example.tgz|tgz" : {
     "allinputs" : true,
-    "use-short-names" : true
+    "use-short-names" : true,
+    "disabled" : true
   },
   "example.tgz|zip" : {
     "allinputs" : true,
-    "use-short-names" : true
+    "use-short-names" : true,
+    "disabled" : true
   },
   "*|pyg" : {
     "except" : ".*.tgz"

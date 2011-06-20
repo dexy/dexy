@@ -3,6 +3,7 @@ from dexy.version import VERSION
 from ordereddict import OrderedDict
 import hashlib
 import inspect
+import logging
 import os
 import shutil
 import time
@@ -54,27 +55,31 @@ class Artifact(object):
     ]
 
     def __init__(self):
-        self.key = None
+        if not hasattr(self.__class__, 'SOURCE_CODE'):
+            self.__class__.SOURCE_CODE = inspect.getsource(self.__class__)
+
+        self._inputs = {}
+        self.additional = None
+        self.args = {}
+        self.artifact_class_source = self.__class__.SOURCE_CODE
+        self.artifacts_dir = 'artifacts' # TODO don't hard code
+        self.binary_input = None
+        self.binary_output = None
+        self.data_dict = OrderedDict()
+        self.dexy_version = VERSION
         self.dirty = False
         self.final = None
-        self.additional = None
         self.initial = None
-        self.binary_output = None
-        self.binary_input = None
-        self.args = {}
-        self._inputs = {}
-        self.data_dict = OrderedDict()
         self.input_data_dict = OrderedDict()
-        self.dexy_version = VERSION
-        self.artifact_class_source = inspect.getsource(self.__class__)
+        self.key = None
+        self.log = logging.getLogger()
         self.state = 'new'
-
-        # TODO Shouldn't hard code this. Always need artifacts_dir and can't store it in meta.
-        self.artifacts_dir = 'artifacts'
 
     def validate(self):
         print "calling validate for", self.key, "in state", self.state
         if self.state == 'new':
+            pass
+        elif self.state == 'setup':
             pass
         elif self.state == 'pending':
             pass
@@ -93,6 +98,7 @@ class Artifact(object):
         artifact = klass()
         artifact.hashstring = hashstring
         artifact.load()
+        return artifact
 
     def load(self):
         self.load_meta()
@@ -113,70 +119,81 @@ class Artifact(object):
     def is_abstract(self):
         return not hasattr(self, 'save_meta')
 
+    def setup_from_filter_class(self, filter_class):
+        if not hasattr(filter_class, 'SOURCE_CODE'):
+            filter_class.SOURCE_CODE = inspect.getsource(filter_class)
+
+        if filter_class.FINAL is not None:
+            self.final = filter_class.FINAL
+
+        self.filter_class = filter_class
+        self.filter_name = filter_class.__name__
+        self.filter_source = filter_class.SOURCE_CODE
+        self.filter_version = filter_class.version(self.log)
+
+    def setup_from_previous_artifact(self, previous_artifact):
+        assert self.filter_class
+        if self.final is None:
+            self.final = previous_artifact.final
+        self.binary_input = previous_artifact.binary_output
+        self.input_ext = previous_artifact.ext
+        self.input_data_dict = previous_artifact.data_dict
+
+        # The 'canonical' output of previous artifact
+        self.previous_artifact_filename = previous_artifact.filename()
+        self.previous_artifact_filepath = previous_artifact.filepath()
+        # The JSON output of previous artifact
+        if not previous_artifact.binary_output:
+            self.previous_cached_output_filepath = previous_artifact.cached_output_filepath()
+
+        self._inputs.update(previous_artifact.inputs())
+        # Need to loop over each artifact's inputs in case extra ones have been
+        # added anywhere.
+        for k, a in previous_artifact.inputs().items():
+            self._inputs.update(a.inputs())
+
+        if hasattr(self, 'next_filter_class'):
+            next_inputs = self.next_filter_class.INPUT_EXTENSIONS
+        else:
+            next_inputs = None
+
+        self.ext = self.filter_class.output_file_extension(
+                previous_artifact.ext,
+                self.name,
+                next_inputs
+                )
+        self.binary_output = self.filter_class.BINARY
+        self.state = 'setup'
+
     @classmethod
     def setup(klass, doc, artifact_key, filter_class = None, previous_artifact = None):
         """Set up a new artifact."""
         artifact = klass()
-        artifact.key = artifact_key
 
-        artifact.doc = doc
-        artifact.log = doc.log
-        artifact.controller = doc.controller
-        artifact.name = doc.name
+        artifact.args = doc.args
         artifact.artifacts_dir = doc.controller.artifacts_dir
-        artifact.args = artifact.doc.args
+        artifact.key = artifact_key
+        artifact.log = doc.log
+        artifact.name = doc.name
 
         if artifact.args.has_key('final'):
             artifact.final = artifact.args['final']
 
-        artifact._inputs = doc.input_artifacts()
-
         if filter_class:
-            artifact.filter_class = filter_class
-            artifact.filter_name = filter_class.__name__
-            artifact.filter_source = inspect.getsource(filter_class)
-            artifact.filter_version = filter_class.version(doc.log)
-            if filter_class.FINAL is not None:
-                artifact.final = filter_class.FINAL
+            artifact.setup_from_filter_class(filter_class)
 
-
-        if doc.next_filter_class:
-            artifact.next_filter_name = doc.next_filter_class.__name__
-
+        if doc.next_filter_class():
+            artifact.next_filter_name = doc.next_filter_class().__name__
+            artifact.next_filter_class = doc.next_filter_class()
 
         if previous_artifact:
-            # Should always have a filter class if we have a previous_artifact
-            if artifact.final is None:
-                artifact.final = previous_artifact.final
-            artifact.binary_input = previous_artifact.binary_output
-            artifact.input_ext = previous_artifact.ext
-            artifact.input_data_dict = previous_artifact.data_dict
-
-            # The 'canonical' output of previous artifact
-            artifact.previous_artifact_filename = previous_artifact.filename()
-            artifact.previous_artifact_filepath = previous_artifact.filepath()
-            # The JSON output of previous artifact
-            if not previous_artifact.binary_output:
-                artifact.previous_cached_output_filepath = previous_artifact.cached_output_filepath()
-
-            artifact._inputs.update(previous_artifact.inputs())
-            # Need to loop over each artifact's inputs in case extra ones have been
-            # added anywhere.
-            for k, a in previous_artifact.inputs().items():
-                artifact._inputs.update(a.inputs())
-
-            artifact.ext = filter_class.output_file_extension(
-                    previous_artifact.ext,
-                    doc.key(),
-                    doc.next_filter_class()
-                    )
-            artifact.binary_output = filter_class.BINARY
-            artifact.state = 'pending'
+            artifact.setup_from_previous_artifact(previous_artifact)
         else:
             # This is an initial artifact
             artifact.initial = True
+            artifact._inputs = doc.input_artifacts()
             artifact.ext = os.path.splitext(doc.name)[1]
-            artifact.binary_input = doc.ext in artifact.BINARY_EXTENSIONS
+            artifact.binary_input = (doc.ext in artifact.BINARY_EXTENSIONS)
             artifact.set_data(doc.initial_artifact_data())
             if doc.name.startswith("_"):
                 artifact.final = False
@@ -191,6 +208,9 @@ class Artifact(object):
     def run(self):
         self.start_time = time.time()
 
+        if not self.is_loaded():
+            self.load()
+
         if not self.is_complete():
             if not self.filter_class:
                 classes = [k for k in self.controller.handlers.values() if k.__name__ == self.filter_name]
@@ -201,12 +221,23 @@ class Artifact(object):
             # Set up instance of filter.
             filter_instance = self.filter_class()
             filter_instance.artifact = self
-            filter_instance.log = self.doc.log
+            filter_instance.log = self.log
 
             self.load_input()
             filter_instance.process()
-            self.state == 'complete'
+            # Some check code, maybe remove later.
+            if len(self.data_dict) > 0:
+                #have data dict in memory
+                pass
+            elif self.is_canonical_output_cached:
+                #have data in file on disk
+                pass
+            else:
+                raise Exception("data neither in memory nor on disk")
+            self.state = 'complete'
             self.save()
+        else:
+            print "cached art", self.key
 
         self.finish_time = time.time()
 
@@ -277,8 +308,8 @@ class Artifact(object):
         with the given key. Note that this does not currently allow
         differentiating between 2 calls to the same filter in a single document.
         """
-        if self.doc.args.has_key('args'):
-            args = self.doc.args['args']
+        if self.args.has_key('args'):
+            args = self.args['args']
             last_key = self.key.rpartition("|")[-1]
             if args.has_key(last_key):
                 return args[last_key]

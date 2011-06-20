@@ -3,6 +3,7 @@ from dexy.controller import Controller
 from dexy.version import VERSION
 from inspect import isclass
 from logging.handlers import RotatingFileHandler
+import cProfile
 import logging
 import os
 import re
@@ -135,6 +136,13 @@ def setup_option_parser():
         default=False,
         action='store_true',
         help='list all available filters (does not run dexy)'
+    )
+
+    add_option(parser,
+        '--profile',
+        default=False,
+        action='store_true',
+        help='run dexy with cProfile'
     )
 
     add_option(parser,
@@ -411,6 +419,12 @@ def setup_controller():
     controller.additional_excludes = additional_excludes
 
     return controller, args, log
+
+def run_dexy_command(profile=True):
+    if profile:
+        return cProfile.runctx("dexy_command()", globals(), locals(), "dexy.prof")
+    else:
+        return dexy_command()
 
 def dexy_command():
     controller, args, log = setup_controller()

@@ -6,13 +6,14 @@ from inspect import isclass
 from ordereddict import OrderedDict
 import fnmatch
 import glob
+import inspect
 import json
 import logging
 import os
 import re
 import sre_constants
 import sys
-import web
+#import web
 
 class Controller(object):
     def __init__(self):
@@ -108,6 +109,8 @@ class Controller(object):
                                 self.log.info("class %s is not available because %s not found" %
                                               (klass.__name__, klass.executable()))
                             else:
+                                #klass.SOURCE_CODE = inspect.getsource(klass)
+                                #print klass.__name__ + " source length " + str(len(klass.SOURCE_CODE))
                                 for a in klass.ALIASES:
                                     if handlers.has_key(a):
                                         raise Exception("duplicate key %s called from %s in %s" % (a, k, f))

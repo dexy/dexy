@@ -1,5 +1,6 @@
 import platform
 import subprocess
+import inspect
 
 class DexyFilter(object):
     """
@@ -94,7 +95,7 @@ class DexyFilter(object):
             return None
 
     @classmethod
-    def output_file_extension(klass, ext, key, next_filter_class):
+    def output_file_extension(klass, ext, key, next_input_extensions=None):
         out_ext = None
 
         if set([ext, ".*"]).isdisjoint(set(klass.INPUT_EXTENSIONS)):
@@ -105,17 +106,16 @@ class DexyFilter(object):
         if ".*" in klass.OUTPUT_EXTENSIONS:
             out_ext = ext
         else:
-            if next_filter_class and not ".*" in next_filter_class.INPUT_EXTENSIONS:
+            if next_input_extensions and not ".*" in next_input_extensions:
                 for e in klass.OUTPUT_EXTENSIONS:
-                    if e in next_filter_class.INPUT_EXTENSIONS:
+                    if e in next_input_extensions:
                         out_ext = e
 
                 if not out_ext:
                   err_str = "unable to find one of %s in %s for %s %s"
                   prev_out = ", ".join(klass.OUTPUT_EXTENSIONS)
-                  next_in = ", ".join(next_filter_class.INPUT_EXTENSIONS)
-                  next_filter_name = next_filter_class.__name__
-                  err_str = err_str % (prev_out, next_in, next_filter_name, key)
+                  next_in = ", ".join(next_input_extensions)
+                  err_str = err_str % (prev_out, next_in, key)
                   raise Exception(err_str)
             else:
                 out_ext = klass.OUTPUT_EXTENSIONS[0]
@@ -140,6 +140,8 @@ class DexyFilter(object):
             input_text = self.artifact.input_text()
             output_text = self.process_text(input_text)
             self.artifact.data_dict['1'] = output_text
+            print "completed process_text for", self.artifact.key
+            print len(self.artifact.data_dict)
             method_used = "process_text"
 
         if hasattr(self, "process_dict"):
