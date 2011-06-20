@@ -1,4 +1,3 @@
-from dexy.dexy_filter import DexyFilter
 from dexy.version import VERSION
 from ordereddict import OrderedDict
 import hashlib
@@ -202,14 +201,10 @@ class Artifact(object):
         if artifact.binary_output is None:
             artifact.set_binary_from_ext()
         artifact.set_hashstring()
-        artifact.save()
         return artifact
 
     def run(self):
         self.start_time = time.time()
-
-        if not self.is_loaded():
-            self.load()
 
         if not self.is_complete():
             if not self.filter_class:
