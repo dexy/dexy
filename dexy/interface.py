@@ -420,7 +420,7 @@ def setup_controller():
 
     return controller, args, log
 
-def run_dexy_command(profile=True):
+def run_dexy_command(profile=False):
     if profile:
         return cProfile.runctx("dexy_command()", globals(), locals(), "dexy.prof")
     else:
