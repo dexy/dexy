@@ -53,7 +53,7 @@ class ProcessStdoutHandler(DexyFilter):
         if proc.returncode is None:
             raise Exception("no return code, proc not finished!")
         elif proc.returncode != 0:
-            if self.artifact.args.ignore_errors:
+            if self.artifact.dexy_args.ignore_errors:
                 self.artifact.log.warn(stderr)
             else:
                 print stderr
@@ -121,12 +121,15 @@ class RedclothLatexHandler(ProcessStdoutHandler):
 
 class Rst2HtmlHandler(ProcessStdoutHandler):
     EXECUTABLE = 'rst2html.py'
+    VERSION = 'rst2html.py --version'
     INPUT_EXTENSIONS = [".rst", ".txt"]
     OUTPUT_EXTENSIONS = [".html"]
     ALIASES = ['rst2html']
+    FINAL = True
 
 class Rst2LatexHandler(ProcessStdoutHandler):
     EXECUTABLE = 'rst2latex.py'
+    VERSION = 'rst2latex.py --version'
     INPUT_EXTENSIONS = [".rst", ".txt"]
     OUTPUT_EXTENSIONS = [".tex"]
     ALIASES = ['rst2latex']
