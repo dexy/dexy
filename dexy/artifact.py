@@ -170,6 +170,7 @@ class Artifact(object):
         artifact = klass()
 
         artifact.args = doc.args
+        artifact.dexy_args = doc.controller.args
         artifact.artifacts_dir = doc.controller.artifacts_dir
         artifact.key = artifact_key
         artifact.log = doc.log
