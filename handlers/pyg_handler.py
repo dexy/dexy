@@ -32,10 +32,21 @@ class PygHandler(DexyFilter):
             lexer = TextLexer()
         else:
             lexer = get_lexer_for_filename(name)
+
+        if self.artifact.args.has_key('pygments'):
+            pygments_args = self.artifact.args['pygments']
+        else:
+            pygments_args = {}
+
+        formatter_args = {'lineanchors' : 'l'}
+        if pygments_args.has_key('formatter'):
+            formatter_args.update(pygments_args['formatter'])
+
         formatter = get_formatter_for_filename(self.artifact.filename(),
-                                               lineanchors='l')
+                **formatter_args)
+
         if self.artifact.ext in self.IMAGE_OUTPUT_EXTENSIONS:
-            self.artifact.binary = True
+            self.artifact.binary_output = True
             f = open(self.artifact.filepath(), 'w')
             f.write(highlight(self.artifact.input_text(), lexer, formatter))
             f.close()

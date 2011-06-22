@@ -111,7 +111,7 @@ class DexyFilter(object):
                         out_ext = e
 
                 if not out_ext:
-                  err_str = "unable to find one of %s in %s for %s %s"
+                  err_str = "unable to find one of %s in %s for %s"
                   prev_out = ", ".join(klass.OUTPUT_EXTENSIONS)
                   next_in = ", ".join(next_input_extensions)
                   err_str = err_str % (prev_out, next_in, key)

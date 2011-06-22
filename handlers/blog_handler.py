@@ -14,7 +14,7 @@ class BlogHandler(DexyFilter):
         f = open(self.BLOG_CONFIG_FILE, "r")
         self.blog_conf = json.load(f)
         f.close()
-    
+
     def load_post_conf(self):
         self.artifact.load_input_artifacts()
         matches = [k for k in self.artifact.input_artifacts_dict.keys() if k.endswith("post.json|dexy")]
@@ -25,7 +25,7 @@ class BlogHandler(DexyFilter):
         self.load_blog_conf()
         self.load_post_conf()
         api = self.initialize_api()
-        
+
         if self.post_conf.has_key('post-id'):
             post_id = self.post_conf['post-id']
             self.update_post(api, input_text, self.post_conf['post-id'])

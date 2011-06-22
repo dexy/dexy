@@ -67,11 +67,7 @@ class Document(object):
     def next_filter_class(self):
         alias = self.next_filter_alias()
         if alias:
-            return self.controller.handlers[alias]
-
-    def next_handler_class(self):
-        if not self.at_last_step():
-            return self.controller.handlers[self.next_handler_name()]
+            return self.controller.get_handler_for_alias(alias)
 
     def at_last_step(self):
         return (len(self.filters) == self.step)
@@ -208,12 +204,7 @@ class Document(object):
             artifact_key += "|%s" % f
             self.step += 1
 
-            if not self.controller.handlers.has_key(f):
-                raise Exception("""You requested filter alias '%s'
-                                but this is not available.""" % f)
-
-            FilterClass = self.controller.handlers[f]
-
+            FilterClass = self.controller.get_handler_for_alias(f)
             artifact = self.artifact_class.setup(self, artifact_key, FilterClass, previous_artifact)
 
             try:

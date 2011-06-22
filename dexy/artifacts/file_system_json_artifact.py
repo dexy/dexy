@@ -16,7 +16,7 @@ class FileSystemJsonArtifact(Artifact):
 
     def save_meta(self):
         m = {}
-        attrs_to_persist = set(self.META_ATTRS + self.HASH_WHITELIST) - {'input_data_dict', 'inputs'}
+        attrs_to_persist = set(self.META_ATTRS + self.HASH_WHITELIST) - set(['input_data_dict', 'inputs'])
         for a in attrs_to_persist:
             if hasattr(self, a):
                 v = getattr(self, a)
@@ -104,9 +104,10 @@ class FileSystemJsonArtifact(Artifact):
             print "we will be overwriting existing files"
 
         if not self.binary_output:
-            if len(self.data_dict) == 0:
+            if not self.data_dict or len(self.data_dict) == 0:
                 # Our filter has written directly to an output file
                 # We need to load this into memory first
+                self.data_dict = OrderedDict()
                 f = open(self.filepath(), 'r')
                 data = f.read()
                 f.close()

@@ -17,6 +17,18 @@ class PdfFormatHandler(DexyFilter):
     OUTPUT_EXTENSIONS = [".pdf"]
     ALIASES = ['p', 'forcepdf']
 
+class ForceJpgFormatHandler(DexyFilter):
+    """
+    Does nothing, just forces previous filter to output .png extension if able.
+    """
+    INPUT_EXTENSIONS = [".jpg"]
+    OUTPUT_EXTENSIONS = [".jpg"]
+    ALIASES = ['jn', 'forcejpg']
+    BINARY = True
+
+    def process(self):
+        shutil.copyfile(self.artifact.previous_artifact_filepath, self.artifact.filepath())
+
 class ForcePngFormatHandler(DexyFilter):
     """
     Does nothing, just forces previous filter to output .png extension if able.

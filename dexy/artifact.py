@@ -141,6 +141,7 @@ class Artifact(object):
         # The 'canonical' output of previous artifact
         self.previous_artifact_filename = previous_artifact.filename()
         self.previous_artifact_filepath = previous_artifact.filepath()
+        self.previous_canonical_filename = previous_artifact.canonical_filename()
         # The JSON output of previous artifact
         if not previous_artifact.binary_output:
             self.previous_cached_output_filepath = previous_artifact.cached_output_filepath()
@@ -222,7 +223,7 @@ class Artifact(object):
             self.load_input()
             filter_instance.process()
             # Some check code, maybe remove later.
-            if len(self.data_dict) > 0:
+            if self.data_dict and len(self.data_dict) > 0:
                 #have data dict in memory
                 pass
             elif self.is_canonical_output_cached:

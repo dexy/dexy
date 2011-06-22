@@ -17,6 +17,7 @@ import sys
 class Controller(object):
     def __init__(self):
         self.config = {}
+        self.args = {}
         self.install_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         if not hasattr(self, 'log'):
             self.log = logging.getLogger('dexy')
@@ -119,7 +120,16 @@ class Controller(object):
         return handlers
 
     def register_handlers(self):
-        self.handlers = self.find_handlers()
+        self._handlers = self.find_handlers()
+
+    def get_handler_for_alias(self, alias):
+        """Given an alias, return the corresponding handler."""
+        if self._handlers.has_key(alias):
+            return self._handlers[alias]
+        elif alias.startswith("alias-") or alias.startswith("al-") or alias in ['al', 'alias']:
+            self._handlers[alias] = DexyFilter
+        else:
+            raise Exception("You requested filter alias '%s' but this is not available." % alias)
 
     def register_reporters(self):
         self.reporters = self.find_reporters()
