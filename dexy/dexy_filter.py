@@ -1,5 +1,6 @@
 import platform
 import subprocess
+from dexy.utils import command_exists
 
 class DexyFilter(object):
     """
@@ -38,7 +39,6 @@ class DexyFilter(object):
         for exe in klass.EXECUTABLES:
             if klass.executable_present(exe):
                 return exe
-                print "found", exe
                 break
         return None
 
@@ -49,17 +49,10 @@ class DexyFilter(object):
             exe = klass.executable()
 
         if exe:
-            cmd = exe.split()[0]
-            which = "which %s" % cmd
-            proc = subprocess.Popen(which, shell=True,
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE)
-            proc.communicate()
-            if proc.returncode == 0:
-                return True
-            else:
-                return False
+            cmd = exe.split()[0] # remove any --arguments
+            return command_exists(cmd)
         else:
+            # why true? because there's nothing to run?
             return True
 
     @classmethod

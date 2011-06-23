@@ -1,6 +1,7 @@
 from BeautifulSoup import BeautifulSoup
 from ansi2html import Ansi2HTMLConverter
 from pynliner import Pynliner
+import os
 import re
 
 def ansi_output_to_html(ansi_text, log=None):
@@ -49,3 +50,26 @@ def print_string_diff(str1, str2):
             flag = "<---"
             msg = msg + "\n%5d:  \t \t\t%s %s" % (i, ord(c1), flag)
     return msg
+
+# Based on http://nedbatchelder.com/code/utilities/wh.py
+def command_exists(cmd_name):
+    path = os.environ["PATH"]
+    path = filter(None, path.split(":"))
+
+    if os.environ.has_key("PATHEXT"):
+        # Present on windows, returns e.g. '.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC'
+        pathext = os.environ["PATHEXT"]
+        pathext = filter(None, pathext.split(";"))
+    else:
+        # Not windows, look for exact command name.
+        pathext = [""]
+
+    cmd_found = False
+    for d in path:
+        for e in pathext:
+            filepath = os.path.join(d, cmd_name + e)
+            if os.path.exists(filepath):
+                cmd_found = True
+                break
+    return cmd_found
+
