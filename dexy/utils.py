@@ -59,8 +59,6 @@ def command_exists(cmd_name):
     else:
         path = filter(None, path.split(":"))
 
-    print path
-
     if os.environ.has_key("PATHEXT"):
         # Present on windows, returns e.g. '.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC'
         pathext = os.environ["PATHEXT"]
@@ -73,9 +71,7 @@ def command_exists(cmd_name):
     for d in path:
         for e in pathext:
             filepath = os.path.join(d, cmd_name + e)
-            print "looking in", filepath
             if os.path.exists(filepath):
-                print "found!"
                 cmd_found = True
                 break
     return cmd_found
