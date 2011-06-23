@@ -8,6 +8,7 @@ class LatexHandler(DexyFilter):
     """
     INPUT_EXTENSIONS = [".tex", ".txt"]
     OUTPUT_EXTENSIONS = [".pdf", ".png"]
+    EXECUTABLES = ['pdflatex', 'latex']
     ALIASES = ['latex']
     BINARY = True
     FINAL = True
@@ -22,49 +23,36 @@ class LatexHandler(DexyFilter):
         else:
             env = None
 
-        # Detect which LaTeX compiler we have...
-        latex_bin = None
-        for e in ["pdflatex", "latex"]:
-            which_cmd = ['which', e]
-            if subprocess.call(which_cmd,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0:
-                latex_bin = e
-                self.log.info("%s LaTeX command found" % e)
-                break
-            else:
-                self.log.info("%s LaTeX command not found" % e)
-                latex_bin = None
+        latex_command = "%s -interaction=batchmode %s" % (self.__class__.executable(), latex_filename)
+        self.log.info(latex_command)
 
-        if not latex_bin:
-            raise Exception("no executable found for latex")
+        if self.__class__.executable_present("bibtex"):
+            bibtex_command = "bibtex %s" % (latex_filename)
+        else:
+            bibtex_command = None
 
-        command = "%s -interaction=batchmode %s" % (e, latex_filename)
-        self.log.info(command)
+        self.artifact.stdout = ""
+        def run_cmd(command):
+            proc = subprocess.Popen(command, shell=True,
+                                    cwd=self.artifact.artifacts_dir,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.STDOUT,
+                                    env=env)
 
-        proc = subprocess.Popen(command, shell=True,
-                                cwd=self.artifact.artifacts_dir,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT,
-                                env=env)
+            stdout, stderr = proc.communicate()
+            self.artifact.stdout += stdout
+            if proc.returncode > 1:
+                raise Exception("latex error, look for information in %s" %
+                                latex_filename.replace(".tex", ".log"))
 
-        stdout, stderr = proc.communicate()
-        self.artifact.stdout = stdout
-        if proc.returncode > 1:
-            raise Exception("latex error, look for information in %s" %
-                            latex_filename.replace(".tex", ".log"))
 
-        # Run LaTeX again for TOC numbering etc.
-        proc = subprocess.Popen(command, shell=True,
-                                cwd=self.artifact.artifacts_dir,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT,
-                                env=env)
+        runbibtex = bibtex_command # TODO allow opting out of running bibtex in args
+        if runbibtex:
+            run_cmd(latex_command) #generate aux
+            run_cmd(bibtex_command) #generate bbl
+        run_cmd(latex_command) #first run
+        run_cmd(latex_command) #second run - fix references
 
-        stdout, stderr = proc.communicate()
-        self.artifact.stdout += stdout
-        if proc.returncode > 1:
-            raise Exception("latex error, look for information in %s" %
-                            latex_filename.replace(".tex", ".log"))
 
 class EmbedFonts(DexyFilter):
     INPUT_EXTENSIONS = [".pdf"]
