@@ -238,7 +238,7 @@ class Artifact(object):
             self.state = 'complete'
             self.save()
         else:
-            print "cached art", self.key
+            self.log.debug("using cached art %s" % self.key)
 
         self.finish_time = time.time()
 
