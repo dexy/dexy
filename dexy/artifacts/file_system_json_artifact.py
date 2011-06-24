@@ -1,4 +1,5 @@
 from dexy.artifact import Artifact
+from dexy.controller import Controller
 from ordereddict import OrderedDict
 import json
 import os
@@ -45,6 +46,12 @@ class FileSystemJsonArtifact(Artifact):
 
         for k, v in m.items():
             setattr(self, k, v)
+
+        # We only store filter name, not filter class, need to retrieve class from name
+        if hasattr(self, "filter_name") and not hasattr(self, "filter_class"):
+            controller = Controller()
+            filters = controller.find_handlers()
+            self.filter_class = [k for n,k in filters.items() if k.__name__ == self.filter_name][0]
 
     # Input
     def load_input(self):
