@@ -13,24 +13,24 @@
 		.sidebar {
 			font-size: 11px;
 		}
-		
-		p.intro { 
+
+		p.intro {
 			font-style: bold;
-		} 
-		
+		}
+
 		.content .padding {
 			padding: 0 36px 0 0;
 		}
-		
+
 		.item .padding {
 			padding: 0 12px 0 0;
 		}
-		
+
 		.list-item h2 {
 			margin: 0;
 			line-height: 27px;
 		}
-		
+
 	</style>
 </head>
 <body>
@@ -44,7 +44,14 @@
 		<div class="padding">
 			<h1>Dexy Run Report</h1>
 			<h2>Results of your Run</h2>
-      <p class="intro">Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+            <p class="intro">Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+
+            <h3>List of Documents</h3>
+            <ul>
+    {% for doc in docs %}
+    <li><a href="#{{ doc.key() }}">{{ doc.key() }}</a></li>
+    {% endfor %}
+</ul>
 
       <p>Controller path: {{ controller.path }}</p>
 
@@ -53,6 +60,7 @@
       {{ dexy_config }}
 
       <h1>Documents</h1>
+
       {% for doc in docs %}
       <hr />
 
