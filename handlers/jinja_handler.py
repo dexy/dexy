@@ -81,6 +81,7 @@ class JinjaHandler(DexyFilter):
     def process_text(self, input_text):
         document_data = {}
         raw_data = {}
+        local_inputs = {}
 
         notextile = self.artifact.args.has_key('notextile') and self.artifact.args['notextile']
 
@@ -98,6 +99,8 @@ class JinjaHandler(DexyFilter):
                 fn = a.canonical_filename()
                 keys.append(os.path.basename(fn))
                 keys.append(os.path.splitext(fn)[0]) # TODO deal with collisions
+                if os.path.dirname(key):
+                    local_inputs[key] = a
 
             # Do special handling of data
             if a.ext == '.json':
@@ -161,8 +164,11 @@ class JinjaHandler(DexyFilter):
             's' : self.artifact,
             'f' : self,
             'a' : self.artifact._inputs,
+            'ak' : sorted(self.artifact._inputs.keys()),
             'd' : document_data,
             'dk' : sorted(document_data.keys()),
+            'l' : local_inputs,
+            'lk' : sorted(local_inputs.keys()),
             'r' : raw_data
         }
 
@@ -177,6 +183,11 @@ class JinjaHandler(DexyFilter):
             result = str(template.render(template_hash))
         except jinja2.exceptions.TemplateSyntaxError as e:
             print "jinja error occurred processing line", e.lineno
+            print self.artifact.previous_artifact_filename
+            raise e
+        except jinja2.exceptions.UndefinedError as e:
+            print "jinja UndefinedError error occurred"
+            print self.artifact.previous_artifact_filename
             raise e
         except Exception as e:
             print e.__class__.__name__
