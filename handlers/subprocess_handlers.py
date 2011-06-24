@@ -63,7 +63,7 @@ class LatexHandler(DexyFilter):
             elif proc.returncode > 0:
                 print """A non-critical latex error has occurred running %s,
                 status code returned was %s, look for information in %s""" % (
-                self.artifact.key(), proc.returncode,
+                self.artifact.key, proc.returncode,
                 latex_filename.replace(".tex", ".log"))
 
 
