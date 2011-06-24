@@ -61,6 +61,7 @@ class Artifact(object):
         self.additional = None
         self.args = {}
         self.artifact_class_source = self.__class__.SOURCE_CODE
+        # TODO need artifact.py and also subclass source.
         self.artifacts_dir = 'artifacts' # TODO don't hard code
         self.binary_input = None
         self.binary_output = None
@@ -207,6 +208,9 @@ class Artifact(object):
 
     def run(self):
         self.start_time = time.time()
+
+        if not self.is_complete() and self.is_output_cached():
+            self.load()
 
         if not self.is_complete():
             if not self.filter_class:
