@@ -179,4 +179,18 @@ class JavadocsJsonFilter(DexyFilter):
                     j['packages'][p]['classes'][k]['methods'][m]['source-html'] = str(highlight(source, lexer, html_formatter))
                     j['packages'][p]['classes'][k]['methods'][m]['source-latex'] = str(highlight(source, lexer, latex_formatter))
 
+                for c in j['packages'][p]['classes'][k]['constructors'].keys():
+                    source = j['packages'][p]['classes'][k]['constructors'][c]['source']
+                    if not source:
+                        source = ""
+
+                    # TODO - try running comment text through Textile
+                    # interpreter for HTML and LaTeX options
+                    comment = j['packages'][p]['classes'][k]['constructors'][c]['comment-text']
+
+                    j['packages'][p]['classes'][k]['constructors'][c]['comment'] = comment
+                    j['packages'][p]['classes'][k]['constructors'][c]['source'] = source
+                    j['packages'][p]['classes'][k]['constructors'][c]['source-html'] = str(highlight(source, lexer, html_formatter))
+                    j['packages'][p]['classes'][k]['constructors'][c]['source-latex'] = str(highlight(source, lexer, latex_formatter))
+
         return json.dumps(j)
