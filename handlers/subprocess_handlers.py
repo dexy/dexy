@@ -1,6 +1,22 @@
 from dexy.dexy_filter import DexyFilter
 import os
+import re
 import subprocess
+
+class BibHandler(DexyFilter):
+    INPUT_EXTENSIONS = [".tex"]
+    OUTPUT_EXTENSIONS = [".tex"]
+    ALIASES = ['bib']
+
+    """Filter which replaces a hard-coded bibtex file with a .bib file specified as an input."""
+    def process_text(self, input_text):
+        for k, a in self.artifact.inputs().items():
+            if a.filename().endswith("bib"):
+                bib_file_basename = os.path.splitext(os.path.basename(a.name))[0]
+
+                input_text = re.sub("bibliography{[^}]+}", "bibliography{%s}" % a.filename(), input_text)
+
+        return input_text
 
 class LatexHandler(DexyFilter):
     """
@@ -24,15 +40,15 @@ class LatexHandler(DexyFilter):
             env = None
 
         latex_command = "%s -interaction=batchmode %s" % (self.__class__.executable(), latex_filename)
-        self.log.info(latex_command)
 
         if self.__class__.executable_present("bibtex"):
-            bibtex_command = "bibtex %s" % (latex_filename)
+            bibtex_command = "bibtex %s" % os.path.splitext(self.artifact.filename())[0]
         else:
             bibtex_command = None
 
         self.artifact.stdout = ""
         def run_cmd(command):
+            self.log.info("running: %s" % command)
             proc = subprocess.Popen(command, shell=True,
                                     cwd=self.artifact.artifacts_dir,
                                     stdout=subprocess.PIPE,
@@ -41,9 +57,14 @@ class LatexHandler(DexyFilter):
 
             stdout, stderr = proc.communicate()
             self.artifact.stdout += stdout
-            if proc.returncode > 1:
+            if proc.returncode > 2: # Set at 2 for now as this is highest I've hit, better to detect whether PDF has been generated?
                 raise Exception("latex error, look for information in %s" %
                                 latex_filename.replace(".tex", ".log"))
+            elif proc.returncode > 0:
+                print """A non-critical latex error has occurred running %s,
+                status code returned was %s, look for information in %s""" % (
+                self.artifact.key(), proc.returncode,
+                latex_filename.replace(".tex", ".log"))
 
 
         runbibtex = bibtex_command # TODO allow opting out of running bibtex in args
