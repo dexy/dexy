@@ -54,6 +54,8 @@ class JinjaHandler(DexyFilter):
 """ % (text, self.clippy_helper(text))
 
     def clippy_helper(self, text):
+        if not text or len(text) == 0:
+            raise Exception("You passed blank text to clippy helper!")
         quoted_text = urllib.quote(text)
         return """<object classid="clsid:d27cdb6e-ae6d-11cf-96b8-444553540000"
                 width="110"
