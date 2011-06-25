@@ -150,7 +150,10 @@ class Controller(object):
                 except ValueError as e:
                     raise Exception("""Your config file %s has invalid JSON. Details: %s""" %
                                     (config_filename, e.message))
-                config_dict.update(json_dict)
+                if json_dict.has_key("$reset"):
+                    config_dict = json_dict
+                else:
+                    config_dict.update(json_dict)
         self.config[path_to_dir] = config_dict
 
     def process_config(self):

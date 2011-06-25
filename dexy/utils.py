@@ -1,10 +1,12 @@
 from BeautifulSoup import BeautifulSoup
 from ansi2html import Ansi2HTMLConverter
 from pynliner import Pynliner
+import StringIO
+import logging
 import os
 import re
 
-def ansi_output_to_html(ansi_text, log=None):
+def ansi_output_to_html(ansi_text):
     try:
         converter = Ansi2HTMLConverter()
         html = converter.convert(ansi_text)
@@ -14,11 +16,13 @@ def ansi_output_to_html(ansi_text, log=None):
             raise Exception("Your installation of ansi2html is missing some template files, please try 'pip install --upgrade ansi2html' or install from source.")
         raise e
 
+    log = logging.getLogger("pynliner")
+    log.setLevel(logging.ERROR) # TODO Allow this to be changed.
+    logstream = StringIO.StringIO()
+    handler = logging.StreamHandler(logstream)
+    log.addHandler(handler)
     try:
         p = Pynliner(log)
-        if not log: # put after call to Pynliner() so it doesn't print in case of error
-            print """a custom log has not been passed to dexy.utils.ansi_output_to_html,
-            harmless but annoying CSS errors will appear on the console."""
     except TypeError:
         print "========== Start of harmless but annoying CSS errors..."
         print "You can install pynliner from source (https://github.com/rennat/pynliner.git) or version > 0.2.1 to get rid of these"
