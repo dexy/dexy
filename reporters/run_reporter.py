@@ -29,7 +29,7 @@ class RunReporter(Reporter):
                 doc.args_html = highlight(json.dumps(doc.args, sort_keys=True, indent=4), js_lexer, formatter)
             for a in doc.artifacts:
                 if hasattr(a, 'stdout'):
-                    html = ansi_output_to_html(a.stdout, self.controller.log)
+                    html = ansi_output_to_html(a.stdout)
                     a.stdout_html = """stdout:<br />%s""" % html
 
         env_data = {}
@@ -38,6 +38,7 @@ class RunReporter(Reporter):
 
         env_data['dexy_config'] = html
         env_data['docs'] = self.controller.docs
+        env_data['docs_sorted'] = sorted([d.key() for d in self.controller.docs])
         env_data['controller'] = self.controller
 
         env = Environment()

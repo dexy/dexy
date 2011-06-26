@@ -48,8 +48,8 @@
 
             <h3>List of Documents</h3>
             <ul>
-    {% for doc in docs %}
-    <li><a href="#{{ doc.key() }}">{{ doc.key() }}</a></li>
+    {% for doc in docs_sorted %}
+    <li><a href="#{{ doc }}">{{ doc }}</a></li>
     {% endfor %}
 </ul>
 
