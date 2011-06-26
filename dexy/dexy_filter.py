@@ -113,6 +113,17 @@ class DexyFilter(object):
                 out_ext = klass.OUTPUT_EXTENSIONS[0]
         return out_ext
 
+    def handle_subprocess_proc_return(self, returncode, stderr):
+        if returncode is None:
+            raise Exception("no return code, proc not finished!")
+        elif returncode != 0:
+            if self.artifact.dexy_args.ignore_errors:
+                self.artifact.log.warn(stderr)
+            else:
+                print stderr
+                raise Exception("""proc returned nonzero status code! if you don't
+want dexy to raise errors on failed scripts then pass the --ignore-errors option""")
+
     def process(self):
         """This is the method that does the "work" of the handler, that is
         filtering the input and producing output. This method can be overridden

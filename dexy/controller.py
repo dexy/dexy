@@ -139,6 +139,7 @@ class Controller(object):
         relative_path = os.path.relpath(path_to_dir, rel_to)
         path_elements = relative_path.split(os.sep)
         config_dict = {}
+        global_args = {}
         for i in range(0,len(path_elements)+1):
             config_file_path_elements = [rel_to] + path_elements[0:i] + [self.config_file]
             config_filename = os.path.join(*config_file_path_elements)
@@ -154,6 +155,10 @@ class Controller(object):
                     config_dict = json_dict
                 else:
                     config_dict.update(json_dict)
+
+                if json_dict.has_key("$globals"):
+                    global_args.update(json_dict["$globals"])
+                config_dict['$globals'] = global_args
         self.config[path_to_dir] = config_dict
 
     def process_config(self):
@@ -316,8 +321,21 @@ re.compile: %s""" % (args['except'], e))
         self.log.debug("About to process config\n")
         self.log.debug(self.config)
         for path, config in self.config.items():
+            ### @export "features-global-args-1"
+            if config.has_key("$globals"):
+                global_args = config["$globals"]
+            else:
+                global_args = {}
+
             for k, v in config.items():
-                parse_doc(path, k, v)
+                local_args = global_args.copy()
+                local_args.update(v)
+                for kg in global_args.keys():
+                    if local_args.has_key(kg):
+                        if isinstance(local_args[kg], dict):
+                            local_args[kg].update(global_args[kg])
+                parse_doc(path, k, local_args)
+            ### @end
 
         # Determine dependencies
         for doc in self.members.values():
