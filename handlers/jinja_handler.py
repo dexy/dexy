@@ -83,7 +83,11 @@ class JinjaHandler(DexyFilter):
     def process_text(self, input_text):
         document_data = {}
         raw_data = {}
-        local_inputs = {}
+        local_inputs = {} # docs in the same directory
+        child_inputs = {} # inputs beneath this doc
+
+        artifact_dir = os.path.join(os.curdir, os.path.dirname(self.artifact.name))
+        subdirectories = [d for d in os.listdir(artifact_dir) if os.path.isdir(os.path.join(artifact_dir, d))]
 
         notextile = self.artifact.args.has_key('notextile') and self.artifact.args['notextile']
 
@@ -95,14 +99,21 @@ class JinjaHandler(DexyFilter):
             # Full path keys
             keys = [key, a.canonical_filename()]
 
+
+            artifact_dir = os.path.dirname(self.artifact.name)
+            key_dir = os.path.dirname(key)
             # Shortcut keys if in common directory
-            if os.path.dirname(self.artifact.name) == os.path.dirname(key) or not os.path.dirname(key):
+            if artifact_dir == key_dir or not key_dir:
                 keys.append(os.path.basename(key))
                 fn = a.canonical_filename()
                 keys.append(os.path.basename(fn))
                 keys.append(os.path.splitext(fn)[0]) # TODO deal with collisions
-                if os.path.dirname(key):
+                if key_dir or not artifact_dir:
+                    # This is also a local input.
                     local_inputs[key] = a
+
+            elif key_dir and artifact_dir and os.path.relpath(artifact_dir, key_dir) in ["..", "../.."]:
+                child_inputs[key] = a
 
             # Do special handling of data
             if a.ext == '.json':
@@ -166,12 +177,15 @@ class JinjaHandler(DexyFilter):
             's' : self.artifact,
             'f' : self,
             'a' : self.artifact._inputs,
+            'c' : child_inputs,
+            'ck' : sorted(child_inputs.keys()),
             'ak' : sorted(self.artifact._inputs.keys()),
             'd' : document_data,
             'dk' : sorted(document_data.keys()),
             'l' : local_inputs,
             'lk' : sorted(local_inputs.keys()),
-            'r' : raw_data
+            'r' : raw_data,
+            'subdirectories' : subdirectories
         }
 
         if self.artifact.args.has_key('jinjavars'):
