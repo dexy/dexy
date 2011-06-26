@@ -50,15 +50,7 @@ class ProcessStdoutHandler(DexyFilter):
         self.artifact.data_dict['1'] = stdout
         self.artifact.stdout = stderr
 
-        if proc.returncode is None:
-            raise Exception("no return code, proc not finished!")
-        elif proc.returncode != 0:
-            if self.artifact.dexy_args.ignore_errors:
-                self.artifact.log.warn(stderr)
-            else:
-                print stderr
-                raise Exception("""proc returned nonzero status code! if you don't
-want dexy to raise errors on failed scripts then pass the --ignore-errors option""")
+        self.handle_subprocess_proc_return(proc.returncode, stderr)
 
 class BashHandler(ProcessStdoutHandler):
     """

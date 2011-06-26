@@ -20,6 +20,8 @@ class AsciidocHandler(DexyFilter):
         extension = self.artifact.ext
 
         if extension == ".html":
+            # TODO check here if we are on asciidoc 8.6.5,
+            # any lower will throw an error if we try to use html5
             backend = "html5"
         elif extension == ".xml":
             backend = "docbook45"
@@ -44,6 +46,5 @@ class AsciidocHandler(DexyFilter):
         stdout, stderr = proc.communicate()
         self.artifact.stdout = stdout
 
-        f = open(self.artifact.filepath(), "r")
-        self.artifact.data_dict['1'] = f.read()
-        f.close()
+        self.handle_subprocess_proc_return(proc.returncode, stderr)
+
