@@ -13,6 +13,7 @@ class Artifact(object):
         'binary_input',
         'binary_output',
         'key',
+        'name',
         'ext',
         'stdout',
         'final',
@@ -316,16 +317,10 @@ class Artifact(object):
                 return args[last_key]
 
     def input_text(self):
-        text = ""
-        for k, v in self.input_data_dict.items():
-            text += v
-        return text
+        return "".join([v for k, v in self.input_data_dict.items()])
 
     def output_text(self):
-        text = ""
-        for k, v in self.data_dict.items():
-            text += v
-        return text
+        return "".join([v for k, v in self.data_dict.items()])
 
     def use_canonical_filename(self):
         """Returns the canonical filename after saving contents under this name

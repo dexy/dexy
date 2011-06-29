@@ -33,8 +33,8 @@ class WordPressHandler(BlogHandler):
     def new_post(self, api, input_text):
         post_id = api.metaWeblog.newPost(
             self.BLOG_ID,
-            self.blog_conf["user"],
-            self.blog_conf["pass"],
+            self.username,
+            self.password,
             self.content_dict(api, input_text),
             self.post_conf['publish']
         )
@@ -43,8 +43,8 @@ class WordPressHandler(BlogHandler):
     def update_post(self, api, input_text, post_id):
         api.metaWeblog.editPost(
             post_id,
-            self.blog_conf["user"],
-            self.blog_conf["pass"],
+            self.username,
+            self.password,
             self.content_dict(api, input_text),
             self.post_conf['publish']
         )
@@ -70,8 +70,8 @@ class WordPressHandler(BlogHandler):
                     }
                     upload_result = api.wp.uploadFile(
                         self.BLOG_ID,
-                        self.blog_conf["user"],
-                        self.blog_conf["pass"],
+                        self.username,
+                        self.password,
                         upload_file
                     )
                     url = upload_result['url']
