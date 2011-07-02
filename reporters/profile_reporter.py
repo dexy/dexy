@@ -1,4 +1,5 @@
 from dexy.reporter import Reporter
+import cgi # for escape
 import datetime
 import dexy.aplotter as aplotter
 import os
@@ -57,6 +58,7 @@ class ProfileReporter(Reporter):
             p = pstats.Stats('dexy.prof')
 
             p.sort_stats('cumulative')
+
             for i, x in enumerate(p.fcn_list):
                 filename, lineno, functionname = x
                 ncalls, primcalls, tottime, cumtime, _ = p.stats[x]
@@ -76,15 +78,23 @@ class ProfileReporter(Reporter):
                     )
 
                 if i < 15:
+                    # TODO use a HTML template instead of this.
                     f.write("<h2>%s</h2>\n" % functionname)
+                    f.write("<ul>\n")
+                    f.write("<li>%s : %s</li>\n" % (filename, lineno))
+                    f.write("<li>%s</li>\n" % cgi.escape(functionname))
+                    f.write("<li>Function called %s times (%s primitive calls).</li>\n" % (ncalls, primcalls) )
+                    f.write("<li>Total time in function %0.4f (%0.4f per call)</li>\n" % (tottime, totpercall) )
+                    f.write("<li>Cumulative time in function %0.4f (%0.4f per call)</li>\n" % (cumtime, cumpercall) )
+                    f.write("</ul>\n")
 
                     hist = []
-                    f.write("<table style=\"font-family: Courier;\">\n<tr><th>timestamp</th><th>cumtime</th></tr>\n")
+                    f.write("<table style=\"font-family: Courier; width: 400px;\">\n<tr><th>timestamp</th><th>cumtime</th></tr>\n")
                     for row in db.select("profiles",
                             where=("filename=\"%s\" AND functionname=\"%s\"" % (filename, functionname)),
                             order=("batchtimestamp ASC")
                             ):
-                        f.write("<tr><td>%s</td><td>%s</td></tr>\n" % (row.batchtimestamp, row.cumtime))
+                        f.write("<tr><td>%s</td><td style=\"text-align:right;\">%0.4f</td></tr>\n" % (row.batchtimestamp, row.cumtime))
                         hist.append(row.cumtime)
 
                     f.write("</table>\n")
