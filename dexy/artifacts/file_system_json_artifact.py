@@ -8,6 +8,8 @@ class FileSystemJsonArtifact(Artifact):
     """Artifact which persists data by writing to the file system (default type
     of Artifact)"""
 
+    FILTERS = Controller().find_filters()
+
     # Metadata
     def meta_filename(self):
         return "%s-meta.json" % (self.hashstring)
@@ -49,9 +51,7 @@ class FileSystemJsonArtifact(Artifact):
 
         # We only store filter name, not filter class, need to retrieve class from name
         if hasattr(self, "filter_name") and not hasattr(self, "filter_class"):
-            controller = Controller()
-            filters = controller.find_handlers()
-            self.filter_class = [k for n,k in filters.iteritems() if k.__name__ == self.filter_name][0]
+            self.filter_class = [k for n,k in self.FILTERS.iteritems() if k.__name__ == self.filter_name][0]
 
     # Input
     def load_input(self):

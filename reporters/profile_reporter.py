@@ -50,9 +50,15 @@ class ProfileReporter(Reporter):
 
         ts = datetime.datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
         report_dir = os.path.join(self.REPORTS_DIR, "profile-%s" % ts)
+        # Avoid collisions if we run Dexy more than once per second...
+        i = 65
+        while os.path.exists(report_dir):
+            ts = "%s-%s" % (ts, chr(i))
+            i += 1
+            report_dir = os.path.join(self.REPORTS_DIR, "profile-%s" % ts)
         os.mkdir(report_dir)
 
-        f = open(os.path.join(report_dir, "profile.html"), "w")
+        f = open(os.path.join(report_dir, "index.html"), "w")
 
         if self.controller.args.profile:
             p = pstats.Stats('dexy.prof')
@@ -77,9 +83,10 @@ class ProfileReporter(Reporter):
                     cumtime=cumtime
                     )
 
-                if i < 15:
+                if i < 50:
                     # TODO use a HTML template instead of this.
-                    f.write("<h2>%s</h2>\n" % functionname)
+                    short_filename = os.path.basename(filename)
+                    f.write("<h2>%s) %s:%s</h2>\n" % (i+1, cgi.escape(short_filename), cgi.escape(functionname)))
                     f.write("<ul>\n")
                     f.write("<li>%s : %s</li>\n" % (filename, lineno))
                     f.write("<li>%s</li>\n" % cgi.escape(functionname))

@@ -375,9 +375,9 @@ def setup_option_parser():
     if args.filters:
         args.run_dexy = False
         controller = Controller()
-        handlers = controller.find_handlers()
-        for k in sorted(handlers.keys()):
-            klass = handlers[k]
+        filters = controller.find_filters()
+        for k in sorted(filters.keys()):
+            klass = filters[k]
             print
             print k, ":", klass.__name__
             if klass.executable():

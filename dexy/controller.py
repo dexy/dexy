@@ -58,7 +58,7 @@ class Controller(object):
         self.reports_dirs = [r.REPORTS_DIR for r in reporters]
         return reporters
 
-    def find_handlers(self):
+    def find_filters(self):
         sys.path.append(os.curdir)
 
         handler_dirs = []
@@ -117,15 +117,15 @@ class Controller(object):
             self.log.info("...finished loading filters from %s" % d)
         return handlers
 
-    def register_handlers(self):
-        self._handlers = self.find_handlers()
+    def register_filters(self):
+        self._filters = self.find_filters()
 
     def get_handler_for_alias(self, alias):
         """Given an alias, return the corresponding handler."""
-        if self._handlers.has_key(alias):
-            return self._handlers[alias]
+        if self._filters.has_key(alias):
+            return self._filters[alias]
         elif alias.startswith("alias-") or alias.startswith("al-") or alias in ['al', 'alias']:
-            self._handlers[alias] = DexyFilter
+            self._filters[alias] = DexyFilter
         else:
             raise Exception("You requested filter alias '%s' but this is not available." % alias)
 
@@ -364,7 +364,7 @@ re.compile: %s""" % (args['except'], e))
     def setup_and_run(self):
         if not hasattr(self, 'config_file'):
             self.config_file = '.dexy'
-        self.register_handlers()
+        self.register_filters()
         self.register_reporters()
         self.process_config()
         self.docs = self.run()
