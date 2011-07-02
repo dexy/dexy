@@ -420,12 +420,6 @@ def setup_controller():
 
     return controller, args, log
 
-def run_dexy_command(profile=True):
-    if profile:
-        return cProfile.runctx("dexy_command()", globals(), locals(), "dexy.prof")
-    else:
-        return dexy_command()
-
 def dexy_command():
     controller, args, log = setup_controller()
 
@@ -499,7 +493,11 @@ def dexy_command():
         log.info("processing dir %s" % controller.dir_name)
         controller.load_config(controller.dir_name)
 
-    controller.setup_and_run()
+    if args.profile:
+        cProfile.runctx("controller.setup_and_run()", globals(), locals(), "dexy.prof")
+    else:
+        controller.setup_and_run()
+
     if not args.no_reports:
         for reporter_klass in controller.reporters:
             reporter_klass(controller).run()

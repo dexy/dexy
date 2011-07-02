@@ -13,6 +13,7 @@ class FilenameHandler(DexyFilter):
 
     def process_text(self, input_text):
         # TODO this should not match more than two dashes
+        # TODO differentiate between using the same base name for 2 extensions, or at least warn
         for m in re.finditer("dexy--(\S+)\.([a-z]+)", input_text):
             key = m.groups()[0]
             ext = m.groups()[1]
@@ -20,12 +21,12 @@ class FilenameHandler(DexyFilter):
 
             if key_with_ext in self.artifact.inputs().keys():
                 artifact = self.artifact.inputs()[key_with_ext]
-                self.artifact.log.debug("existing key %s in artifact %s links to file %s" %
-                          (key, self.artifact.key, artifact.filename()))
+                self.artifact.log.debug("[fn] existing key %s in artifact %s links to file %s" %
+                          (key_with_ext, self.artifact.key, artifact.filename()))
             else:
                 artifact = self.artifact.add_additional_artifact(key_with_ext, ext)
-                self.artifact.log.debug("added key %s to artifact %s ; links to file %s" %
-                          (key, self.artifact.key, artifact.filename()))
+                self.artifact.log.debug("[fn] added key %s to artifact %s ; links to file %s" %
+                          (key_with_ext, self.artifact.key, artifact.filename()))
 
             input_text = input_text.replace(m.group(), artifact.filename())
 

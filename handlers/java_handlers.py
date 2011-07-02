@@ -20,7 +20,7 @@ class JirbHandler(handlers.pexpect_handlers.ProcessLinewiseInteractiveHandler):
     VERSION = "jirb --version"
     EXECUTABLE = "jirb --prompt-mode simple"
     INPUT_EXTENSIONS = [".rb"]
-    PROMPT = ">>|\?>"
+    PROMPT = ['>>', '?>']
     OUTPUT_EXTENSIONS = [".rbcon"]
     ALIASES = ['jirb']
     IGNORE_ERRORS = True

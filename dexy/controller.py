@@ -1,5 +1,5 @@
-from dexy.document import Document
 from dexy.dexy_filter import DexyFilter
+from dexy.document import Document
 from dexy.reporter import Reporter
 from dexy.topological_sort import topological_sort
 from inspect import isclass
@@ -109,8 +109,6 @@ class Controller(object):
                                 self.log.info("class %s is not available because %s not found" %
                                               (klass.__name__, klass.executable()))
                             else:
-                                #klass.SOURCE_CODE = inspect.getsource(klass)
-                                #print klass.__name__ + " source length " + str(len(klass.SOURCE_CODE))
                                 for a in klass.ALIASES:
                                     if handlers.has_key(a):
                                         raise Exception("duplicate key %s called from %s in %s" % (a, k, f))

@@ -227,7 +227,7 @@ class Document(object):
                 raise Exception("no artifact created!")
             self.artifacts.append(artifact)
 
-            self.log.info("(step %s) %s -> %s" % \
+            self.log.info("(step %s) [run] %s -> %s" % \
                      (self.step, artifact_key, artifact.filename()))
 
         # Make sure all additional inputs are saved.

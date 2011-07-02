@@ -1,8 +1,8 @@
-
 #-----------------------------------------------
 #aplotter.py - ascii art function plotter
 #Copyright (c) 2006, Imri Goldberg
 #All rights reserved.
+# http://www.algorithm.co.il/blogs/ascii-plotter/
 #
 #Redistribution and use in source and binary forms,
 #with or without modification, are permitted provided

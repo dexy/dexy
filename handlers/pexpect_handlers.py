@@ -3,6 +3,7 @@ from ordereddict import OrderedDict
 import os
 import pexpect
 import re
+import sys
 import time
 
 class ProcessLinewiseInteractiveHandler(DexyFilter):
@@ -12,7 +13,7 @@ class ProcessLinewiseInteractiveHandler(DexyFilter):
     as input. Sends input line-by-line.
     """
     EXECUTABLE = 'python'
-    PROMPT = '>>>|\.\.\.' # Python uses >>> prompt normally and ... when in multi-line structures like loops
+    PROMPT = ['>>>', '...'] # Python uses >>> prompt normally and ... when in multi-line structures like loops
     TRIM_PROMPT = '>>>'
     LINE_ENDING = "\r\n"
     INPUT_EXTENSIONS = [".txt", ".py"]
@@ -35,24 +36,28 @@ class ProcessLinewiseInteractiveHandler(DexyFilter):
             env = None
 
         proc = pexpect.spawn(self.EXECUTABLE, cwd=self.artifact.artifacts_dir, env=env)
-        proc.expect(self.PROMPT)
+        proc.expect_exact(self.PROMPT, timeout=timeout)
         start = (proc.before + proc.after)
+
+        search_terms = ["%s%s" % (self.LINE_ENDING, p) for p in self.PROMPT]
 
         for k, s in input_dict.items():
             # TODO Should stop processing if an error is raised.
             section_transcript = start
             start = ""
-            for l in s.split("\n"):
+            for l in s.splitlines():
                 section_transcript += start
                 start = ""
                 proc.sendline(l)
-                proc.expect("%s(%s)" % (self.LINE_ENDING, self.PROMPT), timeout=timeout)
+                proc.expect_exact(search_terms, timeout=timeout)
                 section_transcript += proc.before
                 start = proc.after
-            lines = section_transcript.split(self.LINE_ENDING)
+
             # Strip blank lines/trailing prompts at end of section
-            while re.match("^\s*(%s)\s*$|^\s*$" % self.TRIM_PROMPT, lines[-1]):
+            lines = section_transcript.split(self.LINE_ENDING)
+            while len(lines) > 0 and re.match("^\s*(%s)\s*$|^\s*$" % self.TRIM_PROMPT, lines[-1]):
                 lines = lines[0:-1]
+
             output_dict[k] = self.LINE_ENDING.join(lines)
         try:
             proc.close()
@@ -73,8 +78,9 @@ class RLinewiseInteractiveHandler(ProcessLinewiseInteractiveHandler):
     VERSION = "R --version"
     INPUT_EXTENSIONS = ['.txt', '.r', '.R']
     OUTPUT_EXTENSIONS = ['.Rout']
-    PROMPT = ">|\+"
-    ALIASES = ['r', 'rint']
+    PROMPT = [">", "+"]
+    TRIM_PROMPT = ">"
+    ALIASES = ['r', 'rint', 'rnew']
 
 class ClojureInteractiveHandler(ProcessLinewiseInteractiveHandler):
     """

@@ -1,6 +1,6 @@
 from dexy.reporter import Reporter
 import datetime
-import lib.aplotter as aplotter
+import dexy.aplotter as aplotter
 import os
 import pstats
 import shutil
@@ -9,6 +9,8 @@ import uuid
 import web
 
 try:
+    import matplotlib
+    matplotlib.use("Agg")
     import matplotlib.pyplot as pyplot
     MATPLOTLIB_AVAILABLE = True
 except Exception as e:
@@ -22,6 +24,9 @@ class ProfileReporter(Reporter):
 
     def run(self):
         web.config.debug = False
+
+        latest_dir = os.path.join(self.REPORTS_DIR, "profile-latest")
+        shutil.rmtree(latest_dir, ignore_errors = True)
 
         if not os.path.exists(self.REPORTS_DIR):
             os.mkdir(self.REPORTS_DIR)
@@ -48,9 +53,7 @@ class ProfileReporter(Reporter):
 
         f = open(os.path.join(report_dir, "profile.html"), "w")
 
-
-        # TODO this should only be run when we are actually profiling...
-        if os.path.exists('dexy.prof'):
+        if self.controller.args.profile:
             p = pstats.Stats('dexy.prof')
 
             p.sort_stats('cumulative')
@@ -101,7 +104,5 @@ class ProfileReporter(Reporter):
 
             f.close()
 
-            latest_dir = os.path.join(self.REPORTS_DIR, "profile-latest")
-            shutil.rmtree(latest_dir, ignore_errors = True)
             shutil.copytree(report_dir, latest_dir)
 
