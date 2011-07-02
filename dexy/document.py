@@ -231,7 +231,7 @@ class Document(object):
                      (self.step, artifact_key, artifact.filename()))
 
         # Make sure all additional inputs are saved.
-        for k, a in artifact._inputs.items():
+        for k, a in artifact._inputs.iteritems():
             if not a.is_complete():
                 a.state = 'complete'
                 a.save()

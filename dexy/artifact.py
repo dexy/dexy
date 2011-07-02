@@ -150,7 +150,7 @@ class Artifact(object):
         self._inputs.update(previous_artifact.inputs())
         # Need to loop over each artifact's inputs in case extra ones have been
         # added anywhere.
-        for k, a in previous_artifact.inputs().items():
+        for k, a in previous_artifact.inputs().iteritems():
             self._inputs.update(a.inputs())
 
         if hasattr(self, 'next_filter_class'):
@@ -286,7 +286,7 @@ class Artifact(object):
         hash_dict = self.__dict__.copy()
 
         hash_dict['inputs'] = {}
-        for k, a in hash_dict.pop('_inputs').items():
+        for k, a in hash_dict.pop('_inputs').iteritems():
             hash_dict['inputs'][k] = a.hashstring
 
         # Remove any items which should not be included in hash calculations.
@@ -317,13 +317,13 @@ class Artifact(object):
 
     def input_text(self):
         text = ""
-        for k, v in self.input_data_dict.items():
+        for k, v in self.input_data_dict.iteritems():
             text += v
         return text
 
     def output_text(self):
         text = ""
-        for k, v in self.data_dict.items():
+        for k, v in self.data_dict.iteritems():
             text += v
         return text
 

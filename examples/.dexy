@@ -12,6 +12,16 @@
   "*|pyg" : {
     "except" : ".*.tgz"
   },
+  "*|pyg|al" : {
+    "except" : ".*.tgz",
+    "pygments" : {
+        "formatter" : {
+            "lineanchors" : null,
+            "noclasses" : true,
+            "nowrap" : true
+        }
+    }
+  },
   "index.html|jinja" : { "allinputs" : true},
   "hello.rb|rb|test" : {
     "expects" : "hello from Ruby\n"
@@ -49,5 +59,8 @@
     "expects" : "Java Hello World!\n"
   },
   "hello.R|rintbatch" : {},
-  "hello.R|routbatch" : {}
+  "hello.R|routbatch" : {},
+  "hello.java|pyg|pn|mw" : {},
+  "hello.java|pyg|jn|mw" : {},
+  "wiki.txt|jinja|mw" : { "allinputs" : true}
 }

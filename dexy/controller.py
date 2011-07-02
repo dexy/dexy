@@ -12,7 +12,7 @@ import os
 import re
 import sre_constants
 import sys
-#import web
+import web
 
 class Controller(object):
     def __init__(self):
@@ -320,14 +320,14 @@ re.compile: %s""" % (args['except'], e))
         # Create Document objects for all docs.
         self.log.debug("About to process config\n")
         self.log.debug(self.config)
-        for path, config in self.config.items():
+        for path, config in self.config.iteritems():
             ### @export "features-global-args-1"
             if config.has_key("$globals"):
                 global_args = config["$globals"]
             else:
                 global_args = {}
 
-            for k, v in config.items():
+            for k, v in config.iteritems():
                 local_args = global_args.copy()
                 local_args.update(v)
                 for kg in global_args.keys():
