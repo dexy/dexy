@@ -53,6 +53,8 @@ class PygHandler(DexyFilter):
         else:
             output_dict = OrderedDict()
             for k, v in input_dict.items():
+                # TODO figure out where these characters are coming from and don't hard-code this.
+                v = str(v.replace(" \x08", "").replace(chr(13), ""))
                 try:
                     output_dict[k] = str(highlight(v, lexer, formatter))
                 except UnicodeEncodeError as e:

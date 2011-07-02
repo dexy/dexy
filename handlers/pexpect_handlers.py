@@ -2,6 +2,7 @@ from dexy.dexy_filter import DexyFilter
 from ordereddict import OrderedDict
 import os
 import pexpect
+import re
 import time
 
 class ProcessLinewiseInteractiveHandler(DexyFilter):
@@ -12,6 +13,8 @@ class ProcessLinewiseInteractiveHandler(DexyFilter):
     """
     EXECUTABLE = 'python'
     PROMPT = '>>>|\.\.\.' # Python uses >>> prompt normally and ... when in multi-line structures like loops
+    TRIM_PROMPT = '>>>'
+    LINE_ENDING = "\r\n"
     INPUT_EXTENSIONS = [".txt", ".py"]
     OUTPUT_EXTENSIONS = [".pycon"]
     ALIASES = ['pycon']
@@ -43,10 +46,14 @@ class ProcessLinewiseInteractiveHandler(DexyFilter):
                 section_transcript += start
                 start = ""
                 proc.sendline(l)
-                proc.expect(self.PROMPT, timeout=timeout)
+                proc.expect("%s(%s)" % (self.LINE_ENDING, self.PROMPT), timeout=timeout)
                 section_transcript += proc.before
                 start = proc.after
-            output_dict[k] = section_transcript
+            lines = section_transcript.split(self.LINE_ENDING)
+            # Strip blank lines/trailing prompts at end of section
+            while re.match("^\s*(%s)\s*$|^\s*$" % self.TRIM_PROMPT, lines[-1]):
+                lines = lines[0:-1]
+            output_dict[k] = self.LINE_ENDING.join(lines)
         try:
             proc.close()
         except pexpect.ExceptionPexpect:
@@ -58,54 +65,16 @@ class ProcessLinewiseInteractiveHandler(DexyFilter):
 want dexy to raise errors on failed scripts then pass the --ignore-errors option""")
         return output_dict
 
-class ProcessSectionwiseInteractiveHandler(DexyFilter):
+class RLinewiseInteractiveHandler(ProcessLinewiseInteractiveHandler):
     """
-    Intended for use with interactive processes, such as R interpreter,
-    where your goal is to have a session transcript divided into same sections
-    as input. Sends input section-by-section.
+    Runs R
     """
-    EXECUTABLE = 'R --quiet --vanilla'
+    EXECUTABLE = "R --quiet --vanilla"
     VERSION = "R --version"
-    PROMPT = '>'
-    COMMENT = '#'
-    TRAILING_PROMPT = "\r\n> "
     INPUT_EXTENSIONS = ['.txt', '.r', '.R']
     OUTPUT_EXTENSIONS = ['.Rout']
+    PROMPT = ">|\+"
     ALIASES = ['r', 'rint']
-
-    def process_dict(self, input_dict):
-        output_dict = OrderedDict()
-
-        if self.artifact.args.has_key('timeout'):
-            timeout = self.artifact.args['timeout']
-            self.log.info("using custom timeout %s for %s" % (timeout, self.artifact.key))
-        else:
-            timeout = None
-        if self.artifact.args.has_key('env'):
-            env = os.environ
-            env.update(self.artifact.args['env'])
-            self.log.info("adding to env: %s" % self.artifact.args['env'])
-        else:
-            env = None
-
-        proc = pexpect.spawn(self.EXECUTABLE,
-                             cwd=self.artifact.artifacts_dir,
-                             env=env)
-        proc.expect(self.PROMPT)
-        start = (proc.before + proc.after)
-
-        for k, s in input_dict.items():
-            section_transcript = start
-            start = ""
-            proc.send(s)
-            proc.sendline(self.COMMENT * 5)
-
-            proc.expect(self.COMMENT * 5, timeout = timeout)
-
-            section_transcript += proc.before.rstrip(self.TRAILING_PROMPT)
-            output_dict[k] = ''.join([c for c in section_transcript if ord(c) > 31 or ord(c) in [9, 10]])
-
-        return output_dict
 
 class ClojureInteractiveHandler(ProcessLinewiseInteractiveHandler):
     """
