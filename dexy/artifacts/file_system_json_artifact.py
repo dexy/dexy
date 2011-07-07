@@ -107,8 +107,8 @@ class FileSystemJsonArtifact(Artifact):
         if not self.is_complete():
             raise Exception("should not be calling save_output unless artifact is complete")
 
-        if self.is_output_cached():
-            print "we will be overwriting existing files"
+#        if self.is_output_cached():
+#            print "we will be overwriting existing files"
 
         if not self.binary_output:
             if not self.data_dict or len(self.data_dict) == 0:

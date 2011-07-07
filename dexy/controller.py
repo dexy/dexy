@@ -1,3 +1,4 @@
+import dexy.db
 from dexy.dexy_filter import DexyFilter
 from dexy.document import Document
 from dexy.reporter import Reporter
@@ -10,9 +11,9 @@ import json
 import logging
 import os
 import re
+import sqlite3
 import sre_constants
 import sys
-import web
 
 class Controller(object):
     def __init__(self):
@@ -343,19 +344,17 @@ re.compile: %s""" % (args['except'], e))
 
         ordering = topological_sort(range(len(self.members)), self.depends)
 
-#        self.db = web.database(dbn='sqlite', db='testdb')
-        # TODO Replace with UUID?
-#        self.batch_id = self.db.select("tasks", what="max(batch_id)")[0]["max(batch_id)"] + 1
+        self.db = None
+        self.batch_id = None
+        if dexy.db.DB_AVAILABLE:
+            print "initializing database"
+            self.db = dexy.db.Db()
+            self.batch_id = self.db.next_batch_id()
 
         ordered_members = OrderedDict()
         for i in ordering:
             key = self.members.keys()[i]
             ordered_members[key] = self.members[key]
-#            self.db.insert("tasks",
-#                    batch_id=self.batch_id,
-#                    batch_order=i,
-#                    document_key=key
-#                    )
         self.members = ordered_members
 
     def run(self):

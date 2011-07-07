@@ -5,6 +5,7 @@ import jinja2
 import json
 import os
 import re
+import traceback
 import urllib
 
 class FilenameHandler(DexyFilter):
@@ -208,6 +209,7 @@ class JinjaHandler(DexyFilter):
             raise e
         except Exception as e:
             print e.__class__.__name__
+            traceback.print_exc()
             raise e
 
         return result

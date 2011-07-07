@@ -338,6 +338,9 @@ def setup_option_parser():
             print "purging contents of %s" % args.logs_dir
             shutil.rmtree(args.logs_dir)
 
+        if os.path.exists('testdb'):
+            os.remove('testdb')
+
         controller = Controller()
         controller.find_reporters()
         for d in controller.reports_dirs:

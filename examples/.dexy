@@ -60,7 +60,7 @@
   },
   "hello.R|rintbatch" : {},
   "hello.R|routbatch" : {},
-  "hello.java|pyg|pn|mw" : {},
-  "hello.java|pyg|jn|mw" : {},
+  "hello.java|pyg|pn" : {},
+  "hello.java|pyg|jn|picasa" : {},
   "wiki.txt|jinja|mw" : { "allinputs" : true}
 }

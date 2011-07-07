@@ -29,8 +29,7 @@ class RunReporter(Reporter):
                 doc.args_html = highlight(json.dumps(doc.args, sort_keys=True, indent=4), js_lexer, formatter)
             for a in doc.artifacts:
                 if hasattr(a, 'stdout'):
-                    html = ansi_output_to_html(a.stdout)
-                    a.stdout_html = """stdout:<br />%s""" % html
+                    a.stdout_html = ansi_output_to_html(a.stdout)
 
         env_data = {}
         j = json.dumps(self.controller.config, sort_keys = True, indent=4)

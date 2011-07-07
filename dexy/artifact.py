@@ -1,11 +1,14 @@
 from dexy.version import VERSION
 from ordereddict import OrderedDict
+import glob
 import hashlib
 import inspect
 import logging
 import os
 import shutil
+import sys
 import time
+import traceback
 import uuid
 
 class Artifact(object):
@@ -20,7 +23,9 @@ class Artifact(object):
         'additional',
         'initial',
         'state',
-        'batch_id'
+        'batch_id',
+        'output_hash',
+        'elapsed'
     ]
 
     HASH_WHITELIST = [
@@ -106,6 +111,10 @@ class Artifact(object):
         self.load_input()
         if self.is_complete():
             self.load_output()
+
+    def load_inputs(self):
+        for a in self.inputs():
+            a.load()
 
     def save(self):
         if self.is_abstract():
@@ -198,6 +207,11 @@ class Artifact(object):
             artifact.ext = os.path.splitext(doc.name)[1]
             artifact.binary_input = (doc.ext in artifact.BINARY_EXTENSIONS)
             artifact.set_data(doc.initial_artifact_data())
+            if not artifact.data_dict:
+                raise Exception("no data dict!")
+            elif len(artifact.data_dict) == 0:
+                raise Exception("data dict has len 0!")
+
             if doc.name.startswith("_"):
                 artifact.final = False
             artifact.state = 'complete'
@@ -205,10 +219,16 @@ class Artifact(object):
         if artifact.binary_output is None:
             artifact.set_binary_from_ext()
         artifact.set_hashstring()
+        if artifact.state == 'complete':
+            artifact.save()
+        else:
+            artifact.save_meta()
+        if doc.controller.db:
+            doc.controller.db.insert_artifact(artifact, doc.controller.batch_id)
         return artifact
 
     def run(self):
-        self.start_time = time.time()
+        start_time = time.time()
 
         if not self.is_complete() and self.is_output_cached():
             self.load()
@@ -226,22 +246,54 @@ class Artifact(object):
             filter_instance.log = self.log
 
             self.load_input()
-            filter_instance.process()
-            # Some check code, maybe remove later.
+
+            try:
+                filter_instance.process()
+            except Exception as e:
+                print "Error occurred while running", self.key
+                x, y, tb = sys.exc_info()
+                print "Original traceback:"
+                traceback.print_tb(tb)
+                pattern = os.path.join(self.artifacts_dir, self.hashstring)
+                files_matching = glob.glob(pattern)
+                if len(files_matching) > 0:
+                    print "Here are working files which might have clues about this error:"
+                    for f in files_matching:
+                        print f
+                raise e
+
+            h = hashlib.sha512()
+
             if self.data_dict and len(self.data_dict) > 0:
-                #have data dict in memory
-                pass
+                h.update(self.output_text())
+
             elif self.is_canonical_output_cached:
-                #have data in file on disk
-                pass
+                self.state = 'complete'
+                self.save_output()
+
+                f = open(self.filepath(), "rb")
+                while True:
+                    data = f.read(h.block_size)
+                    if not data:
+                        break
+                    h.update(data)
+
             else:
                 raise Exception("data neither in memory nor on disk")
+
+            self.output_hash = h.hexdigest()
+
             self.state = 'complete'
-            self.save()
+            self.finish_time = time.time()
+            self.run_type = 'run'
         else:
             self.log.debug("using cached art %s" % self.key)
+            self.run_type = 'cached'
 
-        self.finish_time = time.time()
+        finish_time = time.time()
+        self.elapsed = finish_time - start_time
+        self.save()
+
 
     def add_additional_artifact(self, key_with_ext, ext):
         """create an 'additional' artifact with random hashstring"""

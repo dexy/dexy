@@ -176,6 +176,7 @@ class Document(object):
     def create_initial_artifact(self):
         # Create and set up the new artifact.
         artifact = self.artifact_class.setup(self, self.name)
+        artifact.elapsed = 0
 
         # Add the new artifact to the document's list of artifacts.
         self.artifacts.append(artifact)
@@ -186,17 +187,10 @@ class Document(object):
         self.controller = controller
         self.step = 0
 
-#        self.log.info("starting to process document")
-#        self.log.info("args:")
-#        for k, v in self.args.items():
-#            self.log.info("%s: %s" % (k, v))
-#        self.log.info("list of inputs:")
-#        for i in self.inputs:
-#            self.log.info(i.key())
-
         artifact = self.create_initial_artifact()
+        artifact.save()
         artifact_key = artifact.key
-        self.log.info("(step %s) %s -> %s" % \
+        self.log.info("(step %s) [run] %s -> %s" % \
                  (self.step, artifact_key, artifact.filename()))
 
         for f in self.filters:
@@ -207,28 +201,13 @@ class Document(object):
             FilterClass = self.controller.get_handler_for_alias(f)
             artifact = self.artifact_class.setup(self, artifact_key, FilterClass, previous_artifact)
 
-            try:
-                artifact.run()
-            except Exception as e:
-                print "Error occurred while applying", f, "for", artifact_key
-                x, y, tb = sys.exc_info()
-                print "Original traceback:"
-                traceback.print_tb(tb)
-                if hasattr(artifact, 'hashstring'):
-                    pattern = os.path.join(self.controller.artifacts_dir, artifact.hashstring)
-                    files_matching = glob.glob(pattern)
-                    if len(files_matching) > 0:
-                        print "Here are working files which might have clues about this error:"
-                        for f in files_matching:
-                            print f
-                raise e
-
-            if not artifact:
-                raise Exception("no artifact created!")
-            self.artifacts.append(artifact)
-
             self.log.info("(step %s) [run] %s -> %s" % \
                      (self.step, artifact_key, artifact.filename()))
+
+            artifact.run()
+
+            self.artifacts.append(artifact)
+
 
         # Make sure all additional inputs are saved.
         for k, a in artifact._inputs.iteritems():
