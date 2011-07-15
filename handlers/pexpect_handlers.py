@@ -217,46 +217,6 @@ class Ps2Pdf(DexyFilter):
         self.log.debug(command)
         self.artifact.stdout = pexpect.run(command, cwd=self.artifact.artifacts_dir)
 
-class VoiceHandler(DexyFilter):
-    """
-    Use text-to-speech to generate mp3 file from a text file. Uses whichever of
-    say, aiff, espeak, wav tools is found, then lame to convert to mp3.
-    """
-    INPUT_EXTENSIONS = [".*"]
-    OUTPUT_EXTENSIONS = [".mp3"]
-    ALIASES = ['voice', 'say']
-
-    def process(self):
-        self.artifact.generate_workfile()
-        work_file = os.path.basename(self.artifact.work_filename())
-        artifact_file = os.path.basename(self.artifact.filename())
-
-        for e, ext in {"say" : "aiff", "espeak" : "wav"}.items():
-            sound_file = artifact_file.replace('mp3', ext)
-            # TODO replace pexpect with subprocess
-            tts_bin, s = pexpect.run("which %s" % e, withexitstatus = True)
-            if s == 0:
-                self.log.info("%s text-to-speech found at %s" % (e, tts_bin))
-                break
-            else:
-                self.log.info("%s text-to-speech not found" % e)
-                e = None
-
-        if e == "say":
-            command = "say -f %s -o %s" % (work_file, sound_file)
-        elif e == "espeak":
-            command = "espeak -f %s -w %s" % (work_file, sound_file)
-        else:
-            raise Exception("unknown text-to-speech command %s" % e)
-
-        self.log.info(command)
-        self.artifact.stdout = pexpect.run(command, cwd=self.artifact.artifacts_dir)
-
-        # Converting to mp3
-        command = "lame %s %s" % (sound_file, artifact_file)
-        self.log.info(command)
-        self.artifact.stdout = pexpect.run(command, cwd=self.artifact.artifacts_dir)
-
 class RagelRubyHandler(DexyFilter):
     """
     Runs ragel for ruby.
