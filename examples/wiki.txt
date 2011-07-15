@@ -1,7 +1,0 @@
-Hello! This is some wiki text...
-
-Let's try some source code
-
-{{ d['hello.java|pyg|al'] }}
-
-
