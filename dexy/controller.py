@@ -269,7 +269,11 @@ Please pass a valid Python-style regular expression for
 'except', NOT a glob-style matcher. Error message from
 re.compile: %s""" % (args['except'], e))
                     if re.match(except_re, f):
-                        print "skipping %s as it matches except pattern %s" % (f, args['except'])
+                        print "skipping %s for %s as it matches except pattern %s" % (
+                                f,
+                                input_directive,
+                                args['except']
+                                )
                         create = False
 
                 if create:
