@@ -7,6 +7,7 @@ import os
 import re
 import traceback
 import urllib
+import pprint
 
 class FilenameHandler(DexyFilter):
     """Generate random filenames to track provenance of data."""
@@ -125,7 +126,11 @@ class JinjaHandler(DexyFilter):
 #                    a.save()
                 # TODO read this from memory rather than loading from file?
                 # TODO capture load errors
-                unsorted_json = json.load(open(path_to_file, "r"))
+                try:
+                    unsorted_json = json.load(open(path_to_file, "r"))
+                except ValueError as e:
+                    print a.key
+                    raise e
 
                 def sort_dict(d):
                     od = OrderedDict()
@@ -187,7 +192,10 @@ class JinjaHandler(DexyFilter):
             'l' : local_inputs,
             'lk' : sorted(local_inputs.keys()),
             'r' : raw_data,
-            'subdirectories' : subdirectories
+            'subdirectories' : subdirectories,
+            'len' : len,
+            'pprint' : pprint.pprint,
+            'pformat' : pprint.pformat
         }
 
         if self.artifact.args.has_key('jinjavars'):
