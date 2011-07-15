@@ -3,6 +3,37 @@ import os
 import re
 import subprocess
 
+class RagelRubyHandler(DexyFilter):
+    """
+    Runs ragel for ruby.
+    """
+    INPUT_EXTENSIONS = [".rl"]
+    OUTPUT_EXTENSIONS = [".rb"]
+    ALIASES = ['rlrb', 'ragelruby']
+    VERSION = 'ragel --version'
+    EXECUTABLE = 'ragel -R'
+
+    def process(self):
+        self.artifact.generate_workfile()
+        wf = self.artifact.work_filename()
+        command = "%s %s -o %s" % (self.executable(), wf, self.artifact.filename())
+
+        if self.artifact.args.has_key('env'):
+            env = os.environ
+            env.update(self.artifact.args['env'])
+        else:
+            env = None
+
+        self.log.info("running: %s" % command)
+        proc = subprocess.Popen(command, shell=True,
+                                cwd=self.artifact.artifacts_dir,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT,
+                                env=env)
+
+        stdout, stderr = proc.communicate()
+        self.artifact.stdout = stdout
+
 class BibHandler(DexyFilter):
     INPUT_EXTENSIONS = [".tex"]
     OUTPUT_EXTENSIONS = [".tex"]
@@ -204,4 +235,29 @@ class DotHandler(DexyFilter):
 
         stdout, stderr = proc.communicate()
         self.artifact.stdout = stdout
-        self.artifact.set_data_from_artifact()
+
+class RubyInteractiveHandler(DexyFilter):
+    """Run Ruby, takign input from input files."""
+    VERSION = "ruby --version"
+    EXECUTABLE = "ruby"
+    INPUT_EXTENSIONS = [".rb"]
+    OUTPUT_EXTENSIONS = [".txt"]
+    ALIASES = ['rbint']
+
+    def process(self):
+        self.artifact.generate_workfile()
+        wf = self.artifact.work_filename()
+        command = "%s %s" % (self.EXECUTABLE, wf)
+        self.log.debug(command)
+        for k, a in self.artifact.inputs().items():
+            for s, t in a.data_dict.items():
+                proc = subprocess.Popen(command, shell=True,
+                                        cwd=self.artifact.artifacts_dir,
+                                        stdin=subprocess.PIPE,
+                                        stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE,
+                                       )
+                stdout, stderr = proc.communicate(t)
+                self.artifact.data_dict[s] = stdout
+                self.artifact.stdout = stdout + "\n" + stderr
+

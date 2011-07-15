@@ -1,4 +1,5 @@
 from dexy.dexy_filter import DexyFilter
+import handlers
 import shutil
 
 class RFormatHandler(DexyFilter):
@@ -16,6 +17,10 @@ class PdfFormatHandler(DexyFilter):
     INPUT_EXTENSIONS = [".pdf"]
     OUTPUT_EXTENSIONS = [".pdf"]
     ALIASES = ['p', 'forcepdf']
+    BINARY = True
+
+    def process(self):
+        shutil.copyfile(self.artifact.previous_artifact_filepath, self.artifact.filepath())
 
 class ForceJpgFormatHandler(DexyFilter):
     """

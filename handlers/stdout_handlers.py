@@ -163,3 +163,13 @@ class RdConvHandler(ProcessStdoutHandler):
     def instance_executable(self):
         return "%s --type=%s" % (self.EXECUTABLE, self.EXTENSION_TO_FORMAT[self.artifact.ext])
 
+class RagelRubyDotHandler(ProcessStdoutHandler):
+    """
+    Generates state chart in .dot format of ragel state machine for ruby.
+    """
+    INPUT_EXTENSIONS = [".rl"]
+    OUTPUT_EXTENSIONS = [".dot"]
+    ALIASES = ['rlrbd', 'ragelrubydot']
+    VERSION = 'ragel --version'
+    EXECUTABLE = 'ragel -R -V'
+
