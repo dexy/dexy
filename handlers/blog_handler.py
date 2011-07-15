@@ -1,8 +1,7 @@
 from dexy.dexy_filter import DexyFilter
-
+import json
 import os
 import re
-import json
 
 class BlogHandler(DexyFilter):
     ALIASES = None
