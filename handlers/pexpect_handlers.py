@@ -7,99 +7,22 @@ import re
 import sys
 import time
 
-class ProcessSectionwiseInteractiveHandler(DexyFilter):
-    """
-    Intended for use with interactive processes, such as R interpreter,
-    where your goal is to have a session transcript divided into same sections
-    as input. Sends input section-by-section. Sections MUST NOT stop in the
-    middle of an indented block, such as a function or a loop construct.
-    """
-    EXECUTABLE = 'python'
-    VERSION = 'python --version'
-    PROMPT = '>>>'
-    TRAILING_PROMPT = '>>>|...'
-    LINE_ENDING = "\r\n"
-    COMMENT = '#'
-    INPUT_EXTENSIONS = [".txt", ".py"]
-    OUTPUT_EXTENSIONS = [".pycon"]
-    ALIASES = ['pycon']
-
-    def process_dict(self, input_dict):
-        output_dict = OrderedDict()
-
-        if self.artifact.args.has_key('timeout'):
-            timeout = self.artifact.args['timeout']
-            self.log.info("using custom timeout %s for %s" % (timeout, self.artifact.key))
-        else:
-            timeout = None
-        if self.artifact.args.has_key('env'):
-            env = os.environ
-            env.update(self.artifact.args['env'])
-            self.log.info("adding to env: %s" % self.artifact.args['env'])
-        else:
-            env = None
-
-        proc = pexpect.spawn(self.EXECUTABLE,
-                             cwd=self.artifact.artifacts_dir,
-                             env=env)
-        proc.expect(self.PROMPT)
-        start = (proc.before + proc.after)
-
-        for k, s in input_dict.items():
-            section_transcript = start
-            start = ""
-            proc.send(s)
-            proc.send("\n" + self.COMMENT * 5 + "\n")
-
-            proc.expect(self.COMMENT * 5, timeout = timeout)
-
-            section_transcript += proc.before
-            lines = section_transcript.split(self.LINE_ENDING)
-            while len(lines) > 0 and re.match("^\s*(%s)\s*$|^\s*$" % self.TRAILING_PROMPT, lines[-1]):
-                lines = lines[0:-1]
-
-            output_dict[k] = self.LINE_ENDING.join(lines)
-
-        if True: # TODO make this an option. Also make it a separate method as needs to be implemented per-language.
-            artifact = self.artifact.add_additional_artifact(self.artifact.key + "-vars", 'json')
-            cmd = """dexy__vars_file = open("%s", "w")
-dexy__x = {}
-for dexy__k, dexy__v in locals().items():
-    dexy__x[dexy__k] = str(dexy__v)
-
-json.dump(dexy__x, dexy__vars_file)
-dexy__vars_file.close()
-""" % artifact.filename()
-
-            section_transcript = start
-            start = ""
-            proc.send(cmd)
-            proc.send("\n" + self.COMMENT * 5 + "\n")
-            proc.expect(self.COMMENT * 5, timeout = timeout)
-
-            section_transcript += proc.before
-            output_dict['dexy--save-vars'] = section_transcript
-        return output_dict
-
-
 class ProcessLinewiseInteractiveHandler(DexyFilter):
     """
     Intended for use with interactive processes, such as python interpreter,
     where your goal is to have a session transcript divided into same sections
     as input. Sends input line-by-line.
     """
-    EXECUTABLE = 'python'
-    VERSION = 'python --version'
     PROMPT = ['>>>', '...'] # Python uses >>> prompt normally and ... when in multi-line structures like loops
     TRIM_PROMPT = '>>>'
     LINE_ENDING = "\r\n"
-    INPUT_EXTENSIONS = [".txt", ".py"]
-    OUTPUT_EXTENSIONS = [".pycon"]
-    ALIASES = ['pycon2']
     IGNORE_ERRORS = False # Allow overriding default per-handler.
+    SAVE_VARS_TO_JSON_CMD = None
+    ALIASES = None
 
     def process_dict(self, input_dict):
         output_dict = OrderedDict()
+
         if self.artifact.args.has_key('timeout'):
             timeout = self.artifact.args['timeout']
             self.log.info("using custom timeout %s for %s" % (timeout, self.artifact.key))
@@ -122,7 +45,7 @@ class ProcessLinewiseInteractiveHandler(DexyFilter):
             # TODO Should stop processing if an error is raised.
             section_transcript = start
             start = ""
-            for l in s.splitlines():
+            for l in (s+"\r\n").splitlines():
                 section_transcript += start
                 start = ""
                 proc.sendline(l)
@@ -131,12 +54,32 @@ class ProcessLinewiseInteractiveHandler(DexyFilter):
                 start = proc.after
 
             # Strip blank lines/trailing prompts at end of section
-#            lines = section_transcript.split(self.LINE_ENDING)
-#            while len(lines) > 0 and re.match("^\s*(%s)\s*$|^\s*$" % self.TRIM_PROMPT, lines[-1]):
-#                lines = lines[0:-1]
+            lines = section_transcript.split(self.LINE_ENDING)
+            while len(lines) > 0 and re.match("^\s*(%s)\s*$|^\s*$" % self.TRIM_PROMPT, lines[-1]):
+                lines = lines[0:-1]
 
-#            output_dict[k] = self.LINE_ENDING.join(lines)
-            output_dict[k] = section_transcript
+#            output_dict[k] = ''.join([c for c in self.LINE_ENDING.join(lines) if ord(c) > 31 or ord(c) in [9, 10]])
+            output_dict[k] = self.LINE_ENDING.join(lines)
+
+        record_vars = self.artifact.args.has_key('record_vars') and self.artifact.args['record_vars']
+        if record_vars:
+            if not self.SAVE_VARS_TO_JSON_CMD:
+                raise Exception("Can't record vars since SAVE_VARS_TO_JSON_CMD not set.")
+            artifact = self.artifact.add_additional_artifact(self.artifact.key + "-vars", 'json')
+            cmd = self.SAVE_VARS_TO_JSON_CMD % artifact.filename()
+
+            section_transcript = start
+            start = ""
+            for l in cmd.splitlines():
+                section_transcript += start
+                start = ""
+                proc.sendline(l)
+                proc.expect_exact(search_terms, timeout=timeout)
+                section_transcript += proc.before
+                start = proc.after
+
+            output_dict['dexy--save-vars'] = section_transcript
+
         try:
             proc.close()
         except pexpect.ExceptionPexpect:
@@ -148,6 +91,21 @@ class ProcessLinewiseInteractiveHandler(DexyFilter):
 want dexy to raise errors on failed scripts then pass the --ignore-errors option""")
         return output_dict
 
+class PythonLinewiseInteractiveHandler(ProcessLinewiseInteractiveHandler):
+    EXECUTABLE = 'python'
+    VERSION = 'python --version'
+    INPUT_EXTENSIONS = [".txt", ".py"]
+    OUTPUT_EXTENSIONS = [".pycon"]
+    ALIASES = ['pycon']
+    SAVE_VARS_TO_JSON_CMD = """dexy__vars_file = open("%s", "w")
+dexy__x = {}
+for dexy__k, dexy__v in locals().items():
+    dexy__x[dexy__k] = str(dexy__v)
+
+json.dump(dexy__x, dexy__vars_file)
+dexy__vars_file.close()
+"""
+
 class RLinewiseInteractiveHandler(ProcessLinewiseInteractiveHandler):
     """
     Runs R
@@ -158,7 +116,17 @@ class RLinewiseInteractiveHandler(ProcessLinewiseInteractiveHandler):
     OUTPUT_EXTENSIONS = ['.Rout']
     PROMPT = [">", "+"]
     TRIM_PROMPT = ">"
-    ALIASES = ['r', 'rint', 'rnew']
+    ALIASES = ['r', 'rint']
+    SAVE_VARS_TO_JSON_CMD = """
+if ("rjson" %%in%% installed.packages()) {
+    library(rjson)
+    dexy__json_file <- file("%s", "w")
+    writeLines(toJSON(as.list(environment())), dexy__json_file)
+    close(dexy__json_file)
+} else {
+   cat("Can't automatically save environment to JSON since rjson package not installed.")
+}
+"""
 
 class ClojureInteractiveHandler(ProcessLinewiseInteractiveHandler):
     """
