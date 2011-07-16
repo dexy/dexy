@@ -208,16 +208,37 @@ class JinjaHandler(DexyFilter):
             template = env.from_string(input_text)
             result = str(template.render(template_hash))
         except jinja2.exceptions.TemplateSyntaxError as e:
-            print "jinja error occurred processing line", e.lineno
-            print self.artifact.previous_artifact_filename
-            raise e
-        except jinja2.exceptions.UndefinedError as e:
-            print "jinja UndefinedError error occurred"
-            print self.artifact.previous_artifact_filename
-            raise e
+            print "*" * 80
+            print "there is a problem with line", e.lineno, "of your file %s" % self.artifact.name
+            print e.message
+            input_lines = self.artifact.input_text().splitlines()
+            print "=" * 60
+            if e.lineno >= 3:
+                print "   ", input_lines[e.lineno-3]
+            if e.lineno >= 2:
+                print "   ", input_lines[e.lineno-2]
+            print ">>>", input_lines[e.lineno-1]
+            if len(input_lines) >= e.lineno:
+                print "   ", input_lines[e.lineno-0]
+            if len(input_lines) >= (e.lineno + 1):
+                print "   ", input_lines[e.lineno+1]
+            print "=" * 60
+            print "^" * 80
+            result = ""
         except Exception as e:
-            print e.__class__.__name__
+            print "*" * 80
+            print "there is a problem with your file %s" % self.artifact.name
+            print e.message
+            if len(self.artifact.input_text().splitlines()) < 20:
+                print "=" * 60
+                print self.artifact.input_text()
+                print "=" * 60
+            else:
+                print "Please check your file, you may have mistyped a variable name."
+            print
+            print "Here is a traceback which may have more information about the problem with your file %s" % self.artifact.name
             traceback.print_exc()
-            raise e
+            print "^" * 80
+            result = ""
 
         return result
