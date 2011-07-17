@@ -86,6 +86,12 @@ def setup_option_parser():
         )
 
         parser.add_argument(
+            '--use-reporters',
+            help="list reporters to be run",
+            nargs='+'
+        )
+
+        parser.add_argument(
             '-v', '--version',
             action='version',
             version='%%(prog)s %s' % VERSION
@@ -99,6 +105,11 @@ def setup_option_parser():
         parser.add_option(
             '-x', '--exclude',
             help=EXCLUDE_HELP + ' Separate multiple directories with commas.'
+        )
+
+        parser.add_option(
+            "--use-reporters",
+            help="list reporters to be used. separate multiple reproters with commas"
         )
 
     # Remaining options are the same for argparse and optparse
@@ -235,6 +246,11 @@ def setup_option_parser():
         else:
             additional_excludes = []
 
+        if args.use_reporters:
+            use_reporters = args.use_reporters
+        else:
+            use_reporters = None
+
     elif (option_parser == 'optparse'):
         (args, argv) = parser.parse_args()
         if len(argv) == 0:
@@ -245,6 +261,11 @@ def setup_option_parser():
             additional_excludes = args.exclude.split(',')
         else:
             additional_excludes = []
+
+        if args.use_reporters:
+            use_reporters = args.use_reporters.split(',')
+        else:
+            use_reporters = None
     else:
         raise Exception("unexpected option_parser %s" % option_parser)
 
@@ -418,7 +439,15 @@ def setup_controller():
     controller.log = log
     controller.config_file = args.config
     controller.use_local_files = args.local
-    controller.find_reporters()
+    reporters = controller.find_reporters()
+    if args.use_reporters:
+        print "reporters", args.use_reporters, "manually specified"
+        controller.reporters = [r for r in reporters if r.__name__ in args.use_reporters]
+        print "running", controller.reporters
+    else:
+        controller.reporters = [r for r in reporters if r.DEFAULT]
+        print "automatically running", controller.reporters
+
     controller.additional_excludes = additional_excludes
 
     return controller, args, log
@@ -503,7 +532,8 @@ def dexy_command():
 
     if not args.no_reports:
         for reporter_klass in controller.reporters:
-            reporter_klass(controller).run()
+            if reporter_klass.DEFAULT:
+                reporter_klass(controller).run()
     else:
         print 'reports not run'
 

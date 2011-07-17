@@ -368,7 +368,6 @@ re.compile: %s""" % (args['except'], e))
         if not hasattr(self, 'config_file'):
             self.config_file = '.dexy'
         self.register_filters()
-        self.register_reporters()
         self.process_config()
         self.docs = self.run()
         return self.docs
