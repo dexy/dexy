@@ -20,8 +20,8 @@ def setup_controller(config_file = None):
 def test_handlers():
     """controller: find_handlers() should not raise errors"""
     controller = Controller()
-    handlers = controller.find_handlers()
-    assert handlers['dexy'] == DexyFilter
+    filters = controller.find_filters()
+    assert filters['dexy'] == DexyFilter
 
 def test_members():
     """controller: files and filters to be run should be identified correctly"""
