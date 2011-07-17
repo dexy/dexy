@@ -383,7 +383,7 @@ class Artifact(object):
 
     def write_to_file(self, filename):
         dirname = os.path.dirname(filename)
-        if not os.path.exists(dirname):
+        if not os.path.exists(dirname) and not dirname == '':
             os.makedirs(dirname)
         shutil.copyfile(self.filepath(), filename)
 

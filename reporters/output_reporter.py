@@ -2,6 +2,32 @@ from dexy.reporter import Reporter
 import shutil
 import os
 
+class InSituReporter(Reporter):
+    """This is the InSitu Reporter"""
+    DEFAULT = False
+
+    def run(self):
+        for doc in self.controller.docs:
+            artifact = doc.final_artifact()
+
+            fn = artifact.canonical_filename()
+
+            if artifact.final:
+                if not os.path.exists(fn):
+                    artifact.write_to_file(fn)
+
+            for k, a in artifact._inputs.items():
+                if not a:
+                    print "no artifact exists for key", k
+                else:
+                    if a.additional and a.final:
+                        if not a.is_complete():
+                            a.state = 'complete'
+                            a.save()
+                        fn = a.canonical_filename()
+                        if not os.path.exists(fn):
+                            a.write_to_file(fn)
+
 class OutputReporter(Reporter):
     """This is the OutputReporter"""
 
