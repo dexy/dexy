@@ -1,6 +1,39 @@
 from dexy.reporter import Reporter
-import shutil
+import datetime
 import os
+import shutil
+import tarfile
+
+class TarzipOutputReporter(Reporter):
+    """Reporter which creates a .tgz of all output files."""
+    OUTPUT_DIR = "logs"
+
+    def run(self):
+        # TODO craete output dir if it doesn't exist
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
+        report_filename = os.path.join(self.OUTPUT_DIR, "output-%s.tgz" % timestamp)
+        tar = tarfile.open(report_filename, mode="w:gz")
+
+        for doc in self.controller.docs:
+            artifact = doc.final_artifact()
+
+            if artifact.final:
+                arcname = artifact.canonical_filename()
+                tar.add(artifact.filepath(), arcname=arcname)
+
+            for k, a in artifact._inputs.items():
+                if not a:
+                    print "no artifact exists for key", k
+                else:
+                    if a.additional and a.final:
+                        if not a.is_complete():
+                            a.state = 'complete'
+                            a.save()
+                            arcname = a.canonical_filename()
+                            tar.add(a.filepath(), arcname=arcname)
+
+        tar.close()
+        shutil.copyfile(report_filename, "output-latest.tgz")
 
 class InSituReporter(Reporter):
     """This is the InSitu Reporter"""

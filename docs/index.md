@@ -20,7 +20,11 @@ The hash_dict function returns a clean dict containing just the elements in this
 And this is used to determine the hashstring:
 {{ d.source.artifact.set_hashstring }}
 
-This hashstring is used as the basis for caching and retrieving artifact information. Broadly speaking, we have three types of information to be concerned with.
+This hashstring is used as the basis for caching and retrieving artifact information.
+
+## Caching and Retrieving Artifact Information
+
+Broadly speaking, we have three types of information to be concerned with.
 
 Metadata - this incorporates the hash dict data and other metadata needed to help generate the artifact.
 
@@ -30,7 +34,17 @@ Input data - this is the same as the output data from the previous artifact.
 
 ### Metadata
 
-Metadata consists of the HASH_WHITELIST attributes and some other attributes listed under META_ATTRS. The metadata, along with the input data, should be all that is required to recreate an attribute. The meta attributes should be simple attributes which are easily serializable by JSON. The metadata also includes a list of inputs, which are other artifacts which we may want to make use of.
+Metadata consists of the HASH_WHITELIST attributes and some other attributes listed under META_ATTRS.
+
+<ul>
+{% for k in d.source.artifact.META_ATTRS.split(",") %}
+<li>{{ k | replace("'","") | replace("[","") | replace("]","") }}</li>
+{% endfor %}
+</ul>
+
+The metadata, along with the input data, should be all that is required to recreate an attribute. The meta attributes should be simple attributes which are easily serializable by JSON.
+
+The input_data_dict is included in the HASH_WHITELIST, however it is serialized separately. The metadata also includes a hash of inputs, which are saved by referencing their hashstrings.
 
 {{ d.source.file_system_json_artifact.save_meta }}
 {{ d.source.file_system_json_artifact.load_meta }}
@@ -49,7 +63,6 @@ The JSON data is loaded into memory at the beginning of processing and it access
 
 Artifacts are usually created via the setup() class method which is intended to be used in the course of creating a document, so many attributes are set based on the document which is creating the artifact. However sometimes artifacts are created on their own, as when creating additional artifacts.
 
-The 'key' argument is required to be passed when creating a new artifact.
 
 {{ d.source.artifact['__init__'] }}
 

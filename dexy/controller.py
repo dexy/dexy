@@ -1,15 +1,16 @@
-import dexy.db
 from dexy.dexy_filter import DexyFilter
 from dexy.document import Document
 from dexy.reporter import Reporter
 from dexy.topological_sort import topological_sort
 from inspect import isclass
 from ordereddict import OrderedDict
+import dexy.db
 import fnmatch
 import glob
 import json
 import logging
 import os
+import pprint
 import re
 import sqlite3
 import sre_constants
@@ -125,7 +126,7 @@ class Controller(object):
         """Given an alias, return the corresponding handler."""
         if self._filters.has_key(alias):
             return self._filters[alias]
-        elif alias.startswith("alias-") or alias.startswith("al-") or alias in ['al', 'alias']:
+        elif alias.startswith("-") or alias.startswith("alias-") or alias.startswith("al-") or alias in ['al', 'alias']:
             self._filters[alias] = DexyFilter
         else:
             raise Exception("You requested filter alias '%s' but this is not available." % alias)
@@ -142,14 +143,15 @@ class Controller(object):
         for i in range(0,len(path_elements)+1):
             config_file_path_elements = [rel_to] + path_elements[0:i] + [self.config_file]
             config_filename = os.path.join(*config_file_path_elements)
-            if os.path.exists(config_filename):
-                self.log.info("loading config %s" % config_filename)
-                config_file = open(config_filename, "r")
+            config_files = glob.glob(config_filename)
+            for cf in config_files:
+                self.log.info("loading config %s" % cf)
+                config_file = open(cf, "r")
                 try:
                     json_dict = json.load(config_file)
                 except ValueError as e:
                     raise Exception("""Your config file %s has invalid JSON. Details: %s""" %
-                                    (config_filename, e.message))
+                                    (cf, e.message))
                 if json_dict.has_key("$reset"):
                     config_dict = json_dict
                 else:
@@ -306,6 +308,7 @@ re.compile: %s""" % (args['except'], e))
                     if not hasattr(doc, 'args'):
                         doc.args = args
 
+                    doc.controller_args = self.args
                     self.members[key] = doc
                     docs.append(doc) # just a local list
             return docs
@@ -321,8 +324,7 @@ re.compile: %s""" % (args['except'], e))
         self.depends = []
 
         # Create Document objects for all docs.
-        self.log.debug("About to process config\n")
-        self.log.debug(self.config)
+        self.log.debug("About to process config:\n" + pprint.pformat(self.config))
         for path, config in self.config.iteritems():
             ### @export "features-global-args-1"
             if config.has_key("$globals"):

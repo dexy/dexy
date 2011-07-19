@@ -16,6 +16,7 @@ class Artifact(object):
         'binary_input',
         'binary_output',
         'key',
+        'document_key',
         'name',
         'ext',
         'stdout',
@@ -148,6 +149,8 @@ class Artifact(object):
         self.binary_input = previous_artifact.binary_output
         self.input_ext = previous_artifact.ext
         self.input_data_dict = previous_artifact.data_dict
+        self.document_key = previous_artifact.document_key
+        self.controller_args = previous_artifact.controller_args
 
         # The 'canonical' output of previous artifact
         self.previous_artifact_filename = previous_artifact.filename()

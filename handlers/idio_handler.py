@@ -2,13 +2,14 @@ from dexy.dexy_filter import DexyFilter
 from idiopidae.runtime import Composer
 from ordereddict import OrderedDict
 from pygments.formatters import get_formatter_for_filename
-from pygments.lexers import get_lexer_for_filename
 from pygments.lexers import get_lexer_by_name
+from pygments.lexers import get_lexer_for_filename
 from pygments.lexers.agile import PythonConsoleLexer
 from pygments.lexers.agile import RubyConsoleLexer
 from pygments.lexers.web import JavascriptLexer
 from pygments.lexers.web import PhpLexer
 import idiopidae.parser
+import re
 
 class IdioHandler(DexyFilter):
     """
@@ -42,13 +43,32 @@ class IdioHandler(DexyFilter):
         else:
             lexer = get_lexer_for_filename(name)
 
+        if self.artifact.args.has_key('idio'):
+            idio_args = self.artifact.args['idio']
+        else:
+            idio_args = {}
+
+        formatter_args = {'lineanchors' : self.artifact.document_key}
+        if idio_args.has_key('formatter'):
+            formatter_args.update(idio_args['formatter'])
+
         formatter = get_formatter_for_filename(self.artifact.filename(),
-                lineanchors='l')
+            **formatter_args)
+
         output_dict = OrderedDict()
+        lineno = 1
 
         for i, s in enumerate(builder.sections):
             lines = builder.statements[i]['lines']
-            formatted_lines = composer.format(lines, lexer, formatter) 
+            if len(lines) == 0:
+                next
+            if not re.match("^\d+$", s):
+                # Manually named section, the sectioning comment takes up a
+                # line, so account for this to keep line nos in sync.
+                lineno += 1
+            formatter.linenostart = lineno
+            formatted_lines = composer.format(lines, lexer, formatter)
             output_dict[s] = formatted_lines
+            lineno += len(lines)
 
         return output_dict

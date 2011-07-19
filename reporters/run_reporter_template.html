@@ -81,7 +81,7 @@
                         {% for a in doc.artifacts -%}
                         <tr>
                             <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">{{ a.key }}</td>
-                            <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;"><a href="../../{{ a.filepath() }}">{{ a.filepath() }}</a></td>
+                            <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">{{ a.data_dict.keys() }}<a href="../../{{ a.filepath() }}">{{ a.filepath() }}</a></td>
                             <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">{{ a.final }}</td>
                             {% if a.elapsed -%}
                             <td style="padding-left: 10px; padding-right: 10px; border:thin solid black; text-align:center;">{{ "%0.4f" % a.elapsed }}</td>

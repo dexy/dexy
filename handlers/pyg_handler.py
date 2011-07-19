@@ -38,7 +38,7 @@ class PygHandler(DexyFilter):
         else:
             pygments_args = {}
 
-        formatter_args = {'lineanchors' : 'l'}
+        formatter_args = {'lineanchors' : self.artifact.document_key }
         if pygments_args.has_key('formatter'):
             formatter_args.update(pygments_args['formatter'])
 

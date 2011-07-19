@@ -86,7 +86,7 @@ def setup_option_parser():
         )
 
         parser.add_argument(
-            '--use-reporters',
+            '--use-reporters', '--use-reporter',
             help="list reporters to be run",
             nargs='+'
         )
@@ -119,6 +119,14 @@ def setup_option_parser():
         default=True,
         action='store_false',
         help='do not recurse into subdirectories (default: recurse)'
+    )
+
+    add_option(parser,
+        '--no-tests',
+        dest='run_tests',
+        default=True,
+        action='store_false',
+        help='do not run any dexy tests (using the test filter) - helpful for populating test content'
     )
 
     add_option(parser,
@@ -441,12 +449,9 @@ def setup_controller():
     controller.use_local_files = args.local
     reporters = controller.find_reporters()
     if args.use_reporters:
-        print "reporters", args.use_reporters, "manually specified"
         controller.reporters = [r for r in reporters if r.__name__ in args.use_reporters]
-        print "running", controller.reporters
     else:
         controller.reporters = [r for r in reporters if r.DEFAULT]
-        print "automatically running", controller.reporters
 
     controller.additional_excludes = additional_excludes
 

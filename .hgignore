@@ -10,3 +10,4 @@ build
 dist
 docs/old-install
 .DS_Store
+.git

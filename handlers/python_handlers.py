@@ -69,12 +69,24 @@ class TestHandler(DexyFilter):
     ALIASES = ['test']
 
     def process(self):
+        if not self.artifact.controller_args.run_tests:
+            print "tests disabled, not running test", self.artifact.key
+            self.artifact.data_dict = self.artifact.input_data_dict
+            return False
+
         print "testing", self.artifact.key, "...",
         if not self.artifact.args.has_key('expects'):
             raise "You need to pass 'expects' to the test filter."
 
         expects = self.artifact.args['expects']
-        # TODO check if expects is a filename and if so load contents of file
+        if expects.startswith("@"):
+            expects_file = open(expects.lstrip("@"), "r")
+            expects_content = expects_file.read()
+            expects_file.close()
+        else:
+            expects_content = expects
+        expects = expects_content
+
         # TODO handle different types of expectation, e.g. when don't know exact
         # output but can look for type of data returned
         if hasattr(expects, 'items'):
@@ -88,7 +100,10 @@ class TestHandler(DexyFilter):
             msg += "\nexpected output '%s' does not match actual '%s'" % (expects, inp)
             assert expects == inp, msg
 
-        print "ok"
+        comment = ""
+        if self.artifact.args.has_key("comment"):
+           comment = "[%s]" % self.artifact.args['comment']
+        print "ok", comment
 
         # Don't change the output so we can use end result still...
         self.artifact.data_dict = self.artifact.input_data_dict
