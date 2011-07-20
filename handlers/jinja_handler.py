@@ -201,7 +201,8 @@ class JinjaHandler(DexyFilter):
             'subdirectories' : subdirectories,
             'len' : len,
             'pprint' : pprint.pprint,
-            'pformat' : pprint.pformat
+            'pformat' : pprint.pformat,
+            'WARN_AUTOGEN' : "This document is generated using Dexy (http://dexy.it). You should modify the source files, not this generated output."
         }
 
         if self.artifact.args.has_key('jinjavars'):
