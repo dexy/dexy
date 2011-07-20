@@ -67,14 +67,14 @@ class Artifact(object):
         self._inputs = {}
         self.additional = None
         self.args = {}
-        self.artifact_class_source = self.__class__.SOURCE_CODE
-        # TODO need artifact.py and also subclass source.
+        self.artifact_class_source = self.__class__.SOURCE_CODE # TODO need artifact.py and also subclass source.
         self.artifacts_dir = 'artifacts' # TODO don't hard code
         self.binary_input = None
         self.binary_output = None
         self.data_dict = OrderedDict()
         self.dexy_version = VERSION
         self.dirty = False
+        self.document_key = None
         self.final = None
         self.initial = None
         self.input_data_dict = OrderedDict()
