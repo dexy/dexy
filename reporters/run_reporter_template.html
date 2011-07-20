@@ -77,11 +77,11 @@
                     <br />
                     <h4>Artifacts</h4>
                     <table style="width: 800px; border: thin solid black; border-collapse: collapse;">
-                        <tr><th>Key</th><th>Link</th><th>Final</th><th>Elapsed</th><th>Run Type</th></tr>
+                        <tr><th>Key</th><th>Link</th><th>Final</th><th>Elapsed</th><th>Run Type</th><th>Sections</th></tr>
                         {% for a in doc.artifacts -%}
                         <tr>
                             <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">{{ a.key }}</td>
-                            <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">{{ a.data_dict.keys() }}<a href="../../{{ a.filepath() }}">{{ a.filepath() }}</a></td>
+                            <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;"><a href="../../{{ a.filepath() }}">{{ a.filepath() }}</a></td>
                             <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">{{ a.final }}</td>
                             {% if a.elapsed -%}
                             <td style="padding-left: 10px; padding-right: 10px; border:thin solid black; text-align:center;">{{ "%0.4f" % a.elapsed }}</td>
@@ -89,6 +89,11 @@
                             <td style="padding-left: 10px; padding-right: 10px; border:thin solid black; text-align:center;"></td>
                             {% endif -%}
                             <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">{{ a.run_type }}</td>
+                            <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">
+                                {% for k in a.data_dict.keys() -%}
+                                {{ k }}<br />
+                                {% endfor -%}
+                            </td>
                         </tr>
                         {% endfor -%}
                     </table>
