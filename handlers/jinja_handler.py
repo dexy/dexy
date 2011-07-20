@@ -49,6 +49,9 @@ class JinjaHandler(DexyFilter):
     """
     ALIASES = ['jinja']
     FINAL = True
+    CHANGE_EXTENSIONS = {
+        ".mds" : ".md"
+    }
 
     def pre_and_clippy(self, text):
         return """<pre>
@@ -84,6 +87,9 @@ class JinjaHandler(DexyFilter):
         </object>""" % (quoted_text, quoted_text)
 
     def process_text(self, input_text):
+        if self.artifact.ext in self.CHANGE_EXTENSIONS.keys():
+            self.artifact.ext = self.CHANGE_EXTENSIONS[self.artifact.ext]
+
         document_data = {}
         raw_data = {}
         local_inputs = {} # docs in the same directory

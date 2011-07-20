@@ -46,7 +46,9 @@ class InSituReporter(Reporter):
             fn = artifact.canonical_filename()
 
             if artifact.final:
-                if not os.path.exists(fn):
+                if os.path.exists(fn):
+                    print "InSituReporter not overwriting existing file", fn
+                else:
                     artifact.write_to_file(fn)
 
             for k, a in artifact._inputs.items():

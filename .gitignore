@@ -1,2 +1,4 @@
 *.pyc
 dexy.egg-info
+artifacts/
+logs/
