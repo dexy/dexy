@@ -370,6 +370,9 @@ def setup_option_parser():
         if os.path.exists('testdb'):
             os.remove('testdb')
 
+        if os.path.exists('output-latest.tgz'):
+            os.remove('output-latest.tgz')
+
         controller = Controller()
         controller.find_reporters()
         for d in controller.reports_dirs:
@@ -537,8 +540,7 @@ def dexy_command():
 
     if not args.no_reports:
         for reporter_klass in controller.reporters:
-            if reporter_klass.DEFAULT:
-                reporter_klass(controller).run()
+            reporter_klass(controller).run()
     else:
         print 'reports not run'
 
