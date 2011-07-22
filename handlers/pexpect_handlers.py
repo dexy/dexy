@@ -128,6 +128,16 @@ if ("rjson" %%in%% installed.packages()) {
 }
 """
 
+class RhinoInteractiveHandler(ProcessLinewiseInteractiveHandler):
+    """
+    Runs rhino JavaScript interpeter.
+    """
+    EXECUTABLE = "rhino"
+    INPUT_EXTENSIONS = [".js"]
+    OUTPUT_EXTENSIONS = [".txt"]
+    ALIASES = ['jsint', 'rhino']
+    PROMPT = "js> "
+
 class ClojureInteractiveHandler(ProcessLinewiseInteractiveHandler):
     """
     Runs clojure.
