@@ -20,14 +20,19 @@ class FilenameHandler(DexyFilter):
             key = m.groups()[0]
             ext = m.groups()[1]
             key_with_ext = "%s.%s" % (key, ext)
+            key_with_ext_with_dexy = "%s|dexy" % key_with_ext
 
             if key_with_ext in self.artifact.inputs().keys():
                 artifact = self.artifact.inputs()[key_with_ext]
                 self.artifact.log.debug("[fn] existing key %s in artifact %s links to file %s" %
                           (key_with_ext, self.artifact.key, artifact.filename()))
+            elif key_with_ext_with_dexy in self.artifact.inputs().keys():
+                artifact = self.artifact.inputs()[key_with_ext_with_dexy]
+                self.artifact.log.debug("[fn] existing key %s in artifact %s links to existing file %s" %
+                          (key_with_ext, self.artifact.key, artifact.filename()))
             else:
                 artifact = self.artifact.add_additional_artifact(key_with_ext, ext)
-                self.artifact.log.debug("[fn] added key %s to artifact %s ; links to file %s" %
+                self.artifact.log.debug("[fn] added key %s to artifact %s ; links to new file %s" %
                           (key_with_ext, self.artifact.key, artifact.filename()))
 
             input_text = input_text.replace(m.group(), artifact.filename())
