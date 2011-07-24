@@ -1,5 +1,6 @@
 from dexy.dexy_filter import DexyFilter
 from jinja2 import Environment
+from jinja2 import StrictUndefined
 from ordereddict import OrderedDict
 import jinja2
 import json
@@ -186,7 +187,8 @@ class JinjaHandler(DexyFilter):
                 variable_start_string = '<<',
                 variable_end_string = '>>',
                 comment_start_string = '<#',
-                comment_end_string = '#>'
+                comment_end_string = '#>',
+                undefined = StrictUndefined
                 )
         else:
             env = Environment()
