@@ -316,7 +316,7 @@ def setup_option_parser():
         path_to_artifacts_dir = os.path.join(project_base, args.artifacts_dir)
         raise Exception(
             """artifacts directory not found at %s,
-            please create a directory called %s if you want to use
+            please call dexy with --setup if you want to use
             this location as a dexy project root""" % (path_to_artifacts_dir, args.artifacts_dir)
         )
 
@@ -324,7 +324,7 @@ def setup_option_parser():
         path_to_logs_dir = os.path.join(project_base, args.logs_dir)
         raise Exception(
             """logs directory not found at %s,
-            please create a directory called %s if you want to use
+            please call dexy with --setup if you want to use
             this location as a dexy project root""" % (path_to_logs_dir, args.logs_dir)
         )
 
