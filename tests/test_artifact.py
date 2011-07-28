@@ -1,6 +1,15 @@
 from dexy.artifact import Artifact
 from dexy.artifacts.file_system_json_artifact import FileSystemJsonArtifact
 
+def is_empty_dict(d):
+    return isinstance(d, dict) and not d
+
+def test_empty_dict():
+    x = {}
+    assert is_empty_dict(x)
+    x['a'] = 5
+    assert not is_empty_dict(x)
+
 def test_artifact_init():
     artifact = Artifact()
     assert artifact.artifact_class_source
@@ -31,11 +40,17 @@ def test_artifact_filenames_file_key_with_filters():
 def test_add_additional_artifact():
     artifact = Artifact()
     artifact.key = 'abc.txt'
-    artifact.artifacts_dir = 'artifacts'
+    artifact.artifacts_dir = 'artifactsx'
     new_artifact = artifact.add_additional_artifact('def.txt', '.txt')
-    assert new_artifact.final
+
+    assert is_empty_dict(new_artifact._inputs)
+    assert is_empty_dict(new_artifact.args)
     assert new_artifact.additional
+    assert new_artifact.artifact_class_source
+    assert new_artifact.artifacts_dir == 'artifactsx'
+    assert new_artifact.final
     assert new_artifact.key in artifact.inputs()
+    assert new_artifact.state == 'new'
 
 def test_simple_metadata():
     HASHSTRING = 'abc123'
