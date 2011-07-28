@@ -190,7 +190,6 @@ class Document(object):
         self.step = 0
 
         artifact = self.create_initial_artifact()
-        artifact.save()
         artifact_key = artifact.key
         self.log.info("(step %s) [run] %s -> %s" % \
                  (self.step, artifact_key, artifact.filename()))

@@ -82,23 +82,8 @@ class Artifact(object):
         self.log = logging.getLogger()
         self.state = 'new'
 
-    def validate(self):
-        print "calling validate for", self.key, "in state", self.state
-        if self.state == 'new':
-            pass
-        elif self.state == 'setup':
-            pass
-        elif self.state == 'pending':
-            pass
-        elif self.state == 'running':
-            pass
-        elif self.state == 'complete':
-            pass
-        else:
-            raise Exception("unknown state: %s" % self.state)
-
     def is_complete(self):
-        return self.state == 'complete'
+        return str(self.state) == 'complete'
 
     @classmethod
     def retrieve(klass, hashstring):
@@ -221,11 +206,9 @@ class Artifact(object):
 
         if artifact.binary_output is None:
             artifact.set_binary_from_ext()
+
         artifact.set_hashstring()
-        if artifact.state == 'complete':
-            artifact.save()
-        else:
-            artifact.save_meta()
+
         if doc.controller.db:
             doc.controller.db.insert_artifact(artifact, doc.controller.batch_id)
         return artifact
@@ -233,10 +216,8 @@ class Artifact(object):
     def run(self):
         start_time = time.time()
 
-        if not self.is_complete() and self.is_output_cached():
-            self.load()
-
         if not self.is_complete():
+            # We have to actually run things...
             if not self.filter_class:
                 classes = [k for k in self.controller.handlers.values() if k.__name__ == self.filter_name]
                 if len(classes) == 0:
@@ -247,8 +228,6 @@ class Artifact(object):
             filter_instance = self.filter_class()
             filter_instance.artifact = self
             filter_instance.log = self.log
-
-            self.load_input()
 
             try:
                 filter_instance.process()
@@ -272,7 +251,7 @@ class Artifact(object):
 
             elif self.is_canonical_output_cached:
                 self.state = 'complete'
-                self.save_output()
+                self.save()
 
                 f = open(self.filepath(), "rb")
                 while True:
@@ -287,15 +266,11 @@ class Artifact(object):
             self.output_hash = h.hexdigest()
 
             self.state = 'complete'
-            self.finish_time = time.time()
-            self.run_type = 'run'
+            finish_time = time.time()
+            self.elapsed = finish_time - start_time
+            self.save()
         else:
             self.log.debug("using cached art %s" % self.key)
-            self.run_type = 'cached'
-
-        finish_time = time.time()
-        self.elapsed = finish_time - start_time
-        self.save()
 
 
     def add_additional_artifact(self, key_with_ext, ext):
@@ -305,9 +280,9 @@ class Artifact(object):
         new_artifact.ext = ".%s" % ext
         new_artifact.final = True
         new_artifact.additional = True
-        new_artifact.set_random_hashstring()
         new_artifact.set_binary_from_ext()
         new_artifact.artifacts_dir = self.artifacts_dir
+        new_artifact.set_hashstring()
         self.add_input(key_with_ext, new_artifact)
         return new_artifact
 
@@ -339,16 +314,23 @@ class Artifact(object):
         if self.dirty:
             self.dirty_string = time.gmtime()
 
-        hash_dict = self.__dict__.copy()
+        hash_dict = OrderedDict()
 
-        hash_dict['inputs'] = {}
-        for k, a in hash_dict.pop('_inputs').iteritems():
-            hash_dict['inputs'][k] = a.hashstring
+        hash_dict['inputs'] = OrderedDict()
+        sorted_input_keys = sorted(self.inputs().keys())
+        for k in sorted_input_keys:
+            hash_dict['inputs'][str(k)] = str(self.inputs()[k].hashstring)
 
-        # Remove any items which should not be included in hash calculations.
-        for k in hash_dict.keys():
-            if not k in self.HASH_WHITELIST:
-                del hash_dict[k]
+        for k in self.HASH_WHITELIST:
+            if self.__dict__.has_key(k):
+                v = self.__dict__[k]
+                if hasattr(v, 'items'):
+                    hash_v = OrderedDict()
+                    for k1, v1 in v.items():
+                        hash_v[str(k1)] = hashlib.md5(str(v1)).hexdigest()
+                else:
+                    hash_v = hashlib.md5(str(v)).hexdigest()
+                hash_dict[str(k)] = hash_v
 
         return hash_dict
 
@@ -356,8 +338,24 @@ class Artifact(object):
         hash_data = str(self.hash_dict())
         self.hashstring = hashlib.md5(hash_data).hexdigest()
 
-    def set_random_hashstring(self):
-        self.hashstring = str(uuid.uuid4())
+        if False:
+            for k, v in self.hash_dict().iteritems():
+                if hasattr(v, 'items'):
+                    print k, ":"
+                    for k1, v1 in v.items():
+                        print "  ", k1, ":", v1
+                else:
+                    print k, ":", v
+            print hash_data
+            print ">>>>>", self.hashstring
+
+        try:
+            self.load()
+        except AttributeError as e:
+            if not self.is_abstract():
+                raise e
+        except IOError as e:
+            self.save_meta()
 
     def command_line_args(self):
         """
