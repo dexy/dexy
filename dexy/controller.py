@@ -1,3 +1,4 @@
+from dexy.utils import profile_memory
 from dexy.dexy_filter import DexyFilter
 from dexy.document import Document
 from dexy.reporter import Reporter

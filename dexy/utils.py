@@ -1,7 +1,10 @@
 from BeautifulSoup import BeautifulSoup
 from ansi2html import Ansi2HTMLConverter
 from pynliner import Pynliner
+import MemoryMonitor
 import StringIO
+import datetime
+import gc
 import logging
 import os
 import re
@@ -80,3 +83,15 @@ def command_exists(cmd_name):
                 break
     return cmd_found
 
+def profile_memory(description=None):
+    file_name = "memory.log"
+    new_file = not os.path.exists(file_name)
+    f = open("memory.log", "a")
+    if new_file:
+        f.write("vm_size\tgc_count\ttimestamp\tdescription\n")
+    pid = os.getpid()
+    vm_size = MemoryMonitor.getVmSize(pid)
+    gc_count = len(gc.get_objects())
+    timestamp = datetime.datetime.now()
+    f.write("%s\t%s\t%s\t%s\n" % (vm_size, gc_count, timestamp, description))
+    f.close()
