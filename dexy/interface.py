@@ -315,9 +315,9 @@ def setup_option_parser():
     if not os.path.exists(args.artifacts_dir):
         path_to_artifacts_dir = os.path.join(project_base, args.artifacts_dir)
         raise Exception(
-            """artifacts directory not found at %s,
+            """artifacts directory not found at '%s',
             please call dexy with --setup if you want to use
-            this location as a dexy project root""" % (path_to_artifacts_dir, args.artifacts_dir)
+            this location as a dexy project root""" % (args.artifacts_dir)
         )
 
     if not os.path.exists(args.logs_dir):
