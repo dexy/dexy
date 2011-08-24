@@ -1,11 +1,12 @@
+from dexy.utils import profile_memory
 import StringIO
 import glob
 import json
 import logging
 import os
 import sys
-import urllib2
 import traceback
+import urllib2
 
 class Document(object):
     def __init__(self, artifact_class, name_or_key, filters = []):
@@ -193,7 +194,7 @@ class Document(object):
         artifact_key = artifact.key
         self.log.info("(step %s) [run] %s -> %s" % \
                  (self.step, artifact_key, artifact.filename()))
-
+        profile_memory("document-%s-step-%s" % (self.key(), self.step))
         for f in self.filters:
             previous_artifact = artifact
             artifact_key += "|%s" % f
@@ -208,6 +209,7 @@ class Document(object):
             artifact.run()
 
             self.artifacts.append(artifact)
+      	    profile_memory("document-%s-step-%s" % (self.key(), self.step))
 
 
         # Make sure all additional inputs are saved.
@@ -216,4 +218,5 @@ class Document(object):
                 a.state = 'complete'
                 a.save()
 
+        profile_memory("document-%s-complete" % (self.key()))
         return self
