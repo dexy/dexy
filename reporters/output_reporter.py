@@ -13,12 +13,13 @@ class TarzipOutputReporter(Reporter):
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
         report_filename = os.path.join(self.OUTPUT_DIR, "output-%s.tgz" % timestamp)
         tar = tarfile.open(report_filename, mode="w:gz")
+        subdir_name = "dexy-output"
 
         for doc in self.controller.docs:
             artifact = doc.final_artifact()
 
             if artifact.final:
-                arcname = artifact.canonical_filename()
+                arcname = os.path.join(subdir_name, artifact.canonical_filename())
                 tar.add(artifact.filepath(), arcname=arcname)
 
             for k, a in artifact._inputs.items():
@@ -29,7 +30,7 @@ class TarzipOutputReporter(Reporter):
                         if not a.is_complete():
                             a.state = 'complete'
                             a.save()
-                            arcname = a.canonical_filename()
+                            arcname = os.path.join(subdir_name, a.canonical_filename())
                             tar.add(a.filepath(), arcname=arcname)
 
         tar.close()
