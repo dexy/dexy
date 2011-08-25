@@ -1,4 +1,3 @@
-from dexy.utils import profile_memory
 from dexy.dexy_filter import DexyFilter
 from dexy.document import Document
 from dexy.reporter import Reporter
@@ -332,6 +331,9 @@ re.compile: %s""" % (args['except'], e))
                 global_args = config["$globals"]
             else:
                 global_args = {}
+
+            if self.args.globals:
+                global_args.update(self.args.globals)
 
             for k, v in config.iteritems():
                 local_args = global_args.copy()

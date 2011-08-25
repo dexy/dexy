@@ -3,14 +3,6 @@
 # Released under the GNU GPL version 2.
 
 import os
-import time
-import glob
-import stat
-import errno
-import signal
-import getopt
-import subprocess
-
 
 def parseStatusFile(pid, field) :
 	contents = ""
