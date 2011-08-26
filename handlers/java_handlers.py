@@ -59,9 +59,13 @@ class JavaHandler(DexyFilter):
             env = None
 
         self.artifact.create_temp_dir()
+        wf = os.path.join(self.artifact.temp_dir(), os.path.basename(self.artifact.name))
+        f = open(wf, "w")
+        f.write(self.artifact.input_text())
+        f.close()
 
         command = "javac -d %s %s" % (
-            self.artifact.temp_dir(), self.artifact.name)
+            self.artifact.temp_dir(), wf)
 
         self.log.debug(command)
         proc = subprocess.Popen(command, shell=True,
