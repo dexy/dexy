@@ -58,17 +58,30 @@ class JavaHandler(DexyFilter):
         else:
             env = None
 
+        # Create a temp dir to hold source + compiled files, since we need .java files
+        # named with their original names.
         self.artifact.create_temp_dir()
         wf = os.path.join(self.artifact.temp_dir(), os.path.basename(self.artifact.name))
         f = open(wf, "w")
         f.write(self.artifact.input_text())
         f.close()
 
-        command = "javac -d %s %s" % (
-            self.artifact.temp_dir(), wf)
+        if env.has_key("CLASSPATH"):
+            # need to add 1 level to classpath since we are working in a subdir of artifacts/
+            env['CLASSPATH'] = ":".join(["../%s" % x for x in env['CLASSPATH'].split(":")])
+        else:
+            env['CLASSPATH'] = None
 
+        cp = "."
+        if env['CLASSPATH']:
+                cp = "%s:%s" % (cp, env['CLASSPATH'])
+
+        cwd = self.artifact.temp_dir()
+
+        command = "javac -classpath %s %s" % (cp, os.path.basename(self.artifact.name))
         self.log.debug(command)
         proc = subprocess.Popen(command, shell=True,
+                                cwd=cwd,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
                                 env=env)
@@ -79,15 +92,11 @@ class JavaHandler(DexyFilter):
             raise Exception("a problem occurred running %s.\ndetails:\n%s" % (
                 command, stderr))
 
-        cp = self.artifact.temp_dir()
-        if self.artifact.args.has_key('env'):
-            if self.artifact.args['env'].has_key('CLASSPATH'):
-                cp = "%s:%s" % (self.artifact.temp_dir(),
-                                self.artifact.args['env']['CLASSPATH'])
 
         command = "java -cp %s %s" % (cp, main_method)
         self.log.debug(command)
         proc = subprocess.Popen(command, shell=True,
+                                cwd=cwd,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
                                 env=env)
