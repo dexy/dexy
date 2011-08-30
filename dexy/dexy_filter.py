@@ -113,6 +113,11 @@ class DexyFilter(object):
                 out_ext = klass.OUTPUT_EXTENSIONS[0]
         return out_ext
 
+    @classmethod
+    def enabled(self):
+        """Allow filters to be disabled."""
+        return True
+
     def handle_subprocess_proc_return(self, returncode, stderr):
         if returncode is None:
             raise Exception("no return code, proc not finished!")

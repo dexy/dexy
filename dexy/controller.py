@@ -110,6 +110,9 @@ class Controller(object):
                             elif not klass.executable_present():
                                 self.log.info("class %s is not available because %s not found" %
                                               (klass.__name__, klass.executable()))
+                            elif not klass.enabled():
+                                self.log.info("class %s is not available because it is not enabled" %
+                                              (klass.__name__))
                             else:
                                 for a in klass.ALIASES:
                                     if handlers.has_key(a):

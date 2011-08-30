@@ -7,6 +7,7 @@ import handlers.pexpect_handlers
 import handlers.stdout_handlers
 import json
 import os
+import platform
 import subprocess
 
 class JrubyHandler(handlers.stdout_handlers.ProcessStdoutHandler):
@@ -32,12 +33,34 @@ class JythonHandler(handlers.stdout_handlers.ProcessStdoutHandler):
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['jython']
 
+    @classmethod
+    def enabled(self):
+        if platform.system() in ('Linux', 'Windows'):
+            return True
+        elif platform.system() in ('Darwin'):
+            print "The jython dexy filter should not be run on MacOS due to a serious bug. This filter is being disabled."
+            return False
+        else:
+            print """Can't detect your system. If you see this message please report this to the dexy project maintainer, your platform.system() value is '%s'. The jython dexy filter should not be run on MacOS due to a serious bug.""" % platform.system()
+            return True
+
 class JythonInteractiveHandler(handlers.pexpect_handlers.ProcessLinewiseInteractiveHandler):
     VERSION = "jython --version"
     EXECUTABLE = "jython -i"
     INPUT_EXTENSIONS = [".py", ".txt"]
     OUTPUT_EXTENSIONS = [".pycon"]
     ALIASES = ['jythoni']
+
+    @classmethod
+    def enabled(self):
+        if platform.system() in ('Linux', 'Windows'):
+            return True
+        elif platform.system() in ('Darwin'):
+            print "The jythoni dexy filter should not be run on MacOS due to a serious bug. This filter is being disabled."
+            return False
+        else:
+            print """Can't detect your system. If you see this message please report this to the dexy project maintainer, your platform.system() value is '%s'. The jythoni dexy filter should not be run on MacOS due to a serious bug.""" % platform.system()
+            return True
 
 class JavaHandler(DexyFilter):
     EXECUTABLE = "javac"
