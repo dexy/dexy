@@ -1,0 +1,79 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>{{ site_name }}</title>
+<link rel="stylesheet" href="http://assets.dexy.it/obtanium/styles.css" type="text/css" />
+<link rel="stylesheet" href="http://assets.dexy.it/pastie.css" type="text/css" />
+</head>
+
+<body>
+<div id="container">
+	<div id="header">
+        {% set relpath_d = relpath('.', directory) %}
+        <h1><a href="{{ relpath_d }}/index.html">{{ pretty_site_name }}</a></h1>
+        <h2>a dexy-generated site</h2>
+        <div class="clear"></div>
+    </div>
+    <div id="nav">
+        <ul>
+            {% for d in dirs -%}
+            {% if d %}
+            {% set relpath_d = relpath(d, directory) %}
+            {% else %}
+            {% set relpath_d = relpath('.', directory) %}
+            {% set d = 'Home' %}
+            {% endif -%}
+            <li><a href="{{ relpath_d }}/index.html">{{ d }}</a></li>
+            {% endfor -%}
+        </ul>
+    </div>
+    <div id="body">
+        <div id="content">
+            <h2>{{ title }}</h2>
+            {{ content }}
+        </div>
+        <div class="sidebar">
+            <ul>
+               <li>
+                    <h4><span>Navigate</span></h4>
+                    <ul class="blocklist">
+                        {% for d in dirs -%}
+                        {% if d %}
+                        {% set relpath_d = relpath(d, directory) %}
+                        {% else %}
+                        {% set relpath_d = relpath('.', directory) %}
+                        {% set d = 'Home' %}
+                        {% endif -%}
+                        <li><a href="{{ relpath_d }}/index.html">{{ d }}</a></li>
+                        {% if relpath_d == '.' %}
+                            {% if children is defined -%}
+                            <ul style="margin-left:20px;">
+                                {% for c in children %}
+                                {% set child_filename = basename(c.canonical_filename()) %}
+                                {% if child_filename == 'index.html' %}
+                                {% set child_filename = basename(c.long_canonical_filename()) %}
+                                {% endif %}
+                                <li><a href="{{ child_filename }}">{{ d }}/{{ child_filename}}</a></li>
+                                {% endfor %}
+                            </ul>
+                            {% endif %}
+                        {% endif %}
+                        {% endfor -%}
+                    </ul>
+                </li>
+                <li>
+                </li>
+            </ul>
+        </div>
+    	<div class="clear"></div>
+    </div>
+
+    <div id="footer">
+        <div class="footer-content">
+			<p>Design by <a href="http://www.spyka.net">Free CSS Templates</a> | <a href="http://www.justfreetemplates.com">Free Web Templates</a></p>
+		</div>
+    </div>
+</div>
+</body>
+</html>
