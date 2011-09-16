@@ -2,3 +2,4 @@
 dexy.egg-info
 artifacts/
 logs/
+*.swp
