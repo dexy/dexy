@@ -209,7 +209,8 @@ class Artifact(object):
 
         artifact.set_hashstring()
 
-        if doc.controller.db:
+        if doc.controller.db and False:
+            # disabled temporarily since it's very slow...
             doc.controller.db.insert_artifact(artifact, doc.controller.batch_id)
         return artifact
 
