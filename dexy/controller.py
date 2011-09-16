@@ -2,6 +2,7 @@ from dexy.dexy_filter import DexyFilter
 from dexy.document import Document
 from dexy.reporter import Reporter
 from dexy.topological_sort import topological_sort
+from dexy.utils import AttrDict
 from inspect import isclass
 from ordereddict import OrderedDict
 import dexy.db
@@ -19,7 +20,14 @@ import sys
 class Controller(object):
     def __init__(self):
         self.config = {}
-        self.args = {}
+
+        # In actual usage, these initialized values are replaced by optparse
+        # Namespace or the argparse equivalent. These initialized values are
+        # used in testing, AttrDict is used so we can simulate the globals
+        # attr.
+        self.args = AttrDict({})
+        self.args.globals = {}
+
         self.install_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         if not hasattr(self, 'log'):
             self.log = logging.getLogger('dexy')

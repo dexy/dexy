@@ -45,6 +45,7 @@ def test_add_additional_artifact():
 
     assert is_empty_dict(new_artifact._inputs)
     assert is_empty_dict(new_artifact.args)
+    assert is_empty_dict(new_artifact.args.globals)
     assert new_artifact.additional
     assert new_artifact.artifact_class_source
     assert new_artifact.artifacts_dir == 'artifactsx'
