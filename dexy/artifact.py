@@ -1,4 +1,5 @@
 from dexy.version import VERSION
+from dexy.utils import AttrDict
 from ordereddict import OrderedDict
 import glob
 import hashlib
@@ -65,7 +66,14 @@ class Artifact(object):
 
         self._inputs = {}
         self.additional = None
-        self.args = {}
+
+        # In actual usage, these initialized values are replaced by optparse
+        # Namespace or the argparse equivalent. These initialized values are
+        # used in testing, AttrDict is used so we can simulate the globals
+        # attr.
+        self.args = AttrDict({})
+        self.args.globals = {}
+
         self.artifact_class_source = self.__class__.SOURCE_CODE # TODO need artifact.py and also subclass source.
         self.artifacts_dir = 'artifacts' # TODO don't hard code
         self.binary_input = None

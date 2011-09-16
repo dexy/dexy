@@ -9,6 +9,13 @@ import logging
 import os
 import re
 
+# http://code.activestate.com/recipes/361668/#c2
+class AttrDict(dict):
+    def __init__(self, *args, **kwargs):
+        dict.__init__(self, *args, **kwargs)
+    def __getattr__(self, name):
+        return self[name]
+
 def ansi_output_to_html(ansi_text):
     try:
         converter = Ansi2HTMLConverter()
