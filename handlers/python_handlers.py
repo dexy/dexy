@@ -1,6 +1,7 @@
 from dexy.dexy_filter import DexyFilter
 from dexy.utils import print_string_diff
 from ordereddict import OrderedDict
+import json
 import os
 import re
 import shutil
@@ -348,6 +349,14 @@ class SplitLatexHandler(DexyFilter):
 
         output_dict = self.artifact.input_data_dict
         self.artifact.data_dict = output_dict
+
+class PrettyPrintJsonFilter(DexyFilter):
+    ALIASES = ['ppjson']
+    OUTPUT_EXTENSIONS = ['.json']
+
+    def process_text(self, input_text):
+        json_content = json.loads(input_text)
+        return json.dumps(json_content, sort_keys=True, indent=4)
 
 class SillyHandler(DexyFilter):
     ALIASES =['silly']
