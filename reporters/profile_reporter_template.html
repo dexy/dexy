@@ -1,0 +1,59 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Profile Report</title>
+<link rel="stylesheet" href="http://assets.dexy.it/obtanium/styles.css" type="text/css" />
+<link rel="stylesheet" href="http://assets.dexy.it/pastie.css" type="text/css" />
+</head>
+
+<body>
+<div id="container">
+	<div id="header">
+        <h1><a href="/">Profile Report</a></h1>
+        <h2>a dexy-generated site</h2>
+        <div class="clear"></div>
+    </div>
+    <div id="nav">
+        <ul>
+            <li><a href="/">Home</a></li>
+        </ul>
+    </div>
+    <div id="body">
+        <div id="content">
+            <h2></h2>
+            <table style="width: 100%;">
+               {% for fn, fd in function_data.items() -%}
+               <tr>
+                   <td style="padding: 0; background-color:white;"><a href="#{{ fn }}">{{ fn }}</a></td>
+                   <td style="padding: 0; background-color:white; text-align:right;">{{ "%0.4f" % fd['cumtime'] }}</td>
+                   <td style="padding: 0; background-color:white; text-align:right;">{{ "%0.4f" % fd['tottime'] }}</td>
+                   <td style="padding: 0; background-color:white; text-align:right;">{{ "%0.2f" % ((fd['tottime']/overall_tot_time) * 100) }}</td>
+                   <td style="padding: 0; background-color:white; text-align:right;">{{ fd['ncalls'] }}</td>
+               </tr>
+               {% endfor -%}
+            </table>
+            {% for fn, fd in function_data.iteritems() %}
+            <h3 id="{{ fn }}">{{ fn }}</h3>
+            <pre>
+            {% for k, v in fd.iteritems() -%}
+            {{ k }}: {{ v }}
+            {% endfor -%}
+            <img width="300px" src="{{ fd['cumtime_fig_filename'] }}" />
+            <img width="300px" src="{{ fd['tottime_fig_filename'] }}" />
+            </pre>
+            {% endfor %}
+        </div>
+        <div class="sidebar">
+        </div>
+    	<div class="clear"></div>
+    </div>
+
+    <div id="footer">
+        <div class="footer-content">
+			<p>Design by <a href="http://www.spyka.net">Free CSS Templates</a> | <a href="http://www.justfreetemplates.com">Free Web Templates</a></p>
+		</div>
+    </div>
+</div>
+</body>
+</html>

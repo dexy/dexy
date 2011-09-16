@@ -1,4 +1,7 @@
 from dexy.reporter import Reporter
+from jinja2 import Environment
+from ordereddict import OrderedDict
+from jinja2 import FileSystemLoader
 import cgi # for escape
 import datetime
 import dexy.aplotter as aplotter
@@ -58,20 +61,25 @@ class ProfileReporter(Reporter):
             report_dir = os.path.join(self.REPORTS_DIR, "profile-%s" % ts)
         os.mkdir(report_dir)
 
-        f = open(os.path.join(report_dir, "index.html"), "w")
-
         if self.controller.args.profile:
             p = pstats.Stats('dexy.prof')
-
             p.sort_stats('cumulative')
 
+            env = Environment()
+            env.loader = FileSystemLoader(os.path.dirname(__file__))
+            template = env.get_template('profile_reporter_template.html')
+
+            function_data = OrderedDict()
+            overall_tot_time = 0
+            p.print_callers()
             for i, x in enumerate(p.fcn_list):
                 filename, lineno, functionname = x
                 ncalls, primcalls, tottime, cumtime, _ = p.stats[x]
                 totpercall = tottime/ncalls
                 cumpercall = cumtime/primcalls
+                overall_tot_time += tottime
 
-
+                # insert data from this run into db
                 db.insert("profiles",
                     batchtimestamp=ts,
                     filename=filename,
@@ -83,43 +91,68 @@ class ProfileReporter(Reporter):
                     cumtime=cumtime
                     )
 
-                if i < 50:
-                    # TODO use a HTML template instead of this.
-                    short_filename = os.path.basename(filename)
-                    f.write("<h2>%s) %s:%s</h2>\n" % (i+1, cgi.escape(short_filename), cgi.escape(functionname)))
-                    f.write("<ul>\n")
-                    f.write("<li>%s : %s</li>\n" % (filename, lineno))
-                    f.write("<li>%s</li>\n" % cgi.escape(functionname))
-                    f.write("<li>Function called %s times (%s primitive calls).</li>\n" % (ncalls, primcalls) )
-                    f.write("<li>Total time in function %0.4f (%0.4f per call)</li>\n" % (tottime, totpercall) )
-                    f.write("<li>Cumulative time in function %0.4f (%0.4f per call)</li>\n" % (cumtime, cumpercall) )
-                    f.write("</ul>\n")
+                short_filename = os.path.basename(filename)
+                function_id = "%s:%s" % (cgi.escape(short_filename), cgi.escape(functionname))
 
-                    hist = []
-                    f.write("<table style=\"font-family: Courier; width: 400px;\">\n<tr><th>timestamp</th><th>cumtime</th></tr>\n")
-                    for row in db.select("profiles",
-                            where=("filename=\"%s\" AND functionname=\"%s\"" % (filename, functionname)),
-                            order=("batchtimestamp ASC")
-                            ):
-                        f.write("<tr><td>%s</td><td style=\"text-align:right;\">%0.4f</td></tr>\n" % (row.batchtimestamp, row.cumtime))
-                        hist.append(row.cumtime)
+                hist_rows = db.select("profiles",
+                    where=("filename=\"%s\" AND functionname=\"%s\"" % (filename, functionname)),
+                    order=("batchtimestamp ASC")
+                )
 
-                    f.write("</table>\n")
-                    if MATPLOTLIB_AVAILABLE:
-                        pyplot.clf()
-                        pyplot.plot(hist)
-                        figfilename = "%s.png" % str(uuid.uuid4())
-                        figfile = open(os.path.join(report_dir, figfilename), "wb")
-                        pyplot.savefig(figfile)
-                        figfile.close()
-                        f.write("<img src=\"%s\" />" % figfilename)
+                cumtime_hist = []
+                tottime_hist = []
+                for row in hist_rows:
+                    cumtime_hist.append(row.cumtime)
+                    tottime_hist.append(row.tottime)
 
-                    try:
-                        f.write("<pre>\n%s\n</pre>" % aplotter.plot(hist))
-                    except Exception as e:
-                        pass
+                if MATPLOTLIB_AVAILABLE and i < 10:
+                    pyplot.clf()
+                    pyplot.plot(cumtime_hist)
+                    cumtime_fig_filename = "%s.png" % str(uuid.uuid4())
+                    figfile = open(os.path.join(report_dir, cumtime_fig_filename), "wb")
+                    pyplot.savefig(figfile)
+                    figfile.close()
 
-            f.close()
+                    pyplot.clf()
+                    pyplot.plot(tottime_hist)
+                    tottime_fig_filename = "%s.png" % str(uuid.uuid4())
+                    figfile = open(os.path.join(report_dir, tottime_fig_filename), "wb")
+                    pyplot.savefig(figfile)
+                    figfile.close()
+                else:
+                    cumtime_fig_filename = None
+                    tottime_fig_filename = None
 
+                try:
+                    cumtime_text_plot = aplotter.plot(cumtime_hist)
+                    tottime_text_plot = aplotter.plot(tottime_hist)
+                    raise Exception()
+                except Exception as e:
+                    cumtime_text_plot = None
+                    tottime_text_plot = None
+
+                function_data[function_id] = {
+                    'functionname' : cgi.escape(functionname),
+                    'ncalls' : ncalls,
+                    'primcalls' : primcalls,
+                    'filename' : filename,
+                    'lineno' : lineno,
+                    'tottime' : tottime,
+                    'totpercall' : totpercall,
+                    'cumtime' : cumtime,
+                    'cumpercall' : cumpercall,
+                    'cumtime_hist' : cumtime_hist,
+                    'tottime_hist' : tottime_hist,
+                    'cumtime_fig_filename' : cumtime_fig_filename,
+                    'tottime_fig_filename' : tottime_fig_filename,
+                    'cumtime_text_plot' : cumtime_text_plot,
+                    'tottime_text_plot' : tottime_text_plot
+                }
+
+            env_data = {
+                'function_data' : function_data,
+                'overall_tot_time' : overall_tot_time
+            }
+            template.stream(env_data).dump(os.path.join(report_dir, 'index.html'))
             shutil.copytree(report_dir, latest_dir)
 
