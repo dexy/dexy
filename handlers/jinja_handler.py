@@ -217,6 +217,11 @@ class JinjaHandler(DexyFilter):
                     raise Exception("Please do not set a jinjavar for %s as this conflicts with standard vars: %s" % (k, ', '.join(template_hash.keys())))
                 template_hash[k] = v
 
+        if self.artifact.controller_args.globals:
+            for k, v in self.artifact.controller_args.globals.iteritems():
+                if not template_hash.has_key(k):
+                    template_hash[k] = v
+
         try:
             template = env.from_string(input_text)
             result = str(template.render(template_hash))

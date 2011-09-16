@@ -7,6 +7,7 @@ import handlers.pexpect_handlers
 import handlers.stdout_handlers
 import json
 import os
+import platform
 import subprocess
 
 class JrubyHandler(handlers.stdout_handlers.ProcessStdoutHandler):
@@ -32,12 +33,34 @@ class JythonHandler(handlers.stdout_handlers.ProcessStdoutHandler):
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['jython']
 
+    @classmethod
+    def enabled(self):
+        if platform.system() in ('Linux', 'Windows'):
+            return True
+        elif platform.system() in ('Darwin'):
+            print "The jython dexy filter should not be run on MacOS due to a serious bug. This filter is being disabled."
+            return False
+        else:
+            print """Can't detect your system. If you see this message please report this to the dexy project maintainer, your platform.system() value is '%s'. The jython dexy filter should not be run on MacOS due to a serious bug.""" % platform.system()
+            return True
+
 class JythonInteractiveHandler(handlers.pexpect_handlers.ProcessLinewiseInteractiveHandler):
     VERSION = "jython --version"
     EXECUTABLE = "jython -i"
     INPUT_EXTENSIONS = [".py", ".txt"]
     OUTPUT_EXTENSIONS = [".pycon"]
     ALIASES = ['jythoni']
+
+    @classmethod
+    def enabled(self):
+        if platform.system() in ('Linux', 'Windows'):
+            return True
+        elif platform.system() in ('Darwin'):
+            print "The jythoni dexy filter should not be run on MacOS due to a serious bug. This filter is being disabled."
+            return False
+        else:
+            print """Can't detect your system. If you see this message please report this to the dexy project maintainer, your platform.system() value is '%s'. The jythoni dexy filter should not be run on MacOS due to a serious bug.""" % platform.system()
+            return True
 
 class JavaHandler(DexyFilter):
     EXECUTABLE = "javac"
@@ -58,13 +81,30 @@ class JavaHandler(DexyFilter):
         else:
             env = None
 
+        # Create a temp dir to hold source + compiled files, since we need .java files
+        # named with their original names.
         self.artifact.create_temp_dir()
+        wf = os.path.join(self.artifact.temp_dir(), os.path.basename(self.artifact.name))
+        f = open(wf, "w")
+        f.write(self.artifact.input_text())
+        f.close()
 
-        command = "javac -d %s %s" % (
-            self.artifact.temp_dir(), self.artifact.name)
+        if env.has_key("CLASSPATH"):
+            # need to add 1 level to classpath since we are working in a subdir of artifacts/
+            env['CLASSPATH'] = ":".join(["../%s" % x for x in env['CLASSPATH'].split(":")])
+        else:
+            env['CLASSPATH'] = None
 
+        cp = "."
+        if env['CLASSPATH']:
+                cp = "%s:%s" % (cp, env['CLASSPATH'])
+
+        cwd = self.artifact.temp_dir()
+
+        command = "javac -classpath %s %s" % (cp, os.path.basename(self.artifact.name))
         self.log.debug(command)
         proc = subprocess.Popen(command, shell=True,
+                                cwd=cwd,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
                                 env=env)
@@ -75,15 +115,11 @@ class JavaHandler(DexyFilter):
             raise Exception("a problem occurred running %s.\ndetails:\n%s" % (
                 command, stderr))
 
-        cp = self.artifact.temp_dir()
-        if self.artifact.args.has_key('env'):
-            if self.artifact.args['env'].has_key('CLASSPATH'):
-                cp = "%s:%s" % (self.artifact.temp_dir(),
-                                self.artifact.args['env']['CLASSPATH'])
 
         command = "java -cp %s %s" % (cp, main_method)
         self.log.debug(command)
         proc = subprocess.Popen(command, shell=True,
+                                cwd=cwd,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
                                 env=env)

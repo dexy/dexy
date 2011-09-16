@@ -1,11 +1,8 @@
 from dexy.utils import profile_memory
 import StringIO
-import glob
 import json
 import logging
 import os
-import sys
-import traceback
 import urllib2
 
 class Document(object):
@@ -37,10 +34,7 @@ class Document(object):
         self.use_all_inputs = False
 
     def final_artifact(self):
-        if len(self.artifacts) == 0:
-            raise Exception("Trying to retrieve final artifact when artifacts are empty!")
-
-        return self.artifacts[-1]
+        return self.last_artifact
 
     def key(self):
         return "%s|%s" % (self.name, "|".join(self.filters))
@@ -195,6 +189,7 @@ class Document(object):
         self.log.info("(step %s) [run] %s -> %s" % \
                  (self.step, artifact_key, artifact.filename()))
         profile_memory("document-%s-step-%s" % (self.key(), self.step))
+        self.last_artifact = artifact
         for f in self.filters:
             previous_artifact = artifact
             artifact_key += "|%s" % f
@@ -208,7 +203,7 @@ class Document(object):
 
             artifact.run()
 
-            self.artifacts.append(artifact)
+            self.last_artifact = artifact
       	    profile_memory("document-%s-step-%s" % (self.key(), self.step))
 
 

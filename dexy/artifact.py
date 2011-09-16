@@ -9,7 +9,6 @@ import shutil
 import sys
 import time
 import traceback
-import uuid
 
 class Artifact(object):
     META_ATTRS = [

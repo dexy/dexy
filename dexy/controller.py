@@ -1,4 +1,3 @@
-from dexy.utils import profile_memory
 from dexy.dexy_filter import DexyFilter
 from dexy.document import Document
 from dexy.reporter import Reporter
@@ -111,6 +110,9 @@ class Controller(object):
                             elif not klass.executable_present():
                                 self.log.info("class %s is not available because %s not found" %
                                               (klass.__name__, klass.executable()))
+                            elif not klass.enabled():
+                                self.log.info("class %s is not available because it is not enabled" %
+                                              (klass.__name__))
                             else:
                                 for a in klass.ALIASES:
                                     if handlers.has_key(a):
@@ -332,6 +334,9 @@ re.compile: %s""" % (args['except'], e))
                 global_args = config["$globals"]
             else:
                 global_args = {}
+
+            if self.args.globals:
+                global_args.update(self.args.globals)
 
             for k, v in config.iteritems():
                 local_args = global_args.copy()

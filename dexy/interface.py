@@ -27,6 +27,7 @@ level of your project: %s.
 Any directory with a file named .nodexy will be skipped, and subdirectories of this will also be skipped.
 """ % (", ".join(EXCLUDE_DIRS_ALL_LEVELS), ", ".join(EXCLUDE_DIRS_ROOT))
 
+
 def artifact_class(artifact_class_name, log):
     artifact_classes = {}
 
@@ -73,6 +74,27 @@ def setup_option_parser():
         import argparse
         option_parser = 'argparse'
         parser = argparse.ArgumentParser()
+
+
+        class GlobalsArgparseAction(argparse.Action):
+            def __call__(self, parser, namespace, values, option_string=None):
+                value_dict = getattr(namespace, self.dest)
+                if not value_dict:
+                    value_dict = {}
+                if not "=" in values:
+                    raise Exception("args passed to %s should be in KEY=value format, no '=' found in %s" % (option_string, values))
+                k, v = values.split("=")
+                value_dict[k] = v
+                setattr(namespace, self.dest, value_dict)
+
+        parser.add_argument(
+            '--global',
+            help="""Use to set a global variable which will be available within dexy tasks,
+            use KEY=value syntax and specify option multiple times if you need to specify more than 1 key value pair
+            e.g. VERSION=0.0.1""",
+            action=GlobalsArgparseAction,
+            dest='globals'
+        )
 
         parser.add_argument(
             'dir',
