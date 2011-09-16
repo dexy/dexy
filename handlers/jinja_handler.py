@@ -207,7 +207,6 @@ class JinjaHandler(DexyFilter):
             'r' : raw_data,
             'subdirectories' : subdirectories,
             'len' : len,
-            'pprint' : pprint.pprint,
             'pformat' : pprint.pformat,
             'WARN_AUTOGEN' : "This document is generated using Dexy (http://dexy.it). You should modify the source files, not this generated output."
         }
