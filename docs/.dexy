@@ -3,7 +3,7 @@
     "allinputs" : true
   },
   "*.R|fn|idio|rint|pyg" : {},
-  "_*.html|jinja" : {},
+  "_*.html|dexy" : {},
   "*.py|pyg" : {},
   "*.py|fn|py" : {},
   "*.css|cp" : {}
