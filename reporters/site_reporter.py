@@ -89,7 +89,7 @@ class SiteReporter(Reporter):
         elif artifact.ext in ['.pdf', '.css']:
             content = """<a href="%s">%s</a>""" % (artifact_fn, artifact_fn)
         else:
-            print "using default handling for extension", artifact.ext
+            print "site reporter using default handling for extension", artifact.ext
             content = """<a href="%s">%s</a>""" % (artifact_fn, artifact_fn)
 
         env_data = {
@@ -105,7 +105,9 @@ class SiteReporter(Reporter):
             'artifact_fn' : artifact_fn,
             'html_page_fn' : html_page_fn
         }
-
+        html_page_parent_dir = os.path.dirname(os.path.join(self.report_dir, html_page_fn))
+        if not os.path.exists(html_page_parent_dir):
+                os.mkdir(html_page_parent_dir)
         self.template.stream(env_data).dump(os.path.join(self.report_dir, html_page_fn))
 
     def run(self):
