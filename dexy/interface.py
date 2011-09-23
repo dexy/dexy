@@ -348,7 +348,7 @@ def setup_option_parser():
         raise Exception(
             """logs directory not found at %s,
             please call dexy with --setup if you want to use
-            this location as a dexy project root""" % (path_to_logs_dir, args.logs_dir)
+            this location as a dexy project root""" % (path_to_logs_dir)
         )
 
     # Set up main dexy log
