@@ -84,9 +84,9 @@ class SiteReporter(Reporter):
             content = artifact.output_text()
         elif artifact.ext in ['.txt']:
             content = """<pre>\n%s\n</pre>""" % artifact.output_text()
-        elif artifact.ext in ['.png', '.jpg']:
+        elif artifact.ext in ['.png', '.jpg', '.gif']:
             content = """<a href="%s"><img src="%s" /></a>""" % (artifact_fn, artifact_fn)
-        elif artifact.ext in ['.pdf', '.css']:
+        elif artifact.ext in ['', '.pdf', '.css', '.rb', '.py', '.swf', '.R']:
             content = """<a href="%s">%s</a>""" % (artifact_fn, artifact_fn)
         else:
             print "site reporter using default handling for extension", artifact.ext
