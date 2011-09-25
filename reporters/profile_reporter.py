@@ -21,9 +21,9 @@ except Exception as e:
     MATPLOTLIB_AVAILABLE = False
 
 class ProfileReporter(Reporter):
-
-    REPORTS_DIR = 'logs/profile'
     DB_FILE = "profile.sqlite"
+    DEFAULT = False
+    REPORTS_DIR = 'logs/profile'
     DB_PATH = os.path.join(REPORTS_DIR, DB_FILE)
 
     def run(self):

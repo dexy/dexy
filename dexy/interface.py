@@ -390,7 +390,7 @@ def setup_option_parser():
             print "purging contents of %s" % args.logs_dir
             shutil.rmtree(args.logs_dir)
 
-        if os.path.exists('testdb'):
+        if os.path.exists('testdb') and False:
             os.remove('testdb')
 
         if os.path.exists('output-latest.tgz'):

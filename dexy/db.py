@@ -1,7 +1,8 @@
 try:
     import web
     import sqlite3
-    DB_AVAILABLE = True
+#    DB_AVAILABLE = True
+    DB_AVAILABLE = False # Disable this for now.
     web.config.debug = False
 except ImportError:
     DB_AVAILABLE = False

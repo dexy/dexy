@@ -7,6 +7,7 @@ import tarfile
 class TarzipOutputReporter(Reporter):
     """Reporter which creates a .tgz of all output files."""
     OUTPUT_DIR = "logs"
+    DEFAULT = False
 
     def run(self):
         # TODO craete output dir if it doesn't exist
