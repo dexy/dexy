@@ -107,7 +107,7 @@ class SiteReporter(Reporter):
         }
         html_page_parent_dir = os.path.dirname(os.path.join(self.report_dir, html_page_fn))
         if not os.path.exists(html_page_parent_dir):
-                os.mkdir(html_page_parent_dir)
+                os.makedirs(html_page_parent_dir)
         self.template.stream(env_data).dump(os.path.join(self.report_dir, html_page_fn))
 
     def run(self):
