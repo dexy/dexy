@@ -11,6 +11,8 @@ import os
 import shutil
 
 class SiteReporter(Reporter):
+    DEFAULT = False
+
     def __init__(self, controller):
         Reporter.__init__(self, controller)
         self.timestamp = datetime.datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
@@ -84,12 +86,12 @@ class SiteReporter(Reporter):
             content = artifact.output_text()
         elif artifact.ext in ['.txt']:
             content = """<pre>\n%s\n</pre>""" % artifact.output_text()
-        elif artifact.ext in ['.png', '.jpg']:
+        elif artifact.ext in ['.png', '.jpg', '.gif']:
             content = """<a href="%s"><img src="%s" /></a>""" % (artifact_fn, artifact_fn)
-        elif artifact.ext in ['.pdf', '.css']:
+        elif artifact.ext in ['', '.pdf', '.css', '.rb', '.py', '.swf', '.R']:
             content = """<a href="%s">%s</a>""" % (artifact_fn, artifact_fn)
         else:
-            print "site reporter using default handling for extension", artifact.ext
+            self.log.debug("site reporter using default handling for extension %s" % artifact.ext)
             content = """<a href="%s">%s</a>""" % (artifact_fn, artifact_fn)
 
         env_data = {

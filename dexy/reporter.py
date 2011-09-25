@@ -4,6 +4,7 @@ class Reporter(object):
 
     def __init__(self, controller):
         self.controller = controller
+        self.log = self.controller.log
 
     def run(self):
         pass
