@@ -3,7 +3,6 @@ try:
     USE_GIT = True
 except ImportError:
     USE_GIT = False
-    print "Install GitPython to be able to reference git repositories directly."
 
 import StringIO
 import hashlib
@@ -166,7 +165,9 @@ class Document(object):
                         print url
                         raise err
 
-        elif USE_GIT and self.args.has_key('repo') and self.args.has_key('path'):
+        elif self.args.has_key('repo') and self.args.has_key('path'):
+            if not USE_GIT:
+                raise Exception("you can't use repo/path unless you install GitPython")
             repo_url = self.args['repo']
             digest = hashlib.md5(repo_url).hexdigest()
             local_repo_dir = os.path.join(self.controller.artifacts_dir, "repository-%s" % digest)
