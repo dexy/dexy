@@ -1,5 +1,6 @@
-from dexy.utils import profile_memory
 import StringIO
+import git
+import hashlib
 import json
 import logging
 import os
@@ -157,6 +158,28 @@ class Document(object):
                         print url
                         raise err
 
+        elif self.args.has_key('repo') or (self.args.globals.has_key('repo') and self.args.has_key('path')):
+            if self.args.has_key('repo'):
+                repo_url = self.args['repo']
+            else:
+                repo_url = self.args.globals['repo']
+
+            digest = hashlib.md5(repo_url).hexdigest()
+            local_repo_dir = os.path.join(self.controller.artifacts_dir, "repository-%s" % digest)
+
+            if os.path.exists(local_repo_dir):
+                repo = git.Repo(local_repo_dir)
+                o = repo.remotes.origin
+                assert o.url == repo_url, "local repo exists but url %s does not match requested url %s" % (o.url, repo_url)
+                o.pull() # TODO remember last pulled time so that don't do this too often? what if network unavailable?
+            else:
+                repo = git.Repo.clone_from(repo_url, local_repo_dir)
+
+            # TODO be able to specify different commits/revisions
+            tree = repo.heads.master.commit.tree
+            blob = tree[self.args['path']]
+            data = blob.data_stream.read()
+
         elif self.args.has_key('contents'):
             data = self.args['contents']
 
@@ -188,7 +211,7 @@ class Document(object):
         artifact_key = artifact.key
         self.log.info("(step %s) [run] %s -> %s" % \
                  (self.step, artifact_key, artifact.filename()))
-        profile_memory("document-%s-step-%s" % (self.key(), self.step))
+#        profile_memory("document-%s-step-%s" % (self.key(), self.step))
         self.last_artifact = artifact
         for f in self.filters:
             previous_artifact = artifact
@@ -204,7 +227,7 @@ class Document(object):
             artifact.run()
 
             self.last_artifact = artifact
-      	    profile_memory("document-%s-step-%s" % (self.key(), self.step))
+#      	    profile_memory("document-%s-step-%s" % (self.key(), self.step))
 
 
         # Make sure all additional inputs are saved.
@@ -213,5 +236,5 @@ class Document(object):
                 a.state = 'complete'
                 a.save()
 
-        profile_memory("document-%s-complete" % (self.key()))
+#        profile_memory("document-%s-complete" % (self.key()))
         return self
