@@ -31,6 +31,7 @@ class Controller(object):
         self.install_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         if not hasattr(self, 'log'):
             self.log = logging.getLogger('dexy')
+            self.log.propagate = 0 # Stops logs being written to STDOUT if another library redirects root logger.
 
     def find_reporters(self):
         d1 = os.path.abspath(os.path.join(self.install_dir, 'reporters'))

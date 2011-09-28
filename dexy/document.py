@@ -28,6 +28,7 @@ class Document(object):
         self.logstream = StringIO.StringIO()
         self.log = logging.getLogger(self.key())
         self.log.setLevel(logging.DEBUG) # TODO Allow this to be changed.
+        self.log.propagate = 0 # Stops logs being written to STDOUT if another library redirects root logger.
         handler = logging.StreamHandler(self.logstream)
         formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
         handler.setFormatter(formatter)
