@@ -1,10 +1,17 @@
+try:
+    import git
+    USE_GIT = True
+except ImportError:
+    USE_GIT = False
+    print "Install GitPython to be able to reference git repositories directly."
+
 import StringIO
-import git
 import hashlib
 import json
 import logging
 import os
 import urllib2
+
 
 class Document(object):
     def __init__(self, artifact_class, name_or_key, filters = []):
@@ -158,12 +165,8 @@ class Document(object):
                         print url
                         raise err
 
-        elif self.args.has_key('repo') or (self.args.globals.has_key('repo') and self.args.has_key('path')):
-            if self.args.has_key('repo'):
-                repo_url = self.args['repo']
-            else:
-                repo_url = self.args.globals['repo']
-
+        elif USE_GIT and self.args.has_key('repo') and self.args.has_key('path'):
+            repo_url = self.args['repo']
             digest = hashlib.md5(repo_url).hexdigest()
             local_repo_dir = os.path.join(self.controller.artifacts_dir, "repository-%s" % digest)
 
