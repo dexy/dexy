@@ -1,6 +1,5 @@
 from dexy.artifact import Artifact
 from dexy.controller import Controller
-from dexy.utils import profile_memory
 from dexy.version import VERSION
 from inspect import isclass
 from logging.handlers import RotatingFileHandler
@@ -564,7 +563,7 @@ def dexy_command():
     if not args.no_reports:
         for reporter_klass in controller.reporters:
             reporter_klass(controller).run()
-            profile_memory("report-%s-complete" % reporter_klass.__name__)
+#            profile_memory("report-%s-complete" % reporter_klass.__name__)
     else:
         print 'reports not run'
 
