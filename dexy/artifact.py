@@ -126,7 +126,7 @@ class Artifact(object):
         if not hasattr(filter_class, 'SOURCE_CODE'):
             filter_class.SOURCE_CODE = inspect.getsource(filter_class)
 
-        if filter_class.FINAL is not None:
+        if self.final is None and filter_class.FINAL is not None:
             self.final = filter_class.FINAL
 
         self.filter_class = filter_class
@@ -184,7 +184,10 @@ class Artifact(object):
         artifact.name = doc.name
 
         if artifact.args.has_key('final'):
+            # TODO move this into initial setup? Should only be needed once...
             artifact.final = artifact.args['final']
+        elif hasattr(previous_artifact, 'final') and previous_artifact.final is not None:
+            artifact.final = previous_artifact.final
 
         if filter_class:
             artifact.setup_from_filter_class(filter_class)
@@ -207,7 +210,7 @@ class Artifact(object):
             elif len(artifact.data_dict) == 0:
                 raise Exception("data dict has len 0!")
 
-            if doc.name.startswith("_"):
+            if os.path.basename(doc.name).startswith("_"):
                 artifact.final = False
             artifact.state = 'complete'
 
