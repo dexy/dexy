@@ -188,6 +188,9 @@ class Document(object):
         elif self.args.has_key('contents'):
             data = self.args['contents']
 
+        elif self.virtual:
+            data = None
+
         else:
             # Normal local file, just read the contents.
             f = open(self.name, "r")

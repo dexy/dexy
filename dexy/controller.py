@@ -198,9 +198,9 @@ class Controller(object):
 
             # virtual document
             if re.search("@", glob_string):
+                virtual = True
                 # TODO some virtual files are local, not remote. test on
                 # presence of 'url' or something more appropriate.
-                virtual = True
                 if not self.allow_remote:
                     raise Exception("""You are attempting to access a remote file.
                                     You must enable --dangerous mode to do this.
@@ -293,6 +293,7 @@ re.compile: %s""" % (args['except'], e))
                 if create:
                     # Filters can either be included in the name...
                     doc = Document(self.artifact_class, f, filters)
+                    doc.virtual = virtual
                     # ...or they may be listed explicitly.
                     if args.has_key('filters'):
                         doc.filters += args['filters']
