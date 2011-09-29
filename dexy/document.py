@@ -56,7 +56,17 @@ class Document(object):
             for doc in members_dict.values():
                 also_all_inputs = doc.use_all_inputs
                 specified = doc.key() in self.input_keys
-                if specified or not also_all_inputs:
+
+                rel1 = os.path.dirname(doc.name)
+                rel2 = os.path.dirname(self.name)
+                if rel1 == '':
+                    rel1 = "."
+                if rel2 == "":
+                    rel2 = "."
+
+                in_subdir = (".." in os.path.relpath(rel2, rel1))
+
+                if specified or in_subdir or not also_all_inputs:
                     self.inputs.append(doc)
         else:
             self.inputs = [members_dict[k] for k in self.input_keys]
