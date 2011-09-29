@@ -10,6 +10,14 @@ import traceback
 import urllib
 import pprint
 
+try:
+    import pygments
+    import pygments.formatters
+    from pygments.styles import get_all_styles
+    USE_PYGMENTS = True
+except ImportError:
+    USE_PYGMENTS = False
+
 class FilenameHandler(DexyFilter):
     """Generate random filenames to track provenance of data."""
     ALIASES = ['fn']
@@ -210,6 +218,25 @@ class JinjaHandler(DexyFilter):
             'pformat' : pprint.pformat,
             'WARN_AUTOGEN' : "This document is generated using Dexy (http://dexy.it). You should modify the source files, not this generated output."
         }
+
+
+        # Create pygments stylesheets
+        if USE_PYGMENTS:
+            if not hasattr(self.__class__, 'PYGMENTS_STYLESHEETS'):
+                pygments_stylesheets = {}
+                for style_name in get_all_styles():
+                    for formatter_class in [pygments.formatters.LatexFormatter, pygments.formatters.HtmlFormatter]:
+                        pygments_formatter = formatter_class(style=style_name)
+                        style_info = pygments_formatter.get_style_defs()
+
+                        for fn in pygments_formatter.filenames:
+                            ext = fn.split(".")[1]
+                            key = "%s.%s" % (style_name, ext)
+                            pygments_stylesheets[key] = style_info
+
+                # cache this so we only need to do this once per dexy run...
+                self.__class__.PYGMENTS_STYLESHEETS = pygments_stylesheets
+            template_hash['pygments'] = self.__class__.PYGMENTS_STYLESHEETS
 
         if self.artifact.args.has_key('jinjavars'):
             for k, v in self.artifact.args['jinjavars'].items():
