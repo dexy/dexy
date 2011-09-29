@@ -15,6 +15,7 @@ class ArchiveHandler(DexyFilter):
     OUTPUT_EXTENSIONS = [".tgz"]
     ALIASES = ['archive', 'tgz']
     BINARY = True
+    FINAL = True
 
     def process(self):
         if self.artifact.args.has_key('use-short-names'):
@@ -41,6 +42,7 @@ class ZipArchiveHandler(DexyFilter):
     OUTPUT_EXTENSIONS = [".zip"]
     ALIASES = ['zip']
     BINARY = True
+    FINAL = True
 
     def process(self):
         if self.artifact.args.has_key('use-short-names'):
