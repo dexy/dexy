@@ -1,9 +1,10 @@
 from dexy.dexy_filter import DexyFilter
 from ordereddict import OrderedDict
-import simplejson as json
 import os
 import pexpect
 import re
+import shutil
+import simplejson as json
 import sys
 import time
 
@@ -205,9 +206,18 @@ class Pdf2Png(DexyFilter):
         # TODO should we be doing this in general rather than generating workfiles?
         wf = self.artifact.previous_artifact_filename
         of = self.artifact.filename()
-        command = "%s -dSAFER -dNOPAUSE -dBATCH -sDEVICE=png16m -r300 -sOutputFile=%s %s" % (self.executable(), of, wf)
+        command = "%s -dSAFER -dNOPAUSE -dBATCH -sDEVICE=png16m -r300 -sOutputFile=%%d-%s %s" % (self.executable(), of, wf)
         self.log.debug(command)
         self.artifact.stdout = pexpect.run(command, cwd=self.artifact.artifacts_dir)
+
+        if self.artifact.args.has_key('page'):
+            page = self.artifact.args['page']
+        else:
+            page = 1
+
+        page_file = os.path.join(self.artifact.artifacts_dir, "%s-%s" % (page, of))
+        shutil.copyfile(page_file, self.artifact.filepath())
+
 
 class Ps2Pdf(DexyFilter):
     """
