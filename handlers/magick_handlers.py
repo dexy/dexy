@@ -72,10 +72,13 @@ class Imlib2Thumb(Imlib2Filter):
     ALIASES = ['im-thumb']
 
     def do_im(self, image):
+        text_top = None
         if self.artifact.args.has_key('im-thumb'):
             region_size, start_x, start_y = self.artifact.args['im-thumb']['crop'].split("+")
             region_width, region_height = region_size.split("x")
             text = self.artifact.args['im-thumb']['title']
+            if self.artifact.args['im-thumb'].has_key('text-top'):
+                text_top = self.artifact.args['im-thumb']['text-top']
         else:
             self.log.debug("Using default cropping region and text for im-thumb, specify in args if you want something else")
             region_width=500
@@ -84,12 +87,14 @@ class Imlib2Thumb(Imlib2Filter):
             start_y=100
             text="Example"
 
+        if not text_top:
+            text_top = 10
+
         # TODO specify crop region in params
         image = image.crop((int(start_x), int(start_y)), (int(region_width), int(region_height)))
         image = image.scale((500, 500))
 
         text_left = len(text)/2+30
-        text_top = 10
 
         # Draw mock blank text to calculate height + width of text
         t_w, t_h, t_ha, t_va = image.draw_text((text_left, text_top), text, (255,255,255), self.default_font)
