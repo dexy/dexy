@@ -9,9 +9,28 @@ import tarfile
 import uuid
 import zipfile
 
+class UnprocessedDirectoryArchiveHandler(DexyFilter):
+    """The archive handler creates .tgz archives of unprocessed directories."""
+    OUTPUT_EXTENSIONS = [".tgz"]
+    ALIASES = ['tgzdir']
+    BINARY = True
+    FINAL = True
+
+    def process(self):
+        tgz_dir = self.artifact.args['dir']
+
+        af = self.artifact.filepath()
+        tar = tarfile.open(af, mode="w:gz")
+        print os.listdir(tgz_dir)
+        for fn in os.listdir(tgz_dir):
+            fp = os.path.join(tgz_dir, fn)
+            self.artifact.log.debug("Adding file %s to archive %s." % (fp, af))
+            tar.add(fp)
+
+        tar.close()
+
 class ArchiveHandler(DexyFilter):
-    """The archive handler creates .tgz archives of processed files. Create an
-    empty/dummy file in the location you wish to have the archive."""
+    """The archive handler creates .tgz archives of processed files."""
     OUTPUT_EXTENSIONS = [".tgz"]
     ALIASES = ['archive', 'tgz']
     BINARY = True
@@ -37,8 +56,7 @@ class ArchiveHandler(DexyFilter):
         tar.close()
 
 class ZipArchiveHandler(DexyFilter):
-    """The archive handler creates .zip archives of the input files. Create an
-    empty file in the location you wish to have the archive."""
+    """The archive handler creates .zip archives of the input files."""
     OUTPUT_EXTENSIONS = [".zip"]
     ALIASES = ['zip']
     BINARY = True
