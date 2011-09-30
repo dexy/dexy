@@ -167,6 +167,10 @@ class Controller(object):
                 if json_dict.has_key("$reset"):
                     config_dict = json_dict
                 else:
+                    # Don't propagate virtual files...
+                    for k in config_dict.keys():
+                        if k.startswith("@") and not json_dict.has_key(k):
+                            del config_dict[k]
                     config_dict.update(json_dict)
 
                 if json_dict.has_key("$globals"):
