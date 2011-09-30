@@ -5,6 +5,7 @@ except ImportError:
     USE_GIT = False
 
 import StringIO
+import fnmatch
 import hashlib
 import json
 import logging
@@ -69,7 +70,14 @@ class Document(object):
                 if specified or in_subdir or not also_all_inputs:
                     self.inputs.append(doc)
         else:
+            inputs = []
+            for k in self.input_keys:
+                for x in members_dict.keys():
+                    if fnmatch.fnmatch(x, k):
+                        inputs.append(members_dict[x])
+
             self.inputs = [members_dict[k] for k in self.input_keys]
+        self.log.debug("Setting inputs for %s to: %s" % (self.key(), self.inputs))
 
     def next_filter_alias(self):
         if self.at_last_step():
@@ -245,6 +253,7 @@ class Document(object):
             artifact.run()
 
             self.last_artifact = artifact
+            self.artifacts.append(artifact)
 #      	    profile_memory("document-%s-step-%s" % (self.key(), self.step))
 
 
