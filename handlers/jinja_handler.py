@@ -25,6 +25,7 @@ class FilenameHandler(DexyFilter):
     def process_text(self, input_text):
         # TODO this should not match more than two dashes
         # TODO differentiate between using the same base name for 2 extensions, or at least warn
+        # TODO files should be created within proper directories, not at project root
         for m in re.finditer("dexy--(\S+)\.([a-z]+)", input_text):
             key = m.groups()[0]
             ext = m.groups()[1]
@@ -122,6 +123,10 @@ class JinjaHandler(DexyFilter):
             # Full path keys
             keys = [key, a.canonical_filename()]
 
+            # Relative path keys
+            keys.append(os.path.relpath(key, os.path.dirname(self.artifact.name)))
+
+            # TODO document all paths + deal with collisions
 
             artifact_dir = os.path.dirname(self.artifact.name)
             key_dir = os.path.dirname(key)
@@ -130,7 +135,7 @@ class JinjaHandler(DexyFilter):
                 keys.append(os.path.basename(key))
                 fn = a.canonical_filename()
                 keys.append(os.path.basename(fn))
-                keys.append(os.path.splitext(fn)[0]) # TODO deal with collisions
+                keys.append(os.path.splitext(fn)[0])
                 if key_dir or not artifact_dir:
                     # This is also a local input.
                     local_inputs[key] = a
