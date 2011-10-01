@@ -1,5 +1,0 @@
-{
-  "simple.R|r" : {
-    "inputs" : [ {"graph.R|r" : {}} ]
-  }
-}
