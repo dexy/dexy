@@ -1,5 +1,0 @@
-This line is ok
-
-1 + 1 = {{ 1 = 1 }}
-
-This line is also ok.
