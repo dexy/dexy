@@ -90,9 +90,11 @@
                             {% endif -%}
                             <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">{{ a.run_type }}</td>
                             <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">
+                                {% if a.data_dict -%}
                                 {% for k in a.data_dict.keys() -%}
                                 {{ k }}<br />
                                 {% endfor -%}
+                                {% endif -%}
                             </td>
                         </tr>
                         {% endfor -%}

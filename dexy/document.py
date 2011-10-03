@@ -5,7 +5,6 @@ except ImportError:
     USE_GIT = False
 
 import StringIO
-import fnmatch
 import hashlib
 import json
 import logging
@@ -72,12 +71,13 @@ class Document(object):
         else:
             inputs = []
             for k in self.input_keys:
+                # k is a filename, not a glob
                 for x in members_dict.keys():
-                    if fnmatch.fnmatch(x, k):
-                        inputs.append(members_dict[x])
+                    if x == k:
+                        inputs.append(x)
 
             self.inputs = [members_dict[k] for k in self.input_keys]
-        self.log.debug("Setting inputs for %s to: %s" % (self.key(), self.inputs))
+        self.log.debug("Setting inputs for %s to: %s" % (self.key(), [i.key() for i in self.inputs]))
 
     def next_filter_alias(self):
         if self.at_last_step():

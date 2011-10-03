@@ -2,8 +2,7 @@ from dexy.dexy_filter import DexyFilter
 import subprocess
 import time
 
-### @export "clang-handler"
-class ClangHandler(DexyFilter):
+class ClangFilter(DexyFilter):
     """Compiles C code using clang compiler, then runs compiled program."""
     VERSION = "clang --version"
     EXECUTABLE = "clang"
@@ -36,8 +35,7 @@ class ClangHandler(DexyFilter):
         self.artifact.data_dict['1'] = stdout
         self.artifact.stdout += stderr
 
-### @export "clang-interactive-handler"
-class ClangInteractiveHandler(DexyFilter):
+class ClangInteractiveFilter(DexyFilter):
     """Compiles C code using clang compiler, then runs compiled program, reading
     input from any input files."""
     VERSION = "clang --version"
@@ -74,8 +72,7 @@ class ClangInteractiveHandler(DexyFilter):
                 self.artifact.data_dict[s] = stdout
                 self.artifact.stdout = self.artifact.stdout + "\n" + stderr
 
-### @export "clang-timing-handler"
-class ClangTimingHandler(DexyFilter):
+class ClangTimingFilter(DexyFilter):
     """Compiles C code using clang compiler, then runs compiled program N times
     reporting timings."""
     N = 10
@@ -113,8 +110,7 @@ class ClangTimingHandler(DexyFilter):
             times.append("%s" % (time.time() - start))
         self.artifact.data_dict['1'] = "\n".join(times)
 
-### @export "cpp-handler"
-class CppHandler(ClangHandler):
+class CppFilter(ClangFilter):
     """Compiles and then runs C++ code."""
     VERSION = "c++ --version"
     EXECUTABLE ="c++"
@@ -122,13 +118,11 @@ class CppHandler(ClangHandler):
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['cpp']
 
-### @export "gcc-handler"
-class CHandler(ClangHandler):
+class CFilter(ClangFilter):
     """Compiles C code using gcc compiler, then runs compiled program."""
     VERSION = "gcc --version"
     EXECUTABLE = "gcc"
     INPUT_EXTENSIONS = [".c"]
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['c', 'gcc']
-
 

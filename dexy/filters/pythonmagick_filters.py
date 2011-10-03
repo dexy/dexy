@@ -1,8 +1,6 @@
-import PythonMagick
 from PythonMagick import Image
 from PythonMagick import _PythonMagick
 from dexy.dexy_filter import DexyFilter
-import os
 
 class PythonMagickFilter(DexyFilter):
     """Base class which reads previous artifact, calls a do_magick method,

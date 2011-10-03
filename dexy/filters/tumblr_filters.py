@@ -1,9 +1,9 @@
-from handlers.blog_handler import BlogHandler
+from dexy.filters.blog_filters import BlogFilter
 
 # TODO write tumblr access from scratch as e.g. saving as draft raises an error
 # http://code.google.com/p/python-tumblr/
 from tumblr import Api
-class TumblrHandler(BlogHandler):
+class TumblrFilter(BlogFilter):
     """
     Posts to a tumblr blog.
     """

@@ -2,7 +2,7 @@ from dexy.dexy_filter import DexyFilter
 import os
 import subprocess
 
-class AsciidocHandler(DexyFilter):
+class AsciidocFilter(DexyFilter):
     """IN DEVELOPMENT. Converts .txt files with asciidoc markup to HTML or
     XML."""
     VERSION = "asciidoc --version"
@@ -26,7 +26,7 @@ class AsciidocHandler(DexyFilter):
         elif extension == ".xml":
             backend = "docbook45"
         else:
-            raise Exception("unexpected file extension in asciidoc handler %s" % extension)
+            raise Exception("unexpected file extension in asciidoc filter %s" % extension)
 
         command = "%s -b %s -d book -o %s %s" % (self.EXECUTABLE, backend, outfile, workfile)
         self.log.debug(command)

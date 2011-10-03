@@ -2,8 +2,6 @@ from BeautifulSoup import BeautifulSoup
 from ansi2html import Ansi2HTMLConverter
 from pynliner import Pynliner
 import StringIO
-import datetime
-import gc
 import logging
 import os
 import re

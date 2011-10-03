@@ -2,7 +2,7 @@ from dexy.dexy_filter import DexyFilter
 import os
 import subprocess
 
-class ProcessStdoutHandler(DexyFilter):
+class ProcessStdoutFilter(DexyFilter):
     """
     Runs python script and returns STDOUT.
     """
@@ -52,7 +52,7 @@ class ProcessStdoutHandler(DexyFilter):
 
         self.handle_subprocess_proc_return(proc.returncode, stderr)
 
-class BashHandler(ProcessStdoutHandler):
+class BashFilter(ProcessStdoutFilter):
     """
     Runs bash script and returns STDOUT.
     """
@@ -62,7 +62,7 @@ class BashHandler(ProcessStdoutHandler):
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['bash']
 
-class PhpHandler(ProcessStdoutHandler):
+class PhpFilter(ProcessStdoutFilter):
     """
     Runs php script and returns STDOUT.
     """
@@ -72,7 +72,7 @@ class PhpHandler(ProcessStdoutHandler):
     OUTPUT_EXTENSIONS = [".html", ".txt"]
     ALIASES = ['php']
 
-class EscriptHandler(ProcessStdoutHandler):
+class EscriptFilter(ProcessStdoutFilter):
     """
     Runs escript (erlang) and returns STDOUT.
     """
@@ -81,7 +81,7 @@ class EscriptHandler(ProcessStdoutHandler):
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['escript']
 
-class LuaHandler(ProcessStdoutHandler):
+class LuaFilter(ProcessStdoutFilter):
     """
     Runs lua script and returns STDOUT.
     """
@@ -91,7 +91,7 @@ class LuaHandler(ProcessStdoutHandler):
     OUTPUT_EXTENSIONS = ['.txt']
     ALIASES = ['lua']
 
-class RedclothHandler(ProcessStdoutHandler):
+class RedclothFilter(ProcessStdoutFilter):
     """
     Runs redcloth, converts textile markup to HTML.
     """
@@ -101,7 +101,7 @@ class RedclothHandler(ProcessStdoutHandler):
     OUTPUT_EXTENSIONS = [".html"]
     ALIASES = ['redcloth', 'textile']
 
-class RedclothLatexHandler(ProcessStdoutHandler):
+class RedclothLatexFilter(ProcessStdoutFilter):
     """
     Runs redcloth, converts textile markup to LaTeX.
     """
@@ -111,7 +111,7 @@ class RedclothLatexHandler(ProcessStdoutHandler):
     OUTPUT_EXTENSIONS = [".tex"]
     ALIASES = ['redclothl', 'latextile']
 
-class Rst2HtmlHandler(ProcessStdoutHandler):
+class Rst2HtmlFilter(ProcessStdoutFilter):
     EXECUTABLE = 'rst2html.py'
     VERSION = 'rst2html.py --version'
     INPUT_EXTENSIONS = [".rst", ".txt"]
@@ -119,34 +119,34 @@ class Rst2HtmlHandler(ProcessStdoutHandler):
     ALIASES = ['rst2html']
     FINAL = True
 
-class Rst2LatexHandler(ProcessStdoutHandler):
+class Rst2LatexFilter(ProcessStdoutFilter):
     EXECUTABLE = 'rst2latex.py'
     VERSION = 'rst2latex.py --version'
     INPUT_EXTENSIONS = [".rst", ".txt"]
     OUTPUT_EXTENSIONS = [".tex"]
     ALIASES = ['rst2latex']
 
-class Rst2BeamerHandler(ProcessStdoutHandler):
+class Rst2BeamerFilter(ProcessStdoutFilter):
     EXECUTABLE = 'rst2beamer'
     INPUT_EXTENSIONS = [".rst", ".txt"]
     OUTPUT_EXTENSIONS = [".tex"]
     ALIASES = ['rst2beamer']
 
-class SloccountHandler(ProcessStdoutHandler):
+class SloccountFilter(ProcessStdoutFilter):
     EXECUTABLE = 'sloccount'
     VERSION = 'sloccount --version'
     INPUT_EXTENSIONS = [".*"]
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['sloc', 'sloccount']
 
-class RubyStdoutHandler(ProcessStdoutHandler):
+class RubyStdoutFilter(ProcessStdoutFilter):
     EXECUTABLE = 'ruby'
     VERSION = 'ruby --version'
     INPUT_EXTENSIONS = [".txt", ".rb"]
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['rb']
 
-class RdConvHandler(ProcessStdoutHandler):
+class RdConvFilter(ProcessStdoutFilter):
     """Convert R documentation to other formats."""
     EXECUTABLE = "R CMD Rdconv"
     VERSION = "R CMD Rdconv -v"
@@ -163,7 +163,7 @@ class RdConvHandler(ProcessStdoutHandler):
     def instance_executable(self):
         return "%s --type=%s" % (self.EXECUTABLE, self.EXTENSION_TO_FORMAT[self.artifact.ext])
 
-class RagelRubyDotHandler(ProcessStdoutHandler):
+class RagelRubyDotFilter(ProcessStdoutFilter):
     """
     Generates state chart in .dot format of ragel state machine for ruby.
     """

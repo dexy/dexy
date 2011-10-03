@@ -11,7 +11,7 @@ from pygments.lexers.web import PhpLexer
 import idiopidae.parser
 import re
 
-class IdioHandler(DexyFilter):
+class IdioFilter(DexyFilter):
     """
     Apply idiopidae to split document into sections at ### @export
     "section-name" comments.

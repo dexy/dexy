@@ -3,7 +3,7 @@ import json
 import os
 import re
 
-class BlogHandler(DexyFilter):
+class BlogFilter(DexyFilter):
     ALIASES = None
     BLOG_CONFIG_FILE = 'blog-config.json'
     PASSWORD_KEYS = ['password', 'pass', 'pw']

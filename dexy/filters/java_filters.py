@@ -3,21 +3,21 @@ from pygments import highlight
 from pygments.formatters.html import HtmlFormatter
 from pygments.formatters.latex import LatexFormatter
 from pygments.lexers.compiled import JavaLexer
-import handlers.pexpect_handlers
-import handlers.stdout_handlers
+import dexy.filters.pexpect_filters
+import dexy.filters.stdout_filters
 import json
 import os
 import platform
 import subprocess
 
-class JrubyHandler(handlers.stdout_handlers.ProcessStdoutHandler):
+class JrubyFilter(dexy.filters.stdout_filters.ProcessStdoutFilter):
     VERSION = "jruby --version"
     EXECUTABLE = "jruby"
     INPUT_EXTENSIONS = [".rb"]
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['jruby']
 
-class JirbHandler(handlers.pexpect_handlers.ProcessLinewiseInteractiveHandler):
+class JirbFilter(dexy.filters.pexpect_filters.ProcessLinewiseInteractiveFilter):
     VERSION = "jirb --version"
     EXECUTABLE = "jirb --prompt-mode simple"
     INPUT_EXTENSIONS = [".rb"]
@@ -26,7 +26,7 @@ class JirbHandler(handlers.pexpect_handlers.ProcessLinewiseInteractiveHandler):
     ALIASES = ['jirb']
     IGNORE_ERRORS = True
 
-class JythonHandler(handlers.stdout_handlers.ProcessStdoutHandler):
+class JythonFilter(dexy.filters.stdout_filters.ProcessStdoutFilter):
     VERSION = "jython --version"
     EXECUTABLE = "jython"
     INPUT_EXTENSIONS = [".py"]
@@ -44,7 +44,7 @@ class JythonHandler(handlers.stdout_handlers.ProcessStdoutHandler):
             print """Can't detect your system. If you see this message please report this to the dexy project maintainer, your platform.system() value is '%s'. The jython dexy filter should not be run on MacOS due to a serious bug.""" % platform.system()
             return True
 
-class JythonInteractiveHandler(handlers.pexpect_handlers.ProcessLinewiseInteractiveHandler):
+class JythonInteractiveFilter(dexy.filters.pexpect_filters.ProcessLinewiseInteractiveFilter):
     VERSION = "jython --version"
     EXECUTABLE = "jython -i"
     INPUT_EXTENSIONS = [".py", ".txt"]
@@ -62,7 +62,7 @@ class JythonInteractiveHandler(handlers.pexpect_handlers.ProcessLinewiseInteract
             print """Can't detect your system. If you see this message please report this to the dexy project maintainer, your platform.system() value is '%s'. The jythoni dexy filter should not be run on MacOS due to a serious bug.""" % platform.system()
             return True
 
-class JavaHandler(DexyFilter):
+class JavaFilter(DexyFilter):
     EXECUTABLE = "javac"
     VERSION = "java -version"
     INPUT_EXTENSIONS = [".java"]

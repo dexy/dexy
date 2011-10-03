@@ -1,9 +1,10 @@
 from dexy.dexy_filter import DexyFilter
 import os
 import re
+import shutil
 import subprocess
 
-class RagelRubyHandler(DexyFilter):
+class RagelRubyFilter(DexyFilter):
     """
     Runs ragel for ruby.
     """
@@ -34,7 +35,7 @@ class RagelRubyHandler(DexyFilter):
         stdout, stderr = proc.communicate()
         self.artifact.stdout = stdout
 
-class BibHandler(DexyFilter):
+class BibFilter(DexyFilter):
     INPUT_EXTENSIONS = [".tex"]
     OUTPUT_EXTENSIONS = [".tex"]
     ALIASES = ['bib']
@@ -43,13 +44,99 @@ class BibHandler(DexyFilter):
     def process_text(self, input_text):
         for k, a in self.artifact.inputs().items():
             if a.filename().endswith("bib"):
-                bib_file_basename = os.path.splitext(os.path.basename(a.name))[0]
-
                 input_text = re.sub("bibliography{[^}]+}", "bibliography{%s}" % a.filename(), input_text)
 
         return input_text
 
-class LatexHandler(DexyFilter):
+class SedFilter(DexyFilter):
+    EXECUTABLES = ['sed']
+    ALIASES = ['sed']
+
+    def process(self):
+        self.artifact.generate_workfile()
+        wf = self.artifact.work_filename()
+
+        if self.artifact.args.has_key('sed'):
+            sed_script = self.artifact.args['sed']
+            command = "%s -e %s %s" % (self.__class__.executable(), sed_script, wf)
+        else:
+            sed_file = None
+            for k, a in self.artifact.inputs().items():
+                if a.filename().endswith("sed"):
+                    sed_file = a.filename()
+                    self.log.debug("Found sed script %s" % sed_file)
+                    break
+            if not sed_file:
+                raise Exception("must pass a 'sed' argument or have an input with .sed file extension")
+            command = "%s -f %s %s" % (self.__class__.executable(), sed_file, wf)
+
+        env = None
+        self.log.debug(command)
+        proc = subprocess.Popen(command, shell=True,
+                                cwd=self.artifact.artifacts_dir,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT,
+                                env=env)
+        stdout, stderr = proc.communicate()
+        self.artifact.set_data(stdout)
+
+class HtLatexFilter(DexyFilter):
+    """
+    Generates HTML from LaTeX source.
+    """
+    INPUT_EXTENSIONS = [".tex", ".txt"]
+    OUTPUT_EXTENSIONS = [".html"]
+    EXECUTABLES = ['htlatex']
+    ALIASES = ['htlatex']
+    FINAL = True
+
+    def process(self):
+        self.artifact.create_temp_dir()
+        wf = os.path.join(self.artifact.temp_dir(), os.path.basename(self.artifact.name))
+
+        f = open(wf, "w")
+        f.write(self.artifact.input_text())
+        f.close()
+
+        if self.artifact.args.has_key('htlatex'):
+            htlatex_args = self.artifact.args['htlatex']
+        else:
+            htlatex_args = ""
+
+
+        command = "%s %s %s" % (self.__class__.executable(), os.path.basename(self.artifact.name), htlatex_args)
+        self.log.info("running: %s" % command)
+        env = None
+        proc = subprocess.Popen(command, shell=True,
+                                cwd=self.artifact.temp_dir(),
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT,
+                                env=env)
+        stdout, stderr = proc.communicate()
+        self.artifact.stdout = stdout
+
+        html_filename = wf.replace(".tex", ".html")
+
+        f = open(html_filename, "r")
+        self.artifact.set_data(f.read())
+        f.close()
+        self.log.debug("read contents of %s into %s" % (html_filename, self.artifact.key))
+
+        css_filename = wf.replace(".tex", ".css")
+        css_canonical_name = self.artifact.canonical_filename().replace(".html", ".css")
+        css_artifact = self.artifact.add_additional_artifact(css_canonical_name, "css")
+        f = open(css_filename, "r")
+        css_artifact.set_data(f.read())
+        f.close()
+        self.log.debug("read contents of %s into %s" % (css_filename, css_artifact.key))
+
+        png_filename = wf.replace(".tex", "0x.png")
+        png_canonical_name = self.artifact.canonical_filename().replace(".html", "0x.png")
+        png_artifact = self.artifact.add_additional_artifact(png_canonical_name, "png")
+        shutil.copyfile(png_filename, png_artifact.filepath())
+        self.log.debug("copying from %s to %s" % (png_filename, png_artifact.filepath()))
+
+class LatexFilter(DexyFilter):
     """
     Generates a PDF file from LaTeX source.
     """
@@ -142,7 +229,7 @@ class EmbedFonts(DexyFilter):
         stdout, stderr = proc.communicate()
         self.artifact.stdout += stdout
 
-class Rd2PdfHandler(DexyFilter):
+class Rd2PdfFilter(DexyFilter):
     INPUT_EXTENSIONS = [".Rd"]
     OUTPUT_EXTENSIONS = [".pdf", ".dvi"]
     EXECUTABLE = 'R CMD Rd2pdf'
@@ -165,7 +252,7 @@ class Rd2PdfHandler(DexyFilter):
         stdout, stderr = proc.communicate()
         self.artifact.stdout = stdout
 
-class RBatchHandler(DexyFilter):
+class RBatchFilter(DexyFilter):
     """Runs R code in batch mode."""
     EXECUTABLE = 'R CMD BATCH --vanilla --quiet --no-timing'
     VERSION = "R --version"
@@ -187,7 +274,7 @@ class RBatchHandler(DexyFilter):
         self.artifact.stdout = stdout
         self.artifact.set_data_from_artifact()
 
-class ROutputBatchHandler(DexyFilter):
+class ROutputBatchFilter(DexyFilter):
     """Runs R code in batch mode. Uses the --slave flag so doesn't echo commands, just returns output."""
     EXECUTABLE = 'R CMD BATCH --vanilla --quiet --slave --no-timing'
     VERSION = "R --version"
@@ -209,7 +296,7 @@ class ROutputBatchHandler(DexyFilter):
         self.artifact.stdout = stdout
         self.artifact.set_data_from_artifact()
 
-class DotHandler(DexyFilter):
+class DotFilter(DexyFilter):
     """
     Renders .dot files to either PNG or PDF images.
     """
@@ -236,7 +323,7 @@ class DotHandler(DexyFilter):
         stdout, stderr = proc.communicate()
         self.artifact.stdout = stdout
 
-class RubyInteractiveHandler(DexyFilter):
+class RubyInteractiveFilter(DexyFilter):
     """Run Ruby, takign input from input files."""
     VERSION = "ruby --version"
     EXECUTABLE = "ruby"

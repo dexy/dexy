@@ -1,8 +1,5 @@
-import kaa
-import logging
 from kaa import imlib2
 from dexy.dexy_filter import DexyFilter
-import os
 
 class Imlib2Filter(DexyFilter):
     """Base class which reads previous artifact, calls a do_im method,

@@ -13,7 +13,6 @@ import logging
 import os
 import pprint
 import re
-import sqlite3
 import sre_constants
 import sys
 
@@ -72,44 +71,39 @@ class Controller(object):
     def find_filters(self):
         sys.path.append(os.curdir)
 
-        handler_dirs = []
-        # Need to give local directory (in which we place custom per-project filters)
-        # a different name or else Python can't see modules in that dir.
-        # This handler/filter switching is confusing, should be improved.
-        h1 = os.path.abspath(os.path.join(self.install_dir, 'handlers'))
-        h2 = os.path.abspath(os.path.join(os.curdir, 'filters'))
+        dexy_filter_dir = os.path.join(dexy.__path__[0], 'filters')
+        proj_filter_dir = os.path.abspath(os.path.join(os.curdir, 'filters'))
 
-        for h in [h1, h2]:
-            if os.path.exists(h) and not h in handler_dirs:
-                handler_dirs.append(h)
+        filter_dirs = []
+        for d in [dexy_filter_dir, proj_filter_dir]:
+            if os.path.exists(d) and not d in filter_dirs:
+                filter_dirs.append(d)
 
-        handlers = {}
+        filters = {}
 
         for a in DexyFilter.ALIASES:
-            handlers[a] = DexyFilter
+            filters[a] = DexyFilter
 
-        for d in handler_dirs:
+        for d in filter_dirs:
             self.log.info("Automatically loading all filters found in %s" % d)
             for f in os.listdir(d):
                 if f.endswith(".py") and f not in ["base.py", "__init__.py"]:
                     self.log.info("Loading filters in %s" % os.path.join(d, f))
                     basename = f.replace(".py", "")
-                    if d.endswith('handlers'):
-                        module = "handlers.%s" % basename
-                    elif d.endswith('filters'):
-                        module = "filters.%s" % basename
+                    if d.endswith("dexy/dexy/filters"):
+                        modname = "dexy.filters.%s" % basename
                     else:
-                        raise Exception(d)
+                        modname = "filters.%s" % basename
 
                     try:
-                        __import__(module)
+                        __import__(modname)
                     except ImportError as e:
-                        self.log.warn("filters defined in %s are not available: %s" % (module, e))
+                        self.log.warn("filters defined in %s are not available: %s" % (modname, e))
 
-                    if not sys.modules.has_key(module):
+                    if not sys.modules.has_key(modname):
                         continue
 
-                    mod = sys.modules[module]
+                    mod = sys.modules[modname]
 
                     for k in dir(mod):
                         klass = mod.__dict__[k]
@@ -124,12 +118,12 @@ class Controller(object):
                                               (klass.__name__))
                             else:
                                 for a in klass.ALIASES:
-                                    if handlers.has_key(a):
+                                    if filters.has_key(a):
                                         raise Exception("duplicate key %s called from %s in %s" % (a, k, f))
-                                    handlers[a] = klass
+                                    filters[a] = klass
                                     self.log.info("registered alias %s for class %s" % (a, k))
             self.log.info("...finished loading filters from %s" % d)
-        return handlers
+        return filters
 
     def register_filters(self):
         self._filters = self.find_filters()

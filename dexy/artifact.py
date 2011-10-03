@@ -182,6 +182,7 @@ class Artifact(object):
         artifact.key = artifact_key
         artifact.log = doc.log
         artifact.name = doc.name
+        artifact.filters = doc.filters
 
         if artifact.args.has_key('final'):
             # TODO move this into initial setup? Should only be needed once...
@@ -385,6 +386,19 @@ class Artifact(object):
 
     def output_text(self):
         return "".join([v for k, v in self.data_dict.items()])
+
+    def relative_refs(self, relative_to_file):
+        """How to refer to this artifact, relative to another."""
+
+        doc_dir = os.path.dirname(relative_to_file)
+        return [
+                os.path.relpath(self.key, doc_dir),
+                os.path.relpath(self.canonical_filename(), doc_dir),
+                os.path.relpath(self.long_canonical_filename(), doc_dir),
+                "/%s" % self.key,
+                "/%s" % self.canonical_filename(),
+                "/%s" % self.long_canonical_filename()
+        ]
 
     def use_canonical_filename(self):
         """Returns the canonical filename after saving contents under this name

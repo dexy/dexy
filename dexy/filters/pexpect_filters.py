@@ -4,11 +4,9 @@ import os
 import pexpect
 import re
 import shutil
-import simplejson as json
-import sys
 import time
 
-class ProcessLinewiseInteractiveHandler(DexyFilter):
+class ProcessLinewiseInteractiveFilter(DexyFilter):
     """
     Intended for use with interactive processes, such as python interpreter,
     where your goal is to have a session transcript divided into same sections
@@ -17,7 +15,7 @@ class ProcessLinewiseInteractiveHandler(DexyFilter):
     PROMPT = ['>>>', '...'] # Python uses >>> prompt normally and ... when in multi-line structures like loops
     TRIM_PROMPT = '>>>'
     LINE_ENDING = "\r\n"
-    IGNORE_ERRORS = False # Allow overriding default per-handler.
+    IGNORE_ERRORS = False # Allow overriding default per-filter.
     SAVE_VARS_TO_JSON_CMD = None
     ALIASES = None
 
@@ -92,7 +90,7 @@ class ProcessLinewiseInteractiveHandler(DexyFilter):
 want dexy to raise errors on failed scripts then pass the --ignore-errors option""")
         return output_dict
 
-class PythonLinewiseInteractiveHandler(ProcessLinewiseInteractiveHandler):
+class PythonLinewiseInteractiveFilter(ProcessLinewiseInteractiveFilter):
     EXECUTABLE = 'python'
     VERSION = 'python --version'
     INPUT_EXTENSIONS = [".txt", ".py"]
@@ -107,7 +105,7 @@ json.dump(dexy__x, dexy__vars_file)
 dexy__vars_file.close()
 """
 
-class RLinewiseInteractiveHandler(ProcessLinewiseInteractiveHandler):
+class RLinewiseInteractiveFilter(ProcessLinewiseInteractiveFilter):
     """
     Runs R
     """
@@ -129,7 +127,7 @@ if ("rjson" %%in%% installed.packages()) {
 }
 """
 
-class RhinoInteractiveHandler(ProcessLinewiseInteractiveHandler):
+class RhinoInteractiveFilter(ProcessLinewiseInteractiveFilter):
     """
     Runs rhino JavaScript interpeter.
     """
@@ -139,7 +137,7 @@ class RhinoInteractiveHandler(ProcessLinewiseInteractiveHandler):
     ALIASES = ['jsint', 'rhino']
     PROMPT = "js> "
 
-class ClojureInteractiveHandler(ProcessLinewiseInteractiveHandler):
+class ClojureInteractiveFilter(ProcessLinewiseInteractiveFilter):
     """
     Runs clojure.
     """
@@ -150,7 +148,7 @@ class ClojureInteractiveHandler(ProcessLinewiseInteractiveHandler):
     ALIASES = ['clj', 'cljint']
     PROMPT = "user=> "
 
-class ProcessTimingHandler(DexyFilter):
+class ProcessTimingFilter(DexyFilter):
     """
     Runs python code N times and reports timings.
     """

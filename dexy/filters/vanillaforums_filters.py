@@ -1,13 +1,12 @@
 from dexy.dexy_filter import DexyFilter
 from StringIO import StringIO
-
 import json
 import os
 import pycurl
 import re
 import urllib
 
-class VanillaForumHandler(DexyFilter):
+class VanillaForumFilter(DexyFilter):
     ALIASES = ['vanilla']
     FORUM_CONFIG_FILE = 'vanilla-config.json'
     DISCUSSION_CONFIG_FILE = 'discuss.json|dexy'
@@ -101,7 +100,7 @@ class VanillaForumHandler(DexyFilter):
         f.close()
         return "ok"
 
-class VanillaForumCommentHandler(VanillaForumHandler):
+class VanillaForumCommentFilter(VanillaForumFilter):
     ALIASES = ['vanillacomment']
     DISCUSSION_CONFIG_FILE = 'comment.json|dexy'
 

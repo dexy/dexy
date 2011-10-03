@@ -9,8 +9,8 @@ import tarfile
 import uuid
 import zipfile
 
-class UnprocessedDirectoryArchiveHandler(DexyFilter):
-    """The archive handler creates .tgz archives of unprocessed directories."""
+class UnprocessedDirectoryArchiveFilter(DexyFilter):
+    """The archive filter creates .tgz archives of unprocessed directories."""
     OUTPUT_EXTENSIONS = [".tgz"]
     ALIASES = ['tgzdir']
     BINARY = True
@@ -28,8 +28,8 @@ class UnprocessedDirectoryArchiveHandler(DexyFilter):
 
         tar.close()
 
-class ArchiveHandler(DexyFilter):
-    """The archive handler creates .tgz archives of processed files."""
+class ArchiveFilter(DexyFilter):
+    """The archive filter creates .tgz archives of processed files."""
     OUTPUT_EXTENSIONS = [".tgz"]
     ALIASES = ['archive', 'tgz']
     BINARY = True
@@ -54,8 +54,8 @@ class ArchiveHandler(DexyFilter):
             tar.add(fn, arcname=arcname)
         tar.close()
 
-class ZipArchiveHandler(DexyFilter):
-    """The archive handler creates .zip archives of the input files."""
+class ZipArchiveFilter(DexyFilter):
+    """The archive filter creates .zip archives of the input files."""
     OUTPUT_EXTENSIONS = [".zip"]
     ALIASES = ['zip']
     BINARY = True
@@ -81,8 +81,8 @@ class ZipArchiveHandler(DexyFilter):
         zf.close()
 
 
-class TestHandler(DexyFilter):
-    """The test handler raises an error if output is not as expected. Handy for
+class TestFilter(DexyFilter):
+    """The test filter raises an error if output is not as expected. Handy for
     testing your custom filters or for ensuring that examples in your
     documentation stay correct."""
 
@@ -128,7 +128,7 @@ class TestHandler(DexyFilter):
         # Don't change the output so we can use end result still...
         self.artifact.data_dict = self.artifact.input_data_dict
 
-class CopyHandler(DexyFilter):
+class CopyFilter(DexyFilter):
     """
     Like 'dexy' filter for binary files. Copies the file without trying to read
     the contents. Hacky!
@@ -142,7 +142,7 @@ class CopyHandler(DexyFilter):
     def process(self):
         shutil.copyfile(self.artifact.name, self.artifact.filepath())
 
-class JoinHandler(DexyFilter):
+class JoinFilter(DexyFilter):
     """
     Takes sectioned code and joins it into a single section. Some filters which
     don't preserve sections will raise an error if they receive multiple
@@ -156,7 +156,7 @@ class JoinHandler(DexyFilter):
     def process_dict(self, input_dict):
         return {'1' : self.artifact.input_text()}
 
-class FooterHandler(DexyFilter):
+class FooterFilter(DexyFilter):
     """
     Adds a footer to file. Looks for a file named _footer.ext where ext is the
     same extension as the file this is being applied to. So _footer.html for a
@@ -193,7 +193,7 @@ class FooterHandler(DexyFilter):
 
         return "%s\n%s" % (input_text, footer_text)
 
-class HeaderHandler(DexyFilter):
+class HeaderFilter(DexyFilter):
     """
     Adds a header to file. Looks for a file named _header.ext where ext is the
     same extension as the file this is being applied to. So _header.html for a
@@ -229,9 +229,9 @@ class HeaderHandler(DexyFilter):
 
         return "%s\n%s" % (header_text, input_text)
 
-# TODO implement combined header/footer handler as a shortcut
+# TODO implement combined header/footer filter as a shortcut
 
-class HeadHandler(DexyFilter):
+class HeadFilter(DexyFilter):
     """
     Returns just the first 10 lines of input.
     """
@@ -239,7 +239,7 @@ class HeadHandler(DexyFilter):
     def process_text(self, input_text):
         return "\n".join(input_text.split("\n")[0:10]) + "\n"
 
-class WordWrapHandler(DexyFilter):
+class WordWrapFilter(DexyFilter):
     """
     Wraps text after 79 characters (tries to preserve existing line breaks and
     spaces).
@@ -265,7 +265,7 @@ class WordWrapHandler(DexyFilter):
     def process_text(self, input_text):
         return self.wrap_text(input_text, 79)
 
-class SplitHtmlHandler(DexyFilter):
+class SplitHtmlFilter(DexyFilter):
     """Splits a HTML page into multiple HTML pages. The original page becomes an
     index page."""
     ALIASES = ['split', 'splithtml']
@@ -319,7 +319,7 @@ class SplitHtmlHandler(DexyFilter):
             output_dict = self.artifact.input_data_dict
         self.artifact.data_dict = output_dict
 
-class SplitLatexHandler(DexyFilter):
+class SplitLatexFilter(DexyFilter):
     """Splits a latex doc into multiple latex docs."""
     ALIASES = ['splitlatex']
     INPUT_EXTENSIONS = [".tex"]
@@ -377,7 +377,7 @@ class PrettyPrintJsonFilter(DexyFilter):
         json_content = json.loads(input_text)
         return json.dumps(json_content, sort_keys=True, indent=4)
 
-class SillyHandler(DexyFilter):
+class SillyFilter(DexyFilter):
     ALIASES =['silly']
 
     def process_text(self, input_text):

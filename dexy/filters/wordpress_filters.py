@@ -1,9 +1,8 @@
-from handlers.blog_handler import BlogHandler
-
+from dexy.filters.blog_filters import BlogFilter
 import re
 import xmlrpclib
 
-class WordPressHandler(BlogHandler):
+class WordPressFilter(BlogFilter):
     """
     Posts to a WordPress blog.
     """

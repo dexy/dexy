@@ -7,21 +7,23 @@ from pygments.lexers.agile import PythonConsoleLexer
 from pygments.lexers.agile import RubyConsoleLexer
 from pygments.lexers.special import TextLexer
 from pygments.lexers.web import JavascriptLexer
+from pygments.lexers.web import XmlLexer
 
-class PygHandler(DexyFilter):
+class PygFilter(DexyFilter):
     """
     Apply Pygments syntax highlighting.
     """
     INPUT_EXTENSIONS = [".*"]
-    IMAGE_OUTPUT_EXTENSIONS = ['.png', '.bmp', '.gif', '.jpg', '.svg']
-    OUTPUT_EXTENSIONS = [".html", ".tex"] + IMAGE_OUTPUT_EXTENSIONS
+    IMAGE_OUTPUT_EXTENSIONS = ['.png', '.bmp', '.gif', '.jpg']
+    OUTPUT_EXTENSIONS = [".html", ".tex", ".svg"] + IMAGE_OUTPUT_EXTENSIONS
     ALIASES = ['pyg', 'pygments']
     FINAL = False
 
     def process_dict(self, input_dict):
         ext = self.artifact.input_ext
         name = "input_text%s" % ext
-        # List any file extensions which don't map neatly to lexers.
+
+        ### @export "custom-file-extension-handling"
         if ext == '.pycon':
             lexer = PythonConsoleLexer()
         elif ext == '.rbcon':
@@ -30,8 +32,11 @@ class PygHandler(DexyFilter):
             lexer = JavascriptLexer()
         elif ext == '.Rd':
             lexer = TextLexer()
+        elif ext == '.svg':
+            lexer = XmlLexer()
         else:
             lexer = get_lexer_for_filename(name)
+        ### @end
 
         if self.artifact.args.has_key('pygments'):
             pygments_args = self.artifact.args['pygments']

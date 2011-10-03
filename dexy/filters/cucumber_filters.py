@@ -3,7 +3,7 @@ from dexy.utils import ansi_output_to_html
 import re
 import subprocess
 
-class CucumberHandler(DexyFilter):
+class CucumberFilter(DexyFilter):
     """Run cucumber features."""
     INPUT_EXTENSIONS = [".feature"]
     OUTPUT_EXTENSIONS = [".html", ".txt"]
