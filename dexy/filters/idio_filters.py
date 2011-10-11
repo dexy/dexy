@@ -45,12 +45,13 @@ class IdioFilter(DexyFilter):
 
         if self.artifact.args.has_key('idio'):
             idio_args = self.artifact.args['idio']
+        elif self.artifact.args.has_key('pygments'):
+            idio_args = self.artifact.args['pygments']
         else:
             idio_args = {}
 
         formatter_args = {'lineanchors' : self.artifact.document_key}
-        if idio_args.has_key('formatter'):
-            formatter_args.update(idio_args['formatter'])
+        formatter_args.update(idio_args)
 
         formatter = get_formatter_for_filename(self.artifact.filename(),
             **formatter_args)
