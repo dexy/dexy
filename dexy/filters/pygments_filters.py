@@ -15,13 +15,13 @@ class PygFilter(DexyFilter):
     """
     INPUT_EXTENSIONS = [".*"]
     IMAGE_OUTPUT_EXTENSIONS = ['.png', '.bmp', '.gif', '.jpg']
-    OUTPUT_EXTENSIONS = [".html", ".tex", ".svg"] + IMAGE_OUTPUT_EXTENSIONS
+    MARKUP_OUTPUT_EXTENSIONS = [".html", ".tex", ".svg"]
+    OUTPUT_EXTENSIONS = MARKUP_OUTPUT_EXTENSIONS + IMAGE_OUTPUT_EXTENSIONS
     ALIASES = ['pyg', 'pygments']
     FINAL = False
 
     def process_dict(self, input_dict):
         ext = self.artifact.input_ext
-        name = "input_text%s" % ext
 
         ### @export "custom-file-extension-handling"
         if ext == '.pycon':
@@ -35,20 +35,24 @@ class PygFilter(DexyFilter):
         elif ext == '.svg':
             lexer = XmlLexer()
         else:
-            lexer = get_lexer_for_filename(name)
-        ### @end
+            fake_file_name = "input_text%s" % ext
+            lexer = get_lexer_for_filename(fake_file_name)
 
+        ### @export "pygments-args"
         if self.artifact.args.has_key('pygments'):
             pygments_args = self.artifact.args['pygments']
         else:
             pygments_args = {}
 
         formatter_args = {'lineanchors' : self.artifact.document_key }
-        if pygments_args.has_key('formatter'):
-            formatter_args.update(pygments_args['formatter'])
+        # for now we assume all pygments args are for the formatter...
+        formatter_args.update(pygments_args)
 
         formatter = get_formatter_for_filename(self.artifact.filename(),
                 **formatter_args)
+        ### @end
+        # TODO whitelist acceptable formatter args
+        # TODO allow passing lexer args?
 
         if self.artifact.ext in self.IMAGE_OUTPUT_EXTENSIONS:
             self.artifact.binary_output = True
