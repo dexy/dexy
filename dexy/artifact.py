@@ -1,4 +1,4 @@
-from dexy.version import VERSION
+from dexy.version import Version
 from dexy.utils import AttrDict
 from ordereddict import OrderedDict
 import glob
@@ -79,7 +79,7 @@ class Artifact(object):
         self.binary_input = None
         self.binary_output = None
         self.data_dict = OrderedDict()
-        self.dexy_version = VERSION
+        self.dexy_version = Version.VERSION
         self.dirty = False
         self.document_key = None
         self.final = None
