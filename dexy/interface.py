@@ -1,6 +1,6 @@
 from dexy.artifact import Artifact
 from dexy.controller import Controller
-from dexy.version import VERSION
+from dexy.version import Version
 from inspect import isclass
 from logging.handlers import RotatingFileHandler
 import cProfile
@@ -116,7 +116,7 @@ def setup_option_parser():
         parser.add_argument(
             '-v', '--version',
             action='version',
-            version='%%(prog)s %s' % VERSION
+            version='%%(prog)s %s' % Version.VERSION
         )
 
     except ImportError:
