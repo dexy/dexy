@@ -198,8 +198,12 @@ class Document(object):
             else:
                 repo = git.Repo.clone_from(repo_url, local_repo_dir)
 
-            # TODO be able to specify different commits/revisions
-            tree = repo.heads.master.commit.tree
+            if self.args.has_key('commit'):
+                commit = self.args['commit']
+                tree = repo.commit(commit).tree
+            else:
+                tree = repo.heads.master.commit.tree
+
             blob = tree[self.args['path']]
             data = blob.data_stream.read()
 
