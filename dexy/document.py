@@ -1,16 +1,18 @@
-try:
-    import git
-    USE_GIT = True
-except ImportError:
-    USE_GIT = False
-
+from dexy.sizeof import asizeof
+from dexy.utils import profile_memory
 import StringIO
+import dexy.controller
 import hashlib
 import json
 import logging
 import os
 import urllib2
 
+try:
+    import git
+    USE_GIT = True
+except ImportError:
+    USE_GIT = False
 
 class Document(object):
     def __init__(self, artifact_class, name_or_key, filters = []):
@@ -22,6 +24,7 @@ class Document(object):
         self.inputs = []
         self.input_keys = []
         self.artifacts = []
+        self.use_all_inputs = False
 
         # Set up document log.
         self.logstream = StringIO.StringIO()
@@ -39,7 +42,6 @@ class Document(object):
         except IndexError:
             pass
 
-        self.use_all_inputs = False
 
     def final_artifact(self):
         return self.last_artifact
@@ -88,7 +90,7 @@ class Document(object):
     def next_filter_class(self):
         alias = self.next_filter_alias()
         if alias:
-            return self.controller.get_handler_for_alias(alias)
+            return dexy.controller.Controller.get_handler_for_alias(alias)
 
     def at_last_step(self):
         return (len(self.filters) == self.step)
@@ -106,7 +108,7 @@ class Document(object):
     def initial_artifact_data(self):
         if self.args.has_key('url'):
             url = self.args['url']
-            filename = os.path.join(self.controller.artifacts_dir, self.name)
+            filename = os.path.join(self.artifacts_dir, self.name)
             header_filename = "%s.headers" % filename
 
             if not os.path.exists(os.path.dirname(filename)):
@@ -134,12 +136,12 @@ class Document(object):
             elif header_dict.has_key('Last-Modified') and os.path.exists(filename):
                 request.add_header('If-Modifed-Since', header_dict['Last-Modified'])
 
-            if self.controller.use_local_files and os.path.exists(filename):
+            if self.use_local_files and os.path.exists(filename):
                 f = open(filename, "r")
                 data = f.read()
                 f.close()
             else:
-                if self.controller.use_local_files:
+                if self.use_local_files:
                     print "local file %s not found, fetching remote url" % filename
 
                 try:
@@ -188,7 +190,7 @@ class Document(object):
                 raise Exception("you can't use repo/path unless you install GitPython")
             repo_url = self.args['repo']
             digest = hashlib.md5(repo_url).hexdigest()
-            local_repo_dir = os.path.join(self.controller.artifacts_dir, "repository-%s" % digest)
+            local_repo_dir = os.path.join(self.artifacts_dir, "repository-%s" % digest)
 
             if os.path.exists(local_repo_dir):
                 repo = git.Repo(local_repo_dir)
@@ -234,21 +236,39 @@ class Document(object):
         return artifact
 
     def run(self, controller):
-        self.controller = controller
         self.step = 0
+        self.use_local_files = controller.use_local_files
+        self.artifacts_dir = controller.artifacts_dir
+        self.db = controller.db
+        self.batch_id = controller.batch_id
 
         artifact = self.create_initial_artifact()
+
         artifact_key = artifact.key
         self.log.info("(step %s) [run] %s -> %s" % \
                  (self.step, artifact_key, artifact.filename()))
-#        profile_memory("document-%s-step-%s" % (self.key(), self.step))
+
+        if self.controller_args.profile_memory:
+            profile_memory(controller, "document-%s-step-%s" % (self.key(), self.step))
+            print
+            print "size of controller", asizeof(controller)
+            print "size of text of", artifact.key, ":", asizeof(artifact.output_text())
+            print "size of document", asizeof(self)
+            tot = 0
+            for x in sorted(self.__dict__.keys()):
+                y = self.__dict__[x]
+                tot += asizeof(y)
+                print x, asizeof(y)
+            print "tot", tot
+
         self.last_artifact = artifact
+
         for f in self.filters:
             previous_artifact = artifact
             artifact_key += "|%s" % f
             self.step += 1
 
-            FilterClass = self.controller.get_handler_for_alias(f)
+            FilterClass = controller.get_handler_for_alias(f)
             artifact = self.artifact_class.setup(self, artifact_key, FilterClass, previous_artifact)
 
             self.log.info("(step %s) [run] %s -> %s" % \
@@ -258,8 +278,11 @@ class Document(object):
 
             self.last_artifact = artifact
             self.artifacts.append(artifact)
-#      	    profile_memory("document-%s-step-%s" % (self.key(), self.step))
 
+            if self.controller_args.profile_memory:
+                if artifact.data_dict:
+                    print "size of text of", artifact.key, "in", self.key(), ":", asizeof(artifact.output_text())
+          	    profile_memory(controller, "document-%s-step-%s" % (self.key(), self.step))
 
         # Make sure all additional inputs are saved.
         for k, a in artifact._inputs.iteritems():
@@ -267,5 +290,4 @@ class Document(object):
                 a.state = 'complete'
                 a.save()
 
-#        profile_memory("document-%s-complete" % (self.key()))
         return self

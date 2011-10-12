@@ -11,10 +11,10 @@ import os
 import shutil
 
 class RunReporter(Reporter):
-    def run(self):
-        report_dir = os.path.join(self.controller.logs_dir, "run-%s" %
+    def run(self, controller, log):
+        report_dir = os.path.join(controller.logs_dir, "run-%s" %
                                   datetime.datetime.now().strftime("%Y-%m-%d--%H-%M-%S"))
-        latest_report_dir = os.path.join(self.controller.logs_dir, "run-latest")
+        latest_report_dir = os.path.join(controller.logs_dir, "run-latest")
         report_filename = os.path.join(report_dir, 'index.html')
         shutil.rmtree(report_dir, ignore_errors=True)
 
@@ -24,7 +24,7 @@ class RunReporter(Reporter):
         formatter = HtmlFormatter()
         js_lexer = JavascriptLexer()
 
-        for doc in self.controller.docs:
+        for doc in controller.docs:
             if len(doc.args) > 0:
                 doc.args_html = highlight(json.dumps(doc.args, sort_keys=True, indent=4), js_lexer, formatter)
             for a in doc.artifacts:
@@ -32,13 +32,13 @@ class RunReporter(Reporter):
                     a.stdout_html = ansi_output_to_html(a.stdout)
 
         env_data = {}
-        j = json.dumps(self.controller.config, sort_keys = True, indent=4)
+        j = json.dumps(controller.config, sort_keys = True, indent=4)
         html = highlight(j, js_lexer, formatter)
 
         env_data['dexy_config'] = html
-        env_data['docs'] = self.controller.docs
-        env_data['docs_sorted'] = sorted([d.key() for d in self.controller.docs])
-        env_data['controller'] = self.controller
+        env_data['docs'] = controller.docs
+        env_data['docs_sorted'] = sorted([d.key() for d in controller.docs])
+        env_data['controller'] = controller
 
         env = Environment()
         env.loader = FileSystemLoader(os.path.dirname(__file__))

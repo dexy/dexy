@@ -1,4 +1,5 @@
 from dexy.version import Version
+from dexy.sizeof import asizeof
 from dexy.utils import AttrDict
 from ordereddict import OrderedDict
 import glob
@@ -62,7 +63,9 @@ class Artifact(object):
 
     def __init__(self):
         if not hasattr(self.__class__, 'SOURCE_CODE'):
-            self.__class__.SOURCE_CODE = inspect.getsource(self.__class__)
+            artifact_class_source = inspect.getsource(self.__class__)
+            artifact_py_source = inspect.getsource(Artifact)
+            self.__class__.SOURCE_CODE = hashlib.md5(artifact_class_source + artifact_py_source).hexdigest()
 
         self._inputs = {}
         self.additional = None
@@ -74,7 +77,7 @@ class Artifact(object):
         self.args = AttrDict({})
         self.args.globals = {}
 
-        self.artifact_class_source = self.__class__.SOURCE_CODE # TODO need artifact.py and also subclass source.
+        self.artifact_class_source = self.__class__.SOURCE_CODE
         self.artifacts_dir = 'artifacts' # TODO don't hard code
         self.binary_input = None
         self.binary_output = None
@@ -94,15 +97,21 @@ class Artifact(object):
 
     @classmethod
     def retrieve(klass, hashstring):
-        artifact = klass()
-        artifact.hashstring = hashstring
-        artifact.load()
-        return artifact
+        if not hasattr(klass, 'retrieved_artifacts'):
+            klass.retrieved_artifacts = {}
+        if klass.retrieved_artifacts.has_key(hashstring):
+            return klass.retrieved_artifacts[hashstring]
+        else:
+            artifact = klass()
+            artifact.hashstring = hashstring
+            artifact.load()
+            klass.retrieved_artifacts[hashstring] = artifact
+            return artifact
 
     def load(self):
         self.load_meta()
         self.load_input()
-        if self.is_complete():
+        if self.is_complete() and not self.is_loaded():
             self.load_output()
 
     def load_inputs(self):
@@ -124,7 +133,8 @@ class Artifact(object):
 
     def setup_from_filter_class(self, filter_class):
         if not hasattr(filter_class, 'SOURCE_CODE'):
-            filter_class.SOURCE_CODE = inspect.getsource(filter_class)
+            filter_class_source = inspect.getsource(filter_class)
+            filter_class.SOURCE_CODE = hashlib.md5(filter_class_source).hexdigest()
 
         if self.final is None and filter_class.FINAL is not None:
             self.final = filter_class.FINAL
@@ -177,8 +187,7 @@ class Artifact(object):
         artifact = klass()
 
         artifact.args = doc.args
-        artifact.dexy_args = doc.controller.args
-        artifact.artifacts_dir = doc.controller.artifacts_dir
+        artifact.artifacts_dir = doc.artifacts_dir
         artifact.key = artifact_key
         artifact.log = doc.log
         artifact.name = doc.name
@@ -220,13 +229,22 @@ class Artifact(object):
 
         artifact.set_hashstring()
 
-        if doc.controller.db and False:
+        if doc.db and False:
             # disabled temporarily since it's very slow...
-            doc.controller.db.insert_artifact(artifact, doc.controller.batch_id)
+            doc.db.insert_artifact(artifact, doc.batch_id)
         return artifact
 
     def run(self):
         start_time = time.time()
+
+        if self.controller_args.profile_memory:
+            print "  size of artifact", asizeof(self)
+            tot = 0
+            for x in sorted(self.__dict__.keys()):
+                y = self.__dict__[x]
+                tot += asizeof(y)
+                print "  ", x, asizeof(y)
+            print "  tot", tot
 
         if not self.is_complete():
             # We have to actually run things...
@@ -350,7 +368,8 @@ class Artifact(object):
         hash_data = str(self.hash_dict())
         self.hashstring = hashlib.md5(hash_data).hexdigest()
 
-        if False:
+        debug_me = False
+        if debug_me:
             for k, v in self.hash_dict().iteritems():
                 if hasattr(v, 'items'):
                     print k, ":"
@@ -362,7 +381,8 @@ class Artifact(object):
             print ">>>>>", self.hashstring
 
         try:
-            self.load()
+            if not self.is_loaded():
+                self.load()
         except AttributeError as e:
             if not self.is_abstract():
                 raise e

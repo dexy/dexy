@@ -1,29 +1,12 @@
 from dexy.reporter import Reporter
-from dexy.utils import ansi_output_to_html
 from jinja2 import Environment
 from jinja2 import FileSystemLoader
-from pygments import highlight
-from pygments.formatters.html import HtmlFormatter
-from pygments.lexers.web import JavascriptLexer
 import datetime
-import json
 import os
 import shutil
 
 class SiteReporter(Reporter):
     DEFAULT = False
-
-    def __init__(self, controller):
-        Reporter.__init__(self, controller)
-        self.timestamp = datetime.datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
-        self.report_dir = os.path.join(self.controller.logs_dir, "site-%s" % self.timestamp)
-        self.latest_report_dir = os.path.join(self.controller.logs_dir, "site-latest")
-        self.site_name = os.path.split(os.path.abspath(os.curdir))[1]
-        self.pretty_site_name = " ".join([n.capitalize() for n in self.site_name.split("-")])
-
-        # This shouldn't matter unless dexy gets run twice in 1 second
-        shutil.rmtree(self.report_dir, ignore_errors=True)
-        os.mkdir(self.report_dir)
 
     def setup_template(self):
         env = Environment()
@@ -112,7 +95,16 @@ class SiteReporter(Reporter):
                 os.makedirs(html_page_parent_dir)
         self.template.stream(env_data).dump(os.path.join(self.report_dir, html_page_fn))
 
-    def run(self):
+    def run(self, controller, log):
+        self.timestamp = datetime.datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
+        self.report_dir = os.path.join(self.controller.logs_dir, "site-%s" % self.timestamp)
+        self.latest_report_dir = os.path.join(self.controller.logs_dir, "site-latest")
+        self.site_name = os.path.split(os.path.abspath(os.curdir))[1]
+        self.pretty_site_name = " ".join([n.capitalize() for n in self.site_name.split("-")])
+
+        # This shouldn't matter unless dexy gets run twice in 1 second
+        shutil.rmtree(self.report_dir, ignore_errors=True)
+        os.mkdir(self.report_dir)
         self.setup_template()
         self.setup_final_artifacts()
         self.setup_dirs()

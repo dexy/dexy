@@ -1,15 +1,16 @@
 from dexy.reporter import Reporter
 from jinja2 import Environment
-from ordereddict import OrderedDict
 from jinja2 import FileSystemLoader
+from ordereddict import OrderedDict
 import cgi # for escape
 import datetime
 import dexy.aplotter as aplotter
 import os
 import pstats
+import random
+import string
 import shutil
 import sqlite3
-import uuid
 import web
 
 try:
@@ -17,7 +18,7 @@ try:
     matplotlib.use("Agg")
     import matplotlib.pyplot as pyplot
     MATPLOTLIB_AVAILABLE = True
-except Exception as e:
+except Exception:
     MATPLOTLIB_AVAILABLE = False
 
 class ProfileReporter(Reporter):
@@ -26,7 +27,7 @@ class ProfileReporter(Reporter):
     REPORTS_DIR = 'logs/profile'
     DB_PATH = os.path.join(REPORTS_DIR, DB_FILE)
 
-    def run(self):
+    def run(self, controller, log):
         web.config.debug = False
 
         latest_dir = os.path.join(self.REPORTS_DIR, "profile-latest")
@@ -61,7 +62,7 @@ class ProfileReporter(Reporter):
             report_dir = os.path.join(self.REPORTS_DIR, "profile-%s" % ts)
         os.mkdir(report_dir)
 
-        if self.controller.args.profile:
+        if controller.args.profile:
             p = pstats.Stats('dexy.prof')
             p.sort_stats('cumulative')
 
@@ -71,9 +72,12 @@ class ProfileReporter(Reporter):
 
             function_data = OrderedDict()
             overall_tot_time = 0
-            p.print_callers()
             for i, x in enumerate(p.fcn_list):
+                if i > 50:
+                    break
+
                 filename, lineno, functionname = x
+                log.debug("processing profile data for item %s: function %s" % (i, functionname))
                 ncalls, primcalls, tottime, cumtime, _ = p.stats[x]
                 totpercall = tottime/ncalls
                 cumpercall = cumtime/primcalls
@@ -90,7 +94,6 @@ class ProfileReporter(Reporter):
                     tottime=tottime,
                     cumtime=cumtime
                     )
-
                 short_filename = os.path.basename(filename)
                 function_id = "%s:%s" % (cgi.escape(short_filename), cgi.escape(functionname))
 
@@ -108,14 +111,14 @@ class ProfileReporter(Reporter):
                 if MATPLOTLIB_AVAILABLE and i < 10:
                     pyplot.clf()
                     pyplot.plot(cumtime_hist)
-                    cumtime_fig_filename = "%s.png" % str(uuid.uuid4())
+                    cumtime_fig_filename = "%s.png" % ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
                     figfile = open(os.path.join(report_dir, cumtime_fig_filename), "wb")
                     pyplot.savefig(figfile)
                     figfile.close()
 
                     pyplot.clf()
                     pyplot.plot(tottime_hist)
-                    tottime_fig_filename = "%s.png" % str(uuid.uuid4())
+                    tottime_fig_filename = "%s.png" % ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
                     figfile = open(os.path.join(report_dir, tottime_fig_filename), "wb")
                     pyplot.savefig(figfile)
                     figfile.close()
@@ -123,13 +126,14 @@ class ProfileReporter(Reporter):
                     cumtime_fig_filename = None
                     tottime_fig_filename = None
 
-                try:
-                    cumtime_text_plot = aplotter.plot(cumtime_hist)
-                    tottime_text_plot = aplotter.plot(tottime_hist)
-                    raise Exception()
-                except Exception as e:
-                    cumtime_text_plot = None
-                    tottime_text_plot = None
+                cumtime_text_plot = None
+                tottime_text_plot = None
+                if i < 20:
+                    try:
+                        cumtime_text_plot = aplotter.plot(cumtime_hist)
+                        tottime_text_plot = aplotter.plot(tottime_hist)
+                    except Exception:
+                        pass
 
                 function_data[function_id] = {
                     'functionname' : cgi.escape(functionname),

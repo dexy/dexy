@@ -16,6 +16,7 @@ import re
 import sre_constants
 import sys
 
+
 class Controller(object):
     def __init__(self):
         self.config = {}
@@ -127,13 +128,16 @@ class Controller(object):
 
     def register_filters(self):
         self._filters = self.find_filters()
+        self.__class__._filters = self._filters
 
-    def get_handler_for_alias(self, alias):
+    @classmethod
+    def get_handler_for_alias(klass, alias):
         """Given an alias, return the corresponding handler."""
-        if self._filters.has_key(alias):
-            return self._filters[alias]
+        if klass._filters.has_key(alias):
+            return klass._filters[alias]
         elif alias.startswith("-") or alias.startswith("alias-") or alias.startswith("al-") or alias in ['al', 'alias']:
-            self._filters[alias] = DexyFilter
+            #klass._filters[alias] = DexyFilter # TODO do we need to keep a list of aliases?
+            return DexyFilter
         else:
             raise Exception("You requested filter alias '%s' but this is not available." % alias)
 
@@ -320,6 +324,7 @@ re.compile: %s""" % (args['except'], e))
                         doc.args = args
 
                     doc.controller_args = self.args
+
                     self.members[key] = doc
                     docs.append(doc) # just a local list
             return docs

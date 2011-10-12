@@ -56,6 +56,9 @@ class FileSystemJsonArtifact(Artifact):
     # Input
     def load_input(self):
         """Load input data into memory, if applicable."""
+        if self.is_loaded():
+            return
+
         if self.binary_input:
             #not loading non-binary input
             pass

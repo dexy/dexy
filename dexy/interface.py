@@ -1,5 +1,6 @@
 from dexy.artifact import Artifact
 from dexy.controller import Controller
+from dexy.utils import profile_memory
 from dexy.version import Version
 from inspect import isclass
 from logging.handlers import RotatingFileHandler
@@ -10,6 +11,7 @@ import re
 import shutil
 import sys
 import urllib
+
 
 # Directories with this name should be excluded anywhere
 EXCLUDE_DIRS_ALL_LEVELS = ['.bzr', '.hg', '.git', '.svn']
@@ -123,7 +125,7 @@ def setup_option_parser():
         # These are optparse-specific
         import optparse
         option_parser = 'optparse'
-        parser = optparse.OptionParser(version="%%prog %s" % VERSION)
+        parser = optparse.OptionParser(version="%%prog %s" % Version.VERSION)
         parser.add_option(
             '-x', '--exclude',
             help=EXCLUDE_HELP + ' Separate multiple directories with commas.'
@@ -184,6 +186,13 @@ def setup_option_parser():
         default=False,
         action='store_true',
         help='run dexy with cProfile'
+    )
+
+    add_option(parser,
+        '--profile-memory',
+        default=False,
+        action='store_true',
+        help='collect memory profile info in memory.log file'
     )
 
     add_option(parser,
@@ -562,8 +571,9 @@ def dexy_command():
 
     if not args.no_reports:
         for reporter_klass in controller.reporters:
-            reporter_klass(controller).run()
-#            profile_memory("report-%s-complete" % reporter_klass.__name__)
+            reporter_klass().run(controller, controller.log)
+            if args.profile_memory:
+                profile_memory(controller, "report-%s-complete" % reporter_klass.__name__)
     else:
         print 'reports not run'
 

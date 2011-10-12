@@ -1,8 +1,9 @@
 from dexy.dexy_filter import DexyFilter
 from jinja2 import Environment
 from jinja2 import StrictUndefined
+from jinja2.exceptions import UndefinedError
+from jinja2.exceptions import TemplateSyntaxError
 from ordereddict import OrderedDict
-import jinja2
 import json
 import os
 import pprint
@@ -36,15 +37,15 @@ class FilenameFilter(DexyFilter):
 
             if key_with_ext in self.artifact.inputs().keys():
                 artifact = self.artifact.inputs()[key_with_ext]
-                self.artifact.log.debug("[fn] existing key %s in artifact %s links to file %s" %
+                self.log.debug("[fn] existing key %s in artifact %s links to file %s" %
                           (key_with_ext, self.artifact.key, artifact.filename()))
             elif key_with_ext_with_dexy in self.artifact.inputs().keys():
                 artifact = self.artifact.inputs()[key_with_ext_with_dexy]
-                self.artifact.log.debug("[fn] existing key %s in artifact %s links to existing file %s" %
+                self.log.debug("[fn] existing key %s in artifact %s links to existing file %s" %
                           (key_with_ext, self.artifact.key, artifact.filename()))
             else:
                 artifact = self.artifact.add_additional_artifact(key, ext)
-                self.artifact.log.debug("[fn] added key %s to artifact %s ; links to new file %s" %
+                self.log.debug("[fn] added key %s to artifact %s ; links to new file %s" %
                           (key_with_ext, self.artifact.key, artifact.filename()))
 
             input_text = input_text.replace(m.group(), artifact.filename())
@@ -142,7 +143,7 @@ class JinjaFilter(DexyFilter):
 
     def setup_jinja_env(self):
         if self.artifact.ext == ".tex":
-            self.artifact.log.debug("changing jinja tags to << >> etc. for %s" % self.artifact.key)
+            self.log.debug("changing jinja tags to << >> etc. for %s" % self.artifact.key)
             env = Environment(
                 block_start_string = '<%',
                 block_end_string = '%>',
@@ -189,8 +190,9 @@ class JinjaFilter(DexyFilter):
         subdirectories = [d for d in os.listdir(os.path.join(os.curdir, doc_dir)) if os.path.isdir(os.path.join(os.curdir, doc_dir, d))]
 
         for key, a in self.artifact.inputs().items():
-            if a.is_output_cached():
-                self.artifact.log.debug("Loading artifact %s" % key)
+            if not a.is_loaded() and not a.binary_output:
+                self.log.debug("Loading artifact %s" % key)
+                print "loading artifact", key
                 a.load() # reload
 
             keys = a.relative_refs(self.artifact.name)
@@ -253,46 +255,70 @@ class JinjaFilter(DexyFilter):
         try:
             template = env.from_string(input_text)
             result = str(template.render(jinja_env_data))
-        except jinja2.exceptions.TemplateSyntaxError as e:
-            print "There is a problem with", self.artifact.key
+        except (UndefinedError, TemplateSyntaxError) as e:
+            if hasattr(e, 'lineno'):
+                # TemplateSyntaxError
+                lineno = e.lineno
+            else:
+                # UndefinedError, we have to search for line number.
+                exception_string = traceback.format_exc()
+                print exception_string
+                m = re.search(", line ([0-9]+),", exception_string)
+                if m:
+                    lineno = int(m.groups()[0])
+                else:
+                    lineno = None
+
+            if lineno:
+                lineno_str = "line %s of " % lineno
+            else:
+                lineno_str = ""
+
             result = """
-            WARNING! There was a problem with line %s of your file %s
+            There is a problem with %s
+
+            There was a problem with %syour file %s
 
             %s
 
             ==================================================
 
-            """ % (e.lineno, self.artifact.name, e.message)
+            """ % (self.artifact.key, lineno_str, self.artifact.name, e.message)
 
             input_lines = self.artifact.input_text().splitlines()
-            if e.lineno >= 3:
-                result += "   ", input_lines[e.lineno-3]
-            if e.lineno >= 2:
-                result += "   ", input_lines[e.lineno-2]
-            result += ">>>", input_lines[e.lineno-1]
-            if len(input_lines) >= e.lineno:
-                result += "   ", input_lines[e.lineno-0]
-            if len(input_lines) >= (e.lineno + 1):
-                result += "   ", input_lines[e.lineno+1]
+            print lineno
+            print len(input_lines), "lines"
+            if lineno >= 3:
+                result += "   ", input_lines[lineno-3]
+            if lineno >= 2:
+                result += "   ", input_lines[lineno-2]
+            result += ">>>", input_lines[lineno-1]
+            if len(input_lines) >= lineno:
+                result += "   ", input_lines[lineno-0]
+            if len(input_lines) >= (lineno + 1):
+                result += "   ", input_lines[lineno+1]
+            raise Exception(result)
         except Exception as e:
-            print "There is a problem with", self.artifact.key
             result = """
-            WARNING! There was a problem with your file %s
+            There is a problem with %s
+
+            There was a problem with your file %s
 
             %s
 
             ==================================================
 
-            """ % (self.artifact.name, e.message)
+            """ % (self.artifact.key, self.artifact.name, e.message)
             if len(self.artifact.input_text().splitlines()) < 20:
                 result += self.artifact.input_text()
             else:
                 result += "Please check your file, you may have mistyped a variable name."
 
-            result += """
-            Here is a traceback which may have more information about the problem:
+            if traceback.print_exc():
+                result += """
+                Here is a traceback which may have more information about the problem:
 
-            %s""" % traceback.print_exc()
-
+                %s""" % traceback.print_exc()
+            raise Exception(result)
         return result
 

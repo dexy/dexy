@@ -9,14 +9,14 @@ class TarzipOutputReporter(Reporter):
     OUTPUT_DIR = "logs"
     DEFAULT = False
 
-    def run(self):
+    def run(self, controller, log):
         # TODO craete output dir if it doesn't exist
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
         report_filename = os.path.join(self.OUTPUT_DIR, "output-%s.tgz" % timestamp)
         tar = tarfile.open(report_filename, mode="w:gz")
         subdir_name = "dexy-output"
 
-        for doc in self.controller.docs:
+        for doc in controller.docs:
             artifact = doc.final_artifact()
 
             if artifact.final:
@@ -41,8 +41,8 @@ class InSituReporter(Reporter):
     """This is the InSitu Reporter"""
     DEFAULT = False
 
-    def run(self):
-        for doc in self.controller.docs:
+    def run(self, controller, log):
+        for doc in controller.docs:
             artifact = doc.final_artifact()
 
             fn = artifact.canonical_filename()
@@ -69,9 +69,9 @@ class OutputReporter(Reporter):
     """This is the OutputReporter"""
 
     REPORTS_DIR = 'output'
-    def run(self):
+    def run(self, controller, log):
         shutil.rmtree(self.REPORTS_DIR, ignore_errors=True)
-        for doc in self.controller.docs:
+        for doc in controller.docs:
             artifact = doc.final_artifact()
 
             fn = artifact.canonical_filename()
@@ -96,9 +96,9 @@ class LongOutputReporter(Reporter):
     """This is the LongOutputReporter"""
 
     REPORTS_DIR = 'output-long'
-    def run(self):
+    def run(self, controller, log):
         shutil.rmtree(self.REPORTS_DIR, ignore_errors=True)
-        for doc in self.controller.docs:
+        for doc in controller.docs:
             artifact = doc.final_artifact()
 
             fn = artifact.long_canonical_filename()
