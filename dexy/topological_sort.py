@@ -67,5 +67,5 @@ def topological_sort(items, partial_order):
 
     if len(graph.items()) != 0:
         # There is a loop in the input
-        return None
-    return sorted
+        return None, graph.items()
+    return sorted, None

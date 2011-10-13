@@ -369,7 +369,16 @@ re.compile: %s""" % (args['except'], e))
             for input_doc in doc.inputs:
                 depend(doc, input_doc)
 
-        ordering = topological_sort(range(len(self.members)), self.depends)
+        ordering, leftover_graph_items = topological_sort(range(len(self.members)), self.depends)
+        if not ordering:
+            for doc, depends_on in leftover_graph_items:
+                print self.members.values()[doc].key(), "depends on"
+                for i in depends_on:
+                    print "   ", self.members.values()[i].key()
+                print
+            print "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+            print "The above dependencies were not able to be resolved.\n\n"
+            raise Exception("There are circular references, can't do topological sort!")
 
         self.db = Database("%s/%s" % (self.logs_dir, "db.json"))
         self.batch_id = self.db.next_batch_id()
