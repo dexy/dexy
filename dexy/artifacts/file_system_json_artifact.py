@@ -5,8 +5,8 @@ import json
 import os
 
 class FileSystemJsonArtifact(Artifact):
-    """Artifact which persists data by writing to the file system (default type
-    of Artifact)"""
+    """Artifact which persists data by writing to the file system and using
+    JSON for serializing metadata (default type of Artifact)"""
 
     FILTERS = Controller().find_filters()
 

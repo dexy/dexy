@@ -73,7 +73,7 @@ class ProfileReporter(Reporter):
             function_data = OrderedDict()
             overall_tot_time = 0
             for i, x in enumerate(p.fcn_list):
-                if i > 50:
+                if i > 100:
                     break
 
                 filename, lineno, functionname = x

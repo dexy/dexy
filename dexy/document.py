@@ -229,6 +229,7 @@ class Document(object):
         artifact.elapsed = 0
         artifact.document_key = self.key()
         artifact.controller_args = self.controller_args
+        artifact.save()
 
         # Add the new artifact to the document's list of artifacts.
         self.artifacts.append(artifact)

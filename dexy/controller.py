@@ -1,3 +1,5 @@
+import dexy
+from dexy.database import Database
 from dexy.dexy_filter import DexyFilter
 from dexy.document import Document
 from dexy.reporter import Reporter
@@ -5,7 +7,6 @@ from dexy.topological_sort import topological_sort
 from dexy.utils import AttrDict
 from inspect import isclass
 from ordereddict import OrderedDict
-import dexy.db
 import fnmatch
 import glob
 import json
@@ -27,6 +28,7 @@ class Controller(object):
         # attr.
         self.args = AttrDict({})
         self.args.globals = {}
+        self.args.profile_memory = False
 
         self.install_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         if not hasattr(self, 'log'):
@@ -369,12 +371,8 @@ re.compile: %s""" % (args['except'], e))
 
         ordering = topological_sort(range(len(self.members)), self.depends)
 
-        self.db = None
-        self.batch_id = None
-        if dexy.db.DB_AVAILABLE:
-            print "initializing database"
-            self.db = dexy.db.Db()
-            self.batch_id = self.db.next_batch_id()
+        self.db = Database("%s/%s" % (self.logs_dir, "db.json"))
+        self.batch_id = self.db.next_batch_id()
 
         ordered_members = OrderedDict()
         for i in ordering:
@@ -391,4 +389,5 @@ re.compile: %s""" % (args['except'], e))
         self.register_filters()
         self.process_config()
         self.docs = self.run()
+        self.db.persist()
         return self.docs

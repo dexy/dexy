@@ -122,7 +122,7 @@ class DexyFilter(object):
         if returncode is None:
             raise Exception("no return code, proc not finished!")
         elif returncode != 0:
-            if self.artifact.dexy_args.ignore_errors:
+            if self.artifact.controller_args.ignore_errors:
                 self.artifact.log.warn(stderr)
             else:
                 print stderr

@@ -9,6 +9,8 @@ def setup_controller():
     if not os.path.isdir(controller.artifacts_dir):
         os.mkdir(controller.artifacts_dir)
     controller.artifact_class = FileSystemJsonArtifact
+    controller.logs_dir = "logs"
+    controller.use_local_files = False
     controller.allow_remote = True
     controller.config = {
         'tests/data' : {
