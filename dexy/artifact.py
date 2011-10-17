@@ -1,51 +1,38 @@
-from dexy.version import Version
+from dexy.constants import Constants
 from dexy.sizeof import asizeof
-from dexy.utils import AttrDict
+from dexy.version import Version
 from ordereddict import OrderedDict
+import dexy.introspect
 import glob
 import hashlib
 import inspect
 import logging
 import os
 import shutil
+import stat
 import sys
 import time
 import traceback
 
 class Artifact(object):
+    HASH_WHITELIST = Constants.ARTIFACT_HASH_WHITELIST
     META_ATTRS = [
+        'additional',
         'binary_input',
         'binary_output',
-        'key',
         'document_key',
-        'name',
+        'elapsed',
         'ext',
-        'stdout',
         'final',
-        'additional',
         'initial',
-        'state',
-        'batch_id',
+        'is_last',
+        'key',
+        'name',
         'output_hash',
-        'elapsed'
+        'state',
+        'stdout'
     ]
 
-    HASH_WHITELIST = [
-        'args',
-        'artifact_class_source',
-        'dexy_version',
-        'dirty',
-        'dirty_string',
-        'ext',
-        'filter_name',
-        'filter_source',
-        'filter_version',
-        'next_filter_name',
-        'inputs',
-        'input_data_dict',
-        'input_ext',
-        'key'
-    ]
 
     BINARY_EXTENSIONS = [
         '.gif',
@@ -61,7 +48,14 @@ class Artifact(object):
         '.swf'
     ]
 
+    @classmethod
+    def artifacts(self):
+        """Lists available artifact classes."""
+        pass
+
     def __init__(self):
+        if not hasattr(self.__class__, 'FILTERS'):
+            self.__class__.FILTERS = dexy.introspect.filters(Constants.NULL_LOGGER)
         if not hasattr(self.__class__, 'SOURCE_CODE'):
             artifact_class_source = inspect.getsource(self.__class__)
             artifact_py_source = inspect.getsource(Artifact)
@@ -69,27 +63,29 @@ class Artifact(object):
 
         self._inputs = {}
         self.additional = None
+        self.db = [] # accepts 'append'
+        self.args = {}
+        self.args['globals'] = {}
 
-        # In actual usage, these initialized values are replaced by optparse
-        # Namespace or the argparse equivalent. These initialized values are
-        # used in testing, AttrDict is used so we can simulate the globals
-        # attr.
-        self.args = AttrDict({})
-        self.args.globals = {}
-
+        self.is_last = False
         self.artifact_class_source = self.__class__.SOURCE_CODE
         self.artifacts_dir = 'artifacts' # TODO don't hard code
+        self.batch_id = None
         self.binary_input = None
         self.binary_output = None
+        self.ctime = None
         self.data_dict = OrderedDict()
         self.dexy_version = Version.VERSION
         self.dirty = False
         self.document_key = None
+        self.elapsed = 0
         self.final = None
         self.initial = None
+        self.inode = None
         self.input_data_dict = OrderedDict()
         self.key = None
         self.log = logging.getLogger()
+        self.mtime = None
         self.state = 'new'
 
     def is_complete(self):
@@ -148,11 +144,13 @@ class Artifact(object):
         assert self.filter_class
         if self.final is None:
             self.final = previous_artifact.final
+
         self.binary_input = previous_artifact.binary_output
         self.input_ext = previous_artifact.ext
         self.input_data_dict = previous_artifact.data_dict
-        self.document_key = previous_artifact.document_key
-        self.controller_args = previous_artifact.controller_args
+        for at in ['batch_id', 'document_key', 'mtime', 'ctime', 'inode']:
+                val = getattr(previous_artifact, at)
+                setattr(self, at, val)
 
         # The 'canonical' output of previous artifact
         self.previous_artifact_filename = previous_artifact.filename()
@@ -186,12 +184,18 @@ class Artifact(object):
         """Set up a new artifact."""
         artifact = klass()
 
+        artifact.doc = doc
+        artifact.controller_args = doc.controller.args
+        artifact.db = doc.db
+
         artifact.args = doc.args
         artifact.artifacts_dir = doc.artifacts_dir
         artifact.key = artifact_key
         artifact.log = doc.log
+        artifact.batch_id = doc.batch_id
         artifact.name = doc.name
         artifact.filters = doc.filters
+        artifact.document_key = doc.key()
 
         if artifact.args.has_key('final'):
             # TODO move this into initial setup? Should only be needed once...
@@ -213,6 +217,13 @@ class Artifact(object):
             artifact.initial = True
             artifact._inputs = doc.input_artifacts()
             artifact.ext = os.path.splitext(doc.name)[1]
+
+            if not doc.virtual:
+                stat_info = os.stat(doc.name)
+                artifact.ctime = stat_info[stat.ST_CTIME]
+                artifact.mtime = stat_info[stat.ST_MTIME]
+                artifact.inode = stat_info[stat.ST_INO]
+
             artifact.binary_input = (doc.ext in artifact.BINARY_EXTENSIONS)
             artifact.set_data(doc.initial_artifact_data())
             if not artifact.data_dict:
@@ -229,15 +240,13 @@ class Artifact(object):
 
         artifact.set_hashstring()
 
-        if doc.db and False:
-            # disabled temporarily since it's very slow...
-            doc.db.insert_artifact(artifact, doc.batch_id)
+        artifact.db.append(artifact)
         return artifact
 
     def run(self):
         start_time = time.time()
 
-        if self.controller_args.profile_memory:
+        if self.doc.profmem:
             print "  size of artifact", asizeof(self)
             tot = 0
             for x in sorted(self.__dict__.keys()):
@@ -249,10 +258,7 @@ class Artifact(object):
         if not self.is_complete():
             # We have to actually run things...
             if not self.filter_class:
-                classes = [k for k in self.controller.handlers.values() if k.__name__ == self.filter_name]
-                if len(classes) == 0:
-                    raise Exception("no filter class %s found" % self.filter_name)
-                self.filter_class = classes[0]
+                self.filter_class = dexy.introspect.get_filter_by_name(self.filter_name, self.doc.__class__.filter_list)
 
             # Set up instance of filter.
             filter_instance = self.filter_class()
@@ -312,8 +318,16 @@ class Artifact(object):
         new_artifact.additional = True
         new_artifact.set_binary_from_ext()
         new_artifact.artifacts_dir = self.artifacts_dir
+        new_artifact.inode = self.hashstring
+
+        # TODO this is duplicated in setup_from_previous_artifact, should reorganize
+        for at in ['batch_id', 'document_key', 'mtime', 'ctime', 'inode']:
+                val = getattr(self, at)
+                setattr(new_artifact, at, val)
+
         new_artifact.set_hashstring()
         self.add_input(key_with_ext, new_artifact)
+        self.db.append(new_artifact)
         return new_artifact
 
     def add_input(self, key, artifact):
@@ -359,7 +373,7 @@ class Artifact(object):
                     for k1, v1 in v.items():
                         hash_v[str(k1)] = hashlib.md5(str(v1)).hexdigest()
                 else:
-                    hash_v = hashlib.md5(str(v)).hexdigest()
+                    hash_v = str(v)
                 hash_dict[str(k)] = hash_v
 
         return hash_dict
@@ -476,3 +490,5 @@ class Artifact(object):
     def filepath(self):
         return os.path.join(self.artifacts_dir, self.filename())
 
+    def unique_key(self):
+        return "%s:%s:%s" % (self.batch_id, self.document_key, self.key)

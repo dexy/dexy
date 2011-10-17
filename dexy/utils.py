@@ -1,20 +1,76 @@
 from BeautifulSoup import BeautifulSoup
 from ansi2html import Ansi2HTMLConverter
+from dexy.constants import Constants
 from dexy.sizeof import asizeof
 from pynliner import Pynliner
 import StringIO
 import datetime
+import dexy.database
+import dexy.databases.csv_database
+import dexy.introspect
 import gc
+import json
 import logging
+import logging.handlers
 import os
 import re
 
-# http://code.activestate.com/recipes/361668/#c2
-class AttrDict(dict):
-    def __init__(self, *args, **kwargs):
-        dict.__init__(self, *args, **kwargs)
-    def __getattr__(self, name):
-        return self[name]
+def load_batch_info(batch_id, logsdir=Constants.DEFAULT_LDIR):
+    with open(batch_info_filename(batch_id, logsdir), "r") as f:
+        return json.load(f)
+
+def save_batch_info(batch_id, batch_info, logsdir=Constants.DEFAULT_LDIR):
+    with open(batch_info_filename(batch_id, logsdir), "w") as f:
+        json.dump(batch_info, f, sort_keys = True, indent = 4)
+
+def batch_info_filename(batch_id, logsdir):
+    return os.path.join(logsdir, "batch-%05d.json" % batch_id)
+
+def get_db(db_classname=Constants.DEFAULT_DBCLASS, **kwargs):
+    # TODO cache the database classes list somewhere
+    database_classes = dexy.introspect.database_classes()
+    db_class = database_classes[db_classname]
+    return db_class(**kwargs)
+
+def get_log(
+        name=Constants.DEFAULT_LOGGER_NAME, # Name of the logger
+        logsdir=Constants.DEFAULT_LDIR, # Directory to store the logfile
+        logfile=Constants.DEFAULT_LFILE, # Filename of logfile
+        loglevel=Constants.DEFAULT_LOGLEVEL # Log level to use
+    ):
+    """Get a log."""
+
+    log = logging.getLogger(Constants.DEFAULT_LOGGER_NAME)
+    log.propagate = 0
+
+    if len(log.handlers) == 0:
+        # Set up handlers and formatters.
+        try:
+            log.setLevel(Constants.LOGLEVELS[loglevel])
+        except KeyError:
+            msg = "You requested log level '%s', valid values are %s" % (loglevel, ",".join(Constants.LOGLEVELS.keys()))
+            raise Exception(msg)
+
+        if logsdir and logfile:
+            logfile = os.path.join(logsdir, logfile)
+            handler = logging.handlers.RotatingFileHandler(logfile)
+        else:
+            handler = logging.StreamHandler() # log to sys.stderr
+
+        log.addHandler(handler)
+        formatter = logging.Formatter(Constants.DEFAULT_LOGFORMAT)
+        handler.setFormatter(formatter)
+
+    if name == Constants.DEFAULT_LOGGER_NAME:
+        return log
+    else:
+        log2 = logging.getLogger(name)
+        log2.handlers = log.handlers
+        return log2
+
+def remove_all_handlers(log):
+    for h in log.handlers:
+        log.removeHandler(h)
 
 def ansi_output_to_html(ansi_text):
     try:
@@ -111,3 +167,18 @@ except ImportError:
     def profile_memory(controller, description=None):
         pass
 
+#http://code.activestate.com/recipes/148061-one-liner-word-wrap-function/
+def wrap_text(text, width):
+    """
+    A word-wrap function that preserves existing line breaks
+    and most spaces in the text. Expects that existing line
+    breaks are posix newlines (\n).
+    """
+    return reduce(lambda line, word, width=width: '%s%s%s' %
+             (line,
+               ' \n'[(len(line)-line.rfind('\n')-1
+                     + len(word.split('\n',1)[0]
+                          ) >= width)],
+               word),
+              text.split(' ')
+             )

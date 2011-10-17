@@ -173,3 +173,6 @@ class RagelRubyDotFilter(ProcessStdoutFilter):
     VERSION = 'ragel --version'
     EXECUTABLE = 'ragel -R -V'
 
+class NonexistentFilter(ProcessStdoutFilter):
+    ALIASES = ['zzzdoesnotexist']
+    VERSION = 'notherenopexxx --version'

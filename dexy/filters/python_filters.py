@@ -1,5 +1,6 @@
 from dexy.dexy_filter import DexyFilter
 from dexy.utils import print_string_diff
+from dexy.utils import wrap_text
 from ordereddict import OrderedDict
 import json
 import os
@@ -246,24 +247,8 @@ class WordWrapFilter(DexyFilter):
     """
     ALIASES = ['ww', 'wrap']
 
-    #http://code.activestate.com/recipes/148061-one-liner-word-wrap-function/
-    def wrap_text(self, text, width):
-        """
-        A word-wrap function that preserves existing line breaks
-        and most spaces in the text. Expects that existing line
-        breaks are posix newlines (\n).
-        """
-        return reduce(lambda line, word, width=width: '%s%s%s' %
-                 (line,
-                   ' \n'[(len(line)-line.rfind('\n')-1
-                         + len(word.split('\n',1)[0]
-                              ) >= width)],
-                   word),
-                  text.split(' ')
-                 )
-
     def process_text(self, input_text):
-        return self.wrap_text(input_text, 79)
+        return wrap_text(input_text, 79)
 
 class SplitHtmlFilter(DexyFilter):
     """Splits a HTML page into multiple HTML pages. The original page becomes an

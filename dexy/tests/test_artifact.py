@@ -1,5 +1,7 @@
 from dexy.artifact import Artifact
 from dexy.artifacts.file_system_json_artifact import FileSystemJsonArtifact
+from dexy.tests.utils import tempdir
+import os
 
 def is_empty_dict(d):
     return isinstance(d, dict) and not d
@@ -41,11 +43,13 @@ def test_add_additional_artifact():
     artifact = Artifact()
     artifact.key = 'abc.txt'
     artifact.artifacts_dir = 'artifactsx'
+    artifact.hashstring = "abcdef123"
+
     new_artifact = artifact.add_additional_artifact('def.txt', '.txt')
 
     assert is_empty_dict(new_artifact._inputs)
-    assert is_empty_dict(new_artifact.args)
-    assert is_empty_dict(new_artifact.args.globals)
+    assert new_artifact.args.keys() == ["globals"]
+    assert is_empty_dict(new_artifact.args['globals'])
     assert new_artifact.additional
     assert new_artifact.artifact_class_source
     assert new_artifact.artifacts_dir == 'artifactsx'
@@ -54,15 +58,18 @@ def test_add_additional_artifact():
     assert new_artifact.state == 'new'
 
 def test_simple_metadata():
-    HASHSTRING = 'abc123'
-    a1 = FileSystemJsonArtifact()
-    a1.hashstring = HASHSTRING
-    a1.key = 'xyz'
-    a1.save_meta()
+    with tempdir():
+        os.mkdir('artifacts')
 
-    a2 = FileSystemJsonArtifact()
-    a2.hashstring = HASHSTRING
-    assert not a2.key
-    a2.load_meta()
-    assert a2.key == 'xyz'
+        HASHSTRING = 'abc123'
+        a1 = FileSystemJsonArtifact()
+        a1.hashstring = HASHSTRING
+        a1.key = 'xyz'
+        a1.save_meta()
+
+        a2 = FileSystemJsonArtifact()
+        a2.hashstring = HASHSTRING
+        assert not a2.key
+        a2.load_meta()
+        assert a2.key == 'xyz'
 

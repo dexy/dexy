@@ -11,10 +11,13 @@ import os
 import shutil
 
 class RunReporter(Reporter):
-    def run(self, controller, log):
-        report_dir = os.path.join(controller.logs_dir, "run-%s" %
+    def run(self):
+        self.load_batch_artifacts()
+
+        # Create a directory to hold the report.
+        report_dir = os.path.join(self.logsdir, "run-%s" %
                                   datetime.datetime.now().strftime("%Y-%m-%d--%H-%M-%S"))
-        latest_report_dir = os.path.join(controller.logs_dir, "run-latest")
+        latest_report_dir = os.path.join(self.logsdir, "run-latest")
         report_filename = os.path.join(report_dir, 'index.html')
         shutil.rmtree(report_dir, ignore_errors=True)
 
@@ -24,21 +27,22 @@ class RunReporter(Reporter):
         formatter = HtmlFormatter()
         js_lexer = JavascriptLexer()
 
-        for doc in controller.docs:
-            if len(doc.args) > 0:
-                doc.args_html = highlight(json.dumps(doc.args, sort_keys=True, indent=4), js_lexer, formatter)
-            for a in doc.artifacts:
-                if hasattr(a, 'stdout'):
-                    a.stdout_html = ansi_output_to_html(a.stdout)
-
         env_data = {}
-        j = json.dumps(controller.config, sort_keys = True, indent=4)
-        html = highlight(j, js_lexer, formatter)
 
-        env_data['dexy_config'] = html
-        env_data['docs'] = controller.docs
-        env_data['docs_sorted'] = sorted([d.key() for d in controller.docs])
-        env_data['controller'] = controller
+        # highlight config
+        j = json.dumps(self.batch_info['config'], sort_keys = True, indent=4)
+        dexy_config = highlight(j, js_lexer, formatter)
+
+        def highlight_json(d):
+            j = json.dumps(d, sort_keys=True, indent=4)
+            return highlight(j, js_lexer, formatter)
+
+        env_data['artifacts'] = self.artifacts
+        env_data['batch_info'] = self.batch_info
+        env_data['dexy_config'] = dexy_config
+        env_data['docs'] = self.batch_info['docs']
+        env_data['sorted'] = sorted
+        env_data['highlight_json'] = highlight_json
 
         env = Environment()
         env.loader = FileSystemLoader(os.path.dirname(__file__))

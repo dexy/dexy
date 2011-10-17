@@ -54,22 +54,24 @@
 
                     <h1>Documents</h1>
 
-                    {% for doc in docs %}
+                    {% for key, doc in docs.iteritems() -%}
                     <hr />
 
-                    <h2 id="{{ doc.key() }}">{{ doc.key() }}</h2>
+                    <h2 id="{{ key }}">{{ key }}</h2>
                     {% if doc.args.__len__() > 0 %}
                     <br />
                     <h4>Arguments</h4>
-                    {{ doc.args_html }}
+                    <pre><code>
+                    {{ highlight_json(doc.args) }}
+                    </code></pre>
                     {% endif %}
 
                     {% if doc.inputs.__len__() > 0 %}
                     <br />
                     <h4>Inputs</h4>
                     <ul>
-                        {% for i in doc.inputs %}
-                        <li><a href="#{{i.key()}}">{{ i.key() }}</a></li>
+                        {% for key in doc.inputs %}
+                        <li><a href="#{{ key }}">{{ key }}</a></li>
                         {% endfor %}
                     </ul>
                     {% endif %}
@@ -78,7 +80,8 @@
                     <h4>Artifacts</h4>
                     <table style="width: 800px; border: thin solid black; border-collapse: collapse;">
                         <tr><th>Key</th><th>Link</th><th>Final</th><th>Elapsed</th><th>Run Type</th><th>Sections</th></tr>
-                        {% for a in doc.artifacts -%}
+                        {% for h in doc.artifacts -%}
+                        {% set a = artifacts[h] -%}
                         <tr>
                             <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">{{ a.key }}</td>
                             <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;"><a href="../../{{ a.filepath() }}">{{ a.filepath() }}</a></td>
@@ -100,7 +103,8 @@
                         {% endfor -%}
                     </table>
                     <br />
-                    {% for a in doc.artifacts -%}
+                    {% for h in doc.artifacts -%}
+                    {% set a = artifacts[h] -%}
                     {% if a.stdout -%}
                     <p><b>{{ a.key }} stdout</b></p>
                     {{ a.stdout_html }}
@@ -109,7 +113,7 @@
                     <br />
                     <h4>Document Log</h4>
 <pre>
-{{ doc.logstream.getvalue() }}
+{{ doc.log }}
 </pre>
                     <br />
                     {% endfor %}
@@ -119,7 +123,7 @@
             <div class="zp-30 sidebar">
                 <h2>List of Documents</h2>
                 <ul>
-                    {% for doc in docs_sorted %}
+                    {% for doc in sorted(docs.keys()) %}
                     <li><a href="#{{ doc }}">{{ doc }}</a></li>
                     {% endfor %}
                 </ul>

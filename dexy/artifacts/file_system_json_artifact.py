@@ -1,14 +1,12 @@
 from dexy.artifact import Artifact
-from dexy.controller import Controller
 from ordereddict import OrderedDict
+import dexy.introspect
 import json
 import os
 
 class FileSystemJsonArtifact(Artifact):
     """Artifact which persists data by writing to the file system and using
     JSON for serializing metadata (default type of Artifact)"""
-
-    FILTERS = Controller().find_filters()
 
     # Metadata
     def meta_filename(self):

@@ -5,115 +5,71 @@ import shutil
 import tarfile
 
 class TarzipOutputReporter(Reporter):
-    """Reporter which creates a .tgz of all output files."""
-    OUTPUT_DIR = "logs"
-    DEFAULT = False
+    """
+    Reporter which creates a .tgz of all output files. Follows same naming
+    conventions as OutputReporter.
+    """
 
-    def run(self, controller, log):
-        # TODO craete output dir if it doesn't exist
+    SUBDIR_NAME = "dexy-output"
+
+    def run(self):
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
-        report_filename = os.path.join(self.OUTPUT_DIR, "output-%s.tgz" % timestamp)
+        report_filename = os.path.join(self.logsdir, "output-%s.tgz" % timestamp)
         tar = tarfile.open(report_filename, mode="w:gz")
-        subdir_name = "dexy-output"
 
-        for doc in controller.docs:
-            artifact = doc.final_artifact()
-
-            if artifact.final:
-                arcname = os.path.join(subdir_name, artifact.canonical_filename())
+        self.load_batch_artifacts()
+        for artifact in self.artifacts.values():
+            if (artifact.is_last or artifact.additional) and artifact.final:
+                arcname = os.path.join(self.SUBDIR_NAME, artifact.canonical_filename())
                 tar.add(artifact.filepath(), arcname=arcname)
-
-            for k, a in artifact._inputs.items():
-                if not a:
-                    print "no artifact exists for key", k
-                else:
-                    if a.additional and a.final:
-                        if not a.is_complete():
-                            a.state = 'complete'
-                            a.save()
-                            arcname = os.path.join(subdir_name, a.canonical_filename())
-                            tar.add(a.filepath(), arcname=arcname)
 
         tar.close()
         shutil.copyfile(report_filename, "output-latest.tgz")
 
 class InSituReporter(Reporter):
-    """This is the InSitu Reporter"""
-    DEFAULT = False
-
-    def run(self, controller, log):
-        for doc in controller.docs:
-            artifact = doc.final_artifact()
-
-            fn = artifact.canonical_filename()
-
-            if artifact.final:
+    """
+    InSitu Reporter creates files directly in your project. Useful for using
+    dexy to create files like README files which need to live in a certain
+    place in your project. Templates should have a different file extension
+    than the final file. InSitu Reporter will not overwrite existing files,
+    delete any previously generated files before running this.
+    """
+    def run(self):
+        self.load_batch_artifacts()
+        for artifact in self.artifacts.values():
+            if (artifact.is_last or artifact.additional) and artifact.final:
+                fn = artifact.canonical_filename()
                 if os.path.exists(fn):
-                    print "InSituReporter not overwriting existing file", fn
+                    print "InSituReporter not overwriting existing file", fn, "please delete this file before running InSitu reporter"
                 else:
                     artifact.write_to_file(fn)
 
-            for k, a in artifact._inputs.items():
-                if not a:
-                    print "no artifact exists for key", k
-                else:
-                    if a.additional and a.final:
-                        if not a.is_complete():
-                            a.state = 'complete'
-                            a.save()
-                        fn = a.canonical_filename()
-                        if not os.path.exists(fn):
-                            a.write_to_file(fn)
-
 class OutputReporter(Reporter):
-    """This is the OutputReporter"""
-
+    """
+    Saves dexy-processed files in a directory under their canonical filenames.
+    Tries to be smart about which files you actually care about and want to
+    see. See LongOutputReporter if you want to see everything (with uglier names).
+    """
     REPORTS_DIR = 'output'
-    def run(self, controller, log):
+
+    def run(self):
         shutil.rmtree(self.REPORTS_DIR, ignore_errors=True)
-        for doc in controller.docs:
-            artifact = doc.final_artifact()
-
-            fn = artifact.canonical_filename()
-            fp = os.path.join(self.REPORTS_DIR, fn)
-
-            if artifact.final:
+        self.load_batch_artifacts()
+        for artifact in self.artifacts.values():
+            if (artifact.is_last or artifact.additional) and artifact.final:
+                fn = artifact.canonical_filename()
+                fp = os.path.join(self.REPORTS_DIR, fn)
                 artifact.write_to_file(fp)
 
-            for k, a in artifact._inputs.items():
-                if not a:
-                    print "no artifact exists for key", k
-                else:
-                    if a.additional and a.final:
-                        if not a.is_complete():
-                            a.state = 'complete'
-                            a.save()
-                        fn = a.canonical_filename()
-                        fp = os.path.join(self.REPORTS_DIR, fn)
-                        a.write_to_file(fp)
-
 class LongOutputReporter(Reporter):
-    """This is the LongOutputReporter"""
-
+    """
+    Saves all dexy-processed files in a directory using unique filenames.
+    """
     REPORTS_DIR = 'output-long'
-    def run(self, controller, log):
+    def run(self):
         shutil.rmtree(self.REPORTS_DIR, ignore_errors=True)
-        for doc in controller.docs:
-            artifact = doc.final_artifact()
-
+        self.load_batch_artifacts()
+        for artifact in self.artifacts.values():
             fn = artifact.long_canonical_filename()
             fp = os.path.join(self.REPORTS_DIR, fn)
-
-            if not artifact.is_complete():
-                artifact.state = 'complete'
-                artifact.save()
-
             artifact.write_to_file(fp)
-
-            for k, a in artifact._inputs.items():
-                if not a:
-                    print "no artifact exists for key", k
-                else:
-                    fn = a.canonical_filename()
-                    fp = os.path.join(self.REPORTS_DIR, fn)
-                    a.write_to_file(fp)

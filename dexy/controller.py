@@ -1,184 +1,185 @@
-import dexy
-from dexy.database import Database
-from dexy.dexy_filter import DexyFilter
-from dexy.document import Document
-from dexy.reporter import Reporter
+from dexy.constants import Constants
 from dexy.topological_sort import topological_sort
-from dexy.utils import AttrDict
-from inspect import isclass
+from dexy.utils import get_log
+from dexy.utils import save_batch_info
 from ordereddict import OrderedDict
+import dexy
+import dexy.document
+import dexy.introspect
 import fnmatch
 import glob
 import json
-import logging
 import os
 import pprint
 import re
 import sre_constants
-import sys
-
 
 class Controller(object):
-    def __init__(self):
-        self.config = {}
+    def __init__(self, args={}):
+        self.args = args # arguments from command line
+        self.config = {} # config to be processed from .dexy files
+        self.docs = []
 
-        # In actual usage, these initialized values are replaced by optparse
-        # Namespace or the argparse equivalent. These initialized values are
-        # used in testing, AttrDict is used so we can simulate the globals
-        # attr.
-        self.args = AttrDict({})
-        self.args.globals = {}
-        self.args.profile_memory = False
-
-        self.install_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-        if not hasattr(self, 'log'):
-            self.log = logging.getLogger('dexy')
-            self.log.propagate = 0 # Stops logs being written to STDOUT if another library redirects root logger.
-
-    def find_reporters(self):
-        d1 = os.path.abspath(os.path.join(self.install_dir, 'reporters'))
-        d2 = os.path.abspath(os.path.join(os.curdir, 'reporters'))
-
-        if d1 == d2:
-            reporter_dirs = [d1]
+        # Set up logging
+        if args.has_key("logsdir") and args.has_key("logfile"):
+            self.log = get_log("dexy.controller", args['logsdir'], args['logfile'])
         else:
-            reporter_dirs = [d1,d2]
+            self.log = Constants.NULL_LOGGER
 
-        reporters = []
-
-        for d in reporter_dirs:
-            if os.path.exists(d):
-                for f in os.listdir(d):
-                    if f.endswith(".py") and f not in ["base.py", "__init__.py"]:
-                        self.log.info("Loading reporters in %s" % os.path.join(d, f))
-                        basename = f.replace(".py", "")
-                        module = "reporters.%s" % basename
-
-                        try:
-                            __import__(module)
-                        except ImportError as e:
-                            self.log.warn("reporters defined in %s are not available: %s" % (module, e))
-
-                        if not sys.modules.has_key(module):
-                            continue
-
-                        mod = sys.modules[module]
-
-                        for k in dir(mod):
-                            klass = mod.__dict__[k]
-                            if isclass(klass) and not (klass == Reporter) and issubclass(klass, Reporter):
-                                reporters.append(klass)
-        self.reports_dirs = [r.REPORTS_DIR for r in reporters]
-        return reporters
-
-    def find_filters(self):
-        sys.path.append(os.curdir)
-
-        dexy_filter_dir = os.path.join(dexy.__path__[0], 'filters')
-        proj_filter_dir = os.path.abspath(os.path.join(os.curdir, 'filters'))
-
-        filter_dirs = []
-        for d in [dexy_filter_dir, proj_filter_dir]:
-            if os.path.exists(d) and not d in filter_dirs:
-                filter_dirs.append(d)
-
-        filters = {}
-
-        for a in DexyFilter.ALIASES:
-            filters[a] = DexyFilter
-
-        for d in filter_dirs:
-            self.log.info("Automatically loading all filters found in %s" % d)
-            for f in os.listdir(d):
-                if f.endswith(".py") and f not in ["base.py", "__init__.py"]:
-                    self.log.info("Loading filters in %s" % os.path.join(d, f))
-                    basename = f.replace(".py", "")
-                    if d.endswith("dexy/dexy/filters"):
-                        modname = "dexy.filters.%s" % basename
-                    else:
-                        modname = "filters.%s" % basename
-
-                    try:
-                        __import__(modname)
-                    except ImportError as e:
-                        self.log.warn("filters defined in %s are not available: %s" % (modname, e))
-
-                    if not sys.modules.has_key(modname):
-                        continue
-
-                    mod = sys.modules[modname]
-
-                    for k in dir(mod):
-                        klass = mod.__dict__[k]
-                        if isclass(klass) and not (klass == DexyFilter) and issubclass(klass, DexyFilter):
-                            if not klass.ALIASES:
-                                self.log.info("class %s is not available because it has no aliases" % klass.__name__)
-                            elif not klass.executable_present():
-                                self.log.info("class %s is not available because %s not found" %
-                                              (klass.__name__, klass.executable()))
-                            elif not klass.enabled():
-                                self.log.info("class %s is not available because it is not enabled" %
-                                              (klass.__name__))
-                            else:
-                                for a in klass.ALIASES:
-                                    if filters.has_key(a):
-                                        raise Exception("duplicate key %s called from %s in %s" % (a, k, f))
-                                    filters[a] = klass
-                                    self.log.info("registered alias %s for class %s" % (a, k))
-            self.log.info("...finished loading filters from %s" % d)
-        return filters
-
-    def register_filters(self):
-        self._filters = self.find_filters()
-        self.__class__._filters = self._filters
-
-    @classmethod
-    def get_handler_for_alias(klass, alias):
-        """Given an alias, return the corresponding handler."""
-        if klass._filters.has_key(alias):
-            return klass._filters[alias]
-        elif alias.startswith("-") or alias.startswith("alias-") or alias.startswith("al-") or alias in ['al', 'alias']:
-            #klass._filters[alias] = DexyFilter # TODO do we need to keep a list of aliases?
-            return DexyFilter
+        # Set up db
+        if args.has_key('dbclass') and args.has_key("logsdir") and args.has_key("dbfile"):
+            self.db = dexy.utils.get_db(self.args['dbclass'], logsdir=self.args['logsdir'], dbfile=args['dbfile'])
         else:
-            raise Exception("You requested filter alias '%s' but this is not available." % alias)
+            self.db = {}
 
-    def register_reporters(self):
-        self.reporters = self.find_reporters()
+        # List of directories that reporters use, these will not be processed by dexy
+        self.reports_dirs = dexy.introspect.reports_dirs(self.log)
 
-    def load_config(self, path_to_dir, rel_to=os.curdir):
-        # This looks in every parent directory for a config file and combines them.
-        relative_path = os.path.relpath(path_to_dir, rel_to)
-        path_elements = relative_path.split(os.sep)
-        config_dict = {}
+        # list of artifact classes - if nothing else uses this then move
+        # it into the if statement below and don't cache it
+
+        self.artifact_classes = dexy.introspect.artifact_classes(self.log)
+        if args.has_key('artifactclass'):
+            self.artifact_class = self.artifact_classes[args['artifactclass']]
+
+    def run(self):
+        """
+        This does all the work.
+        """
+        self.load_config()
+        self.process_config()
+        self.docs = [doc.run() for doc in self.members.values()]
+        self.persist()
+
+    def persist(self):
+        """
+        Persists the database. Saves some information about this batch in a
+        JSON file (for use by reporters or for debugging).
+        """
+        self.db.persist()
+        save_batch_info(self.batch_id, self.batch_info(), self.args['logsdir'])
+
+    def batch_info(self):
+        """
+        Dict of info to save
+        """
+        return {
+            "config" : self.config,
+            "args" : self.args,
+            "docs" : dict((doc.key(), doc.document_info()) for doc in self.docs)
+            }
+
+    def config_for_directory(self, path):
+        """
+        Determine the config applicable within a directory by looking in every
+        parent directory (up as far as the dexy project root) for config files
+        and combining them, such that subdirectories override parents.
+        """
         global_args = {}
+        config_dict = {}
+        config_file = self.args['config']
+
+        path_elements = path.split(os.sep)
+
         for i in range(0,len(path_elements)+1):
-            config_file_path_elements = [rel_to] + path_elements[0:i] + [self.config_file]
-            config_filename = os.path.join(*config_file_path_elements)
-            config_files = glob.glob(config_filename)
-            for cf in config_files:
-                self.log.info("loading config %s" % cf)
-                config_file = open(cf, "r")
-                try:
-                    json_dict = json.load(config_file)
-                except ValueError as e:
-                    raise Exception("""Your config file %s has invalid JSON. Details: %s""" %
-                                    (cf, e.message))
+            config_path = os.path.join(*(path_elements[0:i] + [config_file]))
+            config_files = glob.glob(config_path)
+
+            for f in config_files:
+                self.log.info("loading config file %s" % f)
+
+                with open(f, "r") as cf:
+                    try:
+                        json_dict = json.load(cf)
+                    except ValueError as e:
+                        msg = "Your config file %s has invalid JSON\n%s" % (f, e.message)
+                        raise Exception(msg)
+
                 if json_dict.has_key("$reset"):
+                    # Reset the config, i.e. ignore everything from parent
+                    # directories, just use this directory's config in json_dict
                     config_dict = json_dict
                 else:
-                    # Don't propagate virtual files...
                     for k in config_dict.keys():
                         if k.startswith("@") and not json_dict.has_key(k):
+                            # don't propagate virtual files
                             del config_dict[k]
+
+                    # Combine any config in this dir with parent dir config.
                     config_dict.update(json_dict)
 
                 if json_dict.has_key("$globals"):
                     global_args.update(json_dict["$globals"])
-                config_dict['$globals'] = global_args
-        self.config[path_to_dir] = config_dict
+
+        config_dict['$globals'] = global_args
+        return config_dict
+
+    def load_config(self):
+        """
+        This method determines which subdirectories will be included in the
+        dexy batch and populates the config dict for each of them.
+        """
+        if self.args['recurse']:
+
+            # Figure out which directories need to be skipped
+            exclude_at_root = Constants.EXCLUDE_DIRS_ROOT + self.reports_dirs + [self.args['artifactsdir'], self.args['logsdir']]
+            self.log.debug("project root excluded directories %s" % ",".join(exclude_at_root))
+
+            exclude_everywhere = Constants.EXCLUDE_DIRS_ALL_LEVELS
+            self.log.debug("directories excluded at all levels %s" % ",".join(exclude_everywhere))
+
+            for dirpath, dirnames, filenames in os.walk(self.args['directory']):
+                # Figure out if we should process this directory and recurse
+                # into its children. Start with process_dir = True
+                process_dir = True
+
+                # Remove any children we don't want to recurse into.
+                if dirpath == ".":
+                    for x in exclude_at_root:
+                        if x in dirnames:
+                            dirnames.remove(x)
+                for x in exclude_everywhere:
+                    if x in dirnames:
+                        dirnames.remove(x)
+
+                # Look for a .nodexy file
+                if os.path.isfile(os.path.join(dirpath, '.nodexy')):
+                    # If we find one...
+                    self.log.info(".nodexy file found in %s" % dirpath)
+                    for d in dirnames:
+                        # ...remove all child dirs from processing...
+                        dirnames.remove(d)
+                    # ...and skip this directory.
+                    process_dir = False
+
+                # Check if we match any excludes specified on the command line
+                args_exclude = self.args['exclude']
+                if isinstance(args_exclude, str):
+                    args_exclude = args_exclude.split()
+                for pattern in args_exclude:
+                    for d in dirnames:
+                        m1 = re.match(pattern, d)
+                        m2 = re.match("./%s" % pattern, d)
+                        m3 = re.match("%s/" % pattern, d)
+                        m4 = re.match("./%s/" % pattern, d)
+                        if m1 or m2 or m3 or m4:
+                            dirnames.remove(d)
+
+                if process_dir:
+                    self.config[dirpath] = self.config_for_directory(dirpath)
+            else:
+                # Not recursing
+                dirpath = self.args['directory']
+                self.config[dirpath] = self.config_for_directory(dirpath)
 
     def process_config(self):
+        """
+        Processes a populated config dict, identifies files to be processed,
+        creates Document objects for each, links dependencies and finally does
+        topological sort to establish order of batch run.
+        """
+
+        # Define the parse_doc nested function which we will call recursively.
         def parse_doc(path, input_directive, args = {}):
             # If a specification is nested in a dependency, then input_directive
             # may be a dict. If so, split it into parts before continuing.
@@ -203,9 +204,9 @@ class Controller(object):
             # virtual document
             if re.search("@", glob_string):
                 virtual = True
-                # TODO some virtual files are local, not remote. test on
-                # presence of 'url' or something more appropriate.
-                if not self.allow_remote:
+
+                dangerous = not args.has_key('contents')
+                if dangerous and not self.args['danger']:
                     raise Exception("""You are attempting to access a remote file.
                                     You must enable --dangerous mode to do this.
                                     Please check Dexy help and call the dexy
@@ -295,13 +296,17 @@ re.compile: %s""" % (args['except'], e))
                         create = False
 
                 if create:
+                    doc = dexy.document.Document()
+                    doc.set_controller(self)
+
                     # Filters can either be included in the name...
-                    doc = Document(self.artifact_class, f, filters)
-                    doc.virtual = virtual
+                    doc.set_name_and_filters(f, filters)
                     # ...or they may be listed explicitly.
                     if args.has_key('filters'):
                         doc.filters += args['filters']
 
+                    doc.setup_log() # After name has been set
+                    doc.virtual = virtual
 
                     # Here we are assuming that if we get a key with blank args
                     # this should not override a previous key. A key which does
@@ -315,6 +320,10 @@ re.compile: %s""" % (args['except'], e))
                     else:
                         self.log.debug("no existing key %s" % key)
 
+                    if args.has_key('priority'):
+                        doc.priority = args['priority']
+                        del args['priority']
+
                     if len(args) > 0:
                         self.log.debug("args: %s" % args)
                         doc.args = args
@@ -325,11 +334,10 @@ re.compile: %s""" % (args['except'], e))
                     if not hasattr(doc, 'args'):
                         doc.args = args
 
-                    doc.controller_args = self.args
-
                     self.members[key] = doc
                     docs.append(doc) # just a local list
-            return docs
+
+            return docs # end of parse_doc nested function
 
         def get_pos(member):
             key = member.key()
@@ -338,11 +346,17 @@ re.compile: %s""" % (args['except'], e))
         def depend(parent, child):
             self.depends.append((get_pos(child), get_pos(parent)))
 
+        # The real processing starts here.
         self.members = OrderedDict()
         self.depends = []
 
-        # Create Document objects for all docs.
-        self.log.debug("About to process config:\n" + pprint.pformat(self.config))
+        self.batch_id = self.db.next_batch_id()
+        print "batch id is", self.batch_id
+
+        self.log.debug("About to process config")
+        for l in pprint.pformat(self.config).split():
+            self.log.debug(l)
+
         for path, config in self.config.iteritems():
             ### @export "features-global-args-1"
             if config.has_key("$globals"):
@@ -350,8 +364,8 @@ re.compile: %s""" % (args['except'], e))
             else:
                 global_args = {}
 
-            if self.args.globals:
-                global_args.update(self.args.globals)
+            if self.args.has_key('globals'):
+                global_args.update(self.args['globals'])
 
             for k, v in config.iteritems():
                 local_args = global_args.copy()
@@ -370,7 +384,8 @@ re.compile: %s""" % (args['except'], e))
                 depend(doc, input_doc)
 
         ordering, leftover_graph_items = topological_sort(range(len(self.members)), self.depends)
-        if not ordering:
+        if leftover_graph_items and not ordering:
+            # circular references! print debugging help before stopping
             for doc, depends_on in leftover_graph_items:
                 print self.members.values()[doc].key(), "depends on"
                 for i in depends_on:
@@ -380,23 +395,8 @@ re.compile: %s""" % (args['except'], e))
             print "The above dependencies were not able to be resolved.\n\n"
             raise Exception("There are circular references, can't do topological sort!")
 
-        self.db = Database("%s/%s" % (self.logs_dir, "db.json"))
-        self.batch_id = self.db.next_batch_id()
-
         ordered_members = OrderedDict()
         for i in ordering:
             key = self.members.keys()[i]
             ordered_members[key] = self.members[key]
         self.members = ordered_members
-
-    def run(self):
-        return [doc.run(self) for doc in self.members.values()]
-
-    def setup_and_run(self):
-        if not hasattr(self, 'config_file'):
-            self.config_file = '.dexy'
-        self.register_filters()
-        self.process_config()
-        self.docs = self.run()
-        self.db.persist()
-        return self.docs

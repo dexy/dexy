@@ -1,7 +1,6 @@
 from dexy.dexy_filter import DexyFilter
 from jinja2 import Environment
 from jinja2 import StrictUndefined
-from jinja2.exceptions import UndefinedError
 from jinja2.exceptions import TemplateSyntaxError
 from ordereddict import OrderedDict
 import json
@@ -242,8 +241,8 @@ class JinjaFilter(DexyFilter):
                     %s""" % (k, ', '.join(jinja_env_data.keys())))
                 jinja_env_data[k] = v
 
-        if self.artifact.controller_args.globals:
-            for k, v in self.artifact.controller_args.globals.iteritems():
+        if self.artifact.controller_args['globals']:
+            for k, v in self.artifact.controller_args['globals'].iteritems():
                 if jinja_env_data.has_key(k):
                     raise Exception("""Please do not set a global value for %s
                     as this conflicts with an object already in the jinja env:
@@ -255,24 +254,14 @@ class JinjaFilter(DexyFilter):
         try:
             template = env.from_string(input_text)
             result = str(template.render(jinja_env_data))
-        except (UndefinedError, TemplateSyntaxError) as e:
-            if hasattr(e, 'lineno'):
-                # TemplateSyntaxError
-                lineno = e.lineno
-            else:
-                # UndefinedError, we have to search for line number.
-                exception_string = traceback.format_exc()
-                print exception_string
-                m = re.search(", line ([0-9]+),", exception_string)
-                if m:
-                    lineno = int(m.groups()[0])
-                else:
-                    lineno = None
+        except TemplateSyntaxError as e:
+            # do not try to parse UndefinedError here, the lineno in the stack
+            # trace is a red herring.
 
-            if lineno:
-                lineno_str = "line %s of " % lineno
-            else:
-                lineno_str = ""
+            # TODO maybe can parse UndefinedError stacktrace for the content of
+            # the undefined element and search for it in the original source?
+
+            lineno_str = "line %s of " % e.lineno
 
             result = """
             There is a problem with %s
@@ -286,17 +275,15 @@ class JinjaFilter(DexyFilter):
             """ % (self.artifact.key, lineno_str, self.artifact.name, e.message)
 
             input_lines = self.artifact.input_text().splitlines()
-            print lineno
-            print len(input_lines), "lines"
-            if lineno >= 3:
-                result += "   ", input_lines[lineno-3]
-            if lineno >= 2:
-                result += "   ", input_lines[lineno-2]
-            result += ">>>", input_lines[lineno-1]
+            if e.lineno >= 3:
+                result += "   ", input_lines[e.lineno-3]
+            if e.lineno >= 2:
+                result += "   ", input_lines[e.lineno-2]
+            result += ">>>", input_lines[e.lineno-1]
             if len(input_lines) >= lineno:
-                result += "   ", input_lines[lineno-0]
+                result += "   ", input_lines[e.lineno-0]
             if len(input_lines) >= (lineno + 1):
-                result += "   ", input_lines[lineno+1]
+                result += "   ", input_lines[e.lineno+1]
             raise Exception(result)
         except Exception as e:
             result = """

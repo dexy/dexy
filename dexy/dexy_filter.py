@@ -1,6 +1,6 @@
 import platform
 import subprocess
-from dexy.utils import command_exists
+import dexy.utils
 
 class DexyFilter(object):
     """
@@ -14,6 +14,11 @@ class DexyFilter(object):
     ALIASES = ['dexy']
     BINARY = False
     FINAL = None
+
+    @classmethod
+    def filters(self):
+        """Lists available filter classes."""
+        pass
 
     @classmethod
     def executable(self):
@@ -50,7 +55,7 @@ class DexyFilter(object):
 
         if exe:
             cmd = exe.split()[0] # remove any --arguments
-            return command_exists(cmd)
+            return dexy.utils.command_exists(cmd)
         else:
             # why true? because there's nothing to run?
             return True
@@ -67,6 +72,7 @@ class DexyFilter(object):
     @classmethod
     def version(self, log=None):
         vc = self.version_command()
+
         if vc:
             # TODO make custom env available here...
             proc = subprocess.Popen(vc, shell=True,
@@ -75,14 +81,12 @@ class DexyFilter(object):
             output, e = proc.communicate()
 
             if proc.returncode > 0:
-                err_msg = """An error occurred running %s, this may be due to a path issue""" % vc
+                err_msg = """An error occurred running %s""" % vc
                 if log:
                     log.debug(err_msg)
-                else:
-                    print err_msg
-                return "error"
+                return False
             else:
-                return output
+                return output.strip().split("\n")[0]
         else:
             return None
 
