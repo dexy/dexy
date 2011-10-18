@@ -1,9 +1,5 @@
-from BeautifulSoup import BeautifulSoup
-from ansi2html import Ansi2HTMLConverter
 from dexy.constants import Constants
 from dexy.sizeof import asizeof
-from pynliner import Pynliner
-import StringIO
 import datetime
 import dexy.database
 import dexy.databases.csv_database
@@ -13,7 +9,6 @@ import json
 import logging
 import logging.handlers
 import os
-import re
 
 def load_batch_info(batch_id, logsdir=Constants.DEFAULT_LDIR):
     with open(batch_info_filename(batch_id, logsdir), "r") as f:
@@ -71,35 +66,6 @@ def get_log(
 def remove_all_handlers(log):
     for h in log.handlers:
         log.removeHandler(h)
-
-def ansi_output_to_html(ansi_text):
-    try:
-        converter = Ansi2HTMLConverter()
-        html = converter.convert(ansi_text)
-    except IOError as e:
-        if re.search("templates/header.mak", str(e)):
-            print e
-            raise Exception("Your installation of ansi2html is missing some template files, please try 'pip install --upgrade ansi2html' or install from source.")
-        raise e
-
-    log = logging.getLogger("pynliner")
-    log.setLevel(logging.ERROR) # TODO Allow this to be changed.
-    logstream = StringIO.StringIO()
-    handler = logging.StreamHandler(logstream)
-    log.addHandler(handler)
-    try:
-        p = Pynliner(log)
-    except TypeError:
-        print "========== Start of harmless but annoying CSS errors..."
-        print "You can install pynliner from source (https://github.com/rennat/pynliner.git) or version > 0.2.1 to get rid of these"
-        p = Pynliner()
-
-    p.from_string(html)
-    html_with_css_inline = p.run()
-
-    # Ansi2HTMLConverter returns a complete HTML document, we just want body
-    doc = BeautifulSoup(html_with_css_inline)
-    return doc.body.renderContents()
 
 def print_string_diff(str1, str2):
     msg = ""

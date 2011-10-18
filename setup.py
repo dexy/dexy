@@ -12,21 +12,14 @@ setup(name='dexy',
       packages=find_packages(),
       include_package_data = True,
       install_requires = [
-          'ansi2html',
-          'cssutils',
           'idiopidae',
           'jinja2',
-          'python-modargs==1.2',
           'nose',
-          'ordereddict',
+          'ordereddict', # for Python 2.6
           'pexpect',
           'pygments',
-          'pynliner',
-          'zapps',
-
-          # lock down versions of ansi2html dependencies
-          'BeautifulSoup==3.2.0'
-
+          'python-modargs==1.2',
+          'zapps'
       ],
       entry_points = {
           'console_scripts' : [

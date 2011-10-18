@@ -1,5 +1,4 @@
 from dexy.dexy_filter import DexyFilter
-from dexy.utils import ansi_output_to_html
 import re
 import subprocess
 
@@ -38,8 +37,5 @@ class CucumberFilter(DexyFilter):
                                 env=env)
         stdout, stderr = proc.communicate()
 
-        # TODO detect output extension and convert appropriately
-        # for now assume HTML
-        html = ansi_output_to_html(stdout)
-        self.artifact.data_dict['1'] = html
+        self.artifact.data_dict['1'] = stdout
 

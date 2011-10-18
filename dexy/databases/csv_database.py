@@ -47,7 +47,7 @@ class CsvDatabase(dexy.database.Database):
     def persist(self):
         with open(self.filename, 'wb') as f:
             writer = csv.DictWriter(f, self.FIELD_NAMES, lineterminator="\n")
-            writer.writeheader()
+            writer.writerow(dict(zip(self.FIELD_NAMES, self.FIELD_NAMES))) # writeheader not in python 2.6
             writer.writerows(self.db)
 
     def next_batch_id(self):

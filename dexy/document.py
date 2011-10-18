@@ -19,11 +19,6 @@ except ImportError:
 class Document(object):
 
     def __init__(self):
-        # we use the filter_list a lot, cache it once.
-        if not hasattr(self.__class__, 'filter_list'):
-            # TODO log this
-            self.__class__.filter_list = dexy.introspect.filters()
-
         # initialize attributes
         self.inputs = []
         self.input_keys = []

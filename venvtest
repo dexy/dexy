@@ -1,0 +1,29 @@
+#!/bin/bash -ex
+
+rm -rf testenv/
+virtualenv --no-site-packages testenv/
+
+source testenv/bin/activate
+
+pip install .
+nosetests
+dexy reset
+dexy --directory test-template/
+
+pip install z3c.checkversions
+checkversions
+
+deactivate
+
+
+rm -rf testenv/
+virtualenv --no-site-packages -p python2.6 testenv/
+source testenv/bin/activate
+
+pip install .
+nosetests
+dexy reset
+dexy --directory test-template/
+
+deactivate
+

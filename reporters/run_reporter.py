@@ -1,5 +1,4 @@
 from dexy.reporter import Reporter
-from dexy.utils import ansi_output_to_html
 from jinja2 import Environment
 from jinja2 import FileSystemLoader
 from pygments import highlight

@@ -1,6 +1,13 @@
 import logging
-from logging import NullHandler
 from logging import StreamHandler
+
+try:
+    from logging import NullHandler
+except:
+    # NullHandler not in Python 2.6
+    class NullHandler(logging.Handler):
+        def emit(self, record):
+            pass
 
 class Constants():
 

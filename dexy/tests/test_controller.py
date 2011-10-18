@@ -2,7 +2,7 @@ from dexy.artifacts.file_system_json_artifact import FileSystemJsonArtifact
 from dexy.controller import Controller
 from dexy.document import Document
 from dexy.tests.utils import tempdir
-from logging import NullHandler
+from dexy.constants import NullHandler
 from modargs import args as modargs
 import dexy.commands
 import dexy.database

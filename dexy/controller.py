@@ -10,7 +10,6 @@ import fnmatch
 import glob
 import json
 import os
-import pprint
 import re
 import sre_constants
 
@@ -46,6 +45,9 @@ class Controller(object):
         """
         This does all the work.
         """
+        # Populate the Document class's filter list
+        dexy.document.Document.filter_list = dexy.introspect.filters(self.log)
+
         self.load_config()
         self.process_config()
         self.docs = [doc.run() for doc in self.members.values()]
@@ -354,8 +356,7 @@ re.compile: %s""" % (args['except'], e))
         print "batch id is", self.batch_id
 
         self.log.debug("About to process config")
-        for l in pprint.pformat(self.config).split():
-            self.log.debug(l)
+        self.log.debug(self.config)
 
         for path, config in self.config.iteritems():
             ### @export "features-global-args-1"

@@ -101,29 +101,27 @@ def filters(log=NULL_LOGGER):
     Returns a dict whose keys are all supported filter alises and whose values
     are the corresponding filter classes.
     """
-    dexy_filter_dir = os.path.join(dexy.__path__[0], 'filters')
-    proj_filter_dir = os.path.abspath(os.path.join(os.curdir, 'filters'))
+    dexy_filters = ('dexy.filters', os.path.join(dexy.__path__[0], 'filters'))
+    proj_filters = ('filters', os.path.abspath(os.path.join(os.curdir, 'filters')))
 
     filter_dirs = []
-    for d in [dexy_filter_dir, proj_filter_dir]:
-        if os.path.exists(d) and not d in filter_dirs:
-            filter_dirs.append(d)
+
+    for pkg, d in [dexy_filters, proj_filters]:
+         if os.path.exists(d) and (pkg, d) not in filter_dirs:
+             filter_dirs.append((pkg, d))
 
     filters = {}
 
     for a in DexyFilter.ALIASES:
         filters[a] = DexyFilter
 
-    for d in filter_dirs:
-        log.info("Automatically loading all filters found in %s" % d)
+    for pkg, d in filter_dirs:
+        log.info("Automatically loading all %s found in %s" % (pkg, d))
         for f in os.listdir(d):
             if f.endswith(".py") and f not in ["base.py", "__init__.py"]:
                 log.info("Loading filters in %s" % os.path.join(d, f))
                 basename = f.replace(".py", "")
-                if d.endswith("dexy/dexy/filters"):
-                    modname = "dexy.filters.%s" % basename
-                else:
-                    modname = "filters.%s" % basename
+                modname = "%s.%s" % (pkg, basename)
 
                 try:
                     __import__(modname)
