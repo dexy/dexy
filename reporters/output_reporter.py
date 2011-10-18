@@ -9,7 +9,6 @@ class TarzipOutputReporter(Reporter):
     Reporter which creates a .tgz of all output files. Follows same naming
     conventions as OutputReporter.
     """
-
     SUBDIR_NAME = "dexy-output"
 
     def run(self):
@@ -24,7 +23,7 @@ class TarzipOutputReporter(Reporter):
                 tar.add(artifact.filepath(), arcname=arcname)
 
         tar.close()
-        shutil.copyfile(report_filename, "output-latest.tgz")
+        shutil.copyfile(report_filename, os.path.join(self.logsdir, "output-latest.tgz"))
 
 class InSituReporter(Reporter):
     """
@@ -53,7 +52,7 @@ class OutputReporter(Reporter):
     REPORTS_DIR = 'output'
 
     def run(self):
-        shutil.rmtree(self.REPORTS_DIR, ignore_errors=True)
+        self.create_reports_dir(self.REPORTS_DIR)
         self.load_batch_artifacts()
         for artifact in self.artifacts.values():
             if (artifact.is_last or artifact.additional) and artifact.final:
@@ -67,7 +66,7 @@ class LongOutputReporter(Reporter):
     """
     REPORTS_DIR = 'output-long'
     def run(self):
-        shutil.rmtree(self.REPORTS_DIR, ignore_errors=True)
+        self.create_reports_dir(self.REPORTS_DIR)
         self.load_batch_artifacts()
         for artifact in self.artifacts.values():
             fn = artifact.long_canonical_filename()

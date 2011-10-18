@@ -197,4 +197,4 @@ def reports_dirs(log=NULL_LOGGER):
     """
     Returns a list of all directories which reporters declare that they use.
     """
-    return [r.REPORTS_DIR for r in reporters(log).values() if r.REPORTS_DIR]
+    return [r.REPORTS_DIR for r in reporters(log).values() if r.REPORTS_DIR and not r.REPORTS_DIR.startswith("logs/")]

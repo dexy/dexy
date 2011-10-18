@@ -138,7 +138,7 @@ def cleanup_command(logsdir=Constants.DEFAULT_LDIR, artifactsdir=Constants.DEFAU
     # they do this and be able to purge them.
     purge_artifacts(remake=False, artifactsdir=artifactsdir)
     purge_logs(logsdir=logsdir)
-    #purge_reports()
+    purge_reports()
 
 def reset_command(logsdir=Constants.DEFAULT_LDIR, artifactsdir=Constants.DEFAULT_ADIR):
     """
@@ -148,7 +148,7 @@ def reset_command(logsdir=Constants.DEFAULT_LDIR, artifactsdir=Constants.DEFAULT
     setup_command(logsdir=logsdir, artifactsdir=artifactsdir, showhelp=False)
 
 def purge_artifacts(remake=True, artifact_class=None, artifactsdir=Constants.DEFAULT_ADIR):
-    shutil.rmtree(artifactsdir)
+    shutil.rmtree(artifactsdir, ignore_errors=True)
     if remake:
         os.mkdir(artifactsdir)
 
@@ -156,15 +156,17 @@ def purge_artifacts(remake=True, artifact_class=None, artifactsdir=Constants.DEF
         artifact_class.purge()
 
 def purge_logs(logsdir=Constants.DEFAULT_LDIR):
-    shutil.rmtree(logsdir)
+    shutil.rmtree(logsdir, ignore_errors=True)
 
 def purge_reports():
-    raise Exception("needs more safety checks")
     reports_dirs = dexy.introspect.reports_dirs()
     for d in reports_dirs:
-        if d and os.path.exists(d):
+        safety_file = os.path.join(d, ".dexy-generated")
+        if d and os.path.exists(d) and os.path.exists(safety_file):
             print "purging contents of %s" % d
             shutil.rmtree(d)
+        else:
+            print "not purging %s, please remove this directory manually" % d
 
 def help_command(on=False):
     args.help_command(PROG, MOD, Constants.DEFAULT_COMMAND, on)
