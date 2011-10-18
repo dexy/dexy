@@ -16,31 +16,44 @@ def run():
     args.parse_and_run_command(sys.argv[1:], MOD, default_command=Constants.DEFAULT_COMMAND)
 
 def dexy_command(
-        artifactclass=Constants.DEFAULT_ACLASS, # Name of class to use for artifacts
-        artifactsdir=Constants.DEFAULT_ADIR, # Location of directory in which to store artifacts
-        config=Constants.DEFAULT_CONFIG, # Name to use for configuration file
-        danger=False, # Allow running remote files
-        dbclass=Constants.DEFAULT_DBCLASS, # Name of database class to use
-        dbfile=Constants.DEFAULT_DBFILE, # Name of the database file (it lives in the logs dir)
-        directory=".", # The directory to process, you can just process a subdirectory of your project
-        exclude="", # Directories to exclude from dexy processing
+        artifactclass=Constants.DEFAULT_ACLASS, # name of class to use for artifacts
+        artifactsdir=Constants.DEFAULT_ADIR, # location of directory in which to store artifacts
+        config=Constants.DEFAULT_CONFIG, # name to use for configuration file
+        danger=False, # whether to allow running remote files
+        dbclass=Constants.DEFAULT_DBCLASS, # name of database class to use
+        dbfile=Constants.DEFAULT_DBFILE, # name of the database file (it lives in the logs dir)
+        directory=".", # the directory to process, you can just process a subdirectory of your project
+        exclude="", # directories to exclude from dexy processing
         filters=False, # DEPRECATED just to catch people who use the old dexy --filters syntax
-        globals="DEXY_VERSION=%s" % Version.VERSION, # Global values to make available within dexy documents, should be KEY=VALUE pairs separated by spaces.
+        globals="DEXY_VERSION=%s" % Version.VERSION, # global values to make available within dexy documents, should be KEY=VALUE pairs separated by spaces
         help=False, # DEPRECATED just to catch people who use the old dexy --help syntax
-        ignore=False, # Whether to ignore nonzero exit status or raise an error - may not be supported by all filters
-        local=False, # Use cached local copies of remote URLs, faster but might not be up to date
-        logfile=Constants.DEFAULT_LFILE, # Name of log file
-        logsdir=Constants.DEFAULT_LDIR, # Location of directory in which to store logs
-        profmem=False, # Whether to profile memory (slows Dexy down a lot, use for debugging only)
-        recurse=True, # Whether to recurse into subdirectories when running Dexy
+        ignore=False, # whether to ignore nonzero exit status or raise an error - may not be supported by all filters
+        local=False, # use cached local copies of remote URLs, faster but might not be up to date
+        logfile=Constants.DEFAULT_LFILE, # name of log file
+        logsdir=Constants.DEFAULT_LDIR, # location of directory in which to store logs
+        profmem=False, # whether to profile memory (slows Dexy down a lot, use for debugging only)
+        recurse=True, # whether to recurse into subdirectories when running Dexy
         reporters=False, # DEPRECATED just to catch people who use the old dexy --reporters syntax
-        reports=Constants.DEFAULT_REPORTS, # Reports to be run after dexy runs
-        reset=False, # Whether to purge existing artifacts and logs before running Dexy
-        version=False, # DEPRECATED just to catch people who use the old dexy --version syntax
-        zzzzz=True # remove me - just here to help alphabetical sorting during dev
+        reports=Constants.DEFAULT_REPORTS, # reports to be run after dexy runs, enclose in quotes and separate with spaces
+        reset=False, # whether to purge existing artifacts and logs before running Dexy
+        version=False # DEPRECATED just to catch people who use the old dexy --version syntax
     ):
     """
-    Actually runs dexy.
+    Runs Dexy, by processing your .dexy configuration file and running content
+    through the filters you have specified. Results are cached in the
+    artifacts/ directory but are presented in a more usable format by
+    reporters. Basic reports are run automatically but you can specify
+    additional reports. Type 'dexy reporters' for a list of available reporters.
+
+    After running Dexy, the output/ directory will hold what dexy thinks are
+    the most important generated files (with pretty filenames), the output-long
+    directory will hold all of your generated files (with ugly filenames), and
+    the logs/ directory will hold the basic dexy.log logfile and also a more
+    colorful and descriptive HTML log file in logs/run-latest/. Please look at
+    these logfiles to learn more about how dexy works, and if you run into
+    problems the dexy.log file might provide clues as to what has gone wrong.
+
+    If you run into trouble, visit http://dexy.it/help
     """
     ### @export "dexy-command-body"
     if not check_setup():
