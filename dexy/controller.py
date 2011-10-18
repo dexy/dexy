@@ -209,10 +209,9 @@ class Controller(object):
 
                 dangerous = not args.has_key('contents')
                 if dangerous and not self.args['danger']:
-                    raise Exception("""You are attempting to access a remote file.
-                                    You must enable --dangerous mode to do this.
-                                    Please check Dexy help and call the dexy
-                                    command again.""")
+                    raise Exception("""
+                    You are attempting to access a remote file %s.
+                    You must enable --danger flag to do this.""" % glob_string)
                 glob_string = glob_string.replace("@", "")
             else:
                 virtual = False
