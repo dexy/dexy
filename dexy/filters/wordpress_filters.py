@@ -5,6 +5,19 @@ import xmlrpclib
 class WordPressFilter(BlogFilter):
     """
     Posts to a WordPress blog.
+
+    Create a file called wp-config.json in the root of your project directory.
+    This should include your blog's XMLRPC endpoint URL, your username and your
+    password in a JSON object.
+
+    For example:
+
+    {
+       "user" : "author",
+       "pass" : "password",
+       "xmlrpc_url" : "http://blog.dexy.it:80/xmlrpc.php"
+    }
+
     """
     ALIASES = ['wp']
     BLOG_CONFIG_FILE = 'wp-config.json'
