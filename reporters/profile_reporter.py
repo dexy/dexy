@@ -11,7 +11,7 @@ import shutil
 import sqlite3
 import string
 import web
-import reporters.profile_rep.aplotter as aplotter
+import reporters.profile_reporter_files.aplotter as aplotter
 
 try:
     import matplotlib
@@ -67,7 +67,7 @@ class ProfileReporter(Reporter):
 
             env = Environment()
             env.loader = FileSystemLoader(os.path.dirname(__file__))
-            template = env.get_template(os.path.join('profile_rep', 'template.html'))
+            template = env.get_template(os.path.join('profile_reporter_files', 'template.html'))
 
             function_data = OrderedDict()
             overall_tot_time = 0
