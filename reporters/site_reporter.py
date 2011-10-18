@@ -4,6 +4,7 @@ from jinja2 import FileSystemLoader
 import datetime
 import os
 import shutil
+import this_report_is_deprecated_until_it_gets_updated
 
 class SiteReporter(Reporter):
     DEFAULT = False
@@ -95,7 +96,7 @@ class SiteReporter(Reporter):
                 os.makedirs(html_page_parent_dir)
         self.template.stream(env_data).dump(os.path.join(self.report_dir, html_page_fn))
 
-    def run(self, controller, log):
+    def run(self):
         self.timestamp = datetime.datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
         self.report_dir = os.path.join(self.controller.logs_dir, "site-%s" % self.timestamp)
         self.latest_report_dir = os.path.join(self.controller.logs_dir, "site-latest")
