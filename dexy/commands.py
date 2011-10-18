@@ -118,16 +118,18 @@ def setup_command(logsdir=Constants.DEFAULT_LDIR, artifactsdir=Constants.DEFAULT
             os.mkdir(artifactsdir)
 
         if showhelp:
+            print
             print "Ok, we've created directories called %s and %s." % (logsdir, artifactsdir)
             if os.path.exists(Constants.DEFAULT_CONFIG):
-                print "You are now ready to run dexy!  If you have problems, please check the"
-                print "log file at %s/%s for clues." % (logsdir, logfile)
+                print "You are now ready to run dexy!  If you have problems,"
+                print "please check the log file at %s/%s for clues." % (logsdir, logfile)
                 print "Online help is available from dexy.it/help"
             else:
                 print "You are almost ready to run dexy! You just need to create a config file,"
                 print "check out the tutorials dexy.it/docs/tutorials if you aren't sure how."
                 print "You can type '%s help -on %s' (without quotes) for help running dexy" % (PROG, Constants.DEFAULT_COMMAND)
                 print "or visit dexy.it/help for more resources"
+            print
 
 def cleanup_command(logsdir=Constants.DEFAULT_LDIR, artifactsdir=Constants.DEFAULT_ADIR):
     """
@@ -165,7 +167,7 @@ def purge_reports():
         if d and os.path.exists(d) and os.path.exists(safety_file):
             print "purging contents of %s" % d
             shutil.rmtree(d)
-        else:
+        elif d and os.path.exists(d):
             print "not purging %s, please remove this directory manually" % d
 
 def help_command(on=False):
