@@ -1,8 +1,8 @@
 from dexy.constants import Constants
-import cProfile
 from dexy.controller import Controller
 from dexy.version import Version
 from modargs import args
+import cProfile
 import dexy.introspect
 import os
 import shutil
@@ -69,12 +69,13 @@ def dexy_command(
         sys.exit(1)
 
     controller = run_dexy(locals())
-    print "processing batch", controller.batch_id, "is complete"
+    print "batch", controller.batch_id, "is complete"
     reports_command(reports=reports, logsdir=logsdir, controller=controller)
 
 def run_dexy(args):
     # validate args and do any conversions required
     args['globals'] = dict([g.split("=") for g in args['globals'].split()])
+    args['exclude'] = [x.strip("/") for x in args['exclude'].split()]
     controller = Controller(args)
     controller.run()
     return controller
@@ -94,14 +95,10 @@ def profile_command(
     defaults = args.determine_kwargs(dexy_fn)
     defaults.update(kw)
     defaults['profile'] = True
-    cProfile.runctx("run_dexy(args)", globals(), {'args' : defaults}, "logs/dexy.prof")
-    reports_command(reports=reports)
 
-def profreports_command(**kw):
-    """
-    Runs reports using cProfile to do time-based profiling.
-    """
-    pass
+    ls = {'args' : defaults}
+    cProfile.runctx("run_dexy(args)", globals(), ls, "logs/dexy.prof")
+    reports_command(reports=reports)
 
 def check_setup(logsdir=Constants.DEFAULT_LDIR, artifactsdir=Constants.DEFAULT_ADIR):
     return os.path.exists(logsdir) and os.path.exists(artifactsdir)
@@ -224,7 +221,10 @@ def report_command(**kwargs):
     """
     Alias for reports.
     """
-    reports_command(kwargs)
+    if kwargs.has_key('report'):
+        kwargs['reports'] = kwargs['report']
+        del kwargs['report']
+    reports_command(**kwargs)
 
 def reports_command(
         aclass=Constants.DEFAULT_ACLASS, # What artifact class to use (must correspond to artifact class used by batch id)
