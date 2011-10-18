@@ -3,6 +3,7 @@ from dexy.controller import Controller
 from dexy.version import Version
 from modargs import args
 import cProfile
+import datetime
 import dexy.introspect
 import os
 import shutil
@@ -141,6 +142,43 @@ def cleanup_command(logsdir=Constants.DEFAULT_LDIR, artifactsdir=Constants.DEFAU
     purge_artifacts(remake=False, artifactsdir=artifactsdir)
     purge_logs(logsdir=logsdir)
     purge_reports()
+
+def history_command(
+        filename=None,
+        logsdir=Constants.DEFAULT_LDIR,
+        artifactsdir=Constants.DEFAULT_ADIR,
+        dbclass=Constants.DEFAULT_DBCLASS,
+        dbfile=Constants.DEFAULT_DBFILE
+        ):
+    """
+    Returns a list of available versions of the file.
+    """
+    db = dexy.utils.get_db(dbclass, dbfile=dbfile, logsdir=logsdir)
+    versions = {}
+    for row in db.db:
+        key = row['key']
+        name = row['key'].split("|")[0]
+        if key == filename:
+            artifact_file = os.path.join(artifactsdir, "%s%s" % (row['hashstring'], row['ext']))
+            versions[row['mtime']] = {'file' : artifact_file, 'batch' : row['batch_id'] }
+
+    if len(versions) > 0:
+        print
+        print "Versions of %s:" % filename
+        for time in sorted(versions.keys()):
+            f = versions[time]['file']
+            batch = int(versions[time]['batch'])
+            human_time = datetime.datetime.fromtimestamp(float(time))
+
+            artifact_ok = os.path.exists(f)
+            batch_ok = os.path.exists(dexy.utils.batch_info_filename(batch, logsdir))
+            if artifact_ok and batch_ok:
+                print "  batch id %5d modified time %s available in %s" % (batch, human_time, f)
+        print
+        print "to get copies of all source code files for a given batch id, run dexy report --report SourceReporter --batchid <batch id>"
+        print
+    else:
+        print "No versions found for", filename
 
 def reset_command(logsdir=Constants.DEFAULT_LDIR, artifactsdir=Constants.DEFAULT_ADIR):
     """
