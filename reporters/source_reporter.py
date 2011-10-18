@@ -13,8 +13,7 @@ class SourceReporter(Reporter):
 
     def run(self):
         reports_dir = os.path.join(self.logsdir, "source-batch-%05d" % self.batch_id)
-        shutil.rmtree(reports_dir, ignore_errors=True)
-        os.mkdir(reports_dir)
+        self.create_reports_dir(reports_dir)
 
         self.load_batch_artifacts()
         for artifact in self.artifacts.values():
@@ -22,3 +21,4 @@ class SourceReporter(Reporter):
                 fp = os.path.join(reports_dir, artifact.name)
                 artifact.write_to_file(fp)
 
+        print "source files restored to", reports_dir
