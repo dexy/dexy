@@ -43,9 +43,12 @@ class FilenameFilter(DexyFilter):
                 self.log.debug("[fn] existing key %s in artifact %s links to existing file %s" %
                           (key_with_ext, self.artifact.key, artifact.filename()))
             else:
-                artifact = self.artifact.add_additional_artifact(key, ext)
-                self.log.debug("[fn] added key %s to artifact %s ; links to new file %s" %
-                          (key_with_ext, self.artifact.key, artifact.filename()))
+                self.log.debug("[fn] could not find match for %s in:" % key_with_ext)
+                for k in self.artifact.inputs().keys():
+                    self.log.debug(k)
+                artifact = self.artifact.add_additional_artifact(key_with_ext, ext)
+                self.log.debug("[fn] created new artifact %s for key %s ; links to new file %s" %
+                          (self.artifact.key, key_with_ext, artifact.filename()))
 
             input_text = input_text.replace(m.group(), artifact.filename())
 
