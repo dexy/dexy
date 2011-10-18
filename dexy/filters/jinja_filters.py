@@ -166,6 +166,8 @@ class JinjaFilter(DexyFilter):
 
                     for fn in pygments_formatter.filenames:
                         ext = fn.split(".")[1]
+                        if ext == 'htm':
+                            ext = 'css' # swap the more intuitive '.css' for the unlikely '.htm'
                         key = "%s.%s" % (style_name, ext)
                         pygments_stylesheets[key] = style_info
 
