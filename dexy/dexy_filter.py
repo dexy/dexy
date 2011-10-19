@@ -2,6 +2,9 @@ import platform
 import subprocess
 import dexy.utils
 
+class DexyFilterException(Exception):
+    pass
+
 class DexyFilter(object):
     """
     This is the main DexyFilter class. To make custom filters you should

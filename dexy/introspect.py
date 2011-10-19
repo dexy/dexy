@@ -1,8 +1,8 @@
 from dexy.constants import Constants
-from dexy.dexy_filter import DexyFilter
 import dexy.reporter
 import dexy
 import dexy.artifact
+import dexy.dexy_filter
 import inspect
 import os
 import sys
@@ -92,7 +92,7 @@ def get_filter_for_alias(alias, filter_list=None):
     if filter_list.has_key(alias):
         return filter_list[alias]
     elif alias.startswith("-") or alias.startswith("alias-") or alias.startswith("al-") or alias in ['al', 'alias']:
-        return DexyFilter
+        return dexy.dexy_filter.DexyFilter
     else:
         raise Exception("filter alias '%s' not found or not available" % alias)
 
@@ -112,8 +112,8 @@ def filters(log=NULL_LOGGER):
 
     filters = {}
 
-    for a in DexyFilter.ALIASES:
-        filters[a] = DexyFilter
+    for a in dexy.dexy_filter.DexyFilter.ALIASES:
+        filters[a] = dexy.dexy_filter.DexyFilter
 
     for pkg, d in filter_dirs:
         log.info("Automatically loading all %s found in %s" % (pkg, d))
@@ -135,7 +135,7 @@ def filters(log=NULL_LOGGER):
 
                 for k in dir(mod):
                     klass = mod.__dict__[k]
-                    if inspect.isclass(klass) and not (klass == DexyFilter) and issubclass(klass, DexyFilter):
+                    if inspect.isclass(klass) and not (klass == dexy.dexy_filter.DexyFilter) and issubclass(klass, dexy.dexy_filter.DexyFilter):
                         if not klass.ALIASES:
                             log.info("class %s is not available because it has no aliases" % klass.__name__)
                         elif not klass.executable_present():

@@ -40,10 +40,11 @@ def test_artifact_filenames_file_key_with_filters():
     assert artifact.long_canonical_filename() == 'abc.txt-def-ghi.out'
 
 def test_add_additional_artifact():
+    hashstring = "abcdef123"
     artifact = Artifact()
     artifact.key = 'abc.txt'
     artifact.artifacts_dir = 'artifactsx'
-    artifact.hashstring = "abcdef123"
+    artifact.hashstring = hashstring
 
     new_artifact = artifact.add_additional_artifact('def.txt', '.txt')
 
@@ -56,6 +57,7 @@ def test_add_additional_artifact():
     assert new_artifact.final
     assert new_artifact.key in artifact.inputs()
     assert new_artifact.state == 'new'
+    assert new_artifact.inode == hashstring
 
 def test_simple_metadata():
     with tempdir():

@@ -67,6 +67,10 @@ class Artifact(object):
         self.db = [] # accepts 'append'
         self.args = {}
         self.args['globals'] = {}
+        self.controller_args = {}
+        self.controller_args['globals'] = {}
+        self.ext = None
+        self.name = None
 
         self.is_last = False
         self.artifact_class_source = self.__class__.SOURCE_CODE

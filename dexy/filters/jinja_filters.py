@@ -1,4 +1,5 @@
 from dexy.dexy_filter import DexyFilter
+from dexy.dexy_filter import DexyFilterException
 from jinja2 import Environment
 from jinja2 import StrictUndefined
 from jinja2.exceptions import TemplateSyntaxError
@@ -10,7 +11,12 @@ import re
 import traceback
 import urllib
 
+class JinjaFilterException(DexyFilterException):
+    pass
+
 try:
+    # Want to enable pygments use if available,
+    # but not to have it as a requirement.
     import pygments
     import pygments.formatters
     from pygments.styles import get_all_styles
@@ -156,7 +162,9 @@ class JinjaFilter(DexyFilter):
                 undefined = StrictUndefined
                 )
         else:
-            env = Environment()
+            env = Environment(
+                undefined = StrictUndefined
+            )
         return env
 
     def create_pygments_stylesheets(self):
@@ -275,18 +283,26 @@ class JinjaFilter(DexyFilter):
             input_lines = self.artifact.input_text().splitlines()
 
             result.append(br)
+
+            # print context before line with problem, if available
             if e.lineno >= 3:
                 result.append(s + input_lines[e.lineno-3])
             if e.lineno >= 2:
                 result.append(s + input_lines[e.lineno-2])
+
+            # this is the line that has the problem
             result.append(">>> %s" % input_lines[e.lineno-1])
-            if len(input_lines) >= e.lineno:
+
+            # print context after line with problem, if available
+            if len(input_lines) > e.lineno:
                 result.append(s + input_lines[e.lineno-0])
-            if len(input_lines) >= (e.lineno + 1):
+            if len(input_lines) > (e.lineno + 1):
                 result.append(s + input_lines[e.lineno+1])
+
             result.append(br)
             result.append("The error is: %s" % e.message)
-            raise Exception("\n".join(result))
+
+            raise JinjaFilterException("\n".join(result))
         except Exception as e:
             result = []
             result.append("""There is a problem with %(key)s
@@ -300,6 +316,6 @@ class JinjaFilter(DexyFilter):
 
             result.append(traceback.format_exc())
 
-            raise Exception("\n".join(result))
+            raise JinjaFilterException("\n".join(result))
         return result
 
