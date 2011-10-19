@@ -18,7 +18,7 @@ setup(name='dexy',
           'ordereddict', # for Python 2.6
           'pexpect',
           'pygments',
-          'python-modargs==1.2',
+          'python-modargs>=1.2',
           'zapps'
       ],
       entry_points = {

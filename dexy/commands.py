@@ -32,6 +32,7 @@ def dexy_command(
         local=False, # use cached local copies of remote URLs, faster but might not be up to date
         logfile=Constants.DEFAULT_LFILE, # name of log file
         logsdir=Constants.DEFAULT_LDIR, # location of directory in which to store logs
+        output=False, # Shortcut to mean "I just want the OutputReporter, nothing else"
         profmem=False, # whether to profile memory (slows Dexy down a lot, use for debugging only)
         recurse=True, # whether to recurse into subdirectories when running Dexy
         reporters=False, # DEPRECATED just to catch people who use the old dexy --reporters syntax
@@ -46,6 +47,12 @@ def dexy_command(
     reporters. Basic reports are run automatically but you can specify
     additional reports. Type 'dexy reporters' for a list of available reporters.
 
+    If your project is large, then running reports will start to take up a lot
+    of time, so you should specify only the reports you really need. You can
+    always run more reports after a batch has finished running (you can run
+    historical reports as far back as the last time you cleared out your
+    artifacts cache with a 'dexy reset' or similar).
+
     After running Dexy, the output/ directory will hold what dexy thinks are
     the most important generated files (with pretty filenames), the output-long
     directory will hold all of your generated files (with ugly filenames), and
@@ -54,15 +61,28 @@ def dexy_command(
     these logfiles to learn more about how dexy works, and if you run into
     problems the dexy.log file might provide clues as to what has gone wrong.
 
+    Your original files will be copied to logs/source-batch-00001/ by the
+    SourceReporter (enabled by default). Each time you run dexy, your source
+    code files will be copied so you have a mini-version history. (You can also
+    use the 'dexy history' command to get a history for a given file, and you
+    can run the SourceReporter again at any time to restore a given batch's
+    source files.)
+
     If you run into trouble, visit http://dexy.it/help
     """
-    ### @export "dexy-command-body"
+    ### @export "dexy-command-check-setup"
     if not check_setup():
         print "Please run '%s setup' first to create the directories dexy needs to work with" % PROG
         sys.exit(1)
 
+    ### @export "dexy-command-process-args"
     if reset:
         reset_command(logsdir=logsdir, artifactsdir=artifactsdir)
+
+    if output:
+        if not reports == Constants.DEFAULT_REPORTS:
+            raise Exception("if you pass --output you can't also modify reports! pick 1!")
+        reports = "OutputReporter"
 
     # catch deprecated arguments
     if help or version or reporters or filters:
@@ -151,31 +171,41 @@ def history_command(
         dbfile=Constants.DEFAULT_DBFILE
         ):
     """
-    Returns a list of available versions of the file.
+    Returns a list of available versions of the file. This must be run from the
+    dexy project root.
     """
     db = dexy.utils.get_db(dbclass, dbfile=dbfile, logsdir=logsdir)
     versions = {}
     for row in db.db:
         key = row['key']
-        name = row['key'].split("|")[0]
-        if key == filename:
-            artifact_file = os.path.join(artifactsdir, "%s%s" % (row['hashstring'], row['ext']))
-            versions[row['mtime']] = {'file' : artifact_file, 'batch' : row['batch_id'] }
+        batch_id = int(row['batch_id'])
+        if key == filename and not versions.has_key(batch_id):
+            versions[batch_id] = row
 
     if len(versions) > 0:
         print
-        print "Versions of %s:" % filename
-        for time in sorted(versions.keys()):
-            f = versions[time]['file']
-            batch = int(versions[time]['batch'])
+        print "Dexy found these versions of %s:" % filename
+        for b in sorted(versions.keys()):
+            row = versions[b]
+            artifact_file = os.path.join(artifactsdir, "%s%s" % (row['hashstring'], row['ext']))
+
+            batch_source_dir = os.path.join(logsdir, "batch-source-%0.5d" % b)
+            batch_source_file = os.path.join(batch_source_dir, row['key'])
+
+            time = row['mtime']
             human_time = datetime.datetime.fromtimestamp(float(time))
 
-            artifact_ok = os.path.exists(f)
-            batch_ok = os.path.exists(dexy.utils.batch_info_filename(batch, logsdir))
+            batch_info_file = dexy.utils.batch_info_filename(b, logsdir)
+            batch_ok = os.path.exists(batch_info_file)
+
+            artifact_ok = os.path.exists(artifact_file)
+            batch_source_ok = os.path.exists(batch_source_file)
+
             if artifact_ok and batch_ok:
-                print "  batch id %5d modified time %s available in %s" % (batch, human_time, f)
-        print
-        print "to get copies of all source code files for a given batch id, run dexy report --report SourceReporter --batchid <batch id>"
+                msg = "  batch id %5d  modified time %s available in %s" % (b, human_time, artifact_file)
+                if batch_source_ok:
+                    msg += " and %s" % batch_source_file
+                print msg
         print
     else:
         print "No versions found for", filename
@@ -308,3 +338,4 @@ def reports_command(
 
 def it_command(**kwargs):
     dexy_command(kwargs)
+

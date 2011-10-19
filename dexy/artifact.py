@@ -6,6 +6,7 @@ import dexy.introspect
 import glob
 import hashlib
 import inspect
+import json
 import logging
 import os
 import shutil
@@ -370,8 +371,12 @@ class Artifact(object):
                 v = self.__dict__[k]
                 if hasattr(v, 'items'):
                     hash_v = OrderedDict()
-                    for k1, v1 in v.items():
-                        hash_v[str(k1)] = hashlib.md5(str(v1)).hexdigest()
+                    for k1 in sorted(v.keys()):
+                        v1 = v[k1]
+                        try:
+                            hash_v[str(k1)] = json.dumps(v1)
+                        except TypeError:
+                            hash_v[str(k1)] = str(v1)
                 else:
                     hash_v = str(v)
                 hash_dict[str(k)] = hash_v

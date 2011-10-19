@@ -1,7 +1,9 @@
-import csv
-import os
 from dexy.constants import Constants
+from ordereddict import OrderedDict
+import csv
 import dexy.database
+import json
+import os
 
 class CsvDatabase(dexy.database.Database):
     """
@@ -63,6 +65,11 @@ class CsvDatabase(dexy.database.Database):
 
     def append(self, artifact):
         data = artifact.hash_dict()
+        for k, v in data.iteritems():
+            if isinstance(v, OrderedDict):
+                data[k] = json.dumps(v)
+            if len(data[k]) > 500:
+                data[k] = data[k][0:497] + "..."
         data.update({
             'id' : artifact.unique_key(),
             'batch_id' : artifact.batch_id,
