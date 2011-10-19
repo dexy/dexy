@@ -22,20 +22,25 @@ def test_jinja_filter_with_basic_tag():
 
 def test_undefined_exception():
     f = init_jinja_filter()
+    text = "{{ hello }}"
+    f.artifact.input_data_dict = { '1' : text }
     try:
-        f.process_text("{{ hello }}")
-        assert False
+        f.process_text(text)
+        assert False, "should not get here"
     except JinjaFilterException as e:
-        assert "UndefinedError: 'hello' is undefined" in e.message
+        assert "'hello' is undefined" in e.message
 
 def test_undefined_exception_in_latex():
     f = init_jinja_filter()
+    text = "<< hello >>"
     f.artifact.ext = ".tex"
+    f.artifact.input_data_dict = { '1' : text }
     try:
-        print f.process_text("<< hello >>")
+        print f.process_text(text)
         assert False, "should not get here"
     except JinjaFilterException as e:
-        assert "UndefinedError: 'hello' is undefined" in e.message
+        print e.message
+        assert "'hello' is undefined" in e.message
 
 def test_syntax_error():
     text = "{{ [ }}"

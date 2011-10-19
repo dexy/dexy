@@ -3,6 +3,7 @@ from dexy.dexy_filter import DexyFilterException
 from jinja2 import Environment
 from jinja2 import StrictUndefined
 from jinja2.exceptions import TemplateSyntaxError
+from jinja2.exceptions import UndefinedError
 from ordereddict import OrderedDict
 import json
 import os
@@ -269,12 +270,16 @@ class JinjaFilter(DexyFilter):
         try:
             template = env.from_string(input_text)
             result = str(template.render(jinja_env_data))
-        except TemplateSyntaxError as e:
-            # do not try to parse UndefinedError here, the lineno in the stack
-            # trace is a red herring.
-
+        except (TemplateSyntaxError, UndefinedError) as e:
             result = []
 
+            if isinstance(e, UndefinedError):
+                # try to get the line number
+                m = re.search(r"File \"<template>\", line ([0-9]+), in top\-level template code", traceback.format_exc())
+                if m:
+                    e.lineno = int(m.groups()[0])
+                else:
+                    raise Exception("Unable to parse line number from %s" % traceback.format_exc())
 
             result.append("""There is a problem with %(key)s
             \nA problem was detected at line %(lineno)s of your file %(filename)s
@@ -304,10 +309,17 @@ class JinjaFilter(DexyFilter):
 
             raise JinjaFilterException("\n".join(result))
         except Exception as e:
+            m = re.search(r"File \"<template>\", line ([0-9]+), in top\-level template code", traceback.format_exc())
+            print m
+            if m:
+                print self.artifact.input_text().splitlines()[int(m.groups()[0])-2]
+                print self.artifact.input_text().splitlines()[int(m.groups()[0])-1]
+                print self.artifact.input_text().splitlines()[int(m.groups()[0])-0]
             result = []
             result.append("""There is a problem with %(key)s
             \nA problem was detected in your file %(filename)s
-            """ % {'key' : self.artifact.key, 'filename' : self.artifact.name})
+            \nActual content we are processing comes from %(workfile)s
+            """ % {'key' : self.artifact.key, 'filename' : self.artifact.name, 'workfile' : self.artifact.previous_artifact_filepath })
 
             if len(self.artifact.input_text().splitlines()) < 20:
                 result.append(br)
