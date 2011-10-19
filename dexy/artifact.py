@@ -322,7 +322,7 @@ class Artifact(object):
         new_artifact.inode = self.hashstring
 
         # TODO this is duplicated in setup_from_previous_artifact, should reorganize
-        for at in ['batch_id', 'document_key', 'mtime', 'ctime', 'inode']:
+        for at in ['batch_id', 'document_key', 'mtime', 'ctime']:
                 val = getattr(self, at)
                 setattr(new_artifact, at, val)
 
