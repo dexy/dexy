@@ -373,10 +373,7 @@ class Artifact(object):
                     hash_v = OrderedDict()
                     for k1 in sorted(v.keys()):
                         v1 = v[k1]
-                        try:
-                            hash_v[str(k1)] = json.dumps(v1)
-                        except TypeError:
-                            hash_v[str(k1)] = str(v1)
+                        hash_v[str(k1)] = hashlib.md5(v1).hexdigest()
                 else:
                     hash_v = str(v)
                 hash_dict[str(k)] = hash_v
