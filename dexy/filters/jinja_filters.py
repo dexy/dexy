@@ -256,6 +256,8 @@ class JinjaFilter(DexyFilter):
 
         env = self.setup_jinja_env()
 
+        s = "    " # indent
+        br = "=================================================="
         try:
             template = env.from_string(input_text)
             result = str(template.render(jinja_env_data))
@@ -263,54 +265,41 @@ class JinjaFilter(DexyFilter):
             # do not try to parse UndefinedError here, the lineno in the stack
             # trace is a red herring.
 
-            # TODO maybe can parse UndefinedError stacktrace for the content of
-            # the undefined element and search for it in the original source?
+            result = []
 
-            lineno_str = "line %s of " % e.lineno
 
-            result = """
-            There is a problem with %s
-
-            There was a problem with %syour file %s
-
-            %s
-
-            ==================================================
-
-            """ % (self.artifact.key, lineno_str, self.artifact.name, e.message)
+            result.append("""There is a problem with %(key)s
+            \nA problem was detected at line %(lineno)s of your file %(filename)s
+            """ % {'key' : self.artifact.key, 'lineno' : e.lineno, 'filename' : self.artifact.name})
 
             input_lines = self.artifact.input_text().splitlines()
+
+            result.append(br)
             if e.lineno >= 3:
-                result += "   ", input_lines[e.lineno-3]
+                result.append(s + input_lines[e.lineno-3])
             if e.lineno >= 2:
-                result += "   ", input_lines[e.lineno-2]
-            result += ">>>", input_lines[e.lineno-1]
-            if len(input_lines) >= lineno:
-                result += "   ", input_lines[e.lineno-0]
-            if len(input_lines) >= (lineno + 1):
-                result += "   ", input_lines[e.lineno+1]
-            raise Exception(result)
+                result.append(s + input_lines[e.lineno-2])
+            result.append(">>> %s" % input_lines[e.lineno-1])
+            if len(input_lines) >= e.lineno:
+                result.append(s + input_lines[e.lineno-0])
+            if len(input_lines) >= (e.lineno + 1):
+                result.append(s + input_lines[e.lineno+1])
+            result.append(br)
+            result.append("The error is: %s" % e.message)
+            raise Exception("\n".join(result))
         except Exception as e:
-            result = """
-            There is a problem with %s
+            result = []
+            result.append("""There is a problem with %(key)s
+            \nA problem was detected in your file %(filename)s
+            """ % {'key' : self.artifact.key, 'filename' : self.artifact.name})
 
-            There was a problem with your file %s
-
-            %s
-
-            ==================================================
-
-            """ % (self.artifact.key, self.artifact.name, e.message)
             if len(self.artifact.input_text().splitlines()) < 20:
-                result += self.artifact.input_text()
-            else:
-                result += "Please check your file, you may have mistyped a variable name."
+                result.append(br)
+                result.append(self.artifact.input_text())
+                result.append(br)
 
-            if traceback.print_exc():
-                result += """
-                Here is a traceback which may have more information about the problem:
+            result.append(traceback.format_exc())
 
-                %s""" % traceback.print_exc()
-            raise Exception(result)
+            raise Exception("\n".join(result))
         return result
 
