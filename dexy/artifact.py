@@ -373,7 +373,7 @@ class Artifact(object):
                     hash_v = OrderedDict()
                     for k1 in sorted(v.keys()):
                         v1 = v[k1]
-                        hash_v[str(k1)] = hashlib.md5(v1).hexdigest()
+                        hash_v[str(k1)] = hashlib.md5(str(v1)).hexdigest()
                 else:
                     hash_v = str(v)
                 hash_dict[str(k)] = hash_v
