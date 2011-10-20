@@ -1,9 +1,10 @@
-from dexy.artifacts.file_system_json_artifact import FileSystemJsonArtifact
 from dexy.dexy_filter import DexyFilter
 from dexy.document import Document
 import dexy.filters.python_filters
+import dexy.introspect
 
 def test_get_filter_for_alias():
+    Document.filter_list = dexy.introspect.filters()
     d = Document()
     for k, v in d.__class__.filter_list.iteritems():
         assert isinstance(k, str)

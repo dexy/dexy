@@ -32,6 +32,7 @@ def dexy_command(
         local=False, # use cached local copies of remote URLs, faster but might not be up to date
         logfile=Constants.DEFAULT_LFILE, # name of log file
         logsdir=Constants.DEFAULT_LDIR, # location of directory in which to store logs
+        nocache=False, # whether to force artifacts to run even if there is a matching file in the cache
         output=False, # Shortcut to mean "I just want the OutputReporter, nothing else"
         profmem=False, # whether to profile memory (slows Dexy down a lot, use for debugging only)
         recurse=True, # whether to recurse into subdirectories when running Dexy

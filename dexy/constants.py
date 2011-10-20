@@ -1,5 +1,4 @@
 import logging
-from logging import StreamHandler
 
 try:
     from logging import NullHandler
@@ -16,9 +15,6 @@ class Constants():
     NULL_LOGGER = logging.getLogger("null")
     NULL_LOGGER.addHandler(NullHandler())
     NULL_LOGGER.propagate = 0
-
-    STDERR_LOGGER = logging.getLogger("stderr")
-    STDERR_LOGGER.addHandler(StreamHandler())
 
     LOGLEVELS = {
         'DEBUG' : logging.DEBUG,

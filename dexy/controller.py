@@ -12,12 +12,17 @@ import json
 import os
 import re
 import sre_constants
+import time
 
 class Controller(object):
     def __init__(self, args={}):
         self.args = args # arguments from command line
         self.config = {} # config to be processed from .dexy files
         self.docs = []
+
+        self.batch_start_time = None
+        self.batch_finish_time = None
+        self.batch_elapsed_time = None
 
         # Set up logging
         if args.has_key("logsdir") and args.has_key("logfile"):
@@ -45,12 +50,18 @@ class Controller(object):
         """
         This does all the work.
         """
+        self.batch_start_time = time.time()
+
         # Populate the Document class's filter list
         dexy.document.Document.filter_list = dexy.introspect.filters(self.log)
 
         self.load_config()
         self.process_config()
         self.docs = [doc.run() for doc in self.members.values()]
+
+        self.batch_finish_time = time.time()
+        self.batch_elapsed_time = self.batch_finish_time - self.batch_start_time
+
         self.persist()
         self.log.debug("finished processing")
 
@@ -69,7 +80,10 @@ class Controller(object):
         return {
             "config" : self.config,
             "args" : self.args,
-            "docs" : dict((doc.key(), doc.document_info()) for doc in self.docs)
+            "docs" : dict((doc.key(), doc.document_info()) for doc in self.docs),
+            "start_time" : self.batch_start_time,
+            "finish_time" : self.batch_finish_time,
+            "elapsed_time" : self.batch_elapsed_time
             }
 
     def config_for_directory(self, path):

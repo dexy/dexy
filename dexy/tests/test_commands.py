@@ -106,7 +106,7 @@ def test_dexy_command_with_data():
             f.write(SIMPLE_PY_CONFIG)
 
         setup_command()
-        dexy_command(danger=True)
+        dexy_command()
 
         assert os.path.exists("logs/db.csv"), "database file should be created"
         assert os.path.exists("logs/batch-00001.json")
@@ -125,3 +125,25 @@ def test_dexy_command_with_data():
         for a in reporter.artifacts.values():
             assert isinstance(a, dexy.artifact.Artifact)
 
+def test_caching():
+    with tempdir():
+        with open(".dexy", "w") as f:
+            f.write(SIMPLE_PY_CONFIG)
+        setup_command()
+        dexy_command()
+
+        db = dexy.utils.get_db()
+        refs = db.references_for_batch_id()
+        assert refs[1]['source'] == 'run'
+
+        dexy_command()
+
+        db = dexy.utils.get_db()
+        refs = db.references_for_batch_id()
+        assert refs[1]['source'] == 'cache'
+
+        dexy_command(nocache=True)
+
+        db = dexy.utils.get_db()
+        refs = db.references_for_batch_id()
+        assert refs[1]['source'] == 'run'

@@ -52,4 +52,10 @@ def test_run():
         c.process_config()
         assert c.members.has_key("simple.py|py")
         assert isinstance(c.members["simple.py|py"], Document)
-        assert sorted(c.batch_info().keys()) == ["args", "config", "docs"]
+        assert sorted(c.batch_info().keys()) == [
+                "args",
+                "config",
+                "docs",
+                "elapsed_time",
+                "finish_time",
+                "start_time"]

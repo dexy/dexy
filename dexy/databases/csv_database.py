@@ -13,7 +13,16 @@ class CsvDatabase(dexy.database.Database):
     The database can also be used to parallelize/distribute the processing of
     dexy runs and to store ctime/mtime/inode data to speed up cache detection.
     """
-    FIELD_NAMES = ['id', 'batch_id', 'batch_order', 'hashstring'] + Constants.ARTIFACT_HASH_WHITELIST
+    FIELD_NAMES = [
+        'id',
+        'batch_id',
+        'batch_order',
+        'hashstring',
+        'start_time',
+        'finish_time',
+        'elapsed',
+        'source'
+        ] + Constants.ARTIFACT_HASH_WHITELIST
 
     def __init__(self, logsdir=Constants.DEFAULT_LDIR, dbfile=Constants.DEFAULT_DBFILE):
         if not logsdir:
@@ -73,10 +82,13 @@ class CsvDatabase(dexy.database.Database):
         data.update({
             'id' : artifact.unique_key(),
             'batch_id' : artifact.batch_id,
+            'source' : artifact.source,
+            'start_time' : artifact.start_time,
+            'finish_time' : artifact.finish_time,
+            'elapsed' : artifact.elapsed,
             'batch_order' : self.next_batch_order(artifact.batch_id),
             'hashstring' : artifact.hashstring
         })
-
         self.db.append(data)
 
     def update_artifact(self, artifact):

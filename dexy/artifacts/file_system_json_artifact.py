@@ -1,6 +1,5 @@
 from dexy.artifact import Artifact
 from ordereddict import OrderedDict
-import dexy.introspect
 import json
 import os
 

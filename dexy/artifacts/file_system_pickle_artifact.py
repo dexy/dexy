@@ -1,5 +1,4 @@
 from dexy.artifact import Artifact
-from dexy.controller import Controller
 from ordereddict import OrderedDict
 import pickle
 import os

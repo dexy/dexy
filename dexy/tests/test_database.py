@@ -1,6 +1,4 @@
-from dexy.database import Database
 import dexy.introspect
-import os
 
 INIT_ARGS = {
         "CsvDatabase" : { "logsdir" : "logs", "dbfile" : "db.csv" }

@@ -6,7 +6,6 @@ import dexy.introspect
 import glob
 import hashlib
 import inspect
-import json
 import logging
 import os
 import shutil
@@ -71,6 +70,10 @@ class Artifact(object):
         self.controller_args['globals'] = {}
         self.ext = None
         self.name = None
+        self.source = None
+        self.start_time = None
+        self.finish_time = None
+        self.elapsed = None
 
         self.is_last = False
         self.artifact_class_source = self.__class__.SOURCE_CODE
@@ -246,11 +249,13 @@ class Artifact(object):
 
         artifact.set_hashstring()
 
-        artifact.db.append(artifact)
+        if artifact.initial:
+            artifact.db.append(artifact)
+
         return artifact
 
     def run(self):
-        start_time = time.time()
+        self.start_time = time.time()
 
         if self.doc.profmem:
             print "  size of artifact", asizeof(self)
@@ -261,7 +266,7 @@ class Artifact(object):
                 print "  ", x, asizeof(y)
             print "  tot", tot
 
-        if not self.is_complete():
+        if self.controller_args['nocache'] or not self.is_complete():
             # We have to actually run things...
             if not self.filter_class:
                 self.filter_class = dexy.introspect.get_filter_by_name(self.filter_name, self.doc.__class__.filter_list)
@@ -308,12 +313,15 @@ class Artifact(object):
             self.output_hash = h.hexdigest()
 
             self.state = 'complete'
-            finish_time = time.time()
-            self.elapsed = finish_time - start_time
+            self.finish_time = time.time()
+            self.elapsed = self.finish_time - self.start_time
+            self.source = 'run'
             self.save()
         else:
-            self.log.debug("using cached art %s" % self.key)
-
+            self.source = 'cache'
+            self.log.debug("using cached artifact for %s" % self.key)
+        # TODO move this to init, but update db at end of run.
+        self.db.append(self)
 
     def add_additional_artifact(self, key_with_ext, ext):
         """create an 'additional' artifact with random hashstring"""
