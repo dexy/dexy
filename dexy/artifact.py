@@ -211,9 +211,10 @@ class Artifact(object):
         if filter_class:
             artifact.setup_from_filter_class(filter_class)
 
-        if doc.next_filter_class():
-            artifact.next_filter_name = doc.next_filter_class().__name__
-            artifact.next_filter_class = doc.next_filter_class()
+        next_filter_class = doc.next_filter_class()
+        if next_filter_class:
+            artifact.next_filter_name = next_filter_class.__name__
+            artifact.next_filter_class = next_filter_class
 
         if previous_artifact:
             artifact.setup_from_previous_artifact(previous_artifact)
@@ -324,6 +325,8 @@ class Artifact(object):
         new_artifact.set_binary_from_ext()
         new_artifact.artifacts_dir = self.artifacts_dir
         new_artifact.inode = self.hashstring
+        new_artifact.created_by = self.document_key
+        # TODO filter class source?
 
         # TODO this is duplicated in setup_from_previous_artifact, should reorganize
         for at in ['batch_id', 'document_key', 'mtime', 'ctime']:

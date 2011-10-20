@@ -326,9 +326,21 @@ class Document(object):
         self.last_artifact.save_meta()
 
         # Make sure all additional inputs are saved.
-        for k, a in artifact._inputs.iteritems():
+        for k, a in artifact.inputs().iteritems():
             if not a.is_complete():
+                if not a.additional:
+                    # should only get here if this is an additional artifact
+                    raise Exception("artifact %s should already be complete" % a.key)
+
+                # set to complete and save
                 a.state = 'complete'
-                a.save()
+                try:
+                    a.save()
+                except IOError:
+                    # no file was created, something went wrong in the script that should have
+                    # generated this artifact
+                    raise Exception("""You requested an additional file named %s
+                    but its artifact file (%s) does not exist. Something may have gone wrong
+                    in one of the filters of %s""" % (a.key, a.filepath(), a.created_by))
 
         return self
