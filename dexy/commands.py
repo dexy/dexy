@@ -324,6 +324,8 @@ def reports_command(
     reporters = dexy.introspect.reporters()
 
     for r in reports:
+        if not reporters.has_key(r):
+            raise Exception("No report class named %s available. Valid report classes are: %s" % (r, ", ".join(reporters.keys())))
         report_class = reporters[r]
         print "running", r
         reporter = report_class(
