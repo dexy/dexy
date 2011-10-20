@@ -24,6 +24,7 @@ def test_undefined_exception():
     f = init_jinja_filter()
     text = "{{ hello }}"
     f.artifact.input_data_dict = { '1' : text }
+    f.artifact.previous_artifact_filepath = "file"
     try:
         f.process_text(text)
         assert False, "should not get here"
@@ -35,6 +36,7 @@ def test_undefined_exception_in_latex():
     text = "<< hello >>"
     f.artifact.ext = ".tex"
     f.artifact.input_data_dict = { '1' : text }
+    f.artifact.previous_artifact_filepath = "file"
     try:
         print f.process_text(text)
         assert False, "should not get here"
@@ -46,12 +48,13 @@ def test_syntax_error():
     text = "{{ [ }}"
     f = init_jinja_filter()
     f.artifact.input_data_dict = { '1' : text }
+    f.artifact.previous_artifact_filepath = "file"
 
     try:
         f.process_text(text)
         assert False, "should not get here"
     except JinjaFilterException as e:
-        assert "line 1 of your file" in e.message
+        assert "line 1 of file" in e.message
         assert ">>> {{ [ }}" in e.message
         assert "unexpected '}', expected ']'" in e.message
 
@@ -60,11 +63,12 @@ def test_syntax_error_in_latex():
     f = init_jinja_filter()
     f.artifact.ext = ".tex"
     f.artifact.input_data_dict = { '1' : text }
+    f.artifact.previous_artifact_filepath = "file"
 
     try:
         f.process_text(text)
         assert False, "should not get here"
     except JinjaFilterException as e:
-        assert "line 1 of your file" in e.message
+        assert "line 1 of file" in e.message
         assert ">>> << [ >>" in e.message
         assert "unexpected '>'" in e.message

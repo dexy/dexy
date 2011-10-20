@@ -54,8 +54,8 @@ class FilenameFilter(DexyFilter):
                 for k in self.artifact.inputs().keys():
                     self.log.debug(k)
                 artifact = self.artifact.add_additional_artifact(key_with_ext, ext)
-                self.log.debug("[fn] created new artifact %s for key %s ; links to new file %s" %
-                          (self.artifact.key, key_with_ext, artifact.filename()))
+                self.log.debug("[fn] created new artifact %s ; links to new file %s" %
+                          (key_with_ext, artifact.filename()))
 
             input_text = input_text.replace(m.group(), artifact.filename())
 
@@ -282,8 +282,11 @@ class JinjaFilter(DexyFilter):
                     raise Exception("Unable to parse line number from %s" % traceback.format_exc())
 
             result.append("""There is a problem with %(key)s
-            \nA problem was detected at line %(lineno)s of your file %(filename)s
-            """ % {'key' : self.artifact.key, 'lineno' : e.lineno, 'filename' : self.artifact.name})
+            \nA problem was detected at line %(lineno)s of %(workfile)s
+            """ % {'key' : self.artifact.key, 'lineno' : e.lineno, 'workfile' : self.artifact.previous_artifact_filepath })
+
+            if isinstance(e, UndefinedError):
+                result.append("WARNING: line number may not be accurate, check elsewhere in your file if the excerpt does not contain the undefined item from the stack trace.")
 
             input_lines = self.artifact.input_text().splitlines()
 
@@ -306,25 +309,6 @@ class JinjaFilter(DexyFilter):
 
             result.append(br)
             result.append("The error is: %s" % e.message)
-
-            raise JinjaFilterException("\n".join(result))
-        except Exception as e:
-            m = re.search(r"File \"<template>\", line ([0-9]+), in top\-level template code", traceback.format_exc())
-            print m
-            if m:
-                print self.artifact.input_text().splitlines()[int(m.groups()[0])-2]
-                print self.artifact.input_text().splitlines()[int(m.groups()[0])-1]
-                print self.artifact.input_text().splitlines()[int(m.groups()[0])-0]
-            result = []
-            result.append("""There is a problem with %(key)s
-            \nA problem was detected in your file %(filename)s
-            \nActual content we are processing comes from %(workfile)s
-            """ % {'key' : self.artifact.key, 'filename' : self.artifact.name, 'workfile' : self.artifact.previous_artifact_filepath })
-
-            if len(self.artifact.input_text().splitlines()) < 20:
-                result.append(br)
-                result.append(self.artifact.input_text())
-                result.append(br)
 
             result.append(traceback.format_exc())
 
