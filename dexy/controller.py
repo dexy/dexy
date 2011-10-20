@@ -52,6 +52,7 @@ class Controller(object):
         self.process_config()
         self.docs = [doc.run() for doc in self.members.values()]
         self.persist()
+        self.log.debug("finished processing")
 
     def persist(self):
         """
