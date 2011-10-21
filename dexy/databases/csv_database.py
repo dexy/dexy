@@ -29,8 +29,8 @@ class CsvDatabase(dexy.database.Database):
             logsdir = ""
         filename = os.path.join(logsdir, dbfile)
         self.filename = filename
-        self.max_batch_orders = {}
-        self.max_batch_id = 0
+        self._max_batch_orders = {}
+        self._max_batch_id = 0
         self.db = []
 
         if os.path.exists(self.filename):
@@ -52,8 +52,8 @@ class CsvDatabase(dexy.database.Database):
                         else:
                             row_batch_id = int(row_batch_id)
 
-                        if row_batch_id > self.max_batch_id:
-                            self.max_batch_id = row_batch_id
+                        if row_batch_id > self._max_batch_id:
+                            self._max_batch_id = row_batch_id
 
     def persist(self):
         with open(self.filename, 'wb') as f:
@@ -61,16 +61,19 @@ class CsvDatabase(dexy.database.Database):
             writer.writerow(dict(zip(self.FIELD_NAMES, self.FIELD_NAMES))) # writeheader not in python 2.6
             writer.writerows(self.db)
 
+    def max_batch_id():
+        return self._max_batch_id
+
     def next_batch_id(self):
-        self.max_batch_id += 1
-        return self.max_batch_id
+        self._max_batch_id += 1
+        return self.max_batch_id()
 
     def next_batch_order(self, batch_id):
-        if self.max_batch_orders.has_key(batch_id):
-            self.max_batch_orders[batch_id] += 1
+        if self._max_batch_orders.has_key(batch_id):
+            self._max_batch_orders[batch_id] += 1
         else:
-            self.max_batch_orders[batch_id] = 1
-        return self.max_batch_orders[batch_id]
+            self._max_batch_orders[batch_id] = 1
+        return self._max_batch_orders[batch_id]
 
     def append(self, artifact):
         data = artifact.hash_dict()
@@ -101,5 +104,5 @@ class CsvDatabase(dexy.database.Database):
         """
         if not batch_id:
             # use most recent batch
-            batch_id = self.max_batch_id
+            batch_id = self.max_batch_id()
         return [r for r in self.db if r['batch_id'] == str(batch_id)]
