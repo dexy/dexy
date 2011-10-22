@@ -13,4 +13,4 @@ class ValidateReporter(Reporter):
             if not os.path.exists(a.filepath()):
                 raise Exception(a.key)
             else:
-                print a.key, "ok"
+                print "%5d %s - ok" % (row['batch_id'], a.key)

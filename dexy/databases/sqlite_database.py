@@ -84,7 +84,6 @@ class SqliteDatabase(dexy.database.Database):
     def append_artifacts(self, artifacts):
         qs = ("?," * len(self.field_names))[:-1]
         sql = "INSERT INTO artifacts VALUES (%s)" % qs
-
         for a in artifacts:
             self.conn.execute(sql, self.get_attributes_for_artifact(a))
 

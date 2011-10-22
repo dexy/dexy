@@ -20,6 +20,7 @@ class Artifact(object):
         'additional',
         'binary_input',
         'binary_output',
+        'created_by',
         'document_key',
         'elapsed',
         'ext',
@@ -65,6 +66,7 @@ class Artifact(object):
         self.additional = None
         self.args = {}
         self.args['globals'] = {}
+        self.created_by = None
         self.controller_args = {}
         self.controller_args['globals'] = {}
         self.ext = None
@@ -319,9 +321,16 @@ class Artifact(object):
             self.save()
         else:
             self.source = 'cache'
-            for a in self.inputs():
-                self.db.append_artifact(a)
             self.log.debug("using cached artifact for %s" % self.key)
+
+            # make sure additional artifacts are added to db
+            for a in self.inputs().values():
+                if a.created_by == self.key:
+                    if not a.additional:
+                        raise Exception("created_by should only apply to additional artifacts")
+                    # TODO Should this be done in Artifact.retrieve?
+                    a.batch_id = self.batch_id
+                    self.db.append_artifact(a)
 
         self.db.update_artifact(self)
 
@@ -345,7 +354,7 @@ class Artifact(object):
 
         new_artifact.set_hashstring()
         self.add_input(key_with_ext, new_artifact)
-        self.db.append_artifact(new_artifact)
+        self.db.append_artifact(new_artifact) # append to db because not part of doc.artifacts
         return new_artifact
 
     def add_input(self, key, artifact):
