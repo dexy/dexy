@@ -78,7 +78,7 @@ def test_commands_filters():
 def test_commands_reporters():
     with divert_stdout() as stdout:
         reporters_command()
-        assert "OutputReporter" in stdout.getvalue()
+        assert "Output" in stdout.getvalue()
 
 def test_commands_history():
     with tempdir():

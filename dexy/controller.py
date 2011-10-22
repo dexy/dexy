@@ -83,7 +83,7 @@ class Controller(object):
             "docs" : dict((doc.key(), doc.document_info()) for doc in self.docs),
             "start_time" : self.batch_start_time,
             "finish_time" : self.batch_finish_time,
-            "elapsed_time" : self.batch_elapsed_time
+            "elapsed" : self.batch_elapsed_time
             }
 
     def config_for_directory(self, path):

@@ -234,6 +234,8 @@ class Artifact(object):
                 artifact.inode = stat_info[stat.ST_INO]
 
             artifact.binary_input = (doc.ext in artifact.BINARY_EXTENSIONS)
+            artifact.binary_output = artifact.binary_input
+
             artifact.set_data(doc.initial_artifact_data())
             if not artifact.data_dict:
                 raise Exception("no data dict!")
@@ -318,7 +320,7 @@ class Artifact(object):
         else:
             self.source = 'cache'
             for a in self.inputs():
-                self.db.append(a)
+                self.db.append_artifact(a)
             self.log.debug("using cached artifact for %s" % self.key)
 
         self.db.update_artifact(self)

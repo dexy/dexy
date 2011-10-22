@@ -123,7 +123,7 @@
             <div class="zp-30 sidebar">
                 <h2>List of Documents</h2>
                 <ul>
-                    {% for doc in sorted(docs.keys()) %}
+                    {% for doc in sorted(docs) %}
                     <li><a href="#{{ doc }}">{{ doc }}</a></li>
                     {% endfor %}
                 </ul>

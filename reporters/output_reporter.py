@@ -33,6 +33,7 @@ class InSituReporter(Reporter):
     than the final file. InSitu Reporter will not overwrite existing files,
     delete any previously generated files before running this.
     """
+    ALLREPORTS = False
     def run(self):
         self.load_batch_artifacts()
         for artifact in self.artifacts.values():
@@ -73,6 +74,7 @@ class LongOutputReporter(Reporter):
         self.create_reports_dir(self.REPORTS_DIR)
         self.load_batch_artifacts()
         for artifact in self.artifacts.values():
-            fn = artifact.long_canonical_filename()
-            fp = os.path.join(self.REPORTS_DIR, fn)
-            artifact.write_to_file(fp)
+            if artifact.is_last:
+                fn = artifact.long_canonical_filename()
+                fp = os.path.join(self.REPORTS_DIR, fn)
+                artifact.write_to_file(fp)

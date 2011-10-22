@@ -83,7 +83,7 @@ def dexy_command(
     if output:
         if not reports == Constants.DEFAULT_REPORTS:
             raise Exception("if you pass --output you can't also modify reports! pick 1!")
-        reports = "OutputReporter"
+        reports = "Output"
 
     # catch deprecated arguments
     if help or version or reporters or filters:
@@ -280,7 +280,7 @@ def reporters_text(log):
     reporters = dexy.introspect.reporters(log)
     for reporter_name in sorted(reporters.keys()):
         r = reporters[reporter_name]
-        text.append("\n" + r.__name__)
+        text.append("\n" + r.__name__.replace("Reporter", ""))
 
         if r.__doc__:
             text.append(S + r.__doc__)
@@ -303,6 +303,7 @@ def report_command(**kwargs):
 
 def reports_command(
         aclass=Constants.DEFAULT_ACLASS, # What artifact class to use (must correspond to artifact class used by batch id)
+        allreports=False, # whether to run all available reporters (except those that are specifically excluded by setting ALLREPORTS=False)
         controller=False, # can pass the just-run controller instance to save having to load some data from disk which is already in memory
         batchid=False, # What batch id to run reports for. Leave false to run the most recent batch available (recommended).
         logsdir=Constants.DEFAULT_LDIR, # The location of the logs directory.
@@ -325,11 +326,14 @@ def reports_command(
         # either way we don't want to run any reports.
         reports = []
     reporters = dexy.introspect.reporters()
+    if allreports:
+        reports = [k for k, v in reporters.items() if v.ALLREPORTS]
 
     for r in reports:
-        if not reporters.has_key(r):
-            raise Exception("No report class named %s available. Valid report classes are: %s" % (r, ", ".join(reporters.keys())))
-        report_class = reporters[r]
+        reporter_class_name = r.endswith("Reporter") and r or ("%sReporter" % r)
+        if not reporters.has_key(reporter_class_name):
+            raise Exception("No reporter class named %s available. Valid reporter classes are: %s" % (r, ", ".join(reporters.keys())))
+        report_class = reporters[reporter_class_name]
         print "running", r
         reporter = report_class(
                 artifact_class=aclass,

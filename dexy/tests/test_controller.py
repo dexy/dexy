@@ -17,6 +17,14 @@ SIMPLE_PY_CONFIG = {
     }
 }
 
+NO_FILTERS_CONFIG = {
+   "." : {
+       "@hello.txt" : {
+           "contents" : "well, hello there!"
+        }
+    }
+}
+
 def test_init():
     c = Controller()
     assert isinstance(c.args, dict)
@@ -56,6 +64,25 @@ def test_run():
                 "args",
                 "config",
                 "docs",
-                "elapsed_time",
+                "elapsed",
+                "finish_time",
+                "start_time"]
+
+def test_docs_with_no_filters():
+    with tempdir():
+        fn = modargs.function_for(dexy.commands, "dexy")
+        args = modargs.determine_kwargs(fn)
+        args['globals'] = []
+        os.mkdir(args['logsdir'])
+        c = Controller(args)
+        c.config = NO_FILTERS_CONFIG
+        c.process_config()
+        assert c.members.has_key("hello.txt")
+        assert isinstance(c.members["hello.txt"], Document)
+        assert sorted(c.batch_info().keys()) == [
+                "args",
+                "config",
+                "docs",
+                "elapsed",
                 "finish_time",
                 "start_time"]

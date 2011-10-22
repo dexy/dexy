@@ -29,7 +29,7 @@ class Constants():
     DEFAULT_COMMAND = 'dexy'
     DEFAULT_CONFIG = '.dexy'
     DEFAULT_LDIR = 'logs'
-    DEFAULT_REPORTS = "OutputReporter LongOutputReporter RunReporter SourceReporter"
+    DEFAULT_REPORTS = "Output LongOutput Run Source"
     DEFAULT_LOGGER_NAME = 'dexy'
     DEFAULT_LFILE = 'dexy.log'
     DEFAULT_DBCLASS = 'SqliteDatabase'

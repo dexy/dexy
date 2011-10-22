@@ -7,6 +7,7 @@ import os
 import shutil
 
 class Reporter(object):
+    ALLREPORTS = True # whether to be included in 'allreports', set to false for reporters with side effects
     REPORTS_DIR = None
     LDIR = Constants.DEFAULT_LDIR
     LFILE = Constants.DEFAULT_LFILE

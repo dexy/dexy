@@ -9,6 +9,7 @@ import json
 import logging
 import os
 import urllib2
+import shutil
 
 try:
     import git
@@ -77,7 +78,7 @@ class Document(object):
         return self.last_artifact
 
     def key(self):
-        return "%s|%s" % (self.name, "|".join(self.filters))
+        return "|".join([self.name] + self.filters)
 
     def add_input_key(self, input_key):
         if not input_key in self.input_keys:
@@ -265,7 +266,7 @@ class Document(object):
 
         else:
             # Normal local file, just read the contents.
-            f = open(self.name, "r")
+            f = open(self.name, "rb")
             data = f.read()
             f.close()
 
@@ -274,6 +275,8 @@ class Document(object):
     def create_initial_artifact(self):
         artifact = self.artifact_class.setup(self, self.name)
         artifact.save()
+        if artifact.binary_output:
+            shutil.copyfile(artifact.name, artifact.filepath())
         return artifact
 
     def run(self):
@@ -282,6 +285,8 @@ class Document(object):
         artifact = self.create_initial_artifact()
         self.artifacts.append(artifact)
         self.last_artifact = artifact
+        if len(self.filters) == 0:
+            artifact.is_last = True
 
         artifact_key = artifact.key
         self.log.info("(step %s) [run] %s -> %s" % \
