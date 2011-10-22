@@ -177,7 +177,7 @@ def history_command(
     """
     db = dexy.utils.get_db(dbclass, dbfile=dbfile, logsdir=logsdir)
     versions = {}
-    for row in db.db:
+    for row in db.all():
         key = row['key']
         batch_id = int(row['batch_id'])
         if key == filename and not versions.has_key(batch_id):
@@ -192,9 +192,11 @@ def history_command(
 
             batch_source_dir = os.path.join(logsdir, "batch-source-%0.5d" % b)
             batch_source_file = os.path.join(batch_source_dir, row['key'])
-
             time = row['mtime']
-            human_time = datetime.datetime.fromtimestamp(float(time))
+            if time and not time == 'None':
+                human_time = datetime.datetime.fromtimestamp(float(time))
+            else:
+                human_time = "NA"
 
             batch_info_file = dexy.utils.batch_info_filename(b, logsdir)
             batch_ok = os.path.exists(batch_info_file)

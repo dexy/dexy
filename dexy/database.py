@@ -10,21 +10,5 @@ class Database(object):
     def __init__(self, **kwargs):
         raise Exception("not implemented")
 
-    def persist(self):
-        raise Exception("not implemented")
-
-    def next_batch_id(self):
-        raise Exception("not implemented")
-
-    def next_batch_order(self, batch_id):
-        raise Exception("not implemented")
-
-    def append(self, artifact):
-        raise Exception("not implemented")
-
-    def update_artifact(self, artifact):
-        raise Exception("not implemented")
-
-    def references_for_batch_id(self, batch_id=None):
-        raise Exception("not implemented")
-
+    def append_artifact(self, artifact):
+        self.append_artifacts([artifact])

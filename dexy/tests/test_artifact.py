@@ -1,6 +1,7 @@
 from dexy.artifact import Artifact
 from dexy.artifacts.file_system_json_artifact import FileSystemJsonArtifact
 from dexy.tests.utils import tempdir
+import dexy.utils
 import os
 
 def is_empty_dict(d):
@@ -40,8 +41,10 @@ def test_artifact_filenames_file_key_with_filters():
     assert artifact.long_canonical_filename() == 'abc.txt-def-ghi.out'
 
 def test_add_additional_artifact():
+    db = dexy.utils.get_db(logsdir=None, dbfile=None)
     hashstring = "abcdef123"
     artifact = Artifact()
+    artifact.db = db
     artifact.key = 'abc.txt'
     artifact.artifacts_dir = 'artifactsx'
     artifact.hashstring = hashstring
@@ -58,6 +61,8 @@ def test_add_additional_artifact():
     assert new_artifact.key in artifact.inputs()
     assert new_artifact.state == 'new'
     assert new_artifact.inode == hashstring
+
+    assert db.artifact_row(new_artifact)['key'] == new_artifact.key
 
 def test_simple_metadata():
     with tempdir():

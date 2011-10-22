@@ -32,8 +32,8 @@ class Constants():
     DEFAULT_REPORTS = "OutputReporter LongOutputReporter RunReporter SourceReporter"
     DEFAULT_LOGGER_NAME = 'dexy'
     DEFAULT_LFILE = 'dexy.log'
-    DEFAULT_DBCLASS = 'CsvDatabase'
-    DEFAULT_DBFILE = "db.csv"
+    DEFAULT_DBCLASS = 'SqliteDatabase'
+    DEFAULT_DBFILE = "db.sql"
     DEFAULT_LOGLEVEL="DEBUG"
     DEFAULT_LOGFORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 

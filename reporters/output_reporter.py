@@ -18,7 +18,7 @@ class TarzipOutputReporter(Reporter):
 
         self.load_batch_artifacts()
         for artifact in self.artifacts.values():
-            if (artifact.is_last or artifact.additional) and artifact.final:
+            if (artifact.is_last and artifact.final) or artifact.additional:
                 arcname = os.path.join(self.SUBDIR_NAME, artifact.canonical_filename())
                 tar.add(artifact.filepath(), arcname=arcname)
 
@@ -36,7 +36,7 @@ class InSituReporter(Reporter):
     def run(self):
         self.load_batch_artifacts()
         for artifact in self.artifacts.values():
-            if (artifact.is_last or artifact.additional) and artifact.final:
+            if (artifact.is_last and artifact.final) or artifact.additional:
                 fn = artifact.canonical_filename()
                 if os.path.exists(fn):
                     print "InSituReporter not overwriting existing file", fn, "please delete this file before running InSitu reporter"
@@ -55,10 +55,14 @@ class OutputReporter(Reporter):
         self.create_reports_dir(self.REPORTS_DIR)
         self.load_batch_artifacts()
         for artifact in self.artifacts.values():
-            if (artifact.is_last or artifact.additional) and artifact.final:
+            self.log.debug("processing %s" % artifact.key)
+            if (artifact.is_last and artifact.final) or artifact.additional:
+                self.log.debug("saving to %s" % artifact.canonical_filename())
                 fn = artifact.canonical_filename()
                 fp = os.path.join(self.REPORTS_DIR, fn)
                 artifact.write_to_file(fp)
+            else:
+                self.log.debug("not saving")
 
 class LongOutputReporter(Reporter):
     """

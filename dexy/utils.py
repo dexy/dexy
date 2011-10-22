@@ -2,7 +2,6 @@ from dexy.constants import Constants
 from dexy.sizeof import asizeof
 import datetime
 import dexy.database
-import dexy.databases.csv_database
 import dexy.introspect
 import gc
 import json

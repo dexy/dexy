@@ -63,7 +63,6 @@ class Artifact(object):
 
         self._inputs = {}
         self.additional = None
-        self.db = [] # accepts 'append'
         self.args = {}
         self.args['globals'] = {}
         self.controller_args = {}
@@ -79,6 +78,7 @@ class Artifact(object):
         self.artifact_class_source = self.__class__.SOURCE_CODE
         self.artifacts_dir = 'artifacts' # TODO don't hard code
         self.batch_id = None
+        self.batch_order = None
         self.binary_input = None
         self.binary_output = None
         self.ctime = None
@@ -248,9 +248,7 @@ class Artifact(object):
             artifact.set_binary_from_ext()
 
         artifact.set_hashstring()
-
-        if artifact.initial:
-            artifact.db.append(artifact)
+        artifact.batch_order = artifact.db.next_batch_order(artifact.batch_id)
 
         return artifact
 
@@ -319,9 +317,11 @@ class Artifact(object):
             self.save()
         else:
             self.source = 'cache'
+            for a in self.inputs():
+                self.db.append(a)
             self.log.debug("using cached artifact for %s" % self.key)
-        # TODO move this to init, but update db at end of run.
-        self.db.append(self)
+
+        self.db.update_artifact(self)
 
     def add_additional_artifact(self, key_with_ext, ext):
         """create an 'additional' artifact with random hashstring"""
@@ -343,7 +343,7 @@ class Artifact(object):
 
         new_artifact.set_hashstring()
         self.add_input(key_with_ext, new_artifact)
-        self.db.append(new_artifact)
+        self.db.append_artifact(new_artifact)
         return new_artifact
 
     def add_input(self, key, artifact):

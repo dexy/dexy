@@ -80,6 +80,22 @@ def test_commands_reporters():
         reporters_command()
         assert "OutputReporter" in stdout.getvalue()
 
+def test_commands_history():
+    with tempdir():
+        with divert_stdout() as stdout:
+            with open(".dexy", "w") as f:
+                f.write(SIMPLE_PY_CONFIG)
+
+            setup_command()
+            dexy_command()
+            dexy_command()
+
+            history_command(filename="simple.py")
+            text = stdout.getvalue()
+            assert "Dexy found these versions of simple.py" in text
+            assert "logs/batch-source-00001/simple.py" in text
+            assert "logs/batch-source-00002/simple.py" in text
+
 def test_help_text():
     assert "Available commands for dexy are" in help_text()
     assert "e.g. 'dexy setup --artifactsdir artifacts'" in help_text("setup")
@@ -108,16 +124,13 @@ def test_dexy_command_with_data():
         setup_command()
         dexy_command()
 
-        assert os.path.exists("logs/db.csv"), "database file should be created"
         assert os.path.exists("logs/batch-00001.json")
-
-        with open("logs/db.csv", "rb") as f:
-            reader = csv.DictReader(f)
-            # check that all files listed in the db have been created
-            for row in reader:
-                h = row['hashstring']
-                assert os.path.exists("artifacts/%s-output.json" % h)
-                assert os.path.exists("artifacts/%s-meta.json" % h)
+        db = dexy.utils.get_db()
+        assert os.path.exists(db.filename)
+        for row in db.references_for_batch_id():
+            h = row['hashstring']
+            assert os.path.exists("artifacts/%s-output.json" % h)
+            assert os.path.exists("artifacts/%s-meta.json" % h)
 
         # Test database.
         reporter = dexy.reporter.Reporter()

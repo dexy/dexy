@@ -37,7 +37,7 @@ def test_init_with_artifact_class():
     assert c.artifact_class == FileSystemJsonArtifact
 
 def test_init_with_db():
-    args = { "dbclass" : "CsvDatabase", "dbfile" : "db.csv", "logsdir" : "logs" }
+    args = { "dbclass" : "SqliteDatabase", "dbfile" : None, "logsdir" : None }
     c = Controller(args)
     assert isinstance(c.db, dexy.database.Database)
 

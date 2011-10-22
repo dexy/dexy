@@ -46,7 +46,7 @@ class Reporter(object):
         if batch_id:
             self.batch_id = batch_id
         else:
-            self.batch_id = self.db.max_batch_id
+            self.batch_id = self.db.max_batch_id()
 
         self.dbfile = dbfile
         self.log = dexy.utils.get_log(self.__class__.__name__, logsdir, logfile)

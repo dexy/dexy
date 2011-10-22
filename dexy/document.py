@@ -281,6 +281,7 @@ class Document(object):
 
         artifact = self.create_initial_artifact()
         self.artifacts.append(artifact)
+        self.last_artifact = artifact
 
         artifact_key = artifact.key
         self.log.info("(step %s) [run] %s -> %s" % \
@@ -298,8 +299,6 @@ class Document(object):
                 tot += asizeof(y)
                 print x, asizeof(y)
             print "tot", tot
-
-        self.last_artifact = artifact
 
         for f in self.filters:
             previous_artifact = artifact
@@ -324,6 +323,7 @@ class Document(object):
 
         self.last_artifact.is_last = True
         self.last_artifact.save_meta()
+        self.db.append_artifacts(self.artifacts)
 
         # Make sure all additional inputs are saved.
         for k, a in artifact.inputs().iteritems():
@@ -336,6 +336,7 @@ class Document(object):
                 a.state = 'complete'
                 try:
                     a.save()
+                    self.db.update_artifact(a)
                 except IOError:
                     # no file was created, something went wrong in the script that should have
                     # generated this artifact
