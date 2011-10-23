@@ -13,6 +13,7 @@ import os
 import re
 import sre_constants
 import time
+import urllib2
 
 class Controller(object):
     def __init__(self, args={}):
@@ -111,6 +112,14 @@ class Controller(object):
                     except ValueError as e:
                         msg = "Your config file %s has invalid JSON\n%s" % (f, e.message)
                         raise Exception(msg)
+
+                if json_dict.has_key("$import"):
+                    import_config = json_dict['$import']['url']
+                    f = urllib2.urlopen(import_config)
+                    imported_json = json.load(f)
+                    f.close()
+                    json_dict.update(imported_json)
+                del json_dict['$import']
 
                 if json_dict.has_key("$reset"):
                     # Reset the config, i.e. ignore everything from parent
