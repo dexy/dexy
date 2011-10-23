@@ -2,7 +2,6 @@ from dexy.commands import *
 from dexy.constants import Constants
 from dexy.tests.utils import divert_stdout
 from dexy.tests.utils import tempdir
-import csv
 import dexy.artifact
 import dexy.utils
 import os

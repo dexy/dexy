@@ -1,7 +1,7 @@
-set -e
-
 echo "running pyflakes"
-pyflakes dexy/
+pyflakes dexy
+
+set -e
 
 echo "Checking if all changes have been committed to git and pushed..."
 
@@ -39,6 +39,9 @@ if ! nosetests; then
     echo "tests failed!"
     exit
 fi
+
+echo "running venvtest"
+./scripts/venvtest
 
 echo "success!"
 
