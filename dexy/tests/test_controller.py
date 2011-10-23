@@ -25,25 +25,6 @@ NO_FILTERS_CONFIG = {
     }
 }
 
-def test_config_with_import():
-    with tempdir():
-        fn = modargs.function_for(dexy.commands, "dexy")
-        args = modargs.determine_kwargs(fn)
-        args['globals'] = []
-        os.mkdir(args['logsdir'])
-        c = Controller(args)
-        c.config = CONFIG_WITH_IMPORT
-        c.process_config()
-        assert c.members.has_key("hello.txt")
-        assert isinstance(c.members["hello.txt"], Document)
-        assert sorted(c.batch_info().keys()) == [
-                "args",
-                "config",
-                "docs",
-                "elapsed",
-                "finish_time",
-                "start_time"]
-
 def test_init():
     c = Controller()
     assert isinstance(c.args, dict)
