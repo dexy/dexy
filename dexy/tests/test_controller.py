@@ -17,11 +17,6 @@ SIMPLE_PY_CONFIG = {
     }
 }
 
-CONFIG_WITH_IMPORT = """{
-       "$import" : { "url" : "https://raw.github.com/ananelson/dexy-templates/master/code-journal-html-python/.dexy" },
-       "@local.txt" : { "contents" : "local" }
-}"""
-
 NO_FILTERS_CONFIG = {
    "." : {
        "@hello.txt" : {
@@ -110,12 +105,3 @@ def test_docs_with_no_filters():
                 "elapsed",
                 "finish_time",
                 "start_time"]
-
-def test_config_with_import():
-    with tempdir():
-        with open(".dexy", "w") as f:
-            f.write(CONFIG_WITH_IMPORT)
-        c = Controller()
-        c.args['config'] = '.dexy'
-        config_dict = c.config_for_directory(".")
-        print config_dict
