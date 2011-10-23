@@ -1,7 +1,5 @@
 from dexy.artifact import Artifact
 from dexy.databases.sqlite_database import SqliteDatabase
-from ordereddict import OrderedDict
-import time
 
 def test_create_table():
     db = SqliteDatabase(dbfile=None)

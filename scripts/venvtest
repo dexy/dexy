@@ -9,6 +9,9 @@ pip install .
 nosetests
 dexy reset
 dexy --directory test-template/
+dexy report --allreports
+dexy --directory test-template/
+dexy report --allreports
 
 pip install z3c.checkversions
 checkversions
@@ -24,6 +27,9 @@ pip install .
 nosetests
 dexy reset
 dexy --directory test-template/
+dexy report --allreports
+dexy --directory test-template/
+dexy report --allreports
 
 deactivate
 
