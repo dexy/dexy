@@ -117,24 +117,27 @@ class HtLatexFilter(DexyFilter):
 
         html_filename = wf.replace(".tex", ".html")
 
+        # The main HTML file generated.
         f = open(html_filename, "r")
         self.artifact.set_data(f.read())
         f.close()
-        self.log.debug("read contents of %s into %s" % (html_filename, self.artifact.key))
 
-        css_filename = wf.replace(".tex", ".css")
-        css_canonical_name = self.artifact.canonical_filename().replace(".html", ".css")
-        css_artifact = self.artifact.add_additional_artifact(css_canonical_name, "css")
-        f = open(css_filename, "r")
-        css_artifact.set_data(f.read())
-        f.close()
-        self.log.debug("read contents of %s into %s" % (css_filename, css_artifact.key))
+        for f in os.listdir(self.artifact.temp_dir()):
+            basefilepath = os.path.dirname(self.artifact.name)
+            f_ext = os.path.splitext(f)[1]
 
-        png_filename = wf.replace(".tex", "0x.png")
-        png_canonical_name = self.artifact.canonical_filename().replace(".html", "0x.png")
-        png_artifact = self.artifact.add_additional_artifact(png_canonical_name, "png")
-        shutil.copyfile(png_filename, png_artifact.filepath())
-        self.log.debug("copying from %s to %s" % (png_filename, png_artifact.filepath()))
+            # handle text-based output
+            if (f_ext in [".css", ".html"]) and f != self.artifact.name.replace(".tex", ".html"):
+                f_key = os.path.join(basefilepath, f)
+                new_artifact = self.artifact.add_additional_artifact(f_key, f_ext)
+                with open(os.path.join(self.artifact.temp_dir(), f), "r") as generated_file:
+                    new_artifact.set_data(generated_file.read())
+
+            # handle binary output
+            if f_ext in [".png"]:
+                f_key = os.path.join(basefilepath, f)
+                new_artifact = self.artifact.add_additional_artifact(f_key, f_ext)
+                shutil.copyfile(os.path.join(self.artifact.temp_dir(), f), new_artifact.filepath())
 
 class LatexFilter(DexyFilter):
     """
