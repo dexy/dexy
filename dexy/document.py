@@ -274,6 +274,13 @@ class Document(object):
 
     def create_initial_artifact(self):
         artifact = self.artifact_class.setup(self, self.name)
+        if len(self.filters) == 0:
+            artifact.is_last = True
+            if self.args.has_key('final') and not self.args['final']:
+                # user has specifically requested that this not be final
+                artifact.final = False
+            else:
+                artifact.final = True
         artifact.save()
         if artifact.binary_output:
             shutil.copyfile(artifact.name, artifact.filepath())
@@ -285,8 +292,6 @@ class Document(object):
         artifact = self.create_initial_artifact()
         self.artifacts.append(artifact)
         self.last_artifact = artifact
-        if len(self.filters) == 0:
-            artifact.is_last = True
 
         artifact_key = artifact.key
         self.log.info("(step %s) [run] %s -> %s" % \
