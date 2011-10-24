@@ -164,9 +164,11 @@ class Controller(object):
                 if os.path.isfile(os.path.join(dirpath, '.nodexy')):
                     # If we find one...
                     self.log.info(".nodexy file found in %s" % dirpath)
-                    for d in dirnames:
-                        # ...remove all child dirs from processing...
-                        dirnames.remove(d)
+
+                    # ...remove all child dirs from processing...
+                    for i in xrange(len(dirnames)):
+                        dirnames.pop()
+
                     # ...and skip this directory.
                     process_dir = False
 
