@@ -337,8 +337,11 @@ class Artifact(object):
     def add_additional_artifact(self, key_with_ext, ext):
         """create an 'additional' artifact with random hashstring"""
         new_artifact = self.__class__()
-        new_artifact.key = key_with_ext
-        new_artifact.ext = ".%s" % ext
+        new_artifact.key = "%s|additional" % (key_with_ext)
+        if ext.startswith("."):
+            new_artifact.ext = ext
+        else:
+            new_artifact.ext = ".%s" % ext
         new_artifact.final = True
         new_artifact.additional = True
         new_artifact.set_binary_from_ext()
@@ -423,8 +426,10 @@ class Artifact(object):
             print ">>>>>", self.hashstring
 
         try:
+            original_document_key = self.document_key
             if not self.is_loaded():
                 self.load()
+            self.document_key = original_document_key
         except AttributeError as e:
             if not self.is_abstract():
                 raise e
