@@ -180,19 +180,20 @@ class FooterFilter(DexyFilter):
 
         else:
             # look for the default pattern
+            # TODO optimize this
             footer_key = "_footer%s" % self.artifact.ext
-
-            if footer_key in inputs:
-                footer_doc = inputs[footer_key]
-            else:
-                for filter_alias in self.DEFAULT_FOOTER_FILTERS:
-                    footer_key_with_filter = "%s|%s" % (footer_key, filter_alias)
-                    if footer_key_with_filter in inputs:
-                        footer_doc = inputs[footer_key_with_filter]
+            for i in inputs:
+                if i == footer_key or i.endswith("/%s" % footer_key):
+                    footer_doc = inputs[i]
+                else:
+                    for filter_alias in self.DEFAULT_FOOTER_FILTERS:
+                        footer_key_with_filter = "%s|%s" % (footer_key, filter_alias)
+                        if i == footer_key_with_filter or i.endswith("/%s" % footer_key_with_filter):
+                            footer_doc = inputs[i]
 
         if not footer_doc:
             msg_str = "couldn't find a footer like %s as an input to %s (also tried with filters %s)"
-            msg = msg_str % (footer_key, self.artifact.documetn_key, ", ".join(self.DEFAULT_FOOTER_FILTERS))
+            msg = msg_str % (footer_key, self.artifact.document_key, ", ".join(self.DEFAULT_FOOTER_FILTERS))
             raise Exception(msg)
 
         self.log.debug("using %s as footer for %s" % (footer_doc.key, self.artifact.document_key))
@@ -222,15 +223,16 @@ class HeaderFilter(DexyFilter):
 
         else:
             # look for the default pattern
+            # TODO optimize this
             header_key = "_header%s" % self.artifact.ext
-
-            if header_key in inputs:
-                header_doc = inputs[header_key]
-            else:
-                for filter_alias in self.DEFAULT_HEADER_FILTERS:
-                    header_key_with_filter = "%s|%s" % (header_key, filter_alias)
-                    if header_key_with_filter in inputs:
-                        header_doc = inputs[header_key_with_filter]
+            for i in inputs:
+                if i == header_key or i.endswith("/%s" % header_key):
+                    header_doc = inputs[i]
+                else:
+                    for filter_alias in self.DEFAULT_HEADER_FILTERS:
+                        header_key_with_filter = "%s|%s" % (header_key, filter_alias)
+                        if i == header_key_with_filter or i.endswith("/%s" % header_key_with_filter):
+                            header_doc = inputs[i]
 
         if not header_doc:
             msg_str = "couldn't find a header like %s as an input to %s (also tried with filters %s)"
