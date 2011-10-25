@@ -2,6 +2,7 @@ from dexy.constants import Constants
 from dexy.controller import Controller
 from dexy.version import Version
 from modargs import args
+import copy
 import cProfile
 import datetime
 import dexy.introspect
@@ -104,6 +105,7 @@ def run_dexy(args):
 
 def profile_command(
         reports="ProfileReporter",
+        n=1, # How many times to run dexy for profiling.
         **kw # Accepts additional keyword arguments for the 'dexy' command
     ):
     """
@@ -118,9 +120,15 @@ def profile_command(
     defaults.update(kw)
     defaults['profile'] = True
 
-    ls = {'args' : defaults}
-    cProfile.runctx("run_dexy(args)", globals(), ls, "logs/dexy.prof")
-    reports_command(reports=reports)
+    locals_for_run_dexy = {'args' : defaults}
+
+    logs_dir = kw.has_key("logsdir") and kw['logsdir'] or Constants.DEFAULT_LDIR
+    prof_file = os.path.join(logs_dir, "dexy.prof")
+
+    for i in xrange(n):
+        print "===== run %s of %s =====" % (i+1, n)
+        cProfile.runctx("run_dexy(args)", globals(), copy.deepcopy(locals_for_run_dexy), prof_file)
+        reports_command(reports=reports)
 
 def check_setup(logsdir=Constants.DEFAULT_LDIR, artifactsdir=Constants.DEFAULT_ADIR):
     return os.path.exists(logsdir) and os.path.exists(artifactsdir)
