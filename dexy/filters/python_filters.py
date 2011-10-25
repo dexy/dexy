@@ -160,76 +160,85 @@ class FooterFilter(DexyFilter):
     """
     Adds a footer to file. Looks for a file named _footer.ext where ext is the
     same extension as the file this is being applied to. So _footer.html for a
-    file named index.html.
+    file named index.html. Or, you can specify the name of the footer file to
+    use in the args by passing a value to 'footer'.
     """
     INPUT_EXTENSIONS = [".*"]
     OUTPUT_EXTENSIONS = [".*"]
     ALIASES = ['ft', 'footer']
+    DEFAULT_FOOTER_FILTERS = ['dexy', 'jinja']
 
     def process_text(self, input_text):
-        footer_key = "_footer%s" % self.artifact.ext
-        footer_keys = []
-        for k in self.artifact.inputs().keys():
-            contains_footer = k.find(footer_key) > -1
-            contains_pyg = k.find('|pyg') > 0
-            if contains_footer and not contains_pyg:
-                footer_keys.append(k)
+        footer_doc = None
+        inputs = self.artifact.inputs()
 
         if self.artifact.args.has_key('footer'):
-            requested_footer = self.artifact.args['footer']
-            if not requested_footer in footer_keys:
-                raise Exception("requested footer %s not found in %s" %
-                                (requested_footer, ", ".join(footer_keys)))
-            footer_keys = [requested_footer]
+            footer_key = self.artifact.args['footer']
+            if not footer_key in inputs:
+                raise Exception("You requested footer %s, but this isn't an input to %s" % (footer_key, self.artifact.document_key))
+            footer_doc = inputs[footer_key]
 
-        if len(footer_keys) > 0:
-            footer_key = sorted(footer_keys)[-1]
-            self.artifact.log.debug("using %s as footer for %s" % (footer_key, self.artifact.key))
-            footer_artifact = self.artifact.inputs()[footer_key]
-            footer_text = footer_artifact.output_text()
         else:
-            print self.artifact.inputs().keys()
-            raise Exception("No file matching %s was found to work as a footer." % footer_key)
+            # look for the default pattern
+            footer_key = "_footer%s" % self.artifact.ext
 
-        return "%s\n%s" % (input_text, footer_text)
+            if footer_key in inputs:
+                footer_doc = inputs[footer_key]
+            else:
+                for filter_alias in self.DEFAULT_FOOTER_FILTERS:
+                    footer_key_with_filter = "%s|%s" % (footer_key, filter_alias)
+                    if footer_key_with_filter in inputs:
+                        footer_doc = inputs[footer_key_with_filter]
+
+        if not footer_doc:
+            msg_str = "couldn't find a footer like %s as an input to %s (also tried with filters %s)"
+            msg = msg_str % (footer_key, self.artifact.documetn_key, ", ".join(self.DEFAULT_FOOTER_FILTERS))
+            raise Exception(msg)
+
+        self.log.debug("using %s as footer for %s" % (footer_doc.key, self.artifact.document_key))
+        return "%s\n%s" % (input_text, footer_doc.output_text())
 
 class HeaderFilter(DexyFilter):
     """
     Adds a header to file. Looks for a file named _header.ext where ext is the
     same extension as the file this is being applied to. So _header.html for a
-    file named index.html.
+    file named index.html. Or, you can specify the name of the header file to
+    use in the args by passing a value to 'header'.
     """
     INPUT_EXTENSIONS = [".*"]
     OUTPUT_EXTENSIONS = [".*"]
     ALIASES = ['hd', 'header']
+    DEFAULT_HEADER_FILTERS = ['dexy', 'jinja']
 
     def process_text(self, input_text):
-        header_key = "_header%s" % self.artifact.ext
-        header_keys = []
-        for k in self.artifact.inputs().keys():
-            contains_header = k.find(header_key) > -1
-            contains_pyg = k.find('|pyg') > 0
-            if contains_header and not contains_pyg:
-                header_keys.append(k)
+        header_doc = None
+        inputs = self.artifact.inputs()
 
         if self.artifact.args.has_key('header'):
-            requested_header = self.artifact.args['header']
-            if not requested_header in header_keys:
-                raise Exception("requested header %s not found in %s" %
-                                (requested_header, ", ".join(header_keys)))
-            header_keys = [requested_header]
+            header_key = self.artifact.args['header']
+            if not header_key in inputs:
+                raise Exception("You requested header %s, but this isn't an input to %s" % (header_key, self.artifact.document_key))
+            header_doc = inputs[header_key]
 
-        if len(header_keys) > 0:
-            header_key = sorted(header_keys)[-1]
-            self.artifact.log.debug("using %s as header for %s" % (header_key, self.artifact.key))
-            header_artifact = self.artifact.inputs()[header_key]
-            header_text = header_artifact.output_text()
         else:
-            raise Exception("No file matching %s was found to work as a header for %s." % (header_key, self.artifact.key))
+            # look for the default pattern
+            header_key = "_header%s" % self.artifact.ext
 
-        return "%s\n%s" % (header_text, input_text)
+            if header_key in inputs:
+                header_doc = inputs[header_key]
+            else:
+                for filter_alias in self.DEFAULT_HEADER_FILTERS:
+                    header_key_with_filter = "%s|%s" % (header_key, filter_alias)
+                    if header_key_with_filter in inputs:
+                        header_doc = inputs[header_key_with_filter]
 
-# TODO implement combined header/footer filter as a shortcut
+        if not header_doc:
+            msg_str = "couldn't find a header like %s as an input to %s (also tried with filters %s)"
+            msg = msg_str % (header_key, self.artifact.document_key, ", ".join(self.DEFAULT_HEADER_FILTERS))
+            raise Exception(msg)
+
+        self.log.debug("using %s as header for %s" % (header_doc.key, self.artifact.document_key))
+        return "%s\n%s" % (header_doc.output_text(), input_text)
 
 class HeadFilter(DexyFilter):
     """
