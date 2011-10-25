@@ -523,5 +523,19 @@ class Artifact(object):
     def filepath(self):
         return os.path.join(self.artifacts_dir, self.filename())
 
+    def breadcrumbs(self):
+        """A list of parent dirs, plus the filename if it's not 'index.html'."""
+        parent_dirs = os.path.dirname(self.canonical_filename()).split("/")
+        if self.canonical_basename() == "index.html":
+            return parent_dirs
+        else:
+            return parent_dirs.extend(self.canonical_basename())
+
+    def titleized_name(self):
+        if self.canonical_basename() == "index.html":
+            return self.breadcrumbs()[-1].title()
+        else:
+            return self.key.title()
+
     def unique_key(self):
         return "%s:%s:%s" % (self.batch_id, self.document_key, self.key)
