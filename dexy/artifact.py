@@ -185,7 +185,12 @@ class Artifact(object):
         for a in ['final', 'mtime', 'ctime', 'inode']:
                 setattr(self, a, getattr(previous_artifact, a))
 
-        self._inputs = previous_artifact.inputs()
+        self._inputs.update(previous_artifact.inputs())
+        # Need to loop over each artifact's inputs in case extra ones have been
+        # added anywhere.
+        for k, a in previous_artifact.inputs().iteritems():
+            self._inputs.update(a.inputs())
+
         self.binary_input = previous_artifact.binary_output
         self.input_data_dict = previous_artifact.data_dict
         self.input_ext = previous_artifact.ext
