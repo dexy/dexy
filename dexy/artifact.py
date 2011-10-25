@@ -137,45 +137,67 @@ class Artifact(object):
     def is_abstract(self):
         return not hasattr(self, 'save_meta')
 
-    def setup_from_filter_class(self, filter_class):
-        if not hasattr(filter_class, 'SOURCE_CODE'):
-            filter_class_source = inspect.getsource(filter_class)
-            filter_class.SOURCE_CODE = hashlib.md5(filter_class_source).hexdigest()
+    def setup_initial(self):
+        """
+        Set up an initial artifact (the first artifact in a document's filter chain).
+        """
+        self._inputs = self.doc.input_artifacts()
+        self.binary_input = (self.doc.ext in self.BINARY_EXTENSIONS)
+        self.binary_output = self.binary_input
+        self.ext = self.doc.ext
+        self.initial = True
 
-        if self.final is None and filter_class.FINAL is not None:
-            self.final = filter_class.FINAL
+        if self.args.has_key('final'):
+            self.final = self.args['final']
+        elif os.path.basename(self.name).startswith("_"):
+            self.final = False
 
-        self.filter_class = filter_class
-        self.filter_name = filter_class.__name__
-        self.filter_source = filter_class.SOURCE_CODE
-        self.filter_version = filter_class.version(self.log)
+        if not self.doc.virtual:
+            stat_info = os.stat(self.name)
+            self.ctime = stat_info[stat.ST_CTIME]
+            self.mtime = stat_info[stat.ST_MTIME]
+            self.inode = stat_info[stat.ST_INO]
+
+        self.set_data(self.doc.initial_artifact_data())
+
+        # TODO remove?
+        if not self.data_dict:
+            raise Exception("no data dict!")
+        elif len(self.data_dict) == 0:
+            raise Exception("data dict has len 0!")
+
+        self.state = 'complete'
+
+    def setup_from_filter_class(self):
+        # cache filter class source code so it only has to be calculated once
+        if not hasattr(self.filter_class, 'SOURCE_CODE'):
+            filter_class_source = inspect.getsource(self.filter_class)
+            self.filter_class.SOURCE_CODE = hashlib.md5(filter_class_source).hexdigest()
+
+        self.filter_name = self.filter_class.__name__
+        self.filter_source = self.filter_class.SOURCE_CODE
+        self.filter_version = self.filter_class.version(self.log)
+
+        if self.final is None:
+            self.final = self.filter_class.FINAL
 
     def setup_from_previous_artifact(self, previous_artifact):
-        assert self.filter_class
-        if self.final is None:
-            self.final = previous_artifact.final
+        for a in ['final', 'mtime', 'ctime', 'inode']:
+                setattr(self, a, getattr(previous_artifact, a))
 
+        self._inputs = previous_artifact.inputs()
         self.binary_input = previous_artifact.binary_output
-        self.input_ext = previous_artifact.ext
         self.input_data_dict = previous_artifact.data_dict
-        for at in ['batch_id', 'document_key', 'mtime', 'ctime', 'inode']:
-                val = getattr(previous_artifact, at)
-                setattr(self, at, val)
-
-        # The 'canonical' output of previous artifact
+        self.input_ext = previous_artifact.ext
         self.previous_artifact_filename = previous_artifact.filename()
         self.previous_artifact_filepath = previous_artifact.filepath()
         self.previous_canonical_filename = previous_artifact.canonical_filename()
+
         # The JSON output of previous artifact
         if not previous_artifact.binary_output:
             self.previous_cached_output_filepath = previous_artifact.cached_output_filepath()
 
-        self._inputs.update(previous_artifact.inputs())
-        # Need to loop over each artifact's inputs in case extra ones have been
-        # added anywhere.
-        for k, a in previous_artifact.inputs().iteritems():
-            self._inputs.update(a.inputs())
-
+        # Determine file extension of output
         if hasattr(self, 'next_filter_class'):
             next_inputs = self.next_filter_class.INPUT_EXTENSIONS
         else:
@@ -184,37 +206,39 @@ class Artifact(object):
         self.ext = self.filter_class.output_file_extension(
                 previous_artifact.ext,
                 self.name,
-                next_inputs
-                )
+                next_inputs)
+
         self.binary_output = self.filter_class.BINARY
+        if self.binary_output is None:
+            self.set_binary_from_ext()
+
         self.state = 'setup'
 
     @classmethod
     def setup(klass, doc, artifact_key, filter_class = None, previous_artifact = None):
-        """Set up a new artifact."""
+        """
+        Create an Artifact instance and load all information needed to
+        calculate its hashstring.
+        """
         artifact = klass()
+        artifact.key = artifact_key
+        artifact.filter_class = filter_class
 
-        artifact.doc = doc
+        # Add references for convenience
+        artifact.artifacts_dir = doc.artifacts_dir
         artifact.controller_args = doc.controller.args
         artifact.db = doc.db
-
-        artifact.args = doc.args
-        artifact.artifacts_dir = doc.artifacts_dir
-        artifact.key = artifact_key
+        artifact.doc = doc
         artifact.log = doc.log
+
+        # These attributes are the same for all artifacts pertaining to a document
+        artifact.args = doc.args
         artifact.batch_id = doc.batch_id
-        artifact.name = doc.name
-        artifact.filters = doc.filters
         artifact.document_key = doc.key()
+        artifact.name = doc.name
 
-        if artifact.args.has_key('final'):
-            # TODO move this into initial setup? Should only be needed once...
-            artifact.final = artifact.args['final']
-        elif hasattr(previous_artifact, 'final') and previous_artifact.final is not None:
-            artifact.final = previous_artifact.final
-
-        if filter_class:
-            artifact.setup_from_filter_class(filter_class)
+        # Set batch order to next in sequence
+        artifact.batch_order = artifact.db.next_batch_order(artifact.batch_id)
 
         next_filter_class = doc.next_filter_class()
         if next_filter_class:
@@ -223,36 +247,11 @@ class Artifact(object):
 
         if previous_artifact:
             artifact.setup_from_previous_artifact(previous_artifact)
+            artifact.setup_from_filter_class()
         else:
-            # This is an initial artifact
-            artifact.initial = True
-            artifact._inputs = doc.input_artifacts()
-            artifact.ext = os.path.splitext(doc.name)[1]
-
-            if not doc.virtual:
-                stat_info = os.stat(doc.name)
-                artifact.ctime = stat_info[stat.ST_CTIME]
-                artifact.mtime = stat_info[stat.ST_MTIME]
-                artifact.inode = stat_info[stat.ST_INO]
-
-            artifact.binary_input = (doc.ext in artifact.BINARY_EXTENSIONS)
-            artifact.binary_output = artifact.binary_input
-
-            artifact.set_data(doc.initial_artifact_data())
-            if not artifact.data_dict:
-                raise Exception("no data dict!")
-            elif len(artifact.data_dict) == 0:
-                raise Exception("data dict has len 0!")
-
-            if os.path.basename(doc.name).startswith("_"):
-                artifact.final = False
-            artifact.state = 'complete'
-
-        if artifact.binary_output is None:
-            artifact.set_binary_from_ext()
+            artifact.setup_initial()
 
         artifact.set_hashstring()
-        artifact.batch_order = artifact.db.next_batch_order(artifact.batch_id)
 
         return artifact
 

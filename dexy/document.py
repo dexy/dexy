@@ -276,10 +276,7 @@ class Document(object):
         artifact = self.artifact_class.setup(self, self.name)
         if len(self.filters) == 0:
             artifact.is_last = True
-            if self.args.has_key('final') and not self.args['final']:
-                # user has specifically requested that this not be final
-                artifact.final = False
-            else:
+            if artifact.final is None:
                 artifact.final = True
         artifact.save()
         if artifact.binary_output:
