@@ -2,6 +2,7 @@ from dexy.constants import Constants
 from dexy.controller import Controller
 from dexy.version import Version
 from modargs import args
+import copy
 import cProfile
 import datetime
 import dexy.introspect
@@ -104,6 +105,7 @@ def run_dexy(args):
 
 def profile_command(
         reports="ProfileReporter",
+        n=1, # How many times to run dexy for profiling.
         **kw # Accepts additional keyword arguments for the 'dexy' command
     ):
     """
@@ -118,9 +120,19 @@ def profile_command(
     defaults.update(kw)
     defaults['profile'] = True
 
-    ls = {'args' : defaults}
-    cProfile.runctx("run_dexy(args)", globals(), ls, "logs/dexy.prof")
-    reports_command(reports=reports)
+    locals_for_run_dexy = {'args' : defaults}
+
+    logs_dir = kw.has_key("logsdir") and kw['logsdir'] or Constants.DEFAULT_LDIR
+    prof_file = os.path.join(logs_dir, "dexy.prof")
+
+    report_kwargs = {}
+    if kw.has_key('artifactclass'):
+        report_kwargs['artifactclass'] = kw['artifactclass']
+
+    for i in xrange(n):
+        print "===== run %s of %s =====" % (i+1, n)
+        cProfile.runctx("run_dexy(args)", globals(), copy.deepcopy(locals_for_run_dexy), prof_file)
+        reports_command(reports=reports, **report_kwargs)
 
 def check_setup(logsdir=Constants.DEFAULT_LDIR, artifactsdir=Constants.DEFAULT_ADIR):
     return os.path.exists(logsdir) and os.path.exists(artifactsdir)
@@ -302,7 +314,7 @@ def report_command(**kwargs):
     reports_command(**kwargs)
 
 def reports_command(
-        aclass=Constants.DEFAULT_ACLASS, # What artifact class to use (must correspond to artifact class used by batch id)
+        artifactclass=Constants.DEFAULT_ACLASS, # What artifact class to use (must correspond to artifact class used by batch id)
         allreports=False, # whether to run all available reporters (except those that are specifically excluded by setting ALLREPORTS=False)
         controller=False, # can pass the just-run controller instance to save having to load some data from disk which is already in memory
         batchid=False, # What batch id to run reports for. Leave false to run the most recent batch available (recommended).
@@ -334,9 +346,10 @@ def reports_command(
         if not reporters.has_key(reporter_class_name):
             raise Exception("No reporter class named %s available. Valid reporter classes are: %s" % (r, ", ".join(reporters.keys())))
         report_class = reporters[reporter_class_name]
+
         print "running", r
         reporter = report_class(
-                artifact_class=aclass,
+                artifact_class=artifactclass,
                 batch_id=batchid,
                 controller=controller,
                 logsdir=logsdir
