@@ -93,6 +93,7 @@ class JinjaFilter(DexyFilter):
 """ % (text, self.clippy_helper(text))
 
     def clippy_helper(self, text):
+        # TODO allow specifying other locations for clippy.swf
         if not text or len(text) == 0:
             raise Exception("You passed blank text to clippy helper!")
         quoted_text = urllib.quote(text)
@@ -270,10 +271,10 @@ class JinjaFilter(DexyFilter):
         try:
             template = env.from_string(input_text)
             result = str(template.render(jinja_env_data))
-        except (TemplateSyntaxError, UndefinedError) as e:
+        except (TemplateSyntaxError, UndefinedError, TypeError) as e:
             result = []
 
-            if isinstance(e, UndefinedError):
+            if isinstance(e, UndefinedError) or isinstance(e, TypeError):
                 # try to get the line number
                 m = re.search(r"File \"<template>\", line ([0-9]+), in top\-level template code", traceback.format_exc())
                 if m:
@@ -313,5 +314,5 @@ class JinjaFilter(DexyFilter):
             result.append(traceback.format_exc())
 
             raise JinjaFilterException("\n".join(result))
-        return result
 
+        return result
