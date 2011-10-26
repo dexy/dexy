@@ -514,32 +514,51 @@ class Artifact(object):
 
     def canonical_filename(self):
         fn = os.path.splitext(self.key.split("|")[0])[0]
-        return "%s%s" % (fn, self.ext)
+
+        if self.args.has_key('canonical-name'):
+            parent_dir = os.path.dirname(fn)
+            return os.path.join(parent_dir, self.args['canonical-name'])
+        elif self.args.has_key('postfix'):
+            return "%s%s%s" % (fn, self.ext, self.args['postfix'])
+        else:
+            return "%s%s" % (fn, self.ext)
 
     def long_canonical_filename(self):
         return "%s%s" % (self.key.replace("|", "-"), self.ext)
 
     def filename(self):
+        """
+        The filename where artifact content is stored, based on the hashstring.
+        """
         if not hasattr(self, 'ext'):
             raise Exception("artifact %s has no ext" % self.key)
         return "%s%s" % (self.hashstring, self.ext)
 
     def filepath(self):
+        """
+        Full path (including artifacts dir location) to location where artifact content is stored.
+        """
         return os.path.join(self.artifacts_dir, self.filename())
 
     def breadcrumbs(self):
         """A list of parent dirs, plus the filename if it's not 'index.html'."""
         parent_dirs = os.path.dirname(self.canonical_filename()).split("/")
+
         if self.canonical_basename() == "index.html":
-            return parent_dirs
+            result = parent_dirs
         else:
-            return parent_dirs.extend(self.canonical_basename())
+            result = parent_dirs.append(self.canonical_basename())
+
+        if not result:
+            result = []
+
+        return result
 
     def titleized_name(self):
         if self.canonical_basename() == "index.html":
             return self.breadcrumbs()[-1].title()
         else:
-            return self.key.title()
+            return os.path.splitext(self.canonical_basename())[0].title()
 
     def unique_key(self):
         return "%s:%s:%s" % (self.batch_id, self.document_key, self.key)
