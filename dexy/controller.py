@@ -64,7 +64,7 @@ class Controller(object):
         self.batch_elapsed_time = self.batch_finish_time - self.batch_start_time
 
         self.persist()
-        self.log.debug("finished processing")
+        self.log.debug("finished processing. elapsed time %s" % self.batch_elapsed_time)
 
     def persist(self):
         """
@@ -352,6 +352,7 @@ re.compile: %s""" % (args['except'], e))
 
                     if not hasattr(doc, 'args'):
                         doc.args = args
+                        # TODO figure out how to merge args from parent
 
                     self.members[key] = doc
                     docs.append(doc) # just a local list
