@@ -4,37 +4,6 @@ import re
 import shutil
 import subprocess
 
-class RagelRubyFilter(DexyFilter):
-    """
-    Runs ragel for ruby.
-    """
-    INPUT_EXTENSIONS = [".rl"]
-    OUTPUT_EXTENSIONS = [".rb"]
-    ALIASES = ['rlrb', 'ragelruby']
-    VERSION = 'ragel --version'
-    EXECUTABLE = 'ragel -R'
-
-    def process(self):
-        self.artifact.generate_workfile()
-        wf = self.artifact.work_filename()
-        command = "%s %s -o %s" % (self.executable(), wf, self.artifact.filename())
-
-        if self.artifact.args.has_key('env'):
-            env = os.environ
-            env.update(self.artifact.args['env'])
-        else:
-            env = None
-
-        self.log.info("running: %s" % command)
-        proc = subprocess.Popen(command, shell=True,
-                                cwd=self.artifact.artifacts_dir,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT,
-                                env=env)
-
-        stdout, stderr = proc.communicate()
-        self.artifact.stdout = stdout
-
 class BibFilter(DexyFilter):
     INPUT_EXTENSIONS = [".tex"]
     OUTPUT_EXTENSIONS = [".tex"]
@@ -195,7 +164,6 @@ class LatexFilter(DexyFilter):
         run_cmd(latex_command) #first run
         run_cmd(latex_command) #second run - fix references
 
-
 class EmbedFonts(DexyFilter):
     INPUT_EXTENSIONS = [".pdf"]
     OUTPUT_EXTENSIONS = [".pdf"]
@@ -232,74 +200,118 @@ class EmbedFonts(DexyFilter):
         stdout, stderr = proc.communicate()
         self.artifact.stdout += stdout
 
-class Rd2PdfFilter(DexyFilter):
+class SubprocessFilter(DexyFilter):
+    ALIASES = None
+    BINARY = True
+    FINAL = True
+
+    def command_string(self):
+        """
+        Should return a command string that, when run, should result in filter
+        output being present in the artifact file.
+        """
+        wf = self.artifact.previous_artifact_filename
+        of = self.artifact.filename()
+        return "%s %s %s" % (self.executable(), wf, of)
+
+    def setup_env(self):
+        if self.artifact.args.has_key('env'):
+            env = os.environ
+            env.update(self.artifact.args['env'])
+        else:
+            env = None
+        return env
+
+    def process(self):
+        command = self.command_string()
+        proc = self.run_command(command, self.setup_env())
+        self.handle_subprocess_proc_return(proc.returncode, self.artifact.stdout)
+
+    def run_command(self, command, env):
+        """
+        Runs a command using subprocess.Popen.
+        """
+        self.log.debug("about to run '%s'" % command)
+        proc = subprocess.Popen(command, shell=True,
+                                cwd=self.artifact.artifacts_dir,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT,
+                                env=env)
+
+        stdout, stderr = proc.communicate()
+        self.artifact.stdout = stdout
+        return proc
+
+class ROutputBatchFilter(SubprocessFilter):
+    """Runs R code in batch mode. Uses the --slave flag so doesn't echo commands, just returns output."""
+    ALIASES = ['routbatch']
+    EXECUTABLE = 'R CMD BATCH --vanilla --quiet --slave --no-timing'
+    INPUT_EXTENSIONS = ['.txt', '.r', '.R']
+    OUTPUT_EXTENSIONS = [".txt"]
+    VERSION = "R --version"
+
+class RBatchFilter(DexyFilter):
+    """Runs R code in batch mode."""
+    ALIASES = ['rintbatch']
+    EXECUTABLE = 'R CMD BATCH --vanilla --quiet --no-timing'
+    INPUT_EXTENSIONS = ['.txt', '.r', '.R']
+    OUTPUT_EXTENSIONS = [".txt"]
+    VERSION = "R --version"
+
+class Rd2PdfFilter(SubprocessFilter):
     INPUT_EXTENSIONS = [".Rd"]
     OUTPUT_EXTENSIONS = [".pdf", ".dvi"]
     EXECUTABLE = 'R CMD Rd2pdf'
     VERSION = 'R CMD Rd2pdf -v'
     ALIASES = ['rd2pdf', 'Rd2pdf']
-    FINAL = True
 
-    def process(self):
-        self.artifact.generate_workfile()
-        wf = self.artifact.work_filename()
-        af = self.artifact.filename()
+    def command_string(self):
         title = os.path.splitext(self.artifact.name)[0].replace("_", " ")
-        command = "%s --output=%s --title=\"%s\" %s" % (self.executable(), af,
-                                                    title, wf)
-        self.log.info(command)
-        proc = subprocess.Popen(command, shell=True,
-                                cwd=self.artifact.artifacts_dir,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT)
-        stdout, stderr = proc.communicate()
-        self.artifact.stdout = stdout
+        args = {
+            'prog' : self.executable(),
+            'out' : self.artifact.filename(),
+            'in' : self.artifact.previous_artifact_filename,
+            'title' : title
+        }
+        return "%(prog)s --output=%(out)s --title=\"%(title)s\" %(in)s" % args
 
-class RBatchFilter(DexyFilter):
-    """Runs R code in batch mode."""
-    EXECUTABLE = 'R CMD BATCH --vanilla --quiet --no-timing'
-    VERSION = "R --version"
-    INPUT_EXTENSIONS = ['.txt', '.r', '.R']
-    OUTPUT_EXTENSIONS = [".txt"]
-    ALIASES = ['rintbatch']
+class RagelRubyFilter(SubprocessFilter):
+    """
+    Runs ragel for ruby.
+    """
+    ALIASES = ['rlrb', 'ragelruby']
+    BINARY = False
+    EXECUTABLE = 'ragel -R'
+    FINAL = False
+    INPUT_EXTENSIONS = [".rl"]
+    OUTPUT_EXTENSIONS = [".rb"]
+    VERSION = 'ragel --version'
 
-    def process(self):
-        self.artifact.generate_workfile()
-        work_file = os.path.basename(self.artifact.work_filename())
-        artifact_file = os.path.basename(self.artifact.filename())
-        command = "%s %s %s" % (self.EXECUTABLE, work_file, artifact_file)
-        self.log.info(command)
-        proc = subprocess.Popen(command, shell=True,
-                                cwd=self.artifact.artifacts_dir,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT)
-        stdout, stderr = proc.communicate()
-        self.artifact.stdout = stdout
-        self.artifact.set_data_from_artifact()
+    def command_string(self):
+        wf = self.artifact.previous_artifact_filename
+        of = self.artifact.filename()
+        return "%s %s -o %s" % (self.executable(), wf, of)
 
-class ROutputBatchFilter(DexyFilter):
-    """Runs R code in batch mode. Uses the --slave flag so doesn't echo commands, just returns output."""
-    EXECUTABLE = 'R CMD BATCH --vanilla --quiet --slave --no-timing'
-    VERSION = "R --version"
-    INPUT_EXTENSIONS = ['.txt', '.r', '.R']
-    OUTPUT_EXTENSIONS = [".txt"]
-    ALIASES = ['routbatch']
+class Ps2PdfFilter(SubprocessFilter):
+    """
+    Converts a postscript file to PDF format.
+    """
+    ALIASES = ['ps2pdf']
+    EXECUTABLE = 'ps2pdf'
+    INPUT_EXTENSIONS = [".ps", ".txt"]
+    OUTPUT_EXTENSIONS = [".pdf"]
 
-    def process(self):
-        self.artifact.generate_workfile()
-        work_file = os.path.basename(self.artifact.work_filename())
-        artifact_file = os.path.basename(self.artifact.filename())
-        command = "%s %s %s" % (self.EXECUTABLE, work_file, artifact_file)
-        self.log.info(command)
-        proc = subprocess.Popen(command, shell=True,
-                                cwd=self.artifact.artifacts_dir,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT)
-        stdout, stderr = proc.communicate()
-        self.artifact.stdout = stdout
-        self.artifact.set_data_from_artifact()
+class Html2PdfFilter(SubprocessFilter):
+    """
+    Renders HTML to PDF using wkhtmltopdf
+    """
+    ALIASES = ['html2pdf', 'wkhtmltopdf']
+    EXECUTABLE = 'wkhtmltopdf'
+    INPUT_EXTENSIONS = [".html", ".txt"]
+    OUTPUT_EXTENSIONS = [".pdf"]
+    VERSION = 'wkhtmltopdf --version'
 
-class DotFilter(DexyFilter):
+class DotFilter(SubprocessFilter):
     """
     Renders .dot files to either PNG or PDF images.
     """
@@ -308,46 +320,87 @@ class DotFilter(DexyFilter):
     EXECUTABLE = 'dot'
     VERSION = 'dot -V'
     ALIASES = ['dot', 'graphviz']
-    FINAL = True
-    BINARY = True
+
+    def command_string(self):
+        args = {
+            'prog' : self.executable(),
+            'format' : self.artifact.ext.replace(".",""),
+            'workfile' : self.artifact.previous_artifact_filename,
+            'outfile' : self.artifact.filename()
+        }
+        return "%(prog)s -T%(format)s -o%(outfile)s %(workfile)s" % args
+
+class Pdf2ImgFilter(SubprocessFilter):
+    """
+    Converts a PDF file to a PNG image using ghostscript (subclass this to
+    convert to other image types).
+
+    Returns the image generated by page 1 of the PDF by default, the optional
+    'page' parameter can be used to specify other pages.
+    """
+    ALIASES = ['pdf2img', 'pdf2png']
+    EXECUTABLE = "gs"
+    GS_DEVICE = 'png16m -r300'
+    INPUT_EXTENSIONS = ['.pdf']
+    OUTPUT_EXTENSIONS = ['.png']
+    VERSION = "gs --version"
+
+    def command_string(self):
+        s = "%(prog)s -dSAFER -dNOPAUSE -dBATCH -sDEVICE=%(device)s -sOutputFile=%%d-%(out)s %(in)s"
+        args = {
+            'prog' : self.executable(),
+            'device' : self.GS_DEVICE,
+            'in' : self.artifact.previous_artifact_filename,
+            'out' : self.artifact.filename()
+        }
+        return s % args
 
     def process(self):
-        self.artifact.generate_workfile()
-        wf = self.artifact.work_filename()
-        af = self.artifact.filename()
-        ex = self.artifact.ext.replace(".", "")
-        command = "%s -T%s -o%s %s" % (self.executable(), ex, af, wf)
-        self.log.info(command)
-        proc = subprocess.Popen(command, shell=True,
-                                cwd=self.artifact.artifacts_dir,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT)
+        command = self.command_string()
+        proc = self.run_command(command, self.setup_env())
+        self.handle_subprocess_proc_return(proc.returncode, self.artifact.stdout)
 
-        stdout, stderr = proc.communicate()
-        self.artifact.stdout = stdout
+        if self.artifact.args.has_key('page'):
+            page = self.artifact.args['page']
+        else:
+            page = 1
 
-class RubyInteractiveFilter(DexyFilter):
-    """Run Ruby, takign input from input files."""
-    VERSION = "ruby --version"
+        page_file = os.path.join(self.artifact.artifacts_dir, "%s-%s" % (page, self.artifact.filename()))
+        shutil.copyfile(page_file, self.artifact.filepath())
+
+class Pdf2JpgFilter(Pdf2ImgFilter):
+    ALIASES = ['pdf2jpg']
+    GS_DEVICE = 'jpeg'
+    OUTPUT_EXTENSIONS = ['.jpg']
+
+class RubyInteractiveFilter(SubprocessFilter):
+    """Run Ruby, taking input from input files."""
+    ALIASES = ['rbint']
+    BINARY = False
     EXECUTABLE = "ruby"
+    FINAL = False
     INPUT_EXTENSIONS = [".rb"]
     OUTPUT_EXTENSIONS = [".txt"]
-    ALIASES = ['rbint']
+    VERSION = "ruby --version"
 
     def process(self):
-        self.artifact.generate_workfile()
-        wf = self.artifact.work_filename()
-        command = "%s %s" % (self.EXECUTABLE, wf)
+        command = "%s %s" % (self.EXECUTABLE, self.artifact.previous_artifact_filename)
         self.log.debug(command)
+
+        self.artifact.stdout = ""
+
+        # Loop over all inputs
         for k, a in self.artifact.inputs().items():
+
+            # For each input, loop over all sections
             for s, t in a.data_dict.items():
                 proc = subprocess.Popen(command, shell=True,
                                         cwd=self.artifact.artifacts_dir,
                                         stdin=subprocess.PIPE,
                                         stdout=subprocess.PIPE,
                                         stderr=subprocess.PIPE,
+                                        env=self.setup_env()
                                        )
                 stdout, stderr = proc.communicate(t)
                 self.artifact.data_dict[s] = stdout
-                self.artifact.stdout = stdout + "\n" + stderr
-
+                self.artifact.stdout += stderr

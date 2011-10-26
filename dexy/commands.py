@@ -40,6 +40,7 @@ def dexy_command(
         reporters=False, # DEPRECATED just to catch people who use the old dexy --reporters syntax
         reports=Constants.DEFAULT_REPORTS, # reports to be run after dexy runs, enclose in quotes and separate with spaces
         reset=False, # whether to purge existing artifacts and logs before running Dexy
+        setup=False, # DEPRECATED just to catch people who use the old dexy --setup syntax
         version=False # DEPRECATED just to catch people who use the old dexy --version syntax
     ):
     """
