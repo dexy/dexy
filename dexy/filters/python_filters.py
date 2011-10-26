@@ -307,7 +307,13 @@ class SplitHtmlFilter(DexyFilter):
             output_dict['header'] = header
             if index_content:
                 output_dict['index-page-content'] = index_content
-            output_dict['index'] = "<ul>\n%s\n</ul>" % "\n".join(index_items)
+
+            if self.artifact.args.has_key("split-ul-class"):
+                ul = "<ul class=\"%s\">" % self.artifact.args['split-ul-class']
+            else:
+                ul = "<ul class=\"split\">"
+
+            output_dict['index'] = "%s\n%s\n</ul>" % (ul, "\n".join(index_items))
             output_dict['footer'] = footer
         else:
             # No endsplit found, do nothing.
