@@ -196,7 +196,7 @@ class Artifact(object):
         self.input_ext = previous_artifact.ext
         self.previous_artifact_filename = previous_artifact.filename()
         self.previous_artifact_filepath = previous_artifact.filepath()
-        self.previous_canonical_filename = previous_artifact.canonical_filename()
+        self.previous_canonical_filename = previous_artifact.canonical_filename(True)
 
         # The JSON output of previous artifact
         if not previous_artifact.binary_output:
@@ -505,20 +505,32 @@ class Artifact(object):
     def temp_dir(self):
         return os.path.join(self.artifacts_dir, self.hashstring)
 
-    def create_temp_dir(self):
-        shutil.rmtree(self.temp_dir(), ignore_errors=True)
-        os.mkdir(self.temp_dir())
+    def create_temp_dir(self, populate=False):
+        tempdir = self.temp_dir()
+        shutil.rmtree(tempdir, ignore_errors=True)
+        os.mkdir(tempdir)
+
+        if populate:
+            # write all inputs to this directory, under their canonical names
+            for input_artifact in self._inputs.values():
+                filename = os.path.join(tempdir, input_artifact.canonical_filename())
+                input_artifact.write_to_file(filename)
+
+            # write the workfile to this directory under its canonical name
+            previous = self.previous_artifact_filepath
+            workfile = os.path.join(tempdir, self.previous_canonical_filename)
+            shutil.copyfile(previous, workfile)
 
     def canonical_basename(self):
         return os.path.basename(self.canonical_filename())
 
-    def canonical_filename(self):
+    def canonical_filename(self, ignore_args = False):
         fn = os.path.splitext(self.key.split("|")[0])[0]
 
-        if self.args.has_key('canonical-name'):
+        if self.args.has_key('canonical-name') and not ignore_args:
             parent_dir = os.path.dirname(fn)
             return os.path.join(parent_dir, self.args['canonical-name'])
-        elif self.args.has_key('postfix'):
+        elif self.args.has_key('postfix') and not ignore_args:
             return "%s%s%s" % (fn, self.ext, self.args['postfix'])
         else:
             return "%s%s" % (fn, self.ext)

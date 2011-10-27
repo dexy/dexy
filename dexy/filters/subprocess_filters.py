@@ -311,6 +311,18 @@ class Html2PdfFilter(SubprocessFilter):
     OUTPUT_EXTENSIONS = [".pdf"]
     VERSION = 'wkhtmltopdf --version'
 
+    def command_string(self):
+        # Create a temporary directory and populate it with all inputs.
+        self.artifact.create_temp_dir(populate=True)
+        workfile = os.path.join(self.artifact.hashstring, self.artifact.previous_canonical_filename)
+
+        args = {
+            'prog' : self.executable(),
+            'in' : workfile,
+            'out' : self.artifact.filename()
+        }
+        return "%(prog)s %(in)s %(out)s" % args
+
 class DotFilter(SubprocessFilter):
     """
     Renders .dot files to either PNG or PDF images.

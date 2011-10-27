@@ -280,7 +280,12 @@ class Document(object):
                 artifact.final = True
         artifact.save()
         if artifact.binary_output:
-            shutil.copyfile(artifact.name, artifact.filepath())
+            if artifact.doc.virtual:
+                # make a fake file
+                with open(artifact.filepath(), "wb") as f:
+                    f.write("virtual file")
+            else:
+                shutil.copyfile(artifact.name, artifact.filepath())
         return artifact
 
     def run(self):
