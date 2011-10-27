@@ -112,9 +112,8 @@ class FileSystemJsonArtifact(Artifact):
                 # Our filter has written directly to an output file
                 # We need to load this into memory first
                 self.data_dict = OrderedDict()
-                f = open(self.filepath(), 'r')
-                data = f.read()
-                f.close()
+                with open(self.filepath(), 'r') as f:
+                    data = f.read()
                 self.data_dict['1'] = data
 
             # need to preserve ordering but we can't serialize OrderedDict

@@ -132,7 +132,11 @@ class Artifact(object):
         else:
             self.save_meta()
             if self.is_complete() and not self.is_output_cached():
-                self.save_output()
+                try:
+                    self.save_output()
+                except IOError as e:
+                    print "An error occured while saving %s" % self.key
+                    raise e
 
     def is_abstract(self):
         return not hasattr(self, 'save_meta')
@@ -464,10 +468,8 @@ class Artifact(object):
         doc_dir = os.path.dirname(relative_to_file)
         return [
                 os.path.relpath(self.key, doc_dir),
-                os.path.relpath(self.canonical_filename(), doc_dir),
                 os.path.relpath(self.long_canonical_filename(), doc_dir),
                 "/%s" % self.key,
-                "/%s" % self.canonical_filename(),
                 "/%s" % self.long_canonical_filename()
         ]
 
@@ -519,6 +521,8 @@ class Artifact(object):
             # write the workfile to this directory under its canonical name
             previous = self.previous_artifact_filepath
             workfile = os.path.join(tempdir, self.previous_canonical_filename)
+            if not os.path.exists(os.path.dirname(workfile)):
+                os.makedirs(os.path.dirname(workfile))
             shutil.copyfile(previous, workfile)
 
     def canonical_basename(self):
