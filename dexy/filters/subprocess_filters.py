@@ -249,14 +249,18 @@ class ROutputBatchFilter(SubprocessFilter):
     INPUT_EXTENSIONS = ['.txt', '.r', '.R']
     OUTPUT_EXTENSIONS = [".txt"]
     VERSION = "R --version"
+    BINARY = False
+    FINAL = False
 
-class RBatchFilter(DexyFilter):
+class RBatchFilter(SubprocessFilter):
     """Runs R code in batch mode."""
     ALIASES = ['rintbatch']
     EXECUTABLE = 'R CMD BATCH --vanilla --quiet --no-timing'
     INPUT_EXTENSIONS = ['.txt', '.r', '.R']
-    OUTPUT_EXTENSIONS = [".txt"]
+    OUTPUT_EXTENSIONS = [".Rout", '.txt']
     VERSION = "R --version"
+    BINARY = False
+    FINAL = False
 
 class Rd2PdfFilter(SubprocessFilter):
     INPUT_EXTENSIONS = [".Rd"]
