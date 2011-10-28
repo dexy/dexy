@@ -175,23 +175,42 @@ class FooterFilter(DexyFilter):
         inputs = self.artifact.inputs()
 
         if self.artifact.args.has_key('footer'):
+            # allow specifying footer keys
             footer_key = self.artifact.args['footer']
             if not footer_key in inputs:
                 raise Exception("You requested footer %s, but this isn't an input to %s" % (footer_key, self.artifact.document_key))
             footer_doc = inputs[footer_key]
 
         else:
-            # look for the default pattern
-            # TODO optimize this
+            # nothing specified, look for the default pattern
             footer_key = "_footer%s" % self.artifact.ext
-            for i in inputs:
-                if i == footer_key or i.endswith("/%s" % footer_key):
-                    footer_doc = inputs[i]
+
+            path_elements = self.artifact.name.split(os.sep)[:-1]
+            footer_doc = None
+            n = len(path_elements)
+
+            for i in range(0, n+1):
+                # Start in the immediate directory, proceed through parent
+                # directories as far as project root until a footer file is
+                # found.
+                if i < n:
+                    directory = os.path.join(*(path_elements[0:(n-i)]))
+                    try_footer_in_dir = os.path.join(directory, footer_key)
                 else:
-                    for filter_alias in self.DEFAULT_FOOTER_FILTERS:
-                        footer_key_with_filter = "%s|%s" % (footer_key, filter_alias)
-                        if i == footer_key_with_filter or i.endswith("/%s" % footer_key_with_filter):
-                            footer_doc = inputs[i]
+                    try_footer_in_dir = footer_key
+
+                if inputs.has_key(try_footer_in_dir):
+                    footer_doc = inputs[try_footer_in_dir]
+                else:
+                    for pattern in self.DEFAULT_FOOTER_FILTERS:
+                        if pattern:
+                            try_key = "%s|%s" % (try_footer_in_dir, pattern)
+                        if inputs.has_key(try_key):
+                            footer_doc = inputs[try_key]
+                            break
+
+                if footer_doc:
+                    break
 
         if not footer_doc:
             msg_str = "couldn't find a footer like %s as an input to %s (also tried with filters %s)"
@@ -218,23 +237,42 @@ class HeaderFilter(DexyFilter):
         inputs = self.artifact.inputs()
 
         if self.artifact.args.has_key('header'):
+            # allow specifying header keys
             header_key = self.artifact.args['header']
             if not header_key in inputs:
                 raise Exception("You requested header %s, but this isn't an input to %s" % (header_key, self.artifact.document_key))
             header_doc = inputs[header_key]
 
         else:
-            # look for the default pattern
-            # TODO optimize this
+            # nothing specified, look for the default pattern
             header_key = "_header%s" % self.artifact.ext
-            for i in inputs:
-                if i == header_key or i.endswith("/%s" % header_key):
-                    header_doc = inputs[i]
+
+            path_elements = self.artifact.name.split(os.sep)[:-1]
+            header_doc = None
+            n = len(path_elements)
+
+            for i in range(0, n+1):
+                # Start in the immediate directory, proceed through parent
+                # directories as far as project root until a header file is
+                # found.
+                if i < n:
+                    directory = os.path.join(*(path_elements[0:(n-i)]))
+                    try_header_in_dir = os.path.join(directory, header_key)
                 else:
-                    for filter_alias in self.DEFAULT_HEADER_FILTERS:
-                        header_key_with_filter = "%s|%s" % (header_key, filter_alias)
-                        if i == header_key_with_filter or i.endswith("/%s" % header_key_with_filter):
-                            header_doc = inputs[i]
+                    try_header_in_dir = header_key
+
+                if inputs.has_key(try_header_in_dir):
+                    header_doc = inputs[try_header_in_dir]
+                else:
+                    for pattern in self.DEFAULT_HEADER_FILTERS:
+                        if pattern:
+                            try_key = "%s|%s" % (try_header_in_dir, pattern)
+                        if inputs.has_key(try_key):
+                            header_doc = inputs[try_key]
+                            break
+
+                if header_doc:
+                    break
 
         if not header_doc:
             msg_str = "couldn't find a header like %s as an input to %s (also tried with filters %s)"
