@@ -120,7 +120,6 @@ class Document(object):
                         inputs.append(x)
 
             self.inputs = [members_dict[k] for k in self.input_keys]
-        self.log.debug("Setting inputs for %s to: %s" % (self.key(), [i.key() for i in self.inputs]))
 
     def next_filter_alias(self):
         if self.at_last_step():

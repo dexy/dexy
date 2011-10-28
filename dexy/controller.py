@@ -373,9 +373,6 @@ re.compile: %s""" % (args['except'], e))
         self.batch_id = self.db.next_batch_id()
         print "batch id is", self.batch_id
 
-        self.log.debug("About to process config")
-        self.log.debug(self.config)
-
         for path, config in self.config.iteritems():
             ### @export "features-global-args-1"
             if config.has_key("$globals"):
