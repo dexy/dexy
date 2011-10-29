@@ -102,14 +102,21 @@ class Document(object):
                     rel2 = "."
 
                 relpath = os.path.relpath(rel1, rel2)
+                relpath2 = os.path.relpath(rel2, rel1)
 
                 in_parent_dir = not (".." in relpath) and not (relpath == ".")
+
+                in_parent_or_child = (relpath == ".") or ((not ".." in relpath) ^ (not ".." in relpath2))
 
                 higher_priority = (self.priority > doc.priority)
                 equal_priority = (self.priority == doc.priority)
 
                 if specified or higher_priority or (equal_priority and in_parent_dir) or not also_all_inputs:
-                    self.inputs.append(doc)
+                    if self.controller.args['strictinherit'] and not (in_parent_or_child) and not specified:
+                        #self.log.debug("excluding %s from %s because strictinherit is true" % (doc.key(), self.key()))
+                        pass
+                    else:
+                        self.inputs.append(doc)
 
         else:
             inputs = []

@@ -151,10 +151,10 @@ class LatexFilter(DexyFilter):
                 raise Exception("latex error, look for information in %s" %
                                 latex_filename.replace(".tex", ".log"))
             elif proc.returncode > 0:
-                print """A non-critical latex error has occurred running %s,
+                self.log.warn("""A non-critical latex error has occurred running %s,
                 status code returned was %s, look for information in %s""" % (
                 self.artifact.key, proc.returncode,
-                latex_filename.replace(".tex", ".log"))
+                latex_filename.replace(".tex", ".log")))
 
 
         runbibtex = bibtex_command # TODO allow opting out of running bibtex in args

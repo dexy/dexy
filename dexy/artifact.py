@@ -97,6 +97,7 @@ class Artifact(object):
         self.log = logging.getLogger()
         self.mtime = None
         self.state = 'new'
+        self.stdout = None
 
     def is_complete(self):
         return str(self.state) == 'complete'

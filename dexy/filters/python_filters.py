@@ -27,7 +27,7 @@ class UnprocessedDirectoryArchiveFilter(DexyFilter):
         for fn in os.listdir(tgz_dir):
             fp = os.path.join(tgz_dir, fn)
             self.artifact.log.debug("Adding file %s to archive %s." % (fp, af))
-            tar.add(fp)
+            tar.add(fp, arcname=fn)
 
         tar.close()
 
@@ -213,6 +213,7 @@ class FooterFilter(DexyFilter):
                     break
 
         if not footer_doc:
+            self.log.debug("keys for %s: %s" % (self.artifact.key, ", ".join(self.artifact._inputs.keys())))
             msg_str = "couldn't find a footer like %s as an input to %s (also tried with filters %s)"
             msg = msg_str % (footer_key, self.artifact.document_key, ", ".join(self.DEFAULT_FOOTER_FILTERS))
             raise Exception(msg)
@@ -275,6 +276,7 @@ class HeaderFilter(DexyFilter):
                     break
 
         if not header_doc:
+            self.log.debug("keys for %s: %s" % (self.artifact.key, ", ".join(self.artifact._inputs.keys())))
             msg_str = "couldn't find a header like %s as an input to %s (also tried with filters %s)"
             msg = msg_str % (header_key, self.artifact.document_key, ", ".join(self.DEFAULT_HEADER_FILTERS))
             raise Exception(msg)

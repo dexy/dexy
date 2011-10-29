@@ -53,17 +53,30 @@ class Controller(object):
         """
         self.batch_start_time = time.time()
 
-        # Populate the Document class's filter list
+        self.log.debug("populating Document class filter list")
         dexy.document.Document.filter_list = dexy.introspect.filters(self.log)
 
+        self.log.debug("loading config...")
         self.load_config()
+        self.log.debug("finished loading config.")
+
+        self.log.debug("processing config, populating document list...")
         self.process_config()
-        self.docs = [doc.run() for doc in self.members.values()]
+        self.log.debug("finished processing config.")
+
+        if self.args['dryrun']:
+            # just populate the docs list
+            self.docs = self.members.values()
+        else:
+            # run docs, then populate docs list
+            self.docs = [doc.run() for doc in self.members.values()]
 
         self.batch_finish_time = time.time()
         self.batch_elapsed_time = self.batch_finish_time - self.batch_start_time
 
+        self.log.debug("persisting batch info...")
         self.persist()
+        self.log.debug("finished persisting.")
         self.log.debug("finished processing. elapsed time %s" % self.batch_elapsed_time)
 
     def persist(self):
@@ -253,7 +266,7 @@ class Controller(object):
                 if args.has_key('disabled'):
                     if args['disabled']:
                         create = False
-                        print "document %s|%s disabled" % (f, "|".join(filters))
+                        self.log.warn("document %s|%s disabled" % (f, "|".join(filters)))
 
                 inputs = []
                 if args.has_key('inputs'):
@@ -271,7 +284,6 @@ class Controller(object):
                 # the specified pattern, we should create this document and it
                 # will depend on the specified input.
                 if args.has_key('ifinput'):
-                    self.log.debug(f)
                     if isinstance(args['ifinput'], str) or isinstance(args['ifinput'], unicode):
                         ifinputs = [args['ifinput']]
                     else:
@@ -285,7 +297,6 @@ class Controller(object):
                         self.log.debug("evaluating ifinput %s" % ifinput)
                         input_docs = parse_doc(path, ifinput, {})
                         for input_doc in input_docs:
-                            self.log.debug(input_doc.key())
                             inputs.append(input_doc.key())
 
                     if len(input_docs) == 0:
@@ -307,11 +318,11 @@ Please pass a valid Python-style regular expression for
 'except', NOT a glob-style matcher. Error message from
 re.compile: %s""" % (args['except'], e))
                     if re.match(except_re, f):
-                        print "skipping %s for %s as it matches except pattern %s" % (
+                        self.log.warn("skipping %s for %s as it matches except pattern %s" % (
                                 f,
                                 input_directive,
                                 args['except']
-                                )
+                                ))
                         create = False
 
                 if create:
@@ -344,7 +355,6 @@ re.compile: %s""" % (args['except'], e))
                         del args['priority']
 
                     if len(args) > 0:
-                        self.log.debug("args: %s" % args)
                         doc.args = args
                         doc.use_all_inputs = args.has_key('allinputs')
                         for i in inputs:
@@ -394,11 +404,22 @@ re.compile: %s""" % (args['except'], e))
             ### @end
 
         # Determine dependencies
+        total_dependencies = 0
         for doc in self.members.values():
             doc.finalize_inputs(self.members)
+            total_dependencies += len(doc.inputs)
             for input_doc in doc.inputs:
                 depend(doc, input_doc)
 
+        num_members = len(self.members)
+        dep_ratio = float(total_dependencies)/num_members
+
+        print "sorting %s documents into run order, there are %s total dependencies" % (num_members, total_dependencies)
+        print "ratio of dependencies to documents is %0.1f" % (dep_ratio)
+        if dep_ratio > 10:
+            print "if you are experiencing performance problems:"
+            print "call dexy with -dryrun and inspect logs/batch-XXXX.json to debug dependencies"
+            print "consider using -strictinherit or reducing your use of 'allinputs' "
         ordering, leftover_graph_items = topological_sort(range(len(self.members)), self.depends)
         if leftover_graph_items and not ordering:
             # circular references! print debugging help before stopping

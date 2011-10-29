@@ -70,10 +70,15 @@ class Imlib2Thumb(Imlib2Filter):
 
     def do_im(self, image):
         text_top = None
+        width = None
+
         if self.artifact.args.has_key('im-thumb'):
             region_size, start_x, start_y = self.artifact.args['im-thumb']['crop'].split("+")
             region_width, region_height = region_size.split("x")
             text = self.artifact.args['im-thumb']['title']
+
+            if self.artifact.args['im-thumb'].has_key('width'):
+                width = self.artifact.args['im-thumb']['width']
             if self.artifact.args['im-thumb'].has_key('text-top'):
                 text_top = self.artifact.args['im-thumb']['text-top']
         else:
@@ -86,10 +91,11 @@ class Imlib2Thumb(Imlib2Filter):
 
         if not text_top:
             text_top = 10
+        if not width:
+            width=150 #final width
 
-        # TODO specify crop region in params
         image = image.crop((int(start_x), int(start_y)), (int(region_width), int(region_height)))
-        image = image.scale((500, 500))
+        image = image.scale((width, width))
 
         text_left = len(text)/2+30
 

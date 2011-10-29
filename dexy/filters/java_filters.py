@@ -38,10 +38,10 @@ class JythonFilter(dexy.filters.stdout_filters.ProcessStdoutFilter):
         if platform.system() in ('Linux', 'Windows'):
             return True
         elif platform.system() in ('Darwin'):
-            print "The jython dexy filter should not be run on MacOS due to a serious bug. This filter is being disabled."
+            self.log.warn("The jython dexy filter should not be run on MacOS due to a serious bug. This filter is being disabled.")
             return False
         else:
-            print """Can't detect your system. If you see this message please report this to the dexy project maintainer, your platform.system() value is '%s'. The jython dexy filter should not be run on MacOS due to a serious bug.""" % platform.system()
+            self.log.warn("""Can't detect your system. If you see this message please report this to the dexy project maintainer, your platform.system() value is '%s'. The jython dexy filter should not be run on MacOS due to a serious bug.""" % platform.system())
             return True
 
 class JythonInteractiveFilter(dexy.filters.pexpect_filters.ProcessLinewiseInteractiveFilter):
@@ -102,11 +102,10 @@ class JavaFilter(DexyFilter):
         proc = subprocess.Popen(command, shell=True,
                                 cwd=cwd,
                                 stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
+                                stderr=subprocess.STDOUT,
                                 env=env)
         stdout, stderr = proc.communicate()
-        self.log.debug("stdout from compiler:\n%s" % stdout)
-        self.log.debug("stderr from compiler:\n%s" % stderr)
+        self.artifact.stdout = stdout
         if proc.returncode > 0:
             raise Exception("a problem occurred running %s.\ndetails:\n%s" % (
                 command, stderr))
@@ -117,7 +116,7 @@ class JavaFilter(DexyFilter):
         proc = subprocess.Popen(command, shell=True,
                                 cwd=cwd,
                                 stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
+                                stderr=subprocess.STDOUT,
                                 env=env)
         stdout, stderr = proc.communicate()
         if proc.returncode > 0:
@@ -172,7 +171,7 @@ class JavadocsJsonFilter(DexyFilter):
                     superclass_package, _, superclass_name = klass['superclass'].rpartition(".")
                     if j['packages'].has_key(superclass_package):
                         if not j['packages'][superclass_package]['classes'].has_key(superclass_name):
-                            print "Can't find", superclass_name, "in package", superclass_package
+                            self.log.warn("Can't find", superclass_name, "in package", superclass_package)
                         else:
                             superclass = j['packages'][superclass_package]['classes'][superclass_name]
                             if not superclass.has_key('subclasses'):
@@ -185,7 +184,7 @@ class JavadocsJsonFilter(DexyFilter):
                         iface_package, _, iface_name = iface.rpartition(".")
                         if j['packages'].has_key(iface_package):
                             if not j['packages'][iface_package]['classes'].has_key(iface_name):
-                                print "Can't find", iface_name, "in package", iface_package
+                                self.log.warn("Can't find", iface_name, "in package", iface_package)
                             else:
                                 iface_dict = j['packages'][iface_package]['classes'][iface_name]
                                 if not iface_dict.has_key('implementers'):

@@ -24,8 +24,9 @@ def dexy_command(
         danger=False, # whether to allow running remote files
         dbclass=Constants.DEFAULT_DBCLASS, # name of database class to use
         dbfile=Constants.DEFAULT_DBFILE, # name of the database file (it lives in the logs dir)
-        disabletests=False, # Whether to disable the dexy 'test' filter
         directory=".", # the directory to process, you can just process a subdirectory of your project
+        disabletests=False, # Whether to disable the dexy 'test' filter
+        dryrun=False, # if True, just parse config and print batch info, don't run dexy
         exclude="", # directories to exclude from dexy processing
         filters=False, # DEPRECATED just to catch people who use the old dexy --filters syntax
         globals="DEXY_VERSION=%s" % Version.VERSION, # global values to make available within dexy documents, should be KEY=VALUE pairs separated by spaces
@@ -42,6 +43,7 @@ def dexy_command(
         reports=Constants.DEFAULT_REPORTS, # reports to be run after dexy runs, enclose in quotes and separate with spaces
         reset=False, # whether to purge existing artifacts and logs before running Dexy
         setup=False, # DEPRECATED just to catch people who use the old dexy --setup syntax
+        strictinherit=False, # set to true if you want 'allinputs' to only reference items in same dir or a subdir
         version=False # DEPRECATED just to catch people who use the old dexy --version syntax
     ):
     """
@@ -94,8 +96,8 @@ def dexy_command(
         sys.exit(1)
 
     controller = run_dexy(locals())
-    print "batch", controller.batch_id, "is complete"
-    reports_command(reports=reports, logsdir=logsdir, controller=controller)
+    if not dryrun:
+        reports_command(reports=reports, logsdir=logsdir, controller=controller)
 
 def run_dexy(args):
     # validate args and do any conversions required

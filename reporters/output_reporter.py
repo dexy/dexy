@@ -60,7 +60,8 @@ class OutputReporter(Reporter):
                 fn = artifact.canonical_filename()
                 fp = os.path.join(self.REPORTS_DIR, fn)
                 if os.path.exists(fp):
-                    print "WARNING! two or more final artifacts have canonical path %s" % fp
+                    self.log.warn("two or more final artifacts have canonical path %s" % fp)
+                    self.log.warn("most recent is %s" % artifact.key)
                 artifact.write_to_file(fp)
 
 class LongOutputReporter(Reporter):

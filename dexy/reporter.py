@@ -50,7 +50,8 @@ class Reporter(object):
             self.batch_id = self.db.max_batch_id()
 
         self.dbfile = dbfile
-        self.log = dexy.utils.get_log(self.__class__.__name__, logsdir, logfile)
+        self.log = dexy.utils.get_log('dexy.controller', logsdir=logsdir, logfile=logfile)
+        self.log.debug("Reporter %s initialized" % self.__class__.__name__)
         self.logfile = logfile
         self.logsdir = logsdir
 
