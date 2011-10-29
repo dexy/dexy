@@ -74,6 +74,7 @@ class JinjaFilter(DexyFilter):
     """
     ALIASES = ['jinja']
     FINAL = True
+    TAGS = ['template']
     CHANGE_EXTENSIONS = {
         ".mds" : ".md"
         }
@@ -202,10 +203,10 @@ class JinjaFilter(DexyFilter):
         subdirectories = [d for d in os.listdir(os.path.join(os.curdir, doc_dir)) if os.path.isdir(os.path.join(os.curdir, doc_dir, d))]
 
         for key, a in self.artifact.inputs().items():
-            if not a.is_loaded() and not a.binary_output:
-                self.log.debug("Loading artifact %s" % key)
-                print "loading artifact", key
-                a.load() # reload
+#            if not a.is_loaded() and not a.binary_output:
+#                self.log.debug("Loading artifact %s" % key)
+#                print "loading artifact", key
+#                a.load() # reload
 
             keys = a.relative_refs(self.artifact.name)
 

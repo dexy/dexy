@@ -12,11 +12,12 @@ class DexyFilter(object):
     specify INPUT_EXTENSIONS and OUTPUT_EXTENSIONS. You must define unique
     ALIASES in each handler, use java-style namespacing, e.g. com.abc.alias
     """
-    INPUT_EXTENSIONS = [".*"]
-    OUTPUT_EXTENSIONS = [".*"]
     ALIASES = ['dexy']
     BINARY = False
     FINAL = None
+    INPUT_EXTENSIONS = [".*"]
+    OUTPUT_EXTENSIONS = [".*"]
+    TAGS = [] # Descriptive keywords about the filter.
 
     @classmethod
     def filters(self):

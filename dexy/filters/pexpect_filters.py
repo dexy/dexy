@@ -60,11 +60,12 @@ class ProcessLinewiseInteractiveFilter(DexyFilter):
 #            output_dict[k] = ''.join([c for c in self.LINE_ENDING.join(lines) if ord(c) > 31 or ord(c) in [9, 10]])
             output_dict[k] = self.LINE_ENDING.join(lines)
 
-        record_vars = self.artifact.args.has_key('record_vars') and self.artifact.args['record_vars']
+        record_vars = self.artifact.args.has_key('record-vars') and self.artifact.args['record-vars']
         if record_vars:
             if not self.SAVE_VARS_TO_JSON_CMD:
                 raise Exception("Can't record vars since SAVE_VARS_TO_JSON_CMD not set.")
             artifact = self.artifact.add_additional_artifact(self.artifact.key + "-vars", 'json')
+            self.log.debug("Added additional artifact %s (hashstring %s) to store variables" % (artifact.key, artifact.hashstring))
             cmd = self.SAVE_VARS_TO_JSON_CMD % artifact.filename()
 
             section_transcript = start
@@ -77,6 +78,7 @@ class ProcessLinewiseInteractiveFilter(DexyFilter):
                 section_transcript += proc.before
                 start = proc.after
 
+            # This adds the code processing to the section transcript for display or debugging.
             output_dict['dexy--save-vars'] = section_transcript
 
         try:
@@ -91,12 +93,16 @@ want dexy to raise errors on failed scripts then pass the --ignore-errors option
         return output_dict
 
 class PythonLinewiseInteractiveFilter(ProcessLinewiseInteractiveFilter):
+    ALIASES = ['pycon']
     EXECUTABLE = 'python'
-    VERSION = 'python --version'
     INPUT_EXTENSIONS = [".txt", ".py"]
     OUTPUT_EXTENSIONS = [".pycon"]
-    ALIASES = ['pycon']
-    SAVE_VARS_TO_JSON_CMD = """dexy__vars_file = open("%s", "w")
+    TAGS = ['python', 'interpreter', 'language']
+    VERSION = 'python --version'
+
+    SAVE_VARS_TO_JSON_CMD = """
+import json
+dexy__vars_file = open("%s", "w")
 dexy__x = {}
 for dexy__k, dexy__v in locals().items():
     dexy__x[dexy__k] = str(dexy__v)
@@ -109,13 +115,14 @@ class RLinewiseInteractiveFilter(ProcessLinewiseInteractiveFilter):
     """
     Runs R
     """
+    ALIASES = ['r', 'rint']
     EXECUTABLE = "R --quiet --vanilla"
-    VERSION = "R --version"
     INPUT_EXTENSIONS = ['.txt', '.r', '.R']
     OUTPUT_EXTENSIONS = ['.Rout']
     PROMPT = [">", "+"]
+    TAGS = ['r', 'interpreter', 'language']
     TRIM_PROMPT = ">"
-    ALIASES = ['r', 'rint']
+    VERSION = "R --version"
     SAVE_VARS_TO_JSON_CMD = """
 if ("rjson" %%in%% installed.packages()) {
     library(rjson)
