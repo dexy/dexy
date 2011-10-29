@@ -75,11 +75,9 @@ class JavaFilter(DexyFilter):
         else:
             main_method = os.path.splitext(os.path.basename(self.artifact.name))[0]
 
+        env = os.environ
         if self.artifact.args.has_key('env'):
-            env = os.environ
             env.update(self.artifact.args['env'])
-        else:
-            env = None
 
         # Create a temp dir to hold source + compiled files, since we need .java files
         # named with their original names.
@@ -92,11 +90,9 @@ class JavaFilter(DexyFilter):
         if env.has_key("CLASSPATH"):
             # need to add 1 level to classpath since we are working in a subdir of artifacts/
             env['CLASSPATH'] = ":".join(["../%s" % x for x in env['CLASSPATH'].split(":")])
-        else:
-            env['CLASSPATH'] = None
 
         cp = "."
-        if env['CLASSPATH']:
+        if env.has_key('CLASSPATH'):
                 cp = "%s:%s" % (cp, env['CLASSPATH'])
 
         cwd = self.artifact.temp_dir()

@@ -92,7 +92,7 @@ class TestFilter(DexyFilter):
     ALIASES = ['test']
 
     def process(self):
-        if not self.artifact.controller_args.run_tests:
+        if self.artifact.controller_args['disabletests']:
             print "tests disabled, not running test", self.artifact.key
             self.artifact.data_dict = self.artifact.input_data_dict
             return False

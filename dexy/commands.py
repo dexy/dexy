@@ -24,6 +24,7 @@ def dexy_command(
         danger=False, # whether to allow running remote files
         dbclass=Constants.DEFAULT_DBCLASS, # name of database class to use
         dbfile=Constants.DEFAULT_DBFILE, # name of the database file (it lives in the logs dir)
+        disabletests=False, # Whether to disable the dexy 'test' filter
         directory=".", # the directory to process, you can just process a subdirectory of your project
         exclude="", # directories to exclude from dexy processing
         filters=False, # DEPRECATED just to catch people who use the old dexy --filters syntax
