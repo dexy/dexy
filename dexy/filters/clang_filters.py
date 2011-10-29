@@ -29,11 +29,10 @@ class ClangFilter(DexyFilter):
         proc = subprocess.Popen(command, shell=True,
                                 cwd=self.artifact.artifacts_dir,
                                 stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
+                                stderr=subprocess.STDOUT,
                                 )
         stdout, stderr = proc.communicate()
         self.artifact.data_dict['1'] = stdout
-        self.artifact.stdout += stderr
 
 class ClangInteractiveFilter(DexyFilter):
     """Compiles C code using clang compiler, then runs compiled program, reading

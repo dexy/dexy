@@ -48,6 +48,17 @@
                     <p>This is a logfile to help you understand how dexy has processed your files and to assist with troubleshooting.</p>
                     <br />
                     <br />
+                    <h3>Timing</h3>
+                    <p>The total elapsed time for batch {{ batch_id }} was {{ batch_info.elapsed }}.</p>
+                    <p>A total of {{ total_artifacts }} artifacts were created, of which {{ base_artifacts }} were base artifacts (the initial stage of processing), {{ cached_artifacts }} were cached from previous runs, and {{ run_artifacts }} were run. The total time spent running artifacts was {{ total_run_elapsed }}, or {{ "%0.2f%%" % (float(total_run_elapsed) / float(batch_info.elapsed) * 100) }} of the total batch time.</p>
+<pre>
+{% for filter_class, times in run_time_by_key.iteritems() -%}
+{{ filter_class }}
+{% for t in times -%}
+&nbsp;&nbsp;&nbsp;{{ "%0.4f" % t }}
+{% endfor -%}
+{% endfor -%}
+</pre>
                     <h3>Config</h3>
                     <p>This is the configuration which was used for this run:</p>
                     {{ dexy_config }}
@@ -80,18 +91,14 @@
                     <h4>Artifacts</h4>
                     <table style="width: 800px; border: thin solid black; border-collapse: collapse;">
                         <tr><th>Key</th><th>Link</th><th>Final</th><th>Elapsed</th><th>Run Type</th><th>Sections</th></tr>
-                        {% for h in doc.artifacts -%}
+                        {% for h, source, elapsed in doc.artifacts -%}
                         {% set a = artifacts[h] -%}
                         <tr>
                             <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">{{ a.key }}</td>
                             <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;"><a href="../../{{ a.filepath() }}">{{ a.filepath() }}</a></td>
                             <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">{{ a.final }}</td>
-                            {% if a.elapsed -%}
-                            <td style="padding-left: 10px; padding-right: 10px; border:thin solid black; text-align:center;">{{ "%0.4f" % a.elapsed }}</td>
-                            {% else -%}
-                            <td style="padding-left: 10px; padding-right: 10px; border:thin solid black; text-align:center;"></td>
-                            {% endif -%}
-                            <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">{{ a.run_type }}</td>
+                            <td style="padding-left: 10px; padding-right: 10px; border:thin solid black; text-align:center;">{{ "%0.4f" % elapsed }}</td>
+                            <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">{{ source }}</td>
                             <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">
                                 {% if a.data_dict -%}
                                 {% for k in a.data_dict.keys() -%}
@@ -103,7 +110,7 @@
                         {% endfor -%}
                     </table>
                     <br />
-                    {% for h in doc.artifacts -%}
+                    {% for h, source, elapsed in doc.artifacts -%}
                     {% set a = artifacts[h] -%}
                     {% if a.stdout -%}
                     <p><b>{{ a.key }} stdout</b></p>

@@ -92,6 +92,7 @@ class Controller(object):
         Dict of info to save
         """
         return {
+            "id" : self.batch_id,
             "config" : self.config,
             "args" : self.args,
             "docs" : dict((doc.key(), doc.document_info()) for doc in self.docs),

@@ -31,7 +31,7 @@ class Document(object):
 
     def document_info(self):
         return {
-            "artifacts" : [a.hashstring for a in self.artifacts],
+            "artifacts" : [[a.hashstring, a.source, a.elapsed] for a in self.artifacts],
             "log" : self.logstream.getvalue(),
             "args" : self.args,
             "inputs" : [doc.key() for doc in self.inputs]

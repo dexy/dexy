@@ -22,7 +22,6 @@ class Artifact(object):
         'binary_output',
         'created_by',
         'document_key',
-        'elapsed',
         'ext',
         'final',
         'initial',
@@ -74,7 +73,6 @@ class Artifact(object):
         self.source = None
         self.start_time = None
         self.finish_time = None
-        self.elapsed = None
 
         self.is_last = False
         self.artifact_class_source = self.__class__.SOURCE_CODE
@@ -195,7 +193,6 @@ class Artifact(object):
         # added anywhere.
         for k, a in previous_artifact.inputs().iteritems():
             self._inputs.update(a.inputs())
-
         self.binary_input = previous_artifact.binary_output
         self.input_data_dict = previous_artifact.data_dict
         self.input_ext = previous_artifact.ext
@@ -324,8 +321,6 @@ class Artifact(object):
             self.output_hash = h.hexdigest()
 
             self.state = 'complete'
-            self.finish_time = time.time()
-            self.elapsed = self.finish_time - self.start_time
             self.source = 'run'
             self.save()
         else:
@@ -341,6 +336,8 @@ class Artifact(object):
                     a.batch_id = self.batch_id
                     self.db.append_artifact(a)
 
+        self.finish_time = time.time()
+        self.elapsed = self.finish_time - self.start_time
         self.db.update_artifact(self)
 
     def add_additional_artifact(self, key_with_ext, ext):
