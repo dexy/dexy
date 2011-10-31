@@ -17,7 +17,7 @@ class ProcessLinewiseInteractiveFilter(DexyFilter):
     LINE_ENDING = "\r\n"
     IGNORE_ERRORS = False # Allow overriding default per-filter.
     SAVE_VARS_TO_JSON_CMD = None
-    ALIASES = None
+    ALIASES = ['processlinewiseinteractivefilter']
 
     def process_dict(self, input_dict):
         output_dict = OrderedDict()

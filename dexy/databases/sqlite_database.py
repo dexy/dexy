@@ -51,6 +51,7 @@ class SqliteDatabase(dexy.database.Database):
         self.whitelist_keys = sorted(Constants.ARTIFACT_HASH_WHITELIST)
         self.field_names = ['id'] + self.field_keys + self.whitelist_keys
         self.create_table()
+        self.batch_orders = {}
 
     def persist(self):
         self.conn.commit()
@@ -61,11 +62,19 @@ class SqliteDatabase(dexy.database.Database):
     def next_batch_id(self):
         return self.max_batch_id() + 1
 
-    def max_batch_order(self, batch_id):
-        return self.conn.execute("select max(batch_order) from artifacts where batch_id = ?", (batch_id,)).fetchone()[0] or 0
+    def max_batch_order(self, batch_id, incr=False):
+        # using a hash for calculating batch order since hitting the DB each
+        # time is too slow. should be getting this from topo sort? should be
+        # per-artifact rather than per-document? This isn't used for anything
+        # currently, so not a big deal.
+        if not self.batch_orders.has_key(batch_id):
+            self.batch_orders[batch_id] = 0
+        elif incr:
+            self.batch_orders[batch_id] += 1
+        return self.batch_orders[batch_id]
 
     def next_batch_order(self, batch_id):
-        return self.max_batch_order(batch_id) + 1
+        return self.max_batch_order(batch_id, True)
 
     def get_attributes_for_artifact(self, artifact):
         hd = artifact.hash_dict()

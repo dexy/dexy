@@ -31,6 +31,7 @@ def dexy_command(
         filters=False, # DEPRECATED just to catch people who use the old dexy --filters syntax
         globals="DEXY_VERSION=%s" % Version.VERSION, # global values to make available within dexy documents, should be KEY=VALUE pairs separated by spaces
         help=False, # DEPRECATED just to catch people who use the old dexy --help syntax
+        hashfunction='md5', # What hash function to use, set to crc32 or adler32 for more speed, less reliability
         ignore=False, # whether to ignore nonzero exit status or raise an error - may not be supported by all filters
         local=False, # use cached local copies of remote URLs, faster but might not be up to date
         logfile=Constants.DEFAULT_LFILE, # name of log file

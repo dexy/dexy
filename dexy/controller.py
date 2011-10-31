@@ -20,6 +20,7 @@ class Controller(object):
         self.args = args # arguments from command line
         self.config = {} # config to be processed from .dexy files
         self.docs = []
+        self.timing = []
 
         self.batch_start_time = None
         self.batch_finish_time = None
@@ -52,17 +53,24 @@ class Controller(object):
         This does all the work.
         """
         self.batch_start_time = time.time()
+        start = self.batch_start_time
 
         self.log.debug("populating Document class filter list")
         dexy.document.Document.filter_list = dexy.introspect.filters(self.log)
+        self.timing.append(("populate-filter-list", time.time() - start))
+        start = time.time()
 
         self.log.debug("loading config...")
         self.load_config()
         self.log.debug("finished loading config.")
+        self.timing.append(("load-config", time.time() - start))
+        start = time.time()
 
         self.log.debug("processing config, populating document list...")
         self.process_config()
         self.log.debug("finished processing config.")
+        self.timing.append(("process-config", time.time() - start))
+        start = time.time()
 
         if self.args['dryrun']:
             # just populate the docs list
@@ -70,6 +78,7 @@ class Controller(object):
         else:
             # run docs, then populate docs list
             self.docs = [doc.run() for doc in self.members.values()]
+        self.timing.append(("run-docs", time.time() - start))
 
         self.batch_finish_time = time.time()
         self.batch_elapsed_time = self.batch_finish_time - self.batch_start_time
@@ -98,7 +107,8 @@ class Controller(object):
             "docs" : dict((doc.key(), doc.document_info()) for doc in self.docs),
             "start_time" : self.batch_start_time,
             "finish_time" : self.batch_finish_time,
-            "elapsed" : self.batch_elapsed_time
+            "elapsed" : self.batch_elapsed_time,
+            "timing" : self.timing
             }
 
     def config_for_directory(self, path):
@@ -413,14 +423,18 @@ re.compile: %s""" % (args['except'], e))
                 depend(doc, input_doc)
 
         num_members = len(self.members)
-        dep_ratio = float(total_dependencies)/num_members
+        if num_members > 0:
+            dep_ratio = float(total_dependencies)/num_members
+        else:
+            dep_ratio = None
 
         print "sorting %s documents into run order, there are %s total dependencies" % (num_members, total_dependencies)
-        print "ratio of dependencies to documents is %0.1f" % (dep_ratio)
-        if dep_ratio > 10:
-            print "if you are experiencing performance problems:"
-            print "call dexy with -dryrun and inspect logs/batch-XXXX.json to debug dependencies"
-            print "consider using -strictinherit or reducing your use of 'allinputs' "
+        if dep_ratio:
+            print "ratio of dependencies to documents is %0.1f" % (dep_ratio)
+            if dep_ratio > 10:
+                print "if you are experiencing performance problems:"
+                print "call dexy with -dryrun and inspect logs/batch-XXXX.json to debug dependencies"
+                print "consider using -strictinherit or reducing your use of 'allinputs' "
         ordering, leftover_graph_items = topological_sort(range(len(self.members)), self.depends)
         if leftover_graph_items and not ordering:
             # circular references! print debugging help before stopping

@@ -60,13 +60,6 @@ def test_run():
         c.process_config()
         assert c.members.has_key("simple.py|py")
         assert isinstance(c.members["simple.py|py"], Document)
-        assert sorted(c.batch_info().keys()) == [
-                "args",
-                "config",
-                "docs",
-                "elapsed",
-                "finish_time",
-                "start_time"]
 
 def test_docs_with_no_filters():
     with tempdir():
@@ -85,4 +78,7 @@ def test_docs_with_no_filters():
                 "docs",
                 "elapsed",
                 "finish_time",
-                "start_time"]
+                "id",
+                "start_time",
+                "timing"
+                ]

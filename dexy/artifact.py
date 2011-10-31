@@ -3,6 +3,7 @@ from dexy.sizeof import asizeof
 from dexy.version import Version
 from ordereddict import OrderedDict
 import dexy.introspect
+import json
 import glob
 import hashlib
 import inspect
@@ -13,6 +14,7 @@ import stat
 import sys
 import time
 import traceback
+import zlib
 
 class Artifact(object):
     HASH_WHITELIST = Constants.ARTIFACT_HASH_WHITELIST
@@ -24,6 +26,7 @@ class Artifact(object):
         'document_key',
         'ext',
         'final',
+        'hashfunction',
         'initial',
         'is_last',
         'key',
@@ -32,7 +35,6 @@ class Artifact(object):
         'state',
         'stdout'
     ]
-
 
     BINARY_EXTENSIONS = [
         '.gif',
@@ -48,52 +50,41 @@ class Artifact(object):
         '.swf'
     ]
 
-    @classmethod
-    def artifacts(self):
-        """Lists available artifact classes."""
-        pass
-
     def __init__(self):
         if not hasattr(self.__class__, 'FILTERS'):
             self.__class__.FILTERS = dexy.introspect.filters(Constants.NULL_LOGGER)
-        if not hasattr(self.__class__, 'SOURCE_CODE'):
-            artifact_class_source = inspect.getsource(self.__class__)
-            artifact_py_source = inspect.getsource(Artifact)
-            self.__class__.SOURCE_CODE = hashlib.md5(artifact_class_source + artifact_py_source).hexdigest()
 
         self._inputs = {}
         self.additional = None
         self.args = {}
         self.args['globals'] = {}
-        self.created_by = None
-        self.controller_args = {}
-        self.controller_args['globals'] = {}
-        self.ext = None
-        self.name = None
-        self.source = None
-        self.start_time = None
-        self.finish_time = None
-
-        self.is_last = False
-        self.artifact_class_source = self.__class__.SOURCE_CODE
         self.artifacts_dir = 'artifacts' # TODO don't hard code
         self.batch_id = None
         self.batch_order = None
         self.binary_input = None
         self.binary_output = None
+        self.controller_args = {}
+        self.controller_args['globals'] = {}
+        self.created_by = None
         self.ctime = None
         self.data_dict = OrderedDict()
         self.dexy_version = Version.VERSION
         self.dirty = False
         self.document_key = None
         self.elapsed = 0
+        self.ext = None
         self.final = None
+        self.finish_time = None
         self.initial = None
         self.inode = None
         self.input_data_dict = OrderedDict()
+        self.is_last = False
         self.key = None
         self.log = logging.getLogger()
         self.mtime = None
+        self.name = None
+        self.source = None
+        self.start_time = None
         self.state = 'new'
         self.stdout = None
 
@@ -175,11 +166,15 @@ class Artifact(object):
         # cache filter class source code so it only has to be calculated once
         if not hasattr(self.filter_class, 'SOURCE_CODE'):
             filter_class_source = inspect.getsource(self.filter_class)
-            self.filter_class.SOURCE_CODE = hashlib.md5(filter_class_source).hexdigest()
+            self.filter_class.SOURCE_CODE = self.compute_hash(filter_class_source)
+        if not hasattr(self.filter_class, 'VERSION'):
+            filter_version = self.filter_class.version(self.log)
+            self.filter_class.VERSION = filter_version
+
 
         self.filter_name = self.filter_class.__name__
         self.filter_source = self.filter_class.SOURCE_CODE
-        self.filter_version = self.filter_class.version(self.log)
+        self.filter_version = self.filter_class.VERSION
 
         if self.final is None:
             self.final = self.filter_class.FINAL
@@ -227,6 +222,7 @@ class Artifact(object):
         Create an Artifact instance and load all information needed to
         calculate its hashstring.
         """
+        start = time.time()
         artifact = klass()
         artifact.key = artifact_key
         artifact.filter_class = filter_class
@@ -234,6 +230,7 @@ class Artifact(object):
         # Add references for convenience
         artifact.artifacts_dir = doc.artifacts_dir
         artifact.controller_args = doc.controller.args
+        artifact.hashfunction = doc.controller.args['hashfunction']
         artifact.db = doc.db
         artifact.doc = doc
         artifact.log = doc.log
@@ -259,20 +256,10 @@ class Artifact(object):
             artifact.setup_initial()
 
         artifact.set_hashstring()
-
         return artifact
 
     def run(self):
-        self.start_time = time.time()
-
-        if self.doc.profmem:
-            print "  size of artifact", asizeof(self)
-            tot = 0
-            for x in sorted(self.__dict__.keys()):
-                y = self.__dict__[x]
-                tot += asizeof(y)
-                print "  ", x, asizeof(y)
-            print "  tot", tot
+        start = time.time()
 
         if self.controller_args['nocache'] or not self.is_complete():
             # We have to actually run things...
@@ -336,8 +323,7 @@ class Artifact(object):
                     a.batch_id = self.batch_id
                     self.db.append_artifact(a)
 
-        self.finish_time = time.time()
-        self.elapsed = self.finish_time - self.start_time
+        self.elapsed = time.time() - start
         self.db.update_artifact(self)
 
     def add_additional_artifact(self, key_with_ext, ext):
@@ -349,6 +335,7 @@ class Artifact(object):
         else:
             new_artifact.ext = ".%s" % ext
         new_artifact.final = True
+        new_artifact.hashfunction = self.hashfunction
         new_artifact.additional = True
         new_artifact.set_binary_from_ext()
         new_artifact.artifacts_dir = self.artifacts_dir
@@ -389,17 +376,40 @@ class Artifact(object):
     def is_loaded(self):
         return hasattr(self, 'data_dict') and len(self.data_dict) > 0
 
+    def compute_hash(self, text):
+        if self.hashfunction == 'md5':
+            h = hashlib.md5(str(text)).hexdigest()
+        elif self.hashfunction == 'crc32':
+            h =str(zlib.crc32(str(text)) & 0xffffffff )
+        elif self.hashfunction == 'adler32':
+            h =str(zlib.adler32(str(text)) & 0xffffffff )
+        else:
+            raise Exception("unexpected hash function %s" % self.hashfunction)
+        return h
+
+    def input_hashes(self):
+        """
+        Returns an OrderedDict of key, hashstring for each input artifact, sorted by key.
+        """
+        return OrderedDict((k, str(self.inputs()[k].hashstring)) for k in sorted(self.inputs()))
+
     def hash_dict(self):
-        """Return the elements for calculating the hashstring."""
+        """
+        Calculate and cache the elements used to compute the hashstring
+        """
+        if not hasattr(self.__class__, 'SOURCE_CODE'):
+            artifact_class_source = inspect.getsource(self.__class__)
+            artifact_py_source = inspect.getsource(Artifact)
+            self.__class__.SOURCE_CODE = self.compute_hash(artifact_class_source + artifact_py_source)
+
+        self.artifact_class_source = self.__class__.SOURCE_CODE
+
         if self.dirty:
             self.dirty_string = time.gmtime()
 
         hash_dict = OrderedDict()
 
-        hash_dict['inputs'] = OrderedDict()
-        sorted_input_keys = sorted(self.inputs().keys())
-        for k in sorted_input_keys:
-            hash_dict['inputs'][str(k)] = str(self.inputs()[k].hashstring)
+        hash_dict['inputs'] = self.input_hashes()
 
         for k in self.HASH_WHITELIST:
             if self.__dict__.has_key(k):
@@ -408,16 +418,27 @@ class Artifact(object):
                     hash_v = OrderedDict()
                     for k1 in sorted(v.keys()):
                         v1 = v[k1]
-                        hash_v[str(k1)] = hashlib.md5(str(v1)).hexdigest()
+                        try:
+                            if len(str(v1)) > 50:
+                                raise Exception()
+                            json.dumps(v1)
+                            hash_v[str(k1)] = v1
+                        except Exception as e:
+                            # Use a hash if we will have problems saving to JSON
+                            # or if the data is large (don't want to clutter up the DB,
+                            # makes it harder to spot differences)
+                            hash_v[str(k1)] = self.compute_hash(v1)
                 else:
                     hash_v = str(v)
                 hash_dict[str(k)] = hash_v
-
         return hash_dict
 
     def set_hashstring(self):
+        if hasattr(self, 'hashstring'):
+            raise Exception("setting hashstring twice")
+
         hash_data = str(self.hash_dict())
-        self.hashstring = hashlib.md5(hash_data).hexdigest()
+        self.hashstring = self.compute_hash(hash_data)
 
         debug_me = False
         if debug_me:

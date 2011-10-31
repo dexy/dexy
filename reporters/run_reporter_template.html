@@ -49,14 +49,26 @@
                     <br />
                     <br />
                     <h3>Timing</h3>
-                    <p>The total elapsed time for batch {{ batch_id }} was {{ batch_info.elapsed }}.</p>
+                    <p>The total elapsed time for batch {{ batch_id }} was {{ "%0.2f" % batch_info.elapsed }} ({{ "%0.2f" % (float(batch_info.elapsed)/60)}} minutes).</p>
                     <p>A total of {{ total_artifacts }} artifacts were created, of which {{ base_artifacts }} were base artifacts (the initial stage of processing), {{ cached_artifacts }} were cached from previous runs, and {{ run_artifacts }} were run. The total time spent running artifacts was {{ total_run_elapsed }}, or {{ "%0.2f%%" % (float(total_run_elapsed) / float(batch_info.elapsed) * 100) }} of the total batch time.</p>
+
 <pre>
-{% for filter_class, times in run_time_by_key.iteritems() -%}
-{{ filter_class }}
-{% for t in times -%}
-&nbsp;&nbsp;&nbsp;{{ "%0.4f" % t }}
+Controller Times:
+{% for name, elapsed in batch_info['timing'] -%}
+&nbsp;&nbsp;{{ "%0.3f" % elapsed }} {{ name }}
 {% endfor -%}
+&nbsp;
+&nbsp;
+
+Filter Run Times:
+{% for filter_class in sorted(run_time_by_key) -%}
+{% set times = run_time_by_key[filter_class] -%}
+{{ filter_class }}
+n {{ len(times) }}
+min: {{ min(times) }}
+max: {{ max(times) }}
+avg: {{ float(sum(times))/len(times) }}
+
 {% endfor -%}
 </pre>
                     <h3>Config</h3>
@@ -67,8 +79,13 @@
 
                     {% for key, doc in docs.iteritems() -%}
                     <hr />
-
                     <h2 id="{{ key }}">{{ key }}</h2>
+<pre>
+Total elapsed time: {{ "%0.3f" % doc.elapsed }}
+{% for name, elapsed in doc['timing'] -%}
+&nbsp;&nbsp;{{ "%0.3f" % elapsed }} {{ name }}
+{% endfor -%}
+</pre>
                     {% if doc.args.__len__() > 0 %}
                     <br />
                     <h4>Arguments</h4>

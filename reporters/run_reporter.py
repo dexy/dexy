@@ -47,9 +47,12 @@ class RunReporter(Reporter):
 
                 if hasattr(artifact, 'filter_name'):
                     filter_class = artifact.filter_name
-                    if not hasattr(run_time_by_key, filter_class):
+                    if not run_time_by_key.has_key(filter_class):
                         run_time_by_key[filter_class] = []
-                    run_time_by_key[filter_class].append(elapsed)
+
+                    elapsed_array = run_time_by_key[filter_class]
+                    elapsed_array.append(elapsed)
+                    run_time_by_key[filter_class] = elapsed_array
 
                 total_artifacts += 1
                 total_elapsed += elapsed
@@ -81,6 +84,10 @@ class RunReporter(Reporter):
 
         env_data['sorted'] = sorted
         env_data['float'] = float
+        env_data['min'] = min
+        env_data['max'] = max
+        env_data['len'] = len
+        env_data['sum'] = sum
 
         env = Environment()
         env.loader = FileSystemLoader(os.path.dirname(__file__))

@@ -7,6 +7,7 @@ import os
 import re
 import shutil
 import tarfile
+import time
 import uuid
 import zipfile
 
@@ -27,7 +28,7 @@ class UnprocessedDirectoryArchiveFilter(DexyFilter):
         for fn in os.listdir(tgz_dir):
             fp = os.path.join(tgz_dir, fn)
             self.artifact.log.debug("Adding file %s to archive %s." % (fp, af))
-            tar.add(fp, arcname=fn)
+            tar.add(fp, arcname=os.path.join(tgz_dir, fn))
 
         tar.close()
 
@@ -171,8 +172,10 @@ class FooterFilter(DexyFilter):
     DEFAULT_FOOTER_FILTERS = ['dexy', 'jinja']
 
     def process_text(self, input_text):
+        start = time.time()
         footer_doc = None
         inputs = self.artifact.inputs()
+        footer_input_keys = [k for k in self.artifact.inputs().keys() if "footer" in k]
 
         if self.artifact.args.has_key('footer'):
             # allow specifying footer keys
@@ -199,13 +202,13 @@ class FooterFilter(DexyFilter):
                 else:
                     try_footer_in_dir = footer_key
 
-                if inputs.has_key(try_footer_in_dir):
+                if try_footer_in_dir in footer_input_keys:
                     footer_doc = inputs[try_footer_in_dir]
                 else:
                     for pattern in self.DEFAULT_FOOTER_FILTERS:
                         if pattern:
                             try_key = "%s|%s" % (try_footer_in_dir, pattern)
-                        if inputs.has_key(try_key):
+                        if try_key in footer_input_keys:
                             footer_doc = inputs[try_key]
                             break
 
@@ -219,7 +222,8 @@ class FooterFilter(DexyFilter):
             raise Exception(msg)
 
         self.log.debug("using %s as footer for %s" % (footer_doc.key, self.artifact.document_key))
-        return "%s\n%s" % (input_text, footer_doc.output_text())
+        footer_text = footer_doc.output_text()
+        return "%s\n%s" % (input_text, footer_text)
 
 class HeaderFilter(DexyFilter):
     """

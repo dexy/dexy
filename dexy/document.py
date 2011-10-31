@@ -8,8 +8,9 @@ import hashlib
 import json
 import logging
 import os
-import urllib2
 import shutil
+import time
+import urllib2
 
 try:
     import git
@@ -21,20 +22,24 @@ class Document(object):
 
     def __init__(self):
         # initialize attributes
-        self.inputs = []
-        self.input_keys = []
         self.artifacts = []
-        self.use_all_inputs = False
-        self.priority = 10
+        self.elapsed = 0
+        self.input_keys = []
+        self.inputs = []
         self.log = Constants.NULL_LOGGER # proper logging set up after we know our name
         self.logstream = StringIO.StringIO()
+        self.priority = 10
+        self.timing = []
+        self.use_all_inputs = False
 
     def document_info(self):
         return {
             "artifacts" : [[a.hashstring, a.source, a.elapsed] for a in self.artifacts],
             "log" : self.logstream.getvalue(),
             "args" : self.args,
-            "inputs" : [doc.key() for doc in self.inputs]
+            "inputs" : [doc.key() for doc in self.inputs],
+            "elapsed" : self.elapsed,
+            "timing" : self.timing
         }
 
     def set_controller(self, controller):
@@ -89,6 +94,7 @@ class Document(object):
         Called during setup, this method resolves which other docs this doc
         will depend on (have as inputs).
         """
+        start = time.time()
         if self.use_all_inputs:
             for doc in members_dict.values():
                 also_all_inputs = doc.use_all_inputs
@@ -127,6 +133,9 @@ class Document(object):
                         inputs.append(x)
 
             self.inputs = [members_dict[k] for k in self.input_keys]
+
+        elapsed = time.time() - start
+        self.timing.append(("finalize-inputs", elapsed))
 
     def next_filter_alias(self):
         if self.at_last_step():
@@ -296,27 +305,18 @@ class Document(object):
 
     def run(self):
         self.step = 0
+        start = time.time()
+        time_start = start
+
+        self.log.info("(starting step %s) [run] %s -> %s" % \
+                 (self.step, self.name, self.name))
 
         artifact = self.create_initial_artifact()
         self.artifacts.append(artifact)
         self.last_artifact = artifact
-
         artifact_key = artifact.key
-        self.log.info("(step %s) [run] %s -> %s" % \
-                 (self.step, artifact_key, artifact.filename()))
-
-        if self.profmem:
-            profile_memory(self.controller, "document-%s-step-%s" % (self.key(), self.step))
-            print
-            print "size of controller", asizeof(self.controller)
-            print "size of text of", artifact.key, ":", asizeof(artifact.output_text())
-            print "size of document", asizeof(self)
-            tot = 0
-            for x in sorted(self.__dict__.keys()):
-                y = self.__dict__[x]
-                tot += asizeof(y)
-                print x, asizeof(y)
-            print "tot", tot
+        self.timing.append(("create-initial-artifact", time.time() - start))
+        start = time.time()
 
         for f in self.filters:
             previous_artifact = artifact
@@ -325,23 +325,26 @@ class Document(object):
 
             FilterClass = self.get_filter_for_alias(f)
             artifact = self.artifact_class.setup(self, artifact_key, FilterClass, previous_artifact)
+            self.timing.append(("setup-step-%s" % self.step, time.time() - start))
+            start=time.time()
 
-            self.log.info("(step %s) [run] %s -> %s" % \
+            self.log.info("(starting step %s) [run] %s -> %s" % \
                      (self.step, artifact_key, artifact.filename()))
 
             artifact.run()
+            self.timing.append(("run-step-%s" % self.step, time.time() - start))
+            start = time.time()
 
             self.last_artifact = artifact
             self.artifacts.append(artifact)
-
-            if self.profmem:
-                if artifact.data_dict:
-                    print "size of text of", artifact.key, "in", self.key(), ":", asizeof(artifact.output_text())
-          	    profile_memory(self.controller, "document-%s-step-%s" % (self.key(), self.step))
+            self.timing.append(("append-step-%s" % self.step, time.time() - start))
+            start = time.time()
 
         self.last_artifact.is_last = True
         self.last_artifact.save_meta()
         self.db.append_artifacts(self.artifacts)
+        self.timing.append(("append-artifacts", time.time() - start))
+        start = time.time()
 
         # Make sure all additional inputs are saved.
         for k, a in artifact.inputs().iteritems():
@@ -362,4 +365,6 @@ class Document(object):
                     but its artifact file (%s) does not exist. Something may have gone wrong
                     in one of the filters of %s""" % (a.key, a.filepath(), a.created_by))
 
+        self.timing.append(("save-additional-inputs", time.time() - start))
+        self.elapsed = time.time() - time_start
         return self

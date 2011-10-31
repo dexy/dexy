@@ -173,6 +173,16 @@ class RagelRubyDotFilter(ProcessStdoutFilter):
     VERSION = 'ragel --version'
     EXECUTABLE = 'ragel -R -V'
 
+class LynxDumpFilter(ProcessStdoutFilter):
+    """
+    Converts HTML to plain text by using lynx -dump.
+    """
+    INPUT_EXTENSIONS = [".html"]
+    OUTPUT_EXTENSIONS = [".txt"]
+    ALIASES = ['lynxdump']
+    VERSION = 'lynx --version'
+    EXECUTABLE = 'lynx -dump'
+
 class NonexistentFilter(ProcessStdoutFilter):
     ALIASES = ['zzzdoesnotexist']
     VERSION = 'notherenopexxx --version'

@@ -2,6 +2,7 @@ from dexy.artifact import Artifact
 from ordereddict import OrderedDict
 import json
 import os
+import time
 
 class FileSystemJsonArtifact(Artifact):
     """Artifact which persists data by writing to the file system and using
@@ -22,10 +23,7 @@ class FileSystemJsonArtifact(Artifact):
                 v = getattr(self, a)
                 m[a] = v
 
-        m['inputs'] = {}
-        for k, a in self.inputs().iteritems():
-            a.save()
-            m['inputs'][k] = a.hashstring
+        m['inputs'] = self.input_hashes()
 
         f = open(self.meta_filepath(), "w")
         try:
