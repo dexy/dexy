@@ -135,7 +135,7 @@ class DexyFilter(object):
             else:
                 print stderr
                 raise Exception("""proc returned nonzero status code! if you don't
-want dexy to raise errors on failed scripts then pass the --ignore-errors option""")
+want dexy to raise errors on failed scripts then pass the -ignore option""")
 
     def process(self):
         """This is the method that does the "work" of the handler, that is

@@ -15,8 +15,6 @@ def test_empty_dict():
 
 def test_artifact_init():
     artifact = Artifact()
-    assert artifact.artifact_class_source
-    assert artifact.__class__.SOURCE_CODE
     assert artifact.state == 'new'
 
 def test_artifact_filenames_simple_key():

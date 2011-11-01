@@ -85,11 +85,7 @@ class ProcessLinewiseInteractiveFilter(DexyFilter):
             proc.close()
         except pexpect.ExceptionPexpect:
             print "process %s may not have closed" % proc.pid
-
-        if proc.exitstatus is not None and proc.exitstatus != 0:
-            if not (self.IGNORE_ERRORS or self.artifact.args.ignore_errors):
-                raise Exception("""proc returned nonzero status code! if you don't
-want dexy to raise errors on failed scripts then pass the --ignore-errors option""")
+        self.handle_subprocess_proc_return(proc.exitstatus, "")
         return output_dict
 
 class PythonLinewiseInteractiveFilter(ProcessLinewiseInteractiveFilter):

@@ -244,7 +244,7 @@ class SubprocessFilter(DexyFilter):
 
 class ROutputBatchFilter(SubprocessFilter):
     """Runs R code in batch mode. Uses the --slave flag so doesn't echo commands, just returns output."""
-    ALIASES = ['routbatch']
+    ALIASES = ['rout', 'routbatch']
     EXECUTABLE = 'R CMD BATCH --vanilla --quiet --slave --no-timing'
     INPUT_EXTENSIONS = ['.txt', '.r', '.R']
     OUTPUT_EXTENSIONS = [".txt"]

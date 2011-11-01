@@ -75,6 +75,7 @@ class Artifact(object):
         self.ext = None
         self.final = None
         self.finish_time = None
+        self.hashfunction = 'md5'
         self.initial = None
         self.inode = None
         self.input_data_dict = OrderedDict()

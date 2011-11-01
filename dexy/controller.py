@@ -3,6 +3,7 @@ from dexy.topological_sort import topological_sort
 from dexy.utils import get_log
 from dexy.utils import save_batch_info
 from ordereddict import OrderedDict
+import copy
 import dexy
 import dexy.document
 import dexy.introspect
@@ -36,7 +37,7 @@ class Controller(object):
         if args.has_key('dbclass') and args.has_key("logsdir") and args.has_key("dbfile"):
             self.db = dexy.utils.get_db(self.args['dbclass'], logsdir=self.args['logsdir'], dbfile=args['dbfile'])
         else:
-            self.db = {}
+            self.db = None
 
         # List of directories that reporters use, these will not be processed by dexy
         self.reports_dirs = dexy.introspect.reports_dirs(self.log)
@@ -72,12 +73,8 @@ class Controller(object):
         self.timing.append(("process-config", time.time() - start))
         start = time.time()
 
-        if self.args['dryrun']:
-            # just populate the docs list
-            self.docs = self.members.values()
-        else:
-            # run docs, then populate docs list
-            self.docs = [doc.run() for doc in self.members.values()]
+        if not self.args['dryrun']:
+            self.docs = [doc.run() for doc in self.docs]
         self.timing.append(("run-docs", time.time() - start))
 
         self.batch_finish_time = time.time()
@@ -385,6 +382,7 @@ re.compile: %s""" % (args['except'], e))
             return self.members.keys().index(key)
 
         def depend(parent, child):
+            self.log.debug("Adding dependency of %s on %s" % (parent.key(), child.key()))
             self.depends.append((get_pos(child), get_pos(parent)))
 
         # The real processing starts here.
@@ -435,8 +433,9 @@ re.compile: %s""" % (args['except'], e))
                 print "if you are experiencing performance problems:"
                 print "call dexy with -dryrun and inspect logs/batch-XXXX.json to debug dependencies"
                 print "consider using -strictinherit or reducing your use of 'allinputs' "
-        ordering, leftover_graph_items = topological_sort(range(len(self.members)), self.depends)
-        if leftover_graph_items and not ordering:
+        self.dependencies = copy.copy(self.depends)
+        self.ordering, leftover_graph_items = topological_sort(range(len(self.members)), self.depends)
+        if leftover_graph_items and not self.ordering:
             # circular references! print debugging help before stopping
             for doc, depends_on in leftover_graph_items:
                 print self.members.values()[doc].key(), "depends on"
@@ -447,8 +446,6 @@ re.compile: %s""" % (args['except'], e))
             print "The above dependencies were not able to be resolved.\n\n"
             raise Exception("There are circular references, can't do topological sort!")
 
-        ordered_members = OrderedDict()
-        for i in ordering:
+        for i in self.ordering:
             key = self.members.keys()[i]
-            ordered_members[key] = self.members[key]
-        self.members = ordered_members
+            self.docs.append(self.members[key])

@@ -58,7 +58,7 @@ class Document(object):
         self.log.setLevel(logging.DEBUG) # TODO Allow this to be changed.
         self.log.propagate = 0 # Stops logs being written to STDOUT if another library redirects root logger.
         handler = logging.StreamHandler(self.logstream)
-        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        formatter = logging.Formatter(Constants.DEFAULT_LOGFORMAT)
         handler.setFormatter(formatter)
         self.log.addHandler(handler)
 
@@ -308,8 +308,6 @@ class Document(object):
         start = time.time()
         time_start = start
 
-        self.log.info("(starting step %s) [run] %s -> %s" % \
-                 (self.step, self.name, self.name))
 
         artifact = self.create_initial_artifact()
         self.artifacts.append(artifact)
@@ -317,6 +315,8 @@ class Document(object):
         artifact_key = artifact.key
         self.timing.append(("create-initial-artifact", time.time() - start))
         start = time.time()
+        self.log.info("(step %s) [run] %s -> %s" % \
+                 (self.step, artifact_key, artifact.filename()))
 
         for f in self.filters:
             previous_artifact = artifact
