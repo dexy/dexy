@@ -166,12 +166,24 @@ class Artifact(object):
     def setup_from_filter_class(self):
         # cache filter class source code so it only has to be calculated once
         if not hasattr(self.filter_class, 'SOURCE_CODE'):
-            filter_class_source = inspect.getsource(self.filter_class)
+            # get source code of this filter class + all parent filter classes.
+            source = ""
+            klass = self.filter_class
+
+            # get source code from filter class and all parent classes
+            while klass != dexy.dexy_filter.DexyFilter:
+                source += inspect.getsource(klass)
+                klass = klass.__base__
+
+            # and then get source code of DexyFilter class
+            source += inspect.getsource(dexy.dexy_filter.DexyFilter)
+
+            filter_class_source = source
             self.filter_class.SOURCE_CODE = self.compute_hash(filter_class_source)
+
         if not hasattr(self.filter_class, 'VERSION'):
             filter_version = self.filter_class.version(self.log)
             self.filter_class.VERSION = filter_version
-
 
         self.filter_name = self.filter_class.__name__
         self.filter_source = self.filter_class.SOURCE_CODE
@@ -545,8 +557,8 @@ class Artifact(object):
                 os.makedirs(os.path.dirname(workfile))
             shutil.copyfile(previous, workfile)
 
-    def canonical_basename(self):
-        return os.path.basename(self.canonical_filename())
+    def canonical_basename(self, ignore_args = False):
+        return os.path.basename(self.canonical_filename(ignore_args))
 
     def canonical_filename(self, ignore_args = False):
         fn = os.path.splitext(self.key.split("|")[0])[0]
@@ -592,9 +604,13 @@ class Artifact(object):
 
     def titleized_name(self):
         if self.canonical_basename() == "index.html":
-            return self.breadcrumbs()[-1].title()
+            return self.breadcrumbs()[-1].replace("-"," ").title()
         else:
-            return os.path.splitext(self.canonical_basename())[0].title()
+            return os.path.splitext(self.canonical_basename())[0].replace("-"," ").title()
 
     def unique_key(self):
         return "%s:%s:%s" % (self.batch_id, self.document_key, self.key)
+
+    def web_safe_document_key(self):
+        # TODO this might not be unique
+        return self.document_key.replace("/","-").replace("|", "-")
