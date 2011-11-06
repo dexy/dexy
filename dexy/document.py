@@ -2,6 +2,7 @@ from dexy.constants import Constants
 import StringIO
 import dexy.controller
 import dexy.introspect
+import fnmatch
 import hashlib
 import json
 import logging
@@ -92,44 +93,54 @@ class Document(object):
         will depend on (have as inputs).
         """
         start = time.time()
-        if self.use_all_inputs:
-            for doc in members_dict.values():
-                also_all_inputs = doc.use_all_inputs
-                specified = doc.key() in self.input_keys
+        for doc in members_dict.values():
+            # Work out relative paths
+            dir1 = os.path.dirname(doc.name)
+            dir2 = os.path.dirname(self.name)
+            if dir1 == '':
+                dir1 = "."
+            if dir2 == "":
+                dir2 = "."
 
-                rel1 = os.path.dirname(doc.name)
-                rel2 = os.path.dirname(self.name)
-                if rel1 == '':
-                    rel1 = "."
-                if rel2 == "":
-                    rel2 = "."
+            relpath = os.path.relpath(dir1, dir2)
+            relpath2 = os.path.relpath(dir2, dir1)
 
-                relpath = os.path.relpath(rel1, rel2)
-                relpath2 = os.path.relpath(rel2, rel1)
+            # Whether the document is in parent dir of input
+            in_parent_dir = not (".." in relpath) and not (relpath == ".")
+            in_same_dir = (relpath == ".") and (relpath2 == ".")
+            in_parent_or_child = (relpath == ".") or ((not ".." in relpath) ^ (not ".." in relpath2))
 
-                in_parent_dir = not (".." in relpath) and not (relpath == ".")
+            # See if input matches an item in inputs
+            specified = False
+            for input_glob in self.input_keys:
+                # The full doc key is specified
+                is_exact_absolute_match = (input_glob == doc.key())
 
-                in_parent_or_child = (relpath == ".") or ((not ".." in relpath) ^ (not ".." in relpath2))
+                # The relative path doc key is specified
+                is_exact_relative_match = (os.path.join(relpath2, input_glob) == doc.key())
 
-                higher_priority = (self.priority > doc.priority)
-                equal_priority = (self.priority == doc.priority)
+                # A glob matches in any child dir
+                is_glob_match_in_child_dir = (in_parent_dir or in_same_dir) and fnmatch.fnmatch(os.path.basename(doc.key()), input_glob)
 
-                if specified or higher_priority or (equal_priority and in_parent_dir) or not also_all_inputs:
-                    if self.controller.args['strictinherit'] and not (in_parent_or_child) and not specified:
-                        #self.log.debug("excluding %s from %s because strictinherit is true" % (doc.key(), self.key()))
-                        pass
-                    else:
-                        self.inputs.append(doc)
+                specified = (is_exact_absolute_match or is_exact_relative_match or is_glob_match_in_child_dir)
 
-        else:
-            inputs = []
-            for k in self.input_keys:
-                # k is a filename, not a glob
-                for x in members_dict.keys():
-                    if x == k:
-                        inputs.append(x)
+                if specified:
+                    args = (doc.key(), self.key(), is_exact_absolute_match, is_exact_relative_match, is_glob_match_in_child_dir)
+                    self.log.debug("Doc %s was specified input for %s. exact match: %s rel match: %s glob: %s" % args)
+                    break
 
-            self.inputs = [members_dict[k] for k in self.input_keys]
+            # Work out relative priority
+            higher_priority = (self.priority > doc.priority)
+            equal_priority = (self.priority == doc.priority)
+
+            use_all_inputs = self.use_all_inputs
+            also_all_inputs = doc.use_all_inputs
+
+            all_inputs_and_qualified = use_all_inputs and (higher_priority or (equal_priority and in_parent_dir) or not also_all_inputs)
+            disqualified_by_strictinherit = self.controller.args['strictinherit'] and not (in_parent_or_child)
+
+            if specified or (all_inputs_and_qualified and not disqualified_by_strictinherit):
+                self.inputs.append(doc)
 
         elapsed = time.time() - start
         self.timing.append(("finalize-inputs", elapsed))

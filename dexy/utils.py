@@ -31,8 +31,9 @@ def get_log(
         logfile=Constants.DEFAULT_LFILE, # Filename of logfile
         loglevel=Constants.DEFAULT_LOGLEVEL # Log level to use
     ):
-    """Get a log."""
-
+    """
+    Get a log.
+    """
     log = logging.getLogger(Constants.DEFAULT_LOGGER_NAME)
     log.propagate = 0
 
@@ -59,6 +60,8 @@ def get_log(
     else:
         log2 = logging.getLogger(name)
         log2.handlers = log.handlers
+        if name == "dexy.controller":
+            log2.propagate = 0
         return log2
 
 def remove_all_handlers(log):

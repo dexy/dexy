@@ -161,10 +161,10 @@ class Controller(object):
 
             # Figure out which directories need to be skipped
             exclude_at_root = Constants.EXCLUDE_DIRS_ROOT + self.reports_dirs + [self.args['artifactsdir'], self.args['logsdir']]
-            self.log.debug("project root excluded directories %s" % ",".join(exclude_at_root))
+            self.log.debug("project root excluded directories %s" % ", ".join(exclude_at_root))
 
             exclude_everywhere = Constants.EXCLUDE_DIRS_ALL_LEVELS
-            self.log.debug("directories excluded at all levels %s" % ",".join(exclude_everywhere))
+            self.log.debug("directories excluded at all levels %s" % ", ".join(exclude_everywhere))
 
             for dirpath, dirnames, filenames in os.walk(self.args['directory']):
                 # Figure out if we should process this directory and recurse
@@ -278,11 +278,14 @@ class Controller(object):
                 inputs = []
                 if args.has_key('inputs'):
                     if isinstance(args['inputs'], str):
-                        raise Exception("""this input should be an array,
-                                        not a string: %s""" % args['inputs'])
+                        raise Exception("inputs for %s should be an array" % f)
+
                     for i in args['inputs']:
+                        # Create document objects for input patterns (just in this directory)
                         for doc in parse_doc(path, i):
                             inputs.append(doc.key())
+
+
                 m = matcher.match(f)
                 if m and len(m.groups()) > 0:
                     rootname = matcher.match(f).group(1)
@@ -364,6 +367,10 @@ re.compile: %s""" % (args['except'], e))
                     if len(args) > 0:
                         doc.args = args
                         doc.use_all_inputs = args.has_key('allinputs')
+
+                        if args.has_key('inputs'):
+                            doc.input_keys = args['inputs']
+
                         for i in inputs:
                             doc.add_input_key(i)
 

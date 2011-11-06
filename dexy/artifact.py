@@ -548,6 +548,7 @@ class Artifact(object):
             for input_artifact in self._inputs.values():
                 filename = os.path.join(tempdir, input_artifact.canonical_filename())
                 input_artifact.write_to_file(filename)
+                self.log.debug("Populating temp dir for %s with %s" % (self.key, filename))
 
             # write the workfile to this directory under its canonical name
             previous = self.previous_artifact_filepath
