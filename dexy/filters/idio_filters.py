@@ -50,7 +50,7 @@ class IdioFilter(DexyFilter):
         else:
             idio_args = {}
 
-        formatter_args = {'lineanchors' : self.artifact.document_key}
+        formatter_args = {'lineanchors' : self.artifact.web_safe_document_key() }
         formatter_args.update(idio_args)
 
         formatter = get_formatter_for_filename(self.artifact.filename(),

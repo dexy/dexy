@@ -4,7 +4,7 @@ import os
 import re
 
 class BlogFilter(DexyFilter):
-    ALIASES = None
+    ALIASES = ['blogfilter']
     BLOG_CONFIG_FILE = 'blog-config.json'
     PASSWORD_KEYS = ['password', 'pass', 'pw']
     USERNAME_KEYS = ['username', 'user']

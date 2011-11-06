@@ -1,6 +1,7 @@
 import platform
 import subprocess
 import dexy.utils
+import os
 
 class DexyFilterException(Exception):
     pass
@@ -15,6 +16,7 @@ class DexyFilter(object):
     ALIASES = ['dexy']
     BINARY = False
     FINAL = None
+    IGNORE_ERRORS = False # Set to True for filters where proc.returncode doesn't behave well
     INPUT_EXTENSIONS = [".*"]
     OUTPUT_EXTENSIONS = [".*"]
     TAGS = [] # Descriptive keywords about the filter.
@@ -130,12 +132,28 @@ class DexyFilter(object):
         if returncode is None:
             raise Exception("no return code, proc not finished!")
         elif returncode != 0:
-            if self.artifact.controller_args['ignore']:
+            if self.IGNORE_ERRORS or self.artifact.controller_args['ignore']:
                 self.artifact.log.warn(stderr)
             else:
                 print stderr
                 raise Exception("""proc returned nonzero status code! if you don't
 want dexy to raise errors on failed scripts then pass the -ignore option""")
+
+    def setup_env(self):
+        if self.artifact.args.has_key('env'):
+            env = os.environ
+            env.update(self.artifact.args['env'])
+        else:
+            env = None
+        return env
+
+    def setup_timeout(self):
+        if self.artifact.args.has_key('timeout'):
+            timeout = self.artifact.args['timeout']
+            self.log.info("using custom timeout %s for %s" % (timeout, self.artifact.key))
+        else:
+            timeout = None
+        return timeout
 
     def process(self):
         """This is the method that does the "work" of the handler, that is

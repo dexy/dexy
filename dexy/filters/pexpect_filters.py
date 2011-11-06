@@ -1,9 +1,7 @@
 from dexy.dexy_filter import DexyFilter
 from ordereddict import OrderedDict
-import os
 import pexpect
 import re
-import shutil
 import time
 
 class ProcessLinewiseInteractiveFilter(DexyFilter):
@@ -12,80 +10,93 @@ class ProcessLinewiseInteractiveFilter(DexyFilter):
     where your goal is to have a session transcript divided into same sections
     as input. Sends input line-by-line.
     """
-    PROMPT = ['>>>', '...'] # Python uses >>> prompt normally and ... when in multi-line structures like loops
+    PROMPTS = ['>>>', '...'] # Python uses >>> prompt normally and ... when in multi-line structures like loops
     TRIM_PROMPT = '>>>'
     LINE_ENDING = "\r\n"
-    IGNORE_ERRORS = False # Allow overriding default per-filter.
     SAVE_VARS_TO_JSON_CMD = None
     ALIASES = ['processlinewiseinteractivefilter']
+    ALLOW_MATCH_PROMPT_WITHOUT_NEWLINE = False
+
+    def prompt_search_terms(self):
+        """
+        Search first for the prompt (or prompts) following a line ending.
+        Also optionally allow matching the prompt with no preceding line ending.
+        """
+        if hasattr(self, 'PROMPT'):
+            prompts = [self.PROMPT]
+        else:
+            prompts = self.PROMPTS
+
+        if self.ALLOW_MATCH_PROMPT_WITHOUT_NEWLINE:
+            return ["%s%s" % (self.LINE_ENDING, p) for p in prompts] + prompts
+        else:
+            return ["%s%s" % (self.LINE_ENDING, p) for p in prompts]
+
+    def lines_for_section(self, section_text):
+        """
+        Take the section text and split it into lines which will be sent to the
+        interpreter. This can be overridden if lines need to be defined
+        differently, or if you don't want the extra newline at the end.
+        """
+        return section_text.splitlines() + ["\n"]
+
+    def strip_trailing_prompts(self, section_transcript):
+        lines = section_transcript.splitlines()
+        while len(lines) > 0 and re.match("^\s*(%s)\s*$|^\s*$" % self.TRIM_PROMPT, lines[-1]):
+            lines = lines[0:-1]
+        return self.LINE_ENDING.join(lines)
 
     def process_dict(self, input_dict):
         output_dict = OrderedDict()
 
-        if self.artifact.args.has_key('timeout'):
-            timeout = self.artifact.args['timeout']
-            self.log.info("using custom timeout %s for %s" % (timeout, self.artifact.key))
-        else:
-            timeout = None
-        if self.artifact.args.has_key('env'):
-            env = os.environ
-            env.update(self.artifact.args['env'])
-            self.log.info("adding to env: %s" % self.artifact.args['env'])
-        else:
-            env = None
-
-        proc = pexpect.spawn(self.EXECUTABLE, cwd=self.artifact.artifacts_dir, env=env)
-        proc.expect_exact(self.PROMPT, timeout=timeout)
-        start = (proc.before + proc.after)
-
-        search_terms = ["%s%s" % (self.LINE_ENDING, p) for p in self.PROMPT]
-
-        for k, s in input_dict.items():
-            # TODO Should stop processing if an error is raised.
-            section_transcript = start
-            start = ""
-            for l in (s+"\r\n").splitlines():
-                section_transcript += start
-                start = ""
-                proc.sendline(l)
-                proc.expect_exact(search_terms, timeout=timeout)
-                section_transcript += proc.before
-                start = proc.after
-
-            # Strip blank lines/trailing prompts at end of section
-            lines = section_transcript.split(self.LINE_ENDING)
-            while len(lines) > 0 and re.match("^\s*(%s)\s*$|^\s*$" % self.TRIM_PROMPT, lines[-1]):
-                lines = lines[0:-1]
-
-#            output_dict[k] = ''.join([c for c in self.LINE_ENDING.join(lines) if ord(c) > 31 or ord(c) in [9, 10]])
-            output_dict[k] = self.LINE_ENDING.join(lines)
-
-        record_vars = self.artifact.args.has_key('record-vars') and self.artifact.args['record-vars']
-        if record_vars:
+        # If we want to automatically record values of local variables in the
+        # script we are running, we add a section at the end of script
+        do_record_vars = self.artifact.args.has_key('record-vars') and self.artifact.args['record-vars']
+        if do_record_vars:
             if not self.SAVE_VARS_TO_JSON_CMD:
                 raise Exception("Can't record vars since SAVE_VARS_TO_JSON_CMD not set.")
             artifact = self.artifact.add_additional_artifact(self.artifact.key + "-vars", 'json')
             self.log.debug("Added additional artifact %s (hashstring %s) to store variables" % (artifact.key, artifact.hashstring))
-            cmd = self.SAVE_VARS_TO_JSON_CMD % artifact.filename()
+            section_text = self.SAVE_VARS_TO_JSON_CMD % artifact.filename()
+            input_dict['dexy--save-vars'] = section_text
 
+        search_terms = self.prompt_search_terms()
+        env = self.setup_env()
+        timeout = self.setup_timeout()
+
+        # Spawn the process
+        proc = pexpect.spawn(
+                self.executable(),
+                cwd=self.artifact.artifacts_dir,
+                env=env)
+
+        # Capture the initial prompt
+        proc.expect_exact(search_terms, timeout=timeout)
+        start = proc.before + proc.after
+        for section_key, section_text in input_dict.items():
             section_transcript = start
             start = ""
-            for l in cmd.splitlines():
+
+            lines = self.lines_for_section(section_text)
+
+            for l in lines:
                 section_transcript += start
-                start = ""
-                proc.sendline(l)
+                proc.send(l + "\n")
                 proc.expect_exact(search_terms, timeout=timeout)
                 section_transcript += proc.before
                 start = proc.after
 
-            # This adds the code processing to the section transcript for display or debugging.
-            output_dict['dexy--save-vars'] = section_transcript
+            # Save this section's output
+            output_dict[section_key] = self.strip_trailing_prompts(section_transcript)
 
         try:
             proc.close()
         except pexpect.ExceptionPexpect:
-            print "process %s may not have closed" % proc.pid
-        self.handle_subprocess_proc_return(proc.exitstatus, "")
+            raise Exception("process %s may not have closed" % proc.pid)
+
+        if proc.exitstatus:
+            self.handle_subprocess_proc_return(proc.exitstatus, str(output_dict))
+
         return output_dict
 
 class PythonLinewiseInteractiveFilter(ProcessLinewiseInteractiveFilter):
@@ -115,10 +126,11 @@ class RLinewiseInteractiveFilter(ProcessLinewiseInteractiveFilter):
     EXECUTABLE = "R --quiet --vanilla"
     INPUT_EXTENSIONS = ['.txt', '.r', '.R']
     OUTPUT_EXTENSIONS = ['.Rout']
-    PROMPT = [">", "+"]
+    PROMPTS = [">", "+"]
     TAGS = ['r', 'interpreter', 'language']
     TRIM_PROMPT = ">"
     VERSION = "R --version"
+    ALLOW_MATCH_PROMPT_WITHOUT_NEWLINE = True
     SAVE_VARS_TO_JSON_CMD = """
 if ("rjson" %%in%% installed.packages()) {
     library(rjson)
@@ -144,12 +156,29 @@ class ClojureInteractiveFilter(ProcessLinewiseInteractiveFilter):
     """
     Runs clojure.
     """
-    EXECUTABLE = None
-    EXECUTABLES = ['clojure', 'clj -r', 'java clojure.main']
-    INPUT_EXTENSIONS = [".clj"]
+    EXECUTABLE = 'clojure -r'
+    INPUT_EXTENSIONS = [".clj", ".txt"]
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['clj', 'cljint']
     PROMPT = "user=> "
+
+    def lines_for_section(self, input_text):
+        input_lines = []
+        current_line = []
+        in_indented_block = False
+        for l in input_text.splitlines():
+            if re.match("^\s+", l):
+                in_indented_block = True
+                current_line.append(l)
+            else:
+                if len(current_line) > 0:
+                    input_lines.append("\n".join(current_line))
+                if in_indented_block:
+                    # we have reached the end of this indented block
+                    in_indented_block = False
+                current_line = [l]
+        input_lines.append("\n".join(current_line))
+        return input_lines
 
 class ProcessTimingFilter(DexyFilter):
     """

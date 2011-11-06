@@ -44,7 +44,7 @@ class PygFilter(DexyFilter):
         else:
             pygments_args = {}
 
-        formatter_args = {'lineanchors' : self.artifact.document_key }
+        formatter_args = {'lineanchors' : self.artifact.web_safe_document_key() }
         # for now we assume all pygments args are for the formatter...
         formatter_args.update(pygments_args)
 

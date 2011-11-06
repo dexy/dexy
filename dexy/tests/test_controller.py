@@ -1,8 +1,10 @@
 from dexy.artifacts.file_system_json_artifact import FileSystemJsonArtifact
+from dexy.topsort import CycleError
+from dexy.constants import NullHandler
 from dexy.controller import Controller
 from dexy.document import Document
 from dexy.tests.utils import tempdir
-from dexy.constants import NullHandler
+from dexy.tests.utils import divert_stdout
 from modargs import args as modargs
 import dexy.commands
 import dexy.database
@@ -14,6 +16,14 @@ SIMPLE_PY_CONFIG = {
        "@simple.py|py" : {
            "contents" : "x=6\\ny=7\\nprint x*y"
         }
+    }
+}
+
+CIRCULAR_CONFIG = {
+   "." : {
+       "@abc" : { "inputs" : ["@ghi"] },
+       "@def" : { "inputs" : ["@abc"] },
+       "@ghi" : { "inputs" : ["@def"] }
     }
 }
 
@@ -82,3 +92,24 @@ def test_docs_with_no_filters():
                 "start_time",
                 "timing"
                 ]
+
+def test_circular_dependencies():
+    with tempdir():
+        fn = modargs.function_for(dexy.commands, "dexy")
+        args = modargs.determine_kwargs(fn)
+        args['globals'] = []
+        os.mkdir(args['logsdir'])
+        args['danger'] = True
+        c = Controller(args)
+        c.config = CIRCULAR_CONFIG
+        with divert_stdout() as stdout:
+            try:
+                c.process_config()
+                assert False
+            except CycleError as e:
+                assert True
+            stdout_text = stdout.getvalue()
+        assert "abc depends on ghi" in stdout_text
+        assert "def depends on abc" in stdout_text
+        assert "ghi depends on def" in stdout_text
+

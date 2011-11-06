@@ -201,7 +201,7 @@ class EmbedFonts(DexyFilter):
         self.artifact.stdout += stdout
 
 class SubprocessFilter(DexyFilter):
-    ALIASES = None
+    ALIASES = ['subprocessfilter']
     BINARY = True
     FINAL = True
 
@@ -307,7 +307,13 @@ class Ps2PdfFilter(SubprocessFilter):
 
 class Html2PdfFilter(SubprocessFilter):
     """
-    Renders HTML to PDF using wkhtmltopdf
+    Renders HTML to PDF using wkhtmltopdf. If the HTML relies on assets such as
+    CSS or image files, these should be specified as inputs.
+
+    If you have an older version of wkhtmltopdf, and are running on a server,
+    you may get XServer errors. You can install xvfb and run Dexy as
+    "xvfb-run dexy". Or upgrade to the most recent wkhtmltopdf which only needs
+    X11 client libs.
     """
     ALIASES = ['html2pdf', 'wkhtmltopdf']
     EXECUTABLE = 'wkhtmltopdf'

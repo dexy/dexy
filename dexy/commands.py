@@ -38,7 +38,6 @@ def dexy_command(
         logsdir=Constants.DEFAULT_LDIR, # location of directory in which to store logs
         nocache=False, # whether to force artifacts to run even if there is a matching file in the cache
         output=False, # Shortcut to mean "I just want the OutputReporter, nothing else"
-        profmem=False, # whether to profile memory (slows Dexy down a lot, use for debugging only)
         recurse=True, # whether to recurse into subdirectories when running Dexy
         reporters=False, # DEPRECATED just to catch people who use the old dexy --reporters syntax
         reports=Constants.DEFAULT_REPORTS, # reports to be run after dexy runs, enclose in quotes and separate with spaces

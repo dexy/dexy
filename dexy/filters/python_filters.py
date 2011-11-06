@@ -28,7 +28,7 @@ class UnprocessedDirectoryArchiveFilter(DexyFilter):
         for fn in os.listdir(tgz_dir):
             fp = os.path.join(tgz_dir, fn)
             self.artifact.log.debug("Adding file %s to archive %s." % (fp, af))
-            tar.add(fp, arcname=os.path.join(tgz_dir, fn))
+            tar.add(fp, arcname=os.path.join(self.artifact.args['dir'], fn))
 
         tar.close()
 

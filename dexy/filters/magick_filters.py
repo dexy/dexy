@@ -58,12 +58,37 @@ class Imlib2GridFilter(Imlib2Filter):
                 image.draw_ellipse((i, j), (10, 10), (255,0,0))
                 image.draw_text((i+15, j+15), "(%s,%s)" % (i, j), (255,0,0), self.default_font)
 
+class Imlib2ScaleFilter(Imlib2Filter):
+    ALIASES = ['im-scale']
+
+    def do_im(self, image):
+        if self.artifact.args.has_key('im-scale'):
+            region_width, region_height = self.artifact.args['im-scale'].split("x")
+        else:
+            self.log.debug("Using default cropping region for im-scale, specify in args if you want something else")
+            region_width=500
+            region_height=500
+
+        image = image.scale((int(region_width), int(region_height)))
+        return image
+
 class Imlib2Crop(Imlib2Filter):
     ALIASES = ['im-crop']
 
     def do_im(self, image):
-        # TODO specify crop region in params
-        return image.crop((450, 450), (500, 500))
+        if self.artifact.args.has_key('im-crop'):
+            region_size, start_x, start_y = self.artifact.args['im-crop'].split("+")
+            region_width, region_height = region_size.split("x")
+            self.log.debug("Using custom cropping region for im-crop of width: %s height: %s x: %s y: %s" % (region_width, region_height, start_x, start_y))
+        else:
+            self.log.debug("Using default cropping region for im-crop, specify in args if you want something else")
+            region_width=500
+            region_height=500
+            start_x=100
+            start_y=100
+
+        image = image.crop((int(start_x), int(start_y)), (int(region_width), int(region_height)))
+        return image
 
 class Imlib2Thumb(Imlib2Filter):
     ALIASES = ['im-thumb']

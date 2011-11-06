@@ -12,7 +12,7 @@ setup(name='dexy',
       packages=find_packages(),
       include_package_data = True,
       install_requires = [
-          'idiopidae',
+          'idiopidae>=0.5.1',
           'jinja2',
           'nose',
           'ordereddict', # for Python 2.6

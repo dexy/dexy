@@ -1,6 +1,4 @@
-from dexy.sizeof import asizeof
 from dexy.constants import Constants
-from dexy.utils import profile_memory
 import StringIO
 import dexy.controller
 import dexy.introspect
@@ -51,7 +49,6 @@ class Document(object):
         self.artifact_class = controller.artifact_class
         self.db = controller.db
         self.batch_id = controller.batch_id
-        self.profmem = controller.args['profmem']
 
     def setup_log(self):
         self.log = logging.getLogger(self.key())

@@ -18,13 +18,14 @@ class JrubyFilter(dexy.filters.stdout_filters.ProcessStdoutFilter):
     ALIASES = ['jruby']
 
 class JirbFilter(dexy.filters.pexpect_filters.ProcessLinewiseInteractiveFilter):
-    VERSION = "jirb --version"
-    EXECUTABLE = "jirb --prompt-mode simple"
-    INPUT_EXTENSIONS = [".rb"]
-    PROMPT = ['>>', '?>']
-    OUTPUT_EXTENSIONS = [".rbcon"]
     ALIASES = ['jirb']
-    IGNORE_ERRORS = True
+    ALLOW_MATCH_PROMPT_WITHOUT_NEWLINE = True
+    EXECUTABLE = "jirb --prompt-mode simple"
+    IGNORE_ERRORS = True # Returns nonzero exit code even when no errors.
+    INPUT_EXTENSIONS = [".rb"]
+    OUTPUT_EXTENSIONS = [".rbcon"]
+    PROMPTS = ['>>', '?>']
+    VERSION = "jirb --version"
 
 class JythonFilter(dexy.filters.stdout_filters.ProcessStdoutFilter):
     VERSION = "jython --version"

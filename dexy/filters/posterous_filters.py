@@ -1,7 +1,7 @@
-from dexy.filters.blog_filter import BlogFilter
+import dexy.filters.blog_filter
 import posterous # http://github.com/nureineide/posterous-python
 
-class PosterousFilter(BlogFilter):
+class PosterousFilter(dexy.filters.blog_filter.BlogFilter):
     """
     IN DEVELOPMENT. Post to a posterous blog. (Due to posterous' stripping out
     formatting, is difficult to apply syntax highlighting in usual way.)

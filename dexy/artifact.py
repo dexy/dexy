@@ -1,5 +1,4 @@
 from dexy.constants import Constants
-from dexy.sizeof import asizeof
 from dexy.version import Version
 from ordereddict import OrderedDict
 import dexy.introspect

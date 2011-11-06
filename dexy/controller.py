@@ -1,9 +1,9 @@
 from dexy.constants import Constants
-from dexy.topological_sort import topological_sort
+from dexy.topsort import CycleError
+from dexy.topsort import topsort
 from dexy.utils import get_log
 from dexy.utils import save_batch_info
 from ordereddict import OrderedDict
-import copy
 import dexy
 import dexy.document
 import dexy.introspect
@@ -14,7 +14,6 @@ import os
 import re
 import sre_constants
 import time
-import urllib2
 
 class Controller(object):
     def __init__(self, args={}):
@@ -433,18 +432,19 @@ re.compile: %s""" % (args['except'], e))
                 print "if you are experiencing performance problems:"
                 print "call dexy with -dryrun and inspect logs/batch-XXXX.json to debug dependencies"
                 print "consider using -strictinherit or reducing your use of 'allinputs' "
-        self.dependencies = copy.copy(self.depends)
-        self.ordering, leftover_graph_items = topological_sort(range(len(self.members)), self.depends)
-        if leftover_graph_items and not self.ordering:
-            # circular references! print debugging help before stopping
-            for doc, depends_on in leftover_graph_items:
-                print self.members.values()[doc].key(), "depends on"
-                for i in depends_on:
-                    print "   ", self.members.values()[i].key()
-                print
-            print "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
-            print "The above dependencies were not able to be resolved.\n\n"
-            raise Exception("There are circular references, can't do topological sort!")
+
+        try:
+            topsort_ordering = topsort(self.depends)
+        except CycleError as e:
+            print "There are circular dependencies!"
+            answer, num_parents, children = e.args
+            for child, parents in children.items():
+                for parent in parents:
+                    print "%s depends on %s" % (self.members.keys()[parent], self.members.keys()[child])
+            raise e
+
+        docs_without_dependencies = frozenset(range(len(self.members))) - frozenset(topsort_ordering)
+        self.ordering = topsort_ordering + list(docs_without_dependencies)
 
         for i in self.ordering:
             key = self.members.keys()[i]
