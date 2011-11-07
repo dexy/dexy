@@ -4,6 +4,7 @@ from dexy.topsort import topsort
 from dexy.utils import get_log
 from dexy.utils import save_batch_info
 from ordereddict import OrderedDict
+import copy
 import dexy
 import dexy.document
 import dexy.introspect
@@ -279,7 +280,6 @@ class Controller(object):
                 if args.has_key('inputs'):
                     if isinstance(args['inputs'], str):
                         raise Exception("inputs for %s should be an array" % f)
-
                     for i in args['inputs']:
                         # Create document objects for input patterns (just in this directory)
                         for doc in parse_doc(path, i):
@@ -348,9 +348,6 @@ re.compile: %s""" % (args['except'], e))
                     doc.setup_log() # After name has been set
                     doc.virtual = virtual
 
-                    # Here we are assuming that if we get a key with blank args
-                    # this should not override a previous key. A key which does
-                    # have args should override any previous key.
                     key = doc.key()
                     self.log.debug("creating doc %s for glob %s" % (key, glob_string))
 
@@ -364,22 +361,19 @@ re.compile: %s""" % (args['except'], e))
                         doc.priority = args['priority']
                         del args['priority']
 
-                    if len(args) > 0:
-                        doc.args = args
-                        doc.use_all_inputs = args.has_key('allinputs')
+                    doc.args.update(args)
 
-                        if args.has_key('inputs'):
-                            doc.input_keys = args['inputs']
+                    if args.has_key('allinputs'):
+                        doc.use_all_inputs = args['allinputs']
 
-                        for i in inputs:
-                            doc.add_input_key(i)
+                    if args.has_key('inputs'):
+                        doc.input_keys = copy.copy(args['inputs'])
 
-                    if not hasattr(doc, 'args'):
-                        doc.args = args
-                        # TODO figure out how to merge args from parent
+                    for i in inputs:
+                        doc.add_input_key(i)
 
                     self.members[key] = doc
-                    docs.append(doc) # just a local list
+                    docs.append(doc) # docs is a local list of docs
 
             return docs # end of parse_doc nested function
 
@@ -388,7 +382,6 @@ re.compile: %s""" % (args['except'], e))
             return self.members.keys().index(key)
 
         def depend(parent, child):
-            self.log.debug("Adding dependency of %s on %s" % (parent.key(), child.key()))
             self.depends.append((get_pos(child), get_pos(parent)))
 
         # The real processing starts here.
@@ -441,7 +434,9 @@ re.compile: %s""" % (args['except'], e))
                 print "consider using -strictinherit or reducing your use of 'allinputs' "
 
         try:
+            self.log.debug("Beginning topological sort...")
             topsort_ordering = topsort(self.depends)
+            self.log.debug("Topological sort completed successfully.")
         except CycleError as e:
             print "There are circular dependencies!"
             answer, num_parents, children = e.args

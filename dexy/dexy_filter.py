@@ -1,7 +1,6 @@
+import dexy.utils
 import platform
 import subprocess
-import dexy.utils
-import os
 
 class DexyFilterException(Exception):
     pass
@@ -128,33 +127,6 @@ class DexyFilter(object):
         """Allow filters to be disabled."""
         return True
 
-    def handle_subprocess_proc_return(self, returncode, stderr):
-        if returncode is None:
-            raise Exception("no return code, proc not finished!")
-        elif returncode != 0:
-            if self.IGNORE_ERRORS or self.artifact.controller_args['ignore']:
-                self.artifact.log.warn(stderr)
-            else:
-                print stderr
-                raise Exception("""proc returned nonzero status code! if you don't
-want dexy to raise errors on failed scripts then pass the -ignore option""")
-
-    def setup_env(self):
-        if self.artifact.args.has_key('env'):
-            env = os.environ
-            env.update(self.artifact.args['env'])
-        else:
-            env = None
-        return env
-
-    def setup_timeout(self):
-        if self.artifact.args.has_key('timeout'):
-            timeout = self.artifact.args['timeout']
-            self.log.info("using custom timeout %s for %s" % (timeout, self.artifact.key))
-        else:
-            timeout = None
-        return timeout
-
     def process(self):
         """This is the method that does the "work" of the handler, that is
         filtering the input and producing output. This method can be overridden
@@ -170,7 +142,7 @@ want dexy to raise errors on failed scripts then pass the -ignore option""")
                 raise Exception("""You have passed input with multiple sections
                                 to the %s handler. This handler does not preserve
                                 sections. Either remove sectioning or add a call
-                                to the join filter before this handler.""")
+                                to the join filter before this handler.""" % self.__class__.__name__)
             input_text = self.artifact.input_text()
             output_text = self.process_text(input_text)
             self.artifact.data_dict['1'] = output_text
@@ -198,4 +170,4 @@ want dexy to raise errors on failed scripts then pass the -ignore option""")
             method_used = "process"
 
         return method_used
-
+ 

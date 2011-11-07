@@ -1,21 +1,18 @@
-from dexy.dexy_filter import DexyFilter
 from ordereddict import OrderedDict
+from dexy.filters.process_filters import ProcessFilter
 import pexpect
 import re
-import time
 
-class ProcessLinewiseInteractiveFilter(DexyFilter):
+class PexpectReplFilter(ProcessFilter):
     """
-    Intended for use with interactive processes, such as python interpreter,
-    where your goal is to have a session transcript divided into same sections
-    as input. Sends input line-by-line.
+    Base class for filters which use pexpect to retrieve output line-by-line based on detecting prompts.
     """
-    PROMPTS = ['>>>', '...'] # Python uses >>> prompt normally and ... when in multi-line structures like loops
-    TRIM_PROMPT = '>>>'
-    LINE_ENDING = "\r\n"
-    SAVE_VARS_TO_JSON_CMD = None
-    ALIASES = ['processlinewiseinteractivefilter']
+    ALIASES = ['pexpectreplfilter']
     ALLOW_MATCH_PROMPT_WITHOUT_NEWLINE = False
+    LINE_ENDING = "\r\n"
+    PROMPTS = ['>>>', '...'] # Python uses >>> prompt normally and ... when in multi-line structures like loops
+    SAVE_VARS_TO_JSON_CMD = None
+    TRIM_PROMPT = '>>>'
 
     def prompt_search_terms(self):
         """
@@ -99,8 +96,25 @@ class ProcessLinewiseInteractiveFilter(DexyFilter):
 
         return output_dict
 
-class PythonLinewiseInteractiveFilter(ProcessLinewiseInteractiveFilter):
-    ALIASES = ['pycon']
+class RubyPexpectReplFilter(PexpectReplFilter):
+    ALIASES = ['irb', 'rbrepl']
+    ALLOW_MATCH_PROMPT_WITHOUT_NEWLINE = True
+    EXECUTABLE = 'irb --simple-prompt --noreadline'
+    IGNORE_ERRORS = True
+    INPUT_EXTENSIONS = [".txt", ".rb"]
+    OUTPUT_EXTENSIONS = [".rbcon"]
+    PROMPTS = [">>", "?>"]
+    VERSION = 'irb --version'
+
+class IpythonPexpectReplFilter(PexpectReplFilter):
+    ALIASES = ['ipython']
+    EXECUTABLE = 'ipython --classic'
+    INPUT_EXTENSIONS = [".txt", ".py"]
+    OUTPUT_EXTENSIONS = [".pycon"]
+    VERSION = 'ipython -Version'
+
+class PythonPexpectReplFilter(PexpectReplFilter):
+    ALIASES = ['pycon', 'pyrepl']
     EXECUTABLE = 'python'
     INPUT_EXTENSIONS = [".txt", ".py"]
     OUTPUT_EXTENSIONS = [".pycon"]
@@ -118,10 +132,9 @@ json.dump(dexy__x, dexy__vars_file)
 dexy__vars_file.close()
 """
 
-class RLinewiseInteractiveFilter(ProcessLinewiseInteractiveFilter):
-    """
-    Runs R
-    """
+# untested below here
+
+class RPexpectReplFilter(PexpectReplFilter):
     ALIASES = ['r', 'rint']
     EXECUTABLE = "R --quiet --vanilla"
     INPUT_EXTENSIONS = ['.txt', '.r', '.R']
@@ -142,7 +155,7 @@ if ("rjson" %%in%% installed.packages()) {
 }
 """
 
-class RhinoInteractiveFilter(ProcessLinewiseInteractiveFilter):
+class RhinoInteractiveFilter(PexpectReplFilter):
     """
     Runs rhino JavaScript interpeter.
     """
@@ -152,7 +165,7 @@ class RhinoInteractiveFilter(ProcessLinewiseInteractiveFilter):
     ALIASES = ['jsint', 'rhino']
     PROMPT = "js> "
 
-class ClojureInteractiveFilter(ProcessLinewiseInteractiveFilter):
+class ClojureInteractiveFilter(PexpectReplFilter):
     """
     Runs clojure.
     """
@@ -179,24 +192,3 @@ class ClojureInteractiveFilter(ProcessLinewiseInteractiveFilter):
                 current_line = [l]
         input_lines.append("\n".join(current_line))
         return input_lines
-
-class ProcessTimingFilter(DexyFilter):
-    """
-    Runs python code N times and reports timings.
-    """
-    EXECUTABLE = 'python'
-    VERSION = 'python --version'
-    N = 10
-    INPUT_EXTENSIONS = [".txt", ".py"]
-    OUTPUT_EXTENSIONS = [".times"]
-    ALIASES = ['timing', 'pytime']
-
-    def process(self):
-        self.artifact.generate_workfile()
-        times = []
-        for i in xrange(self.N):
-            start = time.time()
-            pexpect.run("%s %s" % (self.EXECUTABLE, self.artifact.work_filename()))
-            times.append("%s" % (time.time() - start))
-        self.artifact.data_dict['1'] = "\n".join(times)
-

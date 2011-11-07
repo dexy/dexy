@@ -1,68 +1,94 @@
-from dexy.dexy_filter import DexyFilter
-import os
-import subprocess
+from dexy.filters.process_filters import SubprocessStdoutFilter
+from dexy.filters.process_filters import SubprocessStdoutInputFilter
+from dexy.filters.process_filters import SubprocessStdoutInputFileFilter
 
-class ProcessStdoutFilter(DexyFilter):
-    """
-    Runs python script and returns STDOUT.
-    """
+class PythonSubprocessStdoutFilter(SubprocessStdoutFilter):
+    ALIASES = ['py', 'pyout']
     EXECUTABLE = 'python'
+    INPUT_EXTENSIONS = [".py", ".txt"]
+    OUTPUT_EXTENSIONS = [".txt"]
     VERSION = 'python --version'
-    WINDOWS_EXECUTABLE = 'python'
-    INPUT_EXTENSIONS = [".txt", ".py"]
+
+class PythonSubprocessStdoutInputFilter(SubprocessStdoutInputFilter):
+    ALIASES = ['pyinput']
+    EXECUTABLE = 'python'
+    INPUT_EXTENSIONS = [".py", ".txt"]
     OUTPUT_EXTENSIONS = [".txt"]
-    ALIASES = ['py', 'python', 'pyout']
+    VERSION = 'python --version'
 
-    def process(self):
-        # allow running code from different directory
-        cwd = self.artifact.artifacts_dir
-        if self.artifact.args.has_key('cwd'):
-            cwd = os.path.join(cwd, self.artifact.args['cwd'])
-            print "running from", os.path.abspath(cwd)
-
-        self.artifact.generate_workfile()
-        wf = os.path.abspath(os.path.join(self.artifact.artifacts_dir,
-                                          self.artifact.work_filename()))
-
-        if hasattr(self, 'instance_executable'):
-            command = "%s %s" % (self.instance_executable(), wf)
-        else:
-            command = "%s %s" % (self.executable(), wf)
-
-        cla = self.artifact.command_line_args()
-        if cla:
-            command = "%s %s" % (command, cla)
-
-        if self.artifact.args.has_key('env'):
-            env = os.environ
-            env.update(self.artifact.args['env'])
-        else:
-            env = None
-
-        self.artifact.log.debug(command)
-
-        proc = subprocess.Popen(command, shell=True,
-                                cwd=cwd,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
-                                env=env)
-        stdout, stderr = proc.communicate()
-        self.artifact.data_dict['1'] = stdout
-        self.artifact.stdout = stderr
-
-        self.handle_subprocess_proc_return(proc.returncode, stderr)
-
-class BashFilter(ProcessStdoutFilter):
-    """
-    Runs bash script and returns STDOUT.
-    """
+class BashSubprocessStdoutFilter(SubprocessStdoutFilter):
+    ALIASES = ['sh', 'bash']
     EXECUTABLE = 'bash'
-    VERSION = 'bash --version'
-    INPUT_EXTENSIONS = [".sh", ".bash", ".txt"]
+    INPUT_EXTENSIONS = [".sh", ".bash", ".txt", ""]
     OUTPUT_EXTENSIONS = [".txt"]
-    ALIASES = ['bash']
+    VERSION = 'bash --version'
 
-class PhpFilter(ProcessStdoutFilter):
+class BashSubprocessStdoutInputFilter(SubprocessStdoutInputFilter):
+    ALIASES = ['shinput']
+    EXECUTABLE = 'bash'
+    INPUT_EXTENSIONS = [".sh", ".bash", ".txt", ""]
+    OUTPUT_EXTENSIONS = [".txt"]
+    VERSION = 'bash --version'
+
+class SedSubprocessStdoutInputFilter(SubprocessStdoutInputFilter):
+    ALIASES = ['sed']
+    EXECUTABLE = 'sed'
+    INPUT_EXTENSIONS = [".sed"]
+    OUTPUT_EXTENSIONS = [".txt"]
+    VERSION = 'sed --version'
+
+    def command_string_stdout(self):
+        wf = self.artifact.previous_artifact_filename
+        return "%s -f %s" % (self.executable(), wf)
+
+class RegetronSubprocessStdoutInputFileFilter(SubprocessStdoutInputFileFilter):
+    ALIASES = ['regetron']
+    EXECUTABLE = 'regetron'
+    INPUT_EXTENSIONS = [".regex"]
+    OUTPUT_EXTENSIONS = [".txt"]
+
+    def command_string_stdout_input(self, input_artifact):
+        wf = self.artifact.previous_artifact_filename
+        input_file = input_artifact.filename()
+        return "%s %s %s" % (self.executable(), input_file, wf)
+
+class IrbSubprocessStdoutFilter(SubprocessStdoutFilter):
+    ALIASES = ['irbout']
+    EXECUTABLE = 'irb --simple-prompt --noreadline'
+    INPUT_EXTENSIONS = [".txt", ".rb"]
+    OUTPUT_EXTENSIONS = [".rbcon"]
+    VERSION = 'irb --version'
+
+class IrbSubprocessStdoutInputFilter(SubprocessStdoutInputFilter):
+    ALIASES = ['irboutinput']
+    EXECUTABLE = 'irb --simple-prompt --noreadline'
+    INPUT_EXTENSIONS = [".txt", ".rb"]
+    OUTPUT_EXTENSIONS = [".rbcon"]
+    VERSION = 'irb --version'
+
+class RubySubprocessStdoutFilter(SubprocessStdoutFilter):
+    EXECUTABLE = 'ruby'
+    VERSION = 'ruby --version'
+    INPUT_EXTENSIONS = [".txt", ".rb"]
+    OUTPUT_EXTENSIONS = [".txt"]
+    ALIASES = ['rb']
+
+class RubySubprocessStdoutInputFilter(SubprocessStdoutInputFilter):
+    EXECUTABLE = 'ruby'
+    VERSION = 'ruby --version'
+    INPUT_EXTENSIONS = [".txt", ".rb"]
+    OUTPUT_EXTENSIONS = [".txt"]
+    ALIASES = ['rbinput']
+
+class EscriptSubprocessStdoutFilter(SubprocessStdoutFilter):
+    EXECUTABLE = 'escript'
+    INPUT_EXTENSIONS = [".erl"]
+    OUTPUT_EXTENSIONS = [".txt"]
+    ALIASES = ['escript']
+
+# Unchecked below this...
+
+class PhpFilter(SubprocessStdoutFilter):
     """
     Runs php script and returns STDOUT.
     """
@@ -72,16 +98,7 @@ class PhpFilter(ProcessStdoutFilter):
     OUTPUT_EXTENSIONS = [".html", ".txt"]
     ALIASES = ['php']
 
-class EscriptFilter(ProcessStdoutFilter):
-    """
-    Runs escript (erlang) and returns STDOUT.
-    """
-    EXECUTABLE = 'escript'
-    INPUT_EXTENSIONS = [".erl"]
-    OUTPUT_EXTENSIONS = [".txt"]
-    ALIASES = ['escript']
-
-class LuaFilter(ProcessStdoutFilter):
+class LuaFilter(SubprocessStdoutFilter):
     """
     Runs lua script and returns STDOUT.
     """
@@ -91,7 +108,7 @@ class LuaFilter(ProcessStdoutFilter):
     OUTPUT_EXTENSIONS = ['.txt']
     ALIASES = ['lua']
 
-class RedclothFilter(ProcessStdoutFilter):
+class RedclothFilter(SubprocessStdoutFilter):
     """
     Runs redcloth, converts textile markup to HTML.
     """
@@ -101,7 +118,7 @@ class RedclothFilter(ProcessStdoutFilter):
     OUTPUT_EXTENSIONS = [".html"]
     ALIASES = ['redcloth', 'textile']
 
-class RedclothLatexFilter(ProcessStdoutFilter):
+class RedclothLatexFilter(SubprocessStdoutFilter):
     """
     Runs redcloth, converts textile markup to LaTeX.
     """
@@ -111,7 +128,7 @@ class RedclothLatexFilter(ProcessStdoutFilter):
     OUTPUT_EXTENSIONS = [".tex"]
     ALIASES = ['redclothl', 'latextile']
 
-class Rst2HtmlFilter(ProcessStdoutFilter):
+class Rst2HtmlFilter(SubprocessStdoutFilter):
     EXECUTABLE = 'rst2html.py'
     VERSION = 'rst2html.py --version'
     INPUT_EXTENSIONS = [".rst", ".txt"]
@@ -119,34 +136,27 @@ class Rst2HtmlFilter(ProcessStdoutFilter):
     ALIASES = ['rst2html']
     FINAL = True
 
-class Rst2LatexFilter(ProcessStdoutFilter):
+class Rst2LatexFilter(SubprocessStdoutFilter):
     EXECUTABLE = 'rst2latex.py'
     VERSION = 'rst2latex.py --version'
     INPUT_EXTENSIONS = [".rst", ".txt"]
     OUTPUT_EXTENSIONS = [".tex"]
     ALIASES = ['rst2latex']
 
-class Rst2BeamerFilter(ProcessStdoutFilter):
+class Rst2BeamerFilter(SubprocessStdoutFilter):
     EXECUTABLE = 'rst2beamer'
     INPUT_EXTENSIONS = [".rst", ".txt"]
     OUTPUT_EXTENSIONS = [".tex"]
     ALIASES = ['rst2beamer']
 
-class SloccountFilter(ProcessStdoutFilter):
+class SloccountFilter(SubprocessStdoutFilter):
     EXECUTABLE = 'sloccount'
     VERSION = 'sloccount --version'
     INPUT_EXTENSIONS = [".*"]
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['sloc', 'sloccount']
 
-class RubyStdoutFilter(ProcessStdoutFilter):
-    EXECUTABLE = 'ruby'
-    VERSION = 'ruby --version'
-    INPUT_EXTENSIONS = [".txt", ".rb"]
-    OUTPUT_EXTENSIONS = [".txt"]
-    ALIASES = ['rb']
-
-class RdConvFilter(ProcessStdoutFilter):
+class RdConvFilter(SubprocessStdoutFilter):
     """Convert R documentation to other formats."""
     EXECUTABLE = "R CMD Rdconv"
     VERSION = "R CMD Rdconv -v"
@@ -163,7 +173,7 @@ class RdConvFilter(ProcessStdoutFilter):
     def instance_executable(self):
         return "%s --type=%s" % (self.EXECUTABLE, self.EXTENSION_TO_FORMAT[self.artifact.ext])
 
-class RagelRubyDotFilter(ProcessStdoutFilter):
+class RagelRubyDotFilter(SubprocessStdoutFilter):
     """
     Generates state chart in .dot format of ragel state machine for ruby.
     """
@@ -173,7 +183,7 @@ class RagelRubyDotFilter(ProcessStdoutFilter):
     VERSION = 'ragel --version'
     EXECUTABLE = 'ragel -R -V'
 
-class LynxDumpFilter(ProcessStdoutFilter):
+class LynxDumpFilter(SubprocessStdoutFilter):
     """
     Converts HTML to plain text by using lynx -dump.
     """
@@ -183,6 +193,6 @@ class LynxDumpFilter(ProcessStdoutFilter):
     VERSION = 'lynx --version'
     EXECUTABLE = 'lynx -dump'
 
-class NonexistentFilter(ProcessStdoutFilter):
+class NonexistentFilter(SubprocessStdoutFilter):
     ALIASES = ['zzzdoesnotexist']
     VERSION = 'notherenopexxx --version'

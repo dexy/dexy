@@ -21,6 +21,7 @@ class Document(object):
 
     def __init__(self):
         # initialize attributes
+        self.args = {}
         self.artifacts = []
         self.elapsed = 0
         self.input_keys = []
@@ -125,8 +126,6 @@ class Document(object):
                 specified = (is_exact_absolute_match or is_exact_relative_match or is_glob_match_in_child_dir)
 
                 if specified:
-                    args = (doc.key(), self.key(), is_exact_absolute_match, is_exact_relative_match, is_glob_match_in_child_dir)
-                    self.log.debug("Doc %s was specified input for %s. exact match: %s rel match: %s glob: %s" % args)
                     break
 
             # Work out relative priority

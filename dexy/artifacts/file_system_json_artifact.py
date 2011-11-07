@@ -2,7 +2,6 @@ from dexy.artifact import Artifact
 from ordereddict import OrderedDict
 import json
 import os
-import time
 
 class FileSystemJsonArtifact(Artifact):
     """Artifact which persists data by writing to the file system and using

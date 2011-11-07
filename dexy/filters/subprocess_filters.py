@@ -1,8 +1,32 @@
 from dexy.dexy_filter import DexyFilter
+from dexy.filters.process_filters import SubprocessFilter
 import os
 import re
 import shutil
 import subprocess
+
+class AsciidocFilter(SubprocessFilter):
+    VERSION = "asciidoc --version"
+    EXECUTABLE = "asciidoc"
+    INPUT_EXTENSIONS = [".txt"]
+    OUTPUT_EXTENSIONS = [".html", ".xml"]
+    ALIASES = ['asciidoc']
+    BINARY = False
+
+    def command_string(self):
+        extension = self.artifact.ext
+        if extension == ".html":
+            # TODO check here if we are on asciidoc 8.6.5,
+            # any lower will throw an error if we try to use html5
+            backend = "html5"
+        elif extension == ".xml":
+            backend = "docbook45"
+        else:
+            raise Exception("unexpected file extension in asciidoc filter %s" % extension)
+
+        wf = self.artifact.previous_artifact_filename
+        of = self.artifact.filename()
+        return "%s -b %s -d book -o %s %s" % (self.EXECUTABLE, backend, of, wf)
 
 class BibFilter(DexyFilter):
     INPUT_EXTENSIONS = [".tex"]
@@ -16,38 +40,6 @@ class BibFilter(DexyFilter):
                 input_text = re.sub("bibliography{[^}]+}", "bibliography{%s}" % a.filename(), input_text)
 
         return input_text
-
-class SedFilter(DexyFilter):
-    EXECUTABLES = ['sed']
-    ALIASES = ['sed']
-
-    def process(self):
-        self.artifact.generate_workfile()
-        wf = self.artifact.work_filename()
-
-        if self.artifact.args.has_key('sed'):
-            sed_script = self.artifact.args['sed']
-            command = "%s -e %s %s" % (self.__class__.executable(), sed_script, wf)
-        else:
-            sed_file = None
-            for k, a in self.artifact.inputs().items():
-                if a.filename().endswith("sed"):
-                    sed_file = a.filename()
-                    self.log.debug("Found sed script %s" % sed_file)
-                    break
-            if not sed_file:
-                raise Exception("must pass a 'sed' argument or have an input with .sed file extension")
-            command = "%s -f %s %s" % (self.__class__.executable(), sed_file, wf)
-
-        env = None
-        self.log.debug(command)
-        proc = subprocess.Popen(command, shell=True,
-                                cwd=self.artifact.artifacts_dir,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT,
-                                env=env)
-        stdout, stderr = proc.communicate()
-        self.artifact.set_data(stdout)
 
 class HtLatexFilter(DexyFilter):
     """
@@ -200,47 +192,6 @@ class EmbedFonts(DexyFilter):
         stdout, stderr = proc.communicate()
         self.artifact.stdout += stdout
 
-class SubprocessFilter(DexyFilter):
-    ALIASES = ['subprocessfilter']
-    BINARY = True
-    FINAL = True
-
-    def command_string(self):
-        """
-        Should return a command string that, when run, should result in filter
-        output being present in the artifact file.
-        """
-        wf = self.artifact.previous_artifact_filename
-        of = self.artifact.filename()
-        return "%s %s %s" % (self.executable(), wf, of)
-
-    def setup_env(self):
-        if self.artifact.args.has_key('env'):
-            env = os.environ
-            env.update(self.artifact.args['env'])
-        else:
-            env = None
-        return env
-
-    def process(self):
-        command = self.command_string()
-        proc = self.run_command(command, self.setup_env())
-        self.handle_subprocess_proc_return(proc.returncode, self.artifact.stdout)
-
-    def run_command(self, command, env):
-        """
-        Runs a command using subprocess.Popen.
-        """
-        self.log.debug("about to run '%s'" % command)
-        proc = subprocess.Popen(command, shell=True,
-                                cwd=self.artifact.artifacts_dir,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT,
-                                env=env)
-
-        stdout, stderr = proc.communicate()
-        self.artifact.stdout = stdout
-        return proc
 
 class ROutputBatchFilter(SubprocessFilter):
     """Runs R code in batch mode. Uses the --slave flag so doesn't echo commands, just returns output."""
@@ -379,8 +330,9 @@ class Pdf2ImgFilter(SubprocessFilter):
 
     def process(self):
         command = self.command_string()
-        proc = self.run_command(command, self.setup_env())
-        self.handle_subprocess_proc_return(proc.returncode, self.artifact.stdout)
+        proc, stdout = self.run_command(command, self.setup_env())
+        self.artifact.stdout = stdout
+        self.handle_subprocess_proc_return(proc.returncode, stdout)
 
         if self.artifact.args.has_key('page'):
             page = self.artifact.args['page']
@@ -395,34 +347,3 @@ class Pdf2JpgFilter(Pdf2ImgFilter):
     GS_DEVICE = 'jpeg'
     OUTPUT_EXTENSIONS = ['.jpg']
 
-class RubyInteractiveFilter(SubprocessFilter):
-    """Run Ruby, taking input from input files."""
-    ALIASES = ['rbint']
-    BINARY = False
-    EXECUTABLE = "ruby"
-    FINAL = False
-    INPUT_EXTENSIONS = [".rb"]
-    OUTPUT_EXTENSIONS = [".txt"]
-    VERSION = "ruby --version"
-
-    def process(self):
-        command = "%s %s" % (self.EXECUTABLE, self.artifact.previous_artifact_filename)
-        self.log.debug(command)
-
-        self.artifact.stdout = ""
-
-        # Loop over all inputs
-        for k, a in self.artifact.inputs().items():
-
-            # For each input, loop over all sections
-            for s, t in a.data_dict.items():
-                proc = subprocess.Popen(command, shell=True,
-                                        cwd=self.artifact.artifacts_dir,
-                                        stdin=subprocess.PIPE,
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE,
-                                        env=self.setup_env()
-                                       )
-                stdout, stderr = proc.communicate(t)
-                self.artifact.data_dict[s] = stdout
-                self.artifact.stdout += stderr

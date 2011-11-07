@@ -1,8 +1,6 @@
 from dexy.constants import Constants
-import datetime
 import dexy.database
 import dexy.introspect
-import gc
 import json
 import logging
 import logging.handlers

@@ -9,9 +9,9 @@ from pygments.lexers.special import TextLexer
 from pygments.lexers.web import JavascriptLexer
 from pygments.lexers.web import XmlLexer
 
-class PygFilter(DexyFilter):
+class PygmentsFilter(DexyFilter):
     """
-    Apply Pygments syntax highlighting.
+    Apply Pygments syntax highlighting. Image formats require PIL.
     """
     INPUT_EXTENSIONS = [".*"]
     IMAGE_OUTPUT_EXTENSIONS = ['.png', '.bmp', '.gif', '.jpg']
@@ -56,6 +56,7 @@ class PygFilter(DexyFilter):
 
         if self.artifact.ext in self.IMAGE_OUTPUT_EXTENSIONS:
             self.artifact.binary_output = True
+            # TODO set to final
             f = open(self.artifact.filepath(), 'w')
             f.write(highlight(self.artifact.input_text(), lexer, formatter))
             f.close()

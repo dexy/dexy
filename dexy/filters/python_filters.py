@@ -7,7 +7,6 @@ import os
 import re
 import shutil
 import tarfile
-import time
 import uuid
 import zipfile
 
@@ -172,7 +171,6 @@ class FooterFilter(DexyFilter):
     DEFAULT_FOOTER_FILTERS = ['dexy', 'jinja']
 
     def process_text(self, input_text):
-        start = time.time()
         footer_doc = None
         inputs = self.artifact.inputs()
         footer_input_keys = [k for k in self.artifact.inputs().keys() if "footer" in k]
@@ -429,3 +427,4 @@ class SillyFilter(DexyFilter):
 
     def process_text(self, input_text):
         return "you said: '%s'\n that's silly!\n" % input_text
+

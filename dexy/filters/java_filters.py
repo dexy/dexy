@@ -1,23 +1,23 @@
 from dexy.dexy_filter import DexyFilter
+from dexy.filters.pexpect_filters import PexpectReplFilter
+from dexy.filters.process_filters import SubprocessStdoutFilter
 from pygments import highlight
 from pygments.formatters.html import HtmlFormatter
 from pygments.formatters.latex import LatexFormatter
 from pygments.lexers.compiled import JavaLexer
-import dexy.filters.pexpect_filters
-import dexy.filters.stdout_filters
 import json
 import os
 import platform
 import subprocess
 
-class JrubyFilter(dexy.filters.stdout_filters.ProcessStdoutFilter):
+class JrubyFilter(SubprocessStdoutFilter):
     VERSION = "jruby --version"
     EXECUTABLE = "jruby"
     INPUT_EXTENSIONS = [".rb"]
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['jruby']
 
-class JirbFilter(dexy.filters.pexpect_filters.ProcessLinewiseInteractiveFilter):
+class JirbFilter(PexpectReplFilter):
     ALIASES = ['jirb']
     ALLOW_MATCH_PROMPT_WITHOUT_NEWLINE = True
     EXECUTABLE = "jirb --prompt-mode simple"
@@ -27,7 +27,7 @@ class JirbFilter(dexy.filters.pexpect_filters.ProcessLinewiseInteractiveFilter):
     PROMPTS = ['>>', '?>']
     VERSION = "jirb --version"
 
-class JythonFilter(dexy.filters.stdout_filters.ProcessStdoutFilter):
+class JythonFilter(SubprocessStdoutFilter):
     VERSION = "jython --version"
     EXECUTABLE = "jython"
     INPUT_EXTENSIONS = [".py"]
@@ -45,7 +45,7 @@ class JythonFilter(dexy.filters.stdout_filters.ProcessStdoutFilter):
             self.log.warn("""Can't detect your system. If you see this message please report this to the dexy project maintainer, your platform.system() value is '%s'. The jython dexy filter should not be run on MacOS due to a serious bug.""" % platform.system())
             return True
 
-class JythonInteractiveFilter(dexy.filters.pexpect_filters.ProcessLinewiseInteractiveFilter):
+class JythonInteractiveFilter(PexpectReplFilter):
     VERSION = "jython --version"
     EXECUTABLE = "jython -i"
     INPUT_EXTENSIONS = [".py", ".txt"]

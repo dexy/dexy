@@ -135,7 +135,10 @@ def filters(log=NULL_LOGGER):
 
                 for k in dir(mod):
                     klass = mod.__dict__[k]
-                    if inspect.isclass(klass) and not (klass == dexy.dexy_filter.DexyFilter) and issubclass(klass, dexy.dexy_filter.DexyFilter):
+
+                    is_class = inspect.isclass(klass)
+
+                    if is_class and issubclass(klass, dexy.dexy_filter.DexyFilter) and (klass.__module__ == modname):
                         if not klass.ALIASES:
                             log.info("class %s is not available because it has no aliases" % klass.__name__)
                         elif not klass.executable_present():

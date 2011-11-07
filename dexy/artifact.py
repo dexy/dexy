@@ -234,7 +234,6 @@ class Artifact(object):
         Create an Artifact instance and load all information needed to
         calculate its hashstring.
         """
-        start = time.time()
         artifact = klass()
         artifact.key = artifact_key
         artifact.filter_class = filter_class
@@ -435,7 +434,7 @@ class Artifact(object):
                                 raise Exception()
                             json.dumps(v1)
                             hash_v[str(k1)] = v1
-                        except Exception as e:
+                        except Exception:
                             # Use a hash if we will have problems saving to JSON
                             # or if the data is large (don't want to clutter up the DB,
                             # makes it harder to spot differences)
@@ -452,18 +451,6 @@ class Artifact(object):
         hash_data = str(self.hash_dict())
         self.hashstring = self.compute_hash(hash_data)
 
-        debug_me = False
-        if debug_me:
-            for k, v in self.hash_dict().iteritems():
-                if hasattr(v, 'items'):
-                    print k, ":"
-                    for k1, v1 in v.items():
-                        print "  ", k1, ":", v1
-                else:
-                    print k, ":", v
-            print hash_data
-            print ">>>>>", self.hashstring
-
         try:
             original_document_key = self.document_key
             if not self.is_loaded():
@@ -474,18 +461,6 @@ class Artifact(object):
                 raise e
         except IOError as e:
             self.save_meta()
-
-    def command_line_args(self):
-        """
-        Allow specifying command line arguments which are passed to the filter
-        with the given key. Note that this does not currently allow
-        differentiating between 2 calls to the same filter in a single document.
-        """
-        if self.args.has_key('args'):
-            args = self.args['args']
-            last_key = self.key.rpartition("|")[-1]
-            if args.has_key(last_key):
-                return args[last_key]
 
     def input_text(self):
         return "".join([v for k, v in self.input_data_dict.items()])
@@ -614,3 +589,6 @@ class Artifact(object):
     def web_safe_document_key(self):
         # TODO this might not be unique
         return self.document_key.replace("/","-").replace("|", "-")
+
+    def has_sections(self):
+        return (self.data_dict.keys() != ['1'])

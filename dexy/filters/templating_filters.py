@@ -5,7 +5,6 @@ from jinja2.exceptions import TemplateSyntaxError
 from jinja2.exceptions import UndefinedError
 import jinja2
 import re
-import time
 import traceback
 
 class TemplateFilterException(DexyFilterException):
@@ -38,7 +37,6 @@ class TemplateFilter(DexyFilter):
         env = {}
         for plugin_class in self.PLUGINS:
             plugin = plugin_class(self)
-            start = time.time()
             new_env_vars = plugin.run()
             if any(v in env.keys() for v in new_env_vars):
                 raise Exception("trying to add new keys %s, already have %s" % (", ".join(new_env_vars.keys()), ", ".join(env.keys())))
