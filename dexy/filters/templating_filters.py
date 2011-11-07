@@ -53,20 +53,19 @@ class TemplateFilter(DexyFilter):
         template_data = self.run_plugins()
         return input_text % template_data
 
-class JinjaFilter(TemplateFilter):
+class JinjaTextFilter(TemplateFilter):
     """
-    Runs the Jinja templating engine on your document to incorporate dynamic
-    content.
+    Runs the Jinja templating engine. Uses process_text and returns text rather
+    than writing to file.
     """
-    ALIASES = ['jinja']
-    TAGS = ['template']
+    ALIASES = ['jinjatext']
 
-    def process(self):
+    def process_text(self, input_text):
         env = self.setup_jinja_env()
         template_data = self.run_plugins()
         try:
-            template = env.from_string(self.artifact.input_text())
-            template.stream(template_data).dump(self.artifact.filepath())
+            template = env.from_string(input_text)
+            return template.render(template_data)
         except (TemplateSyntaxError, UndefinedError, TypeError) as e:
             self.handle_jinja_exception(e)
 
@@ -134,3 +133,19 @@ class JinjaFilter(TemplateFilter):
 
         raise JinjaFilterException("\n".join(result))
 
+class JinjaFilter(JinjaTextFilter):
+    """
+    Runs the Jinja templating engine on your document to incorporate dynamic
+    content.
+    """
+    ALIASES = ['jinja']
+    TAGS = ['template']
+
+    def process(self):
+        env = self.setup_jinja_env()
+        template_data = self.run_plugins()
+        try:
+            template = env.from_string(self.artifact.input_text())
+            template.stream(template_data).dump(self.artifact.filepath())
+        except (TemplateSyntaxError, UndefinedError, TypeError) as e:
+            self.handle_jinja_exception(e)

@@ -1,5 +1,7 @@
 #!/bin/bash -ex
 
+find . -name "*.pyc" -exec rm -rf {} \;
+
 rm -rf testenv/
 virtualenv --no-site-packages testenv/
 

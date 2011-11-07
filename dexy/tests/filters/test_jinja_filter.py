@@ -1,13 +1,13 @@
 from dexy.artifact import Artifact
 from dexy.constants import Constants
-from dexy.filters.jinja_filters import JinjaFilter
-from dexy.filters.jinja_filters import JinjaFilterException
+from dexy.filters.templating_filters import JinjaTextFilter
+from dexy.filters.templating_filters import JinjaFilterException
 
 def init_jinja_filter():
     artifact = Artifact()
     artifact.name = "" # None causes problems with os.stat
 
-    f = JinjaFilter()
+    f = JinjaTextFilter()
     f.artifact = artifact
     f.log = Constants.NULL_LOGGER
     return f
