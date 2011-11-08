@@ -24,6 +24,7 @@ class Document(object):
         self.args = {}
         self.artifacts = []
         self.elapsed = 0
+        self.input_args = []
         self.input_keys = []
         self.inputs = []
         self.log = Constants.NULL_LOGGER # proper logging set up after we know our name
@@ -94,52 +95,58 @@ class Document(object):
         will depend on (have as inputs).
         """
         start = time.time()
-        for doc in members_dict.values():
-            # Work out relative paths
-            dir1 = os.path.dirname(doc.name)
-            dir2 = os.path.dirname(self.name)
-            if dir1 == '':
-                dir1 = "."
-            if dir2 == "":
-                dir2 = "."
+        if len(self.input_args) > 0 or len(self.input_keys) > 0 or self.use_all_inputs:
+            for doc in members_dict.values():
+                if doc.key() in self.input_keys:
+                    self.inputs.append(doc)
+                else:
+                    # Work out relative paths
+                    dir1 = os.path.dirname(doc.name)
+                    dir2 = os.path.dirname(self.name)
+                    if dir1 == '':
+                        dir1 = "."
+                    if dir2 == "":
+                        dir2 = "."
 
-            relpath = os.path.relpath(dir1, dir2)
-            relpath2 = os.path.relpath(dir2, dir1)
+                    relpath = os.path.relpath(dir1, dir2)
+                    relpath2 = os.path.relpath(dir2, dir1)
 
-            # Whether the document is in parent dir of input
-            in_parent_dir = not (".." in relpath) and not (relpath == ".")
-            in_same_dir = (relpath == ".") and (relpath2 == ".")
-            in_parent_or_child = (relpath == ".") or ((not ".." in relpath) ^ (not ".." in relpath2))
+                    # Whether the document is in parent dir of input
+                    in_parent_dir = not (".." in relpath) and not (relpath == ".")
+                    in_same_dir = (relpath == ".") and (relpath2 == ".")
+                    in_parent_or_child = (relpath == ".") or ((not ".." in relpath) ^ (not ".." in relpath2))
 
-            # See if input matches an item in inputs
-            specified = False
-            for input_glob in self.input_keys:
-                # The full doc key is specified
-                is_exact_absolute_match = (input_glob == doc.key())
+                    # See if input matches an item in inputs
+                    specified = False
+                    for input_glob in self.input_args:
+                        # The full doc key is specified
+                        is_exact_absolute_match = (input_glob == doc.key())
+                        if is_exact_absolute_match:
+                            print "got to is_exact_absolute_match"
 
-                # The relative path doc key is specified
-                is_exact_relative_match = (os.path.join(relpath2, input_glob) == doc.key())
+                        # The relative path doc key is specified
+                        is_exact_relative_match = (os.path.join(relpath2, input_glob) == doc.key())
 
-                # A glob matches in any child dir
-                is_glob_match_in_child_dir = (in_parent_dir or in_same_dir) and fnmatch.fnmatch(os.path.basename(doc.key()), input_glob)
+                        # A glob matches in any child dir
+                        is_glob_match_in_child_dir = (in_parent_dir or in_same_dir) and fnmatch.fnmatch(os.path.basename(doc.key()), input_glob)
 
-                specified = (is_exact_absolute_match or is_exact_relative_match or is_glob_match_in_child_dir)
+                        specified = (is_exact_absolute_match or is_exact_relative_match or is_glob_match_in_child_dir)
 
-                if specified:
-                    break
+                        if specified:
+                            break
 
-            # Work out relative priority
-            higher_priority = (self.priority > doc.priority)
-            equal_priority = (self.priority == doc.priority)
+                    # Work out relative priority
+                    higher_priority = (self.priority > doc.priority)
+                    equal_priority = (self.priority == doc.priority)
 
-            use_all_inputs = self.use_all_inputs
-            also_all_inputs = doc.use_all_inputs
+                    use_all_inputs = self.use_all_inputs
+                    also_all_inputs = doc.use_all_inputs
 
-            all_inputs_and_qualified = use_all_inputs and (higher_priority or (equal_priority and in_parent_dir) or not also_all_inputs)
-            disqualified_by_strictinherit = self.controller.args['strictinherit'] and not (in_parent_or_child)
+                    all_inputs_and_qualified = use_all_inputs and (higher_priority or (equal_priority and in_parent_dir) or not also_all_inputs)
+                    disqualified_by_strictinherit = self.controller.args['strictinherit'] and not (in_parent_or_child)
 
-            if specified or (all_inputs_and_qualified and not disqualified_by_strictinherit):
-                self.inputs.append(doc)
+                    if specified or (all_inputs_and_qualified and not disqualified_by_strictinherit):
+                        self.inputs.append(doc)
 
         elapsed = time.time() - start
         self.timing.append(("finalize-inputs", elapsed))

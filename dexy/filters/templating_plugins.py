@@ -5,6 +5,7 @@ import os
 import pprint
 import pygments
 import pygments.formatters
+import re
 import urllib
 
 class TemplatePlugin(object):
@@ -17,6 +18,10 @@ class TemplatePlugin(object):
 class PrettyPrinterTemplatePlugin(TemplatePlugin):
     def run(self):
         return { 'pformat' : pprint.pformat}
+
+class RegularExpressionsTemplatePlugin(TemplatePlugin):
+    def run(self):
+        return { 're_match' : re.match, 're_search' : re.search}
 
 class PythonBuiltinsTemplatePlugin(TemplatePlugin):
     # Intended to be all builtins that make sense to run within a document.

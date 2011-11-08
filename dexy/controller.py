@@ -367,7 +367,8 @@ re.compile: %s""" % (args['except'], e))
                         doc.use_all_inputs = args['allinputs']
 
                     if args.has_key('inputs'):
-                        doc.input_keys = copy.copy(args['inputs'])
+                        doc.input_args = copy.copy(args['inputs'])
+                        doc.input_keys = []
 
                     for i in inputs:
                         doc.add_input_key(i)

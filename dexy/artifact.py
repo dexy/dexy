@@ -28,6 +28,7 @@ class Artifact(object):
         'hashfunction',
         'initial',
         'is_last',
+        'logstream',
         'key',
         'name',
         'output_hash',
@@ -81,6 +82,7 @@ class Artifact(object):
         self.is_last = False
         self.key = None
         self.log = logging.getLogger()
+        self.logstream = ""
         self.mtime = None
         self.name = None
         self.source = None
@@ -317,7 +319,7 @@ class Artifact(object):
                 raise Exception("data neither in memory nor on disk")
 
             self.output_hash = h.hexdigest()
-
+            self.logstream = self.doc.logstream.getvalue()
             self.state = 'complete'
             self.source = 'run'
             self.save()
@@ -590,5 +592,24 @@ class Artifact(object):
         # TODO this might not be unique
         return self.document_key.replace("/","-").replace("|", "-")
 
+    def hyperlink(self, link_text = None):
+        if not link_text:
+            link_text = self.canonical_basename()
+
+        return """<a href="/%s">%s</a>""" % (self.canonical_filename(), link_text)
+
     def has_sections(self):
         return (self.data_dict.keys() != ['1'])
+
+    def relative_path_to_input(self, input_artifact):
+        my_dir = os.path.dirname(self.name)
+        input_dir = os.path.dirname(input_artifact.name)
+        if my_dir == input_dir:
+            relpath = ""
+        else:
+            relpath = os.path.relpath(input_dir, my_dir)
+        return relpath
+
+    def relative_key_for_input(self, input_artifact):
+        relpath = self.relative_path_to_input(input_artifact)
+        return os.path.join(relpath, os.path.basename(input_artifact.key))

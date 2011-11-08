@@ -75,10 +75,9 @@ class PexpectReplFilter(ProcessFilter):
             start = ""
 
             lines = self.lines_for_section(section_text)
-
             for l in lines:
                 section_transcript += start
-                proc.send(l + "\n")
+                proc.send(l.rstrip() + "\n")
                 proc.expect_exact(search_terms, timeout=timeout)
                 section_transcript += proc.before
                 start = proc.after
@@ -106,13 +105,6 @@ class RubyPexpectReplFilter(PexpectReplFilter):
     PROMPTS = [">>", "?>"]
     VERSION = 'irb --version'
 
-class IpythonPexpectReplFilter(PexpectReplFilter):
-    ALIASES = ['ipython']
-    EXECUTABLE = 'ipython --classic'
-    INPUT_EXTENSIONS = [".txt", ".py"]
-    OUTPUT_EXTENSIONS = [".pycon"]
-    VERSION = 'ipython -Version'
-
 class PythonPexpectReplFilter(PexpectReplFilter):
     ALIASES = ['pycon', 'pyrepl']
     EXECUTABLE = 'python'
@@ -131,6 +123,13 @@ for dexy__k, dexy__v in locals().items():
 json.dump(dexy__x, dexy__vars_file)
 dexy__vars_file.close()
 """
+
+class IpythonPexpectReplFilter(PythonPexpectReplFilter):
+    ALIASES = ['ipython']
+    EXECUTABLE = 'ipython --classic'
+    INPUT_EXTENSIONS = [".txt", ".py"]
+    OUTPUT_EXTENSIONS = [".pycon"]
+    VERSION = 'ipython -Version'
 
 # untested below here
 
