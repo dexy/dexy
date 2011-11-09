@@ -1,22 +1,31 @@
-from kaa import imlib2
 from dexy.dexy_filter import DexyFilter
+from kaa import imlib2
+import re
 
 class Imlib2Filter(DexyFilter):
-    """Base class which reads previous artifact, calls a do_im method,
-    saves the output. Can be inherited. Default action is to flip an image,
-    pointless in itself but a useful demo to know things are working."""
-    OUTPUT_EXTENSIONS = [".png"]
-    INPUT_EXTENSIONS = [".png"]
+    """
+    Base class which reads previous artifact, calls a do_im method, saves the
+    output. Can be inherited. Default action is to flip an image, pointless in
+    itself but a useful demo to know things are working.
+    """
     ALIASES = ['im-flipv']
     BINARY = True
+    FINAL = True
+    FONT_PATHS = ["/usr/share/fonts/truetype/", "/usr/share/fonts/truetype/freefont/"]
+    INPUT_EXTENSIONS = [".png", ".jpg", ".gif", ".tiff", ".bmp"]
+    OUTPUT_EXTENSIONS = [".png", ".jpg", ".gif", ".tiff", ".bmp"]
 
     def do_im(self, image):
         image.flip_vertical()
 
     def process(self):
-        # TODO fix font locations to be configurable
-        imlib2.add_font_path("/usr/share/fonts/truetype/")
-        imlib2.add_font_path("/usr/share/fonts/truetype/freefont/")
+        font_paths = self.FONT_PATHS
+        if self.artifact.args.has_key('font-path'):
+            font_paths.extend(self.artifact.args['font-path'])
+
+        for path in font_paths:
+            imlib2.add_font_path(path)
+
         self.default_font = imlib2.load_font("FreeSans", 20)
 
         wf = self.artifact.previous_artifact_filepath
@@ -31,7 +40,7 @@ class Imlib2Filter(DexyFilter):
 
         image.save(self.artifact.filepath())
 
-class FlipHorizontalFilter(Imlib2Filter):
+class Imlib2FlipHorizontalFilter(Imlib2Filter):
     ALIASES = ['im-fliph']
 
     def do_im(self, image):
@@ -77,7 +86,12 @@ class Imlib2Crop(Imlib2Filter):
 
     def do_im(self, image):
         if self.artifact.args.has_key('im-crop'):
-            region_size, start_x, start_y = self.artifact.args['im-crop'].split("+")
+            crop_args = self.artifact.args['im-crop']
+            regex = "([0-9]+)x([0-9]+)\+([0-9]+)\+([0-9]+)"
+            if not re.match(regex, crop_args):
+                raise Exception("Specify im-crop like 300x300+50+50.")
+
+            region_size, start_x, start_y = crop_args.split("+")
             region_width, region_height = region_size.split("x")
             self.log.debug("Using custom cropping region for im-crop of width: %s height: %s x: %s y: %s" % (region_width, region_height, start_x, start_y))
         else:

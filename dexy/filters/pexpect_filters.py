@@ -43,6 +43,9 @@ class PexpectReplFilter(ProcessFilter):
             lines = lines[0:-1]
         return self.LINE_ENDING.join(lines)
 
+    def strip_newlines(self, line):
+        return line.replace(" \r", "")
+
     def process_dict(self, input_dict):
         output_dict = OrderedDict()
 
@@ -79,7 +82,7 @@ class PexpectReplFilter(ProcessFilter):
                 section_transcript += start
                 proc.send(l.rstrip() + "\n")
                 proc.expect_exact(search_terms, timeout=timeout)
-                section_transcript += proc.before
+                section_transcript += self.strip_newlines(proc.before)
                 start = proc.after
 
             # Save this section's output

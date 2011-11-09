@@ -156,42 +156,33 @@ class LatexFilter(DexyFilter):
         run_cmd(latex_command) #first run
         run_cmd(latex_command) #second run - fix references
 
-class EmbedFonts(DexyFilter):
+class EmbedFonts(SubprocessFilter):
+    """
+    Use to embed fonts and do other prepress as required for some types of printing.
+    """
     INPUT_EXTENSIONS = [".pdf"]
     OUTPUT_EXTENSIONS = [".pdf"]
     EXECUTABLE = 'ps2pdf'
     ALIASES = ['embedfonts', 'prepress']
-    FINAL = True
-    BINARY = True
 
-    def process(self):
+    def preprocess_command_string():
         pf = self.artifact.previous_artifact_filename
         af = self.artifact.filename()
+        return "%s -dPDFSETTINGS=/prepress %s %s" % (self.EXECUTABLE, pf, af)
 
-        env = None
+    def pdffonts_command_string():
+        command = "%s %s" % ("pdffonts", self.artifact.filename())
 
-        command = "%s -dPDFSETTINGS=/prepress %s %s" % (self.EXECUTABLE, pf, af)
-        self.log.info(command)
+    def process(self):
+        env = self.setup_env()
 
-        proc = subprocess.Popen(command, shell=True,
-                                cwd=self.artifact.artifacts_dir,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT,
-                                env=env)
-
-        stdout, stderr = proc.communicate()
+        proc, stdout = self.run_command(self.preprocess_command_string(), env)
+        self.handle_subprocess_proc_return(proc.returncode, stdout)
         self.artifact.stdout = stdout
 
-        command = "%s %s" % ("pdffonts", af)
-        proc = subprocess.Popen(command, shell=True,
-                                cwd=self.artifact.artifacts_dir,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT,
-                                env=env)
-
-        stdout, stderr = proc.communicate()
+        proc, stdout = self.run_command(self.pdffonts_command_string(), env)
+        self.handle_subprocess_proc_return(proc.returncode, stdout)
         self.artifact.stdout += stdout
-
 
 class ROutputBatchFilter(SubprocessFilter):
     """Runs R code in batch mode. Uses the --slave flag so doesn't echo commands, just returns output."""

@@ -96,6 +96,9 @@ class RubySubprocessStdoutInputFilter(SubprocessStdoutInputFilter):
     ALIASES = ['rbinput']
 
 class EscriptSubprocessStdoutFilter(SubprocessStdoutFilter):
+    """
+    Runs Erlang scripts using the escript command.
+    """
     EXECUTABLE = 'escript'
     INPUT_EXTENSIONS = [".erl"]
     OUTPUT_EXTENSIONS = [".txt"]
