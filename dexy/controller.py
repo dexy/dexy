@@ -140,7 +140,8 @@ class Controller(object):
                     config_dict = json_dict
                 else:
                     for k in config_dict.keys():
-                        if k.startswith("@") and not json_dict.has_key(k):
+                        propagate_virtual = config_dict[k].has_key('propagate') and config_dict[k]['propagate']
+                        if k.startswith("@") and not json_dict.has_key(k) and not propagate_virtual:
                             # don't propagate virtual files
                             del config_dict[k]
 

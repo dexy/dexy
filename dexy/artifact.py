@@ -534,6 +534,9 @@ class Artifact(object):
                 os.makedirs(os.path.dirname(workfile))
             shutil.copyfile(previous, workfile)
 
+    def canonical_dir(self, ignore_args = False):
+        return os.path.dirname(self.name)
+
     def canonical_basename(self, ignore_args = False):
         return os.path.basename(self.canonical_filename(ignore_args))
 

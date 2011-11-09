@@ -55,19 +55,6 @@ class TestFilter(DexyFilter):
         # Don't change the output so we can use end result still...
         self.artifact.data_dict = self.artifact.input_data_dict
 
-class CopyFilter(DexyFilter):
-    """
-    Copies the file without trying to read the contents, intended for binary files.
-    """
-    INPUT_EXTENSIONS = [".*"]
-    OUTPUT_EXTENSIONS = [".*"]
-    ALIASES = ['cp']
-    BINARY = True
-    FINAL = True
-
-    def process(self):
-        shutil.copyfile(self.artifact.previous_artifact_filepath, self.artifact.filepath())
-
 class JoinFilter(DexyFilter):
     """
     Takes sectioned code and joins it into a single section. Some filters which

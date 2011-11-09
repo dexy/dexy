@@ -2,6 +2,21 @@ from dexy.filters.process_filters import SubprocessStdoutFilter
 from dexy.filters.process_filters import SubprocessStdoutInputFilter
 from dexy.filters.process_filters import SubprocessStdoutInputFileFilter
 
+class CowsaySubprocessStdoutFilter(SubprocessStdoutFilter):
+    ALIASES = ['cowsay']
+    EXECUTABLE = 'cowsay'
+    INPUT_EXTENSIONS = [".txt"]
+    OUTPUT_EXTENSIONS = [".txt"]
+
+    def command_string_stdout(self):
+        args = self.command_line_args() or ""
+        text = self.artifact.input_text()
+        return "%s %s \"%s\"" % (self.executable(), args, text)
+
+class CowthinkSubprocessStdoutFilter(CowsaySubprocessStdoutFilter):
+    ALIASES = ['cowthink']
+    EXECUTABLE = 'cowthink'
+
 class PythonSubprocessStdoutFilter(SubprocessStdoutFilter):
     ALIASES = ['py', 'pyout']
     EXECUTABLE = 'python'
