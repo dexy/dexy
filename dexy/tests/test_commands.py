@@ -72,7 +72,7 @@ def test_commands_dexy_without_setup():
 def test_commands_filters():
     with divert_stdout() as stdout:
         filters_command()
-        assert "cp : CopyFilter" in stdout.getvalue()
+        assert "pyg : PygmentsFilter" in stdout.getvalue()
 
 def test_commands_reporters():
     with divert_stdout() as stdout:

@@ -1,6 +1,6 @@
 from dexy.dexy_filter import DexyFilter
 from dexy.document import Document
-import dexy.filters.python_filters
+import dexy.filters.pygments_filters
 import dexy.introspect
 
 def test_get_filter_for_alias():
@@ -10,7 +10,7 @@ def test_get_filter_for_alias():
         assert isinstance(k, str)
         assert issubclass(v, DexyFilter)
 
-    assert d.get_filter_for_alias("cp") == dexy.filters.python_filters.CopyFilter
+    assert d.get_filter_for_alias("pyg") == dexy.filters.pygments_filters.PygmentsFilter
     assert d.get_filter_for_alias("-") == DexyFilter
     assert d.get_filter_for_alias("-xxxalias") == DexyFilter
 
