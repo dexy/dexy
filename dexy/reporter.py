@@ -22,9 +22,7 @@ class Reporter(object):
         readme_filepath = os.path.join(reports_dir, self.README_FILENAME)
 
         if os.path.exists(reports_dir) and not os.path.exists(safety_filepath):
-            raise Exception("""Reporter %s is trying to create %s but this
-            directory already exists (and no safety file was found). Please
-            remove or rename this directory before proceeding.""" % (self.__class__.__name__, reports_dir))
+            raise Exception("Please remove directory %s, Dexy wants to put a report here but doesn't want to overwrite anything by accident." % os.path.abspath(reports_dir))
         elif os.path.exists(reports_dir):
             shutil.rmtree(reports_dir)
 
