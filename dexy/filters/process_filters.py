@@ -56,16 +56,36 @@ class ProcessFilter(DexyFilter):
             if args.has_key(last_key):
                 return args[last_key]
 
+    def command_line_scriptargs(self):
+        """
+        Allow specifying command line arguments which are passed to the filter
+        with the given key, to be passed as arguments to the script being run
+        rather than the executable.
+        """
+        if self.artifact.args.has_key('scriptargs'):
+            args = self.artifact.args['scriptargs']
+            last_key = self.artifact.key.rpartition("|")[-1]
+            if args.has_key(last_key):
+                return args[last_key]
+
     def command_string(self):
-        wf = self.artifact.previous_artifact_filename
-        of = self.artifact.filename()
-        args = self.command_line_args() or ""
-        return "%s %s %s %s" % (self.executable(), wf, args, of)
+        args = {
+            'prog' : self.executable(),
+            'args' : self.command_line_args() or "",
+            'scriptargs' : self.command_line_scriptargs() or "",
+            'script_file' : self.artifact.previous_artifact_filename,
+            'output_file' : self.artifact.filename()
+        }
+        return "%(prog)s %(args)s %(script_file)s %(scriptargs)s %(output_file)s" % args
 
     def command_string_stdout(self):
-        wf = self.artifact.previous_artifact_filename
-        args = self.command_line_args() or ""
-        return "%s %s %s" % (self.executable(), wf, args)
+        args = {
+            'prog' : self.executable(),
+            'args' : self.command_line_args() or "",
+            'scriptargs' : self.command_line_scriptargs() or "",
+            'script_file' : self.artifact.previous_artifact_filename
+        }
+        return "%(prog)s %(args)s %(script_file)s %(scriptargs)s" % args
 
 class SubprocessFilter(ProcessFilter):
     ALIASES = ['subprocessfilter']
@@ -125,10 +145,10 @@ class SubprocessStdoutInputFileFilter(SubprocessFilter):
     BINARY = False
 
     def command_string_stdout_input(self, input_artifact):
-        wf = self.artifact.previous_artifact_filename
+        script_file = self.artifact.previous_artifact_filename
         input_file = input_artifact.filename()
         args = self.command_line_args() or ""
-        return "%s %s %s %s" % (self.executable(), wf, args, input_file)
+        return "%s %s %s %s" % (self.executable(), args, script_file, input_file)
 
     def process(self):
         for artifact in self.artifact.inputs().values():

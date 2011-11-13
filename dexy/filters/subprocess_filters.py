@@ -14,19 +14,31 @@ class AsciidocFilter(SubprocessFilter):
     BINARY = False
 
     def command_string(self):
-        extension = self.artifact.ext
-        if extension == ".html":
-            # TODO check here if we are on asciidoc 8.6.5,
-            # any lower will throw an error if we try to use html5
-            backend = "html5"
-        elif extension == ".xml":
-            backend = "docbook45"
+        if self.artifact.args.has_key('backend'):
+            backend = self.artifact.args['backend']
+            # TODO check file extension is valid for backend
         else:
-            raise Exception("unexpected file extension in asciidoc filter %s" % extension)
+            if self.artifact.ext == ".html":
+                if self.version() >= "asciidoc 8.6.5":
+                    backend = 'html5'
+                else:
+                    backend = 'html4'
+            elif self.artifact.ext == ".xml":
+                backend = "docbook45"
+            elif self.artifact.ext == ".tex":
+                backend = "latex"
+            else:
+                raise Exception("unexpected file extension in asciidoc filter %s" % extension)
 
-        wf = self.artifact.previous_artifact_filename
-        of = self.artifact.filename()
-        return "%s -b %s -d book -o %s %s" % (self.EXECUTABLE, backend, of, wf)
+        args = {
+            'backend' : backend,
+            'infile' : self.artifact.previous_artifact_filename,
+            'outfile' : self.artifact.filename(),
+            'prog' : self.executable(),
+            'args' : self.command_line_args() or ""
+        }
+
+        return "%(prog)s -b %(backend)s %(args)s -o %(outfile)s %(infile)s" % args
 
 class BibFilter(DexyFilter):
     INPUT_EXTENSIONS = [".tex"]
@@ -221,9 +233,9 @@ class Rd2PdfFilter(SubprocessFilter):
         }
         return "%(prog)s --output=%(out)s --title=\"%(title)s\" %(in)s" % args
 
-class RagelRubyFilter(SubprocessFilter):
+class RagelRubySubprocessFilter(SubprocessFilter):
     """
-    Runs ragel for ruby.
+    Generates ruby source code from a ragel file.
     """
     ALIASES = ['rlrb', 'ragelruby']
     BINARY = False
@@ -238,7 +250,7 @@ class RagelRubyFilter(SubprocessFilter):
         of = self.artifact.filename()
         return "%s %s -o %s" % (self.executable(), wf, of)
 
-class Ps2PdfFilter(SubprocessFilter):
+class Ps2PdfSubprocessFilter(SubprocessFilter):
     """
     Converts a postscript file to PDF format.
     """
@@ -247,7 +259,7 @@ class Ps2PdfFilter(SubprocessFilter):
     INPUT_EXTENSIONS = [".ps", ".txt"]
     OUTPUT_EXTENSIONS = [".pdf"]
 
-class Html2PdfFilter(SubprocessFilter):
+class Html2PdfSubprocessFilter(SubprocessFilter):
     """
     Renders HTML to PDF using wkhtmltopdf. If the HTML relies on assets such as
     CSS or image files, these should be specified as inputs.
@@ -294,7 +306,7 @@ class DotFilter(SubprocessFilter):
         }
         return "%(prog)s -T%(format)s -o%(outfile)s %(workfile)s" % args
 
-class Pdf2ImgFilter(SubprocessFilter):
+class Pdf2ImgSubprocessFilter(SubprocessFilter):
     """
     Converts a PDF file to a PNG image using ghostscript (subclass this to
     convert to other image types).
@@ -333,7 +345,7 @@ class Pdf2ImgFilter(SubprocessFilter):
         page_file = os.path.join(self.artifact.artifacts_dir, "%s-%s" % (page, self.artifact.filename()))
         shutil.copyfile(page_file, self.artifact.filepath())
 
-class Pdf2JpgFilter(Pdf2ImgFilter):
+class Pdf2JpgSubprocessFilter(Pdf2ImgSubprocessFilter):
     ALIASES = ['pdf2jpg']
     GS_DEVICE = 'jpeg'
     OUTPUT_EXTENSIONS = ['.jpg']
