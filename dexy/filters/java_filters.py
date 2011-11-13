@@ -172,7 +172,7 @@ class JavadocsJsonFilter(DexyFilter):
                     superclass_package, _, superclass_name = klass['superclass'].rpartition(".")
                     if j['packages'].has_key(superclass_package):
                         if not j['packages'][superclass_package]['classes'].has_key(superclass_name):
-                            self.log.warn("Can't find", superclass_name, "in package", superclass_package)
+                            self.log.warn("Can't find %s in package %s" % (superclass_name, superclass_package))
                         else:
                             superclass = j['packages'][superclass_package]['classes'][superclass_name]
                             if not superclass.has_key('subclasses'):
