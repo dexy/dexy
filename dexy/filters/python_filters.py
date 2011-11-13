@@ -339,3 +339,11 @@ class SillyFilter(DexyFilter):
     def process_text(self, input_text):
         return "you said: '%s'\n that's silly!\n" % input_text
 
+class SectionsByLineFilter(DexyFilter):
+    ALIASES = ['lines']
+
+    def process_text_to_dict(self, input_text):
+        data_dict = OrderedDict()
+        for i, line in enumerate(input_text.splitlines()):
+            data_dict["%s" % (i+1)] = line
+        return data_dict
