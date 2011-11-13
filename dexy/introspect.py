@@ -109,18 +109,19 @@ def filters(log=NULL_LOGGER):
 
     if os.path.exists(proj_filters[1]):
         init_py_file = os.path.join(proj_filters[1], "__init__.py")
+        path = os.path.abspath(os.curdir)
         if not os.path.exists(init_py_file):
             print "You need to create a __init__.py file in", proj_filters[1], "in order for filters to be available"
-        else:
-            path = os.path.abspath(os.curdir)
+        elif not path in sys.path:
             print "Adding", path, "to python sys.path so your custom filters in", proj_filters[1], "will be available"
             sys.path.append(path)
+
     if os.path.exists(user_filters[1]):
         init_py_file = os.path.join(user_filters[1], "__init__.py")
+        path = os.path.expanduser('~')
         if not os.path.exists(init_py_file):
             print "You need to create a __init__.py file in", user_filters[1], "in order for filters to be available"
-        else:
-            path = os.path.expanduser('~')
+        elif not path in sys.path:
             print "Adding", path, "to python sys.path so your custom filters in", user_filters[1], "will be available"
             sys.path.append(path)
 
