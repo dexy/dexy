@@ -121,8 +121,6 @@ class Document(object):
                     for input_glob in self.input_args:
                         # The full doc key is specified
                         is_exact_absolute_match = (input_glob == doc.key())
-                        if is_exact_absolute_match:
-                            print "got to is_exact_absolute_match"
 
                         # The relative path doc key is specified
                         is_exact_relative_match = (os.path.join(relpath2, input_glob) == doc.key())
