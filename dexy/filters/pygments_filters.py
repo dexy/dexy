@@ -3,6 +3,7 @@ from ordereddict import OrderedDict
 from pygments import highlight
 from pygments.formatters import get_formatter_for_filename
 from pygments.lexers import get_lexer_for_filename
+from pygments.lexers import get_lexer_by_name
 from pygments.lexers.agile import PythonConsoleLexer
 from pygments.lexers.agile import RubyConsoleLexer
 from pygments.lexers.special import TextLexer
@@ -22,31 +23,33 @@ class PygmentsFilter(DexyFilter):
 
     def process_dict(self, input_dict):
         ext = self.artifact.input_ext
-
-        ### @export "custom-file-extension-handling"
-        if ext == '.pycon':
-            lexer = PythonConsoleLexer()
-        elif ext == '.rbcon':
-            lexer = RubyConsoleLexer()
-        elif ext in ('.json', '.dexy'):
-            lexer = JavascriptLexer()
-        elif ext == '.Rd':
-            lexer = TextLexer()
-        elif ext == '.svg':
-            lexer = XmlLexer()
+        has_args = self.artifact.args.has_key('pygments')
+        if has_args:
+            args = self.artifact.args['pygments']
         else:
-            fake_file_name = "input_text%s" % ext
-            lexer = get_lexer_for_filename(fake_file_name)
+            args = {}
 
-        ### @export "pygments-args"
-        if self.artifact.args.has_key('pygments'):
-            pygments_args = self.artifact.args['pygments']
+        if args.has_key('lexer'):
+            lexer = get_lexer_by_name(args['lexer'])
+            del args['lexer']
         else:
-            pygments_args = {}
+            if ext == '.pycon':
+                lexer = PythonConsoleLexer()
+            elif ext == '.rbcon':
+                lexer = RubyConsoleLexer()
+            elif ext in ('.json', '.dexy'):
+                lexer = JavascriptLexer()
+            elif ext == '.Rd':
+                lexer = TextLexer()
+            elif ext == '.svg':
+                lexer = XmlLexer()
+            else:
+                fake_file_name = "input_text%s" % ext
+                lexer = get_lexer_for_filename(fake_file_name)
 
         formatter_args = {'lineanchors' : self.artifact.web_safe_document_key() }
-        # for now we assume all pygments args are for the formatter...
-        formatter_args.update(pygments_args)
+        # all args left are for the formatter...
+        formatter_args.update(args)
 
         formatter = get_formatter_for_filename(self.artifact.filename(),
                 **formatter_args)
