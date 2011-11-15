@@ -28,7 +28,7 @@ class AsciidocFilter(SubprocessFilter):
             elif self.artifact.ext == ".tex":
                 backend = "latex"
             else:
-                raise Exception("unexpected file extension in asciidoc filter %s" % extension)
+                raise Exception("unexpected file extension in asciidoc filter %s" % self.artifact.ext)
 
         args = {
             'backend' : backend,
@@ -177,13 +177,13 @@ class EmbedFonts(SubprocessFilter):
     EXECUTABLE = 'ps2pdf'
     ALIASES = ['embedfonts', 'prepress']
 
-    def preprocess_command_string():
+    def preprocess_command_string(self):
         pf = self.artifact.previous_artifact_filename
         af = self.artifact.filename()
         return "%s -dPDFSETTINGS=/prepress %s %s" % (self.EXECUTABLE, pf, af)
 
-    def pdffonts_command_string():
-        command = "%s %s" % ("pdffonts", self.artifact.filename())
+    def pdffonts_command_string(self):
+        return "%s %s" % ("pdffonts", self.artifact.filename())
 
     def process(self):
         env = self.setup_env()

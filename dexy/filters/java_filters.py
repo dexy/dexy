@@ -1,6 +1,7 @@
 from dexy.dexy_filter import DexyFilter
 from dexy.filters.pexpect_filters import PexpectReplFilter
 from dexy.filters.process_filters import SubprocessStdoutFilter
+from dexy.filters.process_filters import SubprocessCompileFilter
 from pygments import highlight
 from pygments.formatters.html import HtmlFormatter
 from pygments.formatters.latex import LatexFormatter
@@ -8,7 +9,7 @@ from pygments.lexers.compiled import JavaLexer
 import json
 import os
 import platform
-import subprocess
+import shutil
 
 class JrubyFilter(SubprocessStdoutFilter):
     VERSION = "jruby --version"
@@ -63,68 +64,51 @@ class JythonInteractiveFilter(PexpectReplFilter):
             print """Can't detect your system. If you see this message please report this to the dexy project maintainer, your platform.system() value is '%s'. The jythoni dexy filter should not be run on MacOS due to a serious bug.""" % platform.system()
             return True
 
-class JavaFilter(DexyFilter):
+class JavaFilter(SubprocessCompileFilter):
+    ALIASES = ['java']
+    COMPILED_EXTENSION = ".class"
     EXECUTABLE = "javac"
-    VERSION = "java -version"
     INPUT_EXTENSIONS = [".java"]
     OUTPUT_EXTENSIONS = [".txt"]
-    ALIASES = ['java']
+    VERSION = "java -version"
 
-    def process(self):
-        if self.artifact.args.has_key('main'):
-            main_method = self.artifact.args['main']
-        else:
-            main_method = os.path.splitext(os.path.basename(self.artifact.name))[0]
-
-        env = os.environ
-        if self.artifact.args.has_key('env'):
-            env.update(self.artifact.args['env'])
-
-        # Create a temp dir to hold source + compiled files, since we need .java files
-        # named with their original names.
-        self.artifact.create_temp_dir()
-        wf = os.path.join(self.artifact.temp_dir(), os.path.basename(self.artifact.name))
-        f = open(wf, "w")
-        f.write(self.artifact.input_text())
-        f.close()
-
-        if env.has_key("CLASSPATH"):
-            # need to add 1 level to classpath since we are working in a subdir of artifacts/
-            env['CLASSPATH'] = ":".join(["../%s" % x for x in env['CLASSPATH'].split(":")])
+    def setup_cp(self):
+        env = self.setup_env()
 
         cp = "."
-        if env.has_key('CLASSPATH'):
-                cp = "%s:%s" % (cp, env['CLASSPATH'])
 
-        cwd = self.artifact.temp_dir()
+        if env and env.has_key("CLASSPATH"):
+            # need to add 1 level to classpath since we are working in a subdir of artifacts/
+            env['CLASSPATH'] = ":".join(["../%s" % x for x in env['CLASSPATH'].split(":")])
+            cp = "%s:%s" % (cp, env['CLASSPATH'])
 
-        command = "javac -classpath %s %s" % (cp, os.path.basename(self.artifact.name))
-        self.log.debug(command)
-        proc = subprocess.Popen(command, shell=True,
-                                cwd=cwd,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT,
-                                env=env)
-        stdout, stderr = proc.communicate()
-        self.artifact.stdout = stdout
-        if proc.returncode > 0:
-            raise Exception("a problem occurred running %s.\ndetails:\n%s" % (
-                command, stderr))
+        return cp
 
+    def compile_command_string(self):
+        cp = self.setup_cp()
+        return "javac -classpath %s %s" % (cp, os.path.basename(self.artifact.name))
 
-        command = "java -cp %s %s" % (cp, main_method)
-        self.log.debug(command)
-        proc = subprocess.Popen(command, shell=True,
-                                cwd=cwd,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT,
-                                env=env)
-        stdout, stderr = proc.communicate()
-        if proc.returncode > 0:
-            raise Exception("a problem occurred running %s.\ndetails:\n%s" % (
-                command, stderr))
+    def run_command_string(self):
+        cp = self.setup_cp()
+        main_method = self.setup_main_method()
+        return "java -cp %s %s" % (cp, main_method)
 
-        self.artifact.data_dict['1'] = stdout
+    def setup_cwd(self):
+        tempdir = self.artifact.temp_dir()
+
+        if not os.path.exists(tempdir):
+            self.artifact.create_temp_dir()
+            previous = self.artifact.previous_artifact_filepath
+            workfile = os.path.join(tempdir, os.path.basename(self.artifact.previous_canonical_filename))
+            shutil.copyfile(previous, workfile)
+
+        return tempdir
+
+    def setup_main_method(self):
+        if self.artifact.args.has_key('main'):
+            return self.artifact.args['main']
+        else:
+            return os.path.splitext(os.path.basename(self.artifact.name))[0]
 
 class JavadocsJsonFilter(DexyFilter):
     ALIASES = ['javadoc', 'javadocs']

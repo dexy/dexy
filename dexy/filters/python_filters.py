@@ -5,7 +5,6 @@ from ordereddict import OrderedDict
 import json
 import os
 import re
-import shutil
 import uuid
 
 class TestFilter(DexyFilter):
