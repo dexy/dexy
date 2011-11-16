@@ -66,6 +66,7 @@ class JythonInteractiveFilter(PexpectReplFilter):
 
 class JavaFilter(SubprocessCompileFilter):
     ALIASES = ['java']
+    CHECK_RETURN_CODE = True # Whether to check return code when running compiled executable.
     COMPILED_EXTENSION = ".class"
     EXECUTABLE = "javac"
     INPUT_EXTENSIONS = [".java"]
