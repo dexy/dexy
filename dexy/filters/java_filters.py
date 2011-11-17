@@ -1,7 +1,8 @@
+from dexy.constants import NULL_LOGGER
 from dexy.dexy_filter import DexyFilter
 from dexy.filters.pexpect_filters import PexpectReplFilter
-from dexy.filters.process_filters import SubprocessStdoutFilter
 from dexy.filters.process_filters import SubprocessCompileFilter
+from dexy.filters.process_filters import SubprocessStdoutFilter
 from pygments import highlight
 from pygments.formatters.html import HtmlFormatter
 from pygments.formatters.latex import LatexFormatter
@@ -37,6 +38,8 @@ class JythonFilter(SubprocessStdoutFilter):
 
     @classmethod
     def enabled(self):
+        if not hasattr(self, 'log'):
+            self.log = NULL_LOGGER
         if platform.system() in ('Linux', 'Windows'):
             return True
         elif platform.system() in ('Darwin'):
