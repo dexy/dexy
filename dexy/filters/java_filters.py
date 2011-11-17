@@ -1,4 +1,3 @@
-from dexy.constants import NULL_LOGGER
 from dexy.dexy_filter import DexyFilter
 from dexy.filters.pexpect_filters import PexpectReplFilter
 from dexy.filters.process_filters import SubprocessCompileFilter
@@ -38,15 +37,15 @@ class JythonFilter(SubprocessStdoutFilter):
 
     @classmethod
     def enabled(self):
-        if not hasattr(self, 'log'):
-            self.log = NULL_LOGGER
         if platform.system() in ('Linux', 'Windows'):
             return True
         elif platform.system() in ('Darwin'):
-            self.log.warn("The jython dexy filter should not be run on MacOS due to a serious bug. This filter is being disabled.")
+            if hasattr(self, 'log'):
+                self.log.warn("The jython dexy filter should not be run on MacOS due to a serious bug. This filter is being disabled.")
             return False
         else:
-            self.log.warn("""Can't detect your system. If you see this message please report this to the dexy project maintainer, your platform.system() value is '%s'. The jython dexy filter should not be run on MacOS due to a serious bug.""" % platform.system())
+            if hasattr(self, 'log'):
+                self.log.warn("""Can't detect your system. If you see this message please report this to the dexy project maintainer, your platform.system() value is '%s'. The jython dexy filter should not be run on MacOS due to a serious bug.""" % platform.system())
             return True
 
 class JythonInteractiveFilter(PexpectReplFilter):
