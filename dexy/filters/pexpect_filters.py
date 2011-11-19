@@ -128,8 +128,10 @@ dexy__vars_file.close()
 """
 
 class IpythonPexpectReplFilter(PythonPexpectReplFilter):
+    # TODO test for version of ipython that supports --classic
     ALIASES = ['ipython']
     EXECUTABLE = 'ipython --classic'
+    IGNORE_ERRORS = True # TODO try to figure out why we are getting nonzero exit codes
     INPUT_EXTENSIONS = [".txt", ".py"]
     OUTPUT_EXTENSIONS = [".pycon"]
     VERSION = 'ipython -Version'
