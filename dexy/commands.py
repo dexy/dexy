@@ -77,7 +77,7 @@ def dexy_command(
     If you run into trouble, visit http://dexy.it/help
     """
     ### @export "dexy-command-check-setup"
-    if not check_setup():
+    if not check_setup(logsdir=logsdir, artifactsdir=artifactsdir):
         print "Please run '%s setup' first to create the directories dexy needs to work with" % PROG
         sys.exit(1)
 
@@ -138,7 +138,7 @@ def profile_command(
         cProfile.runctx("run_dexy(args)", globals(), copy.deepcopy(locals_for_run_dexy), prof_file)
         reports_command(reports=reports, **report_kwargs)
 
-def check_setup(logsdir=Constants.DEFAULT_LDIR, artifactsdir=Constants.DEFAULT_ADIR):
+def check_setup(logsdir, artifactsdir):
     return os.path.exists(logsdir) and os.path.exists(artifactsdir)
 
 def setup_command(logsdir=Constants.DEFAULT_LDIR, artifactsdir=Constants.DEFAULT_ADIR, logfile=Constants.DEFAULT_LFILE, showhelp=True):
@@ -147,7 +147,7 @@ def setup_command(logsdir=Constants.DEFAULT_LDIR, artifactsdir=Constants.DEFAULT
     directories and they aren't created automatically as a precaution against
     accidentally running dexy somewhere you didn't mean to.
     """
-    if check_setup():
+    if check_setup(logsdir=logsdir, artifactsdir=artifactsdir):
         print "Dexy is already set up. Run 'reset' if you want to reset everything."
     else:
         if not os.path.exists(logsdir):

@@ -31,7 +31,7 @@ def test_commands_reset():
     with tempdir():
         setup_command()
         reset_command()
-        assert check_setup()
+        assert check_setup(logsdir=Constants.DEFAULT_LDIR, artifactsdir=Constants.DEFAULT_ADIR)
 
 def test_commands_reset_custom_location():
     with tempdir():
@@ -51,12 +51,12 @@ def test_commands_setup_cleanup():
             assert "You are almost ready" in stdout.getvalue()
             assert os.path.exists(Constants.DEFAULT_ADIR)
             assert os.path.exists(Constants.DEFAULT_LDIR)
-            assert check_setup()
+            assert check_setup(logsdir=Constants.DEFAULT_LDIR, artifactsdir=Constants.DEFAULT_ADIR)
 
         cleanup_command()
         assert not os.path.exists(Constants.DEFAULT_ADIR)
         assert not os.path.exists(Constants.DEFAULT_LDIR)
-        assert not check_setup()
+        assert not check_setup(logsdir=Constants.DEFAULT_LDIR, artifactsdir=Constants.DEFAULT_LDIR)
 
 def test_commands_dexy_without_setup():
     with tempdir():
@@ -66,7 +66,7 @@ def test_commands_dexy_without_setup():
                 assertFalse # should not get here
             except SystemExit as e:
                 assert "Please run 'dexy setup'" in stdout.getvalue()
-                assert not check_setup()
+                assert not check_setup(logsdir=Constants.DEFAULT_LDIR, artifactsdir=Constants.DEFAULT_LDIR)
                 assert e.code == 1
 
 def test_commands_filters():
