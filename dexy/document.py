@@ -125,10 +125,12 @@ class Document(object):
                         # The relative path doc key is specified
                         is_exact_relative_match = (os.path.join(relpath2, input_glob) == doc.key())
 
+                        is_exact_match_in_parent_or_child_dir = (in_parent_or_child and input_glob == os.path.basename(doc.key()))
+
                         # A glob matches in any child dir
                         is_glob_match_in_child_dir = (in_parent_dir or in_same_dir) and fnmatch.fnmatch(os.path.basename(doc.key()), input_glob)
 
-                        specified = (is_exact_absolute_match or is_exact_relative_match or is_glob_match_in_child_dir)
+                        specified = (is_exact_absolute_match or is_exact_relative_match or is_exact_match_in_parent_or_child_dir or is_glob_match_in_child_dir)
 
                         if specified:
                             break
