@@ -74,36 +74,55 @@ class JavaFilter(SubprocessCompileFilter):
     INPUT_EXTENSIONS = [".java"]
     OUTPUT_EXTENSIONS = [".txt"]
     VERSION = "java -version"
+    FINAL = False
 
     def setup_cp(self):
+        """
+        Makes sure the current working directory is on the classpath, also adds
+        any specified CLASSPATH elements. Assumes that CLASSPATH elements are either
+        absolute paths, or paths relative to the artifacts directory. Also, if
+        an input has been passed through the javac filter, its directory is
+        added to the classpath.
+        """
         env = self.setup_env()
 
-        cp = "."
+        classpath_elements = []
+        classpath_elements.append(os.path.dirname(self.artifact.name))
+
+        for key, input_artifact in self.artifact.inputs().iteritems():
+            if input_artifact.ext == ".class" and "javac" in key:
+                classpath_elements.append(os.path.dirname(input_artifact.name))
 
         if env and env.has_key("CLASSPATH"):
-            # need to add 1 level to classpath since we are working in a subdir of artifacts/
-            env['CLASSPATH'] = ":".join(["../%s" % x for x in env['CLASSPATH'].split(":")])
-            cp = "%s:%s" % (cp, env['CLASSPATH'])
+            for x in env['CLASSPATH'].split(":"):
+                if x.startswith("/"):
+                    # absolute path, leave it alone
+                    classpath_elements.append(x)
+                else:
+                    # path relative to artifacts directory, need to adjust
+                    # since we are working in a subdir of artifacts
+                    classpath_elements.append(os.path.join("..", x))
+
+        cp = ":".join(classpath_elements)
 
         return cp
 
     def compile_command_string(self):
         cp = self.setup_cp()
-        return "javac -classpath %s %s" % (cp, os.path.basename(self.artifact.name))
+        return "javac -classpath %s %s" % (cp, self.artifact.name)
 
     def run_command_string(self):
         cp = self.setup_cp()
         main_method = self.setup_main_method()
-        return "java -cp %s %s" % (cp, main_method)
+        args = self.command_line_args()
+        return "java %s -cp %s %s" % (args, cp, main_method)
 
     def setup_cwd(self):
         tempdir = self.artifact.temp_dir()
 
+        # if this is the 2nd time we are calling this, don't want our compiled .class to be deleted
         if not os.path.exists(tempdir):
-            self.artifact.create_temp_dir()
-            previous = self.artifact.previous_artifact_filepath
-            workfile = os.path.join(tempdir, os.path.basename(self.artifact.previous_canonical_filename))
-            shutil.copyfile(previous, workfile)
+            self.artifact.create_temp_dir(True)
 
         return tempdir
 
@@ -112,6 +131,25 @@ class JavaFilter(SubprocessCompileFilter):
             return self.artifact.args['main']
         else:
             return os.path.splitext(os.path.basename(self.artifact.name))[0]
+
+class JavacFilter(JavaFilter):
+    ALIASES = ['javac']
+    EXECUTABLE = "javac"
+    INPUT_EXTENSIONS = [".java"]
+    OUTPUT_EXTENSIONS = [".class"]
+    VERSION = "java -version"
+    BINARY = True
+
+    def process(self):
+        # Compile the code
+        command = self.compile_command_string()
+        proc, stdout = self.run_command(command, self.setup_env())
+        self.handle_subprocess_proc_return(proc.returncode, stdout)
+
+        # Copy compiled .class file to where it should live
+        tempdir = self.artifact.temp_dir()
+        compiled_file = os.path.join(tempdir, self.artifact.canonical_filename())
+        shutil.copyfile(compiled_file, self.artifact.filepath())
 
 class JavadocsJsonFilter(DexyFilter):
     ALIASES = ['javadoc', 'javadocs']
@@ -135,21 +173,6 @@ class JavadocsJsonFilter(DexyFilter):
         html_formatter = HtmlFormatter()
         latex_formatter = LatexFormatter()
         lexer = JavaLexer()
-
-        # Update our JSON array with each input data file.
-        def update_dict(o, n):
-            for k in o.keys():
-                if n.has_key(k):
-                    v = o[k]
-                    if isinstance(v, dict):
-                        o[k] = update_dict(v, n[k])
-                    else:
-                        o[k].update(n[k])
-            return o
-
-        for k, a in self.artifact.inputs().items():
-            new_data = json.loads(a.output_text())
-            j = update_dict(j, new_data)
 
         for p in j['packages']:
             for k in j['packages'][p]['classes'].keys():
