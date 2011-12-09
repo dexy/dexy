@@ -56,7 +56,7 @@ class SubdirectoriesTemplatePlugin(TemplatePlugin):
         doc_dir = os.path.dirname(self.filter_instance.artifact.name)
 
         # Get a list of subdirectories under this document's directory.
-        subdirectories = [d for d in os.listdir(os.path.join(os.curdir, doc_dir)) if os.path.isdir(os.path.join(os.curdir, doc_dir, d))]
+        subdirectories = [d for d in sorted(os.listdir(os.path.join(os.curdir, doc_dir))) if os.path.isdir(os.path.join(os.curdir, doc_dir, d))]
         return {'subdirectories' : subdirectories}
 
 class VariablesTemplatePlugin(TemplatePlugin):
@@ -125,7 +125,7 @@ class InputsTemplatePlugin(TemplatePlugin):
             'a' : a_hash,
             's' : self.filter_instance.artifact,
             'd' : d_hash,
-            'f' : self,
+            'f' : self.filter_instance,
         }
 
 class ClippyHelperTemplatePlugin(TemplatePlugin):
