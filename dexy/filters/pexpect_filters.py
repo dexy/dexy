@@ -71,7 +71,7 @@ class PexpectReplFilter(ProcessFilter):
                 env=env)
 
         # Capture the initial prompt
-        proc.expect_exact(search_terms, timeout=timeout)
+        proc.expect(search_terms, timeout=timeout)
         start = proc.before + proc.after
         for section_key, section_text in input_dict.items():
             section_transcript = start
@@ -81,7 +81,7 @@ class PexpectReplFilter(ProcessFilter):
             for l in lines:
                 section_transcript += start
                 proc.send(l.rstrip() + "\n")
-                proc.expect_exact(search_terms, timeout=timeout)
+                proc.expect(search_terms, timeout=timeout)
                 section_transcript += self.strip_newlines(proc.before)
                 start = proc.after
 
