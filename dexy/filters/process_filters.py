@@ -99,9 +99,10 @@ class SubprocessFilter(ProcessFilter):
         self.artifact.stdout = stdout
 
     def run_command(self, command, env, input_text = None):
-        self.log.debug("about to run '%s'" % command)
+        cwd = self.setup_cwd()
+        self.log.debug("about to run '%s' in %s" % (command, cwd))
         proc = subprocess.Popen(command, shell=True,
-                                cwd=self.setup_cwd(),
+                                cwd=cwd,
                                 stdin=subprocess.PIPE,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.STDOUT,
