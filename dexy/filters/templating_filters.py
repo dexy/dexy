@@ -4,6 +4,7 @@ from dexy.filters.templating_plugins import *
 from jinja2.exceptions import TemplateSyntaxError
 from jinja2.exceptions import UndefinedError
 import jinja2
+import sys
 import re
 import traceback
 
@@ -36,13 +37,22 @@ class TemplateFilter(DexyFilter):
 
     def run_plugins(self):
         env = {}
-        for plugin_class in self.PLUGINS:
+        for plugin_class in self.plugins():
+            print "running plugin", plugin_class.__name__
             plugin = plugin_class(self)
             new_env_vars = plugin.run()
             if any(v in env.keys() for v in new_env_vars):
                 raise Exception("trying to add new keys %s, already have %s" % (", ".join(new_env_vars.keys()), ", ".join(env.keys())))
             env.update(new_env_vars)
         return env
+
+    def plugins(self):
+        if self.artifact.args.has_key('plugins'):
+            plugin_names = self.artifact.args['plugins']
+            dict_items = sys.modules[self.__module__].__dict__
+            return [dict_items[name] for name in plugin_names]
+        else:
+            return self.PLUGINS
 
     def process_text(self, input_text):
         """
