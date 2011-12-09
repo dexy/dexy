@@ -524,8 +524,11 @@ class Artifact(object):
             # write all inputs to this directory, under their canonical names
             for input_artifact in self._inputs.values():
                 filename = os.path.join(tempdir, input_artifact.canonical_filename())
-                input_artifact.write_to_file(filename)
-                self.log.debug("Populating temp dir for %s with %s" % (self.key, filename))
+                if os.path.exists(input_artifact.filepath()):
+                    input_artifact.write_to_file(filename)
+                    self.log.debug("Populating temp dir for %s with %s" % (self.key, filename))
+                else:
+                    self.log.warn("Skipping file %s for temp dir for %s, file does not exist (yet)" % (filename, self.key))
 
             # write the workfile to this directory under its canonical name
             previous = self.previous_artifact_filepath
