@@ -46,9 +46,4 @@ echo "running venvtest"
 echo "success!"
 
 echo "now run ~/.ec2/release-dexy.sh script"
-echo "then tag release in git e.g. 'git tag 0.4.1'"
-echo "note *all* projects should be tagged"
-echo "then bump version in repo and commit"
-echo "push to remote git repo"
-echo "then generate website and upload"
 
