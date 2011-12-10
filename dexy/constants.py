@@ -41,7 +41,7 @@ class Constants():
     EXCLUDE_DIRS_ALL_LEVELS = ['.bzr', '.hg', '.git', '.svn']
 
     # Directories with these names should be excluded only at the project root
-    EXCLUDE_DIRS_ROOT = ['ignore', 'filters']
+    EXCLUDE_DIRS_ROOT = ['ignore']
 
     EXCLUDE_HELP = """Specify directory names to exclude from processing by dexy.
     Directories with these names will be skipped anywhere in your project.
