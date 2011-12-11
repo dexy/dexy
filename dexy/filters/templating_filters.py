@@ -38,7 +38,6 @@ class TemplateFilter(DexyFilter):
     def run_plugins(self):
         env = {}
         for plugin_class in self.plugins():
-            print "running plugin", plugin_class.__name__
             plugin = plugin_class(self)
             new_env_vars = plugin.run()
             if any(v in env.keys() for v in new_env_vars):
