@@ -11,6 +11,7 @@ class PexpectReplFilter(ProcessFilter):
     ALLOW_MATCH_PROMPT_WITHOUT_NEWLINE = False
     LINE_ENDING = "\r\n"
     PROMPTS = ['>>>', '...'] # Python uses >>> prompt normally and ... when in multi-line structures like loops
+    PROMPT_REGEX = None
     SAVE_VARS_TO_JSON_CMD = None
     TRIM_PROMPT = '>>>'
 
@@ -19,7 +20,10 @@ class PexpectReplFilter(ProcessFilter):
         Search first for the prompt (or prompts) following a line ending.
         Also optionally allow matching the prompt with no preceding line ending.
         """
-        if hasattr(self, 'PROMPT'):
+
+        if self.PROMPT_REGEX:
+            prompts = [self.PROMPT_REGEX]
+        elif hasattr(self, 'PROMPT'):
             prompts = [self.PROMPT]
         else:
             prompts = self.PROMPTS
@@ -71,7 +75,11 @@ class PexpectReplFilter(ProcessFilter):
                 env=env)
 
         # Capture the initial prompt
-        proc.expect(search_terms, timeout=timeout)
+        if self.PROMPT_REGEX:
+            proc.expect(search_terms, timeout=timeout)
+        else:
+            proc.expect_exact(search_terms, timeout=timeout)
+
         start = proc.before + proc.after
         for section_key, section_text in input_dict.items():
             section_transcript = start
@@ -81,7 +89,10 @@ class PexpectReplFilter(ProcessFilter):
             for l in lines:
                 section_transcript += start
                 proc.send(l.rstrip() + "\n")
-                proc.expect(search_terms, timeout=timeout)
+                if self.PROMPT_REGEX:
+                    proc.expect(search_terms, timeout=timeout)
+                else:
+                    proc.expect_exact(search_terms, timeout=timeout)
                 section_transcript += self.strip_newlines(proc.before)
                 start = proc.after
 
