@@ -42,7 +42,7 @@ def dexy_command(
         reporters=False, # DEPRECATED just to catch people who use the old dexy --reporters syntax
         reports=Constants.DEFAULT_REPORTS, # reports to be run after dexy runs, enclose in quotes and separate with spaces
         reset=False, # whether to purge existing artifacts and logs before running Dexy
-        run=None, # specific document to run. if specified, this document + its dependencies will be all that is run
+        run="", # specific document to run. if specified, this document + its dependencies will be all that is run
         setup=False, # DEPRECATED just to catch people who use the old dexy --setup syntax
         strictinherit=False, # set to true if you want 'allinputs' to only reference items in same dir or a subdir
         version=False # DEPRECATED just to catch people who use the old dexy --version syntax

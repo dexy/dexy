@@ -421,7 +421,7 @@ re.compile: %s""" % (args['except'], e))
             for input_doc in doc.inputs:
                 depend(doc, input_doc)
 
-        if self.args['run']:
+        if len(self.args['run']) > 0:
             # Only run the specified document, and its dependencies.
             new_members = OrderedDict()
             new_depends = []
@@ -445,7 +445,7 @@ re.compile: %s""" % (args['except'], e))
             doc = self.members[run_key]
             parse_new_document(doc)
 
-            print "limiting members list to %s and its dependencies, %s/%s documents will be run" % (input_doc.key(), len(new_members), len(self.members))
+            print "limiting members list to %s and its dependencies, %s/%s documents will be run" % (doc.key(), len(new_members), len(self.members))
             self.members = new_members
             self.depends = new_depends
 
