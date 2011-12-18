@@ -114,7 +114,7 @@ class JavaFilter(SubprocessCompileFilter):
     def run_command_string(self):
         cp = self.setup_cp()
         main_method = self.setup_main_method()
-        args = self.command_line_args()
+        args = self.command_line_args() or ""
         return "java %s -cp %s %s" % (args, cp, main_method)
 
     def setup_cwd(self):
