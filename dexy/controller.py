@@ -421,6 +421,14 @@ re.compile: %s""" % (args['except'], e))
             for input_doc in doc.inputs:
                 depend(doc, input_doc)
 
+        if self.args['run']:
+            # Only run the specified document, and its dependencies.
+            run_key = self.args['run']
+            doc = self.members[run_key]
+            input_keys = [d.key() for d in doc.inputs]
+            new_members = OrderedDict((key, self.members[key]) for key in [run_key] + input_keys)
+            self.members = new_members
+
         num_members = len(self.members)
         if num_members > 0:
             dep_ratio = float(total_dependencies)/num_members
