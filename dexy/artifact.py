@@ -47,6 +47,8 @@ class Artifact(object):
         '.eot',
         '.ttf',
         '.woff',
+        '.sqlite',
+        '.sqlite3',
         '.swf'
     ]
 
