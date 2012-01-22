@@ -9,6 +9,7 @@ class PexpectReplFilter(ProcessFilter):
     """
     ALIASES = ['pexpectreplfilter']
     ALLOW_MATCH_PROMPT_WITHOUT_NEWLINE = False
+    INITIAL_PROMPT = None
     LINE_ENDING = "\r\n"
     PROMPTS = ['>>>', '...'] # Python uses >>> prompt normally and ... when in multi-line structures like loops
     PROMPT_REGEX = None
@@ -59,10 +60,11 @@ class PexpectReplFilter(ProcessFilter):
         if do_record_vars:
             if not self.SAVE_VARS_TO_JSON_CMD:
                 raise Exception("Can't record vars since SAVE_VARS_TO_JSON_CMD not set.")
-            artifact = self.artifact.add_additional_artifact(self.artifact.key + "-vars", 'json')
+            artifact = self.artifact.add_additional_artifact(self.artifact.key + "-vars.json", 'json')
             self.log.debug("Added additional artifact %s (hashstring %s) to store variables" % (artifact.key, artifact.hashstring))
             section_text = self.SAVE_VARS_TO_JSON_CMD % artifact.filename()
             input_dict['dexy--save-vars'] = section_text
+            # TODO this may cause unexpected results if original script only had 1 section
 
         search_terms = self.prompt_search_terms()
         env = self.setup_env()
@@ -77,6 +79,8 @@ class PexpectReplFilter(ProcessFilter):
         # Capture the initial prompt
         if self.PROMPT_REGEX:
             proc.expect(search_terms, timeout=timeout)
+        elif self.INITIAL_PROMPT:
+            proc.expect(self.INITIAL_PROMPT, timeout=timeout)
         else:
             proc.expect_exact(search_terms, timeout=timeout)
 
@@ -179,6 +183,18 @@ class RhinoInteractiveFilter(PexpectReplFilter):
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['jsint', 'rhino']
     PROMPT = "js> "
+
+class KshInteractiveFilter(PexpectReplFilter):
+    """
+    Runs ksh. Use to run bash scripts.
+    """
+    ALIASES = ['shint']
+    EXECUTABLE = "ksh -i -r -e"
+    INPUT_EXTENSIONS = [".txt", ".sh"]
+    OUTPUT_EXTENSIONS = ['.sh-session']
+    INITIAL_PROMPT = "^\$"
+    PROMPT = "$"
+    TRIM_PROMPT = "\$"
 
 class ClojureInteractiveFilter(PexpectReplFilter):
     """
