@@ -4,13 +4,14 @@ from setuptools import setup, find_packages
 from dexy.version import Version
 
 setup(name='dexy',
-      version=Version.VERSION,
-      description='Document Automation',
       author='Ana Nelson',
       author_email='ana@ananelson.com',
-      url='http://dexy.it',
-      packages=find_packages(),
+      description='Document Automation',
       include_package_data = True,
+      packages=find_packages(),
+      package_data = { "dexy" : ["ext/*"] },
+      url='http://dexy.it',
+      version=Version.VERSION,
       install_requires = [
           'idiopidae>=0.5.1',
           'jinja2',

@@ -120,7 +120,7 @@ class RDocumentationFilter(DexyFilter):
         self.artifact.create_temp_dir()
         td = self.artifact.temp_dir()
 
-        r_script_file = os.path.join(INSTALL_DIR, 'dexy', 'filters', "introspect.R")
+        r_script_file = os.path.join(INSTALL_DIR, 'dexy', 'ext', "introspect.R")
         shutil.copyfile(r_script_file, os.path.join(td, "introspect.R"))
 
         command = "R --slave --vanilla --args %s < introspect.R" % (" ".join(package_names))
