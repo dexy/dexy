@@ -20,7 +20,7 @@ class XmlSectionFilter(DexyFilter):
 
     def process_text(self, input_text):
         lexer = XmlLexer()
-        html_formatter = HtmlFormatter()
+        html_formatter = HtmlFormatter(lineanchors=self.artifact.web_safe_document_key())
         latex_formatter = LatexFormatter()
 
         output = {}
@@ -31,8 +31,14 @@ class XmlSectionFilter(DexyFilter):
         for element in tree.iter("*"):
             xpath = tree.getpath(element)
             source = etree.tostring(element, pretty_print=True).strip()
-            output[xpath] = {
+
+            # Convert _Attrib to dict
+            attributes = dict((k, v) for k, v in element.attrib.iteritems())
+
+            element_info = {
+                    "attributes" : attributes,
                     "lineno" : element.sourceline,
+                    "prefix" : element.prefix,
                     "source" : source,
                     "source-html" : highlight(source, lexer, html_formatter),
                     "source-latex" : highlight(source, lexer, latex_formatter),
@@ -40,5 +46,10 @@ class XmlSectionFilter(DexyFilter):
                     "tail" : element.tail,
                     "text" : element.text
                 }
+            output[xpath] = element_info
+
+            if attributes.has_key("name"):
+                key = "%s:%s" % (element.tag, attributes["name"])
+                output[key] = element_info
 
         return json.dumps(output, indent=4, sort_keys=True)
