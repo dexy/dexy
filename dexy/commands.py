@@ -77,6 +77,11 @@ def dexy_command(
 
     If you run into trouble, visit http://dexy.it/help
     """
+    # catch deprecated arguments
+    if help or version or reporters or filters:
+        print "the command syntax has changed, please type 'dexy help' for help"
+        sys.exit(1)
+
     ### @export "dexy-command-check-setup"
     if not check_setup(logsdir=logsdir, artifactsdir=artifactsdir):
         print "Please run '%s setup' first to create the directories dexy needs to work with" % PROG
@@ -90,11 +95,6 @@ def dexy_command(
         if not reports == Constants.DEFAULT_REPORTS:
             raise Exception("if you pass --output you can't also modify reports! pick 1!")
         reports = "Output"
-
-    # catch deprecated arguments
-    if help or version or reporters or filters:
-        print "the command syntax has changed, please type 'dexy help' for help"
-        sys.exit(1)
 
     controller = run_dexy(locals())
     if not dryrun:
