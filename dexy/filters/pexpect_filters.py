@@ -182,7 +182,7 @@ class RhinoInteractiveFilter(PexpectReplFilter):
     INPUT_EXTENSIONS = [".js"]
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['jsint', 'rhino']
-    PROMPT = "js> "
+    PROMPTS = ['js>', '  >']
 
 class KshInteractiveFilter(PexpectReplFilter):
     """
@@ -195,6 +195,18 @@ class KshInteractiveFilter(PexpectReplFilter):
     INITIAL_PROMPT = "^\$"
     PROMPT = "$"
     TRIM_PROMPT = "\$"
+
+class ZshInteractiveFilter(PexpectReplFilter):
+    """
+    Runs zsh.
+    """
+    ALIASES = ['zshint']
+    EXECUTABLE = "zsh --interactive --restricted --errexit"
+    INPUT_EXTENSIONS = [".txt", ".sh"]
+    OUTPUT_EXTENSIONS = ['.sh-session']
+    PROMPT_REGEX = "[a-z\.]+(%|>)"
+    ALLOW_MATCH_PROMPT_WITHOUT_NEWLINE = True
+    IGNORE_ERRORS = True
 
 class ClojureInteractiveFilter(PexpectReplFilter):
     """
