@@ -27,7 +27,7 @@ class PythonBuiltinsTemplatePlugin(TemplatePlugin):
     # Intended to be all builtins that make sense to run within a document.
     PYTHON_BUILTINS = [abs, all, any, bin, bool, bytearray, callable, chr,
         cmp, complex, dict, dir, divmod, enumerate, filter, float, format,
-        hex, id, int, isinstance, issubclass, iter, len, list, long, map,
+        hex, id, int, isinstance, issubclass, iter, len, list, long, map, hasattr,
         max, min, oct, ord, pow, range, reduce, repr, reversed, round,
         set, slice, sorted, str, sum, tuple, xrange, zip]
 
@@ -35,6 +35,12 @@ class PythonBuiltinsTemplatePlugin(TemplatePlugin):
         return dict((f.__name__, f) for f in self.PYTHON_BUILTINS)
 
 class PygmentsStylesheetTemplatePlugin(TemplatePlugin):
+    def highlight(self, text, lexer_name, fmt = 'html', noclasses = False):
+        formatter_options = { "noclasses" : noclasses }
+        lexer = pygments.lexers.get_lexer_by_name(lexer_name)
+        formatter = pygments.formatters.get_formatter_by_name(fmt, **formatter_options)
+        return pygments.highlight(text, lexer, formatter)
+
     def run(self):
         pygments_stylesheets = {}
         for style_name in get_all_styles():
@@ -48,7 +54,7 @@ class PygmentsStylesheetTemplatePlugin(TemplatePlugin):
                         ext = 'css' # swap the more intuitive '.css' for the unlikely '.htm'
                     key = "%s.%s" % (style_name, ext)
                     pygments_stylesheets[key] = style_info
-        return {'pygments' : pygments_stylesheets}
+        return {'pygments' : pygments_stylesheets, 'highlight' : self.highlight }
 
 class SubdirectoriesTemplatePlugin(TemplatePlugin):
     def run(self):
