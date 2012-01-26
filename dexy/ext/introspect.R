@@ -1,9 +1,6 @@
 library(tools)
 library(rjson)
 
-# Package names should be passed as command-line arguments.
-packages <- commandArgs(TRUE)
-
 if (length(packages) == 0) {
     stop("no packages!")
 }

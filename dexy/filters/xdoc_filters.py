@@ -106,24 +106,43 @@ class PythonDocumentationFilter(DexyFilter):
         return json.dumps(packages_info, indent=4)
 
 class RDocumentationFilter(DexyFilter):
+    """
+    Can be run on a text file listing packages to be processed, or an R script
+    which should define a list of package names (strings) named 'packages', the
+    latter option so that you can include some R code prior to automated code
+    running.
+    """
     ALIASES = ["rdoc"]
-    INPUT_EXTENSIONS = [".txt"]
+    INPUT_EXTENSIONS = [".txt", ".R"]
     OUTPUT_EXTENSIONS = [".json"]
 
     def process(self):
-        """
-        input_text should be a list of installed R packages to document.
-        """
-        package_names = self.artifact.input_text().split()
-
         # Create a temporary directory to run R in.
         self.artifact.create_temp_dir()
         td = self.artifact.temp_dir()
 
         r_script_file = os.path.join(INSTALL_DIR, 'dexy', 'ext', "introspect.R")
-        shutil.copyfile(r_script_file, os.path.join(td, "introspect.R"))
+        self.log.debug("script file: %s" % r_script_file)
 
-        command = "R --slave --vanilla --args %s < introspect.R" % (" ".join(package_names))
+        with open(r_script_file, "r") as f:
+            r_script_contents = f.read()
+
+        if self.artifact.input_ext == ".txt":
+            # A text file containing the names of packages to process.
+            package_names = self.artifact.input_text().split()
+            script_start = "packages <- c(%s)" % ",".join("\"%s\"" % n for n in package_names)
+        elif self.artifact.input_ext == ".R":
+            script_start = self.artifact.input_text()
+        else:
+            raise Exception("Unexpected input file extension %s" % self.artifact.input_ext)
+
+        script_filename = os.path.join(td, "script.R")
+
+        with open(script_filename, "w") as f:
+            f.write(script_start + "\n")
+            f.write(r_script_contents)
+
+        command = "R --slave --vanilla < script.R"
         self.log.debug("About to run %s" % command)
 
         proc = subprocess.Popen(command, shell=True,
@@ -134,6 +153,5 @@ class RDocumentationFilter(DexyFilter):
                                 )
         stdout, stderr = proc.communicate()
         self.artifact.stdout = stdout
-        print stdout
         shutil.copyfile(os.path.join(td, "dexy--r-doc-info.json"), self.artifact.filepath())
 
