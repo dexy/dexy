@@ -1,6 +1,7 @@
 from dexy.constants import Constants
 from dexy.version import Version
 from ordereddict import OrderedDict
+import codecs
 import dexy.introspect
 import json
 import glob
@@ -304,7 +305,7 @@ class Artifact(object):
             h = hashlib.sha512()
 
             if self.data_dict and len(self.data_dict) > 0:
-                h.update(self.output_text())
+                h.update(self.output_text().encode("utf-8"))
 
             elif self.is_canonical_output_cached:
                 self.state = 'complete'
@@ -385,7 +386,7 @@ class Artifact(object):
         self.data_dict['1'] = data
 
     def set_data_from_artifact(self):
-        f = open(self.filepath())
+        f = codecs.open(self.filepath(), "r", encoding="utf-8")
         self.data_dict['1'] = f.read()
 
     def is_loaded(self):
@@ -393,7 +394,12 @@ class Artifact(object):
 
     def compute_hash(self, text):
         if self.hashfunction == 'md5':
-            h = hashlib.md5(str(text)).hexdigest()
+            unicode_text = None
+            if type(text) == unicode:
+                unicode_text = text
+            else:
+                unicode_text = unicode(text, encoding="utf-8")
+            h = hashlib.md5(unicode_text.encode("utf-8")).hexdigest()
         elif self.hashfunction == 'crc32':
             h =str(zlib.crc32(str(text)) & 0xffffffff )
         elif self.hashfunction == 'adler32':
@@ -467,10 +473,16 @@ class Artifact(object):
             self.save_meta()
 
     def input_text(self):
-        return "".join([v for k, v in self.input_data_dict.items()])
+        return u"".join([unicode(v) for k, v in self.input_data_dict.items()])
+
+    def convert_if_not_unicode(self, s):
+        if type(s) == unicode:
+            return s
+        else:
+            return unicode(s, encoding="utf-8")
 
     def output_text(self):
-        return "".join([v for k, v in self.data_dict.items()])
+        return u"".join([self.convert_if_not_unicode(v) for k, v in self.data_dict.items()])
 
     def relative_refs(self, relative_to_file):
         """How to refer to this artifact, relative to another."""
@@ -503,7 +515,7 @@ class Artifact(object):
         if not work_filename:
             work_filename = self.work_filename()
         work_path = os.path.join(self.artifacts_dir, work_filename)
-        work_file = open(work_path, "w")
+        work_file = codecs.open(work_path, "w", encoding="utf-8")
         work_file.write(self.input_text())
         work_file.close()
 
@@ -512,7 +524,7 @@ class Artifact(object):
 
     def open_tempfile(self, ext):
         tempfile_path = os.path.join(self.artifacts_dir, self.temp_filename(ext))
-        open(tempfile_path, "w")
+        codecs.open(tempfile_path, "w", encoding="utf-8")
 
     def temp_dir(self):
         return os.path.join(self.artifacts_dir, self.hashstring)

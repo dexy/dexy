@@ -193,7 +193,7 @@ class Document(object):
 
             header_dict = {}
             if os.path.exists(header_filename):
-                header_file = open(header_filename, "r")
+                header_file = open(header_filename, "r", encoding="utf-8")
                 header_dict = json.load(header_file)
                 header_file.close()
 
@@ -214,7 +214,7 @@ class Document(object):
                 request.add_header('If-Modifed-Since', header_dict['Last-Modified'])
 
             if self.controller.args['locals'] and os.path.exists(filename):
-                f = open(filename, "r")
+                f = open(filename, "r", encoding="utf-8")
                 data = f.read()
                 f.close()
             else:
@@ -236,7 +236,7 @@ class Document(object):
                     for s in u.info().headers:
                         a = s.partition(":")
                         header_dict[a[0]] = a[2].strip()
-                    json.dump(header_dict, open(header_filename, "w"))
+                    json.dump(header_dict, open(header_filename, "w", encoding="utf-8"))
 
                     data = url_contents
                 except urllib2.URLError as err:

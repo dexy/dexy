@@ -1,5 +1,6 @@
 from dexy.artifact import Artifact
 from ordereddict import OrderedDict
+import codecs
 import json
 import os
 
@@ -24,7 +25,7 @@ class FileSystemJsonArtifact(Artifact):
 
         m['inputs'] = self.input_hashes()
 
-        f = open(self.meta_filepath(), "w")
+        f = codecs.open(self.meta_filepath(), "w", encoding="utf-8")
         try:
             json.dump(m, f)
         except UnicodeDecodeError as e:
@@ -34,7 +35,7 @@ class FileSystemJsonArtifact(Artifact):
         f.close()
 
     def load_meta(self):
-        f = open(self.meta_filepath(), "r")
+        f = codecs.open(self.meta_filepath(), "r", encoding="utf-8")
         m = json.load(f)
         f.close()
 
@@ -137,7 +138,7 @@ class FileSystemJsonArtifact(Artifact):
             f.close()
 
             # Write the canonical file.
-            f = open(self.filepath(), 'w')
+            f = codecs.open(self.filepath(), 'w', encoding="utf-8")
             f.write(self.output_text())
             f.close()
 

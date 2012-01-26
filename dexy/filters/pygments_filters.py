@@ -61,17 +61,13 @@ class PygmentsFilter(DexyFilter):
         if self.artifact.ext in self.IMAGE_OUTPUT_EXTENSIONS:
             self.artifact.binary_output = True
             # TODO set to final
-            f = open(self.artifact.filepath(), 'w')
+            f = open(self.artifact.filepath(), 'w', encoding="utf-8")
             f.write(highlight(self.artifact.input_text(), lexer, formatter))
             f.close()
         else:
             output_dict = OrderedDict()
             for k, v in input_dict.items():
                 # TODO figure out where these characters are coming from and don't hard-code this.
-                v = str(v.replace(" \x08", "").replace(chr(13), ""))
-                try:
-                    output_dict[k] = str(highlight(v, lexer, formatter))
-                except UnicodeEncodeError as e:
-                    self.artifact.log.warn("error processing section %s of file %s" % (k, self.artifact.key))
-                    raise e
+                v = v.replace(" \x08", "").replace(chr(13), "")
+                output_dict[k] = highlight(v, lexer, formatter)
             return output_dict
