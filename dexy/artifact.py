@@ -472,14 +472,15 @@ class Artifact(object):
         except IOError as e:
             self.save_meta()
 
-    def input_text(self):
-        return u"".join([unicode(v) for k, v in self.input_data_dict.items()])
 
     def convert_if_not_unicode(self, s):
         if type(s) == unicode:
             return s
         else:
             return unicode(s, encoding="utf-8")
+
+    def input_text(self):
+        return u"".join([self.convert_if_not_unicode(v) for k, v in self.input_data_dict.items()])
 
     def output_text(self):
         return u"".join([self.convert_if_not_unicode(v) for k, v in self.data_dict.items()])

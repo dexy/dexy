@@ -154,6 +154,6 @@ class JinjaFilter(JinjaTextFilter):
         template_data = self.run_plugins()
         try:
             template = env.from_string(self.artifact.input_text())
-            template.stream(template_data).dump(self.artifact.filepath())
+            template.stream(template_data).dump(self.artifact.filepath(), encoding="utf-8")
         except (TemplateSyntaxError, UndefinedError, TypeError) as e:
             self.handle_jinja_exception(e)
