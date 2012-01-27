@@ -1,0 +1,13 @@
+{
+  "*.py|idio|pycon|pyg|l" : {},
+  "*.tex|jinja|latex" : { "allinputs" : true },
+  "@test-remote.html|test" : {
+      "url" : "http://dexy.it",
+      "test-includes" : "You are in control of your docs."
+  },
+  "@test-git.txt|test" : {
+      "repo" : "https://github.com/ananelson/dexy",
+      "path" : "README",
+      "test-includes" : "Dexy is software for document automation."
+  }
+}

@@ -10,9 +10,11 @@ source testenv/bin/activate
 pip install .
 nosetests
 dexy reset
-dexy --directory test-template/
+dexy --directory test-examples --danger
 dexy report --allreports
-dexy --directory test-template/
+dexy --directory test-examples --danger
+dexy report --allreports
+dexy --directory test-examples --danger --uselocals no
 dexy report --allreports
 
 pip install z3c.checkversions
@@ -28,9 +30,11 @@ source testenv/bin/activate
 pip install .
 nosetests
 dexy reset
-dexy --directory test-template/
+dexy --directory test-examples --danger
 dexy report --allreports
-dexy --directory test-template/
+dexy --directory test-examples --danger
+dexy report --allreports
+dexy --directory test-examples --danger --uselocals no
 dexy report --allreports
 
 deactivate

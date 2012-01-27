@@ -8,6 +8,7 @@ import hashlib
 import json
 import logging
 import os
+import re
 import shutil
 import time
 import urllib2
@@ -186,7 +187,10 @@ class Document(object):
         # potentially dangerous methods ...
         elif self.args.has_key('url'):
             url = self.args['url']
-            filename = os.path.join(self.artifacts_dir, self.name)
+
+            local_filename = re.sub('[^\w\s-]', '', url).strip().lower()
+            local_filename = re.sub('[-\s]+', '-', local_filename)
+            filename = os.path.join(self.artifacts_dir, local_filename)
             header_filename = "%s.headers" % filename
 
             if not os.path.exists(os.path.dirname(filename)):
@@ -214,12 +218,12 @@ class Document(object):
             elif header_dict.has_key('Last-Modified') and os.path.exists(filename):
                 request.add_header('If-Modifed-Since', header_dict['Last-Modified'])
 
-            if self.controller.args['locals'] and os.path.exists(filename):
+            if self.controller.args['uselocals'] and os.path.exists(filename):
                 f = codecs.open(filename, "r", encoding="utf-8")
                 data = f.read()
                 f.close()
             else:
-                if self.controller.args['locals']:
+                if self.controller.args['uselocals']:
                     print "local file %s not found, fetching remote url" % filename
 
                 try:
@@ -240,27 +244,25 @@ class Document(object):
                     json.dump(header_dict, codecs.open(header_filename, "w", encoding="utf-8"))
 
                     data = url_contents
-                except urllib2.URLError as err:
-                    if os.path.exists(filename):
-                        print "unable to fetch remote url %s because %s\nusing contents of %s" % (url, err, filename)
-                    else:
-                        raise Exception("unable to fetch remote url %s because %s\nno cache found in %s" % (url, err, filename))
+                except (urllib2.HTTPError, urllib2.URLError) as err:
+                    if not hasattr(err, 'code'):
+                        print "Trying to fetch %s for %s" % (url, self.name)
+                        raise err
 
-                    f = codecs.open(filename, "r", encoding="utf-8")
-                    data = f.read()
-                    f.close()
-                except urllib2.HTTPError as err:
-                    if err.code == 304:
-                        print "received http status code %s, using contents of %s" % (err.code, filename)
-                        f = codecs.open(filename, "r", encoding="utf-8")
-                        data = f.read()
-                        f.close()
+                    elif err.code == 304:
+                        if os.path.exists(filename):
+                            print "received NOT MODIFIED (304) from server, so using contents of %s" % (filename)
+                            f = codecs.open(filename, "r", encoding="utf-8")
+                            data = f.read()
+                            f.close()
+                        else:
+                            raise err
+
                     elif err.code == 404:
-                        raise Exception("""received http status code %s while trying to fetch %s for %s""" % 
-                                        (err.code, url, self.name))
+                        raise Exception("url %s NOT FOUND (404) (for virtual file %s)" % (url, self.name))
+
                     else:
-                        # Some other http error, we want to know about it.
-                        print url
+                        print "Trying to fetch %s for %s" % (url, self.name)
                         raise err
 
         elif self.args.has_key('repo') and self.args.has_key('path'):

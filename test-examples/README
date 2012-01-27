@@ -1,0 +1,6 @@
+These are various examples intended to act as quick tests that Dexy and filters
+are working. Some examples may use the 'test' filter to verify output, but for
+the most part we just want to make sure that no errors are thrown and that
+files are generated successfully (Dexy throws an error if files are not
+generated).
+

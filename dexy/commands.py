@@ -33,7 +33,6 @@ def dexy_command(
         help=False, # DEPRECATED just to catch people who use the old dexy --help syntax
         hashfunction='md5', # What hash function to use, set to crc32 or adler32 for more speed, less reliability
         ignore=False, # whether to ignore nonzero exit status or raise an error - may not be supported by all filters
-        local=False, # use cached local copies of remote URLs, faster but might not be up to date
         logfile=Constants.DEFAULT_LFILE, # name of log file
         logsdir=Constants.DEFAULT_LDIR, # location of directory in which to store logs
         nocache=False, # whether to force artifacts to run even if there is a matching file in the cache
@@ -45,6 +44,7 @@ def dexy_command(
         run="", # specific document to run. if specified, this document + its dependencies will be all that is run
         setup=False, # DEPRECATED just to catch people who use the old dexy --setup syntax
         strictinherit=False, # set to true if you want 'allinputs' to only reference items in same dir or a subdir
+        uselocals=True, # use cached local copies of remote URLs, faster but might not be up to date, 304 from server will override this setting
         version=False # DEPRECATED just to catch people who use the old dexy --version syntax
     ):
     """

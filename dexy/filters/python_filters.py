@@ -21,37 +21,45 @@ class TestFilter(DexyFilter):
             return False
 
         print "testing", self.artifact.key, "...",
-        if not self.artifact.args.has_key('expects'):
-            raise "You need to pass 'expects' to the test filter."
 
-        expects = self.artifact.args['expects']
-        if expects.startswith("@"):
-            expects_file = open(expects.lstrip("@"), "r")
-            expects_content = expects_file.read()
-            expects_file.close()
-        else:
-            expects_content = expects
-        expects = expects_content
+        if self.artifact.args.has_key('test-expects'):
+            # 'expects' should be an exact match
+            expects = self.artifact.args['test-expects']
+            if expects.startswith("@"):
+                expects_file = open(expects.lstrip("@"), "r")
+                expects_content = expects_file.read()
+                expects_file.close()
+            else:
+                expects_content = expects
+            expects = expects_content
 
-        # TODO handle different types of expectation, e.g. when don't know exact
-        # output but can look for type of data returned
-        if hasattr(expects, 'items'):
-            for k, v in self.artifact.input_data_dict.items():
-                msg = print_string_diff(expects[k], v)
-                msg += "\nexpected output '%s' (section %s) does not match actual '%s'" % (expects[k], k, v)
-                assert expects[k] == v, msg
+            if hasattr(expects, 'items'):
+                for k, v in self.artifact.input_data_dict.items():
+                    msg = print_string_diff(expects[k], v)
+                    msg += "\nexpected output '%s' (section %s) does not match actual '%s'" % (expects[k], k, v)
+                    assert expects[k] == v, msg
+            else:
+                inp = self.artifact.input_text()
+                msg = print_string_diff(expects, inp)
+                msg += "\nexpected output '%s' does not match actual '%s'" % (expects, inp)
+                assert expects == inp, msg
+        elif self.artifact.args.has_key('test-includes'):
+            # specified text should appear somewhere in the output
+            includes_text = self.artifact.args['test-includes']
+            assert includes_text in self.artifact.input_text()
+
+        elif self.artifact.args.has_key('expects'):
+            raise Exception("'expects' is deprecated, please use 'test-expects' instead.")
+
         else:
-            inp = self.artifact.input_text()
-            msg = print_string_diff(expects, inp)
-            msg += "\nexpected output '%s' does not match actual '%s'" % (expects, inp)
-            assert expects == inp, msg
+            raise Exception("Must pass one of 'test-expects', 'test-includes' to test filter so there is something to test.")
 
         comment = ""
         if self.artifact.args.has_key("comment"):
            comment = "[%s]" % self.artifact.args['comment']
         print "ok", comment
 
-        # Don't change the output so we can use end result still...
+        # Return the original output, so 'test' filter doesn't change anything.
         self.artifact.data_dict = self.artifact.input_data_dict
 
 class JoinFilter(DexyFilter):

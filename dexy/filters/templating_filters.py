@@ -41,7 +41,7 @@ class TemplateFilter(DexyFilter):
             plugin = plugin_class(self)
             new_env_vars = plugin.run()
             if any(v in env.keys() for v in new_env_vars):
-                raise Exception("trying to add new keys %s, already have %s" % (", ".join(new_env_vars.keys()), ", ".join(env.keys())))
+                raise Exception("trying to add new keys %s, already have %s" % (u", ".join(new_env_vars.keys()), u", ".join(env.keys())))
             env.update(new_env_vars)
         return env
 
@@ -139,7 +139,10 @@ class JinjaTextFilter(TemplateFilter):
 
         result.append(traceback.format_exc())
 
-        raise JinjaFilterException("\n".join(result))
+        # Exception constructors don't like unicode, so print error messsage to
+        # STDOUT then raise an exception.
+        print u"\n".join(result)
+        raise JinjaFilterException("An error has occurred while processing %s" % self.artifact.key)
 
 class JinjaFilter(JinjaTextFilter):
     """
