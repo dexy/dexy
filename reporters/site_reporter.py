@@ -7,8 +7,6 @@ import shutil
 import this_report_is_deprecated_until_it_gets_updated
 
 class SiteReporter(Reporter):
-    DEFAULT = False
-
     def setup_template(self):
         env = Environment()
         env.loader = FileSystemLoader(os.path.dirname(__file__))

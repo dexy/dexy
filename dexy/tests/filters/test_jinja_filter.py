@@ -52,7 +52,7 @@ def test_syntax_error():
     try:
         f.process_text(text)
         assert False, "should not get here"
-    except JinjaFilterException as e:
+    except JinjaFilterException:
         pass
 
 def test_syntax_error_in_latex():
@@ -65,5 +65,5 @@ def test_syntax_error_in_latex():
     try:
         f.process_text(text)
         assert False, "should not get here"
-    except JinjaFilterException as e:
+    except JinjaFilterException:
         pass

@@ -1,6 +1,7 @@
 from dexy.artifact import Artifact
 from dexy.artifacts.file_system_json_artifact import FileSystemJsonArtifact
 from dexy.tests.utils import tempdir
+from ordereddict import OrderedDict
 import dexy.utils
 import os
 
@@ -78,3 +79,14 @@ def test_simple_metadata():
         a2.load_meta()
         assert a2.key == 'xyz'
 
+def test_artifact_data_dict_to_numbered_dict():
+    artifact = Artifact()
+    artifact.data_dict = OrderedDict()
+    artifact.data_dict['a'] = 10
+    artifact.data_dict['b'] = 20
+
+    numbered_dict = artifact.convert_data_dict_to_numbered_dict()
+    assert numbered_dict.keys()[0] == '00000:a'
+    assert numbered_dict.keys()[1] == '00001:b'
+    assert numbered_dict['00000:a'] == 10
+    assert numbered_dict['00001:b'] == 20

@@ -47,7 +47,10 @@ class Controller(object):
 
         self.artifact_classes = dexy.introspect.artifact_classes(self.log)
         if args.has_key('artifactclass'):
-            self.artifact_class = self.artifact_classes[args['artifactclass']]
+            if self.artifact_classes.has_key(args['artifactclass']):
+                self.artifact_class = self.artifact_classes[args['artifactclass']]
+            else:
+                raise Exception("Artifact class name %s not found in %s" % (args['artifactclass'], ",".join(self.artifact_classes.keys())))
 
     def run(self):
         """

@@ -6,7 +6,6 @@ from pygments.lexers import get_lexer_for_filename
 from pygments.lexers import get_lexer_by_name
 from pygments.lexers.agile import PythonConsoleLexer
 from pygments.lexers.agile import RubyConsoleLexer
-from pygments.lexers.special import TextLexer
 from pygments.lexers.text import TexLexer
 from pygments.lexers.web import JavascriptLexer
 from pygments.lexers.web import XmlLexer

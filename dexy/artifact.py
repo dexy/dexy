@@ -18,6 +18,8 @@ import zlib
 
 class Artifact(object):
     HASH_WHITELIST = Constants.ARTIFACT_HASH_WHITELIST
+    MAX_DATA_DICT_DECIMALS = 5
+    MAX_DATA_DICT_LENGTH = 10 ** MAX_DATA_DICT_DECIMALS
     META_ATTRS = [
         'additional',
         'binary_input',
@@ -662,3 +664,23 @@ class Artifact(object):
         relpath = self.relative_path_to_input(input_artifact)
         return os.path.join(relpath, os.path.basename(input_artifact.key))
 
+    def convert_numbered_dict_to_ordered_dict(self, numbered_dict):
+        ordered_dict = OrderedDict()
+        for x in sorted(numbered_dict.keys()):
+            k = x.split(":", 1)[1]
+            ordered_dict[k] = numbered_dict[x]
+        return ordered_dict
+
+    def convert_data_dict_to_numbered_dict(self):
+        if len(self.data_dict) >= self.MAX_DATA_DICT_LENGTH:
+            exception_msg = """Your data dict has %s items, which is greater than the arbitrary limit of %s items.
+            You can increase this limit by changing MAX_DATA_DICT_DECIMALS."""
+            raise Exception(exception_msg % (len(self.data_dict), self.MAX_DATA_DICT_LENGTH))
+
+        data_dict = {}
+        i = -1
+        for k, v in self.data_dict.iteritems():
+            i += 1
+            fmt = "%%0%sd:%%s" % self.MAX_DATA_DICT_DECIMALS
+            data_dict[fmt % (i, k)] = v
+        return data_dict

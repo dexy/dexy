@@ -1,43 +1,43 @@
 #!/bin/bash -ex
 
+install_dexy() {
+    pip install .
+    pip install GitPython
+    pip install python-cjson
+    #pip install z3c.checkversions
+    #checkversions
+}
+
+run_tests_and_examples() {
+    nosetests
+    dexy reset
+
+    dexy --directory test-examples --danger --output
+    dexy report --allreports
+    dexy --directory test-examples --danger --output
+    dexy report --allreports
+    dexy --directory test-examples --danger --output --uselocals no
+    dexy report --allreports
+
+    dexy --directory test-examples --danger --allreports --artifactclass FileSystemCjsonArtifact
+    dexy --directory test-examples --danger --allreports --artifactclass FileSystemPickleArtifact
+    dexy --directory test-examples --danger --allreports --artifactclass FileSystemcPickleArtifact
+}
+
 find . -name "*.pyc" -exec rm -rf {} \;
 
 rm -rf testenv/
 virtualenv --no-site-packages testenv/
 
 source testenv/bin/activate
-
-pip install .
-pip install GitPython
-nosetests
-dexy reset
-dexy --directory test-examples --danger
-dexy report --allreports
-dexy --directory test-examples --danger
-dexy report --allreports
-dexy --directory test-examples --danger --uselocals no
-dexy report --allreports
-
-pip install z3c.checkversions
-checkversions
-
+install_dexy
+run_tests_and_examples
 deactivate
-
 
 rm -rf testenv/
 virtualenv --no-site-packages -p python2.6 testenv/
+
 source testenv/bin/activate
-
-pip install .
-pip install GitPython
-nosetests
-dexy reset
-dexy --directory test-examples --danger
-dexy report --allreports
-dexy --directory test-examples --danger
-dexy report --allreports
-dexy --directory test-examples --danger --uselocals no
-dexy report --allreports
-
+install_dexy
+run_tests_and_examples
 deactivate
-

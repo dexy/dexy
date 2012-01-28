@@ -106,7 +106,7 @@ def test_circular_dependencies():
             try:
                 c.process_config()
                 assert False
-            except CycleError as e:
+            except CycleError:
                 assert True
             stdout_text = stdout.getvalue()
         assert "abc depends on ghi" in stdout_text

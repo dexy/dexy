@@ -68,9 +68,8 @@ def artifact_classes(log=NULL_LOGGER):
             for k in dir(mod):
                 klass = mod.__dict__[k]
                 if inspect.isclass(klass) and not (klass == dexy.artifact.Artifact) and issubclass(klass, dexy.artifact.Artifact):
-                    if artifact_classes.has_key(k):
-                        raise Exception("duplicate artifact class name %s called from %s in %s" % (k, f, d))
-                    artifact_classes[klass.__name__] = klass
+                    if not artifact_classes.has_key(k):
+                        artifact_classes[klass.__name__] = klass
 
     return artifact_classes
 

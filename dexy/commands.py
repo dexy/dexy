@@ -18,6 +18,7 @@ def run():
     args.parse_and_run_command(sys.argv[1:], MOD, default_command=Constants.DEFAULT_COMMAND)
 
 def dexy_command(
+        allreports=False, # whether to run all available reports
         artifactclass=Constants.DEFAULT_ACLASS, # name of class to use for artifacts
         artifactsdir=Constants.DEFAULT_ADIR, # location of directory in which to store artifacts
         config=Constants.DEFAULT_CONFIG, # name to use for configuration file
@@ -94,11 +95,20 @@ def dexy_command(
     if output:
         if not reports == Constants.DEFAULT_REPORTS:
             raise Exception("if you pass --output you can't also modify reports! pick 1!")
+        if allreports:
+            raise Exception("if you pass --output you can't also pass --allreports!")
         reports = "Output"
+
+    if allreports:
+        if not reports == Constants.DEFAULT_REPORTS:
+            raise Exception("if you pass --allreports you can't also specify --reports")
 
     controller = run_dexy(locals())
     if not dryrun:
-        reports_command(reports=reports, logsdir=logsdir, controller=controller)
+        if allreports:
+            reports_command(allreports=True, logsdir=logsdir, controller=controller, artifactclass=artifactclass)
+        else:
+            reports_command(reports=reports, logsdir=logsdir, controller=controller, artifactclass=artifactclass)
 
 def run_dexy(args):
     # validate args and do any conversions required
@@ -344,6 +354,7 @@ def reports_command(
         reports = []
     reporters = dexy.introspect.reporters()
     if allreports:
+        print "using allreports"
         reports = [k for k, v in reporters.items() if v.ALLREPORTS]
 
     for r in reports:

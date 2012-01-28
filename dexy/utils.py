@@ -1,4 +1,5 @@
 from dexy.constants import Constants
+import codecs
 import dexy.database
 import dexy.introspect
 import json
@@ -7,11 +8,11 @@ import logging.handlers
 import os
 
 def load_batch_info(batch_id, logsdir=Constants.DEFAULT_LDIR):
-    with open(batch_info_filename(batch_id, logsdir), "r") as f:
+    with codecs.open(batch_info_filename(batch_id, logsdir), "r", encoding="utf-8") as f:
         return json.load(f)
 
 def save_batch_info(batch_id, batch_info, logsdir=Constants.DEFAULT_LDIR):
-    with open(batch_info_filename(batch_id, logsdir), "w") as f:
+    with codecs.open(batch_info_filename(batch_id, logsdir), "w", encoding="utf-8") as f:
         json.dump(batch_info, f, sort_keys = True, indent = 4)
 
 def batch_info_filename(batch_id, logsdir):

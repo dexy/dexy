@@ -9,5 +9,9 @@
       "repo" : "https://github.com/ananelson/dexy",
       "path" : "README",
       "test-includes" : "Dexy is software for document automation."
+  },
+  "@test-virtual|test" : {
+      "contents" : "Введение",
+      "test-expects" : "Введение"
   }
 }

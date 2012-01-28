@@ -6,6 +6,7 @@ class ValidateReporter(Reporter):
     A debugging reporter for checking that all elements in the
     database are also in the cache.
     """
+    ALLREPORTS = False # TODO this breaks when repositories have multiple artifact types
 
     def run(self):
         for row in self.db.all():

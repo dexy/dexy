@@ -27,8 +27,8 @@ class ProfileReporter(Reporter):
     cProfile. Builds up a history of profiling information each time it is run
     (info is saved in a sqlite database), so you can see changes over time.
     """
+    ALLREPORTS = False
     DB_FILE = "profile.sqlite"
-    DEFAULT = False
     REPORTS_DIR = 'logs/profile'
     DB_PATH = os.path.join(REPORTS_DIR, DB_FILE)
 

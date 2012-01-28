@@ -15,6 +15,14 @@ class FileSystemJsonArtifact(Artifact):
     def meta_filepath(self):
         return os.path.join(self.artifacts_dir, self.meta_filename())
 
+    def write_dict_to_file(self, data_dict, filepath):
+        with open(filepath, "wb") as f:
+            json.dump(data_dict, f)
+
+    def read_dict_from_file(self, filepath):
+        with open(filepath, "rb") as f:
+            return json.load(f)
+
     def save_meta(self):
         m = {}
         attrs_to_persist = set(self.META_ATTRS + self.HASH_WHITELIST) - set(['input_data_dict', 'inputs'])
@@ -25,19 +33,10 @@ class FileSystemJsonArtifact(Artifact):
 
         m['inputs'] = self.input_hashes()
 
-        f = codecs.open(self.meta_filepath(), "w", encoding="utf-8")
-        try:
-            json.dump(m, f)
-        except UnicodeDecodeError as e:
-            print e
-            print m
-            raise Exception("Binary data present in %s" % self.key)
-        f.close()
+        self.write_dict_to_file(m, self.meta_filepath())
 
     def load_meta(self):
-        f = codecs.open(self.meta_filepath(), "r", encoding="utf-8")
-        m = json.load(f)
-        f.close()
+        m = self.read_dict_from_file(self.meta_filepath())
 
         self._inputs = dict((k, self.__class__.retrieve(h)) for (k, h) in m.pop('inputs').iteritems())
 
@@ -70,14 +69,8 @@ class FileSystemJsonArtifact(Artifact):
             #no previous cached output, can't load
             pass
         else:
-            f = open(self.previous_cached_output_filepath, "r")
-            data_dict = json.load(f)
-            f.close()
-
-            self.input_data_dict = OrderedDict() # maybe unnecessary
-            for x in sorted(data_dict.keys()):
-                k = x.split(":", 1)[1]
-                self.input_data_dict[k] = data_dict[x]
+            with open(self.previous_cached_output_filepath, "rb") as f:
+                self.input_data_dict = self.convert_numbered_dict_to_ordered_dict(json.load(f))
 
     # Output
     def cached_output_filename(self):
@@ -113,46 +106,20 @@ class FileSystemJsonArtifact(Artifact):
                 with codecs.open(self.filepath(), 'r', encoding="utf-8") as f:
                     data = f.read()
                 self.data_dict['1'] = data
+            else:
+                # Write the canonical output file.
+                with codecs.open(self.filepath(), 'w', encoding="utf-8") as f:
+                    f.write(self.output_text())
 
-            # need to preserve ordering but we can't serialize OrderedDict
-            # using JSON, so add sortable numbers to keys to preserve order
-            data_dict = {}
-            MAX = 10000
-            if len(self.data_dict) >= MAX:
-                raise Exception("""There is an arbitrary limit of %s dict items,
-                               you can increase this if you need to.""" % MAX)
-            i = -1
-            for k, v in self.data_dict.iteritems():
-                i += 1
-                data_dict["%04d:%s" % (i, k)] = v
-
-            # Write the JSON file.
-            f = open(self.cached_output_filepath(), "w")
-            try:
-                json.dump(data_dict, f)
-            except UnicodeDecodeError as e:
-                print e
-                print self.binary_output
-                raise Exception(self.key)
-
-            f.close()
-
-            # Write the canonical file.
-            f = codecs.open(self.filepath(), 'w', encoding="utf-8")
-            f.write(self.output_text())
-            f.close()
+            # Write the JSON output file.
+            output_dict = self.convert_data_dict_to_numbered_dict()
+            self.write_dict_to_file(output_dict, self.cached_output_filepath())
 
     def load_output(self):
         if not self.is_complete():
             raise Exception("should not be calling load_output unless artifact is complete")
 
         if not self.binary_output:
-            f = open(self.cached_output_filepath(), "r")
-            data_dict = json.load(f)
-            f.close()
-
-            self.data_dict = OrderedDict() # maybe unnecessary
-            for x in sorted(data_dict.keys()):
-                k = x.split(":", 1)[1]
-                self.data_dict[k] = data_dict[x]
+            output_dict = self.read_dict_from_file(self.cached_output_filepath())
+            self.data_dict = self.convert_numbered_dict_to_ordered_dict(output_dict)
 
