@@ -41,3 +41,5 @@ source testenv/bin/activate
 install_dexy
 run_tests_and_examples
 deactivate
+
+rm -rf testenv/
