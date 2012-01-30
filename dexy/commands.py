@@ -1,11 +1,16 @@
 from dexy.constants import Constants
 from dexy.controller import Controller
+from dexy.utils import get_log
 from dexy.version import Version
 from modargs import args
-import copy
+from pygments import highlight
+from pygments.lexers.agile import PythonLexer
+from pygments.formatters import TerminalFormatter
 import cProfile
+import copy
 import datetime
 import dexy.introspect
+import inspect
 import os
 import shutil
 import sys
@@ -13,6 +18,16 @@ import sys
 MOD = sys.modules[__name__]
 PROG = 'dexy'
 S = "   "
+
+# List of filter classes not to include in the filters command
+NODOC_FILTERS = [
+    "SubprocessCompileFilter",
+    "SubprocessCompileInputFilter",
+    "SubprocessFilter",
+    "SubprocessStdoutFilter",
+    "SubprocessStdoutInputFileFilter",
+    "SubprocessStdoutInputFilter"
+    ]
 
 def run():
     args.parse_and_run_command(sys.argv[1:], MOD, default_command=Constants.DEFAULT_COMMAND)
@@ -149,7 +164,7 @@ def profile_command(
         cProfile.runctx("run_dexy(args)", globals(), copy.deepcopy(locals_for_run_dexy), prof_file)
         reports_command(reports=reports, **report_kwargs)
 
-def check_setup(logsdir, artifactsdir):
+def check_setup(logsdir=Constants.DEFAULT_LDIR, artifactsdir=Constants.DEFAULT_ADIR):
     return os.path.exists(logsdir) and os.path.exists(artifactsdir)
 
 def setup_command(logsdir=Constants.DEFAULT_LDIR, artifactsdir=Constants.DEFAULT_ADIR, logfile=Constants.DEFAULT_LFILE, showhelp=True):
@@ -278,25 +293,115 @@ def version_command():
     """Print the current version."""
     print "%s version %s" % (PROG, Version.VERSION)
 
-def filters_command():
-    """Lists currently available dexy filters."""
-    print filters_text()
+def filters_command(
+        alias="", # If a filter alias is specified, more detailed help for that filter is printed.
+        nocolor=False, # When source = True, whether to omit syntax highlighting
+        showall=False, # Whether to show all filters, including those which need missing software, implies versions=True
+        showmissing=False, # Whether to just show filters missing external software, implies versions=True
+        space=False, # Whether to add extra spacing to the output for extra readability
+        source=False, # Whether to include syntax-highlighted source code when displaying an indvidual filter
+        versions=False # Whether to check the installed version of external software required by filters, slower
+    ):
+    """
+    Lists the available dexy filters and their aliases.
 
-def filters_text():
-    filters = dexy.introspect.filters()
-    text = []
-    for k in sorted(filters.keys()):
-        klass = filters[k]
-        version = klass.version()
-        if (version is None) or version:
-            text.append("\n%s : %s" % (k, klass.__name__))
-            if klass.executable():
-                text.append(S + "calls '%s'" % klass.executable())
-                if version:
-                    text.append(S + version + " detected")
-            if klass.__doc__:
-                text.append(S + klass.__doc__.strip())
-    return "\n".join(text) + "\n"
+    Does not include filters which require python modules that are not
+    installed.
+
+    Consult the Dexy website http://dexy.it for a complete list of filters.
+    """
+    if len(alias) == 0:
+        # This tends to be slow, let people know it's running
+        print "looking up filter information..."
+    else:
+        if showall:
+            raise Exception("can't specify an alias if showall is True")
+
+    if check_setup():
+        log = get_log()
+    else:
+        log = Constants.NULL_LOGGER
+
+    print filters_text(alias, nocolor, showall, showmissing, space, source, versions, log)
+
+def filters_text(
+        alias="", # If a filter alias is specified, more detailed help for that filter is printed.
+        nocolor=False, # When source = True, whether to omit syntax highlighting
+        showall=False, # Whether to show all filters, including those which need missing software, implies versions=True
+        showmissing=False, # Whether to just show filters missing external software, implies versions=True
+        space=False, # Whether to add extra spacing to the output for extra readability
+        source=False, # Whether to include syntax-highlighted source code when displaying an indvidual filter
+        versions=False, # Whether to check the installed version of external software required by filters, slower
+        log=Constants.NULL_LOGGER
+        ):
+    filters_dict = dexy.introspect.filters(log)
+
+    if len(alias) > 0:
+        # We want help on a particular filter
+        klass = filters_dict[alias]
+        text = []
+        text.append(klass.__name__)
+        text.append("")
+        text.append("Aliases: %s" % ", ".join(klass.ALIASES))
+        text.append("")
+        text.append(trim_docstring(klass.__doc__))
+        text.append("")
+        text.append("http://dexy.it/docs/filters/%s" % alias)
+        if source:
+            text.append("")
+            source_code = inspect.getsource(klass)
+            if nocolor:
+                text.append(source_code)
+            else:
+                formatter = TerminalFormatter()
+                lexer = PythonLexer()
+                text.append(highlight(source_code, lexer, formatter))
+        return "\n".join(text)
+
+    else:
+        def sort_key(k):
+            return k.__name__
+
+        filter_classes = sorted(set(f for f in filters_dict.values()), key=sort_key) # uniqify and sort class names
+
+        text = []
+        for klass in filter_classes:
+            if not showall:
+                skip = klass.__name__ in NODOC_FILTERS
+            else:
+                skip = False
+
+            if (versions or showmissing or showall) and not skip:
+                version = klass.version()
+                no_version_info_available = (version is None)
+                if no_version_info_available:
+                    version_message = ""
+                    if showmissing:
+                        skip = True
+                elif version:
+                    version_message = "Installed version: %s" % version
+                    if showmissing:
+                        skip = True
+                else:
+                    if not (showmissing or showall):
+                        skip = True
+                    version_message = "'%s' failed, filter may not be available." % klass.version_command()
+
+            if not skip:
+                name_and_aliases = "%s (%s) " % (klass.__name__, ", ".join(klass.ALIASES))
+                docstring = trim_docstring(klass.__doc__)
+                if "\n" in docstring:
+                    docstring = docstring.splitlines()[0]
+                filter_help = name_and_aliases + docstring
+                if (versions or showmissing or (showall and not version)):
+                    filter_help += " %s" % version_message
+                text.append(filter_help)
+
+        if space:
+            sep = "\n\n"
+        else:
+            sep = "\n"
+        return sep.join(text)
 
 def reporters_command():
     """Lists currently available dexy reporters."""
@@ -377,3 +482,28 @@ def reports_command(
 def it_command(**kwargs):
     dexy_command(kwargs)
 
+# From http://www.python.org/dev/peps/pep-0257/#handling-docstring-indentation
+def trim_docstring(docstring):
+    if not docstring:
+        return ''
+    # Convert tabs to spaces (following the normal Python rules)
+    # and split into a list of lines:
+    lines = docstring.expandtabs().splitlines()
+    # Determine minimum indentation (first line doesn't count):
+    indent = sys.maxint
+    for line in lines[1:]:
+        stripped = line.lstrip()
+        if stripped:
+            indent = min(indent, len(line) - len(stripped))
+    # Remove indentation (first line is special):
+    trimmed = [lines[0].strip()]
+    if indent < sys.maxint:
+        for line in lines[1:]:
+            trimmed.append(line[indent:].rstrip())
+    # Strip off trailing and leading blank lines:
+    while trimmed and not trimmed[-1]:
+        trimmed.pop()
+    while trimmed and not trimmed[0]:
+        trimmed.pop(0)
+    # Return a single string:
+    return '\n'.join(trimmed)

@@ -22,35 +22,35 @@ class PythonSubprocessStdoutFilter(SubprocessStdoutFilter):
     EXECUTABLE = 'python'
     INPUT_EXTENSIONS = [".py", ".txt"]
     OUTPUT_EXTENSIONS = [".txt"]
-    VERSION = 'python --version'
+    VERSION_COMMAND = 'python --version'
 
 class PythonSubprocessStdoutInputFilter(SubprocessStdoutInputFilter):
     ALIASES = ['pyinput']
     EXECUTABLE = 'python'
     INPUT_EXTENSIONS = [".py", ".txt"]
     OUTPUT_EXTENSIONS = [".txt"]
-    VERSION = 'python --version'
+    VERSION_COMMAND = 'python --version'
 
 class BashSubprocessStdoutFilter(SubprocessStdoutFilter):
     ALIASES = ['sh', 'bash']
     EXECUTABLE = 'bash'
     INPUT_EXTENSIONS = [".sh", ".bash", ".txt", ""]
     OUTPUT_EXTENSIONS = [".txt"]
-    VERSION = 'bash --version'
+    VERSION_COMMAND = 'bash --version'
 
 class BashSubprocessStdoutInputFilter(SubprocessStdoutInputFilter):
     ALIASES = ['shinput']
     EXECUTABLE = 'bash'
     INPUT_EXTENSIONS = [".sh", ".bash", ".txt", ""]
     OUTPUT_EXTENSIONS = [".txt"]
-    VERSION = 'bash --version'
+    VERSION_COMMAND = 'bash --version'
 
 class SedSubprocessStdoutInputFilter(SubprocessStdoutInputFilter):
     ALIASES = ['sed']
     EXECUTABLE = 'sed'
     INPUT_EXTENSIONS = [".sed"]
     OUTPUT_EXTENSIONS = [".txt"]
-    VERSION = 'sed --version'
+    VERSION_COMMAND = 'sed --version'
 
     def command_string_stdout(self):
         wf = self.artifact.previous_artifact_filename
@@ -72,25 +72,25 @@ class IrbSubprocessStdoutFilter(SubprocessStdoutFilter):
     EXECUTABLE = 'irb --simple-prompt --noreadline'
     INPUT_EXTENSIONS = [".txt", ".rb"]
     OUTPUT_EXTENSIONS = [".rbcon"]
-    VERSION = 'irb --version'
+    VERSION_COMMAND = 'irb --version'
 
 class IrbSubprocessStdoutInputFilter(SubprocessStdoutInputFilter):
     ALIASES = ['irboutinput']
     EXECUTABLE = 'irb --simple-prompt --noreadline'
     INPUT_EXTENSIONS = [".txt", ".rb"]
     OUTPUT_EXTENSIONS = [".rbcon"]
-    VERSION = 'irb --version'
+    VERSION_COMMAND = 'irb --version'
 
 class RubySubprocessStdoutFilter(SubprocessStdoutFilter):
     EXECUTABLE = 'ruby'
-    VERSION = 'ruby --version'
+    VERSION_COMMAND = 'ruby --version'
     INPUT_EXTENSIONS = [".txt", ".rb"]
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['rb']
 
 class RubySubprocessStdoutInputFilter(SubprocessStdoutInputFilter):
     EXECUTABLE = 'ruby'
-    VERSION = 'ruby --version'
+    VERSION_COMMAND = 'ruby --version'
     INPUT_EXTENSIONS = [".txt", ".rb"]
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['rbinput']
@@ -111,7 +111,7 @@ class PhpFilter(SubprocessStdoutFilter):
     Runs php script and returns STDOUT.
     """
     EXECUTABLE = 'php'
-    VERSION = 'php --version'
+    VERSION_COMMAND = 'php --version'
     INPUT_EXTENSIONS = [".php"]
     OUTPUT_EXTENSIONS = [".html", ".txt"]
     ALIASES = ['php']
@@ -121,7 +121,7 @@ class LuaFilter(SubprocessStdoutFilter):
     Runs lua script and returns STDOUT.
     """
     EXECUTABLE = 'lua'
-    VERSION = 'lua -v'
+    VERSION_COMMAND = 'lua -v'
     INPUT_EXTENSIONS = ['.lua']
     OUTPUT_EXTENSIONS = ['.txt']
     ALIASES = ['lua']
@@ -131,7 +131,7 @@ class RedclothFilter(SubprocessStdoutFilter):
     Runs redcloth, converts textile markup to HTML.
     """
     EXECUTABLE = 'redcloth'
-    VERSION = 'redcloth --version'
+    VERSION_COMMAND = 'redcloth --version'
     INPUT_EXTENSIONS = [".txt", ".textile"]
     OUTPUT_EXTENSIONS = [".html"]
     ALIASES = ['redcloth', 'textile']
@@ -141,14 +141,14 @@ class RedclothLatexFilter(SubprocessStdoutFilter):
     Runs redcloth, converts textile markup to LaTeX.
     """
     EXECUTABLE = 'redcloth -o latex'
-    VERSION = 'redcloth --version'
+    VERSION_COMMAND = 'redcloth --version'
     INPUT_EXTENSIONS = [".txt", ".textile"]
     OUTPUT_EXTENSIONS = [".tex"]
     ALIASES = ['redclothl', 'latextile']
 
 class Rst2HtmlFilter(SubprocessStdoutFilter):
     EXECUTABLE = 'rst2html.py'
-    VERSION = 'rst2html.py --version'
+    VERSION_COMMAND = 'rst2html.py --version'
     INPUT_EXTENSIONS = [".rst", ".txt"]
     OUTPUT_EXTENSIONS = [".html"]
     ALIASES = ['rst2html']
@@ -156,7 +156,7 @@ class Rst2HtmlFilter(SubprocessStdoutFilter):
 
 class Rst2LatexFilter(SubprocessStdoutFilter):
     EXECUTABLE = 'rst2latex.py'
-    VERSION = 'rst2latex.py --version'
+    VERSION_COMMAND = 'rst2latex.py --version'
     INPUT_EXTENSIONS = [".rst", ".txt"]
     OUTPUT_EXTENSIONS = [".tex"]
     ALIASES = ['rst2latex']
@@ -169,7 +169,7 @@ class Rst2BeamerFilter(SubprocessStdoutFilter):
 
 class SloccountFilter(SubprocessStdoutFilter):
     EXECUTABLE = 'sloccount'
-    VERSION = 'sloccount --version'
+    VERSION_COMMAND = 'sloccount --version'
     INPUT_EXTENSIONS = [".*"]
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['sloc', 'sloccount']
@@ -177,7 +177,7 @@ class SloccountFilter(SubprocessStdoutFilter):
 class RdConvFilter(SubprocessStdoutFilter):
     """Convert R documentation to other formats."""
     EXECUTABLE = "R CMD Rdconv"
-    VERSION = "R CMD Rdconv -v"
+    VERSION_COMMAND = "R CMD Rdconv -v"
     INPUT_EXTENSIONS = ['.Rd']
     OUTPUT_EXTENSIONS = ['.txt', '.html', '.tex', '.R']
     ALIASES = ['rdconv']
@@ -198,7 +198,7 @@ class RagelRubyDotFilter(SubprocessStdoutFilter):
     INPUT_EXTENSIONS = [".rl"]
     OUTPUT_EXTENSIONS = [".dot"]
     ALIASES = ['rlrbd', 'ragelrubydot']
-    VERSION = 'ragel --version'
+    VERSION_COMMAND = 'ragel --version'
     EXECUTABLE = 'ragel -R -V'
 
 class LynxDumpFilter(SubprocessStdoutFilter):
@@ -208,9 +208,9 @@ class LynxDumpFilter(SubprocessStdoutFilter):
     INPUT_EXTENSIONS = [".html"]
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['lynxdump']
-    VERSION = 'lynx --version'
+    VERSION_COMMAND = 'lynx --version'
     EXECUTABLE = 'lynx -dump'
 
 class NonexistentFilter(SubprocessStdoutFilter):
     ALIASES = ['zzzdoesnotexist']
-    VERSION = 'notherenopexxx --version'
+    VERSION_COMMAND = 'notherenopexxx --version'

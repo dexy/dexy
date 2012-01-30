@@ -8,9 +8,11 @@ import re
 import uuid
 
 class TestFilter(DexyFilter):
-    """The test filter raises an error if output is not as expected. Handy for
-    testing your custom filters or for ensuring that examples in your
-    documentation stay correct."""
+    """
+    Lets you test the output of running a filter, raises exception if expectation not met.
+
+    If the test passes, the original content is returned so you can chain this filter.
+    """
 
     ALIASES = ['test']
 

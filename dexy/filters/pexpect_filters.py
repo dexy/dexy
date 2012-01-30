@@ -121,7 +121,7 @@ class RubyPexpectReplFilter(PexpectReplFilter):
     INPUT_EXTENSIONS = [".txt", ".rb"]
     OUTPUT_EXTENSIONS = [".rbcon"]
     PROMPTS = [">>", "?>"]
-    VERSION = 'irb --version'
+    VERSION_COMMAND = 'irb --version'
 
 class PythonPexpectReplFilter(PexpectReplFilter):
     ALIASES = ['pycon', 'pyrepl']
@@ -129,7 +129,7 @@ class PythonPexpectReplFilter(PexpectReplFilter):
     INPUT_EXTENSIONS = [".txt", ".py"]
     OUTPUT_EXTENSIONS = [".pycon"]
     TAGS = ['python', 'interpreter', 'language']
-    VERSION = 'python --version'
+    VERSION_COMMAND = 'python --version'
 
     SAVE_VARS_TO_JSON_CMD = """
 import json
@@ -149,7 +149,7 @@ class IpythonPexpectReplFilter(PythonPexpectReplFilter):
     IGNORE_ERRORS = True # TODO try to figure out why we are getting nonzero exit codes
     INPUT_EXTENSIONS = [".txt", ".py"]
     OUTPUT_EXTENSIONS = [".pycon"]
-    VERSION = 'ipython -Version'
+    VERSION_COMMAND = 'ipython -Version'
 
 # untested below here
 
@@ -161,7 +161,7 @@ class RPexpectReplFilter(PexpectReplFilter):
     PROMPTS = [">", "+"]
     TAGS = ['r', 'interpreter', 'language']
     TRIM_PROMPT = ">"
-    VERSION = "R --version"
+    VERSION_COMMAND = "R --version"
     ALLOW_MATCH_PROMPT_WITHOUT_NEWLINE = True
     SAVE_VARS_TO_JSON_CMD = """
 if ("rjson" %%in%% installed.packages()) {

@@ -6,7 +6,7 @@ import shutil
 import subprocess
 
 class AsciidocFilter(SubprocessFilter):
-    VERSION = "asciidoc --version"
+    VERSION_COMMAND = "asciidoc --version"
     EXECUTABLE = "asciidoc"
     INPUT_EXTENSIONS = [".txt"]
     OUTPUT_EXTENSIONS = [".html", ".xml"]
@@ -202,7 +202,7 @@ class ROutputBatchFilter(SubprocessFilter):
     EXECUTABLE = 'R CMD BATCH --vanilla --quiet --slave --no-timing'
     INPUT_EXTENSIONS = ['.txt', '.r', '.R']
     OUTPUT_EXTENSIONS = [".txt"]
-    VERSION = "R --version"
+    VERSION_COMMAND = "R --version"
     BINARY = False
     FINAL = False
 
@@ -212,7 +212,7 @@ class RBatchFilter(SubprocessFilter):
     EXECUTABLE = 'R CMD BATCH --vanilla --quiet --no-timing'
     INPUT_EXTENSIONS = ['.txt', '.r', '.R']
     OUTPUT_EXTENSIONS = [".Rout", '.txt']
-    VERSION = "R --version"
+    VERSION_COMMAND = "R --version"
     BINARY = False
     FINAL = False
 
@@ -220,7 +220,7 @@ class Rd2PdfFilter(SubprocessFilter):
     INPUT_EXTENSIONS = [".Rd"]
     OUTPUT_EXTENSIONS = [".pdf", ".dvi"]
     EXECUTABLE = 'R CMD Rd2pdf'
-    VERSION = 'R CMD Rd2pdf -v'
+    VERSION_COMMAND = 'R CMD Rd2pdf -v'
     ALIASES = ['rd2pdf', 'Rd2pdf']
 
     def command_string(self):
@@ -243,7 +243,7 @@ class RagelRubySubprocessFilter(SubprocessFilter):
     FINAL = False
     INPUT_EXTENSIONS = [".rl"]
     OUTPUT_EXTENSIONS = [".rb"]
-    VERSION = 'ragel --version'
+    VERSION_COMMAND = 'ragel --version'
 
     def command_string(self):
         wf = self.artifact.previous_artifact_filename
@@ -273,7 +273,7 @@ class Html2PdfSubprocessFilter(SubprocessFilter):
     EXECUTABLE = 'wkhtmltopdf'
     INPUT_EXTENSIONS = [".html", ".txt"]
     OUTPUT_EXTENSIONS = [".pdf"]
-    VERSION = 'wkhtmltopdf --version'
+    VERSION_COMMAND = 'wkhtmltopdf --version'
 
     def command_string(self):
         # Create a temporary directory and populate it with all inputs.
@@ -294,7 +294,7 @@ class DotFilter(SubprocessFilter):
     INPUT_EXTENSIONS = [".dot"]
     OUTPUT_EXTENSIONS = [".png", ".pdf"]
     EXECUTABLE = 'dot'
-    VERSION = 'dot -V'
+    VERSION_COMMAND = 'dot -V'
     ALIASES = ['dot', 'graphviz']
 
     def command_string(self):
@@ -319,7 +319,7 @@ class Pdf2ImgSubprocessFilter(SubprocessFilter):
     GS_DEVICE = 'png16m -r300'
     INPUT_EXTENSIONS = ['.pdf']
     OUTPUT_EXTENSIONS = ['.png']
-    VERSION = "gs --version"
+    VERSION_COMMAND = "gs --version"
 
     def command_string(self):
         s = "%(prog)s -dSAFER -dNOPAUSE -dBATCH -sDEVICE=%(device)s -sOutputFile=%%d-%(out)s %(in)s"

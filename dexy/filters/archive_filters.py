@@ -4,7 +4,9 @@ import tarfile
 import zipfile
 
 class UnprocessedDirectoryArchiveFilter(DexyFilter):
-    """The archive filter creates .tgz archives of unprocessed directories."""
+    """
+    Create a tgz archive containing the original (unprocessed) files in a directory.
+    """
     OUTPUT_EXTENSIONS = [".tgz"]
     ALIASES = ['tgzdir']
     BINARY = True

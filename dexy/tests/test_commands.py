@@ -69,11 +69,6 @@ def test_commands_dexy_without_setup():
                 assert not check_setup(logsdir=Constants.DEFAULT_LDIR, artifactsdir=Constants.DEFAULT_LDIR)
                 assert e.code == 1
 
-def test_commands_filters():
-    with divert_stdout() as stdout:
-        filters_command()
-        assert "pyg : PygmentsFilter" in stdout.getvalue()
-
 def test_commands_reporters():
     with divert_stdout() as stdout:
         reporters_command()
@@ -159,3 +154,32 @@ def test_caching():
         db = dexy.utils.get_db()
         refs = db.references_for_batch_id()
         assert refs[1]['source'] == 'run'
+
+def test_commands_filters():
+    with divert_stdout() as stdout:
+        filters_command()
+        assert "looking up filter information..." in stdout.getvalue()
+        assert "ZipArchiveFilter (zip)" in stdout.getvalue()
+        assert "RubySubprocessStdoutFilter (rb)" in stdout.getvalue()
+        assert "SplitLatexFilter (splitlatex) Splits a latex doc into multiple latex docs." in stdout.getvalue()
+        assert not "http://dexy.it/docs/filters/tgzdir" in stdout.getvalue()
+
+def test_commands_filters_individual_filter():
+    with divert_stdout() as stdout:
+        filters_command(alias="tgzdir")
+        assert "UnprocessedDirectoryArchiveFilter" in stdout.getvalue()
+        assert "Aliases: tgzdir" in stdout.getvalue()
+        assert "Create a tgz" in stdout.getvalue()
+        assert "http://dexy.it/docs/filters/tgzdir" in stdout.getvalue()
+
+def test_commands_filters_source():
+    with divert_stdout() as stdout:
+        filters_command(alias="tgzdir", source=True)
+        with_color = stdout.getvalue()
+
+    with divert_stdout() as stdout:
+        filters_command(alias="tgzdir", source=True, nocolor=True)
+        without_color = stdout.getvalue()
+
+    assert len(with_color) > len(without_color)
+    # TODO find a way to strip out ansi color codes and assert that text is equal?

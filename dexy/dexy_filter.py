@@ -19,6 +19,8 @@ class DexyFilter(object):
     INPUT_EXTENSIONS = [".*"]
     OUTPUT_EXTENSIONS = [".*"]
     TAGS = [] # Descriptive keywords about the filter.
+    VERSION_COMMAND = None
+    WINDOWS_VERSION_COMMAND = None
 
     @classmethod
     def filters(self):
@@ -66,24 +68,22 @@ class DexyFilter(object):
             return True
 
     @classmethod
-    def version_command(self):
+    def version_command(klass):
         if platform.system() == 'Windows':
-            if hasattr(self, 'WINDOWS_VERSION'):
-                return self.WINDOWS_VERSION
+            return klass.WINDOWS_VERSION_COMMAND or klass.VERSION_COMMAND
         else:
-            if hasattr(self, 'VERSION'):
-                return self.VERSION
+            return klass.VERSION_COMMAND
 
     @classmethod
-    def version(self, log=None):
-        vc = self.version_command()
+    def version(klass, log=None):
+        vc = klass.version_command()
 
         if vc:
             # TODO make custom env available here...
             proc = subprocess.Popen(vc, shell=True,
                                     stdout=subprocess.PIPE,
                                     stderr=subprocess.STDOUT)
-            output, e = proc.communicate()
+            stdout, stderr = proc.communicate()
 
             if proc.returncode > 0:
                 err_msg = """An error occurred running %s""" % vc
@@ -91,7 +91,7 @@ class DexyFilter(object):
                     log.debug(err_msg)
                 return False
             else:
-                return output.strip().split("\n")[0]
+                return stdout.strip().split("\n")[0]
         else:
             return None
 

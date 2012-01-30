@@ -8,7 +8,7 @@ class CucumberFilter(DexyFilter):
     OUTPUT_EXTENSIONS = [".html", ".txt"]
     ALIASES = ["cuke"]
     EXECUTABLE = "cucumber"
-    VERSION = "cucumber --version"
+    VERSION_COMMAND = "cucumber --version"
 
     def process(self):
         keys = self.artifact.inputs().keys()

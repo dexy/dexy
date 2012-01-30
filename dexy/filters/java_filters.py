@@ -12,11 +12,11 @@ import platform
 import shutil
 
 class JrubyFilter(SubprocessStdoutFilter):
-    VERSION = "jruby --version"
+    ALIASES = ['jruby']
     EXECUTABLE = "jruby"
     INPUT_EXTENSIONS = [".rb"]
     OUTPUT_EXTENSIONS = [".txt"]
-    ALIASES = ['jruby']
+    VERSION_COMMAND = "jruby --version"
 
 class JirbFilter(PexpectReplFilter):
     ALIASES = ['jirb']
@@ -26,14 +26,14 @@ class JirbFilter(PexpectReplFilter):
     INPUT_EXTENSIONS = [".rb"]
     OUTPUT_EXTENSIONS = [".rbcon"]
     PROMPTS = ['>>', '?>']
-    VERSION = "jirb --version"
+    VERSION_COMMAND = "jirb --version"
 
 class JythonFilter(SubprocessStdoutFilter):
-    VERSION = "jython --version"
+    ALIASES = ['jython']
     EXECUTABLE = "jython"
     INPUT_EXTENSIONS = [".py"]
     OUTPUT_EXTENSIONS = [".txt"]
-    ALIASES = ['jython']
+    VERSION_COMMAND = "jython --version"
 
     @classmethod
     def enabled(self):
@@ -49,11 +49,11 @@ class JythonFilter(SubprocessStdoutFilter):
             return True
 
 class JythonInteractiveFilter(PexpectReplFilter):
-    VERSION = "jython --version"
+    ALIASES = ['jythoni']
     EXECUTABLE = "jython -i"
     INPUT_EXTENSIONS = [".py", ".txt"]
     OUTPUT_EXTENSIONS = [".pycon"]
-    ALIASES = ['jythoni']
+    VERSION_COMMAND = "jython --version"
 
     @classmethod
     def enabled(self):
@@ -71,10 +71,10 @@ class JavaFilter(SubprocessCompileFilter):
     CHECK_RETURN_CODE = True # Whether to check return code when running compiled executable.
     COMPILED_EXTENSION = ".class"
     EXECUTABLE = "javac"
+    FINAL = False
     INPUT_EXTENSIONS = [".java"]
     OUTPUT_EXTENSIONS = [".txt"]
-    VERSION = "java -version"
-    FINAL = False
+    VERSION_COMMAND = "java -version"
 
     def setup_cp(self):
         """
@@ -134,11 +134,11 @@ class JavaFilter(SubprocessCompileFilter):
 
 class JavacFilter(JavaFilter):
     ALIASES = ['javac']
+    BINARY = True
     EXECUTABLE = "javac"
     INPUT_EXTENSIONS = [".java"]
     OUTPUT_EXTENSIONS = [".class"]
-    VERSION = "java -version"
-    BINARY = True
+    VERSION_COMMAND = "java -version"
 
     def process(self):
         # Compile the code
