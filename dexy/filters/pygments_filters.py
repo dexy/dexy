@@ -2,8 +2,8 @@ from dexy.dexy_filter import DexyFilter
 from ordereddict import OrderedDict
 from pygments import highlight
 from pygments.formatters import get_formatter_for_filename
-from pygments.lexers import get_lexer_for_filename
 from pygments.lexers import get_lexer_by_name
+from pygments.lexers import get_lexer_for_filename
 from pygments.lexers.agile import PythonConsoleLexer
 from pygments.lexers.agile import RubyConsoleLexer
 from pygments.lexers.text import TexLexer
@@ -60,9 +60,8 @@ class PygmentsFilter(DexyFilter):
         if self.artifact.ext in self.IMAGE_OUTPUT_EXTENSIONS:
             self.artifact.binary_output = True
             # TODO set to final
-            f = open(self.artifact.filepath(), 'w', encoding="utf-8")
-            f.write(highlight(self.artifact.input_text(), lexer, formatter))
-            f.close()
+            with open(self.artifact.filepath(), 'wb') as f:
+                f.write(highlight(self.artifact.input_text(), lexer, formatter))
         else:
             output_dict = OrderedDict()
             for k, v in input_dict.items():
