@@ -38,7 +38,7 @@ class Reporter(object):
             may be deleted without notice.\n\n""" % self.__class__.__name__)
 
     def __init__(self, logsdir=LDIR, logfile=LFILE, artifact_class=ACLASS, batch_id=None,
-            dbfile=DBFILE, controller=None, dbclass=DBCLASS):
+            dbfile=DBFILE, controller=None, dbclass=DBCLASS, hashfunction='md5'):
 
         self.db = dexy.utils.get_db(dbclass, logsdir=logsdir, dbfile=dbfile)
 
@@ -52,6 +52,7 @@ class Reporter(object):
         self.log.debug("Reporter %s initialized" % self.__class__.__name__)
         self.logfile = logfile
         self.logsdir = logsdir
+        self.hashfunction = hashfunction
 
         if isinstance(artifact_class, str):
             artifact_classes = dexy.introspect.artifact_classes()
@@ -73,7 +74,7 @@ class Reporter(object):
         db = dexy.utils.get_db(logsdir=self.logsdir, dbfile=self.dbfile)
         refs = db.references_for_batch_id(self.batch_id)
         self.batch_refs = refs
-        self.artifacts = dict((r['hashstring'], self.artifact_class.retrieve(r['hashstring'])) for r in refs)
+        self.artifacts = dict((r['hashstring'], self.artifact_class.retrieve(r['hashstring'], self.hashfunction)) for r in refs)
 
     def run(self):
         pass

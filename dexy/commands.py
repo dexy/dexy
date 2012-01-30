@@ -121,9 +121,22 @@ def dexy_command(
     controller = run_dexy(locals())
     if not dryrun:
         if allreports:
-            reports_command(allreports=True, logsdir=logsdir, controller=controller, artifactclass=artifactclass)
+            reports_command(
+                allreports=True,
+                artifactclass=artifactclass,
+                controller=controller,
+                hashfunction=hashfunction,
+                logsdir=logsdir
+            )
         else:
-            reports_command(reports=reports, logsdir=logsdir, controller=controller, artifactclass=artifactclass)
+            reports_command(
+                reports=reports,
+                artifactclass=artifactclass,
+                controller=controller,
+                hashfunction=hashfunction,
+                logsdir=logsdir
+            )
+
 
 def run_dexy(args):
     # validate args and do any conversions required
@@ -434,10 +447,11 @@ def report_command(**kwargs):
     reports_command(**kwargs)
 
 def reports_command(
-        artifactclass=Constants.DEFAULT_ACLASS, # What artifact class to use (must correspond to artifact class used by batch id)
         allreports=False, # whether to run all available reporters (except those that are specifically excluded by setting ALLREPORTS=False)
-        controller=False, # can pass the just-run controller instance to save having to load some data from disk which is already in memory
+        artifactclass=Constants.DEFAULT_ACLASS, # What artifact class to use (must correspond to artifact class used by batch id)
         batchid=False, # What batch id to run reports for. Leave false to run the most recent batch available (recommended).
+        controller=False, # can pass the just-run controller instance to save having to load some data from disk which is already in memory
+        hashfunction='md5',
         logsdir=Constants.DEFAULT_LDIR, # The location of the logs directory.
         reports="OutputReporter RunReporter LongOutputReporter OutputTgzReporter" # The class names for all reports to be run.
     ):
@@ -473,6 +487,7 @@ def reports_command(
                 artifact_class=artifactclass,
                 batch_id=batchid,
                 controller=controller,
+                hashfunction=hashfunction,
                 logsdir=logsdir
             )
 

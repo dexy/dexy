@@ -99,7 +99,7 @@ class Artifact(object):
         return str(self.state) == 'complete'
 
     @classmethod
-    def retrieve(klass, hashstring):
+    def retrieve(klass, hashstring, hashfunction='md5'):
         if not hasattr(klass, 'retrieved_artifacts'):
             klass.retrieved_artifacts = {}
         if klass.retrieved_artifacts.has_key(hashstring):
@@ -107,6 +107,7 @@ class Artifact(object):
         else:
             artifact = klass()
             artifact.hashstring = hashstring
+            artifact.hashfunction = hashfunction
             artifact.load()
             klass.retrieved_artifacts[hashstring] = artifact
             return artifact
@@ -395,19 +396,47 @@ class Artifact(object):
         return hasattr(self, 'data_dict') and len(self.data_dict) > 0
 
     def compute_hash(self, text):
+        unicode_text = None
+
+        if type(text) == unicode:
+            unicode_text = text
+        elif type(text) == dict:
+            unicode_text = json.dumps(text)
+        elif self.binary_input:
+            pass
+        else:
+            unicode_text = unicode(text, encoding="utf-8")
+
+        if unicode_text:
+            text = unicode_text.encode("utf-8")
+
         if self.hashfunction == 'md5':
-            unicode_text = None
-            if type(text) == unicode:
-                unicode_text = text
-            else:
-                unicode_text = unicode(text, encoding="utf-8")
-            h = hashlib.md5(unicode_text.encode("utf-8")).hexdigest()
+            h = hashlib.md5(text).hexdigest()
+
+        elif self.hashfunction == 'sha1':
+            h = hashlib.sha1(text).hexdigest()
+
+        elif self.hashfunction == 'sha224':
+            h = hashlib.sha224(text).hexdigest()
+
+        elif self.hashfunction == 'sha256':
+            h = hashlib.sha256(text).hexdigest()
+
+        elif self.hashfunction == 'sha384':
+            h = hashlib.sha384(text).hexdigest()
+
+        elif self.hashfunction == 'sha512':
+            h = hashlib.sha512(text).hexdigest()
+
         elif self.hashfunction == 'crc32':
-            h =str(zlib.crc32(str(text)) & 0xffffffff )
+            h = str(zlib.crc32(text) & 0xffffffff)
+
         elif self.hashfunction == 'adler32':
-            h =str(zlib.adler32(str(text)) & 0xffffffff )
+            h = str(zlib.adler32(text) & 0xffffffff)
+
         else:
             raise Exception("unexpected hash function %s" % self.hashfunction)
+
         return h
 
     def input_hashes(self):
