@@ -27,7 +27,12 @@ class UnprocessedDirectoryArchiveFilter(DexyFilter):
         tar.close()
 
 class ArchiveFilter(DexyFilter):
-    """The archive filter creates .tgz archives of processed files."""
+    """
+    Creates a .tgz archive of all input documents.
+
+    The use-short-names option will store documents under their short
+    (canonical) filenames.
+    """
     OUTPUT_EXTENSIONS = [".tgz"]
     ALIASES = ['archive', 'tgz']
     BINARY = True
@@ -62,7 +67,12 @@ class ArchiveFilter(DexyFilter):
         tar.close()
 
 class ZipArchiveFilter(DexyFilter):
-    """The archive filter creates .zip archives of the input files."""
+    """
+    Creates a .zip archive of all input documents.
+
+    The use-short-names option will store documents under their short
+    (canonical) filenames.
+    """
     OUTPUT_EXTENSIONS = [".zip"]
     ALIASES = ['zip']
     BINARY = True

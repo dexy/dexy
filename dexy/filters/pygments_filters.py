@@ -9,6 +9,7 @@ from pygments.lexers.agile import RubyConsoleLexer
 from pygments.lexers.text import TexLexer
 from pygments.lexers.web import JavascriptLexer
 from pygments.lexers.web import XmlLexer
+import pygments.lexers.web
 
 class PygmentsFilter(DexyFilter):
     """
@@ -37,8 +38,11 @@ class PygmentsFilter(DexyFilter):
                 lexer = PythonConsoleLexer()
             elif ext == '.rbcon':
                 lexer = RubyConsoleLexer()
-            elif ext in ('.json', '.dexy'):
+            elif ext in ('.json', '.dexy') and pygments.__version__ < '1.5':
                 lexer = JavascriptLexer()
+            elif ext in ('.dexy'):
+                # JSON lexer available in pygments 1.5
+                lexer = pygments.lexers.web.JSONLexer()
             elif ext == '.Rd':
                 lexer = TexLexer() # does a passable job
             elif ext == '.svg':
