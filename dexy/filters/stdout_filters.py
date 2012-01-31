@@ -2,6 +2,12 @@ from dexy.filters.process_filters import SubprocessStdoutFilter
 from dexy.filters.process_filters import SubprocessStdoutInputFilter
 from dexy.filters.process_filters import SubprocessStdoutInputFileFilter
 
+class RhinoSubprocessStdoutFilter(SubprocessStdoutFilter):
+    EXECUTABLE = "rhino -f"
+    INPUT_EXTENSIONS = [".js"]
+    OUTPUT_EXTENSIONS = [".txt"]
+    ALIASES = ['js', 'rhino']
+
 class CowsaySubprocessStdoutFilter(SubprocessStdoutFilter):
     ALIASES = ['cowsay']
     EXECUTABLE = 'cowsay'

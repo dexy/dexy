@@ -115,12 +115,13 @@ class PexpectReplFilter(ProcessFilter):
 
 class RubyPexpectReplFilter(PexpectReplFilter):
     ALIASES = ['irb', 'rbrepl']
-    ALLOW_MATCH_PROMPT_WITHOUT_NEWLINE = True
-    EXECUTABLE = 'irb --simple-prompt --noreadline'
+    EXECUTABLE = 'irb --simple-prompt'
     IGNORE_ERRORS = True
+    INITIAL_PROMPT = "^>>"
     INPUT_EXTENSIONS = [".txt", ".rb"]
     OUTPUT_EXTENSIONS = [".rbcon"]
     PROMPTS = [">>", "?>"]
+    TRIM_PROMPT = '>>'
     VERSION_COMMAND = 'irb --version'
 
 class PythonPexpectReplFilter(PexpectReplFilter):
@@ -179,9 +180,9 @@ class RhinoInteractiveFilter(PexpectReplFilter):
     Runs rhino JavaScript interpeter.
     """
     EXECUTABLE = "rhino"
-    INPUT_EXTENSIONS = [".js"]
-    OUTPUT_EXTENSIONS = [".txt"]
-    ALIASES = ['jsint', 'rhino']
+    INPUT_EXTENSIONS = [".js", ".txt"]
+    OUTPUT_EXTENSIONS = [".jscon"]
+    ALIASES = ['jsint', 'rhinoint']
     PROMPTS = ['js>', '  >']
 
 class KshInteractiveFilter(PexpectReplFilter):

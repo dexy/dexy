@@ -225,8 +225,12 @@ class WordWrapFilter(DexyFilter):
         return wrap_text(input_text, 79)
 
 class SplitHtmlFilter(DexyFilter):
-    """Splits a HTML page into multiple HTML pages. The original page becomes an
-    index page."""
+    """
+    Create multiple HTML pages from a single template, with an automatic index page.
+
+    The split filter looks for specially formatted HTML comments in your
+    document and splits your HTML into separate pages at each split comment.
+    """
     ALIASES = ['split', 'splithtml']
     INPUT_EXTENSIONS = [".html"]
     OUTPUT_EXTENSIONS = [".html"]

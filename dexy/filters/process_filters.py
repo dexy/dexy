@@ -117,6 +117,7 @@ class SubprocessStdoutFilter(SubprocessFilter):
 
     def process(self):
         command = self.command_string_stdout()
+        self.log.debug("About to run '%s'" % command)
         proc, stdout = self.run_command(command, self.setup_env())
         self.handle_subprocess_proc_return(proc.returncode, stdout)
         self.artifact.set_data(stdout)
