@@ -1,0 +1,9 @@
+
+Method 2 is the most important:
+{{ d['Hello.java|idio']['method2'] }}
+
+It calls Method 1
+{{ d['Hello.java|idio']['method1'] }}
+
+This is the fundamental definition of the Hello class
+{{ d['Hello.java|pyg'] }}

@@ -32,7 +32,7 @@ setup(
             },
         include_package_data = True,
         install_requires = [
-            'idiopidae>=0.5.1',
+            'idiopidae>=0.5.2',
             'jinja2',
             'nose',
             'ordereddict', # for Python 2.6

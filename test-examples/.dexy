@@ -1,4 +1,5 @@
 {
+  "hello.txt|jinja" : { "inputs" : ["Hello.java|idio", "Hello.java|pyg"] },
   "*.py|idio|pycon|pyg|l" : {},
   "*.tex|jinja|latex" : { "allinputs" : true },
   "@test-remote.html|test" : {
