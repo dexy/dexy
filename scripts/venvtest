@@ -2,10 +2,10 @@
 
 install_dexy() {
     pip install .
+
+    # These are not required by Dexy, but they enable extra functionality.
     pip install GitPython
     pip install python-cjson
-    #pip install z3c.checkversions
-    #checkversions
 }
 
 run_tests_and_examples() {

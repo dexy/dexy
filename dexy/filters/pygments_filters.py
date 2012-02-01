@@ -38,9 +38,9 @@ class PygmentsFilter(DexyFilter):
                 lexer = PythonConsoleLexer()
             elif ext == '.rbcon':
                 lexer = RubyConsoleLexer()
-            elif ext in ('.json', '.dexy') and pygments.__version__ < '1.5':
+            elif (ext in ('.json', '.dexy') or self.artifact.name.endswith(".dexy")) and (pygments.__version__ < '1.5'):
                 lexer = JavascriptLexer()
-            elif ext in ('.dexy'):
+            elif ext in ('.dexy') or self.artifact.name.endswith(".dexy"):
                 # JSON lexer available in pygments 1.5
                 lexer = pygments.lexers.web.JSONLexer()
             elif ext == '.Rd':

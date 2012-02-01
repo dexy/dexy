@@ -1,4 +1,5 @@
 {
+  ".dexy|pyg" : {},
   "hello.txt|jinja" : { "inputs" : ["Hello.java|idio", "Hello.java|pyg"] },
   "*.py|idio|pycon|pyg|l" : {},
   "*.tex|jinja|latex" : { "allinputs" : true },
@@ -14,5 +15,9 @@
   "@test-virtual|test" : {
       "contents" : "Введение",
       "test-expects" : "Введение"
-  }
+  },
+  "example.sh|idio|shint|pyg" : {
+      "pygments" : { "noclasses" : true }
+  },
+  "example.sh|sh" : {}
 }
