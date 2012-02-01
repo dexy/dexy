@@ -184,6 +184,7 @@ class RhinoInteractiveFilter(PexpectReplFilter):
     OUTPUT_EXTENSIONS = [".jscon"]
     ALIASES = ['jsint', 'rhinoint']
     PROMPTS = ['js>', '  >']
+    TRIM_PROMPT = "js>"
 
 class KshInteractiveFilter(PexpectReplFilter):
     """
