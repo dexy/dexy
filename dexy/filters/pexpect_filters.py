@@ -162,8 +162,8 @@ class RPexpectReplFilter(PexpectReplFilter):
     PROMPTS = [">", "+"]
     TAGS = ['r', 'interpreter', 'language']
     TRIM_PROMPT = ">"
+    INITIAL_PROMPT = "^>"
     VERSION_COMMAND = "R --version"
-    ALLOW_MATCH_PROMPT_WITHOUT_NEWLINE = True
     SAVE_VARS_TO_JSON_CMD = """
 if ("rjson" %%in%% installed.packages()) {
     library(rjson)
