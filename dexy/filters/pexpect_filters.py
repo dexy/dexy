@@ -195,7 +195,7 @@ class KshInteractiveFilter(PexpectReplFilter):
     INPUT_EXTENSIONS = [".txt", ".sh"]
     OUTPUT_EXTENSIONS = ['.sh-session']
     INITIAL_PROMPT = "^\$"
-    PROMPT = "$"
+    PROMPTS = ["$", "#"]
     TRIM_PROMPT = "\$"
 
 class ZshInteractiveFilter(PexpectReplFilter):

@@ -1,5 +1,6 @@
 {
   ".dexy|pyg" : {},
+  "@test-dexy-version.txt|jinja" : { "contents" : "Dexy version is {{ dexy_version }}" },
   "hello.txt|jinja" : { "inputs" : ["Hello.java|idio", "Hello.java|pyg"] },
   "*.py|idio|pycon|pyg|l" : {},
   "*.tex|jinja|latex" : { "allinputs" : true },

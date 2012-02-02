@@ -7,6 +7,7 @@ import pygments
 import pygments.formatters
 import re
 import urllib
+from dexy.version import Version
 
 class TemplatePlugin(object):
     def __init__(self, filter_instance):
@@ -14,6 +15,10 @@ class TemplatePlugin(object):
 
     def run(self):
         return {}
+
+class DexyVersionTemplatePlugin(TemplatePlugin):
+    def run(self):
+        return { "dexy_version" : Version.VERSION }
 
 class PrettyPrinterTemplatePlugin(TemplatePlugin):
     def run(self):

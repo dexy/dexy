@@ -25,6 +25,7 @@ class TemplateFilter(DexyFilter):
     FINAL = True
     PLUGINS = [
         ClippyHelperTemplatePlugin,
+        DexyVersionTemplatePlugin,
         GlobalsTemplatePlugin,
         InputsTemplatePlugin,
         PrettyPrinterTemplatePlugin,
