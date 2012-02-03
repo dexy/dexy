@@ -1,24 +1,38 @@
 {
-  ".dexy|pyg" : {},
-  "@test-dexy-version.txt|jinja" : { "contents" : "Dexy version is {{ dexy_version }}" },
-  "hello.txt|jinja" : { "inputs" : ["Hello.java|idio", "Hello.java|pyg"] },
-  "*.py|idio|pycon|pyg|l" : {},
-  "*.tex|jinja|latex" : { "allinputs" : true },
-  "@test-remote.html|test" : {
-      "url" : "http://dexy.it",
-      "test-includes" : "You are in control of your docs."
-  },
-  "@test-git.txt|test" : {
-      "repo" : "https://github.com/ananelson/dexy",
-      "path" : "README",
-      "test-includes" : "Dexy is software for document automation."
-  },
-  "@test-virtual|test" : {
-      "contents" : "Введение",
-      "test-expects" : "Введение"
-  },
-  "example.sh|idio|shint|pyg" : {
-      "pygments" : { "noclasses" : true }
-  },
-  "example.sh|sh" : {}
+    "*.py|idio|pycon|pyg|l": {},
+    "*.tex|jinja|latex": {
+        "allinputs": true
+    },
+    ".dexy|pyg": {},
+    "@test-dexy-version.txt|jinja": {
+        "contents": "Dexy version is {{ dexy_version }}"
+    },
+    "@test-git.txt|test": {
+        "path": "README",
+        "repo": "https://github.com/ananelson/dexy",
+        "test-includes": "Dexy is software for document automation."
+    },
+    "@test-remote.html|test": {
+        "test-includes": "You are in control of your docs.",
+        "url": "http://dexy.it"
+    },
+    "@test-virtual|test": {
+        "contents": "\u0412\u0432\u0435\u0434\u0435\u043d\u0438\u0435",
+        "test-expects": "\u0412\u0432\u0435\u0434\u0435\u043d\u0438\u0435"
+    },
+    "@whoami.sh|sh": {
+        "contents": "whoami"
+    },
+    "example.sh|idio|shint|pyg": {
+        "pygments": {
+            "noclasses": true
+        }
+    },
+    "example.sh|sh": {},
+    "hello.txt|jinja": {
+        "inputs": [
+            "Hello.java|idio",
+            "Hello.java|pyg"
+        ]
+    }
 }
