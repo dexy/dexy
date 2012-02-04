@@ -77,10 +77,10 @@ class PexpectReplFilter(ProcessFilter):
                 env=env)
 
         # Capture the initial prompt
-        if self.PROMPT_REGEX:
-            proc.expect(search_terms, timeout=timeout)
-        elif self.INITIAL_PROMPT:
+        if self.INITIAL_PROMPT:
             proc.expect(self.INITIAL_PROMPT, timeout=timeout)
+        elif self.PROMPT_REGEX:
+            proc.expect(search_terms, timeout=timeout)
         else:
             proc.expect_exact(search_terms, timeout=timeout)
 
@@ -194,9 +194,9 @@ class KshInteractiveFilter(PexpectReplFilter):
     EXECUTABLE = "ksh -i -r -e"
     INPUT_EXTENSIONS = [".txt", ".sh"]
     OUTPUT_EXTENSIONS = ['.sh-session']
-    INITIAL_PROMPT = "^\$"
+    INITIAL_PROMPT = "^(#|\$)"
     PROMPTS = ["$", "#"]
-    TRIM_PROMPT = "\$"
+    TRIM_PROMPT = "\$|#"
 
 class ZshInteractiveFilter(PexpectReplFilter):
     """
