@@ -78,9 +78,9 @@ class PexpectReplFilter(ProcessFilter):
 
         # Capture the initial prompt
         if self.INITIAL_PROMPT:
-            print "waiting for initial prompt..."
+            self.log.debug("waiting for initial prompt...")
             proc.expect(self.INITIAL_PROMPT, timeout=timeout)
-            print "captured initial prompt %s%s" % (proc.before, proc.after)
+            self.log.debug("captured initial prompt %s%s" % (proc.before, proc.after))
         elif self.PROMPT_REGEX:
             proc.expect(search_terms, timeout=timeout)
         else:
