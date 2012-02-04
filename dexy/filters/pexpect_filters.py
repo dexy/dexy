@@ -1,5 +1,6 @@
-from ordereddict import OrderedDict
 from dexy.filters.process_filters import ProcessFilter
+from ordereddict import OrderedDict
+import os
 import pexpect
 import re
 
@@ -13,6 +14,10 @@ class PexpectReplFilter(ProcessFilter):
     LINE_ENDING = "\r\n"
     PROMPTS = ['>>>', '...'] # Python uses >>> prompt normally and ... when in multi-line structures like loops
     PROMPT_REGEX = None
+    PS1 = None
+    PS2 = None
+    PS3 = None
+    PS4 = None
     SAVE_VARS_TO_JSON_CMD = None
     TRIM_PROMPT = '>>>'
 
@@ -67,7 +72,20 @@ class PexpectReplFilter(ProcessFilter):
             # TODO this may cause unexpected results if original script only had 1 section
 
         search_terms = self.prompt_search_terms()
+
         env = self.setup_env()
+    	if not env:
+    	    env = os.environ
+
+        if env.has_key('PS1') and self.PS1:
+            env['PS1'] = self.PS1
+        if env.has_key('PS2') and self.PS2:
+            env['PS2'] = self.PS2
+        if env.has_key('PS3') and self.PS3:
+            env['PS3'] = self.PS3
+        if env.has_key('PS4') and self.PS4:
+            env['PS4'] = self.PS4
+
         timeout = self.setup_timeout()
 
         # Spawn the process
@@ -78,9 +96,7 @@ class PexpectReplFilter(ProcessFilter):
 
         # Capture the initial prompt
         if self.INITIAL_PROMPT:
-            self.log.debug("waiting for initial prompt...")
             proc.expect(self.INITIAL_PROMPT, timeout=timeout)
-            self.log.debug("captured initial prompt %s%s" % (proc.before, proc.after))
         elif self.PROMPT_REGEX:
             proc.expect(search_terms, timeout=timeout)
         else:
@@ -196,10 +212,10 @@ class KshInteractiveFilter(PexpectReplFilter):
     EXECUTABLE = "ksh -i -r -e"
     INPUT_EXTENSIONS = [".txt", ".sh"]
     OUTPUT_EXTENSIONS = ['.sh-session']
-#    INITIAL_PROMPT = "^(#|\$)"
-    INITIAL_PROMPT = ".+"
+    INITIAL_PROMPT = "^(#|\$)"
     PROMPTS = ["$", "#"]
     TRIM_PROMPT = "\$|#"
+    PS1 = "$"
 
 class ZshInteractiveFilter(PexpectReplFilter):
     """
