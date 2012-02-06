@@ -41,7 +41,6 @@ setup(
             'python-modargs>=1.2',
             'zapps'
             ],
-        license="LICENSE",
         name='dexy',
         packages=find_packages(),
         package_data = { "dexy" : ["ext/*"] },
