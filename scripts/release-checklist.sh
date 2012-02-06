@@ -40,9 +40,6 @@ if ! nosetests; then
     exit
 fi
 
-echo "running venvtest"
-./scripts/venvtest
-
 echo "success!"
 
 echo "now run ~/.ec2/release-dexy.sh script"
