@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 
 from setuptools import setup, find_packages
 from dexy.version import Version
@@ -22,7 +21,6 @@ setup(
             "Topic :: Text Processing :: Markup :: HTML",
             "Topic :: Text Processing :: Markup :: LaTeX"
             ],
-        data_files = ["LICENSE", "README"],
         dependency_links = [ "http://dexy.it/external-dependencies/" ],
         description='Document Automation',
         entry_points = {
