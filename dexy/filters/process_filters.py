@@ -114,6 +114,7 @@ class SubprocessFilter(ProcessFilter):
 class SubprocessStdoutFilter(SubprocessFilter):
     ALIASES = ['subprocessstdoutfilter']
     BINARY = False
+    FINAL = False
 
     def process(self):
         command = self.command_string_stdout()
@@ -125,6 +126,7 @@ class SubprocessStdoutFilter(SubprocessFilter):
 class SubprocessStdoutInputFilter(SubprocessFilter):
     ALIASES = ['subprocessstdoutinputfilter']
     BINARY = False
+    FINAL = False
 
     def process(self):
         command = self.command_string_stdout()
@@ -145,6 +147,7 @@ class SubprocessStdoutInputFilter(SubprocessFilter):
 class SubprocessStdoutInputFileFilter(SubprocessFilter):
     ALIASES = ['subprocessstdoutinputfilefilter']
     BINARY = False
+    FINAL = False
 
     def command_string_stdout_input(self, input_artifact):
         script_file = self.artifact.previous_artifact_filename
@@ -166,6 +169,7 @@ class SubprocessCompileFilter(SubprocessFilter):
     """
     ALIASES = ['subprocesscompilefilter']
     BINARY = False
+    FINAL = False
     COMPILED_EXTENSION = ".o"
     CHECK_RETURN_CODE = False # Whether to check return code when running compiled executable.
 
