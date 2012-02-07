@@ -508,7 +508,13 @@ class Artifact(object):
         if type(s) == unicode:
             return s
         else:
-            return unicode(s, encoding="utf-8")
+            try:
+                ut = unicode(s, encoding="utf-8")
+                return ut
+            except Exception as e:
+                print "error occurred trying to convert text to unicode in", self.key
+                raise e
+
 
     def input_text(self):
         return u"".join([self.convert_if_not_unicode(v) for k, v in self.input_data_dict.items()])
