@@ -4,6 +4,10 @@
         "allinputs": true
     },
     ".dexy|pyg": {},
+    "@test-expression-in-jinja.txt|jinja" : {
+        "final": true,
+        "contents" : "True is {{ True and 1 or 2 }}. False is {{ False and 1 or 2 }}."
+    },
     "@test-dexy-version.txt|jinja": {
         "contents": "Dexy version is {{ dexy_version }}"
     },
