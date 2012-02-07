@@ -139,7 +139,8 @@ class Document(object):
 
                     if self.args.has_key('exact-inputs'):
                         for exact_input in self.args['exact-inputs']:
-                            specified = exact_input == doc.key()
+                            if not specified:
+                                specified = exact_input == doc.key()
 
                     # Work out relative priority
                     higher_priority = (self.priority > doc.priority)
