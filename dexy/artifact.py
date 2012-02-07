@@ -400,7 +400,7 @@ class Artifact(object):
 
         if type(text) == unicode:
             unicode_text = text
-        elif type(text) == dict:
+        elif type(text) in [dict, list]:
             unicode_text = json.dumps(text)
         elif self.binary_input:
             pass

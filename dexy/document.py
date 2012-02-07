@@ -135,7 +135,11 @@ class Document(object):
                         specified = (is_exact_absolute_match or is_exact_relative_match or is_exact_match_in_parent_or_child_dir or is_glob_match_in_child_dir)
 
                         if specified:
-                            break
+                           break
+
+                    if self.args.has_key('exact-inputs'):
+                        for exact_input in self.args['exact-inputs']:
+                            specified = exact_input == doc.key()
 
                     # Work out relative priority
                     higher_priority = (self.priority > doc.priority)
