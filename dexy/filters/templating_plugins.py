@@ -83,10 +83,6 @@ class VariablesTemplatePlugin(TemplatePlugin):
         else:
             return {}
 
-class ArgsTemplatePlugin(TemplatePlugin):
-    def run(self):
-        return self.filter_instance.artifact.args
-
 class GlobalsTemplatePlugin(TemplatePlugin):
     """
     Makes available the global variables specified on the dexy command line
