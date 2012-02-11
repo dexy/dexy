@@ -16,16 +16,21 @@ class FilenameFilter(DexyFilter):
             key = os.path.join(parent_dir, local_key)
 
             key_with_ext = "%s.%s" % (key, ext)
-            key_with_ext_with_dexy = "%s|dexy" % key_with_ext
+
+            canonical_filenames = dict((a.canonical_filename(), a) for a in self.artifact.inputs().values())
+            long_canonical_filenames = dict((a.long_canonical_filename(), a) for a in self.artifact.inputs().values())
 
             if key_with_ext in self.artifact.inputs().keys():
                 artifact = self.artifact.inputs()[key_with_ext]
                 self.log.debug("[fn] existing key %s in artifact %s links to file %s" %
                           (key_with_ext, self.artifact.key, artifact.filename()))
-            elif key_with_ext_with_dexy in self.artifact.inputs().keys():
-                artifact = self.artifact.inputs()[key_with_ext_with_dexy]
-                self.log.debug("[fn] existing key %s in artifact %s links to existing file %s" %
-                          (key_with_ext, self.artifact.key, artifact.filename()))
+
+            elif key_with_ext in canonical_filenames.keys():
+                artifact = canonical_filenames[key_with_ext]
+
+            elif key_with_ext in long_canonical_filenames.keys():
+                artifact = long_canonical_filenames[key_with_ext]
+
             else:
                 self.log.debug("[fn] could not find match for %s" % (key_with_ext))
                 artifact = self.artifact.add_additional_artifact(key_with_ext, ext)
