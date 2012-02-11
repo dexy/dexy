@@ -24,6 +24,7 @@ class TemplateFilter(DexyFilter):
     ALIASES = ['template']
     FINAL = True
     PLUGINS = [
+        ArgsTemplatePlugin,
         ClippyHelperTemplatePlugin,
         DexyVersionTemplatePlugin,
         GlobalsTemplatePlugin,

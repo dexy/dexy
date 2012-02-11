@@ -48,9 +48,15 @@ class PygmentsStylesheetTemplatePlugin(TemplatePlugin):
 
     def run(self):
         pygments_stylesheets = {}
+        if self.filter_instance.artifact.args.has_key('pygments'):
+            formatter_args = self.filter_instance.artifact.args['pygments']
+        else:
+            formatter_args = {}
+
         for style_name in get_all_styles():
             for formatter_class in [pygments.formatters.LatexFormatter, pygments.formatters.HtmlFormatter]:
-                pygments_formatter = formatter_class(style=style_name)
+                formatter_args['style'] = style_name
+                pygments_formatter = formatter_class(**formatter_args)
                 style_info = pygments_formatter.get_style_defs()
 
                 for fn in pygments_formatter.filenames:
@@ -77,7 +83,15 @@ class VariablesTemplatePlugin(TemplatePlugin):
         else:
             return {}
 
+class ArgsTemplatePlugin(TemplatePlugin):
+    def run(self):
+        return self.filter_instance.artifact.args
+
 class GlobalsTemplatePlugin(TemplatePlugin):
+    """
+    Makes available the global variables specified on the dexy command line
+    using the --globals option
+    """
     def run(self):
         if self.filter_instance.artifact.controller_args.has_key('globals'):
             return self.filter_instance.artifact.controller_args['globals']
