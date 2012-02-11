@@ -220,9 +220,15 @@ class WordWrapFilter(DexyFilter):
     spaces).
     """
     ALIASES = ['ww', 'wrap']
+    DEFAULT_WIDTH=79
 
     def process_text(self, input_text):
-        return wrap_text(input_text, 79)
+        if self.artifact.args.has_key('width'):
+            width = self.artifact.args['width']
+        else:
+            width=self.DEFAULT_WIDTH
+
+        return wrap_text(input_text, width)
 
 class SplitHtmlFilter(DexyFilter):
     """
