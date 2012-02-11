@@ -1,9 +1,16 @@
 {
+    "$globals" : { "C" : 99 },
     "*.py|idio|pycon|pyg|l": {},
     "*.tex|jinja|latex": {
         "allinputs": true
     },
     ".dexy|pyg": {},
+    "@test-man-pages.txt|man" : { "contents" : "python strings col" },
+    "@test-variables.txt|jinja|test" : {
+        "contents" : "A is {{ A }}. B is {{ B }}. C is {{ C }}.",
+        "variables" : { "A" : 1, "B" : 42 },
+        "test-expects" : "A is 1. B is 42. C is 99."
+    },
     "@test-expression-in-jinja.txt|jinja" : {
         "final": true,
         "contents" : "True is {{ True and 1 or 2 }}. False is {{ False and 1 or 2 }}."
