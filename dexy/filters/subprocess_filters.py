@@ -5,6 +5,23 @@ import re
 import shutil
 import subprocess
 
+class EspeakFilter(SubprocessFilter):
+    EXECUTABLE = "espeak"
+    INPUT_EXTENSIONS = [".txt"]
+    OUTPUT_EXTENSIONS = [".wav"]
+    ALIASES = ['espeak']
+    BINARY = True
+
+    def command_string(self):
+        args = {
+            'prog' : self.executable(),
+            'args' : self.command_line_args() or "",
+            'scriptargs' : self.command_line_scriptargs() or "",
+            'script_file' : self.artifact.previous_artifact_filename,
+            'output_file' : self.artifact.filename()
+        }
+        return "%(prog)s %(args)s -w %(output_file)s %(script_file)s" % args
+
 class AsciidocFilter(SubprocessFilter):
     VERSION_COMMAND = "asciidoc --version"
     EXECUTABLE = "asciidoc"
