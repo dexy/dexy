@@ -78,10 +78,12 @@ class SubdirectoriesTemplatePlugin(TemplatePlugin):
 
 class VariablesTemplatePlugin(TemplatePlugin):
     def run(self):
+        variables = {}
         if self.filter_instance.artifact.args.has_key('variables'):
-            return self.filter_instance.artifact.args['variables']
-        else:
-            return {}
+            variables.update(self.filter_instance.artifact.args['variables'])
+        if self.filter_instance.artifact.args.has_key('$variables'):
+            variables.update(self.filter_instance.artifact.args['$variables'])
+        return variables
 
 class GlobalsTemplatePlugin(TemplatePlugin):
     """

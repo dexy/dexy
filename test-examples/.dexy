@@ -1,5 +1,5 @@
 {
-    "$globals" : { "C" : 99 },
+    "$variables" : { "C" : 99 },
     "*.py|idio|pycon|pyg|l": {},
     "*.tex|jinja|latex": {
         "allinputs": true

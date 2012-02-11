@@ -119,6 +119,7 @@ class Controller(object):
         """
         global_args = {}
         config_dict = {}
+        variables = {}
         config_file = self.args['config']
 
         path_elements = path.split(os.sep)
@@ -154,7 +155,11 @@ class Controller(object):
                 if json_dict.has_key("$globals"):
                     global_args.update(json_dict["$globals"])
 
+                if json_dict.has_key("$variables"):
+                    variables.update(json_dict["$variables"])
+
         config_dict['$globals'] = global_args
+        config_dict['$variables'] = variables
         return config_dict
 
     def load_config(self):
@@ -403,12 +408,18 @@ re.compile: %s""" % (args['except'], e))
             else:
                 global_args = {}
 
+            if config.has_key("$variables"):
+                global_variables = config["$variables"]
+            else:
+                global_variables = {}
+
             if self.args.has_key('globals'):
                 global_args.update(self.args['globals'])
 
             for k, v in config.iteritems():
                 local_args = global_args.copy()
                 local_args.update(v)
+                local_args['$variables'] = global_variables
                 for kg in global_args.keys():
                     if local_args.has_key(kg):
                         if isinstance(local_args[kg], dict):
