@@ -1,6 +1,42 @@
 from dexy.filters.process_filters import SubprocessStdoutFilter
 from dexy.filters.process_filters import SubprocessStdoutInputFilter
 from dexy.filters.process_filters import SubprocessStdoutInputFileFilter
+import json
+
+class CleanSubprocessStdoutFilter(SubprocessStdoutFilter):
+    """
+    Clean non-printing characters from text using the 'strings' tool.
+    """
+    ALIASES = ['clean', 'strings']
+    EXECUTABLE = 'strings'
+
+class ManPageSubprocessStdoutFilter(SubprocessStdoutFilter):
+    """
+    Read command names from a file and fetch man pages for each.
+
+    Returns a JSON dict whose keys are the program names and values are man
+    pages.
+    """
+    ALIASES = ['man']
+    EXECUTABLE = 'man'
+    VERSION_COMMAND = 'man --version'
+    INPUT_EXTENSIONS = [".txt"]
+    OUTPUT_EXTENSIONS = [".json"]
+
+    def command_string(self, prog_name):
+        return "man %s | col -b | strings" % (prog_name)
+
+    def process(self):
+        man_info = {}
+        for prog_name in self.artifact.input_text().split():
+            command = self.command_string(prog_name)
+            self.log.debug("About to run '%s'" % command)
+
+            proc, stdout = self.run_command(command, self.setup_env())
+            self.handle_subprocess_proc_return(proc.returncode, stdout)
+            man_info[prog_name] = stdout
+
+        self.artifact.set_data(json.dumps(man_info))
 
 class RhinoSubprocessStdoutFilter(SubprocessStdoutFilter):
     EXECUTABLE = "rhino -f"
