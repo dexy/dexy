@@ -40,6 +40,8 @@ class Artifact(object):
     ]
 
     BINARY_EXTENSIONS = [
+         '.docx',
+        '.epub',
         '.gif',
         '.jpg',
         '.png',
@@ -49,6 +51,8 @@ class Artifact(object):
         '.gz',
         '.eot',
         '.ttf',
+        '.odt',
+        '.rtf',
         '.woff',
         '.sqlite',
         '.sqlite3',
@@ -225,10 +229,16 @@ class Artifact(object):
         else:
             next_inputs = None
 
-        self.ext = self.filter_class.output_file_extension(
-                previous_artifact.ext,
-                self.name,
-                next_inputs)
+        if self.args.has_key('ext'):
+            ext = self.args['ext']
+            if not ext.startswith("."):
+                ext = ".%s" % ext
+            self.ext = ext
+        else:
+            self.ext = self.filter_class.output_file_extension(
+                    previous_artifact.ext,
+                    self.name,
+                    next_inputs)
 
         self.binary_output = self.filter_class.BINARY
         if self.binary_output is None:
@@ -589,6 +599,14 @@ class Artifact(object):
                 os.makedirs(os.path.dirname(workfile))
             shutil.copyfile(previous, workfile)
 
+    def alias(self):
+        """
+        Whether this artifact includes an alias.
+        """
+        aliases = [k for k in self.key.split("|") if k.startswith("-")]
+        if len(aliases) > 0:
+            return aliases[0]
+
     def canonical_dir(self, ignore_args = False):
         return os.path.dirname(self.name)
 
@@ -603,6 +621,8 @@ class Artifact(object):
             return os.path.join(parent_dir, self.args['canonical-name'])
         elif self.args.has_key('postfix') and not ignore_args:
             return "%s%s%s" % (fn, self.ext, self.args['postfix'])
+        elif self.alias():
+            return "%s%s%s" % (fn, self.alias(), self.ext)
         else:
             return "%s%s" % (fn, self.ext)
 
