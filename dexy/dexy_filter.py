@@ -1,4 +1,5 @@
 import dexy.utils
+import shutil
 import platform
 import subprocess
 
@@ -13,7 +14,7 @@ class DexyFilter(object):
     ALIASES in each handler, use java-style namespacing, e.g. com.abc.alias
     """
     ALIASES = ['dexy']
-    BINARY = False
+    BINARY = None
     FINAL = None
     IGNORE_ERRORS = False # Set to True for filters where proc.returncode doesn't behave well
     INPUT_EXTENSIONS = [".*"]
@@ -166,8 +167,11 @@ class DexyFilter(object):
 
         if not method_used:
             # This code implements the neutral 'dexy' handler.
-            self.artifact.data_dict = self.artifact.input_data_dict
+            if self.artifact.binary_output:
+                shutil.copyfile(self.artifact.previous_artifact_filepath, self.artifact.filepath())
+            else:
+                self.artifact.data_dict = self.artifact.input_data_dict
             method_used = "process"
 
         return method_used
- 
+
