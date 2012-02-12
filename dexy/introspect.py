@@ -90,7 +90,10 @@ def get_filter_for_alias(alias, filter_list=None):
 
     if filter_list.has_key(alias):
         return filter_list[alias]
-    elif alias.startswith("-") or alias.startswith("alias-") or alias.startswith("al-") or alias in ['al', 'alias']:
+    elif alias.startswith("-") :
+        return dexy.dexy_filter.DexyFilter
+    elif alias.startswith("alias-") or alias.startswith("al-") or alias in ['al', 'alias']:
+        print "alias- al- is deprecated, just start filter with a - to create an alias"
         return dexy.dexy_filter.DexyFilter
     else:
         raise Exception("filter alias '%s' not found or not available" % alias)
