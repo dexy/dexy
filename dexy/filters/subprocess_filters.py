@@ -5,6 +5,22 @@ import re
 import shutil
 import subprocess
 
+class PandocFilter(SubprocessFilter):
+    EXECUTABLE = "pandoc"
+    VERSION_COMMAND = "pandoc --version"
+    ALIASES = ['pandoc']
+    OUTPUT_EXTENSIONS = ['.html', '.txt', '.tex', '.pdf', '.rtf', '.json', '.docx']
+    BINARY = None # determine binary from file extension
+
+    def command_string(self):
+        args = {
+            'prog' : self.executable(),
+            'args' : self.command_line_args() or "",
+            'script_file' : self.artifact.previous_artifact_filename,
+            'output_file' : self.artifact.filename()
+        }
+        return "%(prog)s %(args)s %(script_file)s -o %(output_file)s" % args
+
 class EspeakFilter(SubprocessFilter):
     EXECUTABLE = "espeak"
     INPUT_EXTENSIONS = [".txt"]
