@@ -114,7 +114,10 @@ class InputsTemplatePlugin(TemplatePlugin):
                     od[k] = v
             return od
 
-        return sort_dict(unsorted_json)
+        if type(unsorted_json) == dict:
+            return sort_dict(unsorted_json)
+        else:
+            return unsorted_json
 
     def run(self):
         d_hash = {}
@@ -139,7 +142,7 @@ class InputsTemplatePlugin(TemplatePlugin):
 
                 a_hash[k] = a
 
-                if data.keys() == ['1']:
+                if hasattr(data, 'keys') and data.keys() == ['1']:
                     d_hash[k] = data['1']
                 else:
                     d_hash[k] = data
