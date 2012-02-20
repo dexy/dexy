@@ -23,14 +23,14 @@ def test_artifact_filenames_simple_key():
     artifact.key = 'abc'
     artifact.ext = '.out'
     assert artifact.canonical_filename() == 'abc.out'
-    assert artifact.long_canonical_filename() == 'abc.out'
+    assert artifact.long_canonical_filename() == 'abc'
 
 def test_artifact_filenames_file_key():
     artifact = Artifact()
     artifact.key = 'abc.txt'
     artifact.ext = '.out'
     assert artifact.canonical_filename() == 'abc.out'
-    assert artifact.long_canonical_filename() == 'abc.txt.out'
+    assert artifact.long_canonical_filename() == 'abc.txt'
 
 def test_artifact_filenames_file_key_with_filters():
     artifact = Artifact()

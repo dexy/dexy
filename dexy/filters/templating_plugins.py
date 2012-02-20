@@ -123,6 +123,7 @@ class InputsTemplatePlugin(TemplatePlugin):
         d_hash = {}
         a_hash = {}
 
+
         name = self.filter_instance.artifact.name
         inputs = self.filter_instance.artifact.inputs()
 

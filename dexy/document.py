@@ -318,27 +318,33 @@ class Document(object):
         artifact.save()
         if artifact.binary_output:
             if artifact.doc.virtual:
-                # make a fake file
-                with open(artifact.filepath(), "wb") as f:
-                    f.write("virtual file")
+                if not os.path.exists(artifact.filepath()):
+                    # make a fake file
+                    with open(artifact.filepath(), "wb") as f:
+                        f.write("virtual file")
             else:
                 shutil.copyfile(artifact.name, artifact.filepath())
         return artifact
 
-    def run(self):
-        self.step = 0
+    def setup(self):
+        self.virtual_docs = self.controller.virtual_docs
+
         start = time.time()
-        time_start = start
-
-
+        self.step = 0
         artifact = self.create_initial_artifact()
         self.artifacts.append(artifact)
         self.last_artifact = artifact
         artifact_key = artifact.key
         self.timing.append(("create-initial-artifact", time.time() - start))
-        start = time.time()
         self.log.info("(step %s) [run] %s -> %s" % \
                  (self.step, artifact_key, artifact.filename()))
+
+    def run(self):
+        start = time.time()
+        time_start = start
+
+        artifact = self.artifacts[0]
+        artifact_key = artifact.key
 
         for f in self.filters:
             previous_artifact = artifact

@@ -36,7 +36,8 @@ class Artifact(object):
         'name',
         'output_hash',
         'state',
-        'stdout'
+        'stdout',
+        'virtual'
     ]
 
     BINARY_EXTENSIONS = [
@@ -147,11 +148,13 @@ class Artifact(object):
         """
         Set up an initial artifact (the first artifact in a document's filter chain).
         """
-        self._inputs = self.doc.input_artifacts()
+        self._inputs = {}
         self.binary_input = (self.doc.ext in self.BINARY_EXTENSIONS)
         self.binary_output = self.binary_input
         self.ext = self.doc.ext
         self.initial = True
+        self.virtual = self.doc.virtual
+        self.virtual_docs = self.doc.virtual_docs
 
         if self.args.has_key('final'):
             self.final = self.args['final']
@@ -204,7 +207,7 @@ class Artifact(object):
             self.final = self.filter_class.FINAL
 
     def setup_from_previous_artifact(self, previous_artifact):
-        for a in ['final', 'mtime', 'ctime', 'inode']:
+        for a in ['final', 'mtime', 'ctime', 'inode', 'virtual', 'virtual_docs']:
                 setattr(self, a, getattr(previous_artifact, a))
 
         self._inputs.update(previous_artifact.inputs())
@@ -212,12 +215,14 @@ class Artifact(object):
         # added anywhere.
         for k, a in previous_artifact.inputs().iteritems():
             self._inputs.update(a.inputs())
+
         self.binary_input = previous_artifact.binary_output
         self.input_data_dict = previous_artifact.data_dict
         self.input_ext = previous_artifact.ext
         self.previous_artifact_filename = previous_artifact.filename()
         self.previous_artifact_filepath = previous_artifact.filepath()
         self.previous_canonical_filename = previous_artifact.canonical_filename(True)
+        self.previous_websafe_key = previous_artifact.websafe_key()
 
         # The JSON output of previous artifact
         if not previous_artifact.binary_output:
@@ -288,6 +293,10 @@ class Artifact(object):
         return artifact
 
     def run(self):
+        self._inputs.update(self.doc.input_artifacts())
+        for k, a in self.doc.input_artifacts().iteritems():
+            self._inputs.update(a.inputs())
+
         start = time.time()
 
         if self.controller_args['nocache'] or not self.is_complete():
@@ -315,26 +324,16 @@ class Artifact(object):
                         print f
                 raise e
 
-            h = hashlib.sha512()
-
             if self.data_dict and len(self.data_dict) > 0:
-                h.update(self.output_text().encode("utf-8"))
+                pass
 
             elif self.is_canonical_output_cached:
                 self.state = 'complete'
                 self.save()
 
-                f = open(self.filepath(), "rb")
-                while True:
-                    data = f.read(h.block_size)
-                    if not data:
-                        break
-                    h.update(data)
-
             else:
                 raise Exception("data neither in memory nor on disk")
 
-            self.output_hash = h.hexdigest()
             self.logstream = self.doc.logstream.getvalue()
             self.state = 'complete'
             self.source = 'run'
@@ -517,6 +516,8 @@ class Artifact(object):
     def convert_if_not_unicode(self, s):
         if type(s) == unicode:
             return s
+        elif s == None:
+            return u""
         else:
             try:
                 ut = unicode(s, encoding="utf-8")
@@ -627,7 +628,13 @@ class Artifact(object):
             return "%s%s" % (fn, self.ext)
 
     def long_canonical_filename(self):
-        return "%s%s" % (self.key.replace("|", "-"), self.ext)
+        if not "|" in self.key:
+            return self.key.replace("|", "-")
+        else:
+            return "%s%s" % (self.key.replace("|", "-"), self.ext)
+
+    def websafe_key(self):
+        return self.long_canonical_filename().replace("/", "--")
 
     def filename(self):
         """

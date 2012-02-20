@@ -17,6 +17,7 @@ class FilenameFilter(DexyFilter):
 
             key_with_ext = "%s.%s" % (key, ext)
 
+            virtual_files = dict((d.name, d.artifacts[0]) for d in self.artifact.virtual_docs)
             canonical_filenames = dict((a.canonical_filename(), a) for a in self.artifact.inputs().values())
             long_canonical_filenames = dict((a.long_canonical_filename(), a) for a in self.artifact.inputs().values())
 
@@ -24,6 +25,11 @@ class FilenameFilter(DexyFilter):
                 artifact = self.artifact.inputs()[key_with_ext]
                 self.log.debug("[fn] existing key %s in artifact %s links to file %s" %
                           (key_with_ext, self.artifact.key, artifact.filename()))
+
+            elif key_with_ext in virtual_files.keys():
+                artifact = virtual_files[key_with_ext]
+                self.artifact.add_input(key_with_ext, artifact)
+                self.log.debug("[fn] using virtual file %s" % artifact.key)
 
             elif key_with_ext in canonical_filenames.keys():
                 artifact = canonical_filenames[key_with_ext]

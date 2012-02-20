@@ -52,6 +52,7 @@ class Controller(object):
             else:
                 raise Exception("Artifact class name %s not found in %s" % (args['artifactclass'], ",".join(self.artifact_classes.keys())))
 
+
     def run(self):
         """
         This does all the work.
@@ -76,7 +77,11 @@ class Controller(object):
         self.timing.append(("process-config", time.time() - start))
         start = time.time()
 
+        # set the list of documents which are virtual
+        self.virtual_docs = [d for d in self.docs if d.virtual]
+
         if not self.args['dryrun']:
+            [doc.setup() for doc in self.docs]
             self.docs = [doc.run() for doc in self.docs]
         self.timing.append(("run-docs", time.time() - start))
 

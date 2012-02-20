@@ -166,11 +166,12 @@ class DexyFilter(object):
             method_used = "process_text_to_dict"
 
         if not method_used:
-            # This code implements the neutral 'dexy' handler.
-            if self.artifact.binary_output:
-                shutil.copyfile(self.artifact.previous_artifact_filepath, self.artifact.filepath())
-            else:
-                self.artifact.data_dict = self.artifact.input_data_dict
+            if self.artifact.input_data_dict:
+                # This code implements the neutral 'dexy' handler.
+                if self.artifact.binary_output:
+                    shutil.copyfile(self.artifact.previous_artifact_filepath, self.artifact.filepath())
+                else:
+                    self.artifact.data_dict = self.artifact.input_data_dict
             method_used = "process"
 
         return method_used

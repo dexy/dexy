@@ -49,6 +49,7 @@ def dexy_command(
         help=False, # DEPRECATED just to catch people who use the old dexy --help syntax
         hashfunction='md5', # What hash function to use, set to crc32 or adler32 for more speed, less reliability
         ignore=False, # whether to ignore nonzero exit status or raise an error - may not be supported by all filters
+        inputs=False, # whether to log information about inputs for debugging
         logfile=Constants.DEFAULT_LFILE, # name of log file
         logsdir=Constants.DEFAULT_LDIR, # location of directory in which to store logs
         nocache=False, # whether to force artifacts to run even if there is a matching file in the cache
@@ -493,6 +494,58 @@ def reports_command(
 
         reporter.load_batch_artifacts()
         reporter.run()
+
+def fcmds_command(alias=None):
+    """
+    Returns a list of available filter commands (fcmds) defined by the specified alias.
+
+    These commands can then be run using the fcmd command.
+    """
+    if check_setup():
+        log = get_log()
+    else:
+        log = Constants.NULL_LOGGER
+
+    filters_dict = dexy.introspect.filters(log)
+    filter_class = filters_dict[alias]
+
+    print "Filter commands defined in %s..." % filter_class.__name__
+    cmds = []
+    for m in dir(filter_class):
+        if m.startswith("docmd_"):
+            cmds.append(m.replace("docmd_", ""))
+    print "\n".join(sorted(cmds))
+
+def fcmd_command(
+        alias=None, # The alias of the filter which defines the custom command
+        cmd=None, # The name of the command to run
+        help=False, # If true, just print docstring rather than running command
+        **kwargs # Additional arguments to be passed to the command
+        ):
+    """
+    Run a command defined in a dexy filter.
+    """
+    if check_setup():
+        log = get_log()
+    else:
+        log = Constants.NULL_LOGGER
+
+    filters_dict = dexy.introspect.filters(log)
+    filter_class = filters_dict[alias]
+
+    cmd_name = "docmd_%s" % cmd
+
+    if not filter_class.__dict__.has_key(cmd_name):
+        raise Exception("%s it not a valid command. There is no method %s defined in %s" % (cmd, cmd_name, filter_class.__name__))
+    else:
+        class_method = filter_class.__dict__[cmd_name]
+        if type(class_method) == classmethod:
+            if help:
+                print class_method.__func__.__doc__
+            else:
+                class_method.__func__(filter_class, **kwargs)
+        else:
+            raise Exception("expected %s to be a classmethod of %s" % (cmd_name, filter_class.__name__))
 
 def it_command(**kwargs):
     dexy_command(kwargs)
