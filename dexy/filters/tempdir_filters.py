@@ -35,8 +35,9 @@ class KshTempdirInteractiveFilter(KshInteractiveFilter):
         for input_artifact in self.artifact.inputs().values():
             filename = os.path.join(work_dir, input_artifact.canonical_filename())
             if os.path.exists(input_artifact.filepath()):
-                input_artifact.write_to_file(filename)
-                self.log.debug("Populating temp dir for %s with %s" % (self.artifact.key, filename))
+                local_path = os.path.relpath(input_artifact.canonical_filename(), os.path.dirname(self.artifact.canonical_filename()))
+                input_artifact.write_to_file(os.path.join(work_dir, local_path))
+                self.log.debug("Populating temp dir for %s with %s" % (self.artifact.key, local_path))
             else:
                 self.log.warn("Skipping file %s for temp dir for %s, file does not exist (yet)" % (filename, self.artifact.key))
 
