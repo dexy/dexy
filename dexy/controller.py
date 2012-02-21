@@ -29,7 +29,7 @@ class Controller(object):
 
         # Set up logging
         if args.has_key("logsdir") and args.has_key("logfile"):
-            self.log = get_log("dexy.controller", args['logsdir'], args['logfile'])
+            self.log = get_log("dexy.controller", args['logsdir'], args['logfile'], args['loglevel'])
         else:
             self.log = Constants.NULL_LOGGER
 

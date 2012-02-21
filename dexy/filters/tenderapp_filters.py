@@ -174,8 +174,6 @@ class TenderappFilter(ApiFilter):
     def start_new_discussion(self, document_config, input_text):
         if document_config.has_key('href'):
             raise Exception("Discussion %s has already been uploaded. Please disable this document." % document_config['title'])
-        if not document_config.has_key("author_email"):
-            raise Exception("author_email is required")
 
         category_permalink = document_config['category']
         category_href = self.category_href(category_permalink)
@@ -252,10 +250,15 @@ class TenderappFilter(ApiFilter):
         """
         Permanently deletes a discussion from the remote server.
         """
-        # TODO ask "are you sure"
-        url = "%s/discussions/%s" % (klass.read_url(), discussionid)
+        if str(discussionid).startswith("http"):
+            url = discussionid
+        else:
+            url = "%s/discussions/%s" % (klass.read_url(), discussionid)
         result = requests.delete(url, headers=klass.default_headers())
-        print result.text
+        if re.match("^\s*$", result.text):
+            print "discussion %s deleted" % url
+        else:
+            print result.text
 
     @classmethod
     def docmd_delete_article(klass, articleid):
@@ -324,8 +327,7 @@ class TenderappFilter(ApiFilter):
             with open("tenderapp.json", "w") as f:
                 config = {
                         "category" : "TODO",
-                        "title" : "TODO",
-                        "author_email" : "TODO"
+                        "title" : "TODO"
                         }
                 json.dump(config, f, sort_keys=True, indent=4)
 

@@ -51,6 +51,7 @@ def dexy_command(
         ignore=False, # whether to ignore nonzero exit status or raise an error - may not be supported by all filters
         inputs=False, # whether to log information about inputs for debugging
         logfile=Constants.DEFAULT_LFILE, # name of log file
+        loglevel=Constants.DEFAULT_LOGLEVEL, # default log level (see Constants.LOGLEVELS.keys), can also be set per-document
         logsdir=Constants.DEFAULT_LDIR, # location of directory in which to store logs
         nocache=False, # whether to force artifacts to run even if there is a matching file in the cache
         output=False, # Shortcut to mean "I just want the OutputReporter, nothing else"

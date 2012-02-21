@@ -34,7 +34,7 @@ class Constants():
     DEFAULT_LFILE = 'dexy.log'
     DEFAULT_DBCLASS = 'SqliteDatabase'
     DEFAULT_DBFILE = "db.sql"
-    DEFAULT_LOGLEVEL="DEBUG"
+    DEFAULT_LOGLEVEL="INFO"
     DEFAULT_LOGFORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
     # Directories with this name should be excluded anywhere

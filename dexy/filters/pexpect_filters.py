@@ -217,6 +217,8 @@ class KshInteractiveFilter(PexpectReplFilter):
     TRIM_PROMPT = "\$|#"
     PS1 = "$"
 
+    # TODO Fix hanging on # comments in code
+
 class ZshInteractiveFilter(PexpectReplFilter):
     """
     Runs zsh.

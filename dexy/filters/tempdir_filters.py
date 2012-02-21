@@ -7,8 +7,10 @@ from pygments.lexers.other import BashSessionLexer
 import json
 import os
 import pexpect
-import tempfile
 import shutil
+import tarfile
+import tempfile
+import zipfile
 
 class KshTempdirInteractiveFilter(KshInteractiveFilter):
     """
@@ -39,6 +41,19 @@ class KshTempdirInteractiveFilter(KshInteractiveFilter):
                 self.log.warn("Skipping file %s for temp dir for %s, file does not exist (yet)" % (filename, self.artifact.key))
 
         env = self.setup_env()
+
+    	if not env:
+    	    env = os.environ
+
+        if env.has_key('PS1') and self.PS1:
+            env['PS1'] = self.PS1
+        if env.has_key('PS2') and self.PS2:
+            env['PS2'] = self.PS2
+        if env.has_key('PS3') and self.PS3:
+            env['PS3'] = self.PS3
+        if env.has_key('PS4') and self.PS4:
+            env['PS4'] = self.PS4
+
         proc = pexpect.spawn(
                 self.executable(),
                 cwd=work_dir,
@@ -52,14 +67,15 @@ class KshTempdirInteractiveFilter(KshInteractiveFilter):
             proc.expect(search_terms, timeout=timeout)
         else:
             proc.expect_exact(search_terms, timeout=timeout)
-
         start = proc.before + proc.after
         for section_key, section_text in input_dict.items():
+
             section_transcript = start
             start = ""
 
             lines = self.lines_for_section(section_text)
             for l in lines:
+                self.log.debug("sending: '%s'" % l)
                 section_transcript += start
                 proc.send(l.rstrip() + "\n")
                 if self.PROMPT_REGEX:
@@ -70,15 +86,22 @@ class KshTempdirInteractiveFilter(KshInteractiveFilter):
                 start = proc.after
 
             section_info = {}
-            section_info['transcript'] = self.strip_trailing_prompts(section_transcript)
+            section_info['transcript'] = self.clean_nonprinting(self.strip_trailing_prompts(section_transcript))
             section_info['transcript-html'] = highlight(section_info['transcript'], lexer, html_formatter)
             section_info['transcript-latex'] = highlight(section_info['transcript'], lexer, latex_formatter)
 
             section_info['files'] = {}
+
+            tar_artifact = self.artifact.add_additional_artifact("%s.tgz" % section_key, ".tgz")
+            tar = tarfile.open(tar_artifact.filepath(), mode="w:gz")
+
             for root, dirs, files in os.walk(work_dir):
                 for filename in files:
                     filepath = os.path.join(root, filename)
                     local_path = os.path.relpath(filepath, work_dir)
+
+                    tar.add(filepath, arcname=local_path)
+
                     with open(filepath, "r") as f:
                         contents = f.read()
                         try:
@@ -86,6 +109,8 @@ class KshTempdirInteractiveFilter(KshInteractiveFilter):
                             section_info['files'][local_path] = contents
                         except UnicodeDecodeError:
                             section_info['files'][local_path] = None
+
+            tar.close()
 
             # Save this section's output
             output_dict[section_key] = section_info
@@ -100,7 +125,7 @@ class KshTempdirInteractiveFilter(KshInteractiveFilter):
 
         for i in self.artifact.inputs().values():
             src = os.path.join(work_dir, i.filename())
-            if i.virtual or i.additional and os.path.exists(src):
+            if (i.virtual or i.additional) and os.path.exists(src):
                 shutil.copy(src, i.filepath())
 
         shutil.rmtree(work_dir)

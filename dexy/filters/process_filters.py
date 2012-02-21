@@ -87,6 +87,15 @@ class ProcessFilter(DexyFilter):
         }
         return "%(prog)s %(args)s %(script_file)s %(scriptargs)s" % args
 
+    def clean_nonprinting(self, text):
+        proc = subprocess.Popen('col -b | strings', shell=True,
+                                stdin=subprocess.PIPE,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT)
+
+        stdout, stderr = proc.communicate(text)
+        return stdout
+
 class SubprocessFilter(ProcessFilter):
     ALIASES = ['subprocessfilter']
     BINARY = True

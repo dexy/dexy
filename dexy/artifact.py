@@ -369,6 +369,7 @@ class Artifact(object):
         new_artifact.artifacts_dir = self.artifacts_dir
         new_artifact.inode = self.hashstring
         new_artifact.created_by = self.document_key
+        new_artifact.virtual = True
         # TODO filter class source?
 
         # TODO this is duplicated in setup_from_previous_artifact, should reorganize
