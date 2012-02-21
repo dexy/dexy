@@ -57,7 +57,15 @@ class Document(object):
 
     def setup_log(self):
         self.log = logging.getLogger(self.key())
-        self.log.setLevel(logging.DEBUG) # TODO Allow this to be changed.
+
+        if hasattr(self, 'loglevelname'):
+            loglevelname = self.loglevelname
+        elif self.controller.args.has_key('loglevel'):
+            loglevelname = self.controller.args['loglevel']
+        else:
+            loglevelname = Constants.DEFAULT_LOGLEVEL
+
+        self.log.setLevel(Constants.LOGLEVELS[loglevelname])
         self.log.propagate = 0 # Stops logs being written to STDOUT if another library redirects root logger.
         handler = logging.StreamHandler(self.logstream)
         formatter = logging.Formatter(Constants.DEFAULT_LOGFORMAT)

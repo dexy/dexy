@@ -359,6 +359,8 @@ re.compile: %s""" % (args['except'], e))
                     if args.has_key('filters'):
                         doc.filters += args['filters']
 
+                    if args.has_key('loglevel'):
+                        doc.loglevelname = args['loglevel']
                     doc.setup_log() # After name has been set
                     doc.virtual = virtual
 
