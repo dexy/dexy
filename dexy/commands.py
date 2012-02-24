@@ -537,7 +537,7 @@ def fcmd_command(
     cmd_name = "docmd_%s" % cmd
 
     if not filter_class.__dict__.has_key(cmd_name):
-        raise Exception("%s it not a valid command. There is no method %s defined in %s" % (cmd, cmd_name, filter_class.__name__))
+        raise Exception("%s is not a valid command. There is no method %s defined in %s" % (cmd, cmd_name, filter_class.__name__))
     else:
         class_method = filter_class.__dict__[cmd_name]
         if type(class_method) == classmethod:
