@@ -222,6 +222,7 @@ class Artifact(object):
         self.previous_artifact_filename = previous_artifact.filename()
         self.previous_artifact_filepath = previous_artifact.filepath()
         self.previous_canonical_filename = previous_artifact.canonical_filename(True)
+        self.previous_long_canonical_filename = previous_artifact.long_canonical_filename()
         self.previous_websafe_key = previous_artifact.websafe_key()
 
         # The JSON output of previous artifact
