@@ -24,14 +24,13 @@ class ManPageSubprocessStdoutFilter(SubprocessStdoutFilter):
     OUTPUT_EXTENSIONS = [".json"]
 
     def command_string(self, prog_name):
-        return "set -e; set -o pipefail; man %s | col -b | strings" % (prog_name)
+        # Use bash rather than the default of sh (dash) so we can set pipefail.
+        return "bash -c \"set -e; set -o pipefail; man %s | col -b | strings\"" % (prog_name)
 
     def process(self):
         man_info = {}
         for prog_name in self.artifact.input_text().split():
             command = self.command_string(prog_name)
-            self.log.debug("About to run '%s'" % command)
-
             proc, stdout = self.run_command(command, self.setup_env())
             self.handle_subprocess_proc_return(proc.returncode, stdout)
             man_info[prog_name] = stdout
