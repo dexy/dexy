@@ -41,7 +41,7 @@ def get_log(
         try:
             log.setLevel(Constants.LOGLEVELS[loglevel])
         except KeyError:
-            msg = "You requested log level '%s', valid values are %s" % (loglevel, ",".join(Constants.LOGLEVELS.keys()))
+            msg = "You requested log level '%s', valid values are %s" % (loglevel, ", ".join(Constants.LOGLEVELS.keys()))
             raise Exception(msg)
 
         if logsdir and logfile:
