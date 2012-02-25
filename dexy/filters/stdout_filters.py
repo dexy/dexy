@@ -24,7 +24,7 @@ class ManPageSubprocessStdoutFilter(SubprocessStdoutFilter):
     OUTPUT_EXTENSIONS = [".json"]
 
     def command_string(self, prog_name):
-        return "man %s | col -b | strings" % (prog_name)
+        return "set -e; set -o pipefail; man %s | col -b | strings" % (prog_name)
 
     def process(self):
         man_info = {}
@@ -75,14 +75,14 @@ class PythonSubprocessStdoutInputFilter(SubprocessStdoutInputFilter):
 
 class BashSubprocessStdoutFilter(SubprocessStdoutFilter):
     ALIASES = ['sh', 'bash']
-    EXECUTABLE = 'bash'
+    EXECUTABLE = 'bash -e'
     INPUT_EXTENSIONS = [".sh", ".bash", ".txt", ""]
     OUTPUT_EXTENSIONS = [".txt"]
     VERSION_COMMAND = 'bash --version'
 
 class BashSubprocessStdoutInputFilter(SubprocessStdoutInputFilter):
     ALIASES = ['shinput']
-    EXECUTABLE = 'bash'
+    EXECUTABLE = 'bash -e'
     INPUT_EXTENSIONS = [".sh", ".bash", ".txt", ""]
     OUTPUT_EXTENSIONS = [".txt"]
     VERSION_COMMAND = 'bash --version'
@@ -111,6 +111,7 @@ class RegetronSubprocessStdoutInputFileFilter(SubprocessStdoutInputFileFilter):
 
 class IrbSubprocessStdoutFilter(SubprocessStdoutFilter):
     ALIASES = ['irbout']
+    CHECK_RETURN_CODE = False
     EXECUTABLE = 'irb --simple-prompt --noreadline'
     INPUT_EXTENSIONS = [".txt", ".rb"]
     OUTPUT_EXTENSIONS = [".rbcon"]
@@ -122,6 +123,7 @@ class IrbSubprocessStdoutInputFilter(SubprocessStdoutInputFilter):
     INPUT_EXTENSIONS = [".txt", ".rb"]
     OUTPUT_EXTENSIONS = [".rbcon"]
     VERSION_COMMAND = 'irb --version'
+    CHECK_RETURN_CODE = False
 
 class RubySubprocessStdoutFilter(SubprocessStdoutFilter):
     EXECUTABLE = 'ruby'
@@ -153,6 +155,7 @@ class PhpFilter(SubprocessStdoutFilter):
     Runs php script and returns STDOUT.
     """
     EXECUTABLE = 'php'
+    CHECK_RETURN_CODE = False # TODO see if it's possible to check return code for PHP
     VERSION_COMMAND = 'php --version'
     INPUT_EXTENSIONS = [".php"]
     OUTPUT_EXTENSIONS = [".html", ".txt"]

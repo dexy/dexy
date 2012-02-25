@@ -2,24 +2,49 @@ from dexy.dexy_filter import DexyFilter
 import os
 import subprocess
 
+class DexyScriptErrorException(Exception):
+    pass
+
+class DexyNonzeroExitException(DexyScriptErrorException):
+    def __init__(self):
+        Exception.__init__(self, """proc returned nonzero status code! if you don't want dexy to raise errors on failed scripts then pass the -ignore option""")
+
+class DexyEOFException(DexyScriptErrorException):
+    pass
+
 class ProcessFilter(DexyFilter):
     """
     Base class for all classes that do external processing, via subprocess or pexpect.
     """
     ALIASES = ['processfilter']
+    CHECK_RETURN_CODE = True
+
+    def ignore_errors(self):
+        """
+        By default, dexy filters should raise an exception when a script they
+        run has a nonzero exit code or an EOF. Sometimes you want to document
+        code that has an error, so you can disable this error checking.
+
+        For software which does not consistently return nonzero error codes,
+        you can set CHECK_RETURN_CODE to False.
+        """
+        artifact_ignore = self.artifact.args.has_key('ignore-errors') and self.artifact.args['ignore-errors']
+        controller_ignore = self.artifact.controller_args['ignore']
+        print "artifact ignore", artifact_ignore
+        print "controller ignore", controller_ignore
+        return artifact_ignore or controller_ignore
 
     def handle_subprocess_proc_return(self, returncode, stderr):
+        if not self.CHECK_RETURN_CODE:
+            raise Exception("in handle_subprocess_proc_return with CHECK_RETURN_CODE=False for %s" % self.__class__.__name__)
         if returncode is None:
             raise Exception("no return code, proc not finished!")
         elif returncode != 0:
-            artifact_ignore = self.artifact.args.has_key('ignore') and self.artifact.args['ignore']
-            controller_ignore = self.artifact.controller_args['ignore']
-            if self.IGNORE_ERRORS or artifact_ignore or controller_ignore:
+            if self.ignore_errors():
                 self.artifact.log.warn("Nonzero exit status %s" % returncode)
                 self.artifact.log.warn("output from process: %s" % stderr)
             else:
-                print stderr
-                raise Exception("""proc returned nonzero status code! if you don't want dexy to raise errors on failed scripts then pass the -ignore option""")
+                raise DexyNonzeroExitException()
 
     def setup_env(self):
         if self.artifact.args.has_key('env'):
@@ -118,6 +143,7 @@ class SubprocessFilter(ProcessFilter):
                                 env=env)
 
         stdout, stderr = proc.communicate(input_text)
+        self.log.debug(stdout)
         return (proc, stdout)
 
 class SubprocessStdoutFilter(SubprocessFilter):
@@ -140,6 +166,8 @@ class SubprocessStdoutInputFilter(SubprocessFilter):
     def process(self):
         command = self.command_string_stdout()
 
+        if len(self.artifact.inputs()) == 0:
+            raise Exception("Trying to call an input filter without supplying any inputs!")
         if len(self.artifact.inputs()) == 1:
             artifact = self.artifact.inputs().values()[0]
             for section_name, section_text in artifact.data_dict.iteritems():

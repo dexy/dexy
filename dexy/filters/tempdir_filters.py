@@ -1,4 +1,5 @@
 from dexy.filters.pexpect_filters import KshInteractiveFilter
+from dexy.filters.process_filters import DexyEOFException
 from ordereddict import OrderedDict
 from pygments import highlight
 from pygments.formatters.html import HtmlFormatter
@@ -79,12 +80,17 @@ class KshTempdirInteractiveFilter(KshInteractiveFilter):
                 self.log.debug("sending: '%s'" % l)
                 section_transcript += start
                 proc.send(l.rstrip() + "\n")
-                if self.PROMPT_REGEX:
-                    proc.expect(search_terms, timeout=timeout)
-                else:
-                    proc.expect_exact(search_terms, timeout=timeout)
-                section_transcript += self.strip_newlines(proc.before)
-                start = proc.after
+                try:
+                    if self.PROMPT_REGEX:
+                        proc.expect(search_terms, timeout=timeout)
+                    else:
+                        proc.expect_exact(search_terms, timeout=timeout)
+
+                    section_transcript += self.strip_newlines(proc.before)
+                    start = proc.after
+                except pexpect.EOF:
+                    if not self.ignore_errors():
+                        raise DexyEOFException()
 
             section_info = {}
             section_info['transcript'] = self.clean_nonprinting(self.strip_trailing_prompts(section_transcript))

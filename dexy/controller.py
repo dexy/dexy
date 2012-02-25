@@ -22,6 +22,7 @@ class Controller(object):
         self.config = {} # config to be processed from .dexy files
         self.docs = []
         self.timing = []
+        self.virtual_docs = []
 
         self.batch_start_time = None
         self.batch_finish_time = None

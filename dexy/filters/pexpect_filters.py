@@ -1,4 +1,5 @@
 from dexy.filters.process_filters import ProcessFilter
+from dexy.filters.process_filters import DexyEOFException
 from ordereddict import OrderedDict
 import os
 import pexpect
@@ -111,12 +112,17 @@ class PexpectReplFilter(ProcessFilter):
             for l in lines:
                 section_transcript += start
                 proc.send(l.rstrip() + "\n")
-                if self.PROMPT_REGEX:
-                    proc.expect(search_terms, timeout=timeout)
-                else:
-                    proc.expect_exact(search_terms, timeout=timeout)
-                section_transcript += self.strip_newlines(proc.before)
-                start = proc.after
+                try:
+                    if self.PROMPT_REGEX:
+                        proc.expect(search_terms, timeout=timeout)
+                    else:
+                        proc.expect_exact(search_terms, timeout=timeout)
+
+                        section_transcript += self.strip_newlines(proc.before)
+                        start = proc.after
+                except pexpect.EOF:
+                    if not self.ignore_errors():
+                        raise DexyEOFException()
 
             # Save this section's output
             output_dict[section_key] = self.strip_trailing_prompts(section_transcript)
@@ -134,7 +140,7 @@ class PexpectReplFilter(ProcessFilter):
 class RubyPexpectReplFilter(PexpectReplFilter):
     ALIASES = ['irb', 'rbrepl']
     EXECUTABLE = 'irb --simple-prompt'
-    IGNORE_ERRORS = True
+    CHECK_RETURN_CODE = False
     INITIAL_PROMPT = "^>>"
     INPUT_EXTENSIONS = [".txt", ".rb"]
     OUTPUT_EXTENSIONS = [".rbcon"]
@@ -144,6 +150,7 @@ class RubyPexpectReplFilter(PexpectReplFilter):
 
 class PythonPexpectReplFilter(PexpectReplFilter):
     ALIASES = ['pycon', 'pyrepl']
+    CHECK_RETURN_CODE = False
     EXECUTABLE = 'python'
     INPUT_EXTENSIONS = [".txt", ".py"]
     OUTPUT_EXTENSIONS = [".pycon"]
@@ -165,7 +172,7 @@ class IpythonPexpectReplFilter(PythonPexpectReplFilter):
     # TODO test for version of ipython that supports --classic
     ALIASES = ['ipython']
     EXECUTABLE = 'ipython --classic'
-    IGNORE_ERRORS = True # TODO try to figure out why we are getting nonzero exit codes
+    CHECK_RETURN_CODE = False # TODO try to figure out why we are getting nonzero exit codes
     INPUT_EXTENSIONS = [".txt", ".py"]
     OUTPUT_EXTENSIONS = [".pycon"]
     VERSION_COMMAND = 'ipython -Version'
@@ -174,6 +181,7 @@ class IpythonPexpectReplFilter(PythonPexpectReplFilter):
 
 class RPexpectReplFilter(PexpectReplFilter):
     ALIASES = ['r', 'rint']
+    CHECK_RETURN_CODE = False
     EXECUTABLE = "R --quiet --vanilla"
     INPUT_EXTENSIONS = ['.txt', '.r', '.R']
     OUTPUT_EXTENSIONS = ['.Rout']
@@ -204,6 +212,18 @@ class RhinoInteractiveFilter(PexpectReplFilter):
     PROMPTS = ['js>', '  >']
     TRIM_PROMPT = "js>"
 
+class PhpInteractiveFilter(PexpectReplFilter):
+    """
+    Runs PHP in interpeter mode.
+    """
+    CHECK_RETURN_CODE = False
+    EXECUTABLE = "php -a"
+    INPUT_EXTENSIONS = [".php", ".txt"]
+    OUTPUT_EXTENSIONS = [".txt"]
+    ALIASES = ['phpint']
+    PROMPTS = ['php > ']
+    TRIM_PROMPT = "php > "
+
 class KshInteractiveFilter(PexpectReplFilter):
     """
     Runs ksh. Use to run bash scripts.
@@ -215,21 +235,8 @@ class KshInteractiveFilter(PexpectReplFilter):
     INITIAL_PROMPT = "^(#|\$)"
     PROMPTS = ["$", "#"]
     TRIM_PROMPT = "\$|#"
-    PS1 = "$"
-
+    PS1 = "$ "
     # TODO Fix hanging on # comments in code
-
-class ZshInteractiveFilter(PexpectReplFilter):
-    """
-    Runs zsh.
-    """
-    ALIASES = ['zshint']
-    EXECUTABLE = "zsh --interactive --restricted --errexit"
-    INPUT_EXTENSIONS = [".txt", ".sh"]
-    OUTPUT_EXTENSIONS = ['.sh-session']
-    PROMPT_REGEX = "[a-z\.]+(%|>)"
-    ALLOW_MATCH_PROMPT_WITHOUT_NEWLINE = True
-    IGNORE_ERRORS = True
 
 class ClojureInteractiveFilter(PexpectReplFilter):
     """
@@ -240,6 +247,7 @@ class ClojureInteractiveFilter(PexpectReplFilter):
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['clj', 'cljint']
     PROMPT = "user=> "
+    CHECK_RETURN_CODE = False
 
     def lines_for_section(self, input_text):
         input_lines = []

@@ -313,10 +313,11 @@ class Artifact(object):
             try:
                 filter_instance.process()
             except Exception as e:
+                # TODO Clean this up, should all go to stderr probably.
                 print "Error occurred while running", self.key
                 x, y, tb = sys.exc_info()
                 print "Original traceback:"
-                traceback.print_tb(tb)
+                traceback.print_tb(tb, sys.stdout)
                 pattern = os.path.join(self.artifacts_dir, self.hashstring)
                 files_matching = glob.glob(pattern)
                 if len(files_matching) > 0:

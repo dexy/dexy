@@ -22,7 +22,7 @@ class JirbFilter(PexpectReplFilter):
     ALIASES = ['jirb']
     ALLOW_MATCH_PROMPT_WITHOUT_NEWLINE = True
     EXECUTABLE = "jirb --prompt-mode simple"
-    IGNORE_ERRORS = True # Returns nonzero exit code even when no errors.
+    CHECK_RETURN_CODE = False
     INPUT_EXTENSIONS = [".rb"]
     OUTPUT_EXTENSIONS = [".rbcon"]
     PROMPTS = ['>>', '?>']
@@ -54,6 +54,7 @@ class JythonInteractiveFilter(PexpectReplFilter):
     INPUT_EXTENSIONS = [".py", ".txt"]
     OUTPUT_EXTENSIONS = [".pycon"]
     VERSION_COMMAND = "jython --version"
+    CHECK_RETURN_CODE = False
 
     @classmethod
     def enabled(self):

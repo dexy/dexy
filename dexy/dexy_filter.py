@@ -17,7 +17,6 @@ class DexyFilter(object):
     ALIASES = ['dexy']
     BINARY = None
     FINAL = None
-    IGNORE_ERRORS = False # Set to True for filters where proc.returncode doesn't behave well
     INPUT_EXTENSIONS = [".*"]
     OUTPUT_EXTENSIONS = [".*"]
     TAGS = [] # Descriptive keywords about the filter.
