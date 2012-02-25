@@ -1,4 +1,5 @@
 from dexy.filters.api_filters import ApiFilter
+import codecs
 import datetime
 import json
 import requests
@@ -185,7 +186,6 @@ class TenderappFilter(ApiFilter):
 
         payload = document_config.copy()
         payload['body'] = input_text
-
         result = requests.post(url, data=json.dumps(payload), headers=headers)
         result_json = self.load_if_valid_json(result.text)
 
@@ -314,24 +314,24 @@ class TenderappFilter(ApiFilter):
             print "created directory", create_discussion_dir
             os.chdir(create_discussion_dir)
 
-            with open("discuss-example.md", "w") as f:
+            with codecs.open("discuss-example.md", "w", encoding="utf-8") as f:
                 f.write("This is an example of a markdown file you can use to create a new discussion.")
 
-            with open(".dexy", "w") as f:
+            with codecs.open(".dexy", "w", encoding="utf-8") as f:
                 config = {
                         "discuss-*.md|tenderapp" : { "disabled" : True, "inputs" : ["tenderapp.json"] },
                         "discuss-*.md|markdown" : {}
                         }
                 json.dump(config, f, sort_keys=True, indent=4)
 
-            with open("tenderapp.json", "w") as f:
+            with codecs.open("tenderapp.json", "w", encoding="utf-8") as f:
                 config = {
                         "category" : "TODO",
                         "title" : "TODO"
                         }
                 json.dump(config, f, sort_keys=True, indent=4)
 
-            with open("README", "w") as f:
+            with codecs.open("README", "w", encoding="utf-8") as f:
                 f.write("""This directory is all set up so you can create a new discussion.
 
 Just set disabled to False or remove that line from the .dexy file to enable.
@@ -351,17 +351,17 @@ Remember that discussions can only be posted once.
             print "created directory", create_article_dir
             os.chdir(create_article_dir)
 
-            with open("kb-example.md", "w") as f:
+            with codecs.open("kb-example.md", "w", encoding="utf-8") as f:
                 f.write("This is an example of a markdown file you can use to create a new knowledgebase article.")
 
-            with open(".dexy", "w") as f:
+            with codecs.open(".dexy", "w", encoding="utf-8") as f:
                 config = {
                         "kb-*.md|tenderapp" : { "disabled" : True, "inputs" : ["tenderapp.json"] },
                         "kb-*.md|markdown" : {}
                         }
                 json.dump(config, f, sort_keys=True, indent=4)
 
-            with open("tenderapp.json", "w") as f:
+            with codecs.open("tenderapp.json", "w", encoding="utf-8") as f:
                 config = {
                         "section" : "TODO",
                         "title" : "TODO",
@@ -379,13 +379,13 @@ Remember that discussions can only be posted once.
                 print "created directory", article_dir
                 os.chdir(article_dir)
 
-                with open("info.json", "w") as f:
+                with codecs.open("info.json", "w", encoding="utf-8") as f:
                     json.dump(article, f, sort_keys=True, indent=4)
 
-                with open("kb-article.md", "w") as f:
+                with codecs.open("kb-article.md", "w", encoding="utf-8") as f:
                     f.write(article['body'])
 
-                with open(".dexy", "w") as f:
+                with codecs.open(".dexy", "w", encoding="utf-8") as f:
                     config = {
                             "kb-*.md|tenderapp" : {
                                 "disabled" : True,
@@ -395,7 +395,7 @@ Remember that discussions can only be posted once.
                         }
                     json.dump(config, f, sort_keys=True, indent=4)
 
-                with open("tenderapp.json", "w") as f:
+                with codecs.open("tenderapp.json", "w", encoding="utf-8") as f:
                     config = {
                             "title" : article['title'],
                             "permalink" : article['permalink'],
@@ -428,10 +428,10 @@ Remember that discussions can only be posted once.
 
             if new_dir:
                 # Store the API info for the discussion for future reference
-                with open("info.json", "w") as f:
+                with codecs.open("info.json", "w", encoding="utf-8") as f:
                     json.dump(discussion, f, sort_keys=True, indent=4)
 
-                with open(".dexy", "w") as f:
+                with codecs.open(".dexy", "w", encoding="utf-8") as f:
                     config = {
                             "comment-*.md|tenderapp" : {
                                 "disabled" : True,
@@ -443,11 +443,11 @@ Remember that discussions can only be posted once.
                     json.dump(config, f, sort_keys=True, indent=4)
 
             for comment in comments:
-                with open("comment-%03d.json" % comment['number'], "w") as f:
+                with codecs.open("comment-%03d.json" % comment['number'], "w", encoding="utf-8") as f:
                     json.dump(comment, f, sort_keys=True, indent=4)
-                with open("comment-%03d.txt" % comment['number'], "w") as f:
+                with codecs.open("comment-%03d.txt" % comment['number'], "w", encoding="utf-8") as f:
                     f.write(comment['body'])
-                with open("comment-%03d.html" % comment['number'], "w") as f:
+                with codecs.open("comment-%03d.html" % comment['number'], "w", encoding="utf-8") as f:
                     f.write(comment['formatted_body'])
 
             os.chdir("..")
