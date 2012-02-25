@@ -32,7 +32,7 @@ class ManPageSubprocessStdoutFilter(SubprocessStdoutFilter):
         for prog_name in self.artifact.input_text().split():
             command = self.command_string(prog_name)
             proc, stdout = self.run_command(command, self.setup_env())
-            self.handle_subprocess_proc_return(proc.returncode, stdout)
+            self.handle_subprocess_proc_return(command, proc.returncode, stdout)
             man_info[prog_name] = stdout
 
         self.artifact.set_data(json.dumps(man_info))

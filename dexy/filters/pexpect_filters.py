@@ -132,8 +132,8 @@ class PexpectReplFilter(ProcessFilter):
         except pexpect.ExceptionPexpect:
             raise Exception("process %s may not have closed" % proc.pid)
 
-        if proc.exitstatus:
-            self.handle_subprocess_proc_return(proc.exitstatus, str(output_dict))
+        if proc.exitstatus and self.CHECK_RETURN_CODE:
+            self.handle_subprocess_proc_return(self.executable() , proc.exitstatus, str(output_dict))
 
         return output_dict
 

@@ -221,12 +221,14 @@ class EmbedFonts(SubprocessFilter):
     def process(self):
         env = self.setup_env()
 
-        proc, stdout = self.run_command(self.preprocess_command_string(), env)
-        self.handle_subprocess_proc_return(proc.returncode, stdout)
+        command = self.preprocess_command_string()
+        proc, stdout = self.run_command(command, env)
+        self.handle_subprocess_proc_return(command, proc.returncode, stdout)
         self.artifact.stdout = stdout
 
-        proc, stdout = self.run_command(self.pdffonts_command_string(), env)
-        self.handle_subprocess_proc_return(proc.returncode, stdout)
+        command = self.pdffonts_command_string()
+        proc, stdout = self.run_command(command, env)
+        self.handle_subprocess_proc_return(command, proc.returncode, stdout)
         self.artifact.stdout += stdout
 
 class ROutputBatchFilter(SubprocessFilter):
@@ -368,7 +370,7 @@ class Pdf2ImgSubprocessFilter(SubprocessFilter):
         command = self.command_string()
         proc, stdout = self.run_command(command, self.setup_env())
         self.artifact.stdout = stdout
-        self.handle_subprocess_proc_return(proc.returncode, stdout)
+        self.handle_subprocess_proc_return(command, proc.returncode, stdout)
 
         if self.artifact.args.has_key('page'):
             page = self.artifact.args['page']

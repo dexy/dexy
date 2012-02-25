@@ -290,13 +290,14 @@ class Artifact(object):
         else:
             artifact.setup_initial()
 
+        artifact._inputs.update(artifact.doc.input_artifacts())
+        for k, a in artifact.doc.input_artifacts().iteritems():
+            artifact._inputs.update(a.inputs())
         artifact.set_hashstring()
+
         return artifact
 
     def run(self):
-        self._inputs.update(self.doc.input_artifacts())
-        for k, a in self.doc.input_artifacts().iteritems():
-            self._inputs.update(a.inputs())
 
         start = time.time()
 

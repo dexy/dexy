@@ -56,22 +56,25 @@ class KshTempdirInteractiveFilter(KshInteractiveFilter):
         if env.has_key('PS4') and self.PS4:
             env['PS4'] = self.PS4
 
+        self.log.debug("About to spawn '%s' in %s" % (self.executable(), work_dir))
         proc = pexpect.spawn(
                 self.executable(),
                 cwd=work_dir,
                 env=env)
         timeout = self.setup_timeout()
 
-        # Capture the initial prompt
+        self.log.debug("Waiting to capture initial prompt...")
         if self.INITIAL_PROMPT:
             proc.expect(self.INITIAL_PROMPT, timeout=timeout)
         elif self.PROMPT_REGEX:
             proc.expect(search_terms, timeout=timeout)
         else:
             proc.expect_exact(search_terms, timeout=timeout)
-        start = proc.before + proc.after
-        for section_key, section_text in input_dict.items():
 
+        self.log.debug("Initial prompt captured.")
+        start = proc.before + proc.after
+
+        for section_key, section_text in input_dict.items():
             section_transcript = start
             start = ""
 
@@ -127,8 +130,8 @@ class KshTempdirInteractiveFilter(KshInteractiveFilter):
         except pexpect.ExceptionPexpect:
             raise Exception("process %s may not have closed" % proc.pid)
 
-        if proc.exitstatus:
-            self.handle_subprocess_proc_return(proc.exitstatus, str(output_dict))
+        if proc.exitstatus and self.CHECK_RETURN_CODE:
+            self.handle_subprocess_proc_return(self.executable(), proc.exitstatus, str(output_dict))
 
         for i in self.artifact.inputs().values():
             src = os.path.join(work_dir, i.filename())

@@ -145,7 +145,7 @@ class JavacFilter(JavaFilter):
         # Compile the code
         command = self.compile_command_string()
         proc, stdout = self.run_command(command, self.setup_env())
-        self.handle_subprocess_proc_return(proc.returncode, stdout)
+        self.handle_subprocess_proc_return(command, proc.returncode, stdout)
 
         # Copy compiled .class file to where it should live
         tempdir = self.artifact.temp_dir()

@@ -6,8 +6,8 @@ class DexyScriptErrorException(Exception):
     pass
 
 class DexyNonzeroExitException(DexyScriptErrorException):
-    def __init__(self):
-        Exception.__init__(self, """proc returned nonzero status code! if you don't want dexy to raise errors on failed scripts then pass the -ignore option""")
+    def __init__(self, command, exitcode, stderr):
+        Exception.__init__(self, "'%s' returned nonzero exit code %s. Set --loglevel DEBUG to troubleshoot or run with --ignore or set ignore-errors : true for this document. error info: %s" % (command, exitcode, stderr))
 
 class DexyEOFException(DexyScriptErrorException):
     pass
@@ -30,21 +30,17 @@ class ProcessFilter(DexyFilter):
         """
         artifact_ignore = self.artifact.args.has_key('ignore-errors') and self.artifact.args['ignore-errors']
         controller_ignore = self.artifact.controller_args['ignore']
-        print "artifact ignore", artifact_ignore
-        print "controller ignore", controller_ignore
         return artifact_ignore or controller_ignore
 
-    def handle_subprocess_proc_return(self, returncode, stderr):
-        if not self.CHECK_RETURN_CODE:
-            raise Exception("in handle_subprocess_proc_return with CHECK_RETURN_CODE=False for %s" % self.__class__.__name__)
-        if returncode is None:
+    def handle_subprocess_proc_return(self, command, exitcode, stderr):
+        if exitcode is None:
             raise Exception("no return code, proc not finished!")
-        elif returncode != 0:
+        elif exitcode != 0 and self.CHECK_RETURN_CODE:
             if self.ignore_errors():
-                self.artifact.log.warn("Nonzero exit status %s" % returncode)
+                self.artifact.log.warn("Nonzero exit status %s" % exitcode)
                 self.artifact.log.warn("output from process: %s" % stderr)
             else:
-                raise DexyNonzeroExitException()
+                raise DexyNonzeroExitException(command, exitcode, stderr)
 
     def setup_env(self):
         if self.artifact.args.has_key('env'):
@@ -129,7 +125,7 @@ class SubprocessFilter(ProcessFilter):
     def process(self):
         command = self.command_string()
         proc, stdout = self.run_command(command, self.setup_env())
-        self.handle_subprocess_proc_return(proc.returncode, stdout)
+        self.handle_subprocess_proc_return(command, proc.returncode, stdout)
         self.artifact.stdout = stdout
 
     def run_command(self, command, env, input_text = None):
@@ -142,6 +138,9 @@ class SubprocessFilter(ProcessFilter):
                                 stderr=subprocess.STDOUT,
                                 env=env)
 
+        if input_text:
+            self.log.debug("about to send input '%s'" % input_text)
+
         stdout, stderr = proc.communicate(input_text)
         self.log.debug(stdout)
         return (proc, stdout)
@@ -153,9 +152,9 @@ class SubprocessStdoutFilter(SubprocessFilter):
 
     def process(self):
         command = self.command_string_stdout()
-        self.log.debug("About to run '%s'" % command)
         proc, stdout = self.run_command(command, self.setup_env())
-        self.handle_subprocess_proc_return(proc.returncode, stdout)
+        if self.CHECK_RETURN_CODE:
+            self.handle_subprocess_proc_return(command, proc.returncode, stdout)
         self.artifact.set_data(stdout)
 
 class SubprocessStdoutInputFilter(SubprocessFilter):
@@ -168,16 +167,18 @@ class SubprocessStdoutInputFilter(SubprocessFilter):
 
         if len(self.artifact.inputs()) == 0:
             raise Exception("Trying to call an input filter without supplying any inputs!")
-        if len(self.artifact.inputs()) == 1:
+
+        elif len(self.artifact.inputs()) == 1:
             artifact = self.artifact.inputs().values()[0]
             for section_name, section_text in artifact.data_dict.iteritems():
                 proc, stdout = self.run_command(command, self.setup_env(), section_text)
-                self.handle_subprocess_proc_return(proc.returncode, stdout)
+                self.handle_subprocess_proc_return(command, proc.returncode, stdout)
                 self.artifact.data_dict[section_name] = stdout
+
         else:
             for artifact in self.artifact.inputs().values():
                 proc, stdout = self.run_command(command, self.setup_env(), artifact.output_text())
-                self.handle_subprocess_proc_return(proc.returncode, stdout)
+                self.handle_subprocess_proc_return(command, proc.returncode, stdout)
                 rel_key = self.artifact.relative_key_for_input(artifact)
                 self.artifact.data_dict[rel_key] = stdout
 
@@ -196,7 +197,7 @@ class SubprocessStdoutInputFileFilter(SubprocessFilter):
         for artifact in self.artifact.inputs().values():
             command = self.command_string_stdout_input(artifact)
             proc, stdout = self.run_command(command, self.setup_env())
-            self.handle_subprocess_proc_return(proc.returncode, stdout)
+            self.handle_subprocess_proc_return(command, proc.returncode, stdout)
             rel_key = self.artifact.relative_key_for_input(artifact)
             self.artifact.data_dict[rel_key] = stdout
 
@@ -223,12 +224,16 @@ class SubprocessCompileFilter(SubprocessFilter):
         # Compile the code
         command = self.compile_command_string()
         proc, stdout = self.run_command(command, self.setup_env())
-        self.handle_subprocess_proc_return(proc.returncode, stdout)
+        # This tests exitcode from the *compiler*
+        self.handle_subprocess_proc_return(command, proc.returncode, stdout)
 
+        # Run the compiled code
         command = self.run_command_string()
         proc, stdout = self.run_command(command, self.setup_env())
+
+        # This tests exitcode from the compiled script.
         if self.CHECK_RETURN_CODE:
-            self.handle_subprocess_proc_return(proc.returncode, stdout)
+            self.handle_subprocess_proc_return(command, proc.returncode, stdout)
 
         self.artifact.set_data(stdout)
 
@@ -240,7 +245,7 @@ class SubprocessCompileInputFilter(SubprocessCompileFilter):
         # Compile the code
         command = self.compile_command_string()
         proc, stdout = self.run_command(command, self.setup_env())
-        self.handle_subprocess_proc_return(proc.returncode, stdout)
+        self.handle_subprocess_proc_return(command, proc.returncode, stdout)
 
         command = self.run_command_string()
 
@@ -249,12 +254,12 @@ class SubprocessCompileInputFilter(SubprocessCompileFilter):
             for section_name, section_text in artifact.data_dict.iteritems():
                 proc, stdout = self.run_command(command, self.setup_env(), section_text)
                 if self.CHECK_RETURN_CODE:
-                    self.handle_subprocess_proc_return(proc.returncode, stdout)
+                    self.handle_subprocess_proc_return(command, proc.returncode, stdout)
                 self.artifact.data_dict[section_name] = stdout
         else:
             for artifact in self.artifact.inputs().values():
                 proc, stdout = self.run_command(command, self.setup_env(), artifact.output_text())
                 if self.CHECK_RETURN_CODE:
-                    self.handle_subprocess_proc_return(proc.returncode, stdout)
+                    self.handle_subprocess_proc_return(command, proc.returncode, stdout)
                 rel_key = self.artifact.relative_key_for_input(artifact)
                 self.artifact.data_dict[rel_key] = stdout
