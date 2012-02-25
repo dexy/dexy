@@ -95,6 +95,8 @@ def get_filter_for_alias(alias, filter_list=None):
     elif alias.startswith("alias-") or alias.startswith("al-") or alias in ['al', 'alias']:
         print "alias- al- is deprecated, just start filter with a - to create an alias"
         return dexy.dexy_filter.DexyFilter
+    elif alias == '':
+        raise Exception("Check your config file for a trailing | or 2 | in a row.")
     else:
         raise Exception("filter alias '%s' not found or not available" % alias)
 

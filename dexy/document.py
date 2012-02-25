@@ -84,10 +84,10 @@ class Document(object):
         self.filters += filters
 
     def get_filter_for_alias(self, alias):
-        """
-        Given a filter alias, return the corresponding filter class.
-        """
-        return dexy.introspect.get_filter_for_alias(alias, self.__class__.filter_list)
+        if alias == '':
+            raise Exception("You have a trailing | or 2 | symbols together in your specification for %s" % self.key())
+        else:
+            return dexy.introspect.get_filter_for_alias(alias, self.__class__.filter_list)
 
     def final_artifact(self):
         return self.last_artifact
