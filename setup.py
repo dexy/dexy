@@ -25,7 +25,8 @@ setup(
         description='Document Automation',
         entry_points = {
             'console_scripts' : [
-                'dexy = dexy.commands:run'
+                'dexy = dexy.commands:run',
+                'screenshot = dexy.screenshot:run'
                 ]
             },
         include_package_data = True,

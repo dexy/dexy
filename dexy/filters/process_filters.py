@@ -7,7 +7,11 @@ class DexyScriptErrorException(Exception):
 
 class DexyNonzeroExitException(DexyScriptErrorException):
     def __init__(self, command, exitcode, stderr):
-        Exception.__init__(self, "'%s' returned nonzero exit code %s. Set --loglevel DEBUG to troubleshoot or run with --ignore or set ignore-errors : true for this document. error info: %s" % (command, exitcode, stderr))
+        msg = "'%s' returned nonzero exit code %s." % (command, exitcode)
+        msg += " Set --loglevel DEBUG to troubleshoot or run with --ignore or set ignore-errors : true for this document to skip error-checking."
+        if stderr and not stderr=='':
+            msg += " Error info: %s" % stderr
+        Exception.__init__(self,  msg)
 
 class DexyEOFException(DexyScriptErrorException):
     pass

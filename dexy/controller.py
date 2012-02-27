@@ -237,6 +237,7 @@ class Controller(object):
 
         # Define the parse_doc nested function which we will call recursively.
         def parse_doc(path, input_directive, args = {}):
+            self.log.debug("Parsing doc path: '%s' input_dir: '%s' args : '%s'" % (path, input_directive, args))
             # If a specification is nested in a dependency, then input_directive
             # may be a dict. If so, split it into parts before continuing.
             try:
@@ -378,7 +379,10 @@ re.compile: %s""" % (args['except'], e))
                         doc.priority = args['priority']
                         del args['priority']
 
+                    self.log.debug("Doc args: '%s'" % doc.args)
+                    self.log.debug("updating with: '%s'" % args)
                     doc.args.update(args)
+                    self.log.debug("Doc args after update: '%s'" % doc.args)
 
                     if args.has_key('allinputs'):
                         doc.use_all_inputs = args['allinputs']
