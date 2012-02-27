@@ -79,7 +79,77 @@ class JoinFilter(DexyFilter):
     def process_dict(self, input_dict):
         return {'1' : self.artifact.input_text()}
 
-class FooterFilter(DexyFilter):
+
+class HeaderFilter(DexyFilter):
+    """
+    Adds a header to file. Looks for a file named _header.ext where ext is the
+    same extension as the file this is being applied to. So _header.html for a
+    file named index.html. Or, you can specify the name of the header file to
+    use in the args by passing a value to 'header'.
+    """
+    INPUT_EXTENSIONS = [".*"]
+    OUTPUT_EXTENSIONS = [".*"]
+    ALIASES = ['hd', 'header']
+    DEFAULT_FILTERS = ['jinja']
+
+    def find_closest_parent(self, param_name = 'header'):
+        inputs = self.artifact.inputs()
+
+        search_key_specified = self.artifact.args.has_key(param_name)
+
+        if search_key_specified:
+            search_key = self.artifact.args[param_name]
+        else:
+            # nothing specified, look for the default pattern
+            search_key = "_%s%s" % (param_name, self.artifact.ext)
+
+        path_elements = self.artifact.name.split(os.sep)[:-1]
+        doc = None
+        n = len(path_elements)
+
+        if search_key_specified and "/" in search_key:
+            n = -1
+            doc = inputs[search_key.lstrip("/")]
+
+        for i in range(0, n+1):
+            # Start in the immediate directory, proceed through parent
+            # directories as far as project root until a header file is
+            # found.
+            if i < n:
+                directory = os.path.join(*(path_elements[0:(n-i)]))
+                search_key_in_dir = os.path.join(directory, search_key)
+            else:
+                search_key_in_dir = search_key
+
+            if inputs.has_key(search_key_in_dir):
+                doc = inputs[search_key_in_dir]
+
+            elif not search_key_specified:
+                for pattern in self.DEFAULT_FILTERS:
+                    if pattern:
+                        try_key = "%s|%s" % (search_key_in_dir, pattern)
+                    if inputs.has_key(try_key):
+                        doc = inputs[try_key]
+                        break
+
+            if doc:
+                break
+
+        return doc
+
+    def process_text(self, input_text):
+        header_doc = self.find_closest_parent()
+
+        if not header_doc:
+            self.log.debug("keys for %s: %s" % (self.artifact.key, ", ".join(self.artifact._inputs.keys())))
+            msg_str = "couldn't find a header like %s as an input to %s (also tried with filters %s)"
+            msg = msg_str % (header_key, self.artifact.document_key, ", ".join(self.DEFAULT_HEADER_FILTERS))
+            raise Exception(msg)
+
+        self.log.debug("using %s as header for %s" % (header_doc.key, self.artifact.document_key))
+        return "%s\n%s" % (header_doc.output_text(), input_text)
+
+class FooterFilter(HeaderFilter):
     """
     Adds a footer to file. Looks for a file named _footer.ext where ext is the
     same extension as the file this is being applied to. So _footer.html for a
@@ -92,47 +162,7 @@ class FooterFilter(DexyFilter):
     DEFAULT_FOOTER_FILTERS = ['dexy', 'jinja']
 
     def process_text(self, input_text):
-        footer_doc = None
-        inputs = self.artifact.inputs()
-        footer_input_keys = [k for k in self.artifact.inputs().keys() if "footer" in k]
-
-        if self.artifact.args.has_key('footer'):
-            # allow specifying footer keys
-            footer_key = self.artifact.args['footer']
-            if not footer_key in inputs:
-                raise Exception("You requested footer %s, but this isn't an input to %s" % (footer_key, self.artifact.document_key))
-            footer_doc = inputs[footer_key]
-
-        else:
-            # nothing specified, look for the default pattern
-            footer_key = "_footer%s" % self.artifact.ext
-
-            path_elements = self.artifact.name.split(os.sep)[:-1]
-            footer_doc = None
-            n = len(path_elements)
-
-            for i in range(0, n+1):
-                # Start in the immediate directory, proceed through parent
-                # directories as far as project root until a footer file is
-                # found.
-                if i < n:
-                    directory = os.path.join(*(path_elements[0:(n-i)]))
-                    try_footer_in_dir = os.path.join(directory, footer_key)
-                else:
-                    try_footer_in_dir = footer_key
-
-                if try_footer_in_dir in footer_input_keys:
-                    footer_doc = inputs[try_footer_in_dir]
-                else:
-                    for pattern in self.DEFAULT_FOOTER_FILTERS:
-                        if pattern:
-                            try_key = "%s|%s" % (try_footer_in_dir, pattern)
-                        if try_key in footer_input_keys:
-                            footer_doc = inputs[try_key]
-                            break
-
-                if footer_doc:
-                    break
+        footer_doc = self.find_closest_parent('footer')
 
         if not footer_doc:
             self.log.debug("keys for %s: %s" % (self.artifact.key, ", ".join(self.artifact._inputs.keys())))
@@ -141,71 +171,7 @@ class FooterFilter(DexyFilter):
             raise Exception(msg)
 
         self.log.debug("using %s as footer for %s" % (footer_doc.key, self.artifact.document_key))
-        footer_text = footer_doc.output_text()
-        return "%s\n%s" % (input_text, footer_text)
-
-class HeaderFilter(DexyFilter):
-    """
-    Adds a header to file. Looks for a file named _header.ext where ext is the
-    same extension as the file this is being applied to. So _header.html for a
-    file named index.html. Or, you can specify the name of the header file to
-    use in the args by passing a value to 'header'.
-    """
-    INPUT_EXTENSIONS = [".*"]
-    OUTPUT_EXTENSIONS = [".*"]
-    ALIASES = ['hd', 'header']
-    DEFAULT_HEADER_FILTERS = ['dexy', 'jinja']
-
-    def process_text(self, input_text):
-        header_doc = None
-        inputs = self.artifact.inputs()
-
-        if self.artifact.args.has_key('header'):
-            # allow specifying header keys
-            header_key = self.artifact.args['header']
-            if not header_key in inputs:
-                raise Exception("You requested header %s, but this isn't an input to %s" % (header_key, self.artifact.document_key))
-            header_doc = inputs[header_key]
-
-        else:
-            # nothing specified, look for the default pattern
-            header_key = "_header%s" % self.artifact.ext
-
-            path_elements = self.artifact.name.split(os.sep)[:-1]
-            header_doc = None
-            n = len(path_elements)
-
-            for i in range(0, n+1):
-                # Start in the immediate directory, proceed through parent
-                # directories as far as project root until a header file is
-                # found.
-                if i < n:
-                    directory = os.path.join(*(path_elements[0:(n-i)]))
-                    try_header_in_dir = os.path.join(directory, header_key)
-                else:
-                    try_header_in_dir = header_key
-
-                if inputs.has_key(try_header_in_dir):
-                    header_doc = inputs[try_header_in_dir]
-                else:
-                    for pattern in self.DEFAULT_HEADER_FILTERS:
-                        if pattern:
-                            try_key = "%s|%s" % (try_header_in_dir, pattern)
-                        if inputs.has_key(try_key):
-                            header_doc = inputs[try_key]
-                            break
-
-                if header_doc:
-                    break
-
-        if not header_doc:
-            self.log.debug("keys for %s: %s" % (self.artifact.key, ", ".join(self.artifact._inputs.keys())))
-            msg_str = "couldn't find a header like %s as an input to %s (also tried with filters %s)"
-            msg = msg_str % (header_key, self.artifact.document_key, ", ".join(self.DEFAULT_HEADER_FILTERS))
-            raise Exception(msg)
-
-        self.log.debug("using %s as header for %s" % (header_doc.key, self.artifact.document_key))
-        return "%s\n%s" % (header_doc.output_text(), input_text)
+        return "%s\n%s" % (input_text, footer_doc.output_text())
 
 class HeadFilter(DexyFilter):
     """
