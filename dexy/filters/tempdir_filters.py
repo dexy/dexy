@@ -11,7 +11,6 @@ import pexpect
 import shutil
 import tarfile
 import tempfile
-import zipfile
 
 class KshTempdirInteractiveFilter(KshInteractiveFilter):
     """

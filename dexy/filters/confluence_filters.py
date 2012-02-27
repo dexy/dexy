@@ -87,8 +87,8 @@ class ConfluenceFilter(ApiFilter):
             pageTitle = document_config['title']
             try:
                 page = self.confluence().confluence1.getPage(token, spaceKey, pageTitle)
-            except xmlrpclib.Fault as e:
-                print "page %s does not exist in space %s, creating new page" % (pageTitle, spaceKey)
+            except xmlrpclib.Fault:
+                self.log.debug("page %s does not exist in space %s, creating new page" % (pageTitle, spaceKey))
                 page = document_config
             page['content'] = input_text
 

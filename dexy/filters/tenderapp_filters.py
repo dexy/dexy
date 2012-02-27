@@ -99,9 +99,6 @@ class TenderappFilter(ApiFilter):
             return []
 
     def process_text(self, input_text):
-        api_key = self.read_api_key()
-        base_url = self.read_url()
-
         document_config = self.read_document_config()
         document_config['via'] = 'dexy'
 
@@ -305,9 +302,6 @@ class TenderappFilter(ApiFilter):
         categories = klass.categories()
         category_permalinks = "\n".join(c['permalink'] for c in categories)
 
-        sections = klass.sections()
-        section_permalinks = "\n".join(s['permalink'] for s in sections)
-
         create_discussion_dir = "create-discussion-example"
         if not os.path.exists(create_discussion_dir):
             os.mkdir(create_discussion_dir)
@@ -412,8 +406,6 @@ Remember that discussions can only be posted once.
                 os.chdir("..")
 
         for discussion in klass.discussions_for_current_user():
-            comments = klass.comments_from_href(discussion['comments_href'])
-
             discussion_dir = "%06d-%s" % (discussion['number'], discussion['permalink'][0:50])
             if len(discussion['permalink']) > 50:
                 discussion_dir += "..."
