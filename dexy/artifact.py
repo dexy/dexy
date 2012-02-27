@@ -210,11 +210,21 @@ class Artifact(object):
         for a in ['final', 'mtime', 'ctime', 'inode', 'virtual', 'virtual_docs']:
                 setattr(self, a, getattr(previous_artifact, a))
 
-        self._inputs.update(previous_artifact.inputs())
-        # Need to loop over each artifact's inputs in case extra ones have been
-        # added anywhere.
+        # Look for additional inputs in previous artifacts or previous
+        # artifacts' inputs.
         for k, a in previous_artifact.inputs().iteritems():
-            self._inputs.update(a.inputs())
+
+            if a.additional and not k in self._inputs:
+                self.log.debug("(%s) Adding additional artifact %s from %s" % (self.key, k, a.key))
+                self.add_input(k, a)
+            elif not k in self._inputs:
+                # We should have all other inputs already. Validate this.
+                raise Exception("Missing input %s" % k)
+
+            for kk, aa in a.inputs().iteritems():
+                if aa.additional and not kk in self._inputs:
+                    self.log.debug("(%s) Adding additional artifact %s from %s" % (self.key, kk, k))
+                    self.add_input(kk, aa)
 
         self.binary_input = previous_artifact.binary_output
         self.input_data_dict = previous_artifact.data_dict
@@ -284,15 +294,24 @@ class Artifact(object):
             artifact.next_filter_name = next_filter_class.__name__
             artifact.next_filter_class = next_filter_class
 
+        # Set inputs from original document inputs.
+        artifact._inputs.update(artifact.doc.input_artifacts())
+        artifact.log.debug("add inputs from document %s: %s" % (artifact.doc.key(), ", ".join(artifact.doc.input_artifacts().keys())))
+
+        for k, a in artifact.doc.input_artifacts().iteritems():
+            if a.additional and not k in artifact._inputs:
+                artifact.add_input(k, a)
+
+            for kk, aa in a.inputs().iteritems():
+                if aa.additional and not kk in artifact._inputs:
+                    artifact.add_input(kk, aa)
+
         if previous_artifact:
             artifact.setup_from_previous_artifact(previous_artifact)
             artifact.setup_from_filter_class()
         else:
             artifact.setup_initial()
 
-        artifact._inputs.update(artifact.doc.input_artifacts())
-        for k, a in artifact.doc.input_artifacts().iteritems():
-            artifact._inputs.update(a.inputs())
         artifact.set_hashstring()
 
         return artifact

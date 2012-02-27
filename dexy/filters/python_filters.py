@@ -2,6 +2,7 @@ from dexy.dexy_filter import DexyFilter
 from dexy.utils import print_string_diff
 from dexy.utils import wrap_text
 from ordereddict import OrderedDict
+import copy
 import json
 import os
 import re
@@ -366,3 +367,28 @@ class SectionsByLineFilter(DexyFilter):
         for i, line in enumerate(input_text.splitlines()):
             data_dict["%s" % (i+1)] = line
         return data_dict
+
+class MarkupTagsFilter(DexyFilter):
+    """
+    Wrap text in specified HTML tags.
+    """
+    ALIASES = ['tags']
+
+    def process_text(self, input_text):
+        tags = copy.copy(self.artifact.args['tags'])
+        open_tags = "".join("<%s>" % t for t in tags)
+        tags.reverse()
+        close_tags = "".join("</%s>" % t for t in tags)
+
+        return "%s\n%s\n%s" % (open_tags, input_text, close_tags)
+
+class StartSpaceFilter(DexyFilter):
+    """
+    Add a blank space to the start of each line.
+
+    Useful for passing syntax highlighted/preformatted code to mediawiki.
+    """
+    ALIASES = ['ss', 'startspace']
+
+    def process_text(self, input_text):
+        return "\n".join(" %s" % line for line in input_text.splitlines())

@@ -28,6 +28,7 @@ class FilenameFilter(DexyFilter):
 
             elif key_with_ext in virtual_files.keys():
                 artifact = virtual_files[key_with_ext]
+                artifact.additional = True
                 self.artifact.add_input(key_with_ext, artifact)
                 self.log.debug("[fn] using virtual file %s" % artifact.key)
 
