@@ -442,14 +442,11 @@ Remember that discussions can only be posted once.
                         }
                     json.dump(config, f, sort_keys=True, indent=4)
 
-            for comment in comments:
-                with codecs.open("comment-%03d.json" % comment['number'], "w", encoding="utf-8") as f:
-                    json.dump(comment, f, sort_keys=True, indent=4)
-                with codecs.open("comment-%03d.txt" % comment['number'], "w", encoding="utf-8") as f:
-                    f.write(comment['body'])
-                with codecs.open("comment-%03d.html" % comment['number'], "w", encoding="utf-8") as f:
-                    f.write(comment['formatted_body'])
-
+                with codecs.open("comment-example.md", "w") as f:
+                    f.write("""
+This is content for a new comment. If you enable the comment-*.md pattern, this
+comment will be posted to the discussion %s
+""" % discussion['html_href'])
             os.chdir("..")
 
     @classmethod
