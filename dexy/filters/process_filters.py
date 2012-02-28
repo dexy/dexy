@@ -157,8 +157,7 @@ class SubprocessStdoutFilter(SubprocessFilter):
     def process(self):
         command = self.command_string_stdout()
         proc, stdout = self.run_command(command, self.setup_env())
-        if self.CHECK_RETURN_CODE:
-            self.handle_subprocess_proc_return(command, proc.returncode, stdout)
+        self.handle_subprocess_proc_return(command, proc.returncode, stdout)
         self.artifact.set_data(stdout)
 
 class SubprocessStdoutInputFilter(SubprocessFilter):
