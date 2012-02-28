@@ -37,7 +37,7 @@ class PhantomJsRenderJavascriptInteractiveFilter(SubprocessFilter):
 
         for section_name, code in data_dict.iteritems():
             if code and not re.match("^\s*$", code):
-                artifact_key = os.path.join(os.path.dirname(self.artifact.filename()), "%s-screenshot.png" % section_name)
+                artifact_key = os.path.join(os.path.dirname(self.artifact.name), "%s-screenshot.png" % section_name)
                 page_screenshot_artifact = self.artifact.add_additional_artifact(artifact_key, ".png")
                 page_fn = page_screenshot_artifact.filename()
                 js += """
