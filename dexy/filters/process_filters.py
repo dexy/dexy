@@ -146,7 +146,6 @@ class SubprocessFilter(ProcessFilter):
             self.log.debug("about to send input '%s'" % input_text)
 
         stdout, stderr = proc.communicate(input_text)
-        self.log.debug(stdout)
         return (proc, stdout)
 
 class SubprocessStdoutFilter(SubprocessFilter):

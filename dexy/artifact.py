@@ -296,7 +296,6 @@ class Artifact(object):
 
         # Set inputs from original document inputs.
         artifact._inputs.update(artifact.doc.input_artifacts())
-        artifact.log.debug("add inputs from document %s: %s" % (artifact.doc.key(), ", ".join(artifact.doc.input_artifacts().keys())))
 
         for k, a in artifact.doc.input_artifacts().iteritems():
             if a.additional and not k in artifact._inputs:
@@ -400,6 +399,7 @@ class Artifact(object):
                 setattr(new_artifact, at, val)
 
         new_artifact.set_hashstring()
+        self.log.debug("new artifact %s hashstring %s" % (key_with_ext, new_artifact.hashstring))
         self.add_input(key_with_ext, new_artifact)
         self.db.append_artifact(new_artifact) # append to db because not part of doc.artifacts
         return new_artifact

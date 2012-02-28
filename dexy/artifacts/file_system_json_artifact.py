@@ -97,7 +97,6 @@ class FileSystemJsonArtifact(Artifact):
     def save_output(self):
         if not self.is_complete():
             raise Exception("should not be calling save_output unless artifact is complete")
-
         if not self.binary_output:
             if not self.data_dict or len(self.data_dict) == 0:
                 # Our filter has written directly to an output file
