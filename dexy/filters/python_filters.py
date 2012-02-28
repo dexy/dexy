@@ -141,10 +141,7 @@ class HeaderFilter(DexyFilter):
         header_doc = self.find_closest_parent()
 
         if not header_doc:
-            self.log.debug("keys for %s: %s" % (self.artifact.key, ", ".join(self.artifact._inputs.keys())))
-            msg_str = "couldn't find a header like %s as an input to %s (also tried with filters %s)"
-            msg = msg_str % (header_key, self.artifact.document_key, ", ".join(self.DEFAULT_HEADER_FILTERS))
-            raise Exception(msg)
+            raise Exception("Couldn't find input to use for header. Available inputs: %s" % ",".join(self.artifact.inputs().keys()))
 
         self.log.debug("using %s as header for %s" % (header_doc.key, self.artifact.document_key))
         return "%s\n%s" % (header_doc.output_text(), input_text)
@@ -165,10 +162,7 @@ class FooterFilter(HeaderFilter):
         footer_doc = self.find_closest_parent('footer')
 
         if not footer_doc:
-            self.log.debug("keys for %s: %s" % (self.artifact.key, ", ".join(self.artifact._inputs.keys())))
-            msg_str = "couldn't find a footer like %s as an input to %s (also tried with filters %s)"
-            msg = msg_str % (footer_key, self.artifact.document_key, ", ".join(self.DEFAULT_FOOTER_FILTERS))
-            raise Exception(msg)
+            raise Exception("Couldn't find input to use for footer. Available inputs: %s" % ",".join(self.artifact.inputs().keys()))
 
         self.log.debug("using %s as footer for %s" % (footer_doc.key, self.artifact.document_key))
         return "%s\n%s" % (input_text, footer_doc.output_text())

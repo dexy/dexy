@@ -1,9 +1,5 @@
-from dexy.tests.utils import run_dexy
 from dexy.tests.utils import run_dexy_without_tempdir
-from dexy.tests.utils import divert_stdout
 from dexy.tests.utils import tempdir
-import dexy.commands
-import os
 
 BASIC_CONFIG = {
     "." : {

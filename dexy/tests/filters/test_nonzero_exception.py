@@ -1,11 +1,7 @@
-from dexy.filters.process_filters import DexyEOFException
-from dexy.filters.process_filters import DexyNonzeroExitException
 from dexy.filters.process_filters import DexyScriptErrorException
 from dexy.filters.process_filters import ProcessFilter
 from dexy.tests.utils import run_dexy
-from dexy.tests.utils import divert_stdout
 import dexy.commands
-import os
 
 TRIGGER_EXCEPTIONS_CONFIG = {
     "." : {
@@ -73,7 +69,7 @@ def test_run():
             doc.run()
             if not doc.key() in ["input.txt"]:
                 assert False, "expected exception for %s" % doc.key()
-        except DexyScriptErrorException as e:
+        except DexyScriptErrorException:
             tested_filter_alias = doc.filters[-1]
             tested_filter_classes.append(filters[tested_filter_alias])
             assert True
@@ -91,8 +87,6 @@ def test_ignore_errors_controller():
     """
     Ensure we can ignore errors by setting the controller-wide param 'ignore' to true.
     """
-    filters = dexy.introspect.filters()
-    tested_filter_classes = []
     args = { "ignore" : True }
     for doc in run_dexy(TRIGGER_EXCEPTIONS_CONFIG, args):
         doc.run()
@@ -101,9 +95,6 @@ def test_ignore_errors_document():
     """
     Ensure we can ignore errors by setting 'ignore-errors' to true for each individual document.
     """
-    filters = dexy.introspect.filters()
-    tested_filter_classes = []
-
     trigger_ignore_exceptions_config = TRIGGER_EXCEPTIONS_CONFIG.copy()
 
     for k, v in trigger_ignore_exceptions_config['.'].iteritems():

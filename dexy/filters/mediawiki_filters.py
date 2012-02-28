@@ -1,6 +1,4 @@
 from dexy.filters.api_filters import ApiFilter
-from StringIO import StringIO
-import sys
 import json
 import requests
 

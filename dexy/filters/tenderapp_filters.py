@@ -1,4 +1,5 @@
 from dexy.filters.api_filters import ApiFilter
+import codecs
 import datetime
 import json
 import requests
@@ -98,9 +99,6 @@ class TenderappFilter(ApiFilter):
             return []
 
     def process_text(self, input_text):
-        api_key = self.read_api_key()
-        base_url = self.read_url()
-
         document_config = self.read_document_config()
         document_config['via'] = 'dexy'
 
@@ -185,7 +183,6 @@ class TenderappFilter(ApiFilter):
 
         payload = document_config.copy()
         payload['body'] = input_text
-
         result = requests.post(url, data=json.dumps(payload), headers=headers)
         result_json = self.load_if_valid_json(result.text)
 
@@ -305,33 +302,30 @@ class TenderappFilter(ApiFilter):
         categories = klass.categories()
         category_permalinks = "\n".join(c['permalink'] for c in categories)
 
-        sections = klass.sections()
-        section_permalinks = "\n".join(s['permalink'] for s in sections)
-
         create_discussion_dir = "create-discussion-example"
         if not os.path.exists(create_discussion_dir):
             os.mkdir(create_discussion_dir)
             print "created directory", create_discussion_dir
             os.chdir(create_discussion_dir)
 
-            with open("discuss-example.md", "w") as f:
+            with codecs.open("discuss-example.md", "w", encoding="utf-8") as f:
                 f.write("This is an example of a markdown file you can use to create a new discussion.")
 
-            with open(".dexy", "w") as f:
+            with codecs.open(".dexy", "w", encoding="utf-8") as f:
                 config = {
                         "discuss-*.md|tenderapp" : { "disabled" : True, "inputs" : ["tenderapp.json"] },
                         "discuss-*.md|markdown" : {}
                         }
                 json.dump(config, f, sort_keys=True, indent=4)
 
-            with open("tenderapp.json", "w") as f:
+            with codecs.open("tenderapp.json", "w", encoding="utf-8") as f:
                 config = {
                         "category" : "TODO",
                         "title" : "TODO"
                         }
                 json.dump(config, f, sort_keys=True, indent=4)
 
-            with open("README", "w") as f:
+            with codecs.open("README", "w", encoding="utf-8") as f:
                 f.write("""This directory is all set up so you can create a new discussion.
 
 Just set disabled to False or remove that line from the .dexy file to enable.
@@ -351,17 +345,17 @@ Remember that discussions can only be posted once.
             print "created directory", create_article_dir
             os.chdir(create_article_dir)
 
-            with open("kb-example.md", "w") as f:
+            with codecs.open("kb-example.md", "w", encoding="utf-8") as f:
                 f.write("This is an example of a markdown file you can use to create a new knowledgebase article.")
 
-            with open(".dexy", "w") as f:
+            with codecs.open(".dexy", "w", encoding="utf-8") as f:
                 config = {
                         "kb-*.md|tenderapp" : { "disabled" : True, "inputs" : ["tenderapp.json"] },
                         "kb-*.md|markdown" : {}
                         }
                 json.dump(config, f, sort_keys=True, indent=4)
 
-            with open("tenderapp.json", "w") as f:
+            with codecs.open("tenderapp.json", "w", encoding="utf-8") as f:
                 config = {
                         "section" : "TODO",
                         "title" : "TODO",
@@ -379,13 +373,13 @@ Remember that discussions can only be posted once.
                 print "created directory", article_dir
                 os.chdir(article_dir)
 
-                with open("info.json", "w") as f:
+                with codecs.open("info.json", "w", encoding="utf-8") as f:
                     json.dump(article, f, sort_keys=True, indent=4)
 
-                with open("kb-article.md", "w") as f:
+                with codecs.open("kb-article.md", "w", encoding="utf-8") as f:
                     f.write(article['body'])
 
-                with open(".dexy", "w") as f:
+                with codecs.open(".dexy", "w", encoding="utf-8") as f:
                     config = {
                             "kb-*.md|tenderapp" : {
                                 "disabled" : True,
@@ -395,7 +389,7 @@ Remember that discussions can only be posted once.
                         }
                     json.dump(config, f, sort_keys=True, indent=4)
 
-                with open("tenderapp.json", "w") as f:
+                with codecs.open("tenderapp.json", "w", encoding="utf-8") as f:
                     config = {
                             "title" : article['title'],
                             "permalink" : article['permalink'],
@@ -412,8 +406,6 @@ Remember that discussions can only be posted once.
                 os.chdir("..")
 
         for discussion in klass.discussions_for_current_user():
-            comments = klass.comments_from_href(discussion['comments_href'])
-
             discussion_dir = "%06d-%s" % (discussion['number'], discussion['permalink'][0:50])
             if len(discussion['permalink']) > 50:
                 discussion_dir += "..."
@@ -428,10 +420,10 @@ Remember that discussions can only be posted once.
 
             if new_dir:
                 # Store the API info for the discussion for future reference
-                with open("info.json", "w") as f:
+                with codecs.open("info.json", "w", encoding="utf-8") as f:
                     json.dump(discussion, f, sort_keys=True, indent=4)
 
-                with open(".dexy", "w") as f:
+                with codecs.open(".dexy", "w", encoding="utf-8") as f:
                     config = {
                             "comment-*.md|tenderapp" : {
                                 "disabled" : True,
@@ -442,14 +434,11 @@ Remember that discussions can only be posted once.
                         }
                     json.dump(config, f, sort_keys=True, indent=4)
 
-            for comment in comments:
-                with open("comment-%03d.json" % comment['number'], "w") as f:
-                    json.dump(comment, f, sort_keys=True, indent=4)
-                with open("comment-%03d.txt" % comment['number'], "w") as f:
-                    f.write(comment['body'])
-                with open("comment-%03d.html" % comment['number'], "w") as f:
-                    f.write(comment['formatted_body'])
-
+                with codecs.open("comment-example.md", "w") as f:
+                    f.write("""
+This is content for a new comment. If you enable the comment-*.md pattern, this
+comment will be posted to the discussion %s
+""" % discussion['html_href'])
             os.chdir("..")
 
     @classmethod
