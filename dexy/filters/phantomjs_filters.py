@@ -37,7 +37,8 @@ class PhantomJsRenderJavascriptInteractiveFilter(SubprocessFilter):
 
         for section_name, code in data_dict.iteritems():
             if code and not re.match("^\s*$", code):
-                page_screenshot_artifact = self.artifact.add_additional_artifact("%s-screenshot.png" % section_name, ".png")
+                artifact_key = os.path.join(os.path.dirname(self.artifact.filename()), "%s-screenshot.png" % section_name)
+                page_screenshot_artifact = self.artifact.add_additional_artifact(artifact_key, ".png")
                 page_fn = page_screenshot_artifact.filename()
                 js += """
                 sectionName = "%(section_name)s";
@@ -81,4 +82,5 @@ class PhantomJsRenderJavascriptInteractiveFilter(SubprocessFilter):
         for i in self.artifact.inputs().values():
             src = os.path.join(work_dir, i.filename())
             if (i.virtual or i.additional) and os.path.exists(src):
+                self.log.debug("Copying %s to %s (%s)" % (src, i.filepath(), i.key))
                 shutil.copy(src, i.filepath())
