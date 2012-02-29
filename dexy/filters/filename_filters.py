@@ -10,11 +10,13 @@ class FilenamesFilter(DexyFilter):
     """
     ALIASES = ['filenames']
     INPUT_EXTENSIONS = ['.json']
-    OUTPUT_EXTENSIONS = ['.txt']
+    OUTPUT_EXTENSIONS = ['.json']
 
     def process(self):
         prev_file = open(self.artifact.previous_artifact_filepath, "r")
         input_info = json.load(prev_file)
+        prev_file.close()
+
         work_dir = input_info['dir']
         parent_artifact = self.artifact.inputs().values()[0]
         parent_artifact_dir = os.path.dirname(parent_artifact.key)
@@ -23,7 +25,7 @@ class FilenamesFilter(DexyFilter):
             new_artifact = self.artifact.add_additional_artifact(key_with_ext)
             shutil.copy(os.path.join(work_dir, f), new_artifact.filepath())
 
-        self.artifact.set_data("")
+        self.artifact.set_data(json.dumps(input_info))
 
 class FilenameFilter(DexyFilter):
     """Generate random filenames to track provenance of data."""

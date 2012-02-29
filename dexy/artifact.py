@@ -229,6 +229,7 @@ class Artifact(object):
         self.binary_input = previous_artifact.binary_output
         self.input_data_dict = previous_artifact.data_dict
         self.input_ext = previous_artifact.ext
+        self.previous_artifact_hashstring = previous_artifact.hashstring
         self.previous_artifact_filename = previous_artifact.filename()
         self.previous_artifact_filepath = previous_artifact.filepath()
         self.previous_canonical_filename = previous_artifact.canonical_filename(True)
@@ -316,7 +317,6 @@ class Artifact(object):
         return artifact
 
     def run(self):
-
         start = time.time()
 
         if self.controller_args['nocache'] or not self.is_complete():
@@ -328,6 +328,12 @@ class Artifact(object):
             filter_instance = self.filter_class()
             filter_instance.artifact = self
             filter_instance.log = self.log
+
+            # Make sure previous artifact is loaded.
+            if not self.binary_input and len(self.input_text()) == 0:
+                f = open(self.previous_artifact_filepath, "rb")
+                self.data_dict['1'] = f.read()
+                f.close()
 
             try:
                 filter_instance.process()
