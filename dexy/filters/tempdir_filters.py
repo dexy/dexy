@@ -1,4 +1,4 @@
-from dexy.filters.pexpect_filters import KshInteractiveFilter
+from dexy.filters.pexpect_filters import KshInteractiveStrictFilter
 from dexy.filters.process_filters import DexyEOFException
 from ordereddict import OrderedDict
 from pygments import highlight
@@ -12,12 +12,11 @@ import shutil
 import tarfile
 import tempfile
 
-class KshTempdirInteractiveFilter(KshInteractiveFilter):
+class KshTempdirInteractiveFilter(KshInteractiveStrictFilter):
     """
     Runs ksh in a temporary directory, recording state of that directory.
     """
     ALIASES = ['shtmp']
-    EXECUTABLE = "ksh -i -e"
     OUTPUT_EXTENSIONS = [".json"]
 
     def setup_cwd(self):

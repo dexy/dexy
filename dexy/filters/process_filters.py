@@ -22,6 +22,7 @@ class ProcessFilter(DexyFilter):
     """
     ALIASES = ['processfilter']
     CHECK_RETURN_CODE = True
+    ENV = None
 
     def ignore_errors(self):
         """
@@ -47,12 +48,18 @@ class ProcessFilter(DexyFilter):
                 raise DexyNonzeroExitException(command, exitcode, stderr)
 
     def setup_env(self):
+        env = os.environ
+        if self.ENV:
+            env.update(self.ENV)
         if self.artifact.args.has_key('env'):
-            env = os.environ
             env.update(self.artifact.args['env'])
-        else:
-            env = None
         return env
+
+    def setup_initial_timeout(self):
+        if self.INITIAL_PROMPT_TIMEOUT:
+            return self.INITIAL_PROMPT_TIMEOUT
+        else:
+            return 3
 
     def setup_timeout(self):
         if self.artifact.args.has_key('timeout'):

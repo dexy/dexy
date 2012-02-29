@@ -12,6 +12,7 @@ class PexpectReplFilter(ProcessFilter):
     ALIASES = ['pexpectreplfilter']
     ALLOW_MATCH_PROMPT_WITHOUT_NEWLINE = False
     INITIAL_PROMPT = None
+    INITIAL_PROMPT_TIMEOUT = 3
     LINE_ENDING = "\r\n"
     PROMPTS = ['>>>', '...'] # Python uses >>> prompt normally and ... when in multi-line structures like loops
     PROMPT_REGEX = None
@@ -76,19 +77,24 @@ class PexpectReplFilter(ProcessFilter):
         search_terms = self.prompt_search_terms()
 
         env = self.setup_env()
-    	if not env:
-    	    env = os.environ
 
-        if env.has_key('PS1') and self.PS1:
+        if self.PS1:
+            self.log.debug("Setting PS1 to %s" % self.PS1)
             env['PS1'] = self.PS1
-        if env.has_key('PS2') and self.PS2:
+        if self.PS2:
+            self.log.debug("Setting PS2 to %s" % self.PS1)
             env['PS2'] = self.PS2
-        if env.has_key('PS3') and self.PS3:
+        if self.PS3:
+            self.log.debug("Setting PS3 to %s" % self.PS1)
             env['PS3'] = self.PS3
-        if env.has_key('PS4') and self.PS4:
+        if self.PS4:
+            self.log.debug("Setting PS4 to %s" % self.PS1)
             env['PS4'] = self.PS4
 
         timeout = self.setup_timeout()
+        initial_timeout = self.setup_initial_timeout()
+
+        self.log.debug("About to spawn new process '%s'." % self.executable())
 
         # Spawn the process
         proc = pexpect.spawn(
@@ -96,15 +102,28 @@ class PexpectReplFilter(ProcessFilter):
                 cwd=self.setup_cwd(),
                 env=env)
 
-        # Capture the initial prompt
-        if self.INITIAL_PROMPT:
-            proc.expect(self.INITIAL_PROMPT, timeout=timeout)
-        elif self.PROMPT_REGEX:
-            proc.expect(search_terms, timeout=timeout)
-        else:
-            proc.expect_exact(search_terms, timeout=timeout)
+        self.log.debug("Capturing initial prompt...")
+        try:
+            if self.INITIAL_PROMPT:
+                proc.expect(self.INITIAL_PROMPT, timeout=initial_timeout)
+            elif self.PROMPT_REGEX:
+                proc.expect(search_terms, timeout=initial_timeout)
+            else:
+                proc.expect_exact(search_terms, timeout=initial_timeout)
+
+        except pexpect.TIMEOUT:
+            if self.INITIAL_PROMPT:
+                match = self.INITIAL_PROMPT
+            else:
+                match = search_terms
+
+            msg = "Failed at matching initial prompt within %s seconds. " % initial_timeout
+            msg += "Received '%s', tried to match with '%s'" % (proc.before, match)
+            raise Exception(msg)
 
         start = proc.before + proc.after
+        self.log.debug("Initial prompt captured!")
+        self.log.debug(start)
         for section_key, section_text in input_dict.items():
             section_transcript = start
             start = ""
@@ -242,18 +261,29 @@ class KshInteractiveStrictFilter(PexpectReplFilter):
     EXECUTABLE = "ksh -i -e"
     INPUT_EXTENSIONS = [".txt", ".sh"]
     OUTPUT_EXTENSIONS = ['.sh-session']
-    INITIAL_PROMPT = "^(#|\$)"
+    INITIAL_PROMPT = "^(#|\$)\s+"
     PROMPTS = ["$", "#"]
     TRIM_PROMPT = "\$|#"
     PS1 = "$ "
     # TODO Fix hanging on # comments in code
 
-class KshInteractiveFilter(PexpectReplFilter):
+class KshInteractiveFilter(KshInteractiveStrictFilter):
     """
     Runs ksh. Use to run bash scripts. Does not set -e.
     """
     ALIASES = ['shintp']
     EXECUTABLE = "ksh -i"
+
+class KshInteractiveNumberedPromptFilter(KshInteractiveFilter):
+    """
+    Runs ksh. Use to run bash scripts. Does not set -e. Prompts are numbered.
+    """
+    ALIASES = ['shintpn']
+    PROMPT_REGEX = "\d*(#|\$)"
+    INITIAL_PROMPT = PROMPT_REGEX
+    TRIM_PROMPT = r"\d*(\$|#)"
+    PS1 = "!$ "
+    ENV = { 'HISTFILE' : 'doesnotexistinartifactsdir/histfile' }
 
 class ClojureInteractiveFilter(PexpectReplFilter):
     """

@@ -441,6 +441,7 @@ re.compile: %s""" % (args['except'], e))
 
         # Determine dependencies
         total_dependencies = 0
+        self.log.debug("Finalizing dependencies between documents...")
         for doc in self.members.values():
             doc.finalize_inputs(self.members)
             total_dependencies += len(doc.inputs)
