@@ -234,12 +234,12 @@ class PhpInteractiveFilter(PexpectReplFilter):
     PROMPTS = ['php > ']
     TRIM_PROMPT = "php > "
 
-class KshInteractiveFilter(PexpectReplFilter):
+class KshInteractiveStrictFilter(PexpectReplFilter):
     """
     Runs ksh. Use to run bash scripts.
     """
     ALIASES = ['shint']
-    EXECUTABLE = "ksh -i -r -e"
+    EXECUTABLE = "ksh -i -e"
     INPUT_EXTENSIONS = [".txt", ".sh"]
     OUTPUT_EXTENSIONS = ['.sh-session']
     INITIAL_PROMPT = "^(#|\$)"
@@ -247,6 +247,13 @@ class KshInteractiveFilter(PexpectReplFilter):
     TRIM_PROMPT = "\$|#"
     PS1 = "$ "
     # TODO Fix hanging on # comments in code
+
+class KshInteractiveFilter(PexpectReplFilter):
+    """
+    Runs ksh. Use to run bash scripts. Does not set -e.
+    """
+    ALIASES = ['shintp']
+    EXECUTABLE = "ksh -i"
 
 class ClojureInteractiveFilter(PexpectReplFilter):
     """
