@@ -24,11 +24,6 @@ class DexyFilter(object):
     WINDOWS_VERSION_COMMAND = None
 
     @classmethod
-    def filters(self):
-        """Lists available filter classes."""
-        pass
-
-    @classmethod
     def executable(self):
         """A standard way of specifying a command line executable. For usage
         example see stdout filter. This does not need to be used, and is not
@@ -127,6 +122,21 @@ class DexyFilter(object):
     def enabled(self):
         """Allow filters to be disabled."""
         return True
+
+    def args(self):
+        """
+        Returns args specified in the .dexy file for this filter alias.
+        """
+        if not hasattr(self, '_args'):
+            args = {}
+            for a in self.ALIASES:
+                if self.artifact.args.has_key(a):
+                    args.update(self.artifact.args[a])
+            self._args = args
+        return self._args
+
+    def arg_value(self, key):
+        return self.args().get(key)
 
     def process(self):
         """This is the method that does the "work" of the handler, that is

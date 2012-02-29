@@ -75,7 +75,7 @@ class LongOutputReporter(Reporter):
         self.create_reports_dir(self.REPORTS_DIR)
         self.load_batch_artifacts()
         for artifact in self.artifacts.values():
-            if artifact.is_last:
+            if artifact.is_last or artifact.additional:
                 fn = artifact.long_canonical_filename()
                 fp = os.path.join(self.REPORTS_DIR, fn)
                 artifact.write_to_file(fp)

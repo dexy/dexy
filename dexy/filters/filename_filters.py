@@ -1,16 +1,41 @@
 from dexy.dexy_filter import DexyFilter
+import json
+import shutil
 import os
 import re
+
+class FilenamesFilter(DexyFilter):
+    """
+    Creates additional inputs for a list of canonical file names.
+    """
+    ALIASES = ['filenames']
+    INPUT_EXTENSIONS = ['.json']
+    OUTPUT_EXTENSIONS = ['.json']
+
+    def process(self):
+        prev_file = open(self.artifact.previous_artifact_filepath, "r")
+        input_info = json.load(prev_file)
+        prev_file.close()
+
+        work_dir = input_info['dir']
+        parent_artifact = self.artifact.inputs().values()[0]
+        parent_artifact_dir = os.path.dirname(parent_artifact.key)
+        for f in input_info['filenames']:
+            key_with_ext = os.path.join(parent_artifact_dir, f)
+            new_artifact = self.artifact.add_additional_artifact(key_with_ext)
+            shutil.copy(os.path.join(work_dir, f), new_artifact.filepath())
+
+        self.artifact.set_data(json.dumps(input_info))
 
 class FilenameFilter(DexyFilter):
     """Generate random filenames to track provenance of data."""
     ALIASES = ['fn']
 
     def process_text(self, input_text):
-        # TODO this should not match more than two dashes
-        for m in re.finditer("dexy--(\S+)\.([a-z]+)", input_text):
-            local_key = m.groups()[0]
-            ext = m.groups()[1]
+        for m in re.finditer("dexy(-{2,})(\S+?)\.([a-z]+)", input_text):
+            dashes = m.groups()[0]
+            local_key = m.groups()[1]
+            ext = m.groups()[2]
 
             parent_dir = os.path.dirname(self.artifact.name)
             key = os.path.join(parent_dir, local_key)

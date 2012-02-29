@@ -194,11 +194,11 @@ class Document(object):
         # put *safe* methods at top of list
         # check for safe methods first in controller
         # all other methods assumed to be dangerous and require 'danger' flag
-        if self.args.has_key('contents'):
+        if self.virtual and self.args.has_key('contents'):
             data = self.args['contents']
 
         # potentially dangerous methods ...
-        elif self.args.has_key('url'):
+        elif self.virtual and self.args.has_key('url'):
             url = self.args['url']
 
             local_filename = re.sub('[^\w\s-]', '', url).strip().lower()
@@ -278,7 +278,7 @@ class Document(object):
                         print "Trying to fetch %s for %s" % (url, self.name)
                         raise err
 
-        elif self.args.has_key('repo') and self.args.has_key('path'):
+        elif self.virtual and (self.args.has_key('repo') and self.args.has_key('path')):
             if not USE_GIT:
                 raise Exception("you can't use repo/path unless you install GitPython")
             repo_url = self.args['repo']

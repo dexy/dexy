@@ -217,7 +217,7 @@ class Artifact(object):
             if a.additional and not k in self._inputs:
                 self.log.debug("(%s) Adding additional artifact %s from %s" % (self.key, k, a.key))
                 self.add_input(k, a)
-            elif not k in self._inputs:
+            elif not k in self._inputs and not a.virtual:
                 # We should have all other inputs already. Validate this.
                 raise Exception("Missing input %s" % k)
 
@@ -229,6 +229,7 @@ class Artifact(object):
         self.binary_input = previous_artifact.binary_output
         self.input_data_dict = previous_artifact.data_dict
         self.input_ext = previous_artifact.ext
+        self.previous_artifact_hashstring = previous_artifact.hashstring
         self.previous_artifact_filename = previous_artifact.filename()
         self.previous_artifact_filepath = previous_artifact.filepath()
         self.previous_canonical_filename = previous_artifact.canonical_filename(True)
@@ -296,7 +297,6 @@ class Artifact(object):
 
         # Set inputs from original document inputs.
         artifact._inputs.update(artifact.doc.input_artifacts())
-        artifact.log.debug("add inputs from document %s: %s" % (artifact.doc.key(), ", ".join(artifact.doc.input_artifacts().keys())))
 
         for k, a in artifact.doc.input_artifacts().iteritems():
             if a.additional and not k in artifact._inputs:
@@ -317,7 +317,6 @@ class Artifact(object):
         return artifact
 
     def run(self):
-
         start = time.time()
 
         if self.controller_args['nocache'] or not self.is_complete():
@@ -329,6 +328,12 @@ class Artifact(object):
             filter_instance = self.filter_class()
             filter_instance.artifact = self
             filter_instance.log = self.log
+
+            # Make sure previous artifact is loaded.
+            if not self.binary_input and len(self.input_text()) == 0:
+                f = open(self.previous_artifact_filepath, "rb")
+                self.data_dict['1'] = f.read()
+                f.close()
 
             try:
                 filter_instance.process()
@@ -376,8 +381,10 @@ class Artifact(object):
         self.elapsed = time.time() - start
         self.db.update_artifact(self)
 
-    def add_additional_artifact(self, key_with_ext, ext):
+    def add_additional_artifact(self, key_with_ext, ext=None):
         """create an 'additional' artifact with random hashstring"""
+        if not ext:
+            ext = os.path.splitext(key_with_ext)[1]
         new_artifact = self.__class__()
         new_artifact.key = key_with_ext
         if ext.startswith("."):
@@ -400,6 +407,7 @@ class Artifact(object):
                 setattr(new_artifact, at, val)
 
         new_artifact.set_hashstring()
+        self.log.debug("new artifact %s hashstring %s" % (key_with_ext, new_artifact.hashstring))
         self.add_input(key_with_ext, new_artifact)
         self.db.append_artifact(new_artifact) # append to db because not part of doc.artifacts
         return new_artifact

@@ -102,6 +102,8 @@ class InputsTemplatePlugin(TemplatePlugin):
             unsorted_json = json.loads(a.output_text())
         except ValueError as e:
             print "unable to load JSON for", a.key
+            print a.filename()
+            print len(a.output_text())
             raise e
 
         def sort_dict(d):
@@ -132,6 +134,10 @@ class InputsTemplatePlugin(TemplatePlugin):
 
             # Do any special handling of data
             if a.ext == '.json':
+                if len(a.output_text()) == 0:
+                    # Hack for JSON data being written directly to a file, e.g. filenames filter
+                    with open(a.filepath(), "rb") as f:
+                        a.data_dict['1'] = f.read()
                 data = self.load_sort_json_data(a)
             else:
                 data = a.data_dict

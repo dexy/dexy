@@ -57,9 +57,10 @@ class PexpectReplFilter(ProcessFilter):
     def strip_newlines(self, line):
         return line.replace(" \r", "")
 
-    def process_dict(self, input_dict):
-        output_dict = OrderedDict()
-
+    def section_output(self, input_dict):
+        """
+        Runs the code in sections and returns an iterator so we can do custom stuff.
+        """
         # If we want to automatically record values of local variables in the
         # script we are running, we add a section at the end of script
         do_record_vars = self.artifact.args.has_key('record-vars') and self.artifact.args['record-vars']
@@ -92,7 +93,7 @@ class PexpectReplFilter(ProcessFilter):
         # Spawn the process
         proc = pexpect.spawn(
                 self.executable(),
-                cwd=self.artifact.artifacts_dir,
+                cwd=self.setup_cwd(),
                 env=env)
 
         # Capture the initial prompt
@@ -110,6 +111,7 @@ class PexpectReplFilter(ProcessFilter):
 
             lines = self.lines_for_section(section_text)
             for l in lines:
+                self.log.debug("Sending '%s'" % l)
                 section_transcript += start
                 proc.send(l.rstrip() + "\n")
                 try:
@@ -118,14 +120,15 @@ class PexpectReplFilter(ProcessFilter):
                     else:
                         proc.expect_exact(search_terms, timeout=timeout)
 
-                        section_transcript += self.strip_newlines(proc.before)
-                        start = proc.after
+                    self.log.debug("Received '%s'" % proc.before)
+                    section_transcript += self.strip_newlines(proc.before)
+                    start = proc.after
                 except pexpect.EOF:
+                    self.log.debug("EOF occurred!")
                     if not self.ignore_errors():
                         raise DexyEOFException()
 
-            # Save this section's output
-            output_dict[section_key] = self.strip_trailing_prompts(section_transcript)
+            yield section_key, section_transcript
 
         try:
             proc.close()
@@ -134,6 +137,13 @@ class PexpectReplFilter(ProcessFilter):
 
         if proc.exitstatus and self.CHECK_RETURN_CODE:
             self.handle_subprocess_proc_return(self.executable() , proc.exitstatus, str(output_dict))
+
+    def process_dict(self, input_dict):
+        output_dict = OrderedDict()
+
+        for section_key, section_transcript in self.section_output(input_dict):
+            # Save this section's output
+            output_dict[section_key] = self.strip_trailing_prompts(section_transcript)
 
         return output_dict
 
