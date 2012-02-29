@@ -17,11 +17,11 @@ class FilenamesFilter(DexyFilter):
         input_info = json.load(prev_file)
         work_dir = input_info['dir']
         parent_artifact = self.artifact.inputs().values()[0]
-        parent_artifact_dir = os.path.dirname(parent_artifact.name)
+        parent_artifact_dir = os.path.dirname(parent_artifact.key)
         for f in input_info['filenames']:
             key_with_ext = os.path.join(parent_artifact_dir, f)
             new_artifact = self.artifact.add_additional_artifact(key_with_ext)
-            shutil.copy(os.path.join(work_dir, key_with_ext), new_artifact.filepath())
+            shutil.copy(os.path.join(work_dir, f), new_artifact.filepath())
 
         self.artifact.set_data("")
 
