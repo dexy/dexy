@@ -217,7 +217,7 @@ class Artifact(object):
             if a.additional and not k in self._inputs:
                 self.log.debug("(%s) Adding additional artifact %s from %s" % (self.key, k, a.key))
                 self.add_input(k, a)
-            elif not k in self._inputs:
+            elif not k in self._inputs and not a.virtual:
                 # We should have all other inputs already. Validate this.
                 raise Exception("Missing input %s" % k)
 
@@ -375,8 +375,10 @@ class Artifact(object):
         self.elapsed = time.time() - start
         self.db.update_artifact(self)
 
-    def add_additional_artifact(self, key_with_ext, ext):
+    def add_additional_artifact(self, key_with_ext, ext=None):
         """create an 'additional' artifact with random hashstring"""
+        if not ext:
+            ext = os.path.splitext(key_with_ext)[1]
         new_artifact = self.__class__()
         new_artifact.key = key_with_ext
         if ext.startswith("."):

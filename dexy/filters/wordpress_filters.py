@@ -1,17 +1,10 @@
-import dexy.filters.blog_filters
+from dexy.filters.api_filters import ApiFilter
 import re
 import xmlrpclib
 
-class WordPressFilter(dexy.filters.blog_filters.BlogFilter):
+class WordPressFilter(ApiFilter):
     """
     Posts to a WordPress blog.
-
-    Create a file called wp-config.json in the root of your project directory.
-    This should include your blog's XMLRPC endpoint URL, your username and your
-    password in a JSON object.
-
-    For example:
-
     {
        "user" : "author",
        "pass" : "password",
