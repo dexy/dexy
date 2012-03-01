@@ -3,17 +3,6 @@ from dexy.filters.process_filters import SubprocessStdoutInputFilter
 from dexy.filters.process_filters import SubprocessStdoutInputFileFilter
 import json
 
-class PhantomJsStdoutFilter(SubprocessStdoutFilter):
-    """
-    Runs scripts using phantom js.
-    """
-    ALIASES = ['phantomjs']
-    EXECUTABLE = 'phantomjs'
-    INPUT_EXTENSIONS = ['.js', '.txt']
-    OUTPUT_EXTENSIONS = ['.txt']
-    VERSION_COMMAND = 'phantomjs --version'
-    # TODO ensure phantom.exit() is called in script
-
 class CleanSubprocessStdoutFilter(SubprocessStdoutFilter):
     """
     Clean non-printing characters from text using the 'strings' tool.

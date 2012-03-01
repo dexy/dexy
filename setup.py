@@ -26,7 +26,8 @@ setup(
         entry_points = {
             'console_scripts' : [
                 'dexy = dexy.commands:run',
-                'screenshot = dexy.screenshot:run'
+                'screenshot = dexy.screenshot:run',
+                'ppjson = dexy.ppjson:run'
                 ]
             },
         include_package_data = True,

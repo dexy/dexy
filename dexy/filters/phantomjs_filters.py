@@ -1,8 +1,84 @@
 from dexy.filters.process_filters import SubprocessFilter
+from dexy.filters.process_filters import SubprocessStdoutFilter
 from ordereddict import OrderedDict
+import json
 import os
 import re
 import shutil
+
+class PhantomJsStdoutFilter(SubprocessStdoutFilter):
+    """
+    Runs scripts using phantom js.
+    """
+    ALIASES = ['phantomjs']
+    EXECUTABLE = 'phantomjs'
+    INPUT_EXTENSIONS = ['.js', '.txt']
+    OUTPUT_EXTENSIONS = ['.txt']
+    VERSION_COMMAND = 'phantomjs --version'
+    # TODO ensure phantom.exit() is called in script?
+
+class PhantomJsRenderSubprocessFilter(SubprocessFilter):
+    """
+    Renders HTML to PNG/PDF using phantom.js. If the HTML relies on local
+    assets such as CSS or image files, these should be specified as inputs.
+    """
+    ALIASES = ['phrender']
+    EXECUTABLE = 'phantomjs'
+    INPUT_EXTENSIONS = [".html", ".txt"]
+    OUTPUT_EXTENSIONS = [".png", ".pdf"]
+    VERSION_COMMAND = 'phantomjs --version'
+    DEFAULT_WIDTH = 1024
+    DEFAULT_HEIGHT = 768
+
+    def setup_cwd(self):
+        return os.path.join(self.artifact.artifacts_dir, self.artifact.hashstring)
+
+    def process(self):
+        self.artifact.create_temp_dir(populate=True)
+        width = self.arg_value('width', self.DEFAULT_WIDTH)
+        height = self.arg_value('height', self.DEFAULT_HEIGHT)
+
+        timeout = self.setup_timeout()
+        if not timeout:
+            timeout = 200
+
+        args = {
+                'address' : self.artifact.previous_canonical_filename,
+                'output' : os.path.join("..", self.artifact.filename()),
+                'width' : width,
+                'height' : height,
+                'timeout' : timeout
+                }
+
+        js = """
+        address = '%(address)s'
+        output = '%(output)s'
+        var page = new WebPage(),
+            address, output, size;
+
+        page.viewportSize = { width: %(width)s, height: %(height)s };
+        page.open(address, function (status) {
+            if (status !== 'success') {
+                console.log('Unable to load the address!');
+            } else {
+                window.setTimeout(function () {
+                page.render(output);
+                phantom.exit();
+                }, %(timeout)s);
+            }
+        });
+        """ % args
+
+        scriptfile = os.path.join(self.artifact.artifacts_dir, self.artifact.hashstring, "phantomscript.js")
+        self.log.debug("scriptfile: %s" % scriptfile)
+        with open(scriptfile, "w") as f:
+            f.write(js)
+
+        command = "phantomjs phantomscript.js"
+        self.log.debug(js)
+        proc, stdout = self.run_command(command, self.setup_env())
+        self.handle_subprocess_proc_return(command, proc.returncode, stdout)
+        self.artifact.stdout = stdout
 
 class PhantomJsRenderJavascriptInteractiveFilter(SubprocessFilter):
     """
@@ -15,6 +91,8 @@ class PhantomJsRenderJavascriptInteractiveFilter(SubprocessFilter):
     OUTPUT_EXTENSIONS = ['.json']
     VERSION_COMMAND = 'phantomjs --version'
     BINARY = False
+    DEFAULT_WIDTH = 1024
+    DEFAULT_HEIGHT = 768
 
     def setup_cwd(self):
         adir = self.artifact.artifacts_dir
@@ -51,6 +129,10 @@ class PhantomJsRenderJavascriptInteractiveFilter(SubprocessFilter):
         Construct the javascript which will actually be run by phantomjs.
         """
         page_screenshot_artifact = self.new_image_artifact('initial')
+
+        width = self.arg_value('width', self.DEFAULT_WIDTH)
+        height = self.arg_value('height', self.DEFAULT_HEIGHT)
+
         page_fn = page_screenshot_artifact.filename()
         js = """
         var page = new WebPage();
@@ -61,9 +143,10 @@ class PhantomJsRenderJavascriptInteractiveFilter(SubprocessFilter):
            consoleObject[sectionName] += ("" + msg + "\\n");
         };
 
-        page.open("%s", function (status) {
-                page.render("%s");
-        """ % (url, page_fn)
+        page.viewportSize = { width: %(width)s, height: %(height)s };
+        page.open("%(url)s", function (status) {
+                page.render("%(page_fn)s");
+        """ % {'url' : url, 'page_fn' : page_fn, 'width' : width, 'height' : height }
 
         for section_name, code in data_dict.iteritems():
             if code and not re.match("^\s*$", code):

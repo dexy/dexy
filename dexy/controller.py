@@ -447,6 +447,7 @@ re.compile: %s""" % (args['except'], e))
             total_dependencies += len(doc.inputs)
             for input_doc in doc.inputs:
                 depend(doc, input_doc)
+            self.log.debug(doc.key())
 
         if len(self.args['run']) > 0:
             # Only run the specified document, and its dependencies.

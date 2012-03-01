@@ -135,8 +135,8 @@ class DexyFilter(object):
             self._args = args
         return self._args
 
-    def arg_value(self, key):
-        return self.args().get(key)
+    def arg_value(self, key, default=None):
+        return self.args().get(key, default)
 
     def process(self):
         """This is the method that does the "work" of the handler, that is
