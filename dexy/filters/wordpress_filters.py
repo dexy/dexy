@@ -1,93 +1,91 @@
 from dexy.filters.api_filters import ApiFilter
+import mimetypes
+import os
 import re
 import xmlrpclib
 
 class WordPressFilter(ApiFilter):
     """
     Posts to a WordPress blog.
-    {
-       "user" : "author",
-       "pass" : "password",
-       "xmlrpc_url" : "http://blog.dexy.it:80/xmlrpc.php"
-    }
-
     """
-    ALIASES = ['wp']
-    BLOG_CONFIG_FILE = 'wp-config.json'
-    MIME_TYPES = {
-        'png' : 'image/png',
-        'jpg' : 'image/jpeg',
-        'jpeg' : 'image/jpeg',
-        'aiff' : 'audio/x-aiff',
-        'wav' : 'audio/x-wav',
-        'wave' : 'audio/x-wav',
-        'mp3' : 'audio/mpeg'
-    }
+    ALIASES = ['wp', 'wordpress']
+    API_KEY_NAME = 'wordpress'
     BLOG_ID = 0
+    DOCUMENT_API_CONFIG_FILE = "wordpress.json"
+    DOCUMENT_API_CONFIG_FILE_KEY = "wordpress-config-file"
+    OUTPUT_EXTENSIONS = ['.txt']
 
-    def initialize_api(self):
-        api = xmlrpclib.ServerProxy(self.blog_conf["xmlrpc_url"], verbose=False)
-        #print api.system.listMethods()
-        return api
+    @classmethod
+    def api_url(klass):
+        base_url = klass.read_param_class('url')
+        if base_url.endswith("xmlrpc.php"):
+            return base_url
+        else:
+            return "%s/xmlrpc.php" % base_url
 
-    def content_dict(self, api, input_text):
-        input_text = self.upload_files_and_replace_links(api, input_text)
-        content = { 'title' : self.post_conf['title'], 'description' : input_text}
-        return content
+    @classmethod
+    def api(klass):
+        if not hasattr(klass, "_api"):
+            klass._api = xmlrpclib.ServerProxy(klass.api_url())
+        return klass._api
 
-    def new_post(self, api, input_text):
-        post_id = api.metaWeblog.newPost(
-            self.BLOG_ID,
-            self.username,
-            self.password,
-            self.content_dict(api, input_text),
-            self.post_conf['publish']
-        )
-        return post_id
+    @classmethod
+    def docmd_list_methods(klass):
+        """
+        List API methods exposed by WordPress API.
+        """
+        for method in sorted(klass.api().system.listMethods()):
+            print method
 
-    def update_post(self, api, input_text, post_id):
-        api.metaWeblog.editPost(
-            post_id,
-            self.username,
-            self.password,
-            self.content_dict(api, input_text),
-            self.post_conf['publish']
-        )
+    def process_text(self, input_text):
+        if self.artifact.input_ext in self.PAGE_CONTENT_EXTENSIONS:
+            document_config = self.read_document_config()
+            document_config['description'] = input_text
+            post_id = document_config.get('post-id')
+            publish = document_config.get('publish', False)
 
-    def upload_files_and_replace_links(self, api, input_text):
-        url_cache = {}
+            self.log.debug("document config is :%s" % document_config)
 
-        def upload_files_to_wp(regexp, input_text):
-            for t in re.findall(regexp, input_text):
-                if url_cache.has_key(t[1]):
-                    url = url_cache[t[1]]
-                    self.log.info("using cached url %s %s" % (t[1], url))
-                else:
-                    f = open(t[1], 'rb')
-                    image_base_64 = xmlrpclib.Binary(f.read())
-                    f.close()
-
-                    upload_file = {
-                        'name' : t[1].split("/")[1],
-                        'type' : self.MIME_TYPES[t[2]], # *should* raise error if not on whitelist
-                        'bits' : image_base_64,
-                        'overwrite' : 'true'
-                    }
-                    upload_result = api.wp.uploadFile(
+            if post_id:
+                self.api().metaWeblog.editPost(
+                        post_id,
+                        self.read_param('username'),
+                        self.read_param('password'),
+                        document_config,
+                        publish
+                        )
+            else:
+                post_id = self.api().metaWeblog.newPost(
                         self.BLOG_ID,
-                        self.username,
-                        self.password,
-                        upload_file
-                    )
-                    url = upload_result['url']
-                    url_cache[t[1]] = url
-                    self.log.info("uploaded %s to %s" % (t[1], url))
+                        self.read_param('username'),
+                        self.read_param('password'),
+                        document_config,
+                        publish
+                        )
+                document_config['post-id'] = post_id
 
-                replace_string = t[0].replace(t[1], url)
-                input_text = input_text.replace(t[0], replace_string)
-            return input_text
+            self.save_document_config(document_config)
+            return input_text # Allow chaining
 
-        input_text = upload_files_to_wp('(<img src="(artifacts/.+\.(\w{2,4}))")', input_text)
-        input_text = upload_files_to_wp('(<embed src="(artifacts/.+\.(\w{2,4}))")', input_text)
-        input_text = upload_files_to_wp('(<audio src="(artifacts/.+\.(\w{2,4}))")', input_text)
-        return input_text
+        else:
+            # Upload image, return image url.
+            with open(self.artifact.previous_artifact_filepath, 'rb') as f:
+                image_base_64 = xmlrpclib.Binary(f.read())
+
+                upload_file = {
+                         'name' : os.path.basename(self.artifact.previous_canonical_filename),
+                         'type' : mimetypes.types_map[self.artifact.ext],
+                         'bits' : image_base_64,
+                         'overwrite' : 'true'
+                         }
+
+                upload_result = self.api().wp.uploadFile(
+                         self.BLOG_ID,
+                         self.read_param('username'),
+                         self.read_param('password'),
+                         upload_file
+                         )
+                url = upload_result['url']
+                self.log.debug("uploaded %s to %s" % (self.artifact.key, url))
+
+            return url

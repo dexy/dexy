@@ -219,10 +219,10 @@ class TenderappFilter(ApiFilter):
         """
         categories = klass.categories()
         if len(categories) == 0:
-            print "No categories found for %s" % klass.read_url()
+            print "No categories found for %s" % klass.read_param_class('url')
         else:
             headers = ["permalink", "summary"]
-            print "Categories found for %s" % klass.read_url()
+            print "Categories found for %s" % klass.read_param_class('url')
             print "\t".join(headers)
             for category in categories:
                 print "\t".join(category.setdefault(h, "") for h in headers)
@@ -234,10 +234,10 @@ class TenderappFilter(ApiFilter):
         """
         sections = klass.sections()
         if len(sections) == 0:
-            print "No sections found for %s" % klass.read_url()
+            print "No sections found for %s" % klass.read_param_class('url')
         else:
             headers = ["permalink", "title"]
-            print "Sections found for %s" % klass.read_url()
+            print "Sections found for %s" % klass.read_param_class('url')
             print "\t".join(headers)
             for section in sections:
                 print "\t".join(section.setdefault(h, "") for h in headers)
@@ -250,7 +250,7 @@ class TenderappFilter(ApiFilter):
         if str(discussionid).startswith("http"):
             url = discussionid
         else:
-            url = "%s/discussions/%s" % (klass.read_url(), discussionid)
+            url = "%s/discussions/%s" % (klass.read_param_class('url'), discussionid)
         result = requests.delete(url, headers=klass.default_headers())
         if re.match("^\s*$", result.text):
             print "discussion %s deleted" % url
@@ -263,7 +263,7 @@ class TenderappFilter(ApiFilter):
         Permanently deletes a kb article from the remote server.
         """
         # TODO ask "are you sure"
-        url = "%s/faqs/%s" % (klass.read_url(), articleid)
+        url = "%s/faqs/%s" % (klass.read_param_class('url'), articleid)
         result = requests.delete(url, headers=klass.default_headers())
         print result.text
 
@@ -274,9 +274,9 @@ class TenderappFilter(ApiFilter):
         """
         discussions = klass.discussions_for_current_user()
         if len(discussions) == 0:
-            print "No discussions found for current user at", klass.read_url()
+            print "No discussions found for current user at", klass.read_param_class('url')
         else:
-            print "Discussions found for current user at", klass.read_url()
+            print "Discussions found for current user at", klass.read_param_class('url')
             print "\n".join("%s [%s] (%s)" % (d['href'], d['html_href'], d['title']) for d in discussions)
 
     @classmethod
@@ -286,10 +286,10 @@ class TenderappFilter(ApiFilter):
         """
         articles = klass.articles()
         if len(articles) == 0:
-            print "No articles found at", klass.read_url()
+            print "No articles found at", klass.read_param_class('url')
         else:
             headers = ["href", "title", "html_href"]
-            print "Articles found at", klass.read_url()
+            print "Articles found at", klass.read_param_class('url')
             print "\t".join(headers)
             for article in articles:
                 print "\t".join(article.setdefault(h, "") for h in headers)
@@ -447,7 +447,7 @@ comment will be posted to the discussion %s
         Retrieve a dict with information about knowledge base sections defined in tenderapp
         """
         headers = klass.default_headers()
-        url = "%s/sections" % klass.read_url()
+        url = "%s/sections" % klass.read_param_class('url')
         result = requests.get(url, headers=headers)
         return klass.load_if_valid_json(result.text)['sections']
 
@@ -457,7 +457,7 @@ comment will be posted to the discussion %s
         Retrieve a dict with information about discussion categories defined in tenderapp
         """
         headers = klass.default_headers()
-        url = "%s/categories" % klass.read_url()
+        url = "%s/categories" % klass.read_param_class('url')
         result = requests.get(url, headers=headers)
         return klass.load_if_valid_json(result.text)['categories']
 
@@ -467,14 +467,14 @@ comment will be posted to the discussion %s
         Retrieves list of knowledge base articles
         """
         headers = klass.default_headers()
-        url = "%s/faqs" % klass.read_url()
+        url = "%s/faqs" % klass.read_param_class('url')
         result = requests.get(url, headers=headers)
         return klass.load_if_valid_json(result.text)['faqs']
 
     @classmethod
     def discussions_for_current_user(klass):
         headers = klass.default_headers()
-        url = "%s/discussions?user_current=1" % klass.read_url()
+        url = "%s/discussions?user_current=1" % klass.read_param_class('url')
         result = requests.get(url, headers=headers)
         return json.loads(result.text)['discussions']
 
@@ -508,7 +508,7 @@ comment will be posted to the discussion %s
     def default_headers(klass, json=False):
         headers = {
                 "Accept" : "application/vnd.tender-v1+json",
-                "X-Tender-Auth" :  klass.read_api_key()
+                "X-Tender-Auth" :  klass.read_param_class('api-key')
                 }
         if json:
             headers['Content-Type'] = "application/json"

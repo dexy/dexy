@@ -5,30 +5,7 @@ import re
 
 class BlogFilter(DexyFilter):
     ALIASES = ['blogfilter']
-    BLOG_CONFIG_FILE = 'blog-config.json'
-    PASSWORD_KEYS = ['password', 'pass', 'pw']
-    USERNAME_KEYS = ['username', 'user']
 
-    def load_blog_conf(self):
-        if not os.path.exists(self.BLOG_CONFIG_FILE):
-            raise Exception("Could not find config file called %s" % self.BLOG_CONFIG_FILE)
-        f = open(self.BLOG_CONFIG_FILE, "r")
-        self.blog_conf = json.load(f)
-        f.close()
-
-        self.password = None
-        for k in self.PASSWORD_KEYS:
-            if self.blog_conf.has_key(k):
-                self.password = self.blog_conf[k]
-        if not self.password:
-            raise Exception("none of %s was found in blog conf file %s, need to set a password" % (",".join(self.PASSWORD_KEYS), self.BLOG_CONFIG_FILE))
-
-        self.username = None
-        for k in self.USERNAME_KEYS:
-            if self.blog_conf.has_key(k):
-                self.username = self.blog_conf[k]
-        if not self.username:
-            raise Exception("none of %s was found in blog conf file %s, need to set a username" % (",".join(self.USERNAME_KEYS), self.BLOG_CONFIG_FILE))
 
 
     def load_post_conf(self):

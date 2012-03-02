@@ -13,10 +13,6 @@ class ConfluenceFilter(ApiFilter):
     DOCUMENT_API_CONFIG_FILE_KEY = "confluence-config-file"
     OUTPUT_EXTENSIONS = [".json"]
 
-    # Any file extensions not in this list will be treated as binary files
-    # rather than pages.
-    PAGE_CONTENT_EXTENSIONS = ['.md', '.txt', '.html']
-
     @classmethod
     def confluence(klass):
         if not hasattr(klass, '_confluence'):

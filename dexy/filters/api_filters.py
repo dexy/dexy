@@ -1,4 +1,5 @@
 from dexy.dexy_filter import DexyFilter
+import dexy.introspect
 import json
 import os
 
@@ -24,10 +25,12 @@ class ApiFilter(DexyFilter):
     concern about identifying the entry in a .dexy file or accidentally
     overwriting some unrelated information.
     """
-    ALIASES = ['apifilter']
+    ALIASES = ['apis']
     MASTER_API_KEY_FILE = "~/.dexyapis"
     PROJECT_API_KEY_FILE = ".dexyapis"
+    PAGE_CONTENT_EXTENSIONS = ['.md', '.txt', '.html']
     API_KEY_NAME = None
+    API_KEY_KEYS = ['username', 'password', 'url']
 
     DOCUMENT_API_CONFIG_FILE = None
     DOCUMENT_API_CONFIG_FILE_KEY = "api-config-file"
@@ -35,6 +38,24 @@ class ApiFilter(DexyFilter):
     # Put API key locations in this array, later entries will override earlier
     # entries if found, so you can set a user-wide default but override per-project.
     API_KEY_LOCATIONS = [MASTER_API_KEY_FILE, PROJECT_API_KEY_FILE]
+
+    @classmethod
+    def docmd_create_keyfile(klass):
+        key_filename = os.path.expanduser(klass.MASTER_API_KEY_FILE)
+        if os.path.exists(key_filename):
+            raise Exception("File %s already exists!" % key_filename)
+
+        keyfile_content = {}
+        filter_list = dexy.introspect.filters()
+        for filter_class in filter_list.values():
+            if issubclass(filter_class, klass) and not filter_class == klass:
+                print filter_class.__name__
+                if not filter_class.API_KEY_NAME:
+                    raise Exception("filter class %s should set API_KEY_NAME" % filter_class.__name__)
+                keyfile_content[filter_class.API_KEY_NAME] = dict((k, "TODO") for k in filter_class.API_KEY_KEYS)
+
+        with open(key_filename, "wb") as f:
+            json.dump(keyfile_content, f, sort_keys = True, indent=4)
 
     def document_api_config_file(self):
         if self.artifact.args.has_key(self.DOCUMENT_API_CONFIG_FILE_KEY):
@@ -60,8 +81,10 @@ class ApiFilter(DexyFilter):
             json.dump(config, f, sort_keys=True, indent=4)
 
     @classmethod
-    def read_param(klass, param_name):
+    def read_param_class(klass, param_name):
         param_value = None
+        if not param_name in klass.API_KEY_KEYS:
+            raise Exception("Param %s not specified in API_KEY_KEYS for %s" % (param_name, klass.__name__))
 
         for filename in klass.API_KEY_LOCATIONS:
             if "~" in filename:
@@ -73,19 +96,14 @@ class ApiFilter(DexyFilter):
                     if params.has_key(klass.API_KEY_NAME):
                         param_value = params[klass.API_KEY_NAME][param_name]
 
-        if hasattr(klass, 'artifact') and klass.artifact.args.has_key('tenderapp') and klass.artifact.args['tenderapp'].has_key(param_name):
-            return klass.artifact.args['tenderapp'][param_name]
-        elif param_value:
+        if param_value:
             return param_value
         else:
             msg = "Could not find %s for %s in: %s" % (param_name, klass.API_KEY_NAME, ", ".join(klass.API_KEY_LOCATIONS))
             raise Exception(msg)
 
-    @classmethod
-    def read_api_key(klass):
-        return klass.read_param('api-key')
-
-    @classmethod
-    def read_url(klass):
-        return klass.read_param('url')
-
+    def read_param(self, param_name):
+        if self.arg_value(param_name):
+            return self.arg_value(param_name)
+        else:
+            return self.__class__.read_param_class(param_name)

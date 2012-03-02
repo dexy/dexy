@@ -13,6 +13,14 @@ class MediaWikiFilter(ApiFilter):
     OUTPUT_EXTENSIONS = [".url", ".txt"]
 
     @classmethod
+    def api_url(self):
+        base_url = self.read_url()
+        if base_url.endswith("api.php"):
+            return base_url
+        else:
+            return "%s/api.php" % base_url
+
+    @classmethod
     def response_to_json(klass, response_text):
         """
         Convert response to JSON, checking for errors returned from API.
@@ -37,14 +45,14 @@ class MediaWikiFilter(ApiFilter):
 
             # TODO persist lgtoken somewhere?
 
-            result = requests.post(klass.read_url(), data=payload)
+            result = requests.post(klass.api_url(), data=payload)
             result_json = klass.response_to_json(result.text)
             klass._login_token = result_json['login']['token']
             klass.cookies = result.cookies
 
             # Activate login by posting lgtoken along with username + password
             payload['lgtoken'] = klass._login_token
-            requests.post(klass.read_url(), data=payload, cookies=klass.cookies)
+            requests.post(klass.api_url(), data=payload, cookies=klass.cookies)
 
         return klass._login_token
 
@@ -62,7 +70,7 @@ class MediaWikiFilter(ApiFilter):
         payload['generator'] = 'allpages'
         payload['prop'] = 'info'
         payload['intoken'] = 'edit'
-        result = requests.post(klass.read_url(), cookies=klass.cookies, data=payload)
+        result = requests.post(klass.api_url(), cookies=klass.cookies, data=payload)
         result_json = klass.response_to_json(result.text)
         return result_json['query']['pages']
 
@@ -74,7 +82,7 @@ class MediaWikiFilter(ApiFilter):
         payload['pageids'] = [pageid]
         payload['rvprop'] = 'content'
         payload['rvlimit'] = '1'
-        result = requests.post(klass.read_url(), cookies=klass.cookies, data=payload)
+        result = requests.post(klass.api_url(), cookies=klass.cookies, data=payload)
         result_json = klass.response_to_json(result.text)
         return result_json['query']['pages'][str(pageid)]['revisions'][0]['*']
 
@@ -85,7 +93,7 @@ class MediaWikiFilter(ApiFilter):
         payload['prop'] = 'info'
         payload['inprop'] = 'url'
         payload['titles'] = [title]
-        result = requests.post(klass.read_url(), cookies=klass.cookies, data=payload)
+        result = requests.post(klass.api_url(), cookies=klass.cookies, data=payload)
         if hasattr(klass, 'log'):
             klass.log.debug(result.text)
         result_json = klass.response_to_json(result.text)
@@ -118,12 +126,12 @@ class MediaWikiFilter(ApiFilter):
         payload = self.default_params()
         payload['token'] = edit_token
 
-        if self.artifact.input_ext in ['.html', '.txt', '.md']:
+        if self.artifact.input_ext in self.PAGE_CONTENT_EXTENSIONS:
             # Create a new page or update an existing page.
             payload['action'] = 'edit'
             payload['text'] = input_text
             payload['title'] = document_config['title']
-            result = requests.post(self.read_url(), cookies=self.cookies, data=payload)
+            result = requests.post(self.api_url(), cookies=self.cookies, data=payload)
 
             self.log.debug(result.text)
 
@@ -151,7 +159,7 @@ class MediaWikiFilter(ApiFilter):
 
             f = open(self.artifact.previous_artifact_filepath, "rb")
             files = {'file' : (payload['filename'], f) }
-            result = requests.post(self.read_url(), cookies = self.cookies, data=payload, files=files)
+            result = requests.post(self.api_url(), cookies = self.cookies, data=payload, files=files)
             f.close()
 
             self.log.debug(result.text)
@@ -184,7 +192,7 @@ class MediaWikiFilter(ApiFilter):
                         payload['text'] = a.output_text()
 
             if payload.has_key('text'):
-                result = requests.post(self.read_url(), cookies=self.cookies, data=payload)
+                result = requests.post(self.api_url(), cookies=self.cookies, data=payload)
                 self.log.debug(result.text)
                 result_json = self.response_to_json(result.text)
 
