@@ -2,6 +2,7 @@ from StringIO import StringIO
 from dexy.controller import Controller
 from dexy.document import Document
 from modargs import args as modargs
+import dexy.commands
 import dexy.introspect
 import os
 import shutil
@@ -30,7 +31,8 @@ class divert_stdout():
         self.my_stdout.close()
 
 def run_dexy_without_tempdir(config_dict, additional_args={}):
-    Document.filter_list = dexy.introspect.filters()
+    if not hasattr(Document, 'filter_list'):
+        Document.filter_list = dexy.introspect.filters()
 
     fn = modargs.function_for(dexy.commands, "dexy")
     args = modargs.determine_kwargs(fn)

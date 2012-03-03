@@ -20,7 +20,6 @@ except ImportError:
     USE_GIT = False
 
 class Document(object):
-
     def __init__(self):
         # initialize attributes
         self.args = {}
@@ -404,3 +403,6 @@ class Document(object):
         self.timing.append(("save-additional-inputs", time.time() - start))
         self.elapsed = time.time() - time_start
         return self
+
+    def output(self):
+        return self.final_artifact().output()

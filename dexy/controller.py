@@ -134,6 +134,12 @@ class Controller(object):
             config_path = os.path.join(*(path_elements[0:i] + [config_file]))
             config_files = glob.glob(config_path)
 
+            # Don't propagate virtual files
+            for k in config_dict.keys():
+                propagate_virtual = config_dict[k].has_key('propagate') and config_dict[k]['propagate']
+                if k.startswith("@") and not propagate_virtual:
+                    del config_dict[k]
+
             for f in config_files:
                 self.log.info("loading config file %s" % f)
 
@@ -149,12 +155,6 @@ class Controller(object):
                     # directories, just use this directory's config in json_dict
                     config_dict = json_dict
                 else:
-                    for k in config_dict.keys():
-                        propagate_virtual = config_dict[k].has_key('propagate') and config_dict[k]['propagate']
-                        if k.startswith("@") and not json_dict.has_key(k) and not propagate_virtual:
-                            # don't propagate virtual files
-                            del config_dict[k]
-
                     # Combine any config in this dir with parent dir config.
                     config_dict.update(json_dict)
 
@@ -447,7 +447,7 @@ re.compile: %s""" % (args['except'], e))
             total_dependencies += len(doc.inputs)
             for input_doc in doc.inputs:
                 depend(doc, input_doc)
-            self.log.debug(doc.key())
+            self.log.debug("finalizing dependencies for %s" % doc.key())
 
         if len(self.args['run']) > 0:
             # Only run the specified document, and its dependencies.

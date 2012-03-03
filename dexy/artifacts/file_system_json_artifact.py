@@ -120,4 +120,7 @@ class FileSystemJsonArtifact(Artifact):
         if not self.binary_output:
             output_dict = self.read_dict_from_file(self.cached_output_filepath())
             self.data_dict = self.convert_numbered_dict_to_ordered_dict(output_dict)
+        else:
+            with open(self.filepath(), "rb") as f:
+                self.binary_data = f.read()
 

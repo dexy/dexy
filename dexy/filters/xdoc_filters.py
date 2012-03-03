@@ -70,16 +70,19 @@ class PythonDocumentationFilter(DexyFilter):
         packages_info = {}
 
         for package in packages:
+            self.log.debug("processing package %s" % package)
             package_name = package.__name__
             method_source_code = {}
             class_info = {}
             prefix = package.__name__ + "."
             for module_loader, name, ispkg in pkgutil.walk_packages(package.__path__, prefix=prefix):
+                self.log.debug("in package %s processing module %s" % (package_name, name))
                 try:
                     __import__(name)
                     mod = sys.modules[name]
 
                     for k, m in inspect.getmembers(mod):
+                        self.log.debug("in package %s module %s processing element %s" % (package_name, name, k))
                         if not inspect.isclass(m) and hasattr(m, '__module__') and m.__module__.startswith(package_name):
                             # TODO figure out how to get module constants
                             key = "%s.%s" % (m.__module__, k)
@@ -92,7 +95,7 @@ class PythonDocumentationFilter(DexyFilter):
                             try:
                                 class_info[class_key]['source'] = highlight(inspect.getsource(m), self.LEXER, self.HTML_FORMATTER)
                             except IOError:
-                                print "can't get source for", class_key
+                                self.log.debug("can't get source for" % class_key)
                                 class_info[class_key]['source'] = ""
 
                             for ck, cm in inspect.getmembers(m):
@@ -101,7 +104,7 @@ class PythonDocumentationFilter(DexyFilter):
                                 method_source_code[key] = item_content
                                 class_info[class_key][ck] = item_content
                 except ImportError as e:
-                    print e
+                    self.log.debug(e)
             packages_info[package.__name__] = method_source_code
         return json.dumps(packages_info, indent=4)
 

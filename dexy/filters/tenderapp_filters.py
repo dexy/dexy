@@ -73,6 +73,7 @@ class TenderappFilter(ApiFilter):
     """
     ALIASES = ['tenderapp']
     API_KEY_NAME = 'tenderapp'
+    API_KEY_KEYS = ['api-key', 'url']
     INPUT_EXTENSIONS = [".md", ".markdown", ".html"]
     OUTPUT_EXTENSIONS = [".json"] # we output the json response from the API, maybe better to output orig content for chaining
     DOCUMENT_API_CONFIG_FILE = "tenderapp.json"

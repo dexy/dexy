@@ -102,7 +102,7 @@ def get_filter_for_alias(alias, filter_list=None):
 
 def filters(log=NULL_LOGGER):
     """
-    Returns a dict whose keys are all supported filter alises and whose values
+    Returns a dict whose keys are all supported filter aliases and whose values
     are the corresponding filter classes.
     """
     dexy_filters = ('dexy.filters', os.path.join(dexy.__path__[0], 'filters'))

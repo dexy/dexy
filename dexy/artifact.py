@@ -179,7 +179,8 @@ class Artifact(object):
 
     def setup_from_filter_class(self):
         # cache filter class source code so it only has to be calculated once
-        if not hasattr(self.filter_class, 'SOURCE_CODE'):
+        filter_class_source_const = "SOURCE_CODE_%s" % self.filter_class.__name__
+        if not hasattr(self.filter_class, filter_class_source_const):
             # get source code of this filter class + all parent filter classes.
             source = ""
             klass = self.filter_class
@@ -192,15 +193,17 @@ class Artifact(object):
             # and then get source code of DexyFilter class
             source += inspect.getsource(dexy.dexy_filter.DexyFilter)
 
-            filter_class_source = source
-            self.filter_class.SOURCE_CODE = self.compute_hash(filter_class_source)
+            filter_class_source_hash = self.compute_hash(source)
+            setattr(self.filter_class, filter_class_source_const, filter_class_source_hash)
+            assert filter_class_source_hash == getattr(self.filter_class, filter_class_source_const)
+            self.log.debug("Source code hash for %s is %s" % (self.filter_class.__name__, filter_class_source_hash))
 
         if not hasattr(self.filter_class, 'VERSION'):
             filter_version = self.filter_class.version(self.log)
             self.filter_class.VERSION = filter_version
 
         self.filter_name = self.filter_class.__name__
-        self.filter_source = self.filter_class.SOURCE_CODE
+        self.filter_source = getattr(self.filter_class, filter_class_source_const)
         self.filter_version = self.filter_class.VERSION
 
         if self.final is None:
@@ -563,6 +566,17 @@ class Artifact(object):
 
     def output_text(self):
         return u"".join([self.convert_if_not_unicode(v) for k, v in self.data_dict.items()])
+
+    def output(self):
+        if not self.is_complete():
+            raise Exception("can't call output unless complete!")
+
+        if self.binary_output:
+            if not hasattr(self, 'binary_data'):
+                self.load_output()
+            return self.binary_data
+        else:
+            return self.output_text()
 
     def relative_refs(self, relative_to_file):
         """How to refer to this artifact, relative to another."""

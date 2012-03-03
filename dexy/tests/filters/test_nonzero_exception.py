@@ -48,6 +48,10 @@ DONT_KNOW_HOW_TO_TEST = [
 "PandocFilter",
 "PexpectReplFilter", #skip
 "ProcessFilter", #skip
+"KshInteractiveNumberedPromptFilter",
+"KshInteractiveFilter",
+"PhantomJsStdoutFilter", # phantom js hangs on errors, doesn't exit
+"PhantomJsRenderJavascriptInteractiveFilter", # phantom js hangs on errors, doesn't exit
 "RagelRubySubprocessFilter",
 "RdConvFilter",
 "RedclothFilter",

@@ -12,7 +12,7 @@ class PexpectReplFilter(ProcessFilter):
     ALIASES = ['pexpectreplfilter']
     ALLOW_MATCH_PROMPT_WITHOUT_NEWLINE = False
     INITIAL_PROMPT = None
-    INITIAL_PROMPT_TIMEOUT = 3
+    INITIAL_PROMPT_TIMEOUT = 5
     LINE_ENDING = "\r\n"
     PROMPTS = ['>>>', '...'] # Python uses >>> prompt normally and ... when in multi-line structures like loops
     PROMPT_REGEX = None
@@ -155,7 +155,7 @@ class PexpectReplFilter(ProcessFilter):
             raise Exception("process %s may not have closed" % proc.pid)
 
         if proc.exitstatus and self.CHECK_RETURN_CODE:
-            self.handle_subprocess_proc_return(self.executable() , proc.exitstatus, str(output_dict))
+            self.handle_subprocess_proc_return(self.executable(), proc.exitstatus, section_transcript)
 
     def process_dict(self, input_dict):
         output_dict = OrderedDict()
