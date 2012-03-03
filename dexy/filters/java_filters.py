@@ -21,8 +21,9 @@ class JrubyFilter(SubprocessStdoutFilter):
 class JirbFilter(PexpectReplFilter):
     ALIASES = ['jirb']
     ALLOW_MATCH_PROMPT_WITHOUT_NEWLINE = True
-    EXECUTABLE = "jirb --prompt-mode simple"
     CHECK_RETURN_CODE = False
+    EXECUTABLE = "jirb --prompt-mode simple"
+    INITIAL_PROMPT_TIMEOUT = 30
     INPUT_EXTENSIONS = [".rb"]
     OUTPUT_EXTENSIONS = [".rbcon"]
     PROMPTS = ['>>', '?>']
@@ -50,11 +51,12 @@ class JythonFilter(SubprocessStdoutFilter):
 
 class JythonInteractiveFilter(PexpectReplFilter):
     ALIASES = ['jythoni']
+    CHECK_RETURN_CODE = False
     EXECUTABLE = "jython -i"
+    INITIAL_PROMPT_TIMEOUT = 30
     INPUT_EXTENSIONS = [".py", ".txt"]
     OUTPUT_EXTENSIONS = [".pycon"]
     VERSION_COMMAND = "jython --version"
-    CHECK_RETURN_CODE = False
 
     @classmethod
     def enabled(self):
