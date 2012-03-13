@@ -63,7 +63,7 @@ class OutputReporter(Reporter):
                     self.log.warn("two or more final artifacts have canonical path %s" % fp)
                     self.log.warn("most recent is %s" % artifact.key)
                 else:
-                    self.log.debug("saving %s to %s" % (artifact.key, fn))
+                    self.log.debug("saving %s to %s" % (artifact.filename(), fn))
                 artifact.write_to_file(fp)
 
 class LongOutputReporter(Reporter):

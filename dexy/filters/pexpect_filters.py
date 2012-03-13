@@ -13,6 +13,7 @@ class PexpectReplFilter(ProcessFilter):
     ALLOW_MATCH_PROMPT_WITHOUT_NEWLINE = False
     INITIAL_PROMPT = None
     INITIAL_PROMPT_TIMEOUT = 5
+    TIMEOUT = 10 # Set to larger number if needed. Or set to None for no timeout.
     LINE_ENDING = "\r\n"
     PROMPTS = ['>>>', '...'] # Python uses >>> prompt normally and ... when in multi-line structures like loops
     PROMPT_REGEX = None
@@ -94,12 +95,13 @@ class PexpectReplFilter(ProcessFilter):
         timeout = self.setup_timeout()
         initial_timeout = self.setup_initial_timeout()
 
-        self.log.debug("About to spawn new process '%s'." % self.executable())
+        cwd=self.setup_cwd()
+        self.log.debug("About to spawn new process '%s' in %s." % (self.executable(), cwd))
 
         # Spawn the process
         proc = pexpect.spawn(
                 self.executable(),
-                cwd=self.setup_cwd(),
+                cwd=cwd,
                 env=env)
 
         self.log.debug("Capturing initial prompt...")
@@ -146,6 +148,10 @@ class PexpectReplFilter(ProcessFilter):
                     self.log.debug("EOF occurred!")
                     if not self.ignore_errors():
                         raise DexyEOFException()
+                except pexpect.TIMEOUT:
+                    msg = "Failed at matching prompt within %s seconds. " % timeout
+                    msg += "Received '%s', tried to match with '%s'" % (proc.before, search_terms)
+                    raise Exception(msg)
 
             yield section_key, section_transcript
 
@@ -240,6 +246,7 @@ class RhinoInteractiveFilter(PexpectReplFilter):
     ALIASES = ['jsint', 'rhinoint']
     PROMPTS = ['js>', '  >']
     TRIM_PROMPT = "js>"
+    INITIAL_PROMPT_TIMEOUT = 60
 
 class PhpInteractiveFilter(PexpectReplFilter):
     """
@@ -261,10 +268,10 @@ class KshInteractiveStrictFilter(PexpectReplFilter):
     EXECUTABLE = "ksh -i -e"
     INPUT_EXTENSIONS = [".txt", ".sh"]
     OUTPUT_EXTENSIONS = ['.sh-session']
-    INITIAL_PROMPT = "^(#|\$)\s+"
+    INITIAL_PROMPT = "^\s*(#|\$)\s+"
     PROMPTS = ["$", "#"]
     TRIM_PROMPT = "\$|#"
-    PS1 = "$ "
+    PS1 = "\n$ "
     # TODO Fix hanging on # comments in code
 
 class KshInteractiveFilter(KshInteractiveStrictFilter):

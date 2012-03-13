@@ -20,8 +20,12 @@ class KshTempdirInteractiveFilter(KshInteractiveStrictFilter):
     OUTPUT_EXTENSIONS = [".json"]
 
     def setup_cwd(self):
+        self.log.debug("in setup_cwd in KshTempdirInteractiveFilter")
         if not hasattr(self, '_cwd'):
             self._cwd = tempfile.mkdtemp()
+        if not os.path.exists(self._cwd):
+            raise Exception("path %s should exist!" % self._cwd)
+        self.log.debug("tempdir is %s" % self._cwd)
         return self._cwd
 
     def process_dict(self, input_dict):
@@ -81,10 +85,14 @@ class KshTempdirInteractiveFilter(KshInteractiveStrictFilter):
         # to be moved to their final locations.
         for i in self.artifact.inputs().values():
             src = os.path.join(work_dir, i.filename())
+            self.log.debug("Checking input %s at %s" % (i.key, src))
             if (i.virtual or i.additional) and os.path.exists(src):
+                self.log.debug("Copying %s to %s" % (src, i.filepath()))
                 shutil.copy(src, i.filepath())
+            else:
+                self.log.debug("Not copying %s" % src)
 
-        shutil.rmtree(work_dir)
+        #shutil.rmtree(work_dir)
         x = OrderedDict()
         x['1'] = json.dumps(output_dict)
         return x

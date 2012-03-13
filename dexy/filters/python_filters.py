@@ -6,6 +6,7 @@ import copy
 import json
 import os
 import re
+import requests
 import uuid
 
 class TestFilter(DexyFilter):
@@ -352,3 +353,76 @@ class StartSpaceFilter(DexyFilter):
 
     def process_text(self, input_text):
         return "\n".join(" %s" % line for line in input_text.splitlines())
+
+class SwaggerApiFilter(DexyFilter):
+    """
+    Given a Swagger API base URL, retrieves all available info.
+    """
+    ALIASES = ['swagger']
+    INPUT_EXTENSIONS = ['.txt']
+    OUTPUT_EXTENSIONS = ['.json']
+    def process_text(self, input_text):
+        api_data = {}
+        for base_url in input_text.split():
+            url = "%s/resources.json" % base_url
+            self.log.debug("Fetching info from %s" % url)
+            result = requests.get(url)
+            base_info = json.loads(result.text)
+            api_data[base_url] = base_info
+            for api in base_info['apis']:
+                api_name = api['path'].replace("/", "").replace(".{format}", "")
+                url = "%s%s" % (base_url, api['path'].replace("{format}", "json"))
+                self.log.debug("Fetching info from %s" % url)
+                result = requests.get(url)
+                result_json = json.loads(result.text)
+                api_data[base_url][api_name] = {}
+                for sapi in result_json['apis']:
+                    api_data[base_url][api_name][sapi['path']] = sapi
+                    for op in sapi['operations']:
+                        api_data[base_url][api_name][sapi['path']][op['httpMethod']] = op
+
+        return json.dumps(api_data, sort_keys=True, indent=4)
+
+class EasyHtml(DexyFilter):
+    """
+    Wraps your text in HTML header/footer which links to hosted Atatonic CSS
+    assets. Easy way to add styles (includes Python syntax highlighting).
+    """
+    ALIASES = ['easyhtml']
+    INPUT_EXTENSIONS = ['.html']
+    OUTPUT_EXTENSIONS = ['.html']
+    HEADER = """
+    <html>
+        <head>
+        <link rel="stylesheet" href="http://dexy.it/css/zp-compressed.css" media="all" />
+        <link rel="stylesheet" href="http://dexy.it/css/zp-print.css" media="print" />
+        <link rel="stylesheet" href="http://dexy.it/pastie.css" media="all" />
+        <style type="text/css">
+            .content .padding {
+                padding: 30px 36px 30px 30px;
+            }
+             .item .padding {
+                 padding: 0 12px 0 0;
+             }
+            .list-item h2 {
+                margin: 0;
+                line-height: 27px;
+            }
+
+            td {
+                padding: 5px;
+            }
+            </style>
+        </head>
+        <body>
+            <div class="zp-wrapper">
+            <div class="zp-70 content">
+            <div class="padding">
+    """
+    FOOTER = """
+            </div></div></div>
+        </body>
+    </html>
+    """
+    def process_text(self, input_text):
+        return "%s%s%s" % (self.HEADER, input_text, self.FOOTER)

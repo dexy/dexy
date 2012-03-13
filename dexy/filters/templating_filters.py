@@ -31,6 +31,7 @@ class TemplateFilter(DexyFilter):
         PrettyPrinterTemplatePlugin,
         PygmentsStylesheetTemplatePlugin,
         PythonBuiltinsTemplatePlugin,
+        PythonDatetimeTemplatePlugin,
         RegularExpressionsTemplatePlugin,
         SubdirectoriesTemplatePlugin,
         VariablesTemplatePlugin

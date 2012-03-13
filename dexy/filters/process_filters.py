@@ -65,6 +65,8 @@ class ProcessFilter(DexyFilter):
         if self.artifact.args.has_key('timeout'):
             timeout = self.artifact.args['timeout']
             self.log.info("using custom timeout %s for %s" % (timeout, self.artifact.key))
+        elif self.TIMEOUT:
+            timeout = self.TIMEOUT
         else:
             timeout = None
         return timeout

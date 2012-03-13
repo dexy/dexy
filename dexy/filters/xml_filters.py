@@ -25,10 +25,11 @@ class XmlSectionFilter(DexyFilter):
 
         output = {}
 
-        root = etree.fromstring(input_text)
+        root = etree.fromstring(input_text.encode("utf-8"))
         tree = root.getroottree()
 
         for element in tree.iter("*"):
+            self.log.debug("element: %s" % element)
             xpath = tree.getpath(element)
             source = etree.tostring(element, pretty_print=True).strip()
 

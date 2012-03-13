@@ -210,7 +210,7 @@ class Artifact(object):
             self.final = self.filter_class.FINAL
 
     def setup_from_previous_artifact(self, previous_artifact):
-        for a in ['final', 'mtime', 'ctime', 'inode', 'virtual', 'virtual_docs']:
+        for a in ['args', 'final', 'mtime', 'ctime', 'inode', 'virtual', 'virtual_docs']:
                 setattr(self, a, getattr(previous_artifact, a))
 
         # Look for additional inputs in previous artifacts or previous
@@ -286,6 +286,7 @@ class Artifact(object):
 
         # These attributes are the same for all artifacts pertaining to a document
         artifact.args = doc.args
+        artifact.log.debug("Setting artifact args for %s in %s to %s" % (artifact.key, doc.key(), doc.args))
         artifact.batch_id = doc.batch_id
         artifact.document_key = doc.key()
         artifact.name = doc.name

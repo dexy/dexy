@@ -61,19 +61,35 @@ class PythonDocumentationFilter(DexyFilter):
                 # ... if it can't, convert it to a string to avoid problems.
                 return str(cm)
 
+    def highlight_html(self, source):
+        return highlight(source, self.LEXER, self.HTML_FORMATTER)
+
+    def highlight_latex(self, source):
+        return highlight(source, self.LEXER, self.LATEX_FORMATTER)
+
+    def add_source_for_key(self, docs, key, source):
+        if docs.has_key(key):
+            raise Exception("Duplicate key %s" % key)
+        self.log.debug("Adding new key %s" % key)
+        docs[key] = {}
+        docs[key]['value'] = source
+        if not type(source) == str or type(source) == unicode:
+            source = unicode(source)
+        docs[key]['source'] = source
+        docs[key]['html-source'] = self.highlight_html(source)
+        docs[key]['latex-source'] = self.highlight_latex(source)
+
     def process_text(self, input_text):
         """
         input_text should be a list of installed python libraries to document.
         """
         package_names = input_text.split()
         packages = [__import__(package_name) for package_name in package_names]
-        packages_info = {}
+        docs = {}
 
         for package in packages:
             self.log.debug("processing package %s" % package)
             package_name = package.__name__
-            method_source_code = {}
-            class_info = {}
             prefix = package.__name__ + "."
             for module_loader, name, ispkg in pkgutil.walk_packages(package.__path__, prefix=prefix):
                 self.log.debug("in package %s processing module %s" % (package_name, name))
@@ -87,26 +103,31 @@ class PythonDocumentationFilter(DexyFilter):
                             # TODO figure out how to get module constants
                             key = "%s.%s" % (m.__module__, k)
                             item_content = self.fetch_item_content(m)
-                            method_source_code[key] = item_content
+                            self.add_source_for_key(docs, key, item_content)
 
                         elif inspect.isclass(m) and m.__module__.startswith(package_name):
-                            class_key = "%s.%s" % (name, k)
-                            class_info[class_key] = {}
+                            key = "%s.%s" % (name, k)
                             try:
-                                class_info[class_key]['source'] = highlight(inspect.getsource(m), self.LEXER, self.HTML_FORMATTER)
+                                item_content = inspect.getsource(m)
+                                self.add_source_for_key(docs, key, item_content)
                             except IOError:
-                                self.log.debug("can't get source for" % class_key)
-                                class_info[class_key]['source'] = ""
+                                self.log.debug("can't get source for" % key)
+                                self.add_source_for_key(docs, key, "")
 
                             for ck, cm in inspect.getmembers(m):
                                 key = "%s.%s.%s" % (name, k, ck)
                                 item_content = self.fetch_item_content(cm)
-                                method_source_code[key] = item_content
-                                class_info[class_key][ck] = item_content
+                                self.add_source_for_key(docs, key, item_content)
+
+                        else:
+                            key = "%s.%s" % (name, k)
+                            item_content = self.fetch_item_content(m)
+                            self.add_source_for_key(docs, key, item_content)
+
                 except ImportError as e:
                     self.log.debug(e)
-            packages_info[package.__name__] = method_source_code
-        return json.dumps(packages_info, indent=4)
+
+        return json.dumps(docs, indent=4)
 
 class RDocumentationFilter(DexyFilter):
     """

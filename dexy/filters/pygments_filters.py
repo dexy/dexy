@@ -24,13 +24,11 @@ class PygmentsFilter(DexyFilter):
 
     def process_dict(self, input_dict):
         ext = self.artifact.input_ext
-        has_args = self.artifact.args.has_key('pygments')
-        if has_args:
-            args = self.artifact.args['pygments']
-        else:
-            args = {}
+
+        args = self.args().copy()
 
         if args.has_key('lexer'):
+            self.log.debug("custom lexer alias %s specified" % args['lexer'])
             lexer = get_lexer_by_name(args['lexer'])
             del args['lexer']
         else:
@@ -52,12 +50,13 @@ class PygmentsFilter(DexyFilter):
                 lexer = get_lexer_for_filename(fake_file_name)
 
         formatter_args = {'lineanchors' : self.artifact.web_safe_document_key() }
+
         # all args left are for the formatter...
         formatter_args.update(args)
 
         formatter = get_formatter_for_filename(self.artifact.filename(),
                 **formatter_args)
-        ### @end
+
         # TODO whitelist acceptable formatter args
         # TODO allow passing lexer args?
 
@@ -71,5 +70,6 @@ class PygmentsFilter(DexyFilter):
             for k, v in input_dict.items():
                 # TODO figure out where these characters are coming from and don't hard-code this.
                 v = v.replace(" \x08", "").replace(chr(13), "")
+                self.log.debug("Using lexer %s" % lexer.__class__.__name__)
                 output_dict[k] = highlight(v, lexer, formatter)
             return output_dict

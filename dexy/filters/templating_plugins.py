@@ -1,5 +1,8 @@
+from datetime import datetime
+from dexy.version import Version
 from ordereddict import OrderedDict
 from pygments.styles import get_all_styles
+import calendar
 import json
 import os
 import pprint
@@ -7,7 +10,6 @@ import pygments
 import pygments.formatters
 import re
 import urllib
-from dexy.version import Version
 
 class TemplatePlugin(object):
     def __init__(self, filter_instance):
@@ -15,6 +17,24 @@ class TemplatePlugin(object):
 
     def run(self):
         return {}
+
+class PythonDatetimeTemplatePlugin(TemplatePlugin):
+    def run(self):
+        today = datetime.today()
+        month = today.month
+        year = today.year
+        cal = calendar.Calendar()
+        caldates = list(cal.itermonthdates(year, month))
+
+        return {
+            "datetime" : datetime,
+            "calendar" : calendar,
+            "caldatse" : caldates,
+            "cal" : cal,
+            "today" : today,
+            "month" : month,
+            "year" : year
+            }
 
 class DexyVersionTemplatePlugin(TemplatePlugin):
     def run(self):

@@ -39,6 +39,7 @@ setup(
             'pexpect',
             'pygments',
             'python-modargs>=1.2',
+            'requests>=0.10.6',
             'zapps'
             ],
         name='dexy',

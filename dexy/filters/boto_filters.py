@@ -1,9 +1,10 @@
-from boto.s3.key import Key
-from dexy.dexy_filter import DexyFilter
 import boto
+from boto.s3.key import Key
+from dexy.filters.api_filters import ApiFilter
 import getpass
+import os
 
-class BotoUploadFilter(DexyFilter):
+class BotoUploadFilter(ApiFilter):
     """
     Uses boto library to upload content to S3, returns the URL.
 
@@ -28,22 +29,34 @@ class BotoUploadFilter(DexyFilter):
     """
     ALIASES = ['boto', 'botoup']
     OUTPUT_EXTENSIONS = [".txt"]
+    API_KEY_NAME = 'AWS'
+    API_KEY_KEYS = ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_BUCKET_NAME']
 
     def bucket_name(self):
-        """Calculate S3 bucket name, create it if it doesn't exist."""
-        if self.artifact.args.has_key('bucket-name'):
-            bucket_name = self.artifact.args['bucket-name']
-        else:
+        """
+        Figure out which S3 bucket name to use and create the bucket if it doesn't exist.
+        """
+        bucket_name = self.read_param('AWS_BUCKET_NAME')
+        if not bucket_name:
             try:
                 username = getpass.getuser()
                 bucket_name = "dexy-%s" % username
                 return bucket_name
             except Exception as e:
-                print "Can't automatically determine username. Please specify bucket-name for upload to S3."
+                print "Can't automatically determine username. Please specify AWS_BUCKET_NAME for upload to S3."
                 raise e
+        self.log.debug("S3 bucket name is %s" % bucket_name)
+        return bucket_name
 
     def boto_connection(self):
-        return boto.connect_s3()
+        if os.getenv('AWS_ACCESS_KEY_ID') and os.getenv('AWS_SECRET_ACCESS_KEY'):
+            # use values defined in env
+            return boto.connect_s3()
+        else:
+            # use values specified in .dexyapis
+            aws_access_key_id = self.read_param('AWS_ACCESS_KEY_ID')
+            aws_secret_access_key = self.read_param('AWS_SECRET_ACCESS_KEY')
+            return boto.connect_s3(aws_access_key_id, aws_secret_access_key)
 
     def get_bucket(self):
         conn = self.boto_connection()
@@ -53,6 +66,7 @@ class BotoUploadFilter(DexyFilter):
         b = self.get_bucket()
         k = Key(b)
         k.key = self.artifact.previous_websafe_key
+        self.log.debug("Uploading contents of %s" % self.artifact.previous_artifact_filepath)
         k.set_contents_from_filename(self.artifact.previous_artifact_filepath)
         k.set_acl('public-read')
         return "https://s3.amazonaws.com/%s/%s" % (self.bucket_name(), k.key)

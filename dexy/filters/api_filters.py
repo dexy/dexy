@@ -41,6 +41,9 @@ class ApiFilter(DexyFilter):
 
     @classmethod
     def docmd_create_keyfile(klass):
+        """
+        Creates a key file in location specified by MASTER_API_KEY_FILE.
+        """
         key_filename = os.path.expanduser(klass.MASTER_API_KEY_FILE)
         if os.path.exists(key_filename):
             raise Exception("File %s already exists!" % key_filename)
@@ -96,6 +99,13 @@ class ApiFilter(DexyFilter):
                     if params.has_key(klass.API_KEY_NAME):
                         param_value = params[klass.API_KEY_NAME][param_name]
 
+        if param_value and param_value.startswith("$"):
+            # need to get value of bash variable
+            param_value_from_env = os.getenv(param_value.lstrip("$"))
+            if not param_value_from_env:
+                raise Exception("Bash variable %s not defined in this environment!" % param_value)
+            param_value = param_value_from_env
+
         if param_value:
             return param_value
         else:
@@ -103,7 +113,8 @@ class ApiFilter(DexyFilter):
             raise Exception(msg)
 
     def read_param(self, param_name):
-        if self.arg_value(param_name):
-            return self.arg_value(param_name)
-        else:
-            return self.__class__.read_param_class(param_name)
+        param_value = self.arg_value(param_name)
+        if not param_value:
+            param_value = self.__class__.read_param_class(param_name)
+
+        return param_value

@@ -271,6 +271,18 @@ class TenderappFilter(ApiFilter):
     @classmethod
     def docmd_discussions(klass):
         """
+        Returns list of discussions
+        """
+        discussions = klass.discussions()
+        if len(discussions) == 0:
+            print "No discussions found at", klass.read_param_class('url')
+        else:
+            print "Discussions found at", klass.read_param_class('url')
+            print "\n".join("%s [%s] (%s)" % (d['href'], d['html_href'], d['title']) for d in discussions)
+
+    @classmethod
+    def docmd_mydiscussions(klass):
+        """
         Returns list of hrefs of discussions for the current user.
         """
         discussions = klass.discussions_for_current_user()
@@ -406,7 +418,7 @@ Remember that discussions can only be posted once.
 
                 os.chdir("..")
 
-        for discussion in klass.discussions_for_current_user():
+        for discussion in klass.discussions():
             discussion_dir = "%06d-%s" % (discussion['number'], discussion['permalink'][0:50])
             if len(discussion['permalink']) > 50:
                 discussion_dir += "..."
@@ -476,6 +488,13 @@ comment will be posted to the discussion %s
     def discussions_for_current_user(klass):
         headers = klass.default_headers()
         url = "%s/discussions?user_current=1" % klass.read_param_class('url')
+        result = requests.get(url, headers=headers)
+        return json.loads(result.text)['discussions']
+
+    @classmethod
+    def discussions(klass):
+        headers = klass.default_headers()
+        url = "%s/discussions" % klass.read_param_class('url')
         result = requests.get(url, headers=headers)
         return json.loads(result.text)['discussions']
 

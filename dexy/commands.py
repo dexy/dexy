@@ -508,11 +508,17 @@ def fcmds_command(alias=None):
         log = Constants.NULL_LOGGER
 
     filters_dict = dexy.introspect.filters(log)
+    if not alias in filters_dict:
+        print "Available aliases are:"
+        for a in sorted(filters_dict):
+            print a
+
     filter_class = filters_dict[alias]
 
     print "Filter commands defined in %s..." % filter_class.__name__
     cmds = []
     for m in dir(filter_class):
+        # TODO print start of docstring
         if m.startswith("docmd_"):
             cmds.append(m.replace("docmd_", ""))
     print "\n".join(sorted(cmds))

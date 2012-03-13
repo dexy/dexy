@@ -1,5 +1,6 @@
 from dexy.dexy_filter import DexyFilter
 from dexy.filters.process_filters import SubprocessFilter
+import codecs
 import os
 import re
 import shutil
@@ -145,7 +146,7 @@ class HtLatexFilter(DexyFilter):
                 new_artifact = self.artifact.add_additional_artifact(f_key, f_ext)
                 shutil.copyfile(os.path.join(self.artifact.temp_dir(), f), new_artifact.filepath())
 
-class LatexFilter(DexyFilter):
+class LatexFilter(SubprocessFilter):
     """
     Generates a PDF file from LaTeX source.
     """
@@ -200,6 +201,53 @@ class LatexFilter(DexyFilter):
             run_cmd(bibtex_command) #generate bbl
         run_cmd(latex_command) #first run
         run_cmd(latex_command) #second run - fix references
+
+class TikzPgfFilter(LatexFilter):
+    """
+    Takes a snippet of Tikz code, wraps it in a LaTeX document, and renders it to PDF.
+    """
+    ALIASES = ['tikz']
+
+    def process(self):
+        latex_filename = self.artifact.filename().replace(self.artifact.ext, ".tex")
+        # TODO allow setting tikz libraries per-document, or just include all of them?
+        # TODO how to create a page size that just includes the content
+        latex_header = """\documentclass[tikz]{standalone}
+\usetikzlibrary{shapes.multipart}
+\\begin{document}
+        """
+        latex_footer = "\n\end{document}"
+
+        work_path = os.path.join(self.artifact.artifacts_dir, latex_filename)
+        with codecs.open(work_path, "w", encoding="utf-8") as f:
+            f.write(latex_header)
+            f.write(self.artifact.input_text())
+            f.write(latex_footer)
+
+        latex_command = "%s -interaction=batchmode %s" % (self.__class__.executable(), latex_filename)
+
+        self.artifact.stdout = ""
+
+        def run_cmd(command):
+            self.log.info("running: %s" % command)
+            proc = subprocess.Popen(command, shell=True,
+                                    cwd=self.artifact.artifacts_dir,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.STDOUT,
+                                    env=self.setup_env())
+
+            stdout, stderr = proc.communicate()
+            self.artifact.stdout += stdout
+            if proc.returncode > 2: # Set at 2 for now as this is highest I've hit, better to detect whether PDF has been generated?
+                raise Exception("latex error, look for information in %s" %
+                                latex_filename.replace(".tex", ".log"))
+            elif proc.returncode > 0:
+                self.log.warn("""A non-critical latex error has occurred running %s,
+                status code returned was %s, look for information in %s""" % (
+                self.artifact.key, proc.returncode,
+                latex_filename.replace(".tex", ".log")))
+
+        run_cmd(latex_command) #first run
 
 class EmbedFonts(SubprocessFilter):
     """
@@ -385,3 +433,19 @@ class Pdf2JpgSubprocessFilter(Pdf2ImgSubprocessFilter):
     GS_DEVICE = 'jpeg'
     OUTPUT_EXTENSIONS = ['.jpg']
 
+class FortranFilter(SubprocessFilter):
+    ALIASES = ['fortran']
+    EXECUTABLE = 'gfortran-4.6'
+    VERSION_COMMAND = 'gfortran-4.6 --version'
+    INPUT_EXTENSIONS = ['.f']
+    OUTPUT_EXTENSIONS = ['.exe']
+    BINARY = True
+
+    def command_string(self):
+        args = {
+                'prog' : self.executable(),
+                'args' : self.command_line_args() or "",
+                'script_file' : self.artifact.previous_artifact_filename,
+                'output_file' : self.artifact.filename()
+                }
+        return "%(prog)s %(args)s %(script_file)s -o %(output_file)s" % args

@@ -30,7 +30,6 @@ class FileSystemJsonArtifact(Artifact):
             if hasattr(self, a):
                 v = getattr(self, a)
                 m[a] = v
-
         m['inputs'] = self.input_hashes()
 
         self.write_dict_to_file(m, self.meta_filepath())
@@ -42,7 +41,6 @@ class FileSystemJsonArtifact(Artifact):
 
         for k, v in m.iteritems():
             setattr(self, k, v)
-
         # We only store filter name, not filter class, need to retrieve class from name
         if hasattr(self, "filter_name") and not hasattr(self, "filter_class"):
             self.filter_class = [k for n,k in self.FILTERS.iteritems() if k.__name__ == self.filter_name][0]
