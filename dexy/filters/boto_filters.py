@@ -1,6 +1,7 @@
-import boto
 from boto.s3.key import Key
+from datetime import datetime
 from dexy.filters.api_filters import ApiFilter
+import boto
 import getpass
 import os
 
@@ -18,9 +19,13 @@ class BotoUploadFilter(ApiFilter):
         "bucket-name" : "my-unique-bucket-name"
     }
 
-    You can also set these in your project's .dexy file:
+    You can also have a .dexyapis file in the directory in which you run Dexy,
+    and this will override the user-wide .dexyapis file. You can use this to
+    specify a per-project bucket.
 
-    TODO example...
+    You can add a date to your bucket by specifying strftime codes in your
+    bucket name, this is useful so you don't have to worry about all your
+    filenames being unique.
 
     If you do not set bucket-name, it will default to a name based on your
     username. This may not be unique across all S3 buckets so it may be
@@ -45,6 +50,7 @@ class BotoUploadFilter(ApiFilter):
             except Exception as e:
                 print "Can't automatically determine username. Please specify AWS_BUCKET_NAME for upload to S3."
                 raise e
+        bucket_name = datetime.now().strftime(bucket_name)
         self.log.debug("S3 bucket name is %s" % bucket_name)
         return bucket_name
 
