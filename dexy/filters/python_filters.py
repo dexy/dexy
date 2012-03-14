@@ -142,7 +142,7 @@ class HeaderFilter(DexyFilter):
         header_doc = self.find_closest_parent()
 
         if not header_doc:
-            raise Exception("Couldn't find input to use for header. Available inputs: %s" % ",".join(self.artifact.inputs().keys()))
+            raise Exception("Couldn't find input to use for header. Available inputs: %s" % ", ".join(self.artifact.inputs().keys()))
 
         self.log.debug("using %s as header for %s" % (header_doc.key, self.artifact.document_key))
         return "%s\n%s" % (header_doc.output_text(), input_text)
