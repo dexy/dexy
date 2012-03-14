@@ -7,6 +7,13 @@ class MarkdownFilter(DexyFilter):
     ALIASES = ['markdown']
 
     def process_text(self, input_text):
-        return markdown.markdown(input_text)
+        extensions = ['toc']
+        extension_configs = {'toc' : { "anchorlink" : True }}
+
+        md = markdown.Markdown(
+                extensions=extensions,
+                extension_configs=extension_configs
+                )
+        return md.convert(input_text)
 
 

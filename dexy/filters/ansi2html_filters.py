@@ -32,7 +32,7 @@ class Ansi2HtmlFilter(DexyFilter):
             html = converter.convert(section_text, full=full)
             if inline_css:
                 p.from_string(html).with_cssString(css)
-                html = p.run()
+                html = "<pre>\n%s</pre>" % p.run()
             output_dict[section_name] = html
 
         return output_dict
