@@ -23,6 +23,7 @@ class ProcessFilter(DexyFilter):
     ALIASES = ['processfilter']
     CHECK_RETURN_CODE = True
     ENV = None
+    TIMEOUT = None
 
     def ignore_errors(self):
         """
