@@ -29,7 +29,7 @@ class PythonDatetimeTemplatePlugin(TemplatePlugin):
         return {
             "datetime" : datetime,
             "calendar" : calendar,
-            "caldatse" : caldates,
+            "caldates" : caldates,
             "cal" : cal,
             "today" : today,
             "month" : month,
