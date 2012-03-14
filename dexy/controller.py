@@ -261,8 +261,7 @@ class Controller(object):
             # virtual document
             if re.search("@", glob_string):
                 virtual = True
-
-                dangerous = not args.has_key('contents')
+                dangerous = any(k in ['url', 'repo', 'path'] for k in args)
                 if dangerous and not self.args['danger']:
                     raise Exception("""
                     You are attempting to access a remote file %s.
