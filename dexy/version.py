@@ -1,2 +1,2 @@
 class Version(object):
-    VERSION="0.5.7"
+    VERSION="0.5.8"
