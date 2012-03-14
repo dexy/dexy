@@ -13,9 +13,26 @@ class Ansi2HtmlFilter(DexyFilter):
 
     def process_dict(self, input_dict):
         converter = Ansi2HTMLConverter()
+        full = self.arg_value('full', False)
+
+        p = None
+        css = None
+        inline_css = self.arg_value('inline', False)
+        if inline_css:
+            css = "\n".join(converter.produce_headers().strip().splitlines()[1:-1])
+            self.log.debug(css)
+            try:
+                from pynliner import Pynliner
+                p = Pynliner(self.log)
+            except ImportError:
+                raise Exception("You must install BeautifulSoup, cssutils and pynliner in order to use 'inline' option.")
 
         output_dict = OrderedDict()
         for section_name, section_text in input_dict.iteritems():
-            output_dict[section_name] = converter.convert(section_text, full=False)
+            html = converter.convert(section_text, full=full)
+            if inline_css:
+                p.from_string(html).with_cssString(css)
+                html = p.run()
+            output_dict[section_name] = html
 
         return output_dict
