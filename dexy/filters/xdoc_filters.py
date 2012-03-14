@@ -69,15 +69,16 @@ class PythonDocumentationFilter(DexyFilter):
 
     def add_source_for_key(self, docs, key, source):
         if docs.has_key(key):
-            raise Exception("Duplicate key %s" % key)
-        self.log.debug("Adding new key %s" % key)
-        docs[key] = {}
-        docs[key]['value'] = source
-        if not type(source) == str or type(source) == unicode:
-            source = unicode(source)
-        docs[key]['source'] = source
-        docs[key]['html-source'] = self.highlight_html(source)
-        docs[key]['latex-source'] = self.highlight_latex(source)
+            self.log.debug("Skipping duplicate key %s" % key)
+        else:
+            self.log.debug("Adding new key %s" % key)
+            docs[key] = {}
+            docs[key]['value'] = source
+            if not type(source) == str or type(source) == unicode:
+                source = unicode(source)
+            docs[key]['source'] = source
+            docs[key]['html-source'] = self.highlight_html(source)
+            docs[key]['latex-source'] = self.highlight_latex(source)
 
     def process_text(self, input_text):
         """
