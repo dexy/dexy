@@ -35,9 +35,8 @@ class ApiFilter(DexyFilter):
     DOCUMENT_API_CONFIG_FILE = None
     DOCUMENT_API_CONFIG_FILE_KEY = "api-config-file"
 
-    # Put API key locations in this array, later entries will override earlier
-    # entries if found, so you can set a user-wide default but override per-project.
-    API_KEY_LOCATIONS = [MASTER_API_KEY_FILE, PROJECT_API_KEY_FILE]
+    # Put API key locations in this array, earlier entries have priority.
+    API_KEY_LOCATIONS = [PROJECT_API_KEY_FILE, MASTER_API_KEY_FILE]
 
     @classmethod
     def docmd_create_keyfile(klass):
@@ -97,7 +96,10 @@ class ApiFilter(DexyFilter):
                 with open(filename, "r") as f:
                     params = json.load(f)
                     if params.has_key(klass.API_KEY_NAME):
-                        param_value = params[klass.API_KEY_NAME][param_name]
+                        param_value = params[klass.API_KEY_NAME].get(param_name)
+
+            if param_value:
+                break
 
         if param_value and param_value.startswith("$"):
             # need to get value of bash variable
