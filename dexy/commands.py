@@ -182,7 +182,13 @@ def profile_command(
 def check_setup(logsdir=Constants.DEFAULT_LDIR, artifactsdir=Constants.DEFAULT_ADIR):
     return os.path.exists(logsdir) and os.path.exists(artifactsdir)
 
-def setup_command(logsdir=Constants.DEFAULT_LDIR, artifactsdir=Constants.DEFAULT_ADIR, logfile=Constants.DEFAULT_LFILE, showhelp=True):
+def setup_command(
+        logsdir=Constants.DEFAULT_LDIR,
+        artifactsdir=Constants.DEFAULT_ADIR,
+        logfile=Constants.DEFAULT_LFILE,
+        showhelp=True,
+        scm='git' # generate .gitignore by default, set to None to skip or hg for .hgignore
+        ):
     """
     Creates directories to hold artifacts and logs. Dexy needs these
     directories and they aren't created automatically as a precaution against
@@ -195,12 +201,22 @@ def setup_command(logsdir=Constants.DEFAULT_LDIR, artifactsdir=Constants.DEFAULT
             os.mkdir(logsdir)
         if not os.path.exists(artifactsdir):
             os.mkdir(artifactsdir)
-        if not os.path.exists(".gitignore"):
-            with open(".gitignore", "w") as f:
-                f.write("artifacts/\nlogs/\noutput/\noutput-long/\n*.sw*\n*.pyc\n")
+
+        if not scm:
+            pass
+        elif scm == 'git':
+            if not os.path.exists(".gitignore"):
+                with open(".gitignore", "w") as f:
+                    f.write("artifacts/\nlogs/\noutput/\noutput-long/\n*.sw*\n*.pyc\n")
+        elif scm == 'hg':
+            if not os.path.exists(".hgignore"):
+                with open(".hgignore", "w") as f:
+                    f.write("artifacts/\nlogs/\noutput/\noutput-long/\n")
+        else:
+            raise Exception("don't know how to create an .ignore file for %s" % scm)
 
         if showhelp:
-            print "Ok, we've created directories called %s and %s and a .gitignore." % (logsdir, artifactsdir)
+            print "Ok, we've created directories called %s and %s and a .%signore" % (logsdir, artifactsdir, scmignore)
             if os.path.exists(Constants.DEFAULT_CONFIG):
                 print "You are now ready to run dexy!  If you have problems,"
                 print "please check the log file at %s/%s for clues." % (logsdir, logfile)
