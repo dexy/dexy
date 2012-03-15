@@ -28,6 +28,7 @@ class TemplateFilter(DexyFilter):
         DexyVersionTemplatePlugin,
         GlobalsTemplatePlugin,
         InputsTemplatePlugin,
+        NavigationTemplatePlugin,
         PrettyPrinterTemplatePlugin,
         PygmentsStylesheetTemplatePlugin,
         PythonBuiltinsTemplatePlugin,
@@ -144,7 +145,7 @@ class JinjaTextFilter(TemplateFilter):
         # Exception constructors don't like unicode, so print error messsage to
         # STDOUT then raise an exception.
         print u"\n".join(result)
-        raise JinjaFilterException("An error has occurred while processing %s" % self.artifact.key)
+        raise JinjaFilterException("An error has occurred while processing %s (see top of stack trace for workfile and line no, if avail)" % self.artifact.key)
 
 class JinjaFilter(JinjaTextFilter):
     """

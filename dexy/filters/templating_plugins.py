@@ -116,6 +116,27 @@ class GlobalsTemplatePlugin(TemplatePlugin):
         else:
             return {}
 
+class NavigationTemplatePlugin(TemplatePlugin):
+    """
+    Creates a sitemap - dict with keys for each directory, values for each key
+    are a set of final artifacts in that directory
+    """
+    def run(self):
+        sitemap = {}
+        for key, artifact in self.filter_instance.artifact.inputs().iteritems():
+            if artifact.name and artifact.final:
+                artifact_dir = artifact.canonical_dir()
+                if not artifact_dir in sitemap:
+                    sitemap[artifact_dir] = []
+                sitemap[artifact_dir].append(key)
+
+        for k, v in sitemap.iteritems():
+            v.sort()
+
+        return {
+                'sitemap' : sitemap
+            }
+
 class InputsTemplatePlugin(TemplatePlugin):
     def load_sort_json_data(self, a):
         try:
