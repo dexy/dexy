@@ -195,10 +195,12 @@ def setup_command(logsdir=Constants.DEFAULT_LDIR, artifactsdir=Constants.DEFAULT
             os.mkdir(logsdir)
         if not os.path.exists(artifactsdir):
             os.mkdir(artifactsdir)
+        if not os.path.exists(".gitignore"):
+            with open(".gitignore", "w") as f:
+                f.write("artifacts/\nlogs/\noutput/\noutput-long/\n*.sw*\n*.pyc\n")
 
         if showhelp:
-            print
-            print "Ok, we've created directories called %s and %s." % (logsdir, artifactsdir)
+            print "Ok, we've created directories called %s and %s and a .gitignore." % (logsdir, artifactsdir)
             if os.path.exists(Constants.DEFAULT_CONFIG):
                 print "You are now ready to run dexy!  If you have problems,"
                 print "please check the log file at %s/%s for clues." % (logsdir, logfile)
@@ -208,7 +210,6 @@ def setup_command(logsdir=Constants.DEFAULT_LDIR, artifactsdir=Constants.DEFAULT
                 print "check out the tutorials dexy.it/docs/tutorials if you aren't sure how."
                 print "You can type '%s help -on %s' (without quotes) for help running dexy" % (PROG, Constants.DEFAULT_COMMAND)
                 print "or visit dexy.it/help for more resources"
-            print
 
 def cleanup_command(logsdir=Constants.DEFAULT_LDIR, artifactsdir=Constants.DEFAULT_ADIR):
     """
