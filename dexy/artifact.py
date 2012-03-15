@@ -403,7 +403,7 @@ class Artifact(object):
         new_artifact.inode = self.hashstring
         new_artifact.created_by = self.document_key
         new_artifact.virtual = True
-        # TODO filter class source?
+        new_artifact.name = key_with_ext.split("|")[0]
 
         # TODO this is duplicated in setup_from_previous_artifact, should reorganize
         for at in ['batch_id', 'document_key', 'mtime', 'ctime']:
