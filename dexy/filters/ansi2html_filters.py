@@ -15,7 +15,7 @@ class Ansi2HtmlFilter(DexyFilter):
         converter = Ansi2HTMLConverter()
         css = converter.produce_headers()
         lines = css.strip().splitlines()
-        if "<style>" in lines[0]:
+        if "<style" in lines[0]:
             return "\n".join(lines[1:-1])
         else:
             return "\n".join(lines)
