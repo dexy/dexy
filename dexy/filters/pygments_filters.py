@@ -45,7 +45,7 @@ class PygmentsFilter(DexyFilter):
     def process_dict(self, input_dict):
         ext = self.artifact.input_ext
 
-        if input_dict.has_key('1') and not input_dict['1']:
+        if input_dict.has_key('1') and not input_dict['1'] and ext in [".css", ".sty"]:
             # Special case if we get a virtual empty file, generate style file
             self.artifact.final = True
             self.artifact.ext = ext
