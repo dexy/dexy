@@ -142,7 +142,9 @@ class HeaderFilter(DexyFilter):
         header_doc = self.find_closest_parent()
 
         if not header_doc:
-            raise Exception("Couldn't find input to use for header. Available inputs: %s" % ", ".join(self.artifact.inputs().keys()))
+            keys = ", ".join(self.artifact.inputs().keys())
+            msg = "Couldn't find input to use for header for %s. Available inputs: %s"
+            raise Exception(msg % (self.artifact.key, keys))
 
         self.log.debug("using %s as header for %s" % (header_doc.key, self.artifact.document_key))
         return "%s\n%s" % (header_doc.output_text(), input_text)
@@ -163,7 +165,9 @@ class FooterFilter(HeaderFilter):
         footer_doc = self.find_closest_parent('footer')
 
         if not footer_doc:
-            raise Exception("Couldn't find input to use for footer. Available inputs: %s" % ",".join(self.artifact.inputs().keys()))
+            keys = ", ".join(self.artifact.inputs().keys())
+            msg = "Couldn't find input to use for footer for %s. Available inputs: %s"
+            raise Exception(msg % (self.artifact.key, keys))
 
         self.log.debug("using %s as footer for %s" % (footer_doc.key, self.artifact.document_key))
         return "%s\n%s" % (input_text, footer_doc.output_text())
