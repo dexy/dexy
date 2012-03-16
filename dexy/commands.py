@@ -216,7 +216,7 @@ def setup_command(
             raise Exception("don't know how to create an .ignore file for %s" % scm)
 
         if showhelp:
-            print "Ok, we've created directories called %s and %s and a .%signore" % (logsdir, artifactsdir, scmignore)
+            print "Ok, we've created directories called %s and %s and a .%signore" % (logsdir, artifactsdir, scm)
             if os.path.exists(Constants.DEFAULT_CONFIG):
                 print "You are now ready to run dexy!  If you have problems,"
                 print "please check the log file at %s/%s for clues." % (logsdir, logfile)
