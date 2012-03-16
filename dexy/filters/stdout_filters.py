@@ -88,7 +88,7 @@ class BashSubprocessStdoutInputFilter(SubprocessStdoutInputFilter):
 
 class SedSubprocessStdoutInputFilter(SubprocessStdoutInputFilter):
     ALIASES = ['sed']
-    EXECUTABLE = 'sed'
+    EXECUTABLES = ['gsed', 'sed']
     INPUT_EXTENSIONS = [".sed"]
     OUTPUT_EXTENSIONS = [".txt"]
     VERSION_COMMAND = 'sed --version'
