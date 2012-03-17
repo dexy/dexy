@@ -30,6 +30,17 @@ class divert_stdout():
         sys.stdout = self.old_stdout
         self.my_stdout.close()
 
+class divert_stderr():
+    def __enter__(self):
+        self.old_stderr = sys.stderr
+        self.my_stderr = StringIO()
+        sys.stderr = self.my_stderr
+        return self.my_stderr
+
+    def __exit__(self, type, value, traceback):
+        sys.stderr = self.old_stderr
+        self.my_stderr.close()
+
 def run_dexy_without_tempdir(config_dict, additional_args={}):
     if not hasattr(Document, 'filter_list'):
         Document.filter_list = dexy.introspect.filters()

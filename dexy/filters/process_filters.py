@@ -1,8 +1,9 @@
 from dexy.dexy_filter import DexyFilter
+from dexy.commands import UserFeedback
 import os
 import subprocess
 
-class DexyScriptErrorException(Exception):
+class DexyScriptErrorException(UserFeedback):
     pass
 
 class DexyNonzeroExitException(DexyScriptErrorException):

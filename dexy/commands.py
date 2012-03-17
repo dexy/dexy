@@ -1,6 +1,4 @@
 from dexy.constants import Constants
-from dexy.controller import Controller
-from dexy.utils import get_log
 from dexy.version import Version
 from modargs import args
 from pygments import highlight
@@ -9,11 +7,27 @@ from pygments.formatters import TerminalFormatter
 import cProfile
 import copy
 import datetime
+import dexy.controller
 import dexy.introspect
+import dexy.utils
 import inspect
 import os
 import shutil
 import sys
+
+class InternalDexyProblem(Exception):
+    def __init__(self, message):
+        self.message = """\nOops! You may have found a bug in Dexy.
+        The developer would really appreciate if you copy and paste this entire message
+        and the Traceback above it into a bug report at http://dexy.tenderapp.com.
+        Your version of Dexy is %s\n""" % Version.VERSION
+        self.message += message
+
+    def __str__(self):
+        print self.message
+
+class UserFeedback(Exception):
+    pass
 
 MOD = sys.modules[__name__]
 PROG = 'dexy'
@@ -30,7 +44,12 @@ NODOC_FILTERS = [
     ]
 
 def run():
-    args.parse_and_run_command(sys.argv[1:], MOD, default_command=Constants.DEFAULT_COMMAND)
+    try:
+        args.parse_and_run_command(sys.argv[1:], MOD, default_command=Constants.DEFAULT_COMMAND)
+    except UserFeedback as e:
+        sys.stderr.write("==================================================\n")
+        sys.stderr.write(e.message)
+        sys.exit(1)
 
 def dexy_command(
         allreports=False, # whether to run all available reports
@@ -46,7 +65,8 @@ def dexy_command(
         exclude="", # directories to exclude from dexy processing
         filters=False, # DEPRECATED just to catch people who use the old dexy --filters syntax
         globals="", # global values to make available within dexy documents, should be KEY=VALUE pairs separated by spaces
-        help=False, # DEPRECATED just to catch people who use the old dexy --help syntax
+        help=False, # for people who type -help out of habit
+        h=False, # for people who type -h out of habit
         hashfunction='md5', # What hash function to use, set to crc32 or adler32 for more speed, less reliability
         ignore=False, # whether to ignore nonzero exit status or raise an error - may not be supported by all filters
         inputs=False, # whether to log information about inputs for debugging
@@ -96,14 +116,12 @@ def dexy_command(
     If you run into trouble, visit http://dexy.it/help
     """
     # catch deprecated arguments
-    if help or version or reporters or filters:
-        print "the command syntax has changed, please type 'dexy help' for help"
-        sys.exit(1)
+    if h or help or version or reporters or filters:
+        raise UserFeedback("the command syntax has changed, please type 'dexy help' for help")
 
     ### @export "dexy-command-check-setup"
     if not check_setup(logsdir=logsdir, artifactsdir=artifactsdir):
-        print "Please run '%s setup' first to create the directories dexy needs to work with" % PROG
-        sys.exit(1)
+        raise UserFeedback("Please run '%s setup' first to create the directories dexy needs to work with" % PROG)
 
     ### @export "dexy-command-process-args"
     if reset:
@@ -111,14 +129,14 @@ def dexy_command(
 
     if output:
         if not reports == Constants.DEFAULT_REPORTS:
-            raise Exception("if you pass --output you can't also modify reports! pick 1!")
+            raise UserFeedback("if you pass --output you can't also modify reports! pick 1!")
         if allreports:
-            raise Exception("if you pass --output you can't also pass --allreports!")
+            raise UserFeedback("if you pass --output you can't also pass --allreports!")
         reports = "Output"
 
     if allreports:
         if not reports == Constants.DEFAULT_REPORTS:
-            raise Exception("if you pass --allreports you can't also specify --reports")
+            raise UserFeedback("if you pass --allreports you can't also specify --reports")
 
     controller = run_dexy(locals())
     if not dryrun:
@@ -144,7 +162,7 @@ def run_dexy(args):
     # validate args and do any conversions required
     args['globals'] = dict([g.split("=") for g in args['globals'].split()])
     args['exclude'] = [x.strip("/") for x in args['exclude'].split()]
-    controller = Controller(args)
+    controller = dexy.controller.Controller(args)
     controller.run()
     return controller
 
@@ -187,7 +205,7 @@ def setup_command(
         artifactsdir=Constants.DEFAULT_ADIR,
         logfile=Constants.DEFAULT_LFILE,
         showhelp=True,
-        scm='git' # generate .gitignore by default, set to None to skip or hg for .hgignore
+        scm="" # set to git or hg to automatically generate ignore files
         ):
     """
     Creates directories to hold artifacts and logs. Dexy needs these
@@ -195,14 +213,14 @@ def setup_command(
     accidentally running dexy somewhere you didn't mean to.
     """
     if check_setup(logsdir=logsdir, artifactsdir=artifactsdir):
-        print "Dexy is already set up. Run 'reset' if you want to reset everything."
+        raise UserFeedback("Dexy is already set up. Run 'reset' if you want to reset everything.")
     else:
         if not os.path.exists(logsdir):
             os.mkdir(logsdir)
         if not os.path.exists(artifactsdir):
             os.mkdir(artifactsdir)
 
-        if not scm:
+        if not scm or len(scm) == 0:
             pass
         elif scm == 'git':
             if not os.path.exists(".gitignore"):
@@ -213,7 +231,7 @@ def setup_command(
                 with open(".hgignore", "w") as f:
                     f.write("artifacts/\nlogs/\noutput/\noutput-long/\n")
         else:
-            raise Exception("don't know how to create an .ignore file for %s" % scm)
+            sys.stderr.write("Sorry, %s is not a supported scm for automatically creating an ignore file." % scm)
 
         if showhelp:
             print "Ok, we've created directories called %s and %s and a .%signore" % (logsdir, artifactsdir, scm)
@@ -347,10 +365,10 @@ def filters_command(
         print "looking up filter information..."
     else:
         if showall:
-            raise Exception("can't specify an alias if showall is True")
+            raise UserFeedback("can't specify an alias if showall is True, exiting...")
 
     if check_setup():
-        log = get_log()
+        log = dexy.utils.get_log()
     else:
         log = Constants.NULL_LOGGER
 
@@ -498,7 +516,7 @@ def reports_command(
     for r in reports:
         reporter_class_name = r.endswith("Reporter") and r or ("%sReporter" % r)
         if not reporters.has_key(reporter_class_name):
-            raise Exception("No reporter class named %s available. Valid reporter classes are: %s" % (r, ", ".join(reporters.keys())))
+            raise UserFeedback("No reporter class named %s available. Valid reporter classes are: %s" % (r, ", ".join(reporters.keys())))
         report_class = reporters[reporter_class_name]
 
         print "running", r
@@ -520,7 +538,7 @@ def fcmds_command(alias=None):
     These commands can then be run using the fcmd command.
     """
     if check_setup():
-        log = get_log()
+        log = dexy.utils.get_log()
     else:
         log = Constants.NULL_LOGGER
 
@@ -550,7 +568,7 @@ def fcmd_command(
     Run a command defined in a dexy filter.
     """
     if check_setup():
-        log = get_log()
+        log = dexy.utils.get_log()
     else:
         log = Constants.NULL_LOGGER
 
@@ -560,7 +578,7 @@ def fcmd_command(
     cmd_name = "docmd_%s" % cmd
 
     if not filter_class.__dict__.has_key(cmd_name):
-        raise Exception("%s is not a valid command. There is no method %s defined in %s" % (cmd, cmd_name, filter_class.__name__))
+        raise UserFeedback("%s is not a valid command. There is no method %s defined in %s" % (cmd, cmd_name, filter_class.__name__))
     else:
         class_method = filter_class.__dict__[cmd_name]
         if type(class_method) == classmethod:
@@ -569,7 +587,7 @@ def fcmd_command(
             else:
                 class_method.__func__(filter_class, **kwargs)
         else:
-            raise Exception("expected %s to be a classmethod of %s" % (cmd_name, filter_class.__name__))
+            raise InternalDexyProblem("expected %s to be a classmethod of %s" % (cmd_name, filter_class.__name__))
 
 def it_command(**kwargs):
     dexy_command(kwargs)

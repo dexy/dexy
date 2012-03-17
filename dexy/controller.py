@@ -1,13 +1,13 @@
 from dexy.constants import Constants
 from dexy.topsort import CycleError
 from dexy.topsort import topsort
-from dexy.utils import get_log
-from dexy.utils import save_batch_info
 from ordereddict import OrderedDict
 import copy
 import dexy
+import dexy.commands
 import dexy.document
 import dexy.introspect
+import dexy.utils
 import fnmatch
 import glob
 import json
@@ -30,7 +30,7 @@ class Controller(object):
 
         # Set up logging
         if args.has_key("logsdir") and args.has_key("logfile"):
-            self.log = get_log("dexy.controller", args['logsdir'], args['logfile'], args['loglevel'])
+            self.log = dexy.utils.get_log("dexy.controller", args['logsdir'], args['logfile'], args['loglevel'])
         else:
             self.log = Constants.NULL_LOGGER
 
@@ -51,7 +51,7 @@ class Controller(object):
             if self.artifact_classes.has_key(args['artifactclass']):
                 self.artifact_class = self.artifact_classes[args['artifactclass']]
             else:
-                raise Exception("Artifact class name %s not found in %s" % (args['artifactclass'], ",".join(self.artifact_classes.keys())))
+                raise dexy.commands.UserFeedback("Artifact class name %s not found in %s" % (args['artifactclass'], ",".join(self.artifact_classes.keys())))
 
 
     def run(self):
@@ -100,7 +100,7 @@ class Controller(object):
         JSON file (for use by reporters or for debugging).
         """
         self.db.persist()
-        save_batch_info(self.batch_id, self.batch_info(), self.args['logsdir'])
+        dexy.utils.save_batch_info(self.batch_id, self.batch_info(), self.args['logsdir'])
 
     def batch_info(self):
         """
@@ -148,7 +148,7 @@ class Controller(object):
                         json_dict = json.load(cf)
                     except ValueError as e:
                         msg = "Your config file %s has invalid JSON\n%s" % (f, e.message)
-                        raise Exception(msg)
+                        raise dexy.commands.UserFeedback(msg)
 
                 if json_dict.has_key("$reset"):
                     # Reset the config, i.e. ignore everything from parent
@@ -249,7 +249,7 @@ class Controller(object):
 
             tokens = input_directive.split("|")
             if "/" in tokens[0]:
-                raise Exception("paths not allowed in tokens: %s" % tokens[0])
+                raise dexy.commands.UserFeedback("paths not allowed in tokens: %s" % tokens[0])
             if path == '.':
                 glob_string = tokens[0]
             else:
@@ -263,9 +263,9 @@ class Controller(object):
                 virtual = True
                 dangerous = any(k in ['url', 'repo', 'path'] for k in args)
                 if dangerous and not self.args['danger']:
-                    raise Exception("""
-                    You are attempting to access a remote file %s.
-                    You must enable --danger flag to do this.""" % glob_string)
+                    msg = "You are attempting to access a remote file %s." % glob_string
+                    msg += " You must specify -danger option to do this.\n"
+                    raise dexy.commands.UserFeedback(msg)
                 glob_string = glob_string.replace("@", "")
             else:
                 virtual = False
@@ -293,8 +293,8 @@ class Controller(object):
 
                 inputs = []
                 if args.has_key('inputs'):
-                    if isinstance(args['inputs'], str):
-                        raise Exception("inputs for %s should be an array" % f)
+                    if isinstance(args['inputs'], str) or isinstance(args['inputs'], unicode):
+                        raise dexy.commands.UserFeedback("inputs for %s should be an array" % f)
                     for i in args['inputs']:
                         # Create document objects for input patterns (just in this directory)
                         for doc in parse_doc(path, i):
@@ -338,7 +338,7 @@ class Controller(object):
                     try:
                         except_re = re.compile(args['except'])
                     except sre_constants.error as e:
-                        raise Exception("""You passed 'except' value of %s.
+                        raise dexy.commands.UserFeedback("""You passed 'except' value of %s.
 Please pass a valid Python-style regular expression for
 'except', NOT a glob-style matcher. Error message from
 re.compile: %s""" % (args['except'], e))
@@ -469,7 +469,14 @@ re.compile: %s""" % (args['except'], e))
                     parse_new_document(input_doc)
 
             run_key = self.args['run']
-            doc = self.members[run_key]
+            if self.members.has_key(run_key):
+                doc = self.members[run_key]
+            else:
+                matches = [k for k in self.members.keys() if k.startswith(run_key)]
+                print matches
+                matches.sort(key=lambda k: len(self.members[k].inputs))
+                print matches
+                doc = self.members[matches[-1]]
             parse_new_document(doc)
 
             print "limiting members list to %s and its dependencies, %s/%s documents will be run" % (doc.key(), len(new_members), len(self.members))

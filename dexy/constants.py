@@ -28,14 +28,14 @@ class Constants():
     DEFAULT_ADIR = 'artifacts'
     DEFAULT_COMMAND = 'dexy'
     DEFAULT_CONFIG = '.dexy'
-    DEFAULT_LDIR = 'logs'
-    DEFAULT_REPORTS = "Output LongOutput Run Source"
-    DEFAULT_LOGGER_NAME = 'dexy'
-    DEFAULT_LFILE = 'dexy.log'
     DEFAULT_DBCLASS = 'SqliteDatabase'
     DEFAULT_DBFILE = "db.sql"
-    DEFAULT_LOGLEVEL="INFO"
+    DEFAULT_LDIR = 'logs'
+    DEFAULT_LFILE = 'dexy.log'
     DEFAULT_LOGFORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    DEFAULT_LOGGER_NAME = 'dexy'
+    DEFAULT_LOGLEVEL="DEBUG"
+    DEFAULT_REPORTS = "Output LongOutput Run Source"
 
     # Directories with this name should be excluded anywhere
     EXCLUDE_DIRS_ALL_LEVELS = ['.bzr', '.hg', '.git', '.svn']

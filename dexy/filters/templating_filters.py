@@ -1,18 +1,14 @@
+from dexy.commands import InternalDexyProblem
+from dexy.commands import UserFeedback
 from dexy.dexy_filter import DexyFilter
 from dexy.dexy_filter import DexyFilterException
 from dexy.filters.templating_plugins import *
 from jinja2.exceptions import TemplateSyntaxError
 from jinja2.exceptions import UndefinedError
 import jinja2
-import sys
 import re
+import sys
 import traceback
-
-class TemplateFilterException(DexyFilterException):
-    pass
-
-class JinjaFilterException(TemplateFilterException):
-    pass
 
 class TemplateFilter(DexyFilter):
     """
@@ -100,52 +96,57 @@ class JinjaTextFilter(TemplateFilter):
 
     def handle_jinja_exception(self, e):
         result = []
-        br = "=================================================="
-        s = "    "
+        input_lines = self.artifact.input_text().splitlines()
 
+        # Try to parse line number from stack trace...
         if isinstance(e, UndefinedError) or isinstance(e, TypeError):
             # try to get the line number
             m = re.search(r"File \"<template>\", line ([0-9]+), in top\-level template code", traceback.format_exc())
             if m:
                 e.lineno = int(m.groups()[0])
             else:
-                raise Exception("Unable to parse line number from %s" % traceback.format_exc())
+                raise InternalDexyProblem("Unable to parse line number from %s" % traceback.format_exc())
 
-        result.append("""There is a problem with %(key)s
-        \nA problem was detected at line %(lineno)s of %(workfile)s
-        """ % {'key' : self.artifact.key, 'lineno' : e.lineno, 'workfile' : self.artifact.previous_artifact_filepath })
+        args = {
+                'key' : self.artifact.key,
+                'lineno' : e.lineno,
+                'message' : e.message,
+                'name' : self.artifact.name,
+                'workfile' : self.artifact.previous_artifact_filepath
+                }
+
+        result.append("A problem was detected: %(message)s" % args)
+
+        if hasattr(self.artifact, 'doc') and self.artifact.doc.step > 1:
+            result.append("Your file has been processed through other filters before going through jinja.")
+            result.append("The working file sent to jinja is at %(workfile)s" % args)
+            result.append("Line numbers refer to the working file, not your original file.")
 
         if isinstance(e, UndefinedError):
-            result.append("WARNING: line number may not be accurate, check elsewhere in your file if the excerpt does not contain the undefined item from the stack trace.")
+            match_has_no_attribute = re.match("^'[\w\s]+' has no attribute '(.+)'$", e.message)
+            match_is_undefined = re.match("^'([\w\s]+)' is undefined$", e.message)
 
-        input_lines = self.artifact.input_text().splitlines()
+            if match_has_no_attribute:
+                undefined_object = match_has_no_attribute.groups()[0]
+                match_lines = []
+                for i, line in enumerate(input_lines):
+                    if (".%s" % undefined_object in line) or ("'%s'" % undefined_object in line) or ("\"%s\"" % undefined_object in line):
+                        result.append("line %04d: %s" % (i+1, line))
+                        match_lines.append(i)
+                if len(match_lines) == 0:
+                    raise InternalDexyProblem("could not find match for %s" % undefined_object)
 
-        result.append(br)
+            elif match_is_undefined:
+                undefined_object = match_is_undefined.groups()[0]
+                for i, line in enumerate(input_lines):
+                    if undefined_object in line:
+                        result.append("line %04d: %s" % (i+1, line))
+            else:
+                raise InternalDexyProblem("pattern is %s" % e.message)
+        else:
+            result.append("line %04d: %s" % (e.lineno, input_lines[e.lineno-1]))
 
-        # print context before line with problem, if available
-        if e.lineno >= 3:
-            result.append(s + input_lines[e.lineno-3])
-        if e.lineno >= 2:
-            result.append(s + input_lines[e.lineno-2])
-
-        # this is the line that has the problem
-        result.append(">>> %s" % input_lines[e.lineno-1])
-
-        # print context after line with problem, if available
-        if len(input_lines) > e.lineno:
-            result.append(s + input_lines[e.lineno-0])
-        if len(input_lines) > (e.lineno + 1):
-            result.append(s + input_lines[e.lineno+1])
-
-        result.append(br)
-        result.append("The error is: %s" % e.message)
-
-        result.append(traceback.format_exc())
-
-        # Exception constructors don't like unicode, so print error messsage to
-        # STDOUT then raise an exception.
-        print u"\n".join(result)
-        raise JinjaFilterException("An error has occurred while processing %s (see top of stack trace for workfile and line no, if avail)" % self.artifact.key)
+        raise UserFeedback("\n".join(result))
 
 class JinjaFilter(JinjaTextFilter):
     """
@@ -163,3 +164,35 @@ class JinjaFilter(JinjaTextFilter):
             template.stream(template_data).dump(self.artifact.filepath(), encoding="utf-8")
         except (TemplateSyntaxError, UndefinedError, TypeError) as e:
             self.handle_jinja_exception(e)
+
+class WebsiteTemplateJinjaFilter(JinjaFilter):
+    """
+    Makes website-relevant tags available to a jinja-based website template.
+    """
+    ALIASES = ['ws']
+    PLUGINS = [
+        DexyVersionTemplatePlugin,
+        GlobalsTemplatePlugin,
+        NavigationTemplatePlugin,
+        PrettyPrinterTemplatePlugin,
+        PygmentsStylesheetTemplatePlugin,
+        PythonBuiltinsTemplatePlugin,
+        PythonDatetimeTemplatePlugin,
+        RegularExpressionsTemplatePlugin,
+        SubdirectoriesTemplatePlugin,
+        VariablesTemplatePlugin
+        ]
+
+    def process(self):
+        website_template = self.find_closest_parent('template')
+
+        env = self.setup_jinja_env()
+        template_data = self.run_plugins()
+        template_data['page_content'] = self.artifact.input_text()
+
+        try:
+            template = env.from_string(website_template.output_text())
+            template.stream(template_data).dump(self.artifact.filepath(), encoding="utf-8")
+        except (TemplateSyntaxError, UndefinedError, TypeError) as e:
+            self.handle_jinja_exception(e)
+

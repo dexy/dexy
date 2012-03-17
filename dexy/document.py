@@ -360,6 +360,7 @@ class Document(object):
 
             FilterClass = self.get_filter_for_alias(f)
             artifact = self.artifact_class.setup(self, artifact_key, FilterClass, previous_artifact)
+            artifact.filter_alias = f
             self.timing.append(("setup-step-%s" % self.step, time.time() - start))
             start=time.time()
 

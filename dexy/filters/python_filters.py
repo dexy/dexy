@@ -91,55 +91,10 @@ class HeaderFilter(DexyFilter):
     INPUT_EXTENSIONS = [".*"]
     OUTPUT_EXTENSIONS = [".*"]
     ALIASES = ['hd', 'header']
-    DEFAULT_FILTERS = ['jinja']
-
-    def find_closest_parent(self, param_name = 'header'):
-        inputs = self.artifact.inputs()
-
-        search_key_specified = self.artifact.args.has_key(param_name)
-
-        if search_key_specified:
-            search_key = self.artifact.args[param_name]
-        else:
-            # nothing specified, look for the default pattern
-            search_key = "_%s%s" % (param_name, self.artifact.ext)
-
-        path_elements = self.artifact.name.split(os.sep)[:-1]
-        doc = None
-        n = len(path_elements)
-
-        if search_key_specified and "/" in search_key:
-            n = -1
-            doc = inputs[search_key.lstrip("/")]
-
-        for i in range(0, n+1):
-            # Start in the immediate directory, proceed through parent
-            # directories as far as project root until a header file is
-            # found.
-            if i < n:
-                directory = os.path.join(*(path_elements[0:(n-i)]))
-                search_key_in_dir = os.path.join(directory, search_key)
-            else:
-                search_key_in_dir = search_key
-
-            if inputs.has_key(search_key_in_dir):
-                doc = inputs[search_key_in_dir]
-
-            elif not search_key_specified:
-                for pattern in self.DEFAULT_FILTERS:
-                    if pattern:
-                        try_key = "%s|%s" % (search_key_in_dir, pattern)
-                    if inputs.has_key(try_key):
-                        doc = inputs[try_key]
-                        break
-
-            if doc:
-                break
-
-        return doc
+    DEFAULT_INPUT_SEARCH_FILTERS = ['jinja']
 
     def process_text(self, input_text):
-        header_doc = self.find_closest_parent()
+        header_doc = self.find_closest_parent('header')
 
         if not header_doc:
             keys = ", ".join(self.artifact.inputs().keys())

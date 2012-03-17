@@ -18,6 +18,7 @@ class KshTempdirInteractiveFilter(KshInteractiveStrictFilter):
     """
     ALIASES = ['shtmp']
     OUTPUT_EXTENSIONS = [".json"]
+    INITIAL_PROMPT_TIMEOUT = 10
 
     def setup_cwd(self):
         self.log.debug("in setup_cwd in KshTempdirInteractiveFilter")

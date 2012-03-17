@@ -1,6 +1,7 @@
 from dexy.commands import *
 from dexy.constants import Constants
 from dexy.tests.utils import divert_stdout
+from dexy.tests.utils import divert_stderr
 from dexy.tests.utils import tempdir
 import dexy.artifact
 import dexy.utils
@@ -12,6 +13,18 @@ SIMPLE_PY_CONFIG = """
        "contents" : "x=6\\ny=7\\nprint x*y"
     }
 }"""
+
+INVALID_JSON_CONFIG = "{"
+
+def test_invalid_json():
+    with tempdir():
+        with open(".dexy", "w") as f:
+            f.write(INVALID_JSON_CONFIG)
+        setup_command()
+        try:
+            dexy_command()
+        except UserFeedback as e:
+            assert "Your config file .dexy has invalid JSON" in e.message
 
 def test_setup_message_without_config():
     with tempdir():
@@ -60,14 +73,12 @@ def test_commands_setup_cleanup():
 
 def test_commands_dexy_without_setup():
     with tempdir():
-        with divert_stdout() as stdout:
-            try:
-                dexy_command()
-                assertFalse # should not get here
-            except SystemExit as e:
-                assert "Please run 'dexy setup'" in stdout.getvalue()
-                assert not check_setup(logsdir=Constants.DEFAULT_LDIR, artifactsdir=Constants.DEFAULT_LDIR)
-                assert e.code == 1
+        try:
+            dexy_command()
+            assertFalse # should not get here
+        except UserFeedback as e:
+            assert "Please run 'dexy setup'" in e.message
+            assert not check_setup(logsdir=Constants.DEFAULT_LDIR, artifactsdir=Constants.DEFAULT_LDIR)
 
 def test_commands_reporters():
     with divert_stdout() as stdout:

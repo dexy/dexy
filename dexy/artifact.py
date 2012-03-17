@@ -3,10 +3,11 @@ from dexy.version import Version
 from ordereddict import OrderedDict
 import codecs
 import dexy.introspect
-import json
+import dexy.commands
 import glob
 import hashlib
 import inspect
+import json
 import logging
 import os
 import shutil
@@ -341,19 +342,15 @@ class Artifact(object):
 
             try:
                 filter_instance.process()
-            except Exception as e:
-                # TODO Clean this up, should all go to stderr probably.
-                print "Error occurred while running", self.key
-                x, y, tb = sys.exc_info()
-                print "Original traceback:"
-                traceback.print_tb(tb, sys.stdout)
-                pattern = os.path.join(self.artifacts_dir, self.hashstring)
-                files_matching = glob.glob(pattern)
-                if len(files_matching) > 0:
-                    print "Here are working files which might have clues about this error:"
-                    for f in files_matching:
-                        print f
-                raise e
+            except dexy.commands.UserFeedback as e:
+                messages = []
+                err_msg_args = (self.doc.key(), self.filter_alias, self.doc.step, len(self.doc.filters))
+                messages.append("ERROR in %s (in filter '%s' - step %s of %s)" % err_msg_args)
+                messages.append(e.message)
+                messages.append("There may be more information in logs/dexy.log")
+                if self.log.getEffectiveLevel() > logging.DEBUG:
+                    messages.append("If you can't find clues in the log, try running again with -loglevel DEBUG")
+                raise dexy.commands.UserFeedback("\n".join(messages))
 
             if self.data_dict and len(self.data_dict) > 0:
                 pass

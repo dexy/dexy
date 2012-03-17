@@ -1,6 +1,6 @@
 from dexy.artifact import Artifact
+from dexy.commands import UserFeedback
 from dexy.constants import Constants
-from dexy.filters.templating_filters import JinjaFilterException
 from dexy.filters.templating_filters import JinjaTextFilter
 
 def init_jinja_filter():
@@ -28,7 +28,7 @@ def test_undefined_exception():
     try:
         f.process_text(text)
         assert False, "should not get here"
-    except JinjaFilterException as e:
+    except UserFeedback as e:
         print e.message
 
 def test_undefined_exception_in_latex():
@@ -40,7 +40,7 @@ def test_undefined_exception_in_latex():
     try:
         print f.process_text(text)
         assert False, "should not get here"
-    except JinjaFilterException as e:
+    except UserFeedback  as e:
         print e.message
 
 def test_syntax_error():
@@ -52,7 +52,7 @@ def test_syntax_error():
     try:
         f.process_text(text)
         assert False, "should not get here"
-    except JinjaFilterException:
+    except UserFeedback:
         pass
 
 def test_syntax_error_in_latex():
@@ -65,5 +65,5 @@ def test_syntax_error_in_latex():
     try:
         f.process_text(text)
         assert False, "should not get here"
-    except JinjaFilterException:
+    except UserFeedback:
         pass

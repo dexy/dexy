@@ -1,5 +1,7 @@
-from dexy.filters.process_filters import ProcessFilter
+from dexy.commands import InternalDexyProblem
+from dexy.commands import UserFeedback
 from dexy.filters.process_filters import DexyEOFException
+from dexy.filters.process_filters import ProcessFilter
 from ordereddict import OrderedDict
 import os
 import pexpect
@@ -68,7 +70,7 @@ class PexpectReplFilter(ProcessFilter):
         do_record_vars = self.artifact.args.has_key('record-vars') and self.artifact.args['record-vars']
         if do_record_vars:
             if not self.SAVE_VARS_TO_JSON_CMD:
-                raise Exception("Can't record vars since SAVE_VARS_TO_JSON_CMD not set.")
+                raise UserFeedback("You specified record-vars but this option isn't available since SAVE_VARS_TO_JSON_CMD is not set for this filter.")
             artifact = self.artifact.add_additional_artifact(self.artifact.key + "-vars.json", 'json')
             self.log.debug("Added additional artifact %s (hashstring %s) to store variables" % (artifact.key, artifact.hashstring))
             section_text = self.SAVE_VARS_TO_JSON_CMD % artifact.filename()
@@ -119,9 +121,10 @@ class PexpectReplFilter(ProcessFilter):
             else:
                 match = search_terms
 
-            msg = "Failed at matching initial prompt within %s seconds. " % initial_timeout
+            msg = "%s failed at matching initial prompt within %s seconds. " % (self.__class__.__name__, initial_timeout)
             msg += "Received '%s', tried to match with '%s'" % (proc.before, match)
-            raise Exception(msg)
+            msg += "The developer might need to set a longer INITIAL_PROMPT_TIMEOUT or the regexp may be wrong."
+            raise InternalDexyProblem(msg)
 
         start = proc.before + proc.after
         self.log.debug("Initial prompt captured!")
@@ -151,14 +154,15 @@ class PexpectReplFilter(ProcessFilter):
                 except pexpect.TIMEOUT:
                     msg = "Failed at matching prompt within %s seconds. " % timeout
                     msg += "Received '%s', tried to match with '%s'" % (proc.before, search_terms)
-                    raise Exception(msg)
+                    msg += "Something may have gone wrong, or you may need to set a longer timeout."
+                    raise UserFeedback(msg)
 
             yield section_key, section_transcript
 
         try:
             proc.close()
         except pexpect.ExceptionPexpect:
-            raise Exception("process %s may not have closed" % proc.pid)
+            raise UserFeedback("process %s may not have closed" % proc.pid)
 
         if proc.exitstatus and self.CHECK_RETURN_CODE:
             self.handle_subprocess_proc_return(self.executable(), proc.exitstatus, section_transcript)

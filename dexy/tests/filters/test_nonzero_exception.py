@@ -15,7 +15,6 @@ TRIGGER_EXCEPTIONS_CONFIG = {
         "@bash.sh|sh" : { "contents" : "exit 1" },
         "@main.c|cfussy" : { "contents" : "" },
         "@bash.sh|shint" : { "contents" : "exit 1" },
-        "@bash.sh|shtmp" : { "contents" : "exit 1" },
         "@bash.sh|shinput" : { "contents" : "exit 1", "inputs" : ["input.txt"] },
         "@dot.dot|dot" : { "contents" : "start" },
         "@erlang.erl|escript" : { "contents" : "abc()."},
@@ -50,6 +49,7 @@ DONT_KNOW_HOW_TO_TEST = [
 "ProcessFilter", #skip
 "KshInteractiveNumberedPromptFilter",
 "KshInteractiveFilter",
+"KshTempdirInteractiveFilter",
 "PhantomJsStdoutFilter", # phantom js hangs on errors, doesn't exit
 "PhantomJsRenderJavascriptInteractiveFilter", # phantom js hangs on errors, doesn't exit
 "RagelRubySubprocessFilter",
@@ -68,12 +68,13 @@ def test_run():
     filters = dexy.introspect.filters()
     tested_filter_classes = []
 
-    for doc in run_dexy(TRIGGER_EXCEPTIONS_CONFIG):
+    args = { "trace" : True }
+    for doc in run_dexy(TRIGGER_EXCEPTIONS_CONFIG, args):
         try:
             doc.run()
             if not doc.key() in ["input.txt"]:
                 assert False, "expected exception for %s" % doc.key()
-        except DexyScriptErrorException:
+        except dexy.commands.UserFeedback:
             tested_filter_alias = doc.filters[-1]
             tested_filter_classes.append(filters[tested_filter_alias])
             assert True
