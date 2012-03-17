@@ -36,20 +36,26 @@ class PythonTestFilter(DexyFilter):
     LATEX_FORMATTER = LatexFormatter()
     HTML_FORMATTER = HtmlFormatter()
 
+    # TODO some way to ensure tests logs get written elsewhere, they are going to main log for now - very confusing
+
     def process_text(self, input_text):
         loader = nose.loader.TestLoader()
         test_info = {}
         for module_name in input_text.split():
+            self.log.debug("Starting to process module '%s'" % module_name)
             test_info[module_name] = {}
             tests = loader.loadTestsFromName(module_name)
+            self.log.debug("Loaded tests.")
             for test in tests:
-                test_passed = nose.core.run(suite=test)
+                self.log.debug("Running test suite %s" % test)
+                test_passed = nose.core.run(suite=test, argv=['nosetests'])
+                self.log.debug("Passed: %s" % test_passed)
                 for x in dir(test.context):
                     xx = test.context.__dict__[x]
                     if inspect.ismethod(xx) or inspect.isfunction(xx):
                         source = inspect.getsource(xx.__code__)
-                        html_source = highlight(source, LEXER, HTML_FORMATTER)
-                        latex_source = highlight(source, LEXER, LATEX_FORMATTER)
+                        html_source = highlight(source, self.LEXER, self.HTML_FORMATTER)
+                        latex_source = highlight(source, self.LEXER, self.LATEX_FORMATTER)
                         test_info[module_name][xx.__name__] = {
                                 'source' : source,
                                 'latex_source' : latex_source,
