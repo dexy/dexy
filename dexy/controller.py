@@ -473,9 +473,7 @@ re.compile: %s""" % (args['except'], e))
                 doc = self.members[run_key]
             else:
                 matches = [k for k in self.members.keys() if k.startswith(run_key)]
-                print matches
                 matches.sort(key=lambda k: len(self.members[k].inputs))
-                print matches
                 doc = self.members[matches[-1]]
             parse_new_document(doc)
 

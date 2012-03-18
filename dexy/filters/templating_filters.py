@@ -24,7 +24,7 @@ class TemplateFilter(DexyFilter):
         DexyVersionTemplatePlugin,
         GlobalsTemplatePlugin,
         InputsTemplatePlugin,
-        NavigationTemplatePlugin,
+#        NavigationTemplatePlugin,
         PrettyPrinterTemplatePlugin,
         PygmentsStylesheetTemplatePlugin,
         PythonBuiltinsTemplatePlugin,
@@ -74,7 +74,7 @@ class JinjaTextFilter(TemplateFilter):
             template = env.from_string(input_text)
             return template.render(template_data)
         except (TemplateSyntaxError, UndefinedError, TypeError) as e:
-            self.handle_jinja_exception(e)
+            self.handle_jinja_exception(e, input_text)
 
     def setup_jinja_env(self):
         if self.artifact.ext == ".tex":
@@ -94,9 +94,9 @@ class JinjaTextFilter(TemplateFilter):
             )
         return env
 
-    def handle_jinja_exception(self, e):
+    def handle_jinja_exception(self, e, input_text):
         result = []
-        input_lines = self.artifact.input_text().splitlines()
+        input_lines = input_text.splitlines()
 
         # Try to parse line number from stack trace...
         if isinstance(e, UndefinedError) or isinstance(e, TypeError):
@@ -134,7 +134,7 @@ class JinjaTextFilter(TemplateFilter):
                         result.append("line %04d: %s" % (i+1, line))
                         match_lines.append(i)
                 if len(match_lines) == 0:
-                    raise InternalDexyProblem("could not find match for %s" % undefined_object)
+                    raise InternalDexyProblem("Tried to find source of: %s. Could not find match for '%s'" % (e.message, undefined_object))
 
             elif match_is_undefined:
                 undefined_object = match_is_undefined.groups()[0]
@@ -142,7 +142,7 @@ class JinjaTextFilter(TemplateFilter):
                     if undefined_object in line:
                         result.append("line %04d: %s" % (i+1, line))
             else:
-                raise InternalDexyProblem("pattern is %s" % e.message)
+                raise InternalDexyProblem("don't know how to match pattern: %s" % e.message)
         else:
             result.append("line %04d: %s" % (e.lineno, input_lines[e.lineno-1]))
 
@@ -163,7 +163,23 @@ class JinjaFilter(JinjaTextFilter):
             template = env.from_string(self.artifact.input_text())
             template.stream(template_data).dump(self.artifact.filepath(), encoding="utf-8")
         except (TemplateSyntaxError, UndefinedError, TypeError) as e:
-            self.handle_jinja_exception(e)
+            self.handle_jinja_exception(e, self.artifact.input_text())
+
+class JinjaJustInTimeFilter(JinjaFilter):
+    ALIASES = ['jinjajit']
+    PLUGINS = [
+        ClippyHelperTemplatePlugin,
+        DexyVersionTemplatePlugin,
+        GlobalsTemplatePlugin,
+        InputsJustInTimeTemplatePlugin,
+        PrettyPrinterTemplatePlugin,
+        PygmentsStylesheetTemplatePlugin,
+        PythonBuiltinsTemplatePlugin,
+        PythonDatetimeTemplatePlugin,
+        RegularExpressionsTemplatePlugin,
+        SubdirectoriesTemplatePlugin,
+        VariablesTemplatePlugin
+        ]
 
 class WebsiteTemplateJinjaFilter(JinjaFilter):
     """
@@ -194,5 +210,5 @@ class WebsiteTemplateJinjaFilter(JinjaFilter):
             template = env.from_string(website_template.output_text())
             template.stream(template_data).dump(self.artifact.filepath(), encoding="utf-8")
         except (TemplateSyntaxError, UndefinedError, TypeError) as e:
-            self.handle_jinja_exception(e)
+            self.handle_jinja_exception(e, website_template.output_text())
 

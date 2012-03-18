@@ -123,7 +123,13 @@ class NavigationTemplatePlugin(TemplatePlugin):
     """
     def run(self):
         sitemap = {}
-        for key, artifact in self.filter_instance.artifact.inputs().iteritems():
+        inputs = self.filter_instance.artifact.inputs()
+
+        keys = inputs.keys()
+        keys.append(self.filter_instance.artifact.key)
+
+        for key in keys:
+            artifact = inputs.get(key, self.filter_instance.artifact)
             if artifact.name and artifact.final:
                 artifact_dir = artifact.canonical_dir()
                 if not artifact_dir in sitemap:
@@ -134,8 +140,10 @@ class NavigationTemplatePlugin(TemplatePlugin):
             v.sort()
 
         return {
-                'sitemap' : sitemap
-            }
+                'sitemap' : sitemap,
+                'artifacts' : inputs,
+                's' : self.filter_instance.artifact
+                }
 
 class InputsTemplatePlugin(TemplatePlugin):
     def load_sort_json_data(self, a):
@@ -162,10 +170,22 @@ class InputsTemplatePlugin(TemplatePlugin):
         else:
             return unsorted_json
 
+    def d_data_for_artifact(self, a):
+        # Do any special handling of data
+        if a.ext == '.json':
+            if len(a.output_text()) == 0:
+                # Hack for JSON data being written directly to a file, e.g. filenames filter
+                with open(a.filepath(), "rb") as f:
+                    a.data_dict['1'] = f.read()
+            data = self.load_sort_json_data(a)
+        else:
+            data = a.data_dict
+
+        return data
+
     def run(self):
         d_hash = {}
         a_hash = {}
-
 
         name = self.filter_instance.artifact.name
         inputs = self.filter_instance.artifact.inputs()
@@ -173,15 +193,7 @@ class InputsTemplatePlugin(TemplatePlugin):
         for key, a in inputs.iteritems():
             keys = a.relative_refs(name)
 
-            # Do any special handling of data
-            if a.ext == '.json':
-                if len(a.output_text()) == 0:
-                    # Hack for JSON data being written directly to a file, e.g. filenames filter
-                    with open(a.filepath(), "rb") as f:
-                        a.data_dict['1'] = f.read()
-                data = self.load_sort_json_data(a)
-            else:
-                data = a.data_dict
+            data = self.d_data_for_artifact(a)
 
             for k in keys:
                 # Avoid adding duplicate keys
@@ -201,6 +213,26 @@ class InputsTemplatePlugin(TemplatePlugin):
             'd' : d_hash,
             'f' : self.filter_instance,
         }
+
+class InputsJustInTimeTemplatePlugin(InputsTemplatePlugin):
+    def a(self, relative_ref):
+        return self.map_relative_refs[relative_ref]
+
+    def d(self, relative_ref):
+        return self.d_data_for_artifact(self.a(relative_ref))
+
+    def run(self):
+        self.map_relative_refs = {}
+        for k, a in self.filter_instance.artifact.inputs().iteritems():
+            for ref in a.relative_refs(self.filter_instance.artifact.name):
+                self.map_relative_refs[ref] = a
+
+        return {
+            'a' : self.a,
+            'd' : self.d,
+            'f' : self,
+            's' : self.filter_instance.artifact
+            }
 
 class ClippyHelperTemplatePlugin(TemplatePlugin):
     PRE_AND_CLIPPY_STRING = """

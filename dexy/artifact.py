@@ -287,7 +287,6 @@ class Artifact(object):
 
         # These attributes are the same for all artifacts pertaining to a document
         artifact.args = doc.args
-        artifact.log.debug("Setting artifact args for %s in %s to %s" % (artifact.key, doc.key(), doc.args))
         artifact.batch_id = doc.batch_id
         artifact.document_key = doc.key()
         artifact.name = doc.name
@@ -350,7 +349,15 @@ class Artifact(object):
                 messages.append("There may be more information in logs/dexy.log")
                 if self.log.getEffectiveLevel() > logging.DEBUG:
                     messages.append("If you can't find clues in the log, try running again with -loglevel DEBUG")
+
+                for message in messages:
+                    self.log.debug(message)
+
                 raise dexy.commands.UserFeedback("\n".join(messages))
+            except dexy.commands.InternalDexyProblem as e:
+                err_msg_args = (self.doc.key(), self.filter_alias, self.doc.step, len(self.doc.filters))
+                sys.stderr.write("ERROR in %s (in filter '%s' - step %s of %s)\n" % err_msg_args)
+                raise e
 
             if self.data_dict and len(self.data_dict) > 0:
                 pass

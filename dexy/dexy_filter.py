@@ -125,6 +125,7 @@ class DexyFilter(object):
         return True
 
     def find_closest_parent(self, param_name):
+        self.log.debug("In find_closest_parent for %s" % self.artifact.key)
         inputs = self.artifact.inputs()
 
         search_key_specified = self.artifact.args.has_key(param_name)
@@ -135,6 +136,7 @@ class DexyFilter(object):
             # nothing specified, look for the default pattern
             search_key = "_%s%s" % (param_name, self.artifact.ext)
 
+        self.log.debug("Using search key %s" % search_key)
         path_elements = self.artifact.name.split(os.sep)[:-1]
         doc = None
         n = len(path_elements)
@@ -166,7 +168,7 @@ class DexyFilter(object):
 
             if doc:
                 break
-
+        self.log.debug("selected %s" % doc.key)
         return doc
 
     def args(self):
