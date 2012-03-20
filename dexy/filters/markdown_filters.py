@@ -15,5 +15,3 @@ class MarkdownFilter(DexyFilter):
                 extension_configs=extension_configs
                 )
         return md.convert(input_text)
-
-

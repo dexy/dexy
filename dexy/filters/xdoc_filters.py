@@ -89,9 +89,9 @@ class PythonDocumentationFilter(DexyFilter):
 
             for i, s in enumerate(builder.sections):
                 lines = builder.statements[i]['lines']
-                sections[s] = self.COMPOSER.format(lines, self.LEXER, self.HTML_FORMATTER)
+                self.add_source_for_key(sections, s, lines)
 
-            if len(sections) == 1:
+            if len(sections.keys()) == 1:
                 return sections.values()[0]
             else:
                 return sections
@@ -123,6 +123,43 @@ class PythonDocumentationFilter(DexyFilter):
             docs[key]['html-source'] = self.highlight_html(source)
             docs[key]['latex-source'] = self.highlight_latex(source)
 
+    def process_module(self, package_name, name, docs):
+        try:
+            __import__(name)
+            mod = sys.modules[name]
+
+            for k, m in inspect.getmembers(mod):
+                self.log.debug("in package %s module %s processing element %s" % (package_name, name, k))
+                if not inspect.isclass(m) and hasattr(m, '__module__') and m.__module__.startswith(package_name):
+                    # TODO figure out how to get module constants
+                    key = "%s.%s" % (m.__module__, k)
+                    item_content = self.fetch_item_content(m)
+                    self.add_source_for_key(docs, key, item_content)
+
+                elif inspect.isclass(m) and m.__module__.startswith(package_name):
+                    key = "%s.%s" % (name, k)
+                    try:
+                        item_content = inspect.getsource(m)
+                        self.add_source_for_key(docs, key, item_content)
+                    except IOError:
+                        self.log.debug("can't get source for" % key)
+                        self.add_source_for_key(docs, key, "")
+
+                    for ck, cm in inspect.getmembers(m):
+                        key = "%s.%s.%s" % (name, k, ck)
+                        item_content = self.fetch_item_content(cm)
+                        self.add_source_for_key(docs, key, item_content)
+
+                else:
+                    key = "%s.%s" % (name, k)
+                    item_content = self.fetch_item_content(m)
+                    self.add_source_for_key(docs, key, item_content)
+
+        except ImportError as e:
+            self.log.debug(e)
+
+        return docs
+
     def process_text(self, input_text):
         """
         input_text should be a list of installed python libraries to document.
@@ -135,41 +172,13 @@ class PythonDocumentationFilter(DexyFilter):
             self.log.debug("processing package %s" % package)
             package_name = package.__name__
             prefix = package.__name__ + "."
-            for module_loader, name, ispkg in pkgutil.walk_packages(package.__path__, prefix=prefix):
-                self.log.debug("in package %s processing module %s" % (package_name, name))
-                try:
-                    __import__(name)
-                    mod = sys.modules[name]
 
-                    for k, m in inspect.getmembers(mod):
-                        self.log.debug("in package %s module %s processing element %s" % (package_name, name, k))
-                        if not inspect.isclass(m) and hasattr(m, '__module__') and m.__module__.startswith(package_name):
-                            # TODO figure out how to get module constants
-                            key = "%s.%s" % (m.__module__, k)
-                            item_content = self.fetch_item_content(m)
-                            self.add_source_for_key(docs, key, item_content)
-
-                        elif inspect.isclass(m) and m.__module__.startswith(package_name):
-                            key = "%s.%s" % (name, k)
-                            try:
-                                item_content = inspect.getsource(m)
-                                self.add_source_for_key(docs, key, item_content)
-                            except IOError:
-                                self.log.debug("can't get source for" % key)
-                                self.add_source_for_key(docs, key, "")
-
-                            for ck, cm in inspect.getmembers(m):
-                                key = "%s.%s.%s" % (name, k, ck)
-                                item_content = self.fetch_item_content(cm)
-                                self.add_source_for_key(docs, key, item_content)
-
-                        else:
-                            key = "%s.%s" % (name, k)
-                            item_content = self.fetch_item_content(m)
-                            self.add_source_for_key(docs, key, item_content)
-
-                except ImportError as e:
-                    self.log.debug(e)
+            if hasattr(package, '__path__'):
+                for module_loader, name, ispkg in pkgutil.walk_packages(package.__path__, prefix=prefix):
+                    self.log.debug("in package %s processing module %s" % (package_name, name))
+                    docs = self.process_module(package_name, name, docs)
+            else:
+                docs = self.process_module(package.__name__, package.__name__, docs)
 
         return json.dumps(docs, indent=4)
 

@@ -14,6 +14,7 @@ import urllib
 class TemplatePlugin(object):
     def __init__(self, filter_instance):
         self.filter_instance = filter_instance
+        self.log = self.filter_instance.artifact.log
 
     def run(self):
         return {}
@@ -181,7 +182,10 @@ class InputsTemplatePlugin(TemplatePlugin):
         else:
             data = a.data_dict
 
-        return data
+        if hasattr(data, 'keys') and data.keys() == ['1']:
+            return data['1']
+        else:
+            return data
 
     def run(self):
         d_hash = {}
@@ -201,11 +205,7 @@ class InputsTemplatePlugin(TemplatePlugin):
                     next
 
                 a_hash[k] = a
-
-                if hasattr(data, 'keys') and data.keys() == ['1']:
-                    d_hash[k] = data['1']
-                else:
-                    d_hash[k] = data
+                d_hash[k] = data
 
         return {
             'a' : a_hash,
@@ -271,10 +271,12 @@ class ClippyHelperTemplatePlugin(TemplatePlugin):
         }
 
     def pre_and_clippy(self, text):
+        self.log.debug("in pre_and_clippy")
         return self.PRE_AND_CLIPPY_STRING % (text, self.clippy_helper(text))
 
     def clippy_helper(self, text):
         if not text or len(text) == 0:
-            raise Exception("You passed blank text to clippy helper!")
+            raise UserFeedback("You passed blank text to clippy helper!")
+        self.log.debug("Applying clippy helper to %s" % text)
         quoted_text = urllib.quote(text)
         return self.CLIPPY_HELPER_STRING % (quoted_text, quoted_text)

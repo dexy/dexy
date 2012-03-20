@@ -358,6 +358,11 @@ class Artifact(object):
                 err_msg_args = (self.doc.key(), self.filter_alias, self.doc.step, len(self.doc.filters))
                 sys.stderr.write("ERROR in %s (in filter '%s' - step %s of %s)\n" % err_msg_args)
                 raise e
+            except Exception as e:
+                err_msg_args = (self.doc.key(), self.filter_alias, self.doc.step, len(self.doc.filters))
+                sys.stderr.write("ERROR in %s (in filter '%s' - step %s of %s)\n" % err_msg_args)
+                print "EXCEPTION NOT OF UserFeedback or InternalDexyProblem types!!"
+                raise e
 
             if self.data_dict and len(self.data_dict) > 0:
                 pass

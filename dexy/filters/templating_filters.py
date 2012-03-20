@@ -74,7 +74,7 @@ class JinjaTextFilter(TemplateFilter):
             template = env.from_string(input_text)
             return template.render(template_data)
         except (TemplateSyntaxError, UndefinedError, TypeError) as e:
-            self.handle_jinja_exception(e, input_text)
+            self.handle_jinja_exception(e, input_text, template_data)
 
     def setup_jinja_env(self):
         if self.artifact.ext == ".tex":
@@ -94,7 +94,7 @@ class JinjaTextFilter(TemplateFilter):
             )
         return env
 
-    def handle_jinja_exception(self, e, input_text):
+    def handle_jinja_exception(self, e, input_text, template_data):
         result = []
         input_lines = input_text.splitlines()
 
@@ -146,6 +146,18 @@ class JinjaTextFilter(TemplateFilter):
         else:
             result.append("line %04d: %s" % (e.lineno, input_lines[e.lineno-1]))
 
+        template_data_dump_file = "template-data-dump.json"
+        with open(template_data_dump_file, "wb") as f:
+            template_data_copy = template_data.copy()
+            for k, v in template_data.iteritems():
+                try:
+                    json.dumps(v)
+                except Exception as e:
+                    del template_data_copy[k]
+
+            json.dump(template_data_copy, f, sort_keys=True, indent=4)
+
+        result.append("template data has been written to %s" % template_data_dump_file)
         raise UserFeedback("\n".join(result))
 
 class JinjaFilter(JinjaTextFilter):
@@ -157,13 +169,17 @@ class JinjaFilter(JinjaTextFilter):
     TAGS = ['template']
 
     def process(self):
+        self.log.debug("entering JinjaFilter, about to create jinja env")
         env = self.setup_jinja_env()
+        self.log.debug("jinja env created. about to run plugins")
         template_data = self.run_plugins()
         try:
+            self.log.debug("creating jinja template from input text")
             template = env.from_string(self.artifact.input_text())
+            self.log.debug("about to process jinja template")
             template.stream(template_data).dump(self.artifact.filepath(), encoding="utf-8")
         except (TemplateSyntaxError, UndefinedError, TypeError) as e:
-            self.handle_jinja_exception(e, self.artifact.input_text())
+            self.handle_jinja_exception(e, self.artifact.input_text(), template_data)
 
 class JinjaJustInTimeFilter(JinjaFilter):
     ALIASES = ['jinjajit']
