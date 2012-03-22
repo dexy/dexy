@@ -1,6 +1,22 @@
 from dexy.dexy_filter import DexyFilter
 import shutil
 
+class ForceCPickleExtensionFilter(DexyFilter):
+    """
+    Forces previous filter to output .cpickle extension.
+    """
+    INPUT_EXTENSIONS = [".cpickle"]
+    OUTPUT_EXTENSIONS = [".cpickle"]
+    ALIASES = ['cpickle']
+
+class ForcePickleExtensionFilter(DexyFilter):
+    """
+    Forces previous filter to output .pickle extension.
+    """
+    INPUT_EXTENSIONS = [".pickle"]
+    OUTPUT_EXTENSIONS = [".pickle"]
+    ALIASES = ['pickle']
+
 class ForceHtmlExtensionFilter(DexyFilter):
     """
     Forces previous filter to output .html extension.

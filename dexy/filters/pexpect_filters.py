@@ -16,7 +16,7 @@ class PexpectReplFilter(ProcessFilter):
     INITIAL_PROMPT = None
     INITIAL_PROMPT_TIMEOUT = 5
     TIMEOUT = 10 # Set to larger number if needed. Or set to None for no timeout.
-    LINE_ENDING = "\r\n"
+    LINE_ENDING = "\n"
     PROMPTS = ['>>>', '...'] # Python uses >>> prompt normally and ... when in multi-line structures like loops
     PROMPT_REGEX = None
     PS1 = None
@@ -156,6 +156,10 @@ class PexpectReplFilter(ProcessFilter):
                     msg += "Received '%s', tried to match with '%s'" % (proc.before, search_terms)
                     msg += "Something may have gone wrong, or you may need to set a longer timeout."
                     raise UserFeedback(msg)
+                except pexpect.ExceptionPexpect as e:
+                    raise UserFeedback(str(e))
+                except pexpect.EOF as e:
+                    raise UserFeedback(str(e))
 
             yield section_key, section_transcript
 
@@ -224,7 +228,7 @@ class RPexpectReplFilter(PexpectReplFilter):
     EXECUTABLE = "R --quiet --vanilla"
     INPUT_EXTENSIONS = ['.txt', '.r', '.R']
     OUTPUT_EXTENSIONS = ['.Rout']
-    PROMPTS = [">", "+"]
+    PROMPT_REGEX = "(\x1b[^m]*m)?(>|\+)\s*"
     TAGS = ['r', 'interpreter', 'language']
     TRIM_PROMPT = ">"
     INITIAL_PROMPT = "^>"

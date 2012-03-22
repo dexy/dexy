@@ -505,7 +505,7 @@ re.compile: %s""" % (args['except'], e))
             for child, parents in children.items():
                 for parent in parents:
                     print "%s depends on %s" % (self.members.keys()[parent], self.members.keys()[child])
-            raise e
+            raise dexy.commands.UserFeedback(e.message)
 
         docs_without_dependencies = frozenset(range(len(self.members))) - frozenset(topsort_ordering)
         self.ordering = topsort_ordering + list(docs_without_dependencies)

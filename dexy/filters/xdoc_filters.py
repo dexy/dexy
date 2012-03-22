@@ -31,19 +31,19 @@ class PythonTestFilter(DexyFilter):
     """
     ALIASES = ['pytest']
     INPUT_EXTENSIONS = [".txt"]
-    OUTPUT_EXTENSIONS = [".json"]
+    OUTPUT_EXTENSIONS = [".json", ".kch"]
     LEXER = PythonLexer()
     LATEX_FORMATTER = LatexFormatter()
     HTML_FORMATTER = HtmlFormatter()
 
-    # TODO some way to ensure tests logs get written elsewhere, they are going to main log for now - very confusing
+    # TODO some way to ensure tests logs get written elsewhere, like to the artifact output, they are going to main log for now - very confusing
 
-    def process_text(self, input_text):
+    def process(self):
+        self.artifact.setup_storage()
+
         loader = nose.loader.TestLoader()
-        test_info = {}
-        for module_name in input_text.split():
+        for module_name in self.artifact.input_text().split():
             self.log.debug("Starting to process module '%s'" % module_name)
-            test_info[module_name] = {}
             tests = loader.loadTestsFromName(module_name)
             self.log.debug("Loaded tests.")
             for test in tests:
@@ -53,56 +53,74 @@ class PythonTestFilter(DexyFilter):
                 for x in dir(test.context):
                     xx = test.context.__dict__[x]
                     if inspect.ismethod(xx) or inspect.isfunction(xx):
+                        test_context_name = test.context.__name__
+                        qualified_test_name = "%s.%s" % (test_context_name, xx.__name__)
+
                         source = inspect.getsource(xx.__code__)
                         html_source = highlight(source, self.LEXER, self.HTML_FORMATTER)
                         latex_source = highlight(source, self.LEXER, self.LATEX_FORMATTER)
-                        test_info[module_name][xx.__name__] = {
-                                'source' : source,
-                                'latex_source' : latex_source,
-                                'html_source' : html_source,
-                                'test_passed': test_passed
-                                }
 
-        return json.dumps(test_info)
+                        if test_passed:
+                            html_result = """ <div style="border: thick dotted green;"> %s PASSED </div> """ % qualified_test_name
+                        else:
+                            html_result = """ <div style="border: thick dotted red;"> %s FAILED </div> """ % qualified_test_name
+
+                        self.artifact.append_to_kv_storage("%s:source" % (qualified_test_name, xx.__name__), source)
+                        self.artifact.append_to_kv_storage("%s:html-source" % (qualified_test_name, xx.__name__), html_source)
+                        self.artifact.append_to_kv_storage("%s:latex-source" % (qualified_test_name, xx.__name__), latex_source)
+                        self.artifact.append_to_kv_storage("%s:test-passed" % (qualified_test_name, xx.__name__), test_passed)
+                        self.artifact.append_to_kv_storage("%s:html-result" % (qualified_test_name, xx.__name__), html_result)
+
+        self.artifact.persist_storage()
 
 class PythonDocumentationFilter(DexyFilter):
     ALIASES = ["pydoc"]
     INPUT_EXTENSIONS = [".txt"]
-    OUTPUT_EXTENSIONS = [".json"]
+    OUTPUT_EXTENSIONS = [".json", ".kch"]
     COMPOSER = Composer()
     LEXER = PythonLexer()
     LATEX_FORMATTER = LatexFormatter()
     HTML_FORMATTER = HtmlFormatter()
 
-    def fetch_item_content(self, cm):
-        is_method = inspect.ismethod(cm)
-        is_function = inspect.isfunction(cm)
+    def fetch_item_content(self, key, item):
+        is_method = inspect.ismethod(item)
+        is_function = inspect.isfunction(item)
 
         if is_method or is_function:
+            # Get source code
             try:
-                source = inspect.getsource(cm)
+                source = inspect.getsource(item)
             except IOError:
                 source = ""
 
+            # Process any idiopidae tags
             builder = idiopidae.parser.parse('Document', source + "\n\0")
-            sections = {}
 
+            sections = {}
             for i, s in enumerate(builder.sections):
                 lines = builder.statements[i]['lines']
-                self.add_source_for_key(sections, s, lines)
+                sections[s] = "\n".join(l[1] for l in builder.statements[i]['lines'])
 
-            if len(sections.keys()) == 1:
-                return sections.values()[0]
+            if isinstance(sections, dict):
+                if len(sections.keys()) > 1 or sections.keys()[0] != '1':
+                    for section_name, section_content in sections.iteritems():
+                        self.add_source_for_key("%s:%s" % (key, section_name), section_content)
+                else:
+                    self.add_source_for_key(key, sections['1'])
             else:
-                return sections
-        else:
+                self.add_source_for_key(key, sections)
+
+            self.artifact.append_to_kv_storage("%s:doc" % key, inspect.getdoc(item))
+            self.artifact.append_to_kv_storage("%s:comments" % key, inspect.getcomments(item))
+
+        else: # not a function or a method
             try:
                 # If this can be JSON-serialized, leave it alone...
-                json.dumps(cm)
-                return cm
+                json.dumps(item)
+                self.add_source_for_key(key, item)
             except TypeError:
                 # ... if it can't, convert it to a string to avoid problems.
-                return str(cm)
+                self.add_source_for_key(key, str(item))
 
     def highlight_html(self, source):
         return highlight(source, self.LEXER, self.HTML_FORMATTER)
@@ -110,55 +128,55 @@ class PythonDocumentationFilter(DexyFilter):
     def highlight_latex(self, source):
         return highlight(source, self.LEXER, self.LATEX_FORMATTER)
 
-    def add_source_for_key(self, docs, key, source):
-        if docs.has_key(key):
-            self.log.debug("Skipping duplicate key %s" % key)
-        else:
-            self.log.debug("Adding new key %s" % key)
-            docs[key] = {}
-            docs[key]['value'] = source
-            if not type(source) == str or type(source) == unicode:
-                source = unicode(source)
-            docs[key]['source'] = source
-            docs[key]['html-source'] = self.highlight_html(source)
-            docs[key]['latex-source'] = self.highlight_latex(source)
+    def add_source_for_key(self, key, source):
+        """
+        Appends source code + syntax highlighted source code to persistent store.
+        """
+        self.artifact.append_to_kv_storage("%s:value" % key, source)
+        if not type(source) == str or type(source) == unicode:
+            source = unicode(source)
+        self.artifact.append_to_kv_storage("%s:source" % key, source)
+        self.artifact.append_to_kv_storage("%s:html-source" % key, self.highlight_html(source))
+        self.artifact.append_to_kv_storage("%s:latex-source" % key, self.highlight_latex(source))
 
-    def process_module(self, package_name, name, docs):
+    def process_module(self, package_name, name):
         try:
+            self.log.debug("Trying to import %s" % name)
             __import__(name)
             mod = sys.modules[name]
+
+            try:
+                module_source = inspect.getsource(mod)
+                json.dumps(module_source)
+                self.add_source_for_key(name, inspect.getsource(mod))
+            except (UnicodeDecodeError, IOError):
+                pass
 
             for k, m in inspect.getmembers(mod):
                 self.log.debug("in package %s module %s processing element %s" % (package_name, name, k))
                 if not inspect.isclass(m) and hasattr(m, '__module__') and m.__module__.startswith(package_name):
-                    # TODO figure out how to get module constants
                     key = "%s.%s" % (m.__module__, k)
-                    item_content = self.fetch_item_content(m)
-                    self.add_source_for_key(docs, key, item_content)
+                    self.fetch_item_content(key, m)
 
                 elif inspect.isclass(m) and m.__module__.startswith(package_name):
                     key = "%s.%s" % (name, k)
                     try:
                         item_content = inspect.getsource(m)
-                        self.add_source_for_key(docs, key, item_content)
+                        self.add_source_for_key(key, item_content)
                     except IOError:
-                        self.log.debug("can't get source for" % key)
-                        self.add_source_for_key(docs, key, "")
+                        self.log.debug("can't get source for %s" % key)
+                        self.add_source_for_key(key, "")
 
                     for ck, cm in inspect.getmembers(m):
                         key = "%s.%s.%s" % (name, k, ck)
-                        item_content = self.fetch_item_content(cm)
-                        self.add_source_for_key(docs, key, item_content)
+                        self.fetch_item_content(key, cm)
 
                 else:
                     key = "%s.%s" % (name, k)
-                    item_content = self.fetch_item_content(m)
-                    self.add_source_for_key(docs, key, item_content)
+                    self.fetch_item_content(key, m)
 
         except ImportError as e:
             self.log.debug(e)
-
-        return docs
 
     def process_text(self, input_text):
         """
@@ -166,7 +184,7 @@ class PythonDocumentationFilter(DexyFilter):
         """
         package_names = input_text.split()
         packages = [__import__(package_name) for package_name in package_names]
-        docs = {}
+        self.artifact.setup_storage()
 
         for package in packages:
             self.log.debug("processing package %s" % package)
@@ -176,11 +194,11 @@ class PythonDocumentationFilter(DexyFilter):
             if hasattr(package, '__path__'):
                 for module_loader, name, ispkg in pkgutil.walk_packages(package.__path__, prefix=prefix):
                     self.log.debug("in package %s processing module %s" % (package_name, name))
-                    docs = self.process_module(package_name, name, docs)
+                    self.process_module(package_name, name)
             else:
-                docs = self.process_module(package.__name__, package.__name__, docs)
+                self.process_module(package.__name__, package.__name__)
 
-        return json.dumps(docs, indent=4)
+        self.artifact.persist_storage()
 
 class RDocumentationFilter(DexyFilter):
     """

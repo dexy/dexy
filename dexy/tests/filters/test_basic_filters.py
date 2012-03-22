@@ -1,6 +1,7 @@
 from dexy.dexy_filter import DexyFilter
 from dexy.document import Document
 from dexy.tests.utils import run_dexy
+from dexy.tests.utils import set_filter_list
 from ordereddict import OrderedDict
 import dexy.introspect
 
@@ -24,13 +25,6 @@ class BasicBinaryFilter(DexyFilter):
     def process(self):
         with open(self.artifact.filepath(), "wb") as f:
             f.write(DATA)
-
-def set_filter_list(additional_filters):
-    filters = dexy.introspect.filters()
-    for filter_class in additional_filters:
-        for a in filter_class.ALIASES:
-            filters[a] = filter_class
-    Document.filter_list = filters
 
 def test_basic_filter():
     set_filter_list([BasicFilter, BasicBinaryFilter])

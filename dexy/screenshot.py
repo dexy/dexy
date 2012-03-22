@@ -2,7 +2,7 @@ try:
     from selenium import webdriver
     from selenium.common.exceptions import NoSuchElementException
 except ImportError:
-    raise Exception("You must have python-selenium installed to take screenshots. Try 'pip install selenium'.")
+    raise UserFeedback("You must have python-selenium installed to take screenshots. Try 'pip install selenium'.")
 from kaa import imlib2
 from modargs import args
 import time

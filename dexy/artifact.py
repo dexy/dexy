@@ -2,9 +2,8 @@ from dexy.constants import Constants
 from dexy.version import Version
 from ordereddict import OrderedDict
 import codecs
-import dexy.introspect
 import dexy.commands
-import glob
+import dexy.introspect
 import hashlib
 import inspect
 import json
@@ -42,23 +41,24 @@ class Artifact(object):
     ]
 
     BINARY_EXTENSIONS = [
-         '.docx',
+        '.docx',
+        '.eot',
         '.epub',
         '.gif',
-        '.jpg',
-        '.png',
-        '.pdf',
-        '.zip',
-        '.tgz',
         '.gz',
-        '.eot',
-        '.ttf',
+        '.jpg',
+        '.kch',
         '.odt',
+        '.pdf',
+        '.png',
         '.rtf',
-        '.woff',
         '.sqlite',
         '.sqlite3',
-        '.swf'
+        '.swf',
+        '.tgz',
+        '.ttf',
+        '.woff',
+        '.zip'
     ]
 
     def __init__(self):
@@ -100,6 +100,13 @@ class Artifact(object):
         self.start_time = None
         self.state = 'new'
         self.stdout = None
+
+    def __getitem__(self, key):
+        """
+        Shortcut to retrieve data from key-value storage.
+        """
+        # TODO format this?
+        return self.retrieve_from_kv_storage(key)
 
     def is_complete(self):
         return str(self.state) == 'complete'
@@ -353,16 +360,20 @@ class Artifact(object):
                 for message in messages:
                     self.log.debug(message)
 
-                raise dexy.commands.UserFeedback("\n".join(messages))
+                raise dexy.commands.UserFeedback(e.message)
+
             except dexy.commands.InternalDexyProblem as e:
                 err_msg_args = (self.doc.key(), self.filter_alias, self.doc.step, len(self.doc.filters))
                 sys.stderr.write("ERROR in %s (in filter '%s' - step %s of %s)\n" % err_msg_args)
                 raise e
             except Exception as e:
+                traceback.print_tb(sys.exc_info()[2])
                 err_msg_args = (self.doc.key(), self.filter_alias, self.doc.step, len(self.doc.filters))
                 sys.stderr.write("ERROR in %s (in filter '%s' - step %s of %s)\n" % err_msg_args)
-                print "EXCEPTION NOT OF UserFeedback or InternalDexyProblem types!!"
-                raise e
+                if e.message:
+                    raise dexy.commands.InternalDexyProblem(e.message)
+                else:
+                    raise dexy.commands.InternalDexyProblem(e.__class__.__name__)
 
             if self.data_dict and len(self.data_dict) > 0:
                 pass
@@ -801,3 +812,77 @@ class Artifact(object):
             fmt = "%%0%sd:%%s" % self.MAX_DATA_DICT_DECIMALS
             data_dict[fmt % (i, k)] = v
         return data_dict
+
+    def setup_storage(self):
+        if self.ext == ".json":
+            self._storage = {}
+        elif self.ext == ".kch":
+            from kyotocabinet import DB
+            self._storage = DB()
+            if not self._storage.open(self.filepath(), DB.OWRITER | DB.OCREATE):
+                self.log.debug("Error opening kyotocabinet db: %s" % (self._storage.error()))
+        else:
+            raise dexy.commmands.UserFeedback("I don't know how to set up storage for file extention %s" % self.ext)
+
+    def append_to_kv_storage(self, key, value):
+        self.log.debug("Setting key %s in kv storage" % key)
+        if self.ext == ".json":
+            self._storage[key] = value
+        elif self.ext == ".kch":
+            if not self._storage.set(key, value):
+                self.log.debug("Error setting key %s in kyotocabinet: %s" % (key, self._storage.error()))
+        else:
+            raise dexy.commmands.InternalDexyProblem("I don't know how to set up storage for file extention %s, this should have been trapped at setup_storage" % self.ext)
+
+    def persist_storage(self):
+        if self.ext == ".json":
+            with open(self.filepath(), "wb") as f:
+                import json
+                json.dump(self._storage, f)
+        elif self.ext == ".kch":
+            self.log.debug("Persisting data in file %s" % self.filepath())
+            if not self._storage.close():
+                self.log.debug(self._storage.error())
+        else:
+            raise dexy.commmands.InternalDexyProblem("I don't know how to set up storage for file extention %s, this should have been trapped at setup_storage" % self.ext)
+
+    def setup_storage_read(self):
+        self.load()
+        if self.ext == ".json":
+            self._storage = json.loads(self.data_dict['1'])
+        elif self.ext == ".kch":
+            from kyotocabinet import DB
+            self._storage = DB()
+            self._storage.open(self.filepath(), DB.OREADER)
+        else:
+            raise dexy.commmands.UserFeedback("I don't know how to set up storage for file extention %s" % self.ext)
+
+    def retrieve_from_kv_storage(self, key):
+        if not hasattr(self, "_storage"):
+            self.setup_storage_read()
+        elif self._storage.__class__.__name__ == "DB":
+            self._storage.close()
+            self.setup_storage_read()
+
+        if self.ext == ".json":
+            return self._storage[key]
+        elif self.ext == ".kch":
+            value = self._storage.get(key)
+            return value
+        else:
+            raise dexy.commmands.InternalDexyProblem("I don't know how to set up storage for file extention %s, this should have been trapped at setup_storage" % self.ext)
+
+    def kv_keys(self, prefix=None, regex=None):
+        """
+        Return the keys defined in kv-storage.
+        """
+        if not hasattr(self, "_storage"):
+            self.setup_storage_read()
+        elif self._storage.__class__.__name__ == "DB":
+            self._storage.close()
+            self.setup_storage_read()
+
+        if self.ext == ".json":
+            return self._storage.keys()
+        elif self.ext == ".kch":
+            return self._storage.match_prefix(prefix)

@@ -1,6 +1,7 @@
 from dexy.dexy_filter import DexyFilter
 from dexy.filters.process_filters import SubprocessFilter
 import codecs
+import dexy.commands
 import os
 import re
 import shutil
@@ -186,7 +187,7 @@ class LatexFilter(SubprocessFilter):
             stdout, stderr = proc.communicate()
             self.artifact.stdout += stdout
             if proc.returncode > 2: # Set at 2 for now as this is highest I've hit, better to detect whether PDF has been generated?
-                raise Exception("latex error, look for information in %s" %
+                raise dexy.commands.UserFeedback("latex error, look for information in artifacts/%s" %
                                 latex_filename.replace(".tex", ".log"))
             elif proc.returncode > 0:
                 self.log.warn("""A non-critical latex error has occurred running %s,

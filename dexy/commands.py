@@ -2,8 +2,8 @@ from dexy.constants import Constants
 from dexy.version import Version
 from modargs import args
 from pygments import highlight
-from pygments.lexers.agile import PythonLexer
 from pygments.formatters import TerminalFormatter
+from pygments.lexers.agile import PythonLexer
 import cProfile
 import copy
 import datetime
@@ -14,17 +14,20 @@ import inspect
 import os
 import shutil
 import sys
+import warnings
+import platform
 
 class InternalDexyProblem(Exception):
     def __init__(self, message):
         self.message = """\nOops! You may have found a bug in Dexy.
         The developer would really appreciate if you copy and paste this entire message
         and the Traceback above it into a bug report at http://dexy.tenderapp.com.
-        Your version of Dexy is %s\n""" % Version.VERSION
+        Your version of Dexy is %s
+        Your platform is %s\n""" % (Version.VERSION, platform.system())
         self.message += message
 
     def __str__(self):
-        print self.message
+        return self.message
 
 class UserFeedback(Exception):
     pass
@@ -44,11 +47,13 @@ NODOC_FILTERS = [
     ]
 
 def run():
+    warnings.filterwarnings("ignore",category=DeprecationWarning)
     try:
         args.parse_and_run_command(sys.argv[1:], MOD, default_command=Constants.DEFAULT_COMMAND)
     except UserFeedback as e:
-        sys.stderr.write("==================================================\n")
         sys.stderr.write(e.message)
+        if not e.message.endswith("\n"):
+            sys.stderr.write("\n")
         sys.exit(1)
 
 def dexy_command(

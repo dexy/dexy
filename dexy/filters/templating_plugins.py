@@ -19,6 +19,15 @@ class TemplatePlugin(object):
     def run(self):
         return {}
 
+class PrettyPrintJsonTemplatePlugin(TemplatePlugin):
+    def ppjson(self, json_string):
+        return json.dumps(json.loads(json_string), sort_keys = True, indent = 4)
+
+    def run(self):
+        return {
+            'ppjson' : self.ppjson
+         }
+
 class PythonDatetimeTemplatePlugin(TemplatePlugin):
     def run(self):
         today = datetime.today()
@@ -147,7 +156,8 @@ class NavigationTemplatePlugin(TemplatePlugin):
                 }
 
 class InputsTemplatePlugin(TemplatePlugin):
-    def load_sort_json_data(self, a):
+    @classmethod
+    def load_sort_json_data(klass, a):
         try:
             unsorted_json = json.loads(a.output_text())
         except ValueError as e:
@@ -171,14 +181,18 @@ class InputsTemplatePlugin(TemplatePlugin):
         else:
             return unsorted_json
 
-    def d_data_for_artifact(self, a):
+    @classmethod
+    def d_data_for_artifact(klass, a):
         # Do any special handling of data
         if a.ext == '.json':
             if len(a.output_text()) == 0:
                 # Hack for JSON data being written directly to a file, e.g. filenames filter
                 with open(a.filepath(), "rb") as f:
                     a.data_dict['1'] = f.read()
-            data = self.load_sort_json_data(a)
+            data = klass.load_sort_json_data(a)
+        elif a.ext == ".cpickle":
+            with open(a.filepath(), "rb") as f:
+                data = cPickle.load(f)
         else:
             data = a.data_dict
 
@@ -214,12 +228,17 @@ class InputsTemplatePlugin(TemplatePlugin):
             'f' : self.filter_instance,
         }
 
+
+class D(object):
+    def __init__(self, map_relative_refs):
+        self._map_relative_refs = map_relative_refs
+
+    def __getitem__(self, relative_ref):
+        return self._map_relative_refs[relative_ref]
+
 class InputsJustInTimeTemplatePlugin(InputsTemplatePlugin):
     def a(self, relative_ref):
         return self.map_relative_refs[relative_ref]
-
-    def d(self, relative_ref):
-        return self.d_data_for_artifact(self.a(relative_ref))
 
     def run(self):
         self.map_relative_refs = {}
@@ -229,7 +248,7 @@ class InputsJustInTimeTemplatePlugin(InputsTemplatePlugin):
 
         return {
             'a' : self.a,
-            'd' : self.d,
+            'd' : D(self.map_relative_refs),
             'f' : self,
             's' : self.filter_instance.artifact
             }

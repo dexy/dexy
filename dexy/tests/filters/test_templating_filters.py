@@ -1,4 +1,5 @@
 from dexy.artifact import Artifact
+from dexy.constants import Constants
 from dexy.filters.templating_filters import TemplateFilter
 from dexy.filters.templating_filters import TemplatePlugin
 
@@ -8,6 +9,8 @@ class TestTemplatePlugin(TemplatePlugin):
 
 class TestTemplateFilter(TemplateFilter):
     PLUGINS = [TestTemplatePlugin]
+    def __init__(self):
+        self.log = Constants.NULL_LOGGER
 
 def test_template_filter():
     test_filter = TestTemplateFilter()

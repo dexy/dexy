@@ -1,4 +1,5 @@
 import dexy.utils
+import dexy.commands
 import shutil
 import platform
 import subprocess
@@ -113,8 +114,8 @@ class DexyFilter(object):
                   err_str = "unable to find one of %s in %s for %s"
                   prev_out = ", ".join(klass.OUTPUT_EXTENSIONS)
                   next_in = ", ".join(next_input_extensions)
-                  err_str = err_str % (prev_out, next_in, key)
-                  raise Exception(err_str)
+                  err_str = err_str % (prev_out, next_in, klass.__name__)
+                  raise dexy.commands.UserFeedback(err_str)
             else:
                 out_ext = klass.OUTPUT_EXTENSIONS[0]
         return out_ext
@@ -187,16 +188,25 @@ class DexyFilter(object):
         return self.args().get(key, default)
 
     def process(self):
-        """This is the method that does the "work" of the handler, that is
+        """
+        This is the method that does the "work" of the handler, that is
         filtering the input and producing output. This method can be overridden
         in a subclass, or one of the convenience methods named below can be
-        implemented and will be delegated to. If more than 1 convenience method
-        is implemented then an exception will be raised."""
-        method_used = None
+        implemented and will be delegated to.
+        """
+        if hasattr(self, "process_dict"):
+            input_dict = self.artifact.input_data_dict
+            output_dict = self.process_dict(input_dict)
+            self.artifact.data_dict = output_dict
+            method_used = "process_dict"
 
-        if hasattr(self, "process_text"):
-            if method_used:
-                raise Exception("%s has already been called" % method_used)
+        elif hasattr(self, "process_text_to_dict"):
+            input_text = self.artifact.input_text()
+            output_dict = self.process_text_to_dict(input_text)
+            self.artifact.data_dict = output_dict
+            method_used = "process_text_to_dict"
+
+        elif hasattr(self, "process_text"):
             if len(self.artifact.input_data_dict.keys()) > 1:
                 raise Exception("""You have passed input with multiple sections
                                 to the %s handler. This handler does not preserve
@@ -207,23 +217,7 @@ class DexyFilter(object):
             self.artifact.data_dict['1'] = output_text
             method_used = "process_text"
 
-        if hasattr(self, "process_dict"):
-            if method_used:
-                raise Exception("%s has already been called" % method_used)
-            input_dict = self.artifact.input_data_dict
-            output_dict = self.process_dict(input_dict)
-            self.artifact.data_dict = output_dict
-            method_used = "process_dict"
-
-        if hasattr(self, "process_text_to_dict"):
-            if method_used:
-                raise Exception("%s has already been called" % method_used)
-            input_text = self.artifact.input_text()
-            output_dict = self.process_text_to_dict(input_text)
-            self.artifact.data_dict = output_dict
-            method_used = "process_text_to_dict"
-
-        if not method_used:
+        else:
             if self.artifact.input_data_dict:
                 # This code implements the neutral 'dexy' handler.
                 if self.artifact.binary_output:
@@ -237,4 +231,3 @@ class DexyFilter(object):
             method_used = "process"
 
         return method_used
-

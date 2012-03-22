@@ -1,6 +1,7 @@
 from dexy.constants import Constants
 import StringIO
 import codecs
+import dexy.commands
 import dexy.controller
 import dexy.introspect
 import fnmatch
@@ -84,7 +85,7 @@ class Document(object):
 
     def get_filter_for_alias(self, alias):
         if alias == '':
-            raise Exception("You have a trailing | or 2 | symbols together in your specification for %s" % self.key())
+            raise dexy.commands.UserFeedback("You have a trailing | or 2 | symbols together in your specification for %s" % self.key())
         else:
             return dexy.introspect.get_filter_for_alias(alias, self.__class__.filter_list)
 
@@ -185,7 +186,7 @@ class Document(object):
             k = i.key()
             a = i.final_artifact()
             if not a:
-                raise Exception("No final artifact for document %s" % i.key())
+                raise dexy.commands.InternalDexyProblem("No final artifact for document %s" % i.key())
             input_artifacts[k] = a
         return input_artifacts
 
@@ -279,7 +280,7 @@ class Document(object):
 
         elif self.virtual and (self.args.has_key('repo') and self.args.has_key('path')):
             if not USE_GIT:
-                raise Exception("you can't use repo/path unless you install GitPython")
+                raise dexy.commands.UserFeedback("you can't use repo/path unless you install GitPython")
             repo_url = self.args['repo']
             digest = hashlib.md5(repo_url).hexdigest()
             local_repo_dir = os.path.join(self.artifacts_dir, "repository-%s" % digest)

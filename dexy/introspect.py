@@ -1,8 +1,9 @@
 from dexy.constants import Constants
-import dexy.reporter
 import dexy
 import dexy.artifact
+import dexy.commands
 import dexy.dexy_filter
+import dexy.reporter
 import inspect
 import os
 import sys
@@ -93,12 +94,11 @@ def get_filter_for_alias(alias, filter_list=None):
     elif alias.startswith("-") :
         return dexy.dexy_filter.DexyFilter
     elif alias.startswith("alias-") or alias.startswith("al-") or alias in ['al', 'alias']:
-        print "alias- al- is deprecated, just start filter with a - to create an alias"
         return dexy.dexy_filter.DexyFilter
     elif alias == '':
-        raise Exception("Check your config file for a trailing | or 2 | in a row.")
+        raise dexy.commands.UserFeedback("Check your config file for a trailing | or 2 | in a row.")
     else:
-        raise Exception("filter alias '%s' not found or not available" % alias)
+        raise dexy.commands.UserFeedback("Filter alias '%s' not found or not available. Check the logs/dexy.log file for information." % alias)
 
 def filters(log=NULL_LOGGER):
     """
@@ -115,18 +115,18 @@ def filters(log=NULL_LOGGER):
         init_py_file = os.path.join(proj_filters[1], "__init__.py")
         path = os.path.abspath(os.curdir)
         if not os.path.exists(init_py_file):
-            print "If you want %s to be a source of custom filters, you need to create an __init__.py file in that directory" % proj_filters[1]
+            log.warn("If you want %s to be a source of custom filters, you need to create an __init__.py file in that directory" % proj_filters[1])
         elif not path in sys.path:
-            print "Adding", path, "to python sys.path so your custom filters in", proj_filters[1], "will be available"
+            log.info("Adding", path, "to python sys.path so your custom filters in", proj_filters[1], "will be available")
             sys.path.append(path)
 
     if os.path.exists(user_filters[1]):
         init_py_file = os.path.join(user_filters[1], "__init__.py")
         path = os.path.expanduser('~')
         if not os.path.exists(init_py_file):
-            print "You need to create a __init__.py file in", user_filters[1], "in order for filters to be available"
+            log.warn("If you want %s to be a source of custom filters, you need to create an __init__.py file in that directory" % user_filters[1])
         elif not path in sys.path:
-            print "Adding", path, "to python sys.path so your custom filters in", user_filters[1], "will be available"
+            log.info("Adding", path, "to python sys.path so your custom filters in", user_filters[1], "will be available")
             sys.path.append(path)
 
     for pkg, d in [dexy_filters, proj_filters, user_filters]:

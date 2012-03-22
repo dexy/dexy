@@ -65,6 +65,13 @@ def run_dexy_without_tempdir(config_dict, additional_args={}):
 
     c.persist()
 
+def set_filter_list(additional_filters):
+    filters = dexy.introspect.filters()
+    for filter_class in additional_filters:
+        for a in filter_class.ALIASES:
+            filters[a] = filter_class
+    Document.filter_list = filters
+
 def run_dexy(config_dict, additional_args={}, use_tempdir=True):
     with tempdir():
         for doc in run_dexy_without_tempdir(config_dict, additional_args):

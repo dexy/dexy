@@ -1,5 +1,5 @@
 from dexy.artifacts.file_system_json_artifact import FileSystemJsonArtifact
-from dexy.topsort import CycleError
+from dexy.commands import UserFeedback
 from dexy.constants import NullHandler
 from dexy.controller import Controller
 from dexy.document import Document
@@ -106,7 +106,7 @@ def test_circular_dependencies():
             try:
                 c.process_config()
                 assert False
-            except CycleError:
+            except UserFeedback:
                 assert True
             stdout_text = stdout.getvalue()
         assert "abc depends on ghi" in stdout_text

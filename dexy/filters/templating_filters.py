@@ -24,6 +24,7 @@ class TemplateFilter(DexyFilter):
         DexyVersionTemplatePlugin,
         GlobalsTemplatePlugin,
         InputsTemplatePlugin,
+        PrettyPrintJsonTemplatePlugin,
 #        NavigationTemplatePlugin,
         PrettyPrinterTemplatePlugin,
         PygmentsStylesheetTemplatePlugin,
@@ -37,6 +38,7 @@ class TemplateFilter(DexyFilter):
     def run_plugins(self):
         env = {}
         for plugin_class in self.plugins():
+            self.log.debug("Creating instance of %s" % plugin_class.__name__)
             plugin = plugin_class(self)
             new_env_vars = plugin.run()
             if any(v in env.keys() for v in new_env_vars):
@@ -123,7 +125,7 @@ class JinjaTextFilter(TemplateFilter):
             result.append("Line numbers refer to the working file, not your original file.")
 
         if isinstance(e, UndefinedError):
-            match_has_no_attribute = re.match("^'[\w\s]+' has no attribute '(.+)'$", e.message)
+            match_has_no_attribute = re.match("^'[\w\s\.]+' has no attribute '(.+)'$", e.message)
             match_is_undefined = re.match("^'([\w\s]+)' is undefined$", e.message)
 
             if match_has_no_attribute:
@@ -146,18 +148,6 @@ class JinjaTextFilter(TemplateFilter):
         else:
             result.append("line %04d: %s" % (e.lineno, input_lines[e.lineno-1]))
 
-        template_data_dump_file = "template-data-dump.json"
-        with open(template_data_dump_file, "wb") as f:
-            template_data_copy = template_data.copy()
-            for k, v in template_data.iteritems():
-                try:
-                    json.dumps(v)
-                except Exception as e:
-                    del template_data_copy[k]
-
-            json.dump(template_data_copy, f, sort_keys=True, indent=4)
-
-        result.append("template data has been written to %s" % template_data_dump_file)
         raise UserFeedback("\n".join(result))
 
 class JinjaFilter(JinjaTextFilter):
@@ -189,6 +179,7 @@ class JinjaJustInTimeFilter(JinjaFilter):
         GlobalsTemplatePlugin,
         InputsJustInTimeTemplatePlugin,
         PrettyPrinterTemplatePlugin,
+        PrettyPrintJsonTemplatePlugin,
         PygmentsStylesheetTemplatePlugin,
         PythonBuiltinsTemplatePlugin,
         PythonDatetimeTemplatePlugin,
