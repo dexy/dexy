@@ -20,3 +20,9 @@ def test_latex():
     \\end{document}
     """
     assert_in_output("example.tex|latex", latex, "")
+
+def test_rout():
+    assert_output("example.R|rout", "1+1", "[1] 2\n")
+
+def test_rintbatch():
+    assert_output("example.R|rintbatch", "1+1", "> 1+1\n[1] 2\n> \n")

@@ -106,7 +106,7 @@ class ProcessFilter(DexyFilter):
             'args' : self.command_line_args() or "",
             'scriptargs' : self.command_line_scriptargs() or "",
             'script_file' : os.path.basename(self.artifact.previous_canonical_filename),
-            'output_file' : self.artifact.filename()
+            'output_file' : self.artifact.canonical_basename()
         }
         return "%(prog)s %(args)s %(script_file)s %(scriptargs)s %(output_file)s" % args
 

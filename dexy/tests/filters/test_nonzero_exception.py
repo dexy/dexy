@@ -44,6 +44,7 @@ def tests_to_skip():
 # TODO Come up with examples for these classes which break them.
 
 DONT_KNOW_HOW_TO_TEST = [
+"ApplySedSubprocessStdoutInputFilter",
 "AsciidocFilter",
 "CleanSubprocessStdoutFilter",
 "CowsaySubprocessStdoutFilter",
@@ -66,11 +67,13 @@ DONT_KNOW_HOW_TO_TEST = [
 "RegetronSubprocessStdoutInputFileFilter",
 "Rst2HtmlFilter",
 "Rst2LatexFilter",
+"Rst2BeamerFilter",
 "SedSubprocessStdoutInputFilter",
 "SloccountFilter",
 "SubprocessStdoutFilter", #skip
 "SubprocessStdoutInputFileFilter", #skip
-"SubprocessStdoutInputFilter" #skip
+"SubprocessStdoutInputFilter", #skip
+"Wiki2BeamerFilter"
 ]
 
 def test_run():
