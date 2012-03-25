@@ -1,6 +1,7 @@
-from dexy.dexy_filter import DexyFilter
 from dexy.commands import UserFeedback
+from dexy.dexy_filter import DexyFilter
 import os
+import shutil
 import subprocess
 
 class DexyScriptErrorException(UserFeedback):
@@ -74,11 +75,10 @@ class ProcessFilter(DexyFilter):
         return timeout
 
     def setup_cwd(self):
-        cwd = self.artifact.artifacts_dir
-        if self.artifact.args.has_key('cwd'):
-            cwd = os.path.join(cwd, self.artifact.args['cwd'])
-            self.log.debug("Changing into directory %s" % os.path.abspath(cwd))
-        return cwd
+        if not hasattr(self, '_cwd'):
+            self.artifact.create_temp_dir(True)
+            self._cwd = os.path.join(self.artifact.temp_dir(), self.artifact.canonical_dir())
+        return self._cwd
 
     def command_line_args(self):
         """
@@ -86,11 +86,7 @@ class ProcessFilter(DexyFilter):
         with the given key. Note that this does not currently allow
         differentiating between 2 calls to the same filter in a single document.
         """
-        if self.artifact.args.has_key('args'):
-            args = self.artifact.args['args']
-            last_key = self.artifact.key.rpartition("|")[-1]
-            if args.has_key(last_key):
-                return args[last_key]
+        return self.arg_value('args')
 
     def command_line_scriptargs(self):
         """
@@ -109,7 +105,7 @@ class ProcessFilter(DexyFilter):
             'prog' : self.executable(),
             'args' : self.command_line_args() or "",
             'scriptargs' : self.command_line_scriptargs() or "",
-            'script_file' : self.artifact.previous_artifact_filename,
+            'script_file' : os.path.basename(self.artifact.previous_canonical_filename),
             'output_file' : self.artifact.filename()
         }
         return "%(prog)s %(args)s %(script_file)s %(scriptargs)s %(output_file)s" % args
@@ -119,7 +115,7 @@ class ProcessFilter(DexyFilter):
             'prog' : self.executable(),
             'args' : self.command_line_args() or "",
             'scriptargs' : self.command_line_scriptargs() or "",
-            'script_file' : self.artifact.previous_artifact_filename
+            'script_file' : os.path.basename(self.artifact.previous_canonical_filename)
         }
         return "%(prog)s %(args)s %(script_file)s %(scriptargs)s" % args
 
@@ -137,11 +133,18 @@ class SubprocessFilter(ProcessFilter):
     BINARY = True
     FINAL = True
 
+    def copy_canonical_file(self):
+        canonical_file = os.path.join(self.artifact.temp_dir(), self.artifact.canonical_filename())
+        if not os.path.exists(self.artifact.filepath()) and os.path.exists(canonical_file):
+            self.log.debug("Copying %s to %s" % (canonical_file, self.artifact.filepath()))
+            shutil.copyfile(canonical_file, self.artifact.filepath())
+
     def process(self):
         command = self.command_string()
         proc, stdout = self.run_command(command, self.setup_env())
         self.handle_subprocess_proc_return(command, proc.returncode, stdout)
         self.artifact.stdout = stdout
+        self.copy_canonical_file()
 
     def run_command(self, command, env, input_text = None):
         cwd = self.setup_cwd()
@@ -201,8 +204,8 @@ class SubprocessStdoutInputFileFilter(SubprocessFilter):
     FINAL = False
 
     def command_string_stdout_input(self, input_artifact):
-        script_file = self.artifact.previous_artifact_filename
-        input_file = input_artifact.filename()
+        script_file = self.artifact.previous_canonical_filename
+        input_file = input_artifact.canonical_filename()
         args = self.command_line_args() or ""
         return "%s %s %s %s" % (self.executable(), args, script_file, input_file)
 

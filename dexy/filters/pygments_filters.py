@@ -21,7 +21,7 @@ class PygmentsFilter(DexyFilter):
     """
     INPUT_EXTENSIONS = [".*"]
     IMAGE_OUTPUT_EXTENSIONS = ['.png', '.bmp', '.gif', '.jpg']
-    MARKUP_OUTPUT_EXTENSIONS = [".html", ".tex", ".svg"]
+    MARKUP_OUTPUT_EXTENSIONS = [".html", ".tex", ".svg"] # make sure .html is first!
     OUTPUT_EXTENSIONS = MARKUP_OUTPUT_EXTENSIONS + IMAGE_OUTPUT_EXTENSIONS
     ALIASES = ['pyg', 'pygments']
     FINAL = False

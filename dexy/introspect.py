@@ -117,7 +117,7 @@ def filters(log=NULL_LOGGER):
         if not os.path.exists(init_py_file):
             log.warn("If you want %s to be a source of custom filters, you need to create an __init__.py file in that directory" % proj_filters[1])
         elif not path in sys.path:
-            log.info("Adding", path, "to python sys.path so your custom filters in", proj_filters[1], "will be available")
+            log.info("Adding %s to python sys.path so your custom filters in %s will be available" % (path, proj_filters[1]))
             sys.path.append(path)
 
     if os.path.exists(user_filters[1]):
@@ -126,56 +126,53 @@ def filters(log=NULL_LOGGER):
         if not os.path.exists(init_py_file):
             log.warn("If you want %s to be a source of custom filters, you need to create an __init__.py file in that directory" % user_filters[1])
         elif not path in sys.path:
-            log.info("Adding", path, "to python sys.path so your custom filters in", user_filters[1], "will be available")
+            log.info("Adding %s to python sys.path so your custom filters in %s will be available" % (path, user_filters[1]))
             sys.path.append(path)
-
-    for pkg, d in [dexy_filters, proj_filters, user_filters]:
-         if os.path.exists(d) and (pkg, d) not in filter_dirs:
-             filter_dirs.append((pkg, d))
 
     filters = {}
 
     for a in dexy.dexy_filter.DexyFilter.ALIASES:
         filters[a] = dexy.dexy_filter.DexyFilter
 
-    for pkg, d in filter_dirs:
-        log.info("Automatically loading all %s found in %s" % (pkg, d))
-        for f in os.listdir(d):
-            if f.endswith(".py") and f not in ["base.py", "__init__.py"]:
-                log.info("Loading filters in %s" % os.path.join(d, f))
-                basename = f.replace(".py", "")
-                modname = "%s.%s" % (pkg, basename)
+    for pkg, d in [dexy_filters, user_filters, proj_filters]:
+        if os.path.exists(d):
+            log.info("Loading filters in %s" % d)
+            for f in os.listdir(d):
+                if f.endswith(".py") and f not in ["base.py", "__init__.py"]:
+                    log.info("Loading filters in %s" % os.path.join(d, f))
+                    basename = f.replace(".py", "")
+                    modname = "%s.%s" % (pkg, basename)
 
-                try:
-                    __import__(modname)
-                except ImportError as e:
-                    log.warn("filters defined in %s are not available: %s" % (modname, e))
+                    try:
+                        __import__(modname)
+                    except ImportError as e:
+                        log.warn("filters defined in %s are not available: %s" % (modname, e))
 
-                if not sys.modules.has_key(modname):
-                    continue
+                    if not sys.modules.has_key(modname):
+                        continue
 
-                mod = sys.modules[modname]
+                    mod = sys.modules[modname]
 
-                for k in dir(mod):
-                    klass = mod.__dict__[k]
+                    for k in dir(mod):
+                        klass = mod.__dict__[k]
 
-                    is_class = inspect.isclass(klass)
+                        is_class = inspect.isclass(klass)
 
-                    if is_class and issubclass(klass, dexy.dexy_filter.DexyFilter) and (klass.__module__ == modname):
-                        if not klass.ALIASES:
-                            log.info("class %s is not available because it has no aliases" % klass.__name__)
-                        elif not klass.executable_present():
-                            log.info("class %s is not available because %s not found" %
-                                          (klass.__name__, klass.executable()))
-                        elif not klass.enabled():
-                            log.info("class %s is not available because it is not enabled" %
-                                          (klass.__name__))
-                        else:
-                            for a in klass.ALIASES:
-                                if filters.has_key(a):
-                                    raise Exception("duplicate key %s called from %s in %s" % (a, k, f))
-                                filters[a] = klass
-                                log.info("registered alias %s for class %s" % (a, k))
+                        if is_class and issubclass(klass, dexy.dexy_filter.DexyFilter) and (klass.__module__ == modname):
+                            if not klass.ALIASES:
+                                log.info("class %s is not available because it has no aliases" % klass.__name__)
+                            elif len(klass.executables()) > 0 and not klass.executable():
+                                log.info("class %s is not available because %s not found" %
+                                              (klass.__name__, klass.executable()))
+                            elif not klass.enabled():
+                                log.info("class %s is not available because it is not enabled" %
+                                              (klass.__name__))
+                            else:
+                                for a in klass.ALIASES:
+                                    if filters.has_key(a):
+                                        self.log.info("Replacing class %s with %s for alias %s" % (filters[a].__name__, klass.__name,  a))
+                                    filters[a] = klass
+                                    log.info("registered alias %s for class %s" % (a, k))
         log.info("...finished loading filters from %s" % d)
     return filters
 

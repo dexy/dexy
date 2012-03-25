@@ -26,44 +26,34 @@ class DexyFilter(object):
     WINDOWS_VERSION_COMMAND = None
 
     @classmethod
-    def executable(self):
-        """A standard way of specifying a command line executable. For usage
-        example see stdout filter. This does not need to be used, and is not
-        relevant for many filters, but is intended to allow introspection for
-        those which do use it."""
+    def executables(self):
+        """
+        Returns list of executables defined for this filter, in order of preference. If empty, no executable is required.
+        """
+        executables = []
+
         if platform.system() == 'Windows' and hasattr(self, 'WINDOWS_EXECUTABLE'):
-            return self.WINDOWS_EXECUTABLE
+            executables.append(self.WINDOWS_EXECUTABLE)
         else:
             if hasattr(self, 'EXECUTABLE'):
-                return self.EXECUTABLE
+                executables.append(self.EXECUTABLE)
             elif hasattr(self, 'EXECUTABLES'):
-                # Allows you to specify multiple options for an executable and,
-                # at runtime, use whichever one is present on the system. The
-                # first listed executable to be found is the one used.
-                return self.find_present_executable()
+                executables += self.EXECUTABLES
 
+        return executables
 
     @classmethod
-    def find_present_executable(klass):
-        # determine which executable to use
-        for exe in klass.EXECUTABLES:
-            if klass.executable_present(exe):
-                return exe
-                break
-        return None
-
-    @classmethod
-    def executable_present(klass, exe=None):
-        """Determine whether the specified executable is available."""
-        if not exe:
-            exe = klass.executable()
-
-        if exe:
-            cmd = exe.split()[0] # remove any --arguments
-            return dexy.utils.command_exists(cmd)
-        else:
-            # why true? because there's nothing to run?
-            return True
+    def executable(self):
+        """
+        Returns the executable to use. Looks in WINDOWS_EXECUTABLE if on
+        windows. Otherwise looks at EXECUTABLE or EXECUTABLES. If specified
+        executables are not detected on the system, returns None.
+        """
+        for exe in self.executables():
+            if exe:
+                cmd = exe.split()[0] # remove any --arguments
+                if dexy.utils.command_exists(cmd):
+                    return exe
 
     @classmethod
     def version_command(klass):
@@ -169,19 +159,16 @@ class DexyFilter(object):
 
             if doc:
                 break
+
+        if not doc:
+            raise UserFeedback("Can't find any inputs!")
+
         self.log.debug("selected %s" % doc.key)
         return doc
 
     def args(self):
-        """
-        Returns args specified in the .dexy file for this filter alias.
-        """
         if not hasattr(self, '_args'):
-            args = {}
-            for a in self.ALIASES:
-                if self.artifact.args.has_key(a):
-                    args.update(self.artifact.args[a])
-            self._args = args
+            self._args = self.artifact.filter_args()
         return self._args
 
     def arg_value(self, key, default=None):
@@ -194,19 +181,22 @@ class DexyFilter(object):
         in a subclass, or one of the convenience methods named below can be
         implemented and will be delegated to.
         """
-        if hasattr(self, "process_dict"):
-            input_dict = self.artifact.input_data_dict
-            output_dict = self.process_dict(input_dict)
-            self.artifact.data_dict = output_dict
-            method_used = "process_dict"
-
-        elif hasattr(self, "process_text_to_dict"):
+        if hasattr(self, "process_text_to_dict"):
+            self.log.debug("Using method process_text_to_dict for %s" % self.__class__.__name__)
             input_text = self.artifact.input_text()
             output_dict = self.process_text_to_dict(input_text)
             self.artifact.data_dict = output_dict
             method_used = "process_text_to_dict"
 
+        elif hasattr(self, "process_dict"):
+            self.log.debug("Using method process_dict for %s" % self.__class__.__name__)
+            input_dict = self.artifact.input_data_dict
+            output_dict = self.process_dict(input_dict)
+            self.artifact.data_dict = output_dict
+            method_used = "process_dict"
+
         elif hasattr(self, "process_text"):
+            self.log.debug("Using method process_text for %s" % self.__class__.__name__)
             if len(self.artifact.input_data_dict.keys()) > 1:
                 raise Exception("""You have passed input with multiple sections
                                 to the %s handler. This handler does not preserve

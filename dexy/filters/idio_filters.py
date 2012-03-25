@@ -10,7 +10,7 @@ class IdioFilter(PygmentsFilter):
     "section-name" comments.
     """
     ALIASES = ['idio', 'idiopidae']
-    OUTPUT_EXTENSIONS = ['.txt'] + PygmentsFilter.MARKUP_OUTPUT_EXTENSIONS + PygmentsFilter.IMAGE_OUTPUT_EXTENSIONS
+    OUTPUT_EXTENSIONS = PygmentsFilter.MARKUP_OUTPUT_EXTENSIONS + PygmentsFilter.IMAGE_OUTPUT_EXTENSIONS + [".txt"]
 
     def process_text_to_dict(self, input_text):
         composer = Composer()
@@ -24,6 +24,7 @@ class IdioFilter(PygmentsFilter):
         lineno = 1
 
         for i, s in enumerate(builder.sections):
+            self.log.debug("In section no. %s name %s" % (i, s))
             lines = builder.statements[i]['lines']
             if len(lines) == 0:
                 next

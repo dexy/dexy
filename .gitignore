@@ -4,3 +4,5 @@ artifacts/
 logs/
 *.swp
 !dexy/artifacts/
+build
+dist

@@ -5,6 +5,7 @@ from modargs import args as modargs
 import dexy.commands
 import dexy.introspect
 import os
+import re
 import shutil
 import sys
 import tempfile
@@ -76,3 +77,35 @@ def run_dexy(config_dict, additional_args={}, use_tempdir=True):
     with tempdir():
         for doc in run_dexy_without_tempdir(config_dict, additional_args):
             yield(doc)
+
+def assert_output(key, contents, output, args={}):
+    args["contents"] = contents
+    config = { "." : { ("@%s" % key) : args } }
+    for doc in run_dexy(config):
+        doc.run()
+        print doc.key() + "======="
+        print doc.logstream.getvalue()
+        print "'%s'" % doc.output()
+        print "'%s'" % output
+        assert doc.output() == output
+
+def assert_in_output(key, contents, output, args={}):
+    args["contents"] = contents
+    config = { "." : { ("@%s" % key) : args } }
+    for doc in run_dexy(config):
+        doc.run()
+        print doc.key() + "======="
+        print doc.logstream.getvalue()
+        print "'%s'" % doc.output()
+        print "'%s'" % output
+        assert output in doc.output()
+
+def assert_matches_output(key, contents, output):
+    config = { "." : { ("@%s" % key) : { "contents" : contents } } }
+    for doc in run_dexy(config):
+        doc.run()
+        print doc.key() + "======="
+        print doc.logstream.getvalue()
+        print "'%s'" % doc.output()
+        print "'%s'" % output
+        assert re.match(output, doc.output())

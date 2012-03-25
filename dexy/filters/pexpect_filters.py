@@ -81,17 +81,36 @@ class PexpectReplFilter(ProcessFilter):
 
         env = self.setup_env()
 
-        if self.PS1:
+        if self.args().has_key('PS1'):
+            ps1 = self.arg_value('PS1')
+            self.log.debug("Setting PS1 to %s" % ps1)
+            env['PS1'] = ps1
+        elif self.PS1:
             self.log.debug("Setting PS1 to %s" % self.PS1)
             env['PS1'] = self.PS1
-        if self.PS2:
-            self.log.debug("Setting PS2 to %s" % self.PS1)
+
+        if self.args().has_key('PS2'):
+            ps2 = self.arg_value('PS2')
+            self.log.debug("Setting PS2 to %s" % ps2)
+            env['PS2'] = ps2
+        elif self.PS2:
+            self.log.debug("Setting PS2 to %s" % self.PS2)
             env['PS2'] = self.PS2
-        if self.PS3:
-            self.log.debug("Setting PS3 to %s" % self.PS1)
+
+        if self.args().has_key('PS3'):
+            ps3 = self.arg_value('PS3')
+            self.log.debug("Setting PS3 to %s" % ps3)
+            env['PS3'] = ps3
+        elif self.PS3:
+            self.log.debug("Setting PS3 to %s" % self.PS3)
             env['PS3'] = self.PS3
-        if self.PS4:
-            self.log.debug("Setting PS4 to %s" % self.PS1)
+
+        if self.args().has_key('PS4'):
+            ps4 = self.arg_value('PS4')
+            self.log.debug("Setting PS4 to %s" % ps4)
+            env['PS4'] = ps4
+        elif self.PS4:
+            self.log.debug("Setting PS4 to %s" % self.PS4)
             env['PS4'] = self.PS4
 
         timeout = self.setup_timeout()
@@ -220,8 +239,6 @@ class IpythonPexpectReplFilter(PythonPexpectReplFilter):
     OUTPUT_EXTENSIONS = [".pycon"]
     VERSION_COMMAND = 'ipython -Version'
 
-# untested below here
-
 class RPexpectReplFilter(PexpectReplFilter):
     ALIASES = ['r', 'rint']
     CHECK_RETURN_CODE = False
@@ -268,48 +285,43 @@ class PhpInteractiveFilter(PexpectReplFilter):
     PROMPTS = ['php > ']
     TRIM_PROMPT = "php > "
 
-class KshInteractiveStrictFilter(PexpectReplFilter):
+class BashInteractiveStrictFilter(PexpectReplFilter):
+    """
+    Runs bash. Use to run bash scripts.
+    """
+    ALIASES = ['shint', 'bashint']
+    EXECUTABLE = "bash --norc -i -e"
+    INPUT_EXTENSIONS = [".txt", ".sh"]
+    OUTPUT_EXTENSIONS = ['.sh-session']
+    PROMPT_REGEX = r"\d*[#$]"
+    INITIAL_PROMPT = PROMPT_REGEX
+    TRIM_PROMPT = PROMPT_REGEX
+    PS1 = "$ "
+
+class KshInteractiveFilter(PexpectReplFilter):
     """
     Runs ksh. Use to run bash scripts.
     """
-    ALIASES = ['shint']
-    EXECUTABLE = "ksh -i -e"
+    ALIASES = ['kshint']
+    EXECUTABLE = "ksh -i"
     INPUT_EXTENSIONS = [".txt", ".sh"]
     OUTPUT_EXTENSIONS = ['.sh-session']
-    INITIAL_PROMPT = "^\s*(#|\$)\s+"
-    PROMPTS = ["$", "#"]
-    TRIM_PROMPT = "\$|#"
-    PS1 = "\n$ "
-    # TODO Fix hanging on # comments in code
-
-class KshInteractiveFilter(KshInteractiveStrictFilter):
-    """
-    Runs ksh. Use to run bash scripts. Does not set -e.
-    """
-    ALIASES = ['shintp']
-    EXECUTABLE = "ksh -i"
-
-class KshInteractiveNumberedPromptFilter(KshInteractiveFilter):
-    """
-    Runs ksh. Use to run bash scripts. Does not set -e. Prompts are numbered.
-    """
-    ALIASES = ['shintpn']
+    INITIAL_PROMPT = "^\s*\d*(#|\$)\s+"
     PROMPT_REGEX = "\d*(#|\$)"
-    INITIAL_PROMPT = PROMPT_REGEX
     TRIM_PROMPT = r"\d*(\$|#)"
-    PS1 = "!$ "
-    ENV = { 'HISTFILE' : 'doesnotexistinartifactsdir/histfile' }
+    PS1 = "$ "
 
 class ClojureInteractiveFilter(PexpectReplFilter):
     """
     Runs clojure.
     """
-    EXECUTABLE = 'clojure -r'
+    ALIASES = ['clj', 'cljint']
+    CHECK_RETURN_CODE = False
+    EXECUTABLES = ['clojure -r', 'clj -r']
+    INITIAL_PROMPT_TIMEOUT = 15
     INPUT_EXTENSIONS = [".clj", ".txt"]
     OUTPUT_EXTENSIONS = [".txt"]
-    ALIASES = ['clj', 'cljint']
     PROMPT = "user=> "
-    CHECK_RETURN_CODE = False
 
     def lines_for_section(self, input_text):
         input_lines = []

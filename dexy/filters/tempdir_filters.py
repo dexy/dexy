@@ -20,15 +20,6 @@ class KshTempdirInteractiveFilter(KshInteractiveStrictFilter):
     OUTPUT_EXTENSIONS = [".json"]
     INITIAL_PROMPT_TIMEOUT = 10
 
-    def setup_cwd(self):
-        self.log.debug("in setup_cwd in KshTempdirInteractiveFilter")
-        if not hasattr(self, '_cwd'):
-            self._cwd = tempfile.mkdtemp()
-        if not os.path.exists(self._cwd):
-            raise Exception("path %s should exist!" % self._cwd)
-        self.log.debug("tempdir is %s" % self._cwd)
-        return self._cwd
-
     def process_dict(self, input_dict):
         # Set up syntax highlighting
         html_formatter = HtmlFormatter()

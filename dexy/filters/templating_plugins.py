@@ -240,6 +240,15 @@ class InputsJustInTimeTemplatePlugin(InputsTemplatePlugin):
     def a(self, relative_ref):
         return self.map_relative_refs[relative_ref]
 
+    def tc(self, input_text, id=None, title="show code"):
+        return """<p class="heading" id="%(id)s">%(title)s</p>
+<div class="toggle-code">
+<div class="toggle-code-sidebar"></div>
+<div class="toggle-code-content">
+%(input_text)s
+</div>
+</div>""" % locals()
+
     def run(self):
         self.map_relative_refs = {}
         for k, a in self.filter_instance.artifact.inputs().iteritems():
@@ -249,6 +258,7 @@ class InputsJustInTimeTemplatePlugin(InputsTemplatePlugin):
         return {
             'a' : self.a,
             'd' : D(self.map_relative_refs),
+            'tc' : self.tc,
             'f' : self,
             's' : self.filter_instance.artifact
             }

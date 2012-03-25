@@ -20,3 +20,12 @@ http://dexy.tenderapp.com
 
 Issue tracker (for posting bug reports/feature requests):
 http://dexy.lighthouseapp.com
+
+
+Dexy's tests can be run with the command `nosetests`.
+
+The tests located in dexy/tests/filters may require extra software to be
+installed, so that the filters being tested can run. To skip those tests and
+just run basic tests that don't require extra software, run
+`nosetests dexy/tests/*.py`
+

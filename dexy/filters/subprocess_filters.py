@@ -2,6 +2,7 @@ from dexy.dexy_filter import DexyFilter
 from dexy.filters.process_filters import SubprocessFilter
 import codecs
 import dexy.commands
+import dexy.utils
 import os
 import re
 import shutil
@@ -18,8 +19,8 @@ class PandocFilter(SubprocessFilter):
         args = {
             'prog' : self.executable(),
             'args' : self.command_line_args() or "",
-            'script_file' : self.artifact.previous_artifact_filename,
-            'output_file' : self.artifact.filename()
+            'script_file' : os.path.basename(self.artifact.previous_canonical_filename),
+            'output_file' : self.artifact.canonical_basename()
         }
         return "%(prog)s %(args)s %(script_file)s -o %(output_file)s" % args
 
@@ -35,8 +36,8 @@ class EspeakFilter(SubprocessFilter):
             'prog' : self.executable(),
             'args' : self.command_line_args() or "",
             'scriptargs' : self.command_line_scriptargs() or "",
-            'script_file' : self.artifact.previous_artifact_filename,
-            'output_file' : self.artifact.filename()
+            'script_file' : os.path.basename(self.artifact.previous_artifact_filename),
+            'output_file' : self.artifact.canonical_basename()
         }
         return "%(prog)s %(args)s -w %(output_file)s %(script_file)s" % args
 
@@ -49,8 +50,8 @@ class AsciidocFilter(SubprocessFilter):
     BINARY = False
 
     def command_string(self):
-        if self.artifact.args.has_key('backend'):
-            backend = self.artifact.args['backend']
+        if self.args().has_key('backend'):
+            backend = self.arg_value('backend')
             # TODO check file extension is valid for backend
         else:
             if self.artifact.ext == ".html":
@@ -67,8 +68,8 @@ class AsciidocFilter(SubprocessFilter):
 
         args = {
             'backend' : backend,
-            'infile' : self.artifact.previous_artifact_filename,
-            'outfile' : self.artifact.filename(),
+            'infile' : os.path.basename(self.artifact.previous_canonical_filename),
+            'outfile' : self.artifact.canonical_basename(),
             'prog' : self.executable(),
             'args' : self.command_line_args() or ""
         }
@@ -159,49 +160,42 @@ class LatexFilter(SubprocessFilter):
     FINAL = True
 
     def process(self):
-        latex_filename = self.artifact.filename().replace(self.artifact.ext, ".tex")
-        self.artifact.generate_workfile(latex_filename)
+        cwd = self.setup_cwd()
+        env = self.setup_env()
 
-        if self.artifact.args.has_key('env'):
-            env = os.environ
-            env.update(self.artifact.args['env'])
-        else:
-            env = None
+        latex_command = "%s -interaction=batchmode %s" % (self.executable(), os.path.basename(self.artifact.previous_canonical_filename))
 
-        latex_command = "%s -interaction=batchmode %s" % (self.__class__.executable(), latex_filename)
-
-        if self.__class__.executable_present("bibtex"):
-            bibtex_command = "bibtex %s" % os.path.splitext(self.artifact.filename())[0]
-        else:
-            bibtex_command = None
+        bibtex_command = None
+        if dexy.utils.command_exists("bibtex"):
+            bibtex_command = "bibtex %s" % os.path.splitext(self.artifact.canonical_basename())[0]
 
         self.artifact.stdout = ""
+
         def run_cmd(command):
-            self.log.info("running: %s" % command)
+            self.log.info("running %s in %s" % (command, cwd))
             proc = subprocess.Popen(command, shell=True,
-                                    cwd=self.artifact.artifacts_dir,
+                                    cwd=cwd,
                                     stdout=subprocess.PIPE,
                                     stderr=subprocess.STDOUT,
                                     env=env)
 
             stdout, stderr = proc.communicate()
             self.artifact.stdout += stdout
+
             if proc.returncode > 2: # Set at 2 for now as this is highest I've hit, better to detect whether PDF has been generated?
-                raise dexy.commands.UserFeedback("latex error, look for information in artifacts/%s" %
-                                latex_filename.replace(".tex", ".log"))
+                raise dexy.commands.UserFeedback("latex error, look for information in %s" % cwd)
             elif proc.returncode > 0:
                 self.log.warn("""A non-critical latex error has occurred running %s,
                 status code returned was %s, look for information in %s""" % (
-                self.artifact.key, proc.returncode,
-                latex_filename.replace(".tex", ".log")))
+                self.artifact.key, proc.returncode, cwd))
 
-
-        runbibtex = bibtex_command # TODO allow opting out of running bibtex in args
-        if runbibtex:
+        if bibtex_command:
             run_cmd(latex_command) #generate aux
             run_cmd(bibtex_command) #generate bbl
         run_cmd(latex_command) #first run
         run_cmd(latex_command) #second run - fix references
+
+        self.copy_canonical_file()
 
 class TikzPgfFilter(LatexFilter):
     """

@@ -34,7 +34,7 @@ class PythonTestFilter(DexyFilter):
     OUTPUT_EXTENSIONS = [".json", ".kch"]
     LEXER = PythonLexer()
     LATEX_FORMATTER = LatexFormatter()
-    HTML_FORMATTER = HtmlFormatter()
+    HTML_FORMATTER = HtmlFormatter(lineanchors="pytest")
 
     # TODO some way to ensure tests logs get written elsewhere, like to the artifact output, they are going to main log for now - very confusing
 
@@ -61,15 +61,16 @@ class PythonTestFilter(DexyFilter):
                         latex_source = highlight(source, self.LEXER, self.LATEX_FORMATTER)
 
                         if test_passed:
-                            html_result = """ <div style="border: thick dotted green;"> %s PASSED </div> """ % qualified_test_name
+                            html_result = """ <div class="test-passed"> %s PASSED </div> """ % qualified_test_name
                         else:
-                            html_result = """ <div style="border: thick dotted red;"> %s FAILED </div> """ % qualified_test_name
+                            html_result = """ <div class="test-failed"> %s FAILED </div> """ % qualified_test_name
 
-                        self.artifact.append_to_kv_storage("%s:source" % (qualified_test_name, xx.__name__), source)
-                        self.artifact.append_to_kv_storage("%s:html-source" % (qualified_test_name, xx.__name__), html_source)
-                        self.artifact.append_to_kv_storage("%s:latex-source" % (qualified_test_name, xx.__name__), latex_source)
-                        self.artifact.append_to_kv_storage("%s:test-passed" % (qualified_test_name, xx.__name__), test_passed)
-                        self.artifact.append_to_kv_storage("%s:html-result" % (qualified_test_name, xx.__name__), html_result)
+                        self.artifact.append_to_kv_storage("%s:source" % qualified_test_name, source)
+                        self.artifact.append_to_kv_storage("%s:html-source" % qualified_test_name, html_source)
+                        self.artifact.append_to_kv_storage("%s:latex-source" % qualified_test_name, latex_source)
+                        self.artifact.append_to_kv_storage("%s:test-passed" % qualified_test_name, test_passed)
+                        self.artifact.append_to_kv_storage("%s:html-result" % qualified_test_name, html_result)
+                        self.artifact.append_to_kv_storage("%s:html-source+result" % qualified_test_name, "%s\n%s" % (html_source, html_result))
 
         self.artifact.persist_storage()
 
@@ -80,7 +81,7 @@ class PythonDocumentationFilter(DexyFilter):
     COMPOSER = Composer()
     LEXER = PythonLexer()
     LATEX_FORMATTER = LatexFormatter()
-    HTML_FORMATTER = HtmlFormatter()
+    HTML_FORMATTER = HtmlFormatter(lineanchors="pydoc")
 
     def fetch_item_content(self, key, item):
         is_method = inspect.ismethod(item)
@@ -134,7 +135,7 @@ class PythonDocumentationFilter(DexyFilter):
         """
         self.artifact.append_to_kv_storage("%s:value" % key, source)
         if not type(source) == str or type(source) == unicode:
-            source = unicode(source)
+            source = inspect.getsource(source)
         self.artifact.append_to_kv_storage("%s:source" % key, source)
         self.artifact.append_to_kv_storage("%s:html-source" % key, self.highlight_html(source))
         self.artifact.append_to_kv_storage("%s:latex-source" % key, self.highlight_latex(source))
@@ -149,7 +150,7 @@ class PythonDocumentationFilter(DexyFilter):
                 module_source = inspect.getsource(mod)
                 json.dumps(module_source)
                 self.add_source_for_key(name, inspect.getsource(mod))
-            except (UnicodeDecodeError, IOError):
+            except (UnicodeDecodeError, IOError, TypeError):
                 pass
 
             for k, m in inspect.getmembers(mod):
@@ -175,7 +176,7 @@ class PythonDocumentationFilter(DexyFilter):
                     key = "%s.%s" % (name, k)
                     self.fetch_item_content(key, m)
 
-        except ImportError as e:
+        except (ImportError, TypeError) as e:
             self.log.debug(e)
 
     def process_text(self, input_text):
