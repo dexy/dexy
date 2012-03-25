@@ -105,8 +105,10 @@ class Artifact(object):
         """
         Shortcut to retrieve data from key-value storage.
         """
-        # TODO format this?
-        return self.retrieve_from_kv_storage(key)
+        if self.ext in ['.json', '.kch']:
+            return self.retrieve_from_kv_storage(key)
+        else:
+            return getattr(self, key)
 
     def __unicode__(self):
         """
@@ -875,7 +877,7 @@ class Artifact(object):
             if not self._storage.close():
                 self.log.debug(self._storage.error())
         else:
-            raise dexy.commands.InternalDexyProblem("I don't know how to set up storage for file extention %s, this should have been trapped at setup_storage" % self.ext)
+            raise dexy.commands.InternalDexyProblem("I don't know how to set up storage for file extension %s, this should have been trapped at setup_storage" % self.ext)
 
     def setup_storage_read(self):
         self.load()
@@ -886,7 +888,7 @@ class Artifact(object):
             self._storage = DB()
             self._storage.open(self.filepath(), DB.OREADER)
         else:
-            raise dexy.commands.UserFeedback("I don't know how to set up storage for file extention %s" % self.ext)
+            raise Exception("I don't know how to set up storage for file extension %s" % self.ext)
 
     def retrieve_from_kv_storage(self, key):
         if not hasattr(self, "_storage"):
@@ -901,7 +903,7 @@ class Artifact(object):
             value = self._storage.get(key)
             return value
         else:
-            raise dexy.commands.InternalDexyProblem("I don't know how to set up storage for file extention %s, this should have been trapped at setup_storage" % self.ext)
+            raise dexy.commands.InternalDexyProblem("I don't know how to set up storage for file extension %s, this should have been trapped at setup_storage" % self.ext)
 
     def kv_keys(self, prefix=None, regex=None):
         """

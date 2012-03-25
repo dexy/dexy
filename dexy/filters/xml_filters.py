@@ -3,54 +3,36 @@ from lxml import etree
 from pygments import highlight
 from pygments.formatters.html import HtmlFormatter
 from pygments.formatters.latex import LatexFormatter
-from pygments.lexers.web import XmlLexer
-import json
-
+from pygments.lexers import get_lexer_for_filename
 
 class XmlSectionFilter(DexyFilter):
     """
-    A filter for breaking an XML file up into various sections, referenced by
-    xpaths, and optionally syntax highlighting the various sections to allow
-    easy access to any subsection of an XML document.
+    Returns any element of an XML or HTML document with an 'id' attribute.
     """
-    INPUT_EXTENSIONS = [".xml"]
-    OUTPUT_EXTENSIONS = [".json"]
+    INPUT_EXTENSIONS = [".xml", ".html"]
+    OUTPUT_EXTENSIONS = [".json", ".kch"]
     ALIASES = ["xxml"]
-    FINAL = False
 
-    def process_text(self, input_text):
-        lexer = XmlLexer()
+    def process(self):
+        self.artifact.setup_storage()
+
+        lexer = get_lexer_for_filename(self.artifact.previous_canonical_filename)
         html_formatter = HtmlFormatter(lineanchors=self.artifact.web_safe_document_key())
         latex_formatter = LatexFormatter()
 
-        output = {}
-
-        root = etree.fromstring(input_text.encode("utf-8"))
+        root = etree.fromstring(self.artifact.input_text().encode("utf-8"))
         tree = root.getroottree()
 
         for element in tree.iter("*"):
-            self.log.debug("element: %s" % element)
-            xpath = tree.getpath(element)
-            source = etree.tostring(element, pretty_print=True).strip()
+            if element.attrib.has_key('id'):
+                element_id = element.attrib['id']
+                source = etree.tostring(element, pretty_print=True).strip()
 
-            # Convert _Attrib to dict
-            attributes = dict((k, v) for k, v in element.attrib.iteritems())
+                self.artifact.append_to_kv_storage("%s:lineno" % element_id, element.sourceline)
+                self.artifact.append_to_kv_storage("%s:tail" % element_id, element.tail)
+                self.artifact.append_to_kv_storage("%s:text" % element_id, element.text)
+                self.artifact.append_to_kv_storage("%s:source" % element_id, source)
+                self.artifact.append_to_kv_storage("%s:html-source" % element_id, highlight(source, lexer, html_formatter))
+                self.artifact.append_to_kv_storage("%s:latex-source" % element_id, highlight(source, lexer, latex_formatter))
 
-            element_info = {
-                    "attributes" : attributes,
-                    "lineno" : element.sourceline,
-                    "prefix" : element.prefix,
-                    "source" : source,
-                    "source-html" : highlight(source, lexer, html_formatter),
-                    "source-latex" : highlight(source, lexer, latex_formatter),
-                    "tag" : element.tag,
-                    "tail" : element.tail,
-                    "text" : element.text
-                }
-            output[xpath] = element_info
-
-            if attributes.has_key("name"):
-                key = "%s:%s" % (element.tag, attributes["name"])
-                output[key] = element_info
-
-        return json.dumps(output, indent=4, sort_keys=True)
+        self.artifact.persist_storage()
