@@ -6,6 +6,15 @@ from dexy.tests.utils import assert_matches_output
 def test_irb():
     assert_output("example.rb|irb", "1+1", ">> 1+1\n=> 2")
 
+    config = {"." : { "@example.rb|irb" : {"irb": {"ext" : ".json", "meta" : True}, "contents" : "1+1"}}}
+    for doc in run_dexy(config):
+        doc.run()
+        artifact = doc.last_artifact
+        assert artifact['1:files:example.rb'] == "1+1"
+        assert artifact['1:html-output']
+        assert artifact['1:latex-output']
+        assert artifact['1:output'] == ">> 1+1\n=> 2"
+
 def test_python():
     assert_in_output("example.py|pycon", "1+1", ">>> 1+1\n2")
 
@@ -24,6 +33,29 @@ def test_php():
 def test_bash():
     assert_in_output("script.sh|shint", "pwd", "/artifacts/")
     assert_in_output("script.sh|shint", "pwd", "/artifacts/", { "shint" : { "args" : "-e" }})
+
+def test_bash_create_additional_files():
+    contents = """
+    mkdir abc
+    ls
+    echo "hi" > abc/hello.txt
+    """
+    config = {"." : { "@script.sh|shint" : {"shint": {"ext" : ".json", "meta" : True}, "contents" : contents }}}
+    for doc in run_dexy(config):
+        doc.run()
+        artifact = doc.last_artifact
+        assert artifact['1:files:abc/hello.txt'] == "hi\n"
+
+def test_bash_create_additional_artifacts():
+    contents = """
+    ls
+    echo "hi" > dexy--hello.txt
+    """
+    config = {"." : { "@script.sh|fn|shint" : {"shint": {"ext" : ".json", "meta" : True}, "contents" : contents }}}
+    for doc in run_dexy(config):
+        doc.run()
+        artifact = doc.last_artifact
+        assert artifact.inputs()['hello.txt'].output_text() == "hi\n"
 
 def test_ksh():
     assert_in_output("script.sh|kshint", "pwd", "/artifacts/")

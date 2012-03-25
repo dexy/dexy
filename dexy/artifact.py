@@ -853,7 +853,7 @@ class Artifact(object):
             if not self._storage.open(self.filepath(), DB.OWRITER | DB.OCREATE):
                 self.log.debug("Error opening kyotocabinet db: %s" % (self._storage.error()))
         else:
-            raise dexy.commmands.UserFeedback("I don't know how to set up storage for file extention %s" % self.ext)
+            raise dexy.commands.UserFeedback("I don't know how to set up storage for file extention %s" % self.ext)
 
     def append_to_kv_storage(self, key, value):
         self.log.debug("Setting key %s in kv storage" % key)
@@ -863,7 +863,7 @@ class Artifact(object):
             if not self._storage.set(key, value):
                 self.log.debug("Error setting key %s in kyotocabinet: %s" % (key, self._storage.error()))
         else:
-            raise dexy.commmands.InternalDexyProblem("I don't know how to set up storage for file extention %s, this should have been trapped at setup_storage" % self.ext)
+            raise dexy.commands.InternalDexyProblem("I don't know how to set up storage for file extention %s, this should have been trapped at setup_storage" % self.ext)
 
     def persist_storage(self):
         if self.ext == ".json":
@@ -875,7 +875,7 @@ class Artifact(object):
             if not self._storage.close():
                 self.log.debug(self._storage.error())
         else:
-            raise dexy.commmands.InternalDexyProblem("I don't know how to set up storage for file extention %s, this should have been trapped at setup_storage" % self.ext)
+            raise dexy.commands.InternalDexyProblem("I don't know how to set up storage for file extention %s, this should have been trapped at setup_storage" % self.ext)
 
     def setup_storage_read(self):
         self.load()
@@ -886,7 +886,7 @@ class Artifact(object):
             self._storage = DB()
             self._storage.open(self.filepath(), DB.OREADER)
         else:
-            raise dexy.commmands.UserFeedback("I don't know how to set up storage for file extention %s" % self.ext)
+            raise dexy.commands.UserFeedback("I don't know how to set up storage for file extention %s" % self.ext)
 
     def retrieve_from_kv_storage(self, key):
         if not hasattr(self, "_storage"):
@@ -901,7 +901,7 @@ class Artifact(object):
             value = self._storage.get(key)
             return value
         else:
-            raise dexy.commmands.InternalDexyProblem("I don't know how to set up storage for file extention %s, this should have been trapped at setup_storage" % self.ext)
+            raise dexy.commands.InternalDexyProblem("I don't know how to set up storage for file extention %s, this should have been trapped at setup_storage" % self.ext)
 
     def kv_keys(self, prefix=None, regex=None):
         """

@@ -3,9 +3,14 @@ from dexy.commands import UserFeedback
 from dexy.filters.process_filters import DexyEOFException
 from dexy.filters.process_filters import ProcessFilter
 from ordereddict import OrderedDict
+from pygments import highlight
+from pygments.lexers import get_lexer_by_name
+from pygments.formatters.html import HtmlFormatter
+from pygments.formatters.latex import LatexFormatter
 import os
 import pexpect
 import re
+import shutil
 
 class PexpectReplFilter(ProcessFilter):
     """
@@ -190,14 +195,48 @@ class PexpectReplFilter(ProcessFilter):
         if proc.exitstatus and self.CHECK_RETURN_CODE:
             self.handle_subprocess_proc_return(self.executable(), proc.exitstatus, section_transcript)
 
-    def process_dict(self, input_dict):
-        output_dict = OrderedDict()
+    def process(self):
+        if self.arg_value('meta'):
+            html_formatter = HtmlFormatter()
+            latex_formatter = LatexFormatter()
+            lexer = get_lexer_by_name(self.OUTPUT_LEXER)
+            self.artifact.setup_storage()
 
-        for section_key, section_transcript in self.section_output(input_dict):
-            # Save this section's output
-            output_dict[section_key] = self.strip_trailing_prompts(section_transcript)
+        for section_key, section_transcript in self.section_output(self.artifact.input_data_dict):
+            output = self.strip_trailing_prompts(section_transcript)
+            self.log.debug(self.args())
+            if self.arg_value('meta'):
+                self.log.debug("in meta")
+                # Use key-value storage to save file system and other information at each step of run.
+                self.artifact.append_to_kv_storage("%s:output" % section_key, output)
+                self.artifact.append_to_kv_storage("%s:html-output" % section_key, highlight(output, lexer, html_formatter))
+                self.artifact.append_to_kv_storage("%s:latex-output" % section_key, highlight(output, lexer, latex_formatter))
 
-        return output_dict
+                for root, dirs, files in os.walk(self.artifact.temp_dir()):
+                    for filename in files:
+                        filepath = os.path.join(root, filename)
+                        local_filepath = os.path.relpath(filepath, self.artifact.temp_dir())
+
+                        with open(filepath, "r") as f:
+                            contents = f.read()
+
+                        self.artifact.append_to_kv_storage("%s:files:%s" % (section_key, local_filepath), contents)
+            else:
+                self.artifact.data_dict[section_key] = output
+
+        if self.arg_value('meta'):
+            self.artifact.persist_storage()
+
+        # Collect any artifacts which were generated in the tempdir, that need
+        # to be moved to their final locations.
+        for i in self.artifact.inputs().values():
+            src = os.path.join(self.artifact.temp_dir(), i.canonical_dir(), i.filename())
+            self.log.debug("Checking input %s at %s" % (i.key, src))
+            if (i.virtual or i.additional) and os.path.exists(src):
+                self.log.debug("Copying %s to %s" % (src, i.filepath()))
+                shutil.copy(src, i.filepath())
+            else:
+                self.log.debug("Not copying %s" % src)
 
 class RubyPexpectReplFilter(PexpectReplFilter):
     ALIASES = ['irb', 'rbrepl']
@@ -206,6 +245,7 @@ class RubyPexpectReplFilter(PexpectReplFilter):
     INITIAL_PROMPT = "^>>"
     INPUT_EXTENSIONS = [".txt", ".rb"]
     OUTPUT_EXTENSIONS = [".rbcon"]
+    OUTPUT_LEXER = "irb"
     PROMPTS = [">>", "?>"]
     TRIM_PROMPT = '>>'
     VERSION_COMMAND = 'irb --version'
@@ -290,9 +330,10 @@ class BashInteractiveStrictFilter(PexpectReplFilter):
     Runs bash. Use to run bash scripts.
     """
     ALIASES = ['shint', 'bashint']
-    EXECUTABLE = "bash --norc -i -e"
+    EXECUTABLE = "bash --norc -i"
     INPUT_EXTENSIONS = [".txt", ".sh"]
     OUTPUT_EXTENSIONS = ['.sh-session']
+    OUTPUT_LEXER = "console"
     PROMPT_REGEX = r"\d*[#$]"
     INITIAL_PROMPT = PROMPT_REGEX
     TRIM_PROMPT = PROMPT_REGEX
