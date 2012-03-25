@@ -18,6 +18,14 @@ def test_irb():
 def test_python():
     assert_in_output("example.py|pycon", "1+1", ">>> 1+1\n2")
 
+def test_python_create_files():
+    contents = """with open("new-file.txt", "w") as f:\n    f.write("hello!")\n"""
+    config = {"." : { "@example.py|pycon" : {"pycon": {"ext" : ".json", "meta" : True}, "contents" : contents }}}
+    for doc in run_dexy(config):
+        doc.run()
+        artifact = doc.last_artifact
+        assert artifact['1:files:new-file.txt'] == "hello!"
+
 def test_ipython():
     assert_in_output("example.py|ipython", "1+1", ">>> 1+1\n2")
 

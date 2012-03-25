@@ -196,7 +196,8 @@ class PexpectReplFilter(ProcessFilter):
             self.handle_subprocess_proc_return(self.executable(), proc.exitstatus, section_transcript)
 
     def process(self):
-        if self.arg_value('meta'):
+        lexer = None
+        if self.arg_value('meta') and hasattr(self, 'OUTPUT_LEXER'):
             html_formatter = HtmlFormatter()
             latex_formatter = LatexFormatter()
             lexer = get_lexer_by_name(self.OUTPUT_LEXER)
@@ -209,8 +210,9 @@ class PexpectReplFilter(ProcessFilter):
                 self.log.debug("in meta")
                 # Use key-value storage to save file system and other information at each step of run.
                 self.artifact.append_to_kv_storage("%s:output" % section_key, output)
-                self.artifact.append_to_kv_storage("%s:html-output" % section_key, highlight(output, lexer, html_formatter))
-                self.artifact.append_to_kv_storage("%s:latex-output" % section_key, highlight(output, lexer, latex_formatter))
+                if lexer:
+                    self.artifact.append_to_kv_storage("%s:html-output" % section_key, highlight(output, lexer, html_formatter))
+                    self.artifact.append_to_kv_storage("%s:latex-output" % section_key, highlight(output, lexer, latex_formatter))
 
                 for root, dirs, files in os.walk(self.artifact.temp_dir()):
                     for filename in files:
@@ -256,6 +258,7 @@ class PythonPexpectReplFilter(PexpectReplFilter):
     EXECUTABLE = 'python'
     INPUT_EXTENSIONS = [".txt", ".py"]
     OUTPUT_EXTENSIONS = [".pycon"]
+    OUTPUT_LEXER = "pycon"
     TAGS = ['python', 'interpreter', 'language']
     VERSION_COMMAND = 'python --version'
 
