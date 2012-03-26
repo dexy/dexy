@@ -105,7 +105,7 @@ class Artifact(object):
         """
         Shortcut to retrieve data from key-value storage.
         """
-        if self.ext in ['.json', '.kch']:
+        if self.ext in ['.json', '.kch', '.sqlite3']:
             return self.retrieve_from_kv_storage(key)
         else:
             return getattr(self, key)
@@ -846,7 +846,7 @@ class Artifact(object):
             data_dict[fmt % (i, k)] = v
         return data_dict
 
-    def setup_storage(self):
+    def setup_kv_storage(self):
         if self.ext == ".json":
             self._storage = {}
         elif self.ext == ".kch":
@@ -854,6 +854,11 @@ class Artifact(object):
             self._storage = DB()
             if not self._storage.open(self.filepath(), DB.OWRITER | DB.OCREATE):
                 self.log.debug("Error opening kyotocabinet db: %s" % (self._storage.error()))
+        elif self.ext == ".sqlite3":
+            import sqlite3
+            self._storage = sqlite3.connect(self.filepath())
+            self._cursor = self._storage.cursor()
+            self._cursor.execute("CREATE TABLE kvstore (key TEXT, value TEXT)")
         else:
             raise dexy.commands.UserFeedback("I don't know how to set up storage for file extention %s" % self.ext)
 
@@ -864,10 +869,12 @@ class Artifact(object):
         elif self.ext == ".kch":
             if not self._storage.set(key, value):
                 self.log.debug("Error setting key %s in kyotocabinet: %s" % (key, self._storage.error()))
+        elif self.ext == ".sqlite3":
+            self._cursor.execute("INSERT INTO kvstore VALUES (?, ?)", (str(key), str(value)))
         else:
-            raise dexy.commands.InternalDexyProblem("I don't know how to set up storage for file extention %s, this should have been trapped at setup_storage" % self.ext)
+            raise dexy.commands.InternalDexyProblem("I don't know how to set up storage for file extention %s, this should have been trapped at setup_kv_storage" % self.ext)
 
-    def persist_storage(self):
+    def persist_kv_storage(self):
         if self.ext == ".json":
             with open(self.filepath(), "wb") as f:
                 import json
@@ -876,10 +883,16 @@ class Artifact(object):
             self.log.debug("Persisting data in file %s" % self.filepath())
             if not self._storage.close():
                 self.log.debug(self._storage.error())
-        else:
-            raise dexy.commands.InternalDexyProblem("I don't know how to set up storage for file extension %s, this should have been trapped at setup_storage" % self.ext)
+        elif self.ext == ".sqlite3":
+            self._storage.commit()
+            self._cursor.close()
 
-    def setup_storage_read(self):
+            self._storage = None
+            self._cursor = None
+        else:
+            raise dexy.commands.InternalDexyProblem("I don't know how to set up storage for file extension %s, this should have been trapped at setup_kv_storage" % self.ext)
+
+    def setup_kv_storage_read(self):
         self.load()
         if self.ext == ".json":
             self._storage = json.loads(self.data_dict['1'])
@@ -887,35 +900,51 @@ class Artifact(object):
             from kyotocabinet import DB
             self._storage = DB()
             self._storage.open(self.filepath(), DB.OREADER)
+        elif self.ext == ".sqlite3":
+            import sqlite3
+            self._storage = sqlite3.connect(self.filepath())
+            self._cursor = self._storage.cursor()
         else:
             raise Exception("I don't know how to set up storage for file extension %s" % self.ext)
 
     def retrieve_from_kv_storage(self, key):
         if not hasattr(self, "_storage"):
-            self.setup_storage_read()
+            self.setup_kv_storage_read()
+        elif self._storage is None:
+            self.setup_kv_storage_read()
         elif self._storage.__class__.__name__ == "DB":
             self._storage.close()
-            self.setup_storage_read()
+            self.setup_kv_storage_read()
 
         if self.ext == ".json":
             return self._storage[key]
         elif self.ext == ".kch":
             value = self._storage.get(key)
             return value
+        elif self.ext == ".sqlite3":
+            self._cursor.execute("SELECT value from kvstore where key = ?", key)
+            record = self._cursor.fetchone()
+            if record:
+                return record[0]
         else:
-            raise dexy.commands.InternalDexyProblem("I don't know how to set up storage for file extension %s, this should have been trapped at setup_storage" % self.ext)
+            raise dexy.commands.InternalDexyProblem("I don't know how to set up storage for file extension %s, this should have been trapped at setup_kv_storage" % self.ext)
 
     def kv_keys(self, prefix=None, regex=None):
         """
         Return the keys defined in kv-storage.
         """
         if not hasattr(self, "_storage"):
-            self.setup_storage_read()
+            self.setup_kv_storage_read()
+        elif self._storage is None:
+            self.setup_kv_storage_read()
         elif self._storage.__class__.__name__ == "DB":
             self._storage.close()
-            self.setup_storage_read()
+            self.setup_kv_storage_read()
 
         if self.ext == ".json":
             return self._storage.keys()
         elif self.ext == ".kch":
             return self._storage.match_prefix(prefix)
+        elif self.ext == ".sqlite3":
+            self._cursor.execute("SELECT key from kvstore")
+            return [str(k[0]) for k in self._cursor.fetchall()]

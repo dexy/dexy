@@ -201,7 +201,7 @@ class PexpectReplFilter(ProcessFilter):
             html_formatter = HtmlFormatter()
             latex_formatter = LatexFormatter()
             lexer = get_lexer_by_name(self.OUTPUT_LEXER)
-            self.artifact.setup_storage()
+            self.artifact.setup_kv_storage()
 
         for section_key, section_transcript in self.section_output(self.artifact.input_data_dict):
             output = self.strip_trailing_prompts(section_transcript)
@@ -227,7 +227,7 @@ class PexpectReplFilter(ProcessFilter):
                 self.artifact.data_dict[section_key] = output
 
         if self.arg_value('meta'):
-            self.artifact.persist_storage()
+            self.artifact.persist_kv_storage()
 
         # Collect any artifacts which were generated in the tempdir, that need
         # to be moved to their final locations.

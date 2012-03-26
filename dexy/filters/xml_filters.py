@@ -14,7 +14,7 @@ class XmlSectionFilter(DexyFilter):
     ALIASES = ["xxml"]
 
     def process(self):
-        self.artifact.setup_storage()
+        self.artifact.setup_kv_storage()
 
         lexer = get_lexer_for_filename(self.artifact.previous_canonical_filename)
         html_formatter = HtmlFormatter(lineanchors=self.artifact.web_safe_document_key())
@@ -35,4 +35,4 @@ class XmlSectionFilter(DexyFilter):
                 self.artifact.append_to_kv_storage("%s:html-source" % element_id, highlight(source, lexer, html_formatter))
                 self.artifact.append_to_kv_storage("%s:latex-source" % element_id, highlight(source, lexer, latex_formatter))
 
-        self.artifact.persist_storage()
+        self.artifact.persist_kv_storage()

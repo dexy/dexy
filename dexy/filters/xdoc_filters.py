@@ -39,7 +39,7 @@ class PythonTestFilter(DexyFilter):
     # TODO some way to ensure tests logs get written elsewhere, like to the artifact output, they are going to main log for now - very confusing
 
     def process(self):
-        self.artifact.setup_storage()
+        self.artifact.setup_kv_storage()
 
         loader = nose.loader.TestLoader()
         for module_name in self.artifact.input_text().split():
@@ -72,7 +72,7 @@ class PythonTestFilter(DexyFilter):
                         self.artifact.append_to_kv_storage("%s:html-result" % qualified_test_name, html_result)
                         self.artifact.append_to_kv_storage("%s:html-source+result" % qualified_test_name, "%s\n%s" % (html_source, html_result))
 
-        self.artifact.persist_storage()
+        self.artifact.persist_kv_storage()
 
 class PythonDocumentationFilter(DexyFilter):
     ALIASES = ["pydoc"]
@@ -185,7 +185,7 @@ class PythonDocumentationFilter(DexyFilter):
         """
         package_names = input_text.split()
         packages = [__import__(package_name) for package_name in package_names]
-        self.artifact.setup_storage()
+        self.artifact.setup_kv_storage()
 
         for package in packages:
             self.log.debug("processing package %s" % package)
@@ -199,7 +199,7 @@ class PythonDocumentationFilter(DexyFilter):
             else:
                 self.process_module(package.__name__, package.__name__)
 
-        self.artifact.persist_storage()
+        self.artifact.persist_kv_storage()
 
 class RDocumentationFilter(DexyFilter):
     """
