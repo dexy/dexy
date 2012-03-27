@@ -229,16 +229,7 @@ class PexpectReplFilter(ProcessFilter):
         if self.arg_value('meta'):
             self.artifact.persist_kv_storage()
 
-        # Collect any artifacts which were generated in the tempdir, that need
-        # to be moved to their final locations.
-        for i in self.artifact.inputs().values():
-            src = os.path.join(self.artifact.temp_dir(), i.canonical_dir(), i.filename())
-            self.log.debug("Checking input %s at %s" % (i.key, src))
-            if (i.virtual or i.additional) and os.path.exists(src):
-                self.log.debug("Copying %s to %s" % (src, i.filepath()))
-                shutil.copy(src, i.filepath())
-            else:
-                self.log.debug("Not copying %s" % src)
+        self.copy_additional_inputs()
 
 class RubyPexpectReplFilter(PexpectReplFilter):
     ALIASES = ['irb', 'rbrepl']

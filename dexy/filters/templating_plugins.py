@@ -70,8 +70,8 @@ class PythonBuiltinsTemplatePlugin(TemplatePlugin):
         return dict((f.__name__, f) for f in self.PYTHON_BUILTINS)
 
 class PygmentsStylesheetTemplatePlugin(TemplatePlugin):
-    def highlight(self, text, lexer_name, fmt = 'html', noclasses = False):
-        formatter_options = { "noclasses" : noclasses }
+    def highlight(self, text, lexer_name, fmt = 'html', noclasses = False, lineanchors = 'l'):
+        formatter_options = { "lineanchors" : lineanchors, "noclasses" : noclasses }
         lexer = pygments.lexers.get_lexer_by_name(lexer_name)
         formatter = pygments.formatters.get_formatter_by_name(fmt, **formatter_options)
         return pygments.highlight(text, lexer, formatter)

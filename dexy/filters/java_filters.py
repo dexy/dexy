@@ -112,7 +112,10 @@ class JavaFilter(SubprocessCompileFilter):
 
     def compile_command_string(self):
         cp = self.setup_cp()
-        return "javac -classpath %s %s" % (cp, self.artifact.name)
+        if len(cp) == 0:
+            return "javac %s" % (self.artifact.previous_canonical_filename)
+        else:
+            return "javac -classpath %s %s" % (cp, self.artifact.previous_canonical_filename)
 
     def run_command_string(self):
         cp = self.setup_cp()

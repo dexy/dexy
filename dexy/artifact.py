@@ -106,9 +106,15 @@ class Artifact(object):
         Shortcut to retrieve data from key-value storage.
         """
         if self.ext in ['.json', '.kch', '.sqlite3']:
+            self.log.debug("Retrieving %s from kv storage" % key)
             return self.retrieve_from_kv_storage(key)
+        elif self.data_dict.has_key(key):
+            return self.data_dict[key]
         else:
             return getattr(self, key)
+
+    def keys(self):
+        return self.data_dict.keys()
 
     def __unicode__(self):
         """
@@ -922,7 +928,8 @@ class Artifact(object):
             value = self._storage.get(key)
             return value
         elif self.ext == ".sqlite3":
-            self._cursor.execute("SELECT value from kvstore where key = ?", key)
+            self.log.debug(key)
+            self._cursor.execute("SELECT value from kvstore where key = ?", (key,))
             record = self._cursor.fetchone()
             if record:
                 return record[0]

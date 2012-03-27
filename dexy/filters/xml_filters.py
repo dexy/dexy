@@ -9,7 +9,7 @@ class XmlSectionFilter(DexyFilter):
     """
     Returns any element of an XML or HTML document with an 'id' attribute.
     """
-    INPUT_EXTENSIONS = [".xml", ".html"]
+    INPUT_EXTENSIONS = [".xml", ".html", ".md", ".txt"]
     OUTPUT_EXTENSIONS = [".json", ".kch"]
     ALIASES = ["xxml"]
 
@@ -27,11 +27,12 @@ class XmlSectionFilter(DexyFilter):
             if element.attrib.has_key('id'):
                 element_id = element.attrib['id']
                 source = etree.tostring(element, pretty_print=True).strip()
-
+                inner_html = "\n".join(etree.tostring(child) for child in element.iterchildren())
                 self.artifact.append_to_kv_storage("%s:lineno" % element_id, element.sourceline)
                 self.artifact.append_to_kv_storage("%s:tail" % element_id, element.tail)
                 self.artifact.append_to_kv_storage("%s:text" % element_id, element.text)
                 self.artifact.append_to_kv_storage("%s:source" % element_id, source)
+                self.artifact.append_to_kv_storage("%s:inner-html" % element_id, inner_html)
                 self.artifact.append_to_kv_storage("%s:html-source" % element_id, highlight(source, lexer, html_formatter))
                 self.artifact.append_to_kv_storage("%s:latex-source" % element_id, highlight(source, lexer, latex_formatter))
 

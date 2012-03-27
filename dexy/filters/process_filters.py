@@ -139,6 +139,18 @@ class SubprocessFilter(ProcessFilter):
             self.log.debug("Copying %s to %s" % (canonical_file, self.artifact.filepath()))
             shutil.copyfile(canonical_file, self.artifact.filepath())
 
+    def copy_additional_inputs(self):
+        # Collect any artifacts which were generated in the tempdir, that need
+        # to be moved to their final locations.
+        for i in self.artifact.inputs().values():
+            src = os.path.join(self.artifact.temp_dir(), i.canonical_dir(), i.filename())
+            self.log.debug("Checking input %s at %s" % (i.key, src))
+            if (i.virtual or i.additional) and os.path.exists(src):
+                self.log.debug("Copying %s to %s" % (src, i.filepath()))
+                shutil.copy(src, i.filepath())
+            else:
+                self.log.debug("Not copying %s" % src)
+
     def process(self):
         command = self.command_string()
         proc, stdout = self.run_command(command, self.setup_env())
@@ -252,6 +264,7 @@ class SubprocessCompileFilter(SubprocessFilter):
             self.handle_subprocess_proc_return(command, proc.returncode, stdout)
 
         self.artifact.set_data(stdout)
+        self.copy_additional_inputs()
 
 class SubprocessCompileInputFilter(SubprocessCompileFilter):
     ALIASES = ['subprocesscompileinputfilter']
