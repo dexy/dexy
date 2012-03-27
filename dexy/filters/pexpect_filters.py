@@ -319,7 +319,7 @@ class PhpInteractiveFilter(PexpectReplFilter):
     PROMPTS = ['php > ']
     TRIM_PROMPT = "php > "
 
-class BashInteractiveStrictFilter(PexpectReplFilter):
+class BashInteractiveFilter(PexpectReplFilter):
     """
     Runs bash. Use to run bash scripts.
     """

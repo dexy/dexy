@@ -128,17 +128,6 @@ class ProcessFilter(DexyFilter):
         stdout, stderr = proc.communicate(text)
         return stdout
 
-class SubprocessFilter(ProcessFilter):
-    ALIASES = ['subprocessfilter']
-    BINARY = True
-    FINAL = True
-
-    def copy_canonical_file(self):
-        canonical_file = os.path.join(self.artifact.temp_dir(), self.artifact.canonical_filename())
-        if not os.path.exists(self.artifact.filepath()) and os.path.exists(canonical_file):
-            self.log.debug("Copying %s to %s" % (canonical_file, self.artifact.filepath()))
-            shutil.copyfile(canonical_file, self.artifact.filepath())
-
     def copy_additional_inputs(self):
         # Collect any artifacts which were generated in the tempdir, that need
         # to be moved to their final locations.
@@ -150,6 +139,17 @@ class SubprocessFilter(ProcessFilter):
                 shutil.copy(src, i.filepath())
             else:
                 self.log.debug("Not copying %s" % src)
+
+    def copy_canonical_file(self):
+        canonical_file = os.path.join(self.artifact.temp_dir(), self.artifact.canonical_filename())
+        if not os.path.exists(self.artifact.filepath()) and os.path.exists(canonical_file):
+            self.log.debug("Copying %s to %s" % (canonical_file, self.artifact.filepath()))
+            shutil.copyfile(canonical_file, self.artifact.filepath())
+
+class SubprocessFilter(ProcessFilter):
+    ALIASES = ['subprocessfilter']
+    BINARY = True
+    FINAL = True
 
     def process(self):
         command = self.command_string()
