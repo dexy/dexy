@@ -184,6 +184,7 @@ class SubprocessStdoutFilter(SubprocessFilter):
         proc, stdout = self.run_command(command, self.setup_env())
         self.handle_subprocess_proc_return(command, proc.returncode, stdout)
         self.artifact.set_data(stdout)
+        self.copy_additional_inputs()
 
 class SubprocessStdoutInputFilter(SubprocessFilter):
     ALIASES = ['subprocessstdoutinputfilter']
