@@ -398,7 +398,7 @@ class Document(object):
                 except IOError:
                     # no file was created, something went wrong in the script that should have
                     # generated this artifact
-                    raise Exception("""You requested an additional file named %s
+                    raise UserFeedback("""You requested an additional file named %s
                     but its artifact file (%s) does not exist. Something may have gone wrong
                     in one of the filters of %s""" % (a.key, a.filepath(), a.created_by))
 
