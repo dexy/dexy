@@ -109,8 +109,6 @@ def filters(log=NULL_LOGGER):
     proj_filters = ('filters', os.path.abspath(os.path.join(os.curdir, 'filters')))
     user_filters = ('dexy_filters', os.path.expanduser(os.path.join('~', 'dexy_filters')))
 
-    filter_dirs = []
-
     if os.path.exists(proj_filters[1]):
         init_py_file = os.path.join(proj_filters[1], "__init__.py")
         path = os.path.abspath(os.curdir)
@@ -170,7 +168,7 @@ def filters(log=NULL_LOGGER):
                             else:
                                 for a in klass.ALIASES:
                                     if filters.has_key(a):
-                                        self.log.info("Replacing class %s with %s for alias %s" % (filters[a].__name__, klass.__name,  a))
+                                        log.info("Replacing class %s with %s for alias %s" % (filters[a].__name__, klass.__name,  a))
                                     filters[a] = klass
                                     log.info("registered alias %s for class %s" % (a, k))
         log.info("...finished loading filters from %s" % d)
