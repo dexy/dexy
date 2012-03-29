@@ -234,7 +234,10 @@ class D(object):
         self._map_relative_refs = map_relative_refs
 
     def __getitem__(self, relative_ref):
-        return self._map_relative_refs[relative_ref]
+        if self._map_relative_refs.has_key("relative_ref"):
+            return self._map_relative_refs[relative_ref]
+        else:
+            raise UserFeedback("There is no document named %s available to %s" % (relative_ref, self.filter_instance.artifact.key))
 
 class InputsJustInTimeTemplatePlugin(InputsTemplatePlugin):
     def a(self, relative_ref):
