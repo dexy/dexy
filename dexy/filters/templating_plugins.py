@@ -3,6 +3,7 @@ from dexy.version import Version
 from ordereddict import OrderedDict
 from pygments.styles import get_all_styles
 import calendar
+import dexy.commands
 import json
 import os
 import pprint
@@ -237,7 +238,7 @@ class D(object):
         if self._map_relative_refs.has_key("relative_ref"):
             return self._map_relative_refs[relative_ref]
         else:
-            raise UserFeedback("There is no document named %s available to %s" % (relative_ref, self.filter_instance.artifact.key))
+            raise dexy.commands.UserFeedback("There is no document named %s available to %s" % (relative_ref, self.filter_instance.artifact.key))
 
 class InputsJustInTimeTemplatePlugin(InputsTemplatePlugin):
     def a(self, relative_ref):
