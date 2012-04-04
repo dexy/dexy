@@ -231,14 +231,15 @@ class InputsTemplatePlugin(TemplatePlugin):
 
 
 class D(object):
-    def __init__(self, map_relative_refs):
+    def __init__(self, artifact, map_relative_refs):
+        self._artifact = artifact
         self._map_relative_refs = map_relative_refs
 
     def __getitem__(self, relative_ref):
         if self._map_relative_refs.has_key("relative_ref"):
             return self._map_relative_refs[relative_ref]
         else:
-            raise dexy.commands.UserFeedback("There is no document named %s available to %s" % (relative_ref, self.filter_instance.artifact.key))
+            raise dexy.commands.UserFeedback("There is no document named %s available to %s" % (relative_ref, self._artifact.key))
 
 class InputsJustInTimeTemplatePlugin(InputsTemplatePlugin):
     def a(self, relative_ref):
@@ -261,7 +262,7 @@ class InputsJustInTimeTemplatePlugin(InputsTemplatePlugin):
 
         return {
             'a' : self.a,
-            'd' : D(self.map_relative_refs),
+            'd' : D(self.filter_instance, artifact, self.map_relative_refs),
             'tc' : self.tc,
             'f' : self,
             's' : self.filter_instance.artifact

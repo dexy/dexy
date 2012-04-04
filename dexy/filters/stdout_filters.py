@@ -164,6 +164,9 @@ class RedclothLatexFilter(SubprocessStdoutFilter):
     ALIASES = ['redclothl', 'latextile']
 
 class Rst2HtmlFilter(SubprocessStdoutFilter):
+    """
+    This uses the command line tool rst2html. The 'rst' filter is recommended instead of this.
+    """
     EXECUTABLES = ['rst2html', 'rst2html.py']
     VERSION_COMMAND = 'rst2html.py --version'
     INPUT_EXTENSIONS = [".rst", ".txt"]
@@ -172,6 +175,9 @@ class Rst2HtmlFilter(SubprocessStdoutFilter):
     FINAL = True
 
 class Rst2LatexFilter(SubprocessStdoutFilter):
+    """
+    This uses the command line tool rst2latex. The 'rst' filter is recommended instead of this.
+    """
     EXECUTABLES = ['rst2latex', 'rst2latex.py']
     VERSION_COMMAND = 'rst2latex.py --version'
     INPUT_EXTENSIONS = [".rst", ".txt"]

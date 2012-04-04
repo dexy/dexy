@@ -613,6 +613,12 @@ class Artifact(object):
     def output_text(self):
         return u"".join([self.convert_if_not_unicode(v) for k, v in self.data_dict.items()])
 
+    def read_binary_output(self):
+        self.binary_output = True
+        self.load_output()
+        self.binary_output = False
+        return self.binary_data
+
     def output(self):
         if not self.is_complete():
             raise Exception("can't call output unless complete!")
