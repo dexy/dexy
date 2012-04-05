@@ -8,6 +8,7 @@ from pygments.formatters.html import HtmlFormatter
 from pygments.formatters.latex import LatexFormatter
 from pygments.lexers import get_lexer_by_name
 import codecs
+import json
 import os
 import pexpect
 import re
@@ -224,6 +225,9 @@ class PexpectReplFilter(ProcessFilter):
                         try:
                             with codecs.open(filepath, "r") as f:
                                 contents = f.read()
+
+                            # make sure the contents are unicode-safe
+                            json.dumps(contents)
 
                             self.artifact.append_to_kv_storage(key_name_for_file, contents)
                         except UnicodeDecodeError as e:

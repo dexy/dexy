@@ -59,7 +59,8 @@ def test_bash_create_git_repo():
     mkdir abc
     ls
     echo "hi" > abc/hello.txt
-    git init .
+    git init
+    git add .
     """
     config = {"." : { "@script.sh|shint" : {"shint": {"ext" : ".json", "meta" : True}, "contents" : contents }}}
     for doc in run_dexy(config):
