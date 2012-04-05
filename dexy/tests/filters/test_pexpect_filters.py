@@ -65,7 +65,7 @@ def test_bash_create_git_repo():
     for doc in run_dexy(config):
         doc.run()
         artifact = doc.last_artifact
-        print artifact.kv_keys()
+        assert "[core]" in artifact["1:files:.git/config"]
 
 def test_bash_create_additional_artifacts():
     contents = """
