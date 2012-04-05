@@ -52,6 +52,7 @@ class SqliteDatabase(dexy.database.Database):
         self.field_names = ['id'] + self.field_keys + self.whitelist_keys
         self.create_table()
         self.batch_orders = {}
+        self.extra_keys = []
 
     def persist(self):
         self.conn.commit()
@@ -119,3 +120,6 @@ class SqliteDatabase(dexy.database.Database):
 
     def all(self):
         return self.conn.execute("SELECT * from artifacts").fetchall()
+
+    def query_like(self, query):
+        return self.conn.execute("SELECT * from artifacts where (is_last = 'True' or additional='True') and batch_id = ? and key like ?", (self.max_batch_id(), query,)).fetchall()

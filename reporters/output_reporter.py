@@ -56,6 +56,7 @@ class OutputReporter(Reporter):
         self.create_reports_dir(self.REPORTS_DIR)
         self.load_batch_artifacts()
         for artifact in self.artifacts.values():
+            self.log.debug("Processing artifact %s" % artifact.key)
             if (artifact.is_last and artifact.final) or artifact.additional:
                 fn = artifact.canonical_filename()
                 fp = os.path.join(self.REPORTS_DIR, fn)

@@ -90,47 +90,38 @@ class JavaFilter(SubprocessCompileFilter):
         env = self.setup_env()
 
         classpath_elements = []
-        classpath_elements.append(os.path.dirname(self.artifact.name))
+
+        working_dir = os.path.join(self.artifact.temp_dir(), self.artifact.canonical_dir())
+        classpath_elements.append(os.path.abspath(working_dir))
 
         for key, input_artifact in self.artifact.inputs().iteritems():
             if input_artifact.ext == ".class" and "javac" in key:
                 classpath_elements.append(os.path.dirname(input_artifact.name))
 
+        if self.artifact.args.has_key("$variables") and self.artifact.args["$variables"].has_key('CLASSPATH'):
+            for x in self.artifact.args["$variables"]['CLASSPATH'].split(":"):
+                classpath_elements.append(x)
+
         if env and env.has_key("CLASSPATH"):
             for x in env['CLASSPATH'].split(":"):
-                if x.startswith("/"):
-                    # absolute path, leave it alone
-                    classpath_elements.append(x)
-                else:
-                    # path relative to artifacts directory, need to adjust
-                    # since we are working in a subdir of artifacts
-                    classpath_elements.append(os.path.join("..", x))
+                classpath_elements.append(x)
 
         cp = ":".join(classpath_elements)
-
+        self.log.debug("Classpath %s" % cp)
         return cp
 
     def compile_command_string(self):
         cp = self.setup_cp()
         if len(cp) == 0:
-            return "javac %s" % (self.artifact.previous_canonical_filename)
+            return "javac %s" % os.path.basename(self.artifact.previous_canonical_filename)
         else:
-            return "javac -classpath %s %s" % (cp, self.artifact.previous_canonical_filename)
+            return "javac -classpath %s %s" % (cp, os.path.basename(self.artifact.previous_canonical_filename))
 
     def run_command_string(self):
         cp = self.setup_cp()
         main_method = self.setup_main_method()
         args = self.command_line_args() or ""
         return "java %s -cp %s %s" % (args, cp, main_method)
-
-    def setup_cwd(self):
-        tempdir = self.artifact.temp_dir()
-
-        # if this is the 2nd time we are calling this, don't want our compiled .class to be deleted
-        if not os.path.exists(tempdir):
-            self.artifact.create_temp_dir(True)
-
-        return tempdir
 
     def setup_main_method(self):
         if self.artifact.args.has_key('main'):

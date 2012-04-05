@@ -39,6 +39,9 @@ class FileSystemJsonArtifact(Artifact):
 
         self._inputs = dict((k, self.__class__.retrieve(h)) for (k, h) in m.pop('inputs').iteritems())
 
+        for k in m.pop('additional_inputs'):
+            self._inputs[k] = self.__class__.retrieve(k)
+
         for k, v in m.iteritems():
             setattr(self, k, v)
         # We only store filter name, not filter class, need to retrieve class from name

@@ -9,10 +9,9 @@ class DexyScriptErrorException(UserFeedback):
 
 class DexyNonzeroExitException(DexyScriptErrorException):
     def __init__(self, command, exitcode, stderr):
-        msg = "'%s' returned nonzero exit code %s." % (command, exitcode)
-        msg += " Set --loglevel DEBUG to troubleshoot or run with --ignore or set ignore-errors : true for this document to skip error-checking."
+        msg = "Exit code %s returned from: %s" % (exitcode, command)
         if stderr and not stderr=='':
-            msg += " Error info: %s" % stderr
+            msg += "\nError info: %s" % stderr
         Exception.__init__(self,  msg)
 
 class DexyEOFException(DexyScriptErrorException):
@@ -157,6 +156,7 @@ class SubprocessFilter(ProcessFilter):
         self.handle_subprocess_proc_return(command, proc.returncode, stdout)
         self.artifact.stdout = stdout
         self.copy_canonical_file()
+        self.copy_additional_inputs()
 
     def run_command(self, command, env, input_text = None):
         cwd = self.setup_cwd()

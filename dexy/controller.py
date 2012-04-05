@@ -123,6 +123,8 @@ class Controller(object):
         parent directory (up as far as the dexy project root) for config files
         and combining them, such that subdirectories override parents.
         """
+        self.log.debug("Determining configuration applicable in %s" % path)
+
         global_args = {}
         config_dict = {}
         variables = {}
@@ -446,7 +448,14 @@ re.compile: %s""" % (args['except'], e))
             total_dependencies += len(doc.inputs)
             for input_doc in doc.inputs:
                 depend(doc, input_doc)
-            self.log.debug("finalizing dependencies for %s" % doc.key())
+
+            self.log.debug("finalized dependencies for %s" % doc.key())
+            if len(doc.inputs) > 10:
+                self.log.debug("%s inputs added" % len(doc.inputs))
+            elif len(doc.inputs) == 0:
+                self.log.debug("no inputs added")
+            else:
+                self.log.debug("inputs added: %s" % "\n".join(d.key() for d in doc.inputs))
 
         if len(self.args['run']) > 0:
             # Only run the specified document, and its dependencies.

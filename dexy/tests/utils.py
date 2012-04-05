@@ -42,10 +42,7 @@ class divert_stderr():
         sys.stderr = self.old_stderr
         self.my_stderr.close()
 
-def run_dexy_without_tempdir(config_dict, additional_args={}):
-    if not hasattr(Document, 'filter_list'):
-        Document.filter_list = dexy.introspect.filters()
-
+def controller_args(additional_args = {}):
     fn = modargs.function_for(dexy.commands, "dexy")
     args = modargs.determine_kwargs(fn)
     args.update(additional_args)
@@ -54,6 +51,14 @@ def run_dexy_without_tempdir(config_dict, additional_args={}):
         os.mkdir(args['logsdir'])
     if not os.path.exists(args['artifactsdir']):
         os.mkdir(args['artifactsdir'])
+
+    return args
+
+def run_dexy_without_tempdir(config_dict, additional_args={}):
+    if not hasattr(Document, 'filter_list'):
+        Document.filter_list = dexy.introspect.filters()
+    
+    args = controller_args(additional_args)
 
     c = Controller(args)
     c.config = config_dict

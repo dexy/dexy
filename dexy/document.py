@@ -56,7 +56,7 @@ class Document(object):
         self.batch_id = controller.batch_id
 
     def setup_log(self):
-        self.log = logging.getLogger(self.key())
+        self.log = logging.getLogger("%s (batch %s)" % (self.key(), self.batch_id))
 
         if hasattr(self, 'loglevelname'):
             loglevelname = self.loglevelname
@@ -105,7 +105,7 @@ class Document(object):
         will depend on (have as inputs).
         """
         start = time.time()
-        if len(self.input_args) > 0 or len(self.input_keys) > 0 or self.use_all_inputs:
+        if len(self.input_args) > 0 or len(self.input_keys) > 0 or self.use_all_inputs or self.args.has_key('exact-inputs'):
             for doc in members_dict.values():
                 if doc.key() in self.input_keys:
                     self.inputs.append(doc)
@@ -147,7 +147,9 @@ class Document(object):
 
                     if self.args.has_key('exact-inputs'):
                         for exact_input in self.args['exact-inputs']:
+                            self.log.debug("Processing exact input %s" % exact_input)
                             if not specified:
+                                self.log.debug("Comparing exact input %s with %s" % (exact_input, doc.key()))
                                 specified = exact_input == doc.key()
 
                     # Work out relative priority
@@ -320,7 +322,6 @@ class Document(object):
     def create_initial_artifact(self):
         artifact = self.artifact_class.setup(self, self.name)
         if len(self.filters) == 0:
-            artifact.is_last = True
             if artifact.final is None:
                 artifact.final = True
         artifact.save()
@@ -377,7 +378,6 @@ class Document(object):
             self.timing.append(("append-step-%s" % self.step, time.time() - start))
             start = time.time()
 
-        self.last_artifact.is_last = True
         self.last_artifact.save_meta()
         self.db.append_artifacts(self.artifacts)
         self.timing.append(("append-artifacts", time.time() - start))

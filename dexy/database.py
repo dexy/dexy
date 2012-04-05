@@ -11,4 +11,5 @@ class Database(object):
         raise Exception("not implemented")
 
     def append_artifact(self, artifact):
+        self.extra_keys.append(artifact.key)
         self.append_artifacts([artifact])

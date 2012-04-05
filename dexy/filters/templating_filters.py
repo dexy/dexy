@@ -42,7 +42,7 @@ class TemplateFilter(DexyFilter):
             plugin = plugin_class(self)
             new_env_vars = plugin.run()
             if any(v in env.keys() for v in new_env_vars):
-                raise Exception("trying to add new keys %s, already have %s" % (u", ".join(new_env_vars.keys()), u", ".join(env.keys())))
+                raise InternalDexyProblem("plugin class %s trying to add new keys %s, already have %s" % (plugin_class.__name__, u", ".join(new_env_vars.keys()), u", ".join(env.keys())))
             env.update(new_env_vars)
         return env
 
@@ -178,12 +178,13 @@ class JinjaJustInTimeFilter(JinjaFilter):
         DexyVersionTemplatePlugin,
         GlobalsTemplatePlugin,
         InputsJustInTimeTemplatePlugin,
-        PrettyPrinterTemplatePlugin,
         PrettyPrintJsonTemplatePlugin,
+        PrettyPrinterTemplatePlugin,
         PygmentsStylesheetTemplatePlugin,
         PythonBuiltinsTemplatePlugin,
         PythonDatetimeTemplatePlugin,
         RegularExpressionsTemplatePlugin,
+        SimpleJsonTemplatePlugin,
         SubdirectoriesTemplatePlugin,
         VariablesTemplatePlugin
         ]

@@ -168,7 +168,7 @@ def filters(log=NULL_LOGGER):
                             else:
                                 for a in klass.ALIASES:
                                     if filters.has_key(a):
-                                        log.info("Replacing class %s with %s for alias %s" % (filters[a].__name__, klass.__name,  a))
+                                        log.info("Replacing class %s with %s for alias %s" % (filters[a].__name__, klass.__name__,  a))
                                     filters[a] = klass
                                     log.info("registered alias %s for class %s" % (a, k))
         log.info("...finished loading filters from %s" % d)

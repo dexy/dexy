@@ -21,7 +21,7 @@ class Artifact(object):
     MAX_DATA_DICT_DECIMALS = 5
     MAX_DATA_DICT_LENGTH = 10 ** MAX_DATA_DICT_DECIMALS
     META_ATTRS = [
-        'additional',
+        'additional_inputs',
         'binary_input',
         'binary_output',
         'created_by',
@@ -30,7 +30,6 @@ class Artifact(object):
         'final',
         'hashfunction',
         'initial',
-        'is_last',
         'logstream',
         'key',
         'name',
@@ -67,6 +66,7 @@ class Artifact(object):
 
         self._inputs = {}
         self.additional = None
+        self.additional_inputs = []
         self.args = {}
         self.args['globals'] = {}
         self.artifacts_dir = 'artifacts' # TODO don't hard code
@@ -100,6 +100,7 @@ class Artifact(object):
         self.start_time = None
         self.state = 'new'
         self.stdout = None
+        self.virtual_docs = None
 
     def __getitem__(self, key):
         """
@@ -182,7 +183,6 @@ class Artifact(object):
         """
         Set up an initial artifact (the first artifact in a document's filter chain).
         """
-        self._inputs = {}
         self.binary_input = (self.doc.ext in self.BINARY_EXTENSIONS)
         self.binary_output = self.binary_input
         self.ext = self.doc.ext
@@ -250,7 +250,7 @@ class Artifact(object):
         # Look for additional inputs in previous artifacts or previous
         # artifacts' inputs.
         for k, a in previous_artifact.inputs().iteritems():
-
+            self.log.debug("Processing previous artifact input %s" % k)
             if a.additional and not k in self._inputs:
                 self.log.debug("(%s) Adding additional artifact %s from %s" % (self.key, k, a.key))
                 self.add_input(k, a)
@@ -309,6 +309,7 @@ class Artifact(object):
         artifact = klass()
         artifact.key = artifact_key
         artifact.filter_class = filter_class
+        artifact.is_last = (artifact.key == doc.key())
 
         # Add references for convenience
         artifact.artifacts_dir = doc.artifacts_dir
@@ -334,13 +335,19 @@ class Artifact(object):
 
         # Set inputs from original document inputs.
         artifact._inputs.update(artifact.doc.input_artifacts())
+        if len(artifact.doc.input_artifacts().keys()) > 10:
+            doc.log.debug("Setting inputs to include %s document inputs" % len(artifact.doc.input_artifacts()))
+        elif len(artifact.doc.input_artifacts().keys()) > 0:
+            doc.log.debug("Setting inputs to include inputs: %s" % ",".join(artifact.doc.input_artifacts().keys()))
 
         for k, a in artifact.doc.input_artifacts().iteritems():
             if a.additional and not k in artifact._inputs:
+                doc.log.debug("Adding additional input %s" % k)
                 artifact.add_input(k, a)
 
             for kk, aa in a.inputs().iteritems():
                 if aa.additional and not kk in artifact._inputs:
+                    doc.log.debug("Adding additional input %s" % kk)
                     artifact.add_input(kk, aa)
 
         if previous_artifact:
@@ -379,14 +386,16 @@ class Artifact(object):
                 err_msg_args = (self.doc.key(), self.filter_alias, self.doc.step, len(self.doc.filters))
                 messages.append("ERROR in %s (in filter '%s' - step %s of %s)" % err_msg_args)
                 messages.append(e.message)
-                messages.append("There may be more information in logs/dexy.log")
-                if self.log.getEffectiveLevel() > logging.DEBUG:
-                    messages.append("If you can't find clues in the log, try running again with -loglevel DEBUG")
 
                 for message in messages:
                     self.log.debug(message)
 
-                raise dexy.commands.UserFeedback(e.message)
+                messages.append("This exception information has been written to logs/dexy.log")
+                messages.append("There may be more information in logs/dexy.log")
+                if self.log.getEffectiveLevel() > logging.DEBUG:
+                    messages.append("If you can't find clues in the log, try running again with -loglevel DEBUG")
+
+                raise dexy.commands.UserFeedback("\n".join(messages))
 
             except dexy.commands.InternalDexyProblem as e:
                 err_msg_args = (self.doc.key(), self.filter_alias, self.doc.step, len(self.doc.filters))
@@ -421,10 +430,7 @@ class Artifact(object):
 
             # make sure additional artifacts are added to db
             for a in self.inputs().values():
-                if a.created_by == self.key:
-                    if not a.additional:
-                        raise Exception("created_by should only apply to additional artifacts")
-                    # TODO Should this be done in Artifact.retrieve?
+                if a.additional and not a.key in self.db.extra_keys:
                     a.batch_id = self.batch_id
                     self.db.append_artifact(a)
 
@@ -432,7 +438,6 @@ class Artifact(object):
         self.db.update_artifact(self)
 
     def add_additional_artifact(self, key_with_ext, ext=None):
-        """create an 'additional' artifact with random hashstring"""
         if not ext:
             ext = os.path.splitext(key_with_ext)[1]
         new_artifact = self.__class__()
@@ -447,12 +452,12 @@ class Artifact(object):
         new_artifact.set_binary_from_ext()
         new_artifact.artifacts_dir = self.artifacts_dir
         new_artifact.inode = self.hashstring
-        new_artifact.created_by = self.document_key
+        new_artifact.created_by = self.key
         new_artifact.virtual = True
         new_artifact.name = key_with_ext.split("|")[0]
 
         # TODO this is duplicated in setup_from_previous_artifact, should reorganize
-        for at in ['batch_id', 'document_key', 'mtime', 'ctime']:
+        for at in ['batch_id', 'document_key', 'mtime', 'ctime', 'virtual_docs']:
                 val = getattr(self, at)
                 setattr(new_artifact, at, val)
 
@@ -464,6 +469,7 @@ class Artifact(object):
 
     def add_input(self, key, artifact):
         self._inputs[key] = artifact
+        self.additional_inputs.append(artifact.hashstring)
 
     def inputs(self):
         return self._inputs
@@ -688,7 +694,7 @@ class Artifact(object):
                     input_artifact.write_to_file(filename)
                     self.log.debug("Populating temp dir for %s with %s" % (self.key, filename))
                 else:
-                    self.log.warn("Skipping file %s for temp dir for %s, file does not exist (yet)" % (filename, self.key))
+                    self.log.warn("Not populating temp dir for %s with file %s, file does not exist (yet)" % (self.key, filename))
 
             # write the workfile to this directory under its canonical name
             previous = self.previous_artifact_filepath
@@ -961,3 +967,20 @@ class Artifact(object):
         elif self.ext == ".sqlite3":
             self._cursor.execute("SELECT key from kvstore")
             return [str(k[0]) for k in self._cursor.fetchall()]
+
+    def kv_query(self, query_string):
+        if not hasattr(self, "_storage"):
+            self.setup_kv_storage_read()
+        elif self._storage is None:
+            self.setup_kv_storage_read()
+        elif self._storage.__class__.__name__ == "DB":
+            self._storage.close()
+            self.setup_kv_storage_read()
+
+        if self.ext == ".sqlite3":
+            self._cursor.execute("SELECT * from kvstore WHERE key LIKE ? COLLATE RTRIM ORDER BY key", (query_string,))
+            return [k[0] for k in self._cursor]
+        elif self.ext == ".json":
+            return [k for k in self.kv_keys() if query_string in k]
+        else:
+            raise Exception("extension is %s" % self.ext)

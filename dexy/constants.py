@@ -53,6 +53,7 @@ class Constants():
     """ % (", ".join(EXCLUDE_DIRS_ALL_LEVELS), ", ".join(EXCLUDE_DIRS_ROOT))
 
     ARTIFACT_HASH_WHITELIST = [
+        'additional',
         'args',
         'artifact_class_source',
         'ctime',
@@ -67,6 +68,7 @@ class Constants():
         'input_data_dict',
         'input_ext',
         'inputs',
+        'is_last',
         'key',
         'mtime',
         'next_filter_name'

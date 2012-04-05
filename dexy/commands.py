@@ -11,11 +11,12 @@ import dexy.controller
 import dexy.introspect
 import dexy.utils
 import inspect
+import json
 import os
+import platform
 import shutil
 import sys
 import warnings
-import platform
 
 class InternalDexyProblem(Exception):
     def __init__(self, message):
@@ -399,7 +400,7 @@ def filters_text(
         text.append("")
         text.append("Aliases: %s" % ", ".join(klass.ALIASES))
         text.append("")
-        text.append(trim_docstring(klass.__doc__))
+        text.append(inspect.getdoc(klass))
         text.append("")
         text.append("http://dexy.it/docs/filters/%s" % alias)
         if source:
@@ -444,7 +445,7 @@ def filters_text(
 
             if not skip:
                 name_and_aliases = "%s (%s) " % (klass.__name__, ", ".join(klass.ALIASES))
-                docstring = trim_docstring(klass.__doc__)
+                docstring = inspect.getdoc(klass) or ""
                 if "\n" in docstring:
                     docstring = docstring.splitlines()[0]
                 filter_help = name_and_aliases + docstring
@@ -470,7 +471,7 @@ def reporters_text(log):
         text.append("\n" + r.__name__.replace("Reporter", ""))
 
         if r.__doc__:
-            text.append(S + r.__doc__)
+            text.append(S + inspect.getdoc(r))
         else:
             text.append(S + "no documentation available")
 
@@ -588,7 +589,7 @@ def fcmd_command(
         class_method = filter_class.__dict__[cmd_name]
         if type(class_method) == classmethod:
             if help:
-                print class_method.__func__.__doc__
+                print inspect.getdoc(class_method.__func__)
             else:
                 class_method.__func__(filter_class, **kwargs)
         else:
@@ -597,28 +598,51 @@ def fcmd_command(
 def it_command(**kwargs):
     dexy_command(kwargs)
 
-# From http://www.python.org/dev/peps/pep-0257/#handling-docstring-indentation
-def trim_docstring(docstring):
-    if not docstring:
-        return ''
-    # Convert tabs to spaces (following the normal Python rules)
-    # and split into a list of lines:
-    lines = docstring.expandtabs().splitlines()
-    # Determine minimum indentation (first line doesn't count):
-    indent = sys.maxint
-    for line in lines[1:]:
-        stripped = line.lstrip()
-        if stripped:
-            indent = min(indent, len(line) - len(stripped))
-    # Remove indentation (first line is special):
-    trimmed = [lines[0].strip()]
-    if indent < sys.maxint:
-        for line in lines[1:]:
-            trimmed.append(line[indent:].rstrip())
-    # Strip off trailing and leading blank lines:
-    while trimmed and not trimmed[-1]:
-        trimmed.pop()
-    while trimmed and not trimmed[0]:
-        trimmed.pop(0)
-    # Return a single string:
-    return '\n'.join(trimmed)
+def grep_command(
+        expr=None, # The expression to search for
+        keyexpr="", # Only search for keys matching this expression, implies keys=True
+        keys=False, # if True, try to list the keys in any found files
+        recurse=False, # if True, recurse into keys to look for sub keys (implies keys=True)
+        artifactclass=Constants.DEFAULT_ACLASS, # name of class to use for artifacts
+        dbclass=Constants.DEFAULT_DBCLASS, # name of database class to use
+        dbfile=Constants.DEFAULT_DBFILE, # name of the database file (it lives in the logs dir)
+        logsdir=Constants.DEFAULT_LDIR # location of directory in which to store logs
+        ):
+    """
+    Search for a Dexy document in the database matching the expression.
+
+    For sqlite the expression will be wrapped in % for you.
+    """
+    db = dexy.utils.get_db(dbclass, dbfile=dbfile, logsdir=logsdir)
+    for row in db.query_like("%%%s%%" % expr):
+        print row['key']
+        if keys or len(keyexpr) > 0 or recurse:
+            artifact_classes = dexy.introspect.artifact_classes()
+            artifact_class = artifact_classes[artifactclass]
+            artifact = artifact_class.retrieve(row['hashstring'])
+            if artifact.ext in [".json", ".kch", ".sqlite3"]:
+                if len(keyexpr) > 0:
+                    rows = artifact.kv_query("%%%s%%" % keyexpr)
+                else:
+                    rows = artifact.kv_keys()
+
+                if rows:
+                    print "  key-value store keys:"
+                for k in rows:
+                    print "    %s" % k
+                    if recurse:
+                        v = artifact.retrieve_from_kv_storage(k)
+                        try:
+                            if not hasattr(v, "keys"):
+                                v = json.loads(v)
+                            if hasattr(v, "keys"):
+                                for kk in v.keys():
+                                    print "      %s" % kk
+                        except Exception as e:
+                            pass
+
+            if len(artifact.data_dict.keys()) > 1:
+                print "  data dict keys:"
+            for k in artifact.data_dict.keys():
+                if not k == '1':
+                    print "    %s" % k
