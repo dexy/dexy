@@ -4,9 +4,10 @@ from dexy.filters.process_filters import DexyEOFException
 from dexy.filters.process_filters import ProcessFilter
 from ordereddict import OrderedDict
 from pygments import highlight
-from pygments.lexers import get_lexer_by_name
 from pygments.formatters.html import HtmlFormatter
 from pygments.formatters.latex import LatexFormatter
+from pygments.lexers import get_lexer_by_name
+import codecs
 import os
 import pexpect
 import re
@@ -218,11 +219,17 @@ class PexpectReplFilter(ProcessFilter):
                     for filename in files:
                         filepath = os.path.join(root, filename)
                         local_filepath = os.path.relpath(filepath, self.artifact.temp_dir())
+                        key_name_for_file = "%s:files:%s" % (section_key, local_filepath)
 
-                        with open(filepath, "r") as f:
-                            contents = f.read()
+                        try:
+                            with codecs.open(filepath, "r") as f:
+                                contents = f.read()
 
-                        self.artifact.append_to_kv_storage("%s:files:%s" % (section_key, local_filepath), contents)
+                            self.artifact.append_to_kv_storage(key_name_for_file, contents)
+                        except UnicodeDecodeError as e:
+                            self.log.debug("Not appending %s because %s" % (key_name_for_file, e.message))
+                        except Exception as e:
+                            raise InternalDexyProblem("%s reading file contents of %s or appending to db" % (e.__class__.__name__, filepath))
             else:
                 self.artifact.data_dict[section_key] = output
 

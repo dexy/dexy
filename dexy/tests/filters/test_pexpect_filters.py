@@ -54,6 +54,19 @@ def test_bash_create_additional_files():
         artifact = doc.last_artifact
         assert artifact['1:files:abc/hello.txt'] == "hi\n"
 
+def test_bash_create_git_repo():
+    contents = """
+    mkdir abc
+    ls
+    echo "hi" > abc/hello.txt
+    git init .
+    """
+    config = {"." : { "@script.sh|shint" : {"shint": {"ext" : ".json", "meta" : True}, "contents" : contents }}}
+    for doc in run_dexy(config):
+        doc.run()
+        artifact = doc.last_artifact
+        print artifact.kv_keys()
+
 def test_bash_create_additional_artifacts():
     contents = """
     ls
