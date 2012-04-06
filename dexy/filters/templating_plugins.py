@@ -270,7 +270,7 @@ class InputsJustInTimeTemplatePlugin(InputsTemplatePlugin):
 
         return {
             'a' : self.a,
-            'd' : D(self.filter_instance, artifact, self.map_relative_refs),
+            'd' : D(self.filter_instance.artifact, self.map_relative_refs),
             'tc' : self.tc,
             'f' : self,
             's' : self.filter_instance.artifact
