@@ -882,13 +882,11 @@ class Artifact(object):
             raise dexy.commands.UserFeedback("I don't know how to set up storage for file extention %s" % self.kv_ext())
 
     def append_to_kv_storage(self, key, value):
-        print "Setting key %s in kv storage" % key
         if self.kv_ext() == ".json":
             self._kv_storage[key] = value
         elif self.kv_ext() == ".kch":
             if not self._kv_storage.set(key, value):
                 self.log.debug("Error setting key %s in kyotocabinet: %s" % (key, self._kv_storage.error()))
-                print "Error setting key %s in kyotocabinet: %s" % (key, self._kv_storage.error())
         elif self.kv_ext() == ".sqlite3":
             self._kv_cursor.execute("INSERT INTO kvstore VALUES (?, ?)", (str(key), str(value)))
         else:
@@ -901,7 +899,6 @@ class Artifact(object):
                 json.dump(self._kv_storage, f)
         elif self.kv_ext() == ".kch":
             self.log.debug("Persisting data in file %s" % self.kv_filepath())
-            print "Persisting data in file %s" % self.kv_filepath()
             if not self._kv_storage.close():
                 self.log.debug(self._kv_storage.error())
         elif self.kv_ext() == ".sqlite3":
@@ -915,8 +912,6 @@ class Artifact(object):
 
     def setup_kv_storage_read(self):
         self.load()
-        print "in setup_kv_storage_read for", self.kv_ext()
-        print "loading contents from", self.kv_filepath()
         if self.kv_ext() == ".json":
             with open(self.kv_filepath(), "rb") as f:
                 self._kv_storage = json.load(f)
