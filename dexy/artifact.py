@@ -106,6 +106,7 @@ class Artifact(object):
         """
         Shortcut to retrieve data from key-value storage.
         """
+        print "in getitem for", self.key
         if self.data_dict.has_key(key):
             return self.data_dict[key]
         elif hasattr(self, key):

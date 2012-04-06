@@ -48,7 +48,7 @@ def test_bash_create_additional_files():
     ls
     echo "hi" > abc/hello.txt
     """
-    config = {"." : { "@script.sh|shint" : {"shint": {"ext" : ".json", "meta" : True}, "contents" : contents }}}
+    config = {"." : { "@script.sh|shint" : {"shint": {"meta" : True}, "contents" : contents }}}
     for doc in run_dexy(config):
         doc.run()
         artifact = doc.last_artifact

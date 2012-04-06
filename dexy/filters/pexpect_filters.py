@@ -234,8 +234,7 @@ class PexpectReplFilter(ProcessFilter):
                             self.log.debug("Not appending %s because %s" % (key_name_for_file, e.message))
                         except Exception as e:
                             raise InternalDexyProblem("%s reading file contents of %s or appending to db" % (e.__class__.__name__, filepath))
-            else:
-                self.artifact.data_dict[section_key] = output
+            self.artifact.data_dict[section_key] = output
 
         if self.arg_value('meta'):
             self.artifact.persist_kv_storage()

@@ -37,3 +37,4 @@ class XmlSectionFilter(DexyFilter):
                 self.artifact.append_to_kv_storage("%s:latex-source" % element_id, highlight(source, lexer, latex_formatter))
 
         self.artifact.persist_kv_storage()
+        self.artifact.data_dict = self.artifact.input_data_dict

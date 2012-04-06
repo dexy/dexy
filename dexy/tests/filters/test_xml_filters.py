@@ -9,4 +9,4 @@ def test_xml():
         artifact = doc.last_artifact
         assert artifact['abc:text'] == "def"
         assert artifact['abc:source'] == contents
-        assert artifact['abc:lineno'] == 1
+        assert artifact['abc:lineno'] == "1"
