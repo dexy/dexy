@@ -5,8 +5,46 @@ import json
 import os
 
 class FileSystemJsonArtifact(Artifact):
-    """Artifact which persists data by writing to the file system and using
-    JSON for serializing metadata (default type of Artifact)"""
+    """
+    Artifact which persists data by writing to the file system and using JSON
+    for serializing metadata (default type of Artifact)
+    """
+
+    # Key-Value Store
+    def kv_extension(self):
+        ext = None
+
+        try:
+            import kyotocabinet
+            ext = ".kch"
+        except ImportError:
+            pass
+
+        if not ext:
+            try:
+                import sqlite3
+                ext = ".sqlite3"
+            except ImportError:
+                pass
+
+        if not ext:
+            ext = ".json"
+
+        return ext
+
+    def kv_ext(self):
+        if not hasattr(self, "_kv_ext"):
+            if self.args.has_key('kv-ext'):
+                self._kv_ext = self.args['kv-ext']
+            else:
+                self._kv_ext = self.kv_extension()
+        return self._kv_ext
+
+    def kv_filename(self):
+        return "%s-kv%s" % (self.web_safe_document_key(), self.kv_ext())
+
+    def kv_filepath(self):
+        return os.path.join(self.artifacts_dir, self.kv_filename())
 
     # Metadata
     def meta_filename(self):
@@ -44,7 +82,7 @@ class FileSystemJsonArtifact(Artifact):
 
         for k, v in m.iteritems():
             setattr(self, k, v)
-        # We only store filter name, not filter class, need to retrieve class from name
+
         if hasattr(self, "filter_name") and not hasattr(self, "filter_class"):
             self.filter_class = [k for n,k in self.FILTERS.iteritems() if k.__name__ == self.filter_name][0]
 

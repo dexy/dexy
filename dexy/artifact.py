@@ -106,13 +106,13 @@ class Artifact(object):
         """
         Shortcut to retrieve data from key-value storage.
         """
-        if self.ext in ['.json', '.kch', '.sqlite3']:
+        if self.data_dict.has_key(key):
+            return self.data_dict[key]
+        elif hasattr(self, key):
+            return getattr(self, key)
+        else:
             self.log.debug("Retrieving %s from kv storage" % key)
             return self.retrieve_from_kv_storage(key)
-        elif self.data_dict.has_key(key):
-            return self.data_dict[key]
-        else:
-            return getattr(self, key)
 
     def keys(self):
         return self.data_dict.keys()
@@ -865,84 +865,88 @@ class Artifact(object):
         return data_dict
 
     def setup_kv_storage(self):
-        if self.ext == ".json":
-            self._storage = {}
-        elif self.ext == ".kch":
+        if self.kv_ext() == ".json":
+            self._kv_storage = {}
+        elif self.kv_ext() == ".kch":
             from kyotocabinet import DB
-            self._storage = DB()
-            if not self._storage.open(self.filepath(), DB.OWRITER | DB.OCREATE):
-                self.log.debug("Error opening kyotocabinet db: %s" % (self._storage.error()))
-        elif self.ext == ".sqlite3":
+            self._kv_storage = DB()
+            if not self._kv_storage.open(self.kv_filepath(), DB.OWRITER | DB.OCREATE):
+                self.log.debug("Error opening kyotocabinet db: %s" % (self._kv_storage.error()))
+        elif self.kv_ext() == ".sqlite3":
             import sqlite3
-            self._storage = sqlite3.connect(self.filepath())
-            self._cursor = self._storage.cursor()
-            self._cursor.execute("CREATE TABLE kvstore (key TEXT, value TEXT)")
+            self._kv_storage = sqlite3.connect(self.kv_filepath())
+            self._kv_cursor = self._kv_storage.cursor()
+            self._kv_cursor.execute("CREATE TABLE kvstore (key TEXT, value TEXT)")
         else:
-            raise dexy.commands.UserFeedback("I don't know how to set up storage for file extention %s" % self.ext)
+            raise dexy.commands.UserFeedback("I don't know how to set up storage for file extention %s" % self.kv_ext())
 
     def append_to_kv_storage(self, key, value):
-        self.log.debug("Setting key %s in kv storage" % key)
-        if self.ext == ".json":
-            self._storage[key] = value
-        elif self.ext == ".kch":
-            if not self._storage.set(key, value):
-                self.log.debug("Error setting key %s in kyotocabinet: %s" % (key, self._storage.error()))
-        elif self.ext == ".sqlite3":
-            self._cursor.execute("INSERT INTO kvstore VALUES (?, ?)", (str(key), str(value)))
+        print "Setting key %s in kv storage" % key
+        if self.kv_ext() == ".json":
+            self._kv_storage[key] = value
+        elif self.kv_ext() == ".kch":
+            if not self._kv_storage.set(key, value):
+                self.log.debug("Error setting key %s in kyotocabinet: %s" % (key, self._kv_storage.error()))
+                print "Error setting key %s in kyotocabinet: %s" % (key, self._kv_storage.error())
+        elif self.kv_ext() == ".sqlite3":
+            self._kv_cursor.execute("INSERT INTO kvstore VALUES (?, ?)", (str(key), str(value)))
         else:
-            raise dexy.commands.InternalDexyProblem("I don't know how to set up storage for file extention %s, this should have been trapped at setup_kv_storage" % self.ext)
+            raise dexy.commands.InternalDexyProblem("I don't know how to set up storage for file extention %s, this should have been trapped at setup_kv_storage" % self.kv_ext())
 
     def persist_kv_storage(self):
-        if self.ext == ".json":
-            with open(self.filepath(), "wb") as f:
+        if self.kv_ext() == ".json":
+            with open(self.kv_filepath(), "wb") as f:
                 import json
-                json.dump(self._storage, f)
-        elif self.ext == ".kch":
-            self.log.debug("Persisting data in file %s" % self.filepath())
-            if not self._storage.close():
-                self.log.debug(self._storage.error())
-        elif self.ext == ".sqlite3":
-            self._storage.commit()
-            self._cursor.close()
+                json.dump(self._kv_storage, f)
+        elif self.kv_ext() == ".kch":
+            self.log.debug("Persisting data in file %s" % self.kv_filepath())
+            print "Persisting data in file %s" % self.kv_filepath()
+            if not self._kv_storage.close():
+                self.log.debug(self._kv_storage.error())
+        elif self.kv_ext() == ".sqlite3":
+            self._kv_storage.commit()
+            self._kv_cursor.close()
 
-            self._storage = None
-            self._cursor = None
+            self._kv_storage = None
+            self._kv_cursor = None
         else:
-            raise dexy.commands.InternalDexyProblem("I don't know how to set up storage for file extension %s, this should have been trapped at setup_kv_storage" % self.ext)
+            raise dexy.commands.InternalDexyProblem("I don't know how to persist for file extension %s, this should have been trapped at setup_kv_storage" % self.kv_ext())
 
     def setup_kv_storage_read(self):
         self.load()
-        if self.ext == ".json":
-            self._storage = json.loads(self.data_dict['1'])
-        elif self.ext == ".kch":
+        print "in setup_kv_storage_read for", self.kv_ext()
+        print "loading contents from", self.kv_filepath()
+        if self.kv_ext() == ".json":
+            with open(self.kv_filepath(), "rb") as f:
+                self._kv_storage = json.load(f)
+        elif self.kv_ext() == ".kch":
             from kyotocabinet import DB
-            self._storage = DB()
-            self._storage.open(self.filepath(), DB.OREADER)
-        elif self.ext == ".sqlite3":
+            self._kv_storage = DB()
+            self._kv_storage.open(self.kv_filepath(), DB.OREADER)
+        elif self.kv_ext() == ".sqlite3":
             import sqlite3
-            self._storage = sqlite3.connect(self.filepath())
-            self._cursor = self._storage.cursor()
+            self._kv_storage = sqlite3.connect(self.kv_filepath())
+            self._kv_cursor = self._kv_storage.cursor()
         else:
-            raise Exception("I don't know how to set up storage for file extension %s" % self.ext)
+            raise Exception("I don't know how to set up storage for file extension %s" % self.kv_ext())
 
     def retrieve_from_kv_storage(self, key):
-        if not hasattr(self, "_storage"):
+        if not hasattr(self, "_kv_storage"):
             self.setup_kv_storage_read()
-        elif self._storage is None:
+        elif self._kv_storage is None:
             self.setup_kv_storage_read()
-        elif self._storage.__class__.__name__ == "DB":
-            self._storage.close()
+        elif self._kv_storage.__class__.__name__ == "DB":
+            self._kv_storage.close()
             self.setup_kv_storage_read()
 
-        if self.ext == ".json":
-            return self._storage[key]
-        elif self.ext == ".kch":
-            value = self._storage.get(key)
+        if self.kv_ext() == ".json":
+            return self._kv_storage[key]
+        elif self.kv_ext() == ".kch":
+            value = self._kv_storage.get(key)
             return value
-        elif self.ext == ".sqlite3":
-            self.log.debug(key)
-            self._cursor.execute("SELECT value from kvstore where key = ?", (key,))
-            record = self._cursor.fetchone()
+        elif self.kv_ext() == ".sqlite3":
+            self._kv_cursor.execute("SELECT value from kvstore where key = ?", (key,))
+            record = self._kv_cursor.fetchone()
             if record:
                 return record[0]
         else:
@@ -952,35 +956,37 @@ class Artifact(object):
         """
         Return the keys defined in kv-storage.
         """
-        if not hasattr(self, "_storage"):
+        if not hasattr(self, "_kv_storage"):
             self.setup_kv_storage_read()
-        elif self._storage is None:
+        elif self._kv_storage is None:
             self.setup_kv_storage_read()
-        elif self._storage.__class__.__name__ == "DB":
-            self._storage.close()
+        elif hasattr(self._kv_storage, "keys") and len(self._kv_storage.keys()) == 0:
+            self.setup_kv_storage_read()
+        elif self._kv_storage.__class__.__name__ == "DB":
+            self._kv_storage.close()
             self.setup_kv_storage_read()
 
-        if self.ext == ".json":
-            return self._storage.keys()
-        elif self.ext == ".kch":
-            return self._storage.match_prefix(prefix)
-        elif self.ext == ".sqlite3":
-            self._cursor.execute("SELECT key from kvstore")
-            return [str(k[0]) for k in self._cursor.fetchall()]
+        if self.kv_ext() == ".json":
+            return self._kv_storage.keys()
+        elif self.kv_ext() == ".kch":
+            return self._kv_storage.match_prefix(prefix)
+        elif self.kv_ext() == ".sqlite3":
+            self._kv_cursor.execute("SELECT key from kvstore")
+            return [str(k[0]) for k in self._kv_cursor.fetchall()]
 
     def kv_query(self, query_string):
-        if not hasattr(self, "_storage"):
+        if not hasattr(self, "_kv_storage"):
             self.setup_kv_storage_read()
-        elif self._storage is None:
+        elif self._kv_storage is None:
             self.setup_kv_storage_read()
-        elif self._storage.__class__.__name__ == "DB":
-            self._storage.close()
+        elif self._kv_storage.__class__.__name__ == "DB":
+            self._kv_storage.close()
             self.setup_kv_storage_read()
 
-        if self.ext == ".sqlite3":
-            self._cursor.execute("SELECT * from kvstore WHERE key LIKE ? COLLATE RTRIM ORDER BY key", (query_string,))
-            return [k[0] for k in self._cursor]
-        elif self.ext == ".json":
+        if self.kv_ext() == ".sqlite3":
+            self._kv_cursor.execute("SELECT * from kvstore WHERE key LIKE ? COLLATE RTRIM ORDER BY key", (query_string,))
+            return [k[0] for k in self._kv_cursor]
+        elif self.kv_ext() == ".json":
             return [k for k in self.kv_keys() if query_string in k]
         else:
             raise Exception("extension is %s" % self.ext)
