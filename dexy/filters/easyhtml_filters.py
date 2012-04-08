@@ -2,18 +2,42 @@ from dexy.dexy_filter import DexyFilter
 
 class EasyHtml(DexyFilter):
     """
-    Wraps your text in HTML header/footer which links to hosted Atatonic CSS
-    assets. Easy way to add styles (includes Python syntax highlighting).
+    Wraps your text in HTML header/footer which includes Baseline CSS resets.
+    Easy way to add styles (includes Python syntax highlighting).
     """
     ALIASES = ['easyhtml']
     INPUT_EXTENSIONS = ['.html']
     OUTPUT_EXTENSIONS = ['.html']
-    HEADER = """
-    <html>
-        <head>
-        <style type="text/css">
-html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent;margin:0;padding:0}body{line-height:1;font:12px/18px "Lucida Grande", Arial, sans-serif;color:#111}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:none}:focus{outline:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}hr{height:0;border:0;border-top:1px solid #e0e0e0;width:100%;margin:0 0 17px;padding:0}header,footer,section,aside,nav,article{display:block!important}.zp-wrapper{width:970px;margin:0 auto}.zp-5,.zp-10,.zp-15,.zp-20,.zp-25,.zp-30,.zp-33,.zp-35,.zp-40,.zp-45,.zp-50,.zp-55,.zp-60,.zp-65,.zp-67,.zp-70,.zp-75,.zp-80,.zp-85,.zp-90,.zp-95,.zp-100{float:left;display:inline}.zp-5{width:5%}.zp-10{width:10%}.zp-15{width:15%}.zp-20{width:20%}.zp-25{width:25%}.zp-30{width:30%}.zp-33{width:33.33%}.zp-35{width:35%}.zp-40{width:40%}.zp-45{width:45%}.zp-50{width:50%}.zp-55{width:55%}.zp-60{width:60%}.zp-65{width:65%}.zp-67{width:66.67%}.zp-70{width:70%}.zp-75{width:75%}.zp-80{width:80%}.zp-85{width:85%}.zp-90{width:90%}.zp-95{width:95%}.zp-100{width:100%}.last{padding:0!important}.clear{clear:both}.left{float:left}.right{float:right}.list{list-style:none;margin:0;padding:0}.list li{display:inline;margin:0 6px 0 0}.clearfix:after,.zp-wrapper:after{content:".";display:block;clear:both;visibility:hidden;line-height:0;height:0}.clearfix,.zp-wrapper{display:inline-block}html[xmlns] .clearfix,html[xmlns] .zp-wrapper{display:block}* html .clearfix,* html .zp-wrapper{height:1%}.skip{display:block;left:-9999px;position:absolute;visibility:hidden}h1{font-size:36px;line-height:36px;font-weight:400;font-family:Georgia, "Times new roman", serif}h2{font-family:Georgia, "Times new roman", serif;font-size:18px;line-height:36px;font-style:italic;font-weight:400}h3{font-size:12px;line-height:18px;font-weight:700;color:#000;margin:0}h4{font-size:12px;line-height:18px;font-weight:400;color:#666;margin:0}h5,h6{font-size:12px;line-height:18px;font-weight:400;margin:0}p{margin:0 0 18px}p img,li img{float:left;margin:4px 6px 0 0;padding:0}p img.right,li img.right{float:right;margin:4px 0 6px;padding:0}a,a:focus{color:#009;text-decoration:underline}blockquote{background:#F9F9F9;border-left:6px solid #ccc;color:#333;font-family:Georgia, "Times new roman", serif;font-size:13px;font-style:italic;margin:0 0 18px;padding:9px}p.intro:first-letter,p.important:first-letter{font-size:43px;font-weight:400;line-height:32px;letter-spacing:5px;float:left;width:auto;font-family:Georgia, Times, serif;padding:5px 0 0}p.intro:first-line,p.important:first-line{font-variant:small-caps}pre,code{font-family:monaco, courier, "courier new", monospace;font-size:11px;margin:0 0 2px;padding:2px}a.button,button{display:block;float:left;border:1px solid #ccc;background:#ccc url(../images/button.png) left top repeat-x;font-family:"Lucida Grande", Tahoma, Arial, Verdana, sans-serif;font-size:11px;line-height:16px;text-decoration:none;font-weight:400;color:#333;cursor:pointer;white-space:nowrap;vertical-align:baseline;border-color:#999 #858585 #666;margin:0 3px 15px 0;padding:2px 6px}button{width:auto;overflow:visible;padding:1px 4px}a.button{line-height:14px}button[type]{line-height:16px;padding:1px 4px}a.button:hover,button:hover{background-color:#ccc;border:1px solid #000;color:#000;text-decoration:none}.notification{font-size:11px;line-height:18px;margin:0 0 17px;padding:0 4px}.notice{background:#FFF6BF;color:#514721;border-bottom:1px solid #FFD324}.error{background:#FBE3E4;color:#8a1f11;border-bottom:1px solid #FBC2C4}.success{background:#E6EFC2;color:#264409;border-bottom:1px solid #C6D880}fieldset{border:1px solid #ccc;margin:0 0 18px;padding:9px}legend{color:#333;font-size:18px;line-height:18px;padding:0}label{float:left;width:100px;display:block;text-align:left;cursor:pointer;color:#333;margin:0 12px 0 0}.form-item{margin:0 0 11px}textarea,input{border:solid #ddd;border-width:1px 1px 2px;padding:4px}textarea{font-family:"Lucida Sans",Helvetica,sans-serif;font-size:11px}textarea:focus,input:focus{background:#f9f9f9;border:solid #ddd;border-width:1px 1px 2px}input.form-field-error,textarea.form-field-error{background:#FBE3E4;color:#8A1F11;border-color:#FBC2C4 #FBC2C4 #ee9b9e;border-style:solid;border-width:1px 1px 2px}input.form-field-notice,textarea.form-field-notice{background:#FFF6BF;color:#514721;border-color:#FFD324 #FFD324 #e3bb1b;border-style:solid;border-width:1px 1px 2px}select{border:1px solid #ccc;background:#f9f9f9;color:#333}input[type=checkbox],input[type=radio]{margin:3px 4px 0 0}input[type=radio]{background-color:#fff;color:#000}option{background:#fff;color:#000}optgroup{background:#f2f2f2;color:#111}a:hover,input[type=checkbox]{color:#000}
 
+    def process_text(self, input_text):
+        args = {
+                'pygments_css' : self.PYGMENTS_CSS,
+                'css_framework' : self.CSS_FRAMEWORK,
+                'custom_css' : self.arg_value("css", ""),
+                'custom_js' : self.arg_value("js", ""),
+                'content' : input_text
+                }
+
+        return """
+<html>
+    <head>
+        <style type="text/css">
+            %(css_framework)s
+            %(pygments_css)s
+        </style>
+        %(custom_js)s
+    </head>
+    <body>
+    <div id="content">
+        <div class="g3">
+%(content)s
+        </div>
+    </div>
+    </body>
+</html>
+""" % args
+
+    PYGMENTS_CSS = """
 .highlight .hll { background-color: #ffffcc }
 .highlight .c { color: #888888 } /* Comment */
 .highlight .err { color: #a61717; background-color: #e3d2d2 } /* Error */
@@ -74,36 +98,207 @@ html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abb
 .highlight .vg { color: #dd7700 } /* Name.Variable.Global */
 .highlight .vi { color: #3333bb } /* Name.Variable.Instance */
 .highlight .il { color: #0000DD; font-weight: bold } /* Literal.Number.Integer.Long */
+"""
 
-            .content .padding {
-                padding: 30px 36px 30px 30px;
-            }
-             .item .padding {
-                 padding: 0 12px 0 0;
-             }
-            .list-item h2 {
-                margin: 0;
-                line-height: 27px;
-            }
+    CSS_FRAMEWORK = """
+/*
+    Fluid Baseline Grid v1.0.0
+    Designed & Built by Josh Hopkins and 40 Horse, http://40horse.com
+    Licensed under Unlicense, http://unlicense.org/
 
-            td {
-                padding: 5px;
-            }
-    """
+    Base stylesheet with CSS normalization, typographic baseline grid and progressive responsiveness
+*/
 
-    CLOSE_STYLE = "\n</style>\n"
-    HEADER_CLOSE = """
-        </head>
-        <body>
-            <div class="zp-wrapper">
-            <div class="zp-70 content">
-            <div class="padding">
-    """
+/* HTML5 DECLARATIONS */
+article, aside, details, figcaption, figure, footer, header, hgroup, menu, nav, section, dialog {display: block}
+audio[controls],canvas,video {display: inline-block; *display: inline; zoom: 1}
 
-    FOOTER = """
-            </div></div></div>
-        </body>
-    </html>
-    """
-    def process_text(self, input_text):
-        return "%s%s%s%s%s%s%s" % (self.HEADER, self.arg_value("css", ""), self.CLOSE_STYLE, self.arg_value("js", ""), self.HEADER_CLOSE, input_text, self.FOOTER)
+/* BASE */
+html {height: 100%; font-size: 100%; overflow-y: scroll; -webkit-text-size-adjust: 100%} /* Force scrollbar in non-IE and Remove iOS text size adjust without disabling user zoom */
+body {margin: 0; min-height: 100%; -webkit-font-smoothing:antialiased; font-smoothing:antialiased; text-rendering:optimizeLegibility; background:url('../images/24px_grid_bg.gif') 0 1.1875em} /* Improve default text rendering, handling of kerning pairs and ligatures */
+
+/* DEFAULT FONT SETTINGS */
+/* 16px base font size with 150% (24px) friendly, unitless line height and margin for vertical rhythm */
+/* Font-size percentage is based on 16px browser default size */
+body, button, input, select, textarea {font: 100%/1.5 Georgia,Palatino,"Palatino Linotype",Times,"Times New Roman",serif; *font-size: 1em; color: #333} /* IE7 and older can't resize px based text */
+p, blockquote, q, pre, address, hr, code, samp, dl, ol, ul, form, table, fieldset, menu, img {margin: 0 0 1.5em; padding: 0}
+
+/* TYPOGRAPHY */
+/* Composed to a scale of 12px, 14px, 16px, 18px, 21px, 24px, 36px, 48px, 60px and 72px */
+h1, h2, h3, h4, h5, h6 {font-family:Futura, "Century Gothic", AppleGothic, sans-serif;color:#222;text-shadow:1px 1px 1px rgba(0,0,0,.10)}
+h1 {margin: 0; font-size: 3.75em; line-height: 1.2em; margin-bottom: 0.4em} /* 60px / 72px */
+h2 {margin: 0; font-size: 3em; line-height: 1em; margin-bottom: 0.5em} /* 48px / 48px */
+h3 {margin: 0; font-size: 2.25em; line-height: 1.3333333333333333333333333333333em; margin-bottom: 0.6667em} /* 36px / 48px */ 
+h4 {margin: 0; font-size: 1.5em; line-height: 1em; margin-bottom: 1em} /* 24px / 24px */
+h5 {margin: 0; font-size: 1.3125em; line-height: 1.1428571428571428571428571428571em; margin-bottom: 1.1428571428571428571428571428571em} /* 21px / 24px */
+h6 {margin: 0; font-size: 1.125em; line-height: 1.3333333333333333333333333333333em; margin-bottom: 1.3333333333333333333333333333333em} /* 18px / 24px */
+p, ul, blockquote, pre, td, th, label {margin: 0; font-size: 1em; line-height: 1.5em; margin-bottom: 1.5em} /* 16px / 24px */
+small, p.small {margin: 0; font-size: 0.875em; line-height: 1.7142857142857142857142857142857em; margin-bottom: 1.7142857142857142857142857142857em} /* 14px / 24px */
+
+/* CODE */
+pre {white-space: pre; white-space: pre-wrap; word-wrap: break-word} /* Allow line wrapping of 'pre' */
+pre, code, kbd, samp {font-size: 1em; line-height: 1.5em; margin-bottom: 1.5em; font-family: Menlo, Consolas, 'DejaVu Sans Mono', Monaco, monospace}
+
+/* TABLES */
+table {border-collapse: collapse; border-spacing: 0; margin-bottom: 1.5em}
+th {text-align: left}
+tr, th, td {padding-right: 1.5em; border-bottom: 0 solid #333}
+
+/* FORMS */
+form {margin: 0}
+fieldset {border: 0;padding: 0}
+textarea {overflow: auto; vertical-align: top}
+legend {*margin-left: -.75em}
+button, input, select, textarea {vertical-align: baseline; *vertical-align: middle} /* IE7 and older */
+button, input {line-height: normal; *overflow: visible}
+button, input[type="button"], input[type="reset"], input[type="submit"] {cursor: pointer;-webkit-appearance: button}
+input[type="checkbox"], input[type="radio"] {box-sizing: border-box}
+input[type="search"] {-webkit-appearance: textfield; -moz-box-sizing: content-box; -webkit-box-sizing: content-box; box-sizing: content-box}
+input[type="search"]::-webkit-search-decoration {-webkit-appearance: none}
+button::-moz-focus-inner, input::-moz-focus-inner {border: 0; padding: 0}
+
+/* QUOTES */
+blockquote, q {quotes: none}
+blockquote:before, blockquote:after, q:before, q:after {content: ''; content: none}
+blockquote, q, cite {font-style: italic}
+blockquote {padding-left: 1.5em; border-left: 3px solid #ccc}
+blockquote > p {padding: 0}
+
+/* LISTS */
+ul, ol {list-style-position: inside; padding: 0}
+li ul, li ol {margin: 0 1.5em}
+dl dd {margin-left: 1.5em}
+dt {font-family:Futura, "Century Gothic", AppleGothic, sans-serif}
+
+/* HYPERLINKS */
+a {text-decoration: none; color:#c47529}
+a:hover {text-decoration: underline}
+a:focus {outline: thin dotted}
+a:hover, a:active {outline: none} /* Better CSS Outline Suppression */
+
+/* MEDIA */
+figure {margin: 0}
+img, object, embed, video {max-width: 100%; _width: 100%} /* Fluid images */
+img {border: 0; -ms-interpolation-mode: bicubic} /* Improve IE's resizing of images */
+svg:not(:root) {overflow: hidden} /* Correct IE9 overflow */
+
+/* ABBREVIATION */
+abbr[title], dfn[title] {border-bottom: 1px dotted #333; cursor: help}
+
+/* MARKED/INSERTED/DELETED AND SELECTED TEXT */
+ins, mark {text-decoration: none}
+mark {background: #c47529}
+ins {background: #d49855}
+del {text-decoration: line-through}
+::-moz-selection {background: #c47529; color: #fff; text-shadow: none} /* selected text */
+::selection {background: #c47529; color: #fff; text-shadow: none} /* selected text */
+
+/* OTHERS */
+strong, b, dt { font-weight: bold}
+dfn {font-style: italic}
+var, address {font-style: normal}
+sub, sup {font-size: 75%; line-height: 0; position: relative; vertical-align: baseline} /* Position 'sub' and 'sup' without affecting line-height */
+sup {top: -0.5em} /* Move superscripted text up */
+sub {bottom: -0.25em} /* Move subscripted text down */
+span.amp{font-family:Adobe Caslon Pro,Baskerville,"Goudy Old Style","Palatino","Palatino Linotype","Book Antiqua",Georgia,"Times New Roman",Times,serif;font-style:italic;font-size:110%;line-height:0;position:relative;vertical-align:baseline} /* Best available ampersand */
+
+/* MICRO CLEARFIX HACK */
+.cf:before, .cf:after {content:"";display:table} /* For modern browsers */
+.cf:after {clear:both}
+.cf {zoom:1} /* For IE 6/7 (trigger hasLayout) */
+
+/* DEFAULT MOBILE STYLE */
+body {width: 92%; margin: 0 auto} /* Center page without wrapper */
+/* column grid */
+.g1,.g2,.g3{display:block; position: relative; margin-left: 1%; margin-right: 1%}
+/* 1 column grid */
+.g1,.g2,.g3{width:98.0%}
+
+
+/* media Queries
+
+FOLDING FLUID GRID
+< 767px         - 1-Column Fluid Grid
+768px - 1023px  - 2-Column Fluid Grid
+> 1024px            - 3-Column Fluid Grid
+Change widths as necessary
+------------------------------------------- */
+
+/* MOBILE PORTRAIT */
+@media only screen and (min-width: 320px) {
+    body {
+        
+    }
+}
+
+/* MOBILE LANDSCAPE */
+@media only screen and (min-width: 480px) {
+    body {
+        
+    }
+}
+
+/* SMALL TABLET */
+@media only screen and (min-width: 600px) {
+    body {
+        
+    }
+}
+
+/* TABLET/NETBOOK */
+@media only screen and (min-width: 768px) { 
+    body {
+        
+    }
+    
+    /* COLUMN GRID */
+    .g1,.g2,.g3 {display:inline; float: left}
+    
+    /* 2 COLUMN GRID */
+    .g1 {width:48.0%}
+    .g2 {width:48.0%}
+    .g3 {width:98.0%}
+}
+
+/* LANDSCAPE TABLET/NETBOOK/LAPTOP */
+@media only screen and (min-width: 1024px) { 
+    body {
+
+    }
+    
+    /* 3 COLUMN GRID */
+    .g1 {width:31.333%}
+    .g2 {width:64.667%;}
+    .g3 {width:98.0%}
+}
+
+@media only screen and (min-width: 1280px) { 
+/* DESKTOP */
+        body {
+
+    }
+}
+
+/* WIDESCREEN */
+/* Increased body size for legibility */
+@media only screen and (min-width: 1400px) { 
+    body {font-size:116.75%; background:url('../images/28px_grid_bg.gif') 0 1.25em; max-width:1440px} /* 18.5px / 28px */
+}
+
+
+/* PRINT */
+@media print {
+  * {background: transparent !important; color: black !important; text-shadow: none !important; filter:none !important; -ms-filter: none !important} /* Black prints faster */
+  a, a:visited {color: #444 !important; text-decoration: underline}
+  a[href]:after {content: " (" attr(href) ")"}
+  abbr[title]:after {content: " (" attr(title) ")"}
+  .ir a:after, a[href^="javascript:"]:after, a[href^="#"]:after {content: ""}  /* Don't print links for images, javascript or internal links */
+  pre, blockquote {border: 1px solid #999; page-break-inside: avoid; }
+  thead {display: table-header-group; } /* Repeat header row at top of each printed page */
+  tr, img {page-break-inside: avoid; }
+  img {max-width: 100% !important; }
+  @page {margin: 0.5cm}
+  p, h2, h3 {orphans: 3; widows: 3}
+  h2, h3{page-break-after: avoid}
+}
+"""
