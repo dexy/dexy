@@ -1,5 +1,6 @@
 {
     "$variables" : { "C" : 99 },
+    "@run-tree.sh|bash|ansi2html" : {},
     "*.py|idio|pycon|pyg|l": {},
     "*.tex|jinja|latex": {
         "allinputs": true

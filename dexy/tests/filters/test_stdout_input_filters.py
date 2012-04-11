@@ -11,7 +11,7 @@ def test_sed_filter():
     for doc in run_dexy({"." : config}):
         doc.run()
         if doc.key().endswith("sed"):
-            assert doc.output() == "hEllo\n"
+            assert doc.output() == "hEllo"
 
 def test_used_filter():
     config = {
@@ -25,7 +25,7 @@ def test_used_filter():
     for doc in run_dexy({"." : config}):
         doc.run()
         if doc.key().endswith("used"):
-            assert doc.output() == "hEllo\n"
+            assert doc.output() == "hEllo"
 
 def test_ruby_input_filter():
     script = """

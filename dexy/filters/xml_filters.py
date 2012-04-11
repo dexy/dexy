@@ -38,4 +38,3 @@ class XmlSectionFilter(DexyFilter):
                 self.artifact._storage.append("%s:latex-source" % element_id, highlight(source, lexer, latex_formatter))
 
         self.artifact._storage.save()
-        self.artifact.data_dict = self.artifact.input_data_dict
