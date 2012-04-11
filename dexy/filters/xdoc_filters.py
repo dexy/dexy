@@ -1,4 +1,5 @@
 from dexy.dexy_filter import DexyFilter
+from dexy.helpers import KeyValueData
 from dexy.introspect import INSTALL_DIR
 from idiopidae.runtime import Composer
 from pygments import highlight
@@ -26,12 +27,12 @@ installed libraries, rather than needing source code.
 class PythonTestFilter(DexyFilter):
     """
     Runs the tests in the specified module(s) (which must be installed on the
-    system) and returns a dict with test results, source code and html or latex
-    highlighted source code.
+    system) and returns a key-value store with test results, source code and
+    html and latex highlighted source code.
     """
     ALIASES = ['pytest']
     INPUT_EXTENSIONS = [".txt"]
-    OUTPUT_EXTENSIONS = [".json", ".kch"]
+    OUTPUT_EXTENSIONS = KeyValueData.EXTENSIONS
     LEXER = PythonLexer()
     LATEX_FORMATTER = LatexFormatter()
     HTML_FORMATTER = HtmlFormatter(lineanchors="pytest")
@@ -65,19 +66,19 @@ class PythonTestFilter(DexyFilter):
                         else:
                             html_result = """ <div class="test-failed"> %s FAILED </div> """ % qualified_test_name
 
-                        self.artifact.append_to_kv_storage("%s:source" % qualified_test_name, source)
-                        self.artifact.append_to_kv_storage("%s:html-source" % qualified_test_name, html_source)
-                        self.artifact.append_to_kv_storage("%s:latex-source" % qualified_test_name, latex_source)
-                        self.artifact.append_to_kv_storage("%s:test-passed" % qualified_test_name, test_passed)
-                        self.artifact.append_to_kv_storage("%s:html-result" % qualified_test_name, html_result)
-                        self.artifact.append_to_kv_storage("%s:html-source+result" % qualified_test_name, "%s\n%s" % (html_source, html_result))
+                        self.artifact._storage.append("%s:source" % qualified_test_name, source)
+                        self.artifact._storage.append("%s:html-source" % qualified_test_name, html_source)
+                        self.artifact._storage.append("%s:latex-source" % qualified_test_name, latex_source)
+                        self.artifact._storage.append("%s:test-passed" % qualified_test_name, test_passed)
+                        self.artifact._storage.append("%s:html-result" % qualified_test_name, html_result)
+                        self.artifact._storage.append("%s:html-source+result" % qualified_test_name, "%s\n%s" % (html_source, html_result))
 
-        self.artifact.persist_kv_storage()
+        self.artifact._storage.save()
 
 class PythonDocumentationFilter(DexyFilter):
     ALIASES = ["pydoc"]
     INPUT_EXTENSIONS = [".txt"]
-    OUTPUT_EXTENSIONS = [".json", ".kch"]
+    OUTPUT_EXTENSIONS = KeyValueData.EXTENSIONS
     COMPOSER = Composer()
     LEXER = PythonLexer()
     LATEX_FORMATTER = LatexFormatter()
@@ -111,8 +112,8 @@ class PythonDocumentationFilter(DexyFilter):
             else:
                 self.add_source_for_key(key, sections)
 
-            self.artifact.append_to_kv_storage("%s:doc" % key, inspect.getdoc(item))
-            self.artifact.append_to_kv_storage("%s:comments" % key, inspect.getcomments(item))
+            self.artifact._storage.append("%s:doc" % key, inspect.getdoc(item))
+            self.artifact._storage.append("%s:comments" % key, inspect.getcomments(item))
 
         else: # not a function or a method
             try:
@@ -133,12 +134,12 @@ class PythonDocumentationFilter(DexyFilter):
         """
         Appends source code + syntax highlighted source code to persistent store.
         """
-        self.artifact.append_to_kv_storage("%s:value" % key, source)
+        self.artifact._storage.append("%s:value" % key, source)
         if not type(source) == str or type(source) == unicode:
             source = inspect.getsource(source)
-        self.artifact.append_to_kv_storage("%s:source" % key, source)
-        self.artifact.append_to_kv_storage("%s:html-source" % key, self.highlight_html(source))
-        self.artifact.append_to_kv_storage("%s:latex-source" % key, self.highlight_latex(source))
+        self.artifact._storage.append("%s:source" % key, source)
+        self.artifact._storage.append("%s:html-source" % key, self.highlight_html(source))
+        self.artifact._storage.append("%s:latex-source" % key, self.highlight_latex(source))
 
     def process_module(self, package_name, name):
         try:
@@ -155,7 +156,7 @@ class PythonDocumentationFilter(DexyFilter):
 
             for k, m in inspect.getmembers(mod):
                 self.log.debug("in package %s module %s processing element %s" % (package_name, name, k))
-                if not inspect.isclass(m) and hasattr(m, '__module__') and m.__module__.startswith(package_name):
+                if not inspect.isclass(m) and hasattr(m, '__module__') and m.__module__ and m.__module__.startswith(package_name):
                     key = "%s.%s" % (m.__module__, k)
                     self.fetch_item_content(key, m)
 
@@ -168,9 +169,12 @@ class PythonDocumentationFilter(DexyFilter):
                         self.log.debug("can't get source for %s" % key)
                         self.add_source_for_key(key, "")
 
-                    for ck, cm in inspect.getmembers(m):
-                        key = "%s.%s.%s" % (name, k, ck)
-                        self.fetch_item_content(key, cm)
+                    try:
+                        for ck, cm in inspect.getmembers(m):
+                            key = "%s.%s.%s" % (name, k, ck)
+                            self.fetch_item_content(key, cm)
+                    except AttributeError:
+                        pass
 
                 else:
                     key = "%s.%s" % (name, k)
@@ -179,13 +183,14 @@ class PythonDocumentationFilter(DexyFilter):
         except (ImportError, TypeError) as e:
             self.log.debug(e)
 
-    def process_text(self, input_text):
+    def process(self):
         """
         input_text should be a list of installed python libraries to document.
         """
-        package_names = input_text.split()
-        packages = [__import__(package_name) for package_name in package_names]
         self.artifact.setup_kv_storage()
+
+        package_names = self.artifact.input_text().split()
+        packages = [__import__(package_name) for package_name in package_names]
 
         for package in packages:
             self.log.debug("processing package %s" % package)
@@ -195,11 +200,12 @@ class PythonDocumentationFilter(DexyFilter):
             if hasattr(package, '__path__'):
                 for module_loader, name, ispkg in pkgutil.walk_packages(package.__path__, prefix=prefix):
                     self.log.debug("in package %s processing module %s" % (package_name, name))
-                    self.process_module(package_name, name)
+                    if not name.endswith("__main__"):
+                        self.process_module(package_name, name)
             else:
                 self.process_module(package.__name__, package.__name__)
 
-        self.artifact.persist_kv_storage()
+        self.artifact._storage.save()
 
 class RDocumentationFilter(DexyFilter):
     """

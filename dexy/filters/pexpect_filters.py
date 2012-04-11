@@ -200,10 +200,11 @@ class PexpectReplFilter(ProcessFilter):
     def process(self):
         lexer = None
         if self.arg_value('meta') and hasattr(self, 'OUTPUT_LEXER'):
+            kv_artifact = self.artifact.add_additional_artifact("%s-meta.json" % self.artifact.key)
             html_formatter = HtmlFormatter()
             latex_formatter = LatexFormatter()
             lexer = get_lexer_by_name(self.OUTPUT_LEXER)
-            self.artifact.setup_kv_storage()
+            kv_artifact.setup_kv_storage()
 
         for section_key, section_transcript in self.section_output(self.artifact.input_data_dict):
             output = self.strip_trailing_prompts(section_transcript)
@@ -211,10 +212,10 @@ class PexpectReplFilter(ProcessFilter):
             if self.arg_value('meta'):
                 self.log.debug("in meta")
                 # Use key-value storage to save file system and other information at each step of run.
-                self.artifact.append_to_kv_storage("%s:output" % section_key, output)
+                kv_artifact._storage.append("%s:output" % section_key, output)
                 if lexer:
-                    self.artifact.append_to_kv_storage("%s:html-output" % section_key, highlight(output, lexer, html_formatter))
-                    self.artifact.append_to_kv_storage("%s:latex-output" % section_key, highlight(output, lexer, latex_formatter))
+                    kv_artifact._storage.append("%s:html-output" % section_key, highlight(output, lexer, html_formatter))
+                    kv_artifact._storage.append("%s:latex-output" % section_key, highlight(output, lexer, latex_formatter))
 
                 for root, dirs, files in os.walk(self.artifact.temp_dir()):
                     for filename in files:
@@ -229,7 +230,7 @@ class PexpectReplFilter(ProcessFilter):
                             # make sure the contents are unicode-safe
                             json.dumps(contents)
 
-                            self.artifact.append_to_kv_storage(key_name_for_file, contents)
+                            kv_artifact._storage.append(key_name_for_file, contents)
                         except UnicodeDecodeError as e:
                             self.log.debug("Not appending %s because %s" % (key_name_for_file, e.message))
                         except Exception as e:
@@ -237,7 +238,7 @@ class PexpectReplFilter(ProcessFilter):
             self.artifact.data_dict[section_key] = output
 
         if self.arg_value('meta'):
-            self.artifact.persist_kv_storage()
+            kv_artifact._storage.save()
 
         self.copy_additional_inputs()
 

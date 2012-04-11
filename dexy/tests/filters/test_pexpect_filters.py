@@ -9,11 +9,16 @@ def test_irb():
     config = {"." : { "@example.rb|irb" : {"irb": {"ext" : ".json", "meta" : True}, "contents" : "1+1"}}}
     for doc in run_dexy(config):
         doc.run()
+
         artifact = doc.last_artifact
-        assert artifact['1:files:example.rb'] == "1+1"
-        assert artifact['1:html-output']
-        assert artifact['1:latex-output']
-        assert artifact['1:output'] == ">> 1+1\n=> 2"
+        assert artifact.output() == ">> 1+1\n=> 2"
+
+        kv_artifact = artifact.inputs().values()[0]
+        kv_artifact.setup_kv_storage()
+        assert kv_artifact['1:files:example.rb'] == "1+1"
+        assert kv_artifact['1:html-output']
+        assert kv_artifact['1:latex-output']
+        assert kv_artifact['1:output'] == ">> 1+1\n=> 2"
 
 def test_python():
     assert_in_output("example.py|pycon", "1+1", ">>> 1+1\n2")
@@ -24,7 +29,10 @@ def test_python_create_files():
     for doc in run_dexy(config):
         doc.run()
         artifact = doc.last_artifact
-        assert artifact['1:files:new-file.txt'] == "hello!"
+
+        kv_artifact = artifact.inputs().values()[0]
+        kv_artifact.setup_kv_storage()
+        assert kv_artifact['1:files:new-file.txt'] == "hello!"
 
 def test_ipython():
     assert_in_output("example.py|ipython", "1+1", ">>> 1+1\n2")
@@ -52,7 +60,10 @@ def test_bash_create_additional_files():
     for doc in run_dexy(config):
         doc.run()
         artifact = doc.last_artifact
-        assert artifact['1:files:abc/hello.txt'] == "hi\n"
+
+        kv_artifact = artifact.inputs().values()[0]
+        kv_artifact.setup_kv_storage()
+        assert kv_artifact['1:files:abc/hello.txt'] == "hi\n"
 
 def test_bash_create_git_repo():
     contents = """
@@ -66,7 +77,10 @@ def test_bash_create_git_repo():
     for doc in run_dexy(config):
         doc.run()
         artifact = doc.last_artifact
-        assert "[core]" in artifact["1:files:.git/config"]
+
+        kv_artifact = artifact.inputs().values()[0]
+        kv_artifact.setup_kv_storage()
+        assert "[core]" in kv_artifact["1:files:.git/config"]
 
 def test_bash_create_additional_artifacts():
     contents = """
