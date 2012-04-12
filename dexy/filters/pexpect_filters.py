@@ -149,6 +149,9 @@ class PexpectReplFilter(ProcessFilter):
 
             msg = "%s failed at matching initial prompt within %s seconds. " % (self.__class__.__name__, initial_timeout)
             msg += "Received '%s', tried to match with '%s'" % (proc.before, match)
+            msg += "\nExact characters received:\n"
+            for i, c in enumerate(proc.before):
+                msg += "chr %02d: %s\n" % (i, ord(c))
             msg += "The developer might need to set a longer INITIAL_PROMPT_TIMEOUT or the regexp may be wrong."
             raise InternalDexyProblem(msg)
 
