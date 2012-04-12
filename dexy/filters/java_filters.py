@@ -87,6 +87,7 @@ class JavaFilter(SubprocessCompileFilter):
         an input has been passed through the javac filter, its directory is
         added to the classpath.
         """
+        self.log.debug("in setup_cp for %s" % self.artifact.key)
         env = self.setup_env()
 
         classpath_elements = []

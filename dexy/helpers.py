@@ -164,12 +164,12 @@ class KeyValueData(DataStorage):
         else:
             raise dexy.commands.UserFeedback("unsupported extension %s" % self.ext)
 
-    def query(self):
+    def query(self, query_string):
         if not self.mode == "read":
             raise dexy.commands.UserFeedback("Trying to read but in '%s' mode!" % self.mode)
 
         if self.ext == ".sqlite3":
-            self._kv_cursor.execute("SELECT * from kvstore WHERE key LIKE ? COLLATE RTRIM ORDER BY key", (query_string,))
+            self._cursor.execute("SELECT * from kvstore WHERE key LIKE ? COLLATE RTRIM ORDER BY key", (query_string,))
             return [k[0] for k in self._cursor]
         elif self.ext == ".json":
             return [k for k in self.keys() if query_string in k]

@@ -147,9 +147,7 @@ class Document(object):
 
                     if self.args.has_key('exact-inputs'):
                         for exact_input in self.args['exact-inputs']:
-                            self.log.debug("Processing exact input %s" % exact_input)
                             if not specified:
-                                self.log.debug("Comparing exact input %s with %s" % (exact_input, doc.key()))
                                 specified = exact_input == doc.key()
 
                     # Work out relative priority

@@ -87,6 +87,7 @@ def dexy_command(
         reset=False, # whether to purge existing artifacts and logs before running Dexy
         run="", # specific document to run. if specified, this document + its dependencies will be all that is run
         setup=False, # DEPRECATED just to catch people who use the old dexy --setup syntax
+        silent=False, # Whether to not print any output when running dexy
         strictinherit=False, # set to true if you want 'allinputs' to only reference items in same dir or a subdir
         uselocals=True, # use cached local copies of remote URLs, faster but might not be up to date, 304 from server will override this setting
         version=False # DEPRECATED just to catch people who use the old dexy --version syntax
@@ -622,9 +623,9 @@ def grep_command(
             artifact = artifact_class.retrieve(row['hashstring'])
             if artifact.ext in [".json", ".kch", ".sqlite3"]:
                 if len(keyexpr) > 0:
-                    rows = artifact.kv_query("%%%s%%" % keyexpr)
+                    rows = artifact.kv_storage().query("%%%s%%" % keyexpr)
                 else:
-                    rows = artifact.kv_keys()
+                    rows = artifact.kv_storage().keys()
 
                 if rows:
                     print "  key-value store keys:"

@@ -239,7 +239,6 @@ class Controller(object):
 
         # Define the parse_doc nested function which we will call recursively.
         def parse_doc(path, input_directive, args = {}):
-            self.log.debug("Parsing doc path: '%s' input_dir: '%s' args : '%s'" % (path, input_directive, args))
             # If a specification is nested in a dependency, then input_directive
             # may be a dict. If so, split it into parts before continuing.
             try:
@@ -371,19 +370,13 @@ re.compile: %s""" % (args['except'], e))
                     self.log.debug("creating doc %s for glob %s" % (key, glob_string))
 
                     if self.members.has_key(key):
-                        self.log.debug("found existing key %s" % key)
                         doc = self.members[key]
-                    else:
-                        self.log.debug("no existing key %s" % key)
 
                     if args.has_key('priority'):
                         doc.priority = args['priority']
                         del args['priority']
 
-                    self.log.debug("Doc args: '%s'" % doc.args)
-                    self.log.debug("updating with: '%s'" % args)
                     doc.args.update(args)
-                    self.log.debug("Doc args after update: '%s'" % doc.args)
 
                     if args.has_key('allinputs'):
                         doc.use_all_inputs = args['allinputs']
@@ -412,7 +405,8 @@ re.compile: %s""" % (args['except'], e))
         self.depends = []
 
         self.batch_id = self.db.next_batch_id()
-        print "batch id is", self.batch_id
+        if not self.args['silent']:
+            print "batch id is", self.batch_id
 
         for path, config in self.config.iteritems():
             ### @export "features-global-args-1"
@@ -455,7 +449,7 @@ re.compile: %s""" % (args['except'], e))
             elif len(doc.inputs) == 0:
                 self.log.debug("no inputs added")
             else:
-                self.log.debug("inputs added: %s" % "\n".join(d.key() for d in doc.inputs))
+                self.log.debug("inputs added: %s" % ", ".join(d.key() for d in doc.inputs))
 
         if len(self.args['run']) > 0:
             # Only run the specified document, and its dependencies.
@@ -486,7 +480,8 @@ re.compile: %s""" % (args['except'], e))
                 doc = self.members[matches[-1]]
             parse_new_document(doc)
 
-            print "limiting members list to %s and its dependencies, %s/%s documents will be run" % (doc.key(), len(new_members), len(self.members))
+            if not self.args['silent']:
+                print "limiting members list to %s and its dependencies, %s/%s documents will be run" % (doc.key(), len(new_members), len(self.members))
             self.members = new_members
             self.depends = new_depends
 
@@ -496,13 +491,14 @@ re.compile: %s""" % (args['except'], e))
         else:
             dep_ratio = None
 
-        print "sorting %s documents into run order, there are %s total dependencies" % (num_members, total_dependencies)
-        if dep_ratio:
-            print "ratio of dependencies to documents is %0.1f" % (dep_ratio)
-            if dep_ratio > 10:
-                print "if you are experiencing performance problems:"
-                print "call dexy with -dryrun and inspect logs/batch-XXXX.json to debug dependencies"
-                print "consider using -strictinherit or reducing your use of 'allinputs' "
+        if not self.args['silent']:
+            print "sorting %s documents into run order, there are %s total dependencies" % (num_members, total_dependencies)
+            if dep_ratio:
+                print "ratio of dependencies to documents is %0.1f" % (dep_ratio)
+                if dep_ratio > 10:
+                    print "if you are experiencing performance problems:"
+                    print "call dexy with -dryrun and inspect logs/batch-XXXX.json to debug dependencies"
+                    print "consider using -strictinherit or reducing your use of 'allinputs' "
 
         try:
             self.log.debug("Beginning topological sort...")

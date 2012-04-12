@@ -103,12 +103,16 @@ class Artifact(object):
         self.stdout = None
         self.virtual_docs = None
 
+    def keys(self):
+        return self.data_dict.keys()
+
     def __getitem__(self, key):
         if not hasattr(self, "_storage") and self.binary_output and (self.ext in dexy.helpers.KeyValueData.EXTENSIONS):
             self.setup_kv_storage()
 
         if hasattr(self, "_storage"):
             if self._storage.mode == "write":
+                # Change from write mode to read mode...
                 self.setup_kv_storage()
             return self._storage.retrieve(key)
         elif self.data_dict.has_key(key):
@@ -120,9 +124,6 @@ class Artifact(object):
             return self._storage.retrieve(key)
         else:
             raise dexy.commands.InternalDexyProblem("Don't know how to retrieve key %s from %s" % (key, self.artifact))
-
-    def keys(self):
-        return self.data_dict.keys()
 
     def __unicode__(self):
         """
@@ -875,5 +876,22 @@ class Artifact(object):
             data_dict[fmt % (i, k)] = v
         return data_dict
 
+    def storage(self):
+        if not hasattr(self, "_storage"):
+            # Assume we want KV storage
+            self.setup_kv_storage()
+        return self._storage
+    
+    def kv_storage(self):
+        return self.storage()
+
+    def row_storage(self):
+        if not hasattr(self, "_storage"):
+            self.setup_row()
+        return self._storage
+
     def setup_kv_storage(self):
         self._storage = dexy.helpers.KeyValueData(self.filepath())
+
+    def setup_row_storage(self):
+        self._storage = dexy.helpers.RowData(self.filepath())
