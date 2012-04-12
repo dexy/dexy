@@ -76,19 +76,6 @@ class AsciidocFilter(SubprocessFilter):
 
         return "%(prog)s -b %(backend)s %(args)s -o %(outfile)s %(infile)s" % args
 
-class BibFilter(DexyFilter):
-    INPUT_EXTENSIONS = [".tex"]
-    OUTPUT_EXTENSIONS = [".tex"]
-    ALIASES = ['bib']
-
-    """Filter which replaces a hard-coded bibtex file with a .bib file specified as an input."""
-    def process_text(self, input_text):
-        for k, a in self.artifact.inputs().items():
-            if a.filename().endswith("bib"):
-                input_text = re.sub("bibliography{[^}]+}", "bibliography{%s}" % a.filename(), input_text)
-
-        return input_text
-
 class HtLatexFilter(DexyFilter):
     """
     Generates HTML from LaTeX source.
