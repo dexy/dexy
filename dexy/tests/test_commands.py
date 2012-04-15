@@ -171,7 +171,6 @@ def test_commands_filters():
         filters_command()
         assert "looking up filter information..." in stdout.getvalue()
         assert "ZipArchiveFilter (zip)" in stdout.getvalue()
-        assert "RubySubprocessStdoutFilter (rb)" in stdout.getvalue()
         assert "SplitLatexFilter (splitlatex) Splits a latex doc into multiple latex docs." in stdout.getvalue()
         assert not "http://dexy.it/docs/filters/tgzdir" in stdout.getvalue()
 
