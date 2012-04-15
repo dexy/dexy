@@ -15,7 +15,7 @@ def test_markdown():
         if doc.key() == "example1.md|markdown":
             assert doc.output() == "<p>[TOC]</p>"
         elif doc.key() == "example2.md|markdown":
-            assert doc.output() == """<div class="toc" />"""
+            assert doc.output() == """<div class="toc"></div>"""
         elif doc.key() == "example3.md|markdown":
             assert doc.output() == """<div class="toc"><span class="toctitle">My Table of Contents</span></div>"""
         elif doc.key() == "example4.md|markdown":

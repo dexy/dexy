@@ -209,9 +209,9 @@ class PexpectReplFilter(ProcessFilter):
             lexer = get_lexer_by_name(self.OUTPUT_LEXER)
             kv_artifact.setup_kv_storage()
 
+        self.log.debug("args: " % self.args())
         for section_key, section_transcript in self.section_output(self.artifact.input_data_dict):
             output = self.strip_trailing_prompts(section_transcript)
-            self.log.debug(self.args())
             if self.arg_value('meta'):
                 self.log.debug("in meta")
                 # Use key-value storage to save file system and other information at each step of run.

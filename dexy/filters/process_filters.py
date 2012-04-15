@@ -53,8 +53,8 @@ class ProcessFilter(DexyFilter):
         env = os.environ
         if self.ENV:
             env.update(self.ENV)
-        if self.artifact.args.has_key('env'):
-            env.update(self.artifact.args['env'])
+        if self.args().has_key('env'):
+            env.update(self.arg_value('env'))
         return env
 
     def setup_initial_timeout(self):
@@ -178,6 +178,22 @@ class SubprocessStdoutFilter(SubprocessFilter):
     ALIASES = ['subprocessstdoutfilter']
     BINARY = False
     FINAL = False
+
+    def run_command(self, command, env, input_text = None):
+        cwd = self.setup_cwd()
+        self.log.debug("about to run '%s' in %s" % (command, cwd))
+        proc = subprocess.Popen(command, shell=True,
+                                cwd=cwd,
+                                stdin=subprocess.PIPE,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE,
+                                env=env)
+
+        if input_text:
+            self.log.debug("about to send input '%s'" % input_text)
+
+        stdout, stderr = proc.communicate(input_text)
+        return (proc, stdout)
 
     def process(self):
         command = self.command_string_stdout()
