@@ -262,9 +262,7 @@ class Artifact(object):
         # Look for additional inputs in previous artifacts or previous
         # artifacts' inputs.
         for k, a in previous_artifact.inputs().iteritems():
-            self.log.debug("Processing previous artifact input %s" % k)
             if a.additional and not k in self._inputs:
-                self.log.debug("(%s) Adding additional artifact %s from %s" % (self.key, k, a.key))
                 self.add_input(k, a)
             elif not k in self._inputs and not a.virtual:
                 # We should have all other inputs already. Validate this.
@@ -272,7 +270,6 @@ class Artifact(object):
 
             for kk, aa in a.inputs().iteritems():
                 if aa.additional and not kk in self._inputs:
-                    self.log.debug("(%s) Adding additional artifact %s from %s" % (self.key, kk, k))
                     self.add_input(kk, aa)
 
         self.binary_input = previous_artifact.binary_output
