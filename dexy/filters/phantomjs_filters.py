@@ -6,6 +6,16 @@ import os
 import re
 import shutil
 
+class CasperJsStdoutFilter(SubprocessStdoutFilter):
+    """
+    Runs scripts using casper js.
+    """
+    ALIASES = ['casperjs']
+    EXECUTABLE = 'casperjs'
+    INPUT_EXTENSIONS = ['.js', '.txt']
+    OUTPUT_EXTENSIONS = ['.txt']
+    VERSION_COMMAND = 'casperjs --version'
+
 class PhantomJsStdoutFilter(SubprocessStdoutFilter):
     """
     Runs scripts using phantom js.
