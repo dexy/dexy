@@ -224,7 +224,7 @@ class RDocumentationFilter(DexyFilter):
         td = self.artifact.temp_dir()
 
         r_script_file = os.path.join(INSTALL_DIR, 'dexy', 'ext', "introspect.R")
-        self.log.debug("script file: %s" % r_script_file)
+        self.log.debug("r docs introspection script file: %s" % r_script_file)
 
         with open(r_script_file, "r") as f:
             r_script_contents = f.read()
@@ -240,12 +240,15 @@ class RDocumentationFilter(DexyFilter):
 
         script_filename = os.path.join(td, "script.R")
 
+        data_filename = "dexy--r-doc-info%s" % self.artifact.ext
+
         with open(script_filename, "w") as f:
             f.write(script_start + "\n")
+            f.write("""data.filename <- "%s"\n""" % data_filename)
             f.write(r_script_contents)
 
         command = "R --slave --vanilla < script.R"
-        self.log.debug("About to run %s" % command)
+        self.log.debug("About to run %s in %s" % (command, td))
 
         proc = subprocess.Popen(command, shell=True,
                                 cwd=td,
@@ -255,5 +258,5 @@ class RDocumentationFilter(DexyFilter):
                                 )
         stdout, stderr = proc.communicate()
         self.artifact.stdout = stdout
-        shutil.copyfile(os.path.join(td, "dexy--r-doc-info.json"), self.artifact.filepath())
+        shutil.copyfile(os.path.join(td, data_filename), self.artifact.filepath())
 

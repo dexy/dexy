@@ -1,12 +1,8 @@
 library(tools)
-library(rjson)
 
 if (length(packages) == 0) {
     stop("no packages!")
 }
-
-# Set up 1 environment to store all data, this will be written to JSON at the end.
-packages_info <- new.env(hash=TRUE)
 
 # This function will do the real work of extracting content.  It should return
 # a list of lists each with 2 entries, the section name and the content for
@@ -202,6 +198,57 @@ processSimpleChunk <- function(chunk, stripExtraWhitespace=TRUE) {
     return(result)
 }
 
+# TODO check based on data.filename extension
+
+if (grepl(".sqlite3", data.filename)) {
+    cat("using sqlite")
+    library(RSQLite)
+
+    # Set up storage
+    conn <- dbConnect(SQLite(), data.filename)
+    dbSendQuery(conn, "CREATE TABLE kvstore (key TEXT, value TEXT)")
+    dbBeginTransaction(conn)
+
+    # Define append function
+    append_kv <- function(key, value) {
+        sql <- "INSERT INTO kvstore VALUES (:key, :value)"
+        if (class(value) != "list") {
+            dbGetPreparedQuery(conn, sql, bind.data = data.frame(key=key, value=value))
+        } else {
+            cat("Skipping key", key, "value is of type", class(value))
+        }
+    }
+
+    # Define persist/save function
+    save_kv <- function() {
+        dbCommit(conn)
+        dbDisconnect(conn)
+    }
+
+} else if  (grepl(".json", data.filename)) {
+    cat("using JSON")
+    library(rjson)
+
+    # Set up storage
+    packages_info <- new.env(hash=TRUE)
+
+    # Define append function
+    append_kv <- function(key, value) {
+        assign(key, value, env=packages_info)
+    }
+
+    # Define persist/save function
+    save_kv <- function() {
+        library(rjson)
+        data_file <- file(data.filename, "w")
+        writeLines(toJSON(as.list(packages_info)), data_file)
+        close(data_file)
+    }
+
+} else {
+    stop(data.filename)
+}
+
 # Main loop in which we gather content by iterating over packages, Rd files
 # within packages and tags within Rd files.
 for (pkg_name in packages) {
@@ -210,9 +257,6 @@ for (pkg_name in packages) {
 
     # Get the stored Rd files for this package.
     db <- Rd_db(pkg_name)
-
-    # Set up an environment in which to store collected data.
-    pkg_info <- new.env(hash=TRUE)
 
     # Pre-process each Rd chunk.
     Rd_list <- lapply(db, tools:::prepare_Rd)
@@ -230,33 +274,23 @@ for (pkg_name in packages) {
         file_info <- new.env(hash=TRUE)
 
         # Store the info we want in the environment.
-        assign("filename", f, env=file_info)
+        append_kv(paste(pkg_name, names[[f]], "filename", sep=":"), f)
 
         if (exists(names[[f]])) {
             f_closure <- get(names[[f]])
             source_code <- paste(deparse(f_closure), collapse="\n")
-            assign("source", source_code, env=file_info)
+            append_kv(paste(pkg_name, names[[f]],  "source", sep=":"), source_code)
         }
         for (i in seq_along(tags)) {
             results <- processSection(Rd[[i]], tags[[i]])
             for (result in results) {
-                assign(result[[1]], result[[2]], env=file_info)
+                append_kv(paste(pkg_name, names[[f]], result[[1]], sep=":"), result[[2]])
             }
         }
-
-        # Add this file's environment to the package's overall environment.
-        assign(names[[f]], file_info, env=pkg_info)
     }
-
     # Detach this package now that we are done with it.
     name_with_pkg <- paste("package", pkg_name, sep=":")
     detach(name_with_pkg, character.only = TRUE)
-
-    # Add the pkg_info environment to the overall environment for all packages.
-    assign(pkg_name, pkg_info, env=packages_info)
 }
 
-data_file <- file("dexy--r-doc-info.json", "w")
-writeLines(toJSON(as.list(packages_info)), data_file)
-close(data_file)
-
+save_kv()
