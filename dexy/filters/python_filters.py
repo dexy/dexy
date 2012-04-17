@@ -90,7 +90,7 @@ class HeaderFilter(DexyFilter):
     """
     INPUT_EXTENSIONS = [".*"]
     OUTPUT_EXTENSIONS = [".*"]
-    ALIASES = ['hd', 'header']
+    ALIASES = ['hd']
     DEFAULT_INPUT_SEARCH_FILTERS = ['jinja']
 
     def process_text(self, input_text):
@@ -113,7 +113,7 @@ class FooterFilter(HeaderFilter):
     """
     INPUT_EXTENSIONS = [".*"]
     OUTPUT_EXTENSIONS = [".*"]
-    ALIASES = ['ft', 'footer']
+    ALIASES = ['ft']
     DEFAULT_FOOTER_FILTERS = ['dexy', 'jinja']
 
     def process_text(self, input_text):

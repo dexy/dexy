@@ -827,7 +827,7 @@ class Artifact(object):
         Returns relative path from self to other artifact key, e.g. for linking to CSS relatively
         """
         artifact = self.inputs()[artifact_key]
-        return os.path.join(self.relative_path_to_input(artifact), artifact.canonical_filename())
+        return os.path.join(self.relative_path_to_input(artifact), artifact.canonical_basename())
 
     def has_sections(self):
         return (self.data_dict.keys() != ['1'])
