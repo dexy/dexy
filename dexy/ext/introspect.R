@@ -29,6 +29,7 @@ processSection <- function(content, tag) {
                      "\\title"=processSimple(content),
                      "\\usage"=processUsage(content),
                      "\\value"=processSimple(content),
+                     "\\COMMENT"=processSimple(content),
 
                      # default case
                      stop(paste("I don't know how to handle tag '", tag, "'", sep=""))
@@ -119,6 +120,7 @@ processArguments <- function(content) {
         item_tag <- attr(item, "Rd_tag")
         result <- switch(item_tag,
                          TEXT=NA,
+                         COMMENT=NA,
                          "\\item"=processArgument(item),
 
                          # default case
