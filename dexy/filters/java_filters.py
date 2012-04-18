@@ -100,8 +100,12 @@ class JavaFilter(SubprocessCompileFilter):
                 classpath_elements.append(os.path.dirname(input_artifact.name))
 
         if self.artifact.args.has_key("$variables") and self.artifact.args["$variables"].has_key('CLASSPATH'):
-            for x in self.artifact.args["$variables"]['CLASSPATH'].split(":"):
-                classpath_elements.append(x)
+            args_classpath = self.artifact.args['$variables']['CLASSPATH']
+            if isinstance(args_classpath, list):
+                classpath_elements += args_classpath
+            else:
+                for x in args_classpath.split(":"):
+                    classpath_elements.append(x)
 
         if env and env.has_key("CLASSPATH"):
             for x in env['CLASSPATH'].split(":"):
