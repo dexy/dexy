@@ -32,6 +32,7 @@ class PexpectReplFilter(ProcessFilter):
     PS4 = None
     SAVE_VARS_TO_JSON_CMD = None
     TRIM_PROMPT = '>>>'
+    STRIP_REGEX = None
 
     def prompt_search_terms(self):
         """
@@ -156,6 +157,7 @@ class PexpectReplFilter(ProcessFilter):
             raise InternalDexyProblem(msg)
 
         start = proc.before + proc.after
+
         self.log.debug("Initial prompt captured!")
         self.log.debug(start)
         for section_key, section_text in input_dict.items():
@@ -189,6 +191,9 @@ class PexpectReplFilter(ProcessFilter):
                     raise UserFeedback(str(e))
                 except pexpect.EOF as e:
                     raise UserFeedback(str(e))
+
+            if self.STRIP_REGEX:
+                section_transcript = re.sub(self.STRIP_REGEX, "", section_transcript)
 
             yield section_key, section_transcript
 
@@ -294,9 +299,10 @@ class RPexpectReplFilter(PexpectReplFilter):
     INPUT_EXTENSIONS = ['.txt', '.r', '.R']
     OUTPUT_EXTENSIONS = ['.Rout']
     PROMPT_REGEX = "(\x1b[^m]*m)?(>|\+)\s*"
-    INITIAL_PROMPT = "^(\x1b[^>])?>\s*"
+    INITIAL_PROMPT = "(\x1b[^>])?>\s*"
     TAGS = ['r', 'interpreter', 'language']
     TRIM_PROMPT = ">"
+    STRIP_REGEX = "(\x1b[^h]+h)" # Strip weird initial prompt on OSX
     VERSION_COMMAND = "R --version"
     SAVE_VARS_TO_JSON_CMD = """
 if ("rjson" %%in%% installed.packages()) {
