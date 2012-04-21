@@ -397,7 +397,7 @@ class Artifact(object):
                 messages.append(e.message)
 
                 for message in messages:
-                    self.log.debug(message)
+                    self.log.debug(unicode(message, errors="replace"))
 
                 messages.append("This exception information has been written to logs/dexy.log")
                 messages.append("There may be more information in logs/dexy.log")
@@ -888,7 +888,10 @@ class Artifact(object):
         return self._storage
 
     def setup_kv_storage(self):
-        self._storage = dexy.helpers.KeyValueData(self.filepath())
+        try:
+            self._storage = dexy.helpers.KeyValueData(self.filepath())
+        except ValueError as e:
+            raise dexy.commands.UserFeedback("Can't get key-value data from %s for %s: %s" % self.filepath(), self.key, e.message)
 
     def setup_row_storage(self):
         self._storage = dexy.helpers.RowData(self.filepath())

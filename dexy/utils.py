@@ -46,7 +46,7 @@ def get_log(
 
         if logsdir and logfile:
             logfile = os.path.join(logsdir, logfile)
-            handler = logging.handlers.RotatingFileHandler(logfile)
+            handler = logging.handlers.RotatingFileHandler(logfile, encoding="UTF-8")
         else:
             handler = logging.StreamHandler() # log to sys.stderr
 

@@ -158,15 +158,16 @@ class PexpectReplFilter(ProcessFilter):
 
         start = proc.before + proc.after
 
-        self.log.debug("Initial prompt captured!")
-        self.log.debug(start)
+        self.log.debug(u"Initial prompt captured!")
+        self.log.debug(unicode(start))
+
         for section_key, section_text in input_dict.items():
             section_transcript = start
             start = ""
 
             lines = self.lines_for_section(section_text)
             for l in lines:
-                self.log.debug("Sending '%s'" % l)
+                self.log.debug(u"Sending '%s'" % l)
                 section_transcript += start
                 proc.send(l.rstrip() + "\n")
                 try:
@@ -175,7 +176,9 @@ class PexpectReplFilter(ProcessFilter):
                     else:
                         proc.expect_exact(search_terms, timeout=timeout)
 
-                    self.log.debug("Received '%s'" % proc.before)
+
+                    self.log.debug(u"Received '%s'" % unicode(proc.before, errors='replace'))
+
                     section_transcript += self.strip_newlines(proc.before)
                     start = proc.after
                 except pexpect.EOF:

@@ -92,7 +92,9 @@ class RunReporter(Reporter):
         env = Environment()
         env.loader = FileSystemLoader(os.path.dirname(__file__))
         template = env.get_template('run_reporter_template.html')
-        template.stream(env_data).dump(report_filename)
+
+        with open(report_filename, "wb") as f:
+            template.stream(env_data).dump(f)
 
         shutil.rmtree(latest_report_dir, ignore_errors=True)
         shutil.copytree(report_dir, latest_report_dir)
