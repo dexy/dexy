@@ -294,9 +294,9 @@ class RPexpectReplFilter(PexpectReplFilter):
     INPUT_EXTENSIONS = ['.txt', '.r', '.R']
     OUTPUT_EXTENSIONS = ['.Rout']
     PROMPT_REGEX = "(\x1b[^m]*m)?(>|\+)\s*"
+    INITIAL_PROMPT = "^(\x1b[^>])?>\s*"
     TAGS = ['r', 'interpreter', 'language']
     TRIM_PROMPT = ">"
-    INITIAL_PROMPT = "^(\x1b[^m]*m)?>\s*"
     VERSION_COMMAND = "R --version"
     SAVE_VARS_TO_JSON_CMD = """
 if ("rjson" %%in%% installed.packages()) {
