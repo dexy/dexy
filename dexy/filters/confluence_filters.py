@@ -13,10 +13,15 @@ class ConfluenceFilter(ApiFilter):
     DOCUMENT_API_CONFIG_FILE_KEY = "confluence-config-file"
     OUTPUT_EXTENSIONS = [".json"]
 
+    # Any file extensions not in mimetypes can be added here.
+    CUSTOM_MIME_TYPES = {
+        ".R" : "text/x-R"
+        }
+
     @classmethod
     def confluence(klass):
         if not hasattr(klass, '_confluence'):
-            klass._confluence = xmlrpclib.Server("%s/rpc/xmlrpc" % klass.read_url())
+            klass._confluence = xmlrpclib.Server("%s/rpc/xmlrpc" % klass.read_param_class('url'))
         return klass._confluence
 
     @classmethod
@@ -25,10 +30,10 @@ class ConfluenceFilter(ApiFilter):
         Returns login token if we already have one. Otherwise logs in and saves token.
         """
         if forcelogin or not hasattr(klass, '_login_token'):
-            username = klass.read_param('username')
-            password = klass.read_param('password')
-
-            klass._login_token = klass.confluence().confluence1.login(username, password)
+            username = klass.read_param_class('username')
+            password = klass.read_param_class('password')
+            login_token = klass.confluence().confluence1.login(username, password)
+            klass._login_token = login_token
         return klass._login_token
 
     @classmethod
@@ -86,7 +91,7 @@ class ConfluenceFilter(ApiFilter):
             except xmlrpclib.Fault:
                 self.log.debug("page %s does not exist in space %s, creating new page" % (pageTitle, spaceKey))
                 page = document_config
-            page['content'] = input_text
+            page['content'] = "" + input_text
 
         result = self.confluence().confluence1.storePage(token, page)
 
@@ -101,11 +106,13 @@ class ConfluenceFilter(ApiFilter):
 
         # Now upload attachments.
         for k, a in self.artifact.inputs().iteritems():
-            if a.final:
+            content_type = self.CUSTOM_MIME_TYPES.get(a.ext, None) or  mimetypes.types_map.get(a.ext, None)
+
+            if a.final and content_type:
                 attachment_info = {
-                    "fileName" : a.canonical_filename(),
+                    "fileName" : a.canonical_basename(),
                     "comment" : "Created by dexy.",
-                    "contentType" : mimetypes.types_map[a.ext]
+                    "contentType" :  content_type
                 }
                 attachment_content = xmlrpclib.Binary(open(a.filepath(), "rb").read())
                 attachment_result = self.confluence().confluence1.addAttachment(

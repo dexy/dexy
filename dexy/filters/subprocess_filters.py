@@ -274,7 +274,7 @@ class ROutputBatchFilter(SubprocessFilter):
 class RBatchFilter(SubprocessFilter):
     """Runs R code in batch mode."""
     ALIASES = ['rintbatch']
-    EXECUTABLE = 'R CMD BATCH --vanilla --quiet --no-timing'
+    EXECUTABLE = 'R CMD BATCH --quiet --no-timing'
     INPUT_EXTENSIONS = ['.txt', '.r', '.R']
     OUTPUT_EXTENSIONS = [".Rout", '.txt']
     VERSION_COMMAND = "R --version"

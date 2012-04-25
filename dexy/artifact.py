@@ -397,7 +397,7 @@ class Artifact(object):
                 messages.append(e.message)
 
                 for message in messages:
-                    self.log.debug(unicode(message, errors="replace"))
+                    self.log.debug(message)
 
                 messages.append("This exception information has been written to logs/dexy.log")
                 messages.append("There may be more information in logs/dexy.log")

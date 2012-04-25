@@ -592,7 +592,14 @@ def fcmd_command(
             if help:
                 print inspect.getdoc(class_method.__func__)
             else:
-                class_method.__func__(filter_class, **kwargs)
+                try:
+                    class_method.__func__(filter_class, **kwargs)
+                except TypeError as e:
+                    print e.message
+                    print inspect.getargspec(class_method.__func__)
+                    print inspect.getdoc(class_method.__func__)
+                    raise e
+
         else:
             raise InternalDexyProblem("expected %s to be a classmethod of %s" % (cmd_name, filter_class.__name__))
 

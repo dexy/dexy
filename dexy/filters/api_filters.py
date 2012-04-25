@@ -34,6 +34,7 @@ class ApiFilter(DexyFilter):
 
     DOCUMENT_API_CONFIG_FILE = None
     DOCUMENT_API_CONFIG_FILE_KEY = "api-config-file"
+    DOCUMENT_API_CONFIG_POSTFIX = "-config.json"
 
     # Put API key locations in this array, earlier entries have priority.
     API_KEY_LOCATIONS = [PROJECT_API_KEY_FILE, MASTER_API_KEY_FILE]
@@ -66,8 +67,13 @@ class ApiFilter(DexyFilter):
             return self.DOCUMENT_API_CONFIG_FILE
 
     def document_config_file(self):
-        document_dir = os.path.dirname(self.artifact.name)
-        return os.path.join(document_dir, self.document_api_config_file())
+        postfix_config_filename = "%s%s" % (os.path.splitext(self.artifact.name)[0], self.DOCUMENT_API_CONFIG_POSTFIX)
+        print "using postfix_config_filename of %s" % postfix_config_filename
+        if os.path.exists(postfix_config_filename):
+            return postfix_config_filename
+        else:
+            document_dir = os.path.dirname(self.artifact.name)
+            return os.path.join(document_dir, self.document_api_config_file())
 
     def read_document_config(self):
         document_config = self.document_config_file()
