@@ -8,6 +8,24 @@ import re
 import shutil
 import subprocess
 
+class BlackWhitePdfFilter(SubprocessFilter):
+    EXECUTABLE = "gs"
+    ALIASES = ['bw', 'bwconv']
+    INPUT_EXTENSIONS = [".pdf"]
+    OUTPUT_EXTENSIONS = [".pdf"]
+
+    def command_string(self):
+        s = "%(prog)s -dSAFER -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sColorConversionStrategy=Gray -dProcessColorModel=/DeviceGray -sOutputFile=%(out)s %(in)s"
+        args = {
+            'prog' : self.executable(),
+            'in' : self.artifact.previous_artifact_filename,
+            'out' : self.artifact.filename()
+        }
+        return s % args
+
+    def setup_cwd(self):
+        return self.artifact.artifacts_dir
+
 class PandocFilter(SubprocessFilter):
     EXECUTABLE = "pandoc"
     VERSION_COMMAND = "pandoc --version"
