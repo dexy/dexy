@@ -131,7 +131,7 @@ Total elapsed time: {{ "%0.3f" % doc.elapsed }}
                     {% set a = artifacts[h] -%}
                     {% if a.stdout -%}
                     <p><b>{{ a.key }} stdout</b></p>
-                    {{ a.stdout_html }}
+                    {{ a.stdout }}
                     {% endif -%}
                     {% endfor -%}
                     <br />

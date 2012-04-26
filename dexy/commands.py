@@ -220,7 +220,7 @@ def setup_command(
     accidentally running dexy somewhere you didn't mean to.
     """
     if check_setup(logsdir=logsdir, artifactsdir=artifactsdir):
-        raise UserFeedback("Dexy is already set up. Run 'reset' if you want to reset everything.")
+        print "Dexy is already set up. Run 'reset' if you want to reset everything."
     else:
         if not os.path.exists(logsdir):
             os.mkdir(logsdir)

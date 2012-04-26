@@ -291,13 +291,17 @@ class Document(object):
                 assert o.url == repo_url, "local repo exists but url %s does not match requested url %s" % (o.url, repo_url)
                 o.pull() # TODO remember last pulled time so that don't do this too often? what if network unavailable?
             else:
-                repo = git.Repo.clone_from(repo_url, local_repo_dir)
-
+                if self.args.has_key('branch'):
+                    branch = self.args['branch']
+                    repo = git.Repo.clone_from(repo_url, local_repo_dir, branch=branch)
+                else:
+                    repo = git.Repo.clone_from(repo_url, local_repo_dir)
+            
             if self.args.has_key('commit'):
                 commit = self.args['commit']
                 tree = repo.commit(commit).tree
             else:
-                tree = repo.heads.master.commit.tree
+                tree = repo.heads[0].commit.tree
 
             try:
                 blob = tree[self.args['path']]

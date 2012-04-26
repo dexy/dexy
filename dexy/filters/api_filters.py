@@ -68,7 +68,6 @@ class ApiFilter(DexyFilter):
 
     def document_config_file(self):
         postfix_config_filename = "%s%s" % (os.path.splitext(self.artifact.name)[0], self.DOCUMENT_API_CONFIG_POSTFIX)
-        print "using postfix_config_filename of %s" % postfix_config_filename
         if os.path.exists(postfix_config_filename):
             return postfix_config_filename
         else:
