@@ -1,4 +1,5 @@
 library(tools)
+library(rjson)
 
 if (length(packages) == 0) {
     stop("no packages!")
@@ -217,7 +218,8 @@ if (grepl(".sqlite3", data.filename)) {
         if (class(value) != "list") {
             dbGetPreparedQuery(conn, sql, bind.data = data.frame(key=key, value=value))
         } else {
-            cat("Skipping key", key, "value is of type", class(value))
+            # json-encode the data first
+            dbGetPreparedQuery(conn, sql, bind.data = data.frame(key=key, value=toJSON(value)))
         }
     }
 
@@ -229,7 +231,6 @@ if (grepl(".sqlite3", data.filename)) {
 
 } else if  (grepl(".json", data.filename)) {
     cat("using JSON")
-    library(rjson)
 
     # Set up storage
     packages_info <- new.env(hash=TRUE)
@@ -241,7 +242,6 @@ if (grepl(".sqlite3", data.filename)) {
 
     # Define persist/save function
     save_kv <- function() {
-        library(rjson)
         data_file <- file(data.filename, "w")
         writeLines(toJSON(as.list(packages_info)), data_file)
         close(data_file)

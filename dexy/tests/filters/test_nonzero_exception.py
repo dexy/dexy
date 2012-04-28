@@ -47,6 +47,7 @@ DONT_KNOW_HOW_TO_TEST = [
 "ApplySedSubprocessStdoutInputFilter",
 "AsciidocFilter",
 "CleanSubprocessStdoutFilter",
+"CasperJsStdoutFilter",
 "CowsaySubprocessStdoutFilter",
 "CowthinkSubprocessStdoutFilter",
 "LynxDumpFilter",

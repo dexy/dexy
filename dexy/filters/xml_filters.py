@@ -8,11 +8,11 @@ from pygments.lexers import get_lexer_for_filename
 
 class XmlSectionFilter(DexyFilter):
     """
-    Returns any element of an XML or HTML document with an 'id' attribute.
+    Returns any element of an XML document with an 'id' attribute.
     """
     INPUT_EXTENSIONS = [".xml", ".html", ".md", ".txt"]
     OUTPUT_EXTENSIONS = KeyValueData.EXTENSIONS
-    ALIASES = ["xxml"]
+    ALIASES = ["xxml", "xmlsec"]
 
     def process(self):
         self.artifact.setup_kv_storage()

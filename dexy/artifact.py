@@ -878,7 +878,10 @@ class Artifact(object):
             # Assume we want KV storage
             self.setup_kv_storage()
         return self._storage
-    
+
+    def key_prefixes(self):
+        return sorted(set(":".join(k.split(":")[:-1]) for k in self.storage().keys()))
+
     def kv_storage(self):
         return self.storage()
 
