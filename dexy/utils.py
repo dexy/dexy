@@ -7,6 +7,10 @@ import logging
 import logging.handlers
 import os
 
+def artifact_class(artifact_classname=Constants.DEFAULT_ACLASS):
+    artifact_classes = dexy.introspect.artifact_classes()
+    return artifact_classes[artifact_classname]
+
 def load_batch_info(batch_id, logsdir=Constants.DEFAULT_LDIR):
     with codecs.open(batch_info_filename(batch_id, logsdir), "r", encoding="utf-8") as f:
         return json.load(f)

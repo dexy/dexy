@@ -118,8 +118,14 @@ class SqliteDatabase(dexy.database.Database):
         sql = "SELECT * from artifacts where batch_id = ?"
         return self.conn.execute(sql, (batch_id,)).fetchall()
 
-    def all(self):
-        return self.conn.execute("SELECT * from artifacts").fetchall()
+    def all(self, limit=None):
+        if limit:
+            return self.conn.execute("SELECT * from artifacts LIMIT ?", (limit,)).fetchall()
+        else:
+            return self.conn.execute("SELECT * from artifacts").fetchall()
+
+    def query_unique_key(self, unique_key):
+        return self.conn.execute("SELECT * from artifacts where id = ?", (unique_key,)).fetchall()
 
     def query_like(self, query):
         return self.conn.execute("SELECT * from artifacts where (is_last = 'True' or additional='True') and batch_id = ? and key like ?", (self.max_batch_id(), query,)).fetchall()

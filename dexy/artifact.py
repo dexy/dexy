@@ -106,6 +106,9 @@ class Artifact(object):
     def keys(self):
         return self.data_dict.keys()
 
+    def may_have_kv_storage(self):
+        return self.binary_output and (self.ext in dexy.helpers.KeyValueData.EXTENSIONS)
+
     def __getitem__(self, key):
         if not hasattr(self, "_storage") and self.binary_output and (self.ext in dexy.helpers.KeyValueData.EXTENSIONS):
             self.setup_kv_storage()
@@ -748,6 +751,10 @@ class Artifact(object):
     def websafe_key(self):
         return self.long_canonical_filename().replace("/", "--")
 
+    def web_safe_document_key(self):
+        # duplicate, remove this alias
+        return self.websafe_key()
+
     def filename(self):
         """
         The filename where artifact content is stored, based on the hashstring.
@@ -788,9 +795,8 @@ class Artifact(object):
     def unique_key(self):
         return "%s:%s:%s" % (self.batch_id, self.document_key, self.key)
 
-    def web_safe_document_key(self):
-        # TODO this might not be unique
-        return self.document_key.replace("/","-").replace("|", "-")
+    def websafe_unique_key(self):
+        return self.unique_key().replace("/", "--")
 
     def url(self):
         # TODO test for final

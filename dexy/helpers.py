@@ -150,6 +150,28 @@ class KeyValueData(DataStorage):
         else:
             raise dexy.commands.UserFeedback("unsupported extension %s" % self.ext)
 
+    def get(self, key, default=None):
+        """
+        Safe mode of 'retrieve' that returns None if no value is available.
+        """
+        if not self.mode == "read":
+            raise dexy.commands.UserFeedback("Trying to read but in '%s' mode!" % self.mode)
+
+        if self.ext == ".json":
+            return self._storage.get(key, default)
+        elif self.ext == ".kch":
+            return self._storage.get(key)
+        elif self.ext == ".sqlite3":
+            self._cursor.execute("SELECT value from kvstore where key = ?", (key,))
+            record = self._cursor.fetchone()
+            if record:
+                return record[0]
+            else:
+                return default
+        else:
+            raise dexy.commands.UserFeedback("unsupported extension %s" % self.ext)
+
+
     def keys(self):
         if not self.mode == "read":
             raise dexy.commands.UserFeedback("Trying to read but in '%s' mode!" % self.mode)
