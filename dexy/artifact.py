@@ -879,8 +879,8 @@ class Artifact(object):
             data_dict[fmt % (i, k)] = v
         return data_dict
 
-    def storage(self):
-        if not hasattr(self, "_storage"):
+    def storage(self, reset=False):
+        if not hasattr(self, "_storage") or reset:
             # Assume we want KV storage
             self.setup_kv_storage()
         return self._storage
