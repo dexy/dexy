@@ -1,0 +1,120 @@
+$def with (artifacts, expr)
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,minimum-scale=1.0">
+        <title>Dexy Snippet Previewer</title>
+        <script type="text/javascript" src="/static/jquery-1.7.2.min.js"></script>
+        <script type="text/javascript" src="/static/jquery-ui-1.8.19.custom.min.js"></script>
+        <script type='text/javascript'>//<![CDATA[
+            $$(window).load(function(){
+
+                    $$('.preview').each(function() {
+                        var $$link = $$(this);
+
+                        var $$dialog = $$('<div></div>')
+
+                        .dialog({
+                            modal: true,
+                            autoOpen: false,
+                            close: function(event, ui) {
+                              $$("#" + $$link.attr('x')).select()
+                            },
+                            title: $$link.attr('title'),
+                            width: 600,
+                            height: 300
+                            });
+
+                        $$link.click(function() {
+                            $$dialog.load($$link.attr('href'));
+                            $$dialog.dialog('open');
+                            return false;
+                        });
+                    });
+
+                    $$('input[type=text]').click(function() {
+                        $$(this).select();
+                    });
+            });//]]>
+        </script>
+        <link rel="stylesheet" type="text/css" href="/static/jquery-ui-1.8.19.custom.css">
+        <style media="screen">
+            body {
+                font-family: sans-serif;
+                background-color: #dedede;
+            }
+            #page {
+                width: 70%;
+                margin: 1em auto;
+                padding: 1px 2em;
+                background-color: #efefef;
+                box-shadow: 0px 0px 20px #c4c2bb;
+            }
+            input {
+                width: 70%;
+            }
+            input.test {
+                border: thick solid red;
+            }
+            h1 {
+                color: navy;
+                text-shadow: 1px 1px 0px white;
+            }
+            h1 a {
+                color: navy;
+                text-decoration: none;
+            }
+            h2 {
+                font-family: monospace;
+                padding-top: .5em;
+                color: #332a00;
+                border-top: 1px solid silver;
+            }
+            .button {
+                padding: 6px 4px 4px;
+                font-size: x-small;
+                color: #efefef;
+                background-color: navy;
+                text-decoration: none;
+                text-transform: uppercase;
+                border-radius: 4px;
+                box-shadow: 0px 0px 10px gray;
+            }
+            .button:hover {
+                background-color: #1414cc;
+                box-shadow:none;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="page">
+            <h1><a href="/">Dexy Snippet Previewer</a></h1>
+            $if expr:
+              <p>Here are your results for '$(expr)':</p>
+
+        $for artifact in artifacts:
+          <h2>$artifact.key</h2>
+          <p>
+            <a class="preview button" x="$artifact.hashstring" title="$artifact.key" href="/doc/$artifact.websafe_unique_key()">preview</a>
+            <input type="text" value="{{ d['$artifact.key'] }}" />
+            </p>
+
+            $if artifact.may_have_kv_storage():
+              $for i, k in enumerate(artifact.storage(True).keys()):
+                $if i < 50:
+                  <p>
+                    <a class="preview button" x="$artifact.hashstring--$k" title="$artifact.key:$k" href="/snip/$artifact.websafe_unique_key()/$k">preview</a>
+                    <input id="$artifact.hashstring--$k" type="text" value="{{ d['$artifact.key']['$k'] }}" />
+                    </p>
+                $elif i == 50:
+                  <p>Only showing first $i records. Use 'dexy grep' to search for more.</p>
+            $else:
+              $for k in artifact.keys():
+                <p>
+                  <a class="preview button" x="$artifact.hashstring--$k" title="$artifact.key:$k" href="/snip/$artifact.websafe_unique_key()/$k">preview</a>
+                  <input id="$artifact.hashstring--$k" type="text" value="{{ d['$artifact.key']['$k'] }}" />
+                </p>
+        </div>
+    </body>
+</html>

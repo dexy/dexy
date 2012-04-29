@@ -40,6 +40,7 @@ setup(
             'pygments',
             'python-modargs>=1.4',
             'requests>=0.10.6',
+            'web.py>=0.3', # for viewer
             'zapps'
             ],
         name='dexy',
