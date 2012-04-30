@@ -42,14 +42,15 @@ $def with (artifacts, expr)
         <style media="screen">
             body {
                 font-family: sans-serif;
-                background-color: #dedede;
+                background-color: #324654;
             }
             #page {
                 width: 70%;
                 margin: 1em auto;
                 padding: 1px 2em;
-                background-color: #efefef;
-                box-shadow: 0px 0px 20px #c4c2bb;
+                background-color: #e3e3e3;
+                border-radius: 5px;
+                background: #e3e3e3 url('/static/images/logo.png') 20px 20px no-repeat;
             }
             input {
                 width: 70%;
@@ -58,32 +59,55 @@ $def with (artifacts, expr)
                 border: thick solid red;
             }
             h1 {
-                color: navy;
-                text-shadow: 1px 1px 0px white;
+                margin: 61px 0 61px 61px;
+                font-size: 1.5em;
+                font-weight: normal;
+                color: #9C9985;
+                text-shadow: 1px 1px 2px white;
             }
             h1 a {
-                color: navy;
+                color: #324654;
+                color: #9C9985;
                 text-decoration: none;
             }
             h2 {
                 font-family: monospace;
+                font-size: 1em;
+                margin-top: 0;
                 padding-top: .5em;
-                color: #332a00;
-                border-top: 1px solid silver;
+                color: #788880;
+                text-shadow: 1px 1px 0px white;
             }
             .button {
                 padding: 6px 4px 4px;
                 font-size: x-small;
                 color: #efefef;
-                background-color: navy;
+                background-color: #324654;
                 text-decoration: none;
                 text-transform: uppercase;
                 border-radius: 4px;
-                box-shadow: 0px 0px 10px gray;
+                box-shadow: 0px 0px 5px gray;
             }
             .button:hover {
-                background-color: #1414cc;
+                background-color: #c46d3b;
                 box-shadow:none;
+            }
+            .artifact {
+                margin-bottom: 10px;
+                padding: 0 1em;
+                border: 1px solid #c2c2c2;
+                border-top: 1px solid #fdfdfd;
+                border-radius: 5px;
+                background-image: -webkit-linear-gradient(#f7f7f7, #e8e8e8);
+                background-image: -moz-linear-gradient(#f7f7f7, #e8e8e8);
+                background-image: -ms-linear-gradient(#f7f7f7, #e8e8e8);
+                background-image: -o-linear-gradient(#f7f7f7, #e8e8e8);
+                background-image: linear-gradient(#f7f7f7, #e8e8e8);
+            }
+            /* jQuery UI overrides */
+            .ui-widget-header {
+                background: #788880;
+                border: none;
             }
         </style>
     </head>
@@ -94,10 +118,11 @@ $def with (artifacts, expr)
               <p>Here are your results for '$(expr)':</p>
 
         $for artifact in artifacts:
+          <div class="artifact">
           <h2>$artifact.key</h2>
           <p>
             <a class="preview button" x="$artifact.hashstring" title="$artifact.key" href="/doc/$artifact.websafe_unique_key()">preview</a>
-            <input type="text" value="{{ d['$artifact.key'] }}" />
+            <input id="$artifact.hashstring" type="text" value="{{ d['$artifact.key'] }}" />
             </p>
 
             $if artifact.may_have_kv_storage():
@@ -115,6 +140,7 @@ $def with (artifacts, expr)
                   <a class="preview button" x="$artifact.hashstring--$k" title="$artifact.key:$k" href="/snip/$artifact.websafe_unique_key()/$k">preview</a>
                   <input id="$artifact.hashstring--$k" type="text" value="{{ d['$artifact.key']['$k'] }}" />
                 </p>
+            </div>
         </div>
     </body>
 </html>
