@@ -247,7 +247,7 @@ class RDocumentationFilter(DexyFilter):
             f.write("""data.filename <- "%s"\n""" % data_filename)
             f.write(r_script_contents)
 
-        command = "R --slave --vanilla < script.R"
+        command = "R CMD BATCH script.R"
         self.log.debug("About to run %s in %s" % (command, td))
 
         proc = subprocess.Popen(command, shell=True,
@@ -257,6 +257,5 @@ class RDocumentationFilter(DexyFilter):
                                 stderr=subprocess.STDOUT,
                                 )
         stdout, stderr = proc.communicate()
-        self.artifact.stdout = stdout
         shutil.copyfile(os.path.join(td, data_filename), self.artifact.filepath())
 
