@@ -126,7 +126,7 @@ class Artifact(object):
             self.setup_kv_storage()
             return self._storage.retrieve(key)
         else:
-            raise dexy.commands.UserFeedback("Can't find key %s in %s" % (key, self.key))
+            raise dexy.commands.UserFeedback("Can't find key '%s' in %s" % (key, self.key))
 
     def __unicode__(self):
         """
