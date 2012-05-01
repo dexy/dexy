@@ -1,4 +1,4 @@
-$def with (artifacts, expr)
+$def with (artifacts, expr, keyexpr)
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -127,19 +127,20 @@ $def with (artifacts, expr)
 
             $if artifact.may_have_kv_storage():
               $for i, k in enumerate(artifact.storage(True).keys()):
-                $if i < 50:
+                $if (keyexpr and keyexpr in k) or (not keyexpr and i < 50):
                   <p>
                     <a class="preview button" x="$artifact.hashstring--$k" title="$artifact.key:$k" href="/snip/$artifact.websafe_unique_key()/$k">preview</a>
                     <input id="$artifact.hashstring--$k" type="text" value="{{ d['$artifact.key']['$k'] }}" />
                     </p>
-                $elif i == 50:
-                  <p>Only showing first $i records. Use 'dexy grep' to search for more.</p>
+                $elif not keyexpr and i == 50:
+                  <p>Only showing first $i records.</p>
             $else:
               $for k in artifact.keys():
-                <p>
-                  <a class="preview button" x="$artifact.hashstring--$k" title="$artifact.key:$k" href="/snip/$artifact.websafe_unique_key()/$k">preview</a>
-                  <input id="$artifact.hashstring--$k" type="text" value="{{ d['$artifact.key']['$k'] }}" />
-                </p>
+                $if (keyexpr and keyexpr in k) or (not keyexpr):
+                  <p>
+                    <a class="preview button" x="$artifact.hashstring--$k" title="$artifact.key:$k" href="/snip/$artifact.websafe_unique_key()/$k">preview</a>
+                    <input id="$artifact.hashstring--$k" type="text" value="{{ d['$artifact.key']['$k'] }}" />
+                  </p>
             </div>
         </div>
     </body>

@@ -10,6 +10,7 @@ urls = (
         '/doc/(.*)', 'document',
         '/raw/(.*)', 'raw',
         '/snip/(.*)/(.*)', 'snippet',
+        '/(.*)/(.*)', 'grep',
         '/(.*)', 'grep'
         )
 
@@ -57,7 +58,7 @@ class snippet:
         return wrap_content(artifact[snippet_key], artifact.ext)
 
 class grep:
-    def GET(self, expr):
+    def GET(self, expr, keyexpr=None):
         db = dexy.utils.get_db(Constants.DEFAULT_DBCLASS)
         if not expr:
             # Show first 20 records
@@ -72,7 +73,7 @@ class grep:
             artifact.batch_id = row['batch_id']
             artifacts.append(artifact)
 
-        return render.grep(artifacts, expr)
+        return render.grep(artifacts, expr, keyexpr)
 
 app = web.application(urls, globals())
 
