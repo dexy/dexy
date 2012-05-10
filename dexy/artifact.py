@@ -57,6 +57,7 @@ class Artifact(object):
         '.swf',
         '.tgz',
         '.ttf',
+        '.wav',
         '.woff',
         '.zip'
     ]
