@@ -21,7 +21,7 @@ class ImpressiveFilter(DexyFilter):
                 page_info[page_number] = {}
             else:
                 # TODO support the other commands from http://impressive.sourceforge.net/manual.php#scripts
-                m = re.search("^%%(transition|timeout|speech):\s+(.+)$", l)
+                m = re.search("^%%(boxes|transition|timeout|speech|always):\s+(.+)$", l)
                 if m:
                     command = m.groups()[0]
                     value = m.groups()[1]
@@ -37,21 +37,30 @@ class ImpressiveFilter(DexyFilter):
 
                         stdout, stderr = proc.communicate(value)
                         page_info[page_number]['sound'] = wav_filename
-                        wav = wave.open(wav_artifact.filepath())
 
                         # Calculate timeout automatically from length of sound file.
-                        # Need to specify manual timeout before this to override.
+                        # Need to specify manual 'timeout' before 'speech' if you want to override.
+                        wav = wave.open(wav_artifact.filepath())
                         if not page_info[page_number].has_key('timeout'):
                             timeout = float(wav.getnframes()) / wav.getframerate() * 1000
                             page_info[page_number]['timeout'] = int(timeout)
-
                         wav.close()
 
-                    elif command in ('timeout', 'transition'):
-                        # get rid of unicode
+                    elif command in ('always', 'timeout', 'transition', 'boxes'):
+                        # get rid of any unicode
                         page_info[page_number][str(command)] = str(value)
                     else:
                         raise Exception("unknown command '%s'" % command)
+
+        # Apply defaults.
+        for k, v in page_info.iteritems():
+            if not 'transition' in v.keys():
+                if 'transition' in self.args():
+                    page_info[k]['transition'] = self.arg_value('transition')
+
+            if not 'timeout' in v.keys():
+                if 'timeout' in self.args():
+                    page_info[k]['timeout'] = self.arg_value('timeout')
 
         with open(page_info_artifact.filepath(), "w") as f:
             f.write("PageProps = {\n")
@@ -61,12 +70,12 @@ class ImpressiveFilter(DexyFilter):
                     f.write("  %s: {\n" % k)
                 if i > 0:
                     f.write("  }")
-                    if i < n-1:
+                    if i < n:
                         f.write(",\n  %s: {\n" % k)
 
                 nn = len(page_info[k].keys())
                 for ii, kk in enumerate(page_info[k].keys()):
-                    if kk in ('transition', 'timeout'):
+                    if kk in ('transition', 'timeout', 'boxes'):
                         f.write("    '%s': %s" % (kk, page_info[k][kk]))
                     else:
                         f.write("    '%s': '%s'" % (kk, page_info[k][kk]))
@@ -76,6 +85,6 @@ class ImpressiveFilter(DexyFilter):
                     else:
                         f.write("\n")
 
-            f.write("}\n")
+            f.write("  }\n}\n")
 
         return input_text

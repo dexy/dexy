@@ -161,7 +161,7 @@ class DexyFilter(object):
                 break
 
         if not doc:
-            raise dexy.commands.UserFeedback("Can't find any inputs!")
+            raise dexy.commands.UserFeedback("Can't find any inputs in find_closest_parent!")
 
         self.log.debug("selected %s" % doc.key)
         return doc

@@ -133,7 +133,6 @@ class KeyValueData(DataStorage):
         else:
             raise dexy.commands.UserFeedback("unsupported extension %s" % self.ext)
 
-
     def retrieve(self, key):
         if not self.mode == "read":
             raise dexy.commands.UserFeedback("Trying to read but in '%s' mode!" % self.mode)

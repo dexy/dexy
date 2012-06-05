@@ -106,7 +106,7 @@ class ApiFilter(DexyFilter):
             if param_value:
                 break
 
-        if param_value and param_value.startswith("$"):
+        if param_value and isinstance(param_value, basestring) and param_value.startswith("$"):
             # need to get value of bash variable
             param_value_from_env = os.getenv(param_value.lstrip("$"))
             if not param_value_from_env:

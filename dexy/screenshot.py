@@ -1,8 +1,9 @@
+import dexy.commands
 try:
     from selenium import webdriver
     from selenium.common.exceptions import NoSuchElementException
 except ImportError:
-    raise UserFeedback("You must have python-selenium installed to take screenshots. Try 'pip install selenium'.")
+    raise dexy.commands.UserFeedback("You must have python-selenium installed to take screenshots. Try 'pip install selenium'.")
 from kaa import imlib2
 from modargs import args
 import time

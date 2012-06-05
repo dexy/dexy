@@ -87,14 +87,12 @@ class PythonDocumentationFilter(DexyFilter):
     def fetch_item_content(self, key, item):
         is_method = inspect.ismethod(item)
         is_function = inspect.isfunction(item)
-
         if is_method or is_function:
             # Get source code
             try:
                 source = inspect.getsource(item)
-            except IOError:
+            except IOError as e:
                 source = ""
-
             # Process any idiopidae tags
             builder = idiopidae.parser.parse('Document', source + "\n\0")
 
@@ -135,7 +133,7 @@ class PythonDocumentationFilter(DexyFilter):
         Appends source code + syntax highlighted source code to persistent store.
         """
         self.artifact._storage.append("%s:value" % key, source)
-        if not type(source) == str or type(source) == unicode:
+        if not (type(source) == str or type(source) == unicode):
             source = inspect.getsource(source)
         self.artifact._storage.append("%s:source" % key, source)
         self.artifact._storage.append("%s:html-source" % key, self.highlight_html(source))
@@ -164,6 +162,8 @@ class PythonDocumentationFilter(DexyFilter):
                     key = "%s.%s" % (name, k)
                     try:
                         item_content = inspect.getsource(m)
+                        self.artifact._storage.append("%s:doc" % key, inspect.getdoc(m))
+                        self.artifact._storage.append("%s:comments" % key, inspect.getcomments(m))
                         self.add_source_for_key(key, item_content)
                     except IOError:
                         self.log.debug("can't get source for %s" % key)

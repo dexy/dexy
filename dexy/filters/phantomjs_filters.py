@@ -14,7 +14,7 @@ class CasperJsStdoutFilter(SubprocessStdoutFilter):
     EXECUTABLE = 'casperjs'
     INPUT_EXTENSIONS = ['.js', '.txt']
     OUTPUT_EXTENSIONS = ['.txt']
-    VERSION_COMMAND = 'casperjs --version'
+    CHECK_RETURN_CODE = False
 
 class PhantomJsStdoutFilter(SubprocessStdoutFilter):
     """

@@ -81,9 +81,14 @@ class Controller(object):
         # set the list of documents which are virtual
         self.virtual_docs = [d for d in self.docs if d.virtual]
 
-        if not self.args['dryrun']:
-            [doc.setup() for doc in self.docs]
-            self.docs = [doc.run() for doc in self.docs]
+        try:
+            if not self.args['dryrun']:
+                [doc.setup() for doc in self.docs]
+                self.docs = [doc.run() for doc in self.docs]
+        except dexy.commands.UserFeedback as e:
+            self.persist()
+            raise e
+
         self.timing.append(("run-docs", time.time() - start))
 
         self.batch_finish_time = time.time()
