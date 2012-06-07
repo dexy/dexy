@@ -94,7 +94,7 @@ class AsciidocFilter(SubprocessFilter):
 
         return "%(prog)s -b %(backend)s %(args)s -o %(outfile)s %(infile)s" % args
 
-class HtLatexFilter(DexyFilter):
+class HtLatexFilter(SubprocessFilter):
     """
     Generates HTML from LaTeX source.
     """
@@ -105,8 +105,8 @@ class HtLatexFilter(DexyFilter):
     FINAL = True
 
     def process(self):
-        self.artifact.create_temp_dir()
-        wf = os.path.join(self.artifact.temp_dir(), os.path.basename(self.artifact.name))
+        cwd = self.setup_cwd()
+        wf = os.path.join(cwd, os.path.basename(self.artifact.name))
 
         f = open(wf, "w")
         f.write(self.artifact.input_text())
@@ -119,15 +119,16 @@ class HtLatexFilter(DexyFilter):
 
 
         command = "%s %s %s" % (self.__class__.executable(), os.path.basename(self.artifact.name), htlatex_args)
-        self.log.info("running: %s" % command)
+        self.log.debug("running '%s' in '%s'" % (command, cwd))
         env = None
         proc = subprocess.Popen(command, shell=True,
-                                cwd=self.artifact.temp_dir(),
+                                cwd=cwd,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.STDOUT,
                                 env=env)
         stdout, stderr = proc.communicate()
         self.artifact.stdout = stdout
+        self.log.debug("Finished running. Output is %s" % stdout)
 
         html_filename = wf.replace(".tex", ".html")
 
@@ -329,8 +330,8 @@ class RagelRubySubprocessFilter(SubprocessFilter):
     VERSION_COMMAND = 'ragel --version'
 
     def command_string(self):
-        wf = self.artifact.previous_artifact_filename
-        of = self.artifact.filename()
+        wf = os.path.basename(self.artifact.previous_canonical_filename)
+        of = self.artifact.canonical_basename()
         return "%s %s -o %s" % (self.executable(), wf, of)
 
 class Ps2PdfSubprocessFilter(SubprocessFilter):
@@ -359,13 +360,9 @@ class Html2PdfSubprocessFilter(SubprocessFilter):
     VERSION_COMMAND = 'wkhtmltopdf --version'
 
     def command_string(self):
-        # Create a temporary directory and populate it with all inputs.
-        self.artifact.create_temp_dir(populate=True)
-        workfile = os.path.join(self.artifact.hashstring, self.artifact.previous_canonical_filename)
-
         args = {
             'prog' : self.executable(),
-            'in' : workfile,
+            'in' : os.path.basename(self.artifact.previous_canonical_filename),
             'out' : self.artifact.filename()
         }
         return "%(prog)s %(in)s %(out)s" % args
@@ -384,8 +381,8 @@ class DotFilter(SubprocessFilter):
         args = {
             'prog' : self.executable(),
             'format' : self.artifact.ext.replace(".",""),
-            'workfile' : self.artifact.previous_artifact_filename,
-            'outfile' : self.artifact.filename()
+            'workfile' : os.path.basename(self.artifact.previous_canonical_filename),
+            'outfile' : self.artifact.canonical_basename()
         }
         return "%(prog)s -T%(format)s -o%(outfile)s %(workfile)s" % args
 
@@ -409,7 +406,7 @@ class Pdf2ImgSubprocessFilter(SubprocessFilter):
         args = {
             'prog' : self.executable(),
             'device' : self.GS_DEVICE,
-            'in' : self.artifact.previous_artifact_filename,
+            'in' : os.path.basename(self.artifact.previous_canonical_filename),
             'out' : self.artifact.filename()
         }
         return s % args
@@ -425,7 +422,8 @@ class Pdf2ImgSubprocessFilter(SubprocessFilter):
         else:
             page = 1
 
-        page_file = os.path.join(self.artifact.artifacts_dir, "%s-%s" % (page, self.artifact.filename()))
+        page_file = os.path.join(self.artifact.temp_dir(), os.path.dirname(self.artifact.canonical_filename()), "%s-%s" % (page, self.artifact.filename()))
+        print page_file
         shutil.copyfile(page_file, self.artifact.filepath())
 
 class Pdf2JpgSubprocessFilter(Pdf2ImgSubprocessFilter):

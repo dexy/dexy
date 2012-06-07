@@ -51,6 +51,10 @@ class DexyVersionTemplatePlugin(TemplatePlugin):
     def run(self):
         return { "dexy_version" : Version.VERSION }
 
+class DexyRootTemplatePlugin(TemplatePlugin):
+    def run(self):
+        return { "DEXY_ROOT" : os.path.abspath(os.getcwd()) }
+
 class SimpleJsonTemplatePlugin(TemplatePlugin):
     def run(self):
         return { 'json' : json }

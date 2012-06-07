@@ -189,7 +189,14 @@ class Artifact(object):
         args = {}
         for a in self.filter_class.ALIASES:
             if self.args.has_key(a):
-                args.update(self.args[a])
+                try:
+                    args.update(self.args[a])
+                except ValueError as e:
+                    if "dictionary update sequence element" in e.message:
+                        raise dexy.commands.UserFeedback("You need to supply a dict to argument '%s', rather than the single value '%s'" % (a, self.args[a]))
+                    else:
+                        print self.args[a]
+                        raise e
         return args
 
     def setup_initial(self):

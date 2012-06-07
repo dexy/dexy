@@ -1,6 +1,7 @@
 from ansi2html import Ansi2HTMLConverter
 from dexy.dexy_filter import DexyFilter
 from ordereddict import OrderedDict
+from dexy.commands import UserFeedback
 
 class Ansi2HtmlFilter(DexyFilter):
     ALIASES = ['ansi2html']
@@ -43,7 +44,7 @@ class Ansi2HtmlFilter(DexyFilter):
                     from pynliner import Pynliner
                     p = Pynliner(self.log)
                 except ImportError:
-                    raise Exception("You must install BeautifulSoup, cssutils and pynliner in order to use 'inline' option.")
+                    raise UserFeedback("You must install BeautifulSoup, cssutils and pynliner in order to use 'inline' option.")
 
             output_dict = OrderedDict()
             for section_name, section_text in input_dict.iteritems():

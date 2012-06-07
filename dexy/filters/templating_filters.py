@@ -22,6 +22,7 @@ class TemplateFilter(DexyFilter):
     PLUGINS = [
         ClippyHelperTemplatePlugin,
         DexyVersionTemplatePlugin,
+        DexyRootTemplatePlugin,
         GlobalsTemplatePlugin,
         InputsTemplatePlugin,
         PrettyPrintJsonTemplatePlugin,

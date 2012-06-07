@@ -12,7 +12,9 @@ class FilenamesFilter(DexyFilter):
     INPUT_EXTENSIONS = ['.json']
     OUTPUT_EXTENSIONS = ['.json']
 
-    def process(self):
+    def process_text(self, input_text):
+        print "in filenames filter with input: '%s'" % input_text
+
         prev_file = open(self.artifact.previous_artifact_filepath, "r")
         input_info = json.load(prev_file)
         prev_file.close()
@@ -25,6 +27,7 @@ class FilenamesFilter(DexyFilter):
             new_artifact = self.artifact.add_additional_artifact(key_with_ext)
             shutil.copy(os.path.join(work_dir, f), new_artifact.filepath())
 
+        print "input info is: ", input_info
         self.artifact.set_data(json.dumps(input_info))
 
 class FilenameFilter(DexyFilter):

@@ -20,8 +20,8 @@ class Imlib2Filter(DexyFilter):
 
     def process(self):
         font_paths = self.FONT_PATHS
-        if self.artifact.args.has_key('font-path'):
-            font_paths.extend(self.artifact.args['font-path'])
+        if self.args().has_key('font-path'):
+            font_paths.extend(self.args()['font-path'])
 
         for path in font_paths:
             imlib2.add_font_path(path)
@@ -71,8 +71,8 @@ class Imlib2ScaleFilter(Imlib2Filter):
     ALIASES = ['im-scale']
 
     def do_im(self, image):
-        if self.artifact.args.has_key('im-scale'):
-            region_width, region_height = self.artifact.args['im-scale'].split("x")
+        if self.args().has_key('scale'):
+            region_width, region_height = self.args()['scale'].split("x")
         else:
             self.log.debug("Using default cropping region for im-scale, specify in args if you want something else")
             region_width=500
@@ -85,11 +85,11 @@ class Imlib2Crop(Imlib2Filter):
     ALIASES = ['im-crop']
 
     def do_im(self, image):
-        if self.artifact.args.has_key('im-crop'):
-            crop_args = self.artifact.args['im-crop']
+        if self.args().has_key('crop'):
+            crop_args = self.args()['crop']
             regex = "([0-9]+)x([0-9]+)\+([0-9]+)\+([0-9]+)"
             if not re.match(regex, crop_args):
-                raise Exception("Specify im-crop like 300x300+50+50.")
+                raise Exception("Specify 'crop' param like 300x300+50+50.")
 
             region_size, start_x, start_y = crop_args.split("+")
             region_width, region_height = region_size.split("x")
@@ -111,15 +111,15 @@ class Imlib2Thumb(Imlib2Filter):
         text_top = None
         width = None
 
-        if self.artifact.args.has_key('im-thumb'):
-            region_size, start_x, start_y = self.artifact.args['im-thumb']['crop'].split("+")
+        if self.args().has_key('crop'):
+            region_size, start_x, start_y = self.args()['crop'].split("+")
             region_width, region_height = region_size.split("x")
-            text = self.artifact.args['im-thumb']['title']
+            text = self.args()['title']
 
-            if self.artifact.args['im-thumb'].has_key('width'):
-                width = self.artifact.args['im-thumb']['width']
-            if self.artifact.args['im-thumb'].has_key('text-top'):
-                text_top = self.artifact.args['im-thumb']['text-top']
+            if self.args().has_key('width'):
+                width = self.args()['width']
+            if self.args().has_key('text-top'):
+                text_top = self.args()['text-top']
         else:
             self.log.debug("Using default cropping region and text for im-thumb, specify in args if you want something else")
             region_width=500

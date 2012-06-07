@@ -1,5 +1,6 @@
 from dexy.filters.process_filters import SubprocessStdoutInputFilter
 from dexy.filters.process_filters import SubprocessStdoutInputFileFilter
+import os
 
 class ApplySedSubprocessStdoutInputFilter(SubprocessStdoutInputFilter):
     ALIASES = ['used']
@@ -8,7 +9,7 @@ class ApplySedSubprocessStdoutInputFilter(SubprocessStdoutInputFilter):
     def process(self):
         for artifact in self.artifact.inputs().values():
             if artifact.name.endswith(".sed"):
-                command = "%s -f %s" % (self.executable(), artifact.canonical_filename())
+                command = "%s -f %s" % (self.executable(), artifact.canonical_basename())
 
         if not command:
             raise UserFeedback("A .sed file must be passed as an input to %s" % self.artifact.key)
@@ -25,7 +26,7 @@ class SedSubprocessStdoutInputFilter(SubprocessStdoutInputFilter):
     VERSION_COMMAND = 'sed --version'
 
     def command_string_stdout(self):
-        wf = self.artifact.previous_canonical_filename
+        wf = os.path.basename(self.artifact.previous_canonical_filename)
         return "%s -f %s" % (self.executable(), wf)
 
 class RubySubprocessStdoutInputFilter(SubprocessStdoutInputFilter):
@@ -33,7 +34,7 @@ class RubySubprocessStdoutInputFilter(SubprocessStdoutInputFilter):
     VERSION_COMMAND = 'ruby --version'
     INPUT_EXTENSIONS = [".txt", ".rb"]
     OUTPUT_EXTENSIONS = [".txt"]
-    ALIASES = ['rbinput']
+    ALIASES = ['rbinput', 'irboutinput']
 
 class PythonSubprocessStdoutInputFilter(SubprocessStdoutInputFilter):
     ALIASES = ['pyinput']
@@ -56,7 +57,7 @@ class RegetronSubprocessStdoutInputFileFilter(SubprocessStdoutInputFileFilter):
     OUTPUT_EXTENSIONS = [".txt"]
 
     def command_string_stdout_input(self, input_artifact):
-        wf = self.artifact.previous_canonical_filename
-        input_file = input_artifact.canonical_filename()
+        wf = os.path.basename(self.artifact.previous_canonical_filename)
+        input_file = input_artifact.canonical_basename()
         return "%s %s %s" % (self.executable(), input_file, wf)
 

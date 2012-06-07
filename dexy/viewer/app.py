@@ -1,6 +1,5 @@
 from dexy.constants import Constants
 import dexy.introspect
-import dexy.utils
 import web
 import os
 
@@ -79,3 +78,5 @@ app = web.application(urls, globals())
 
 if __name__ == "__main__":
     app.run()
+
+import dexy.utils

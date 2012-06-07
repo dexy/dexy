@@ -1,6 +1,6 @@
+from bs4 import BeautifulSoup
 from dexy.dexy_filter import DexyFilter
 from dexy.helpers import KeyValueData
-from bs4 import BeautifulSoup
 from pygments import highlight
 from pygments.formatters.html import HtmlFormatter
 from pygments.formatters.latex import LatexFormatter

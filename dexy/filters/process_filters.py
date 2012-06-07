@@ -257,7 +257,7 @@ class SubprocessCompileFilter(SubprocessFilter):
     CHECK_RETURN_CODE = False # Whether to check return code when running compiled executable.
 
     def compile_command_string(self):
-        wf = self.artifact.previous_artifact_filename
+        wf = os.path.basename(self.artifact.previous_canonical_filename)
         of = self.artifact.temp_filename(self.COMPILED_EXTENSION)
         return "%s %s -o %s" % (self.executable(), wf, of)
 

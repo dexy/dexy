@@ -332,7 +332,9 @@ class Document(object):
                 if not os.path.exists(artifact.filepath()):
                     # make a fake file
                     with open(artifact.filepath(), "wb") as f:
-                        f.write(artifact.doc.initial_artifact_data())
+                        initial_artifact_data = artifact.doc.initial_artifact_data()
+                        if initial_artifact_data:
+                            f.write(artifact.doc.initial_artifact_data())
             else:
                 shutil.copyfile(artifact.name, artifact.filepath())
         return artifact

@@ -1,8 +1,6 @@
-import sys
 from dexy.dexy_filter import DexyFilter
-import time
 import pexpect
-import json
+import time
 
 class PJSUACallFilter(DexyFilter):
     """
