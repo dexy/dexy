@@ -260,7 +260,7 @@ class EmbedFonts(SubprocessFilter):
     ALIASES = ['embedfonts', 'prepress']
 
     def preprocess_command_string(self):
-        pf = self.artifact.previous_artifact_filename
+        pf = os.path.basename(self.artifact.previous_canonical_filename)
         af = self.artifact.filename()
         return "%s -dPDFSETTINGS=/prepress %s %s" % (self.EXECUTABLE, pf, af)
 
