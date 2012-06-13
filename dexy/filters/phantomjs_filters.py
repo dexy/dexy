@@ -8,13 +8,32 @@ import shutil
 
 class CasperJsStdoutFilter(SubprocessStdoutFilter):
     """
-    Runs scripts using casper js.
+    Runs scripts using casper js. Saves cookies.
     """
     ALIASES = ['casperjs']
     EXECUTABLE = 'casperjs'
     INPUT_EXTENSIONS = ['.js', '.txt']
     OUTPUT_EXTENSIONS = ['.txt']
-    CHECK_RETURN_CODE = False
+
+    def command_string_stdout(self, cookies):
+        args = {
+            'cookie_file' : cookies.filename(),
+            'prog' : self.executable(),
+            'args' : self.command_line_args() or "",
+            'scriptargs' : self.command_line_scriptargs() or "",
+            'script_file' : os.path.basename(self.artifact.previous_canonical_filename)
+        }
+        return "%(prog)s --cookies-file=%(cookie_file)s %(args)s %(script_file)s %(scriptargs)s" % args
+
+    def process(self):
+        dirname = os.path.dirname(self.artifact.canonical_filename())
+        cookies = self.artifact.add_additional_artifact(os.path.join(dirname, "cookies.txt"))
+
+        command = self.command_string_stdout(cookies)
+        proc, stdout = self.run_command(command, self.setup_env())
+        self.handle_subprocess_proc_return(command, proc.returncode, stdout)
+        self.artifact.set_data(stdout)
+        self.copy_additional_inputs()
 
 class PhantomJsStdoutFilter(SubprocessStdoutFilter):
     """

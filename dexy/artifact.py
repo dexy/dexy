@@ -722,6 +722,7 @@ class Artifact(object):
             workfile = os.path.join(tempdir, self.previous_canonical_filename)
             if not os.path.exists(os.path.dirname(workfile)):
                 os.makedirs(os.path.dirname(workfile))
+            self.log.debug("Copying %s to %s" % (previous, workfile))
             shutil.copyfile(previous, workfile)
 
     def alias(self):
