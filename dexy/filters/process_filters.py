@@ -182,9 +182,15 @@ class SubprocessStdoutFilter(SubprocessFilter):
     def run_command(self, command, env, input_text = None):
         cwd = self.setup_cwd()
         self.log.debug("about to run '%s' in %s" % (command, cwd))
+
+        if input_text:
+            stdin = subprocess.PIPE
+        else:
+            stdin = None
+
         proc = subprocess.Popen(command, shell=True,
                                 cwd=cwd,
-                                stdin=subprocess.PIPE,
+                                stdin=stdin,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
                                 env=env)
