@@ -42,7 +42,6 @@ class Ansi2HtmlFilter(DexyFilter):
                 self.log.debug(css)
                 try:
                     from pynliner import Pynliner
-                    p = Pynliner(self.log)
                 except ImportError:
                     raise UserFeedback("You must install BeautifulSoup, cssutils and pynliner in order to use 'inline' option.")
 
@@ -50,7 +49,7 @@ class Ansi2HtmlFilter(DexyFilter):
             for section_name, section_text in input_dict.iteritems():
                 html = converter.convert(section_text, full=full)
                 if inline_css:
-                    p.from_string(html).with_cssString(css)
+                    p = Pynliner(self.log).from_string(html).with_cssString(css)
                     html = "<pre>\n%s</pre>" % p.run()
                 output_dict[section_name] = html
 
