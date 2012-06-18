@@ -6,6 +6,46 @@ import os
 import re
 import shutil
 
+class CasperJsSvg2PdfFilter(SubprocessFilter):
+    """
+    Converts an SVG file to PDF by running it through casper js.
+    # TODO convert this to phantomjs, no benefit to using casper here (js is not user facing) and more restrictive
+    """
+    ALIASES = ['svg2pdf']
+    EXECUTABLE = 'casperjs'
+    INPUT_EXTENSIONS = ['.svg']
+    OUTPUT_EXTENSIONS = ['.pdf']
+    VERSION_COMMAND = 'casperjs --version'
+
+    def script_js(self, width, height):
+        svgfile = os.path.basename(self.artifact.previous_canonical_filename)
+        pdffile = self.artifact.canonical_basename()
+        return """
+        var casper = require('casper').create({
+             viewportSize : {width : %(width)s, height : %(height)s}
+        });
+        casper.start('%(svgfile)s', function() {
+            this.capture('%(pdffile)s');
+        });
+
+        casper.run();
+        """ % locals()
+
+    def process(self):
+        width = self.args().get('width', 200)
+        height = self.args().get('height', 200)
+        js = self.script_js(width, height)
+
+        script_name = "script.js"
+        workfile_path = os.path.join(self.setup_cwd(), script_name)
+        with open(workfile_path, "w") as f:
+            f.write(js)
+
+        command = "%s %s" % (self.executable(), script_name)
+        proc, stdout = self.run_command(command, self.setup_env())
+        self.handle_subprocess_proc_return(command, proc.returncode, stdout)
+        self.copy_canonical_file()
+
 class CasperJsStdoutFilter(SubprocessStdoutFilter):
     """
     Runs scripts using casper js. Saves cookies.
@@ -14,6 +54,7 @@ class CasperJsStdoutFilter(SubprocessStdoutFilter):
     EXECUTABLE = 'casperjs'
     INPUT_EXTENSIONS = ['.js', '.txt']
     OUTPUT_EXTENSIONS = ['.txt']
+    VERSION_COMMAND = 'casperjs --version'
 
     def command_string_stdout(self, cookies):
         args = {
