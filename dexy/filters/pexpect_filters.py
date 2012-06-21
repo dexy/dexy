@@ -219,6 +219,7 @@ class PexpectReplFilter(ProcessFilter):
 
         self.log.debug("args: " % self.args())
         for section_key, section_transcript in self.section_output(self.artifact.input_data_dict):
+            self.log.debug("Processing section %s" % section_key)
             output = self.strip_trailing_prompts(section_transcript)
             if self.arg_value('meta'):
                 self.log.debug("in meta")
