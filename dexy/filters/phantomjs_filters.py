@@ -205,6 +205,7 @@ class PhantomJsRenderJavascriptInteractiveFilter(SubprocessFilter):
 
         page_fn = page_screenshot_artifact.filename()
         js = """
+        var fs = require('fs');
         var page = new WebPage();
 
         var consoleObject = {};
@@ -232,12 +233,15 @@ class PhantomJsRenderJavascriptInteractiveFilter(SubprocessFilter):
                 page.render("%(page_fn)s");
                 """ % locals()
 
-        # Closing bracket for page.open
         js += """
-            console.log(JSON.stringify(consoleObject));
+            var info_file = fs.open("%s", "w");
+            info_file.write(JSON.stringify(consoleObject));
+            info_file.close();
+
             phantom.exit();
         });
-        """
+        """ % self.artifact.canonical_basename()
+
         return js
 
     def process(self):
@@ -262,10 +266,6 @@ class PhantomJsRenderJavascriptInteractiveFilter(SubprocessFilter):
         proc, stdout = self.run_command(command, self.setup_env())
         self.handle_subprocess_proc_return(command, proc.returncode, stdout)
 
-        self.artifact.data_dict['1'] = stdout
-
-        work_dir = os.path.join(self.artifact.artifacts_dir, self.artifact.hashstring)
-
         # Collect any artifacts which were generated in the tempdir, that need
         # to be moved to their final locations.
         for i in self.artifact.inputs().values():
@@ -273,3 +273,5 @@ class PhantomJsRenderJavascriptInteractiveFilter(SubprocessFilter):
             if (i.virtual or i.additional) and os.path.exists(src):
                 self.log.debug("Copying %s to %s (%s)" % (src, i.filepath(), i.key))
                 shutil.copy(src, i.filepath())
+
+        self.copy_canonical_file()
