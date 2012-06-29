@@ -75,7 +75,7 @@ class CasperJsStdoutFilter(SubprocessStdoutFilter):
         self.handle_subprocess_proc_return(command, proc.returncode, stdout)
         self.artifact.set_data(stdout)
 
-        cookie_generated_file = os.path.join(self.artifact.artifacts_dir, dirname, cookies.filename())
+        cookie_generated_file = os.path.join(self.setup_cwd(), cookies.filename())
         if not os.path.exists(cookie_generated_file):
             self.log.debug("No cookie file created, making a blank one.")
             self.log.debug(cookie_generated_file)
