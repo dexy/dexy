@@ -26,7 +26,7 @@ class PJSUACallFilter(DexyFilter):
 
     ALIASES = ['pjsua']
     INPUT_EXTENSIONS = [".txt", ".pjsua"]
-    OUTPUT_EXTENSIONS = [".wav"]
+    OUTPUT_EXTENSIONS = [".wav", ".mp3"]
     BINARY = True
     FINAL = True
 
@@ -74,8 +74,18 @@ class PJSUACallFilter(DexyFilter):
 
     def process(self):
         self.child = None
+
+        pjsua_config_artifact = None
+        for key, input_artifact in self.artifact.inputs().iteritems():
+            if "pjsua.config" in key:
+                pjsua_config_artifact = input_artifact
+
         try:
-            cmd = "pjsua --rec-file %s --auto-rec --null-audio" % self.artifact.filepath()
+            if pjsua_config_artifact:
+                cmd = "pjsua --rec-file %s --auto-rec --null-audio --config-file=%s" % (self.artifact.filepath(), pjsua_config_artifact.canonical_filename())
+            else:
+                cmd = "pjsua --rec-file %s --auto-rec --null-audio" % self.artifact.filepath()
+
             self.log.debug(cmd)
             self.child = pexpect.spawn(cmd)
 
