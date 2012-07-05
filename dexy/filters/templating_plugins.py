@@ -1,5 +1,6 @@
 from datetime import datetime
 from dexy.version import Version
+import dexy.artifact
 from ordereddict import OrderedDict
 from pygments.styles import get_all_styles
 import calendar
@@ -321,8 +322,12 @@ class ClippyHelperTemplatePlugin(TemplatePlugin):
         return self.PRE_AND_CLIPPY_STRING % (text, self.clippy_helper(text))
 
     def clippy_helper(self, text):
+        if isinstance(text, dexy.artifact.Artifact):
+            text = text.output_text()
+
         if not text or len(text) == 0:
             raise UserFeedback("You passed blank text to clippy helper!")
+
         self.log.debug("Applying clippy helper to %s" % text)
         quoted_text = urllib.quote(text)
         return self.CLIPPY_HELPER_STRING % (quoted_text, quoted_text)
