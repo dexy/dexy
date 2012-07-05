@@ -21,6 +21,7 @@ class EasyHtml(DexyFilter):
         return """
 <html>
     <head>
+        <meta http-equiv="Content-type" content="text/html;charset=UTF-8" /> 
         <style type="text/css">
             %(css_framework)s
             %(pygments_css)s
