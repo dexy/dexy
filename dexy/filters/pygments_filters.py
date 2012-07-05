@@ -132,7 +132,5 @@ class PygmentsFilter(DexyFilter):
             else:
                 output_dict = OrderedDict()
                 for k, v in input_dict.items():
-                    # TODO figure out where these characters are coming from and don't hard-code this.
-                    v = v.replace(" \x08", "").replace(chr(13), "")
-                    output_dict[k] = highlight(v, lexer, formatter)
+                    output_dict[k] = highlight(v.decode("utf-8"), lexer, formatter)
                 return output_dict
