@@ -72,6 +72,7 @@ DONT_KNOW_HOW_TO_TEST = [
 "SedSubprocessStdoutInputFilter",
 "SloccountFilter",
 "SubprocessStdoutFilter", #skip
+"SubprocessStdoutSectionalFilter", #skip
 "SubprocessStdoutInputFileFilter", #skip
 "SubprocessStdoutInputFilter", #skip
 "Wiki2BeamerFilter"

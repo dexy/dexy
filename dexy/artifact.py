@@ -1,4 +1,5 @@
 from dexy.constants import Constants
+from dexy.common import Common
 from dexy.version import Version
 from ordereddict import OrderedDict
 import codecs
@@ -17,7 +18,7 @@ import time
 import traceback
 import zlib
 
-class Artifact(object):
+class Artifact(Common):
     HASH_WHITELIST = Constants.ARTIFACT_HASH_WHITELIST
     MAX_DATA_DICT_DECIMALS = 5
     MAX_DATA_DICT_LENGTH = 10 ** MAX_DATA_DICT_DECIMALS
@@ -692,15 +693,9 @@ class Artifact(object):
         work_file.write(self.input_text())
         work_file.close()
 
-    def temp_filename(self, ext):
-        return "%s.work%s" % (self.hashstring, ext)
-
     def open_tempfile(self, ext):
         tempfile_path = os.path.join(self.artifacts_dir, self.temp_filename(ext))
         codecs.open(tempfile_path, "w", encoding="utf-8")
-
-    def temp_dir(self):
-        return os.path.join(self.artifacts_dir, self.hashstring)
 
     def create_temp_dir(self, populate=False):
         tempdir = self.temp_dir()
@@ -725,33 +720,6 @@ class Artifact(object):
             self.log.debug("Copying %s to %s" % (previous, workfile))
             shutil.copyfile(previous, workfile)
 
-    def alias(self):
-        """
-        Whether this artifact includes an alias.
-        """
-        aliases = [k for k in self.key.split("|") if k.startswith("-")]
-        if len(aliases) > 0:
-            return aliases[0]
-
-    def canonical_dir(self, ignore_args = False):
-        return os.path.dirname(self.name)
-
-    def canonical_basename(self, ignore_args = False):
-        return os.path.basename(self.canonical_filename(ignore_args))
-
-    def canonical_filename(self, ignore_args = False):
-        fn = os.path.splitext(self.key.split("|")[0])[0]
-
-        if self.args.has_key('canonical-name') and not ignore_args:
-            parent_dir = os.path.dirname(fn)
-            return os.path.join(parent_dir, self.args['canonical-name'])
-        elif self.args.has_key('postfix') and not ignore_args:
-            return "%s%s%s" % (fn, self.ext, self.args['postfix'])
-        elif self.alias():
-            return "%s%s%s" % (fn, self.alias(), self.ext)
-        else:
-            return "%s%s" % (fn, self.ext)
-
     def long_canonical_filename(self):
         if not "|" in self.key:
             return self.key.replace("|", "-")
@@ -764,23 +732,6 @@ class Artifact(object):
     def web_safe_document_key(self):
         # duplicate, remove this alias
         return self.websafe_key()
-
-    def filename(self):
-        """
-        The filename where artifact content is stored, based on the hashstring.
-        """
-        if not hasattr(self, 'ext'):
-            raise Exception("artifact %s has no ext" % self.key)
-        return "%s%s" % (self.hashstring, self.ext)
-
-    def filepath(self):
-        """
-        Full path (including artifacts dir location) to location where artifact content is stored.
-        """
-        return os.path.join(self.artifacts_dir, self.filename())
-
-    def abs_filepath(self):
-        return os.path.abspath(self.filepath())
 
     def breadcrumbs(self):
         """A list of parent dirs, plus the filename if it's not 'index.html'."""
