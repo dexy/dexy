@@ -246,6 +246,7 @@ class PexpectReplFilter(ProcessFilter):
                         except UnicodeDecodeError as e:
                             self.log.debug("Not appending %s because %s" % (key_name_for_file, e.message))
                         except Exception as e:
+                            self.log.debug("error message: %s" % e)
                             raise InternalDexyProblem("%s reading file contents of %s or appending to db" % (e.__class__.__name__, filepath))
             self.artifact.data_dict[section_key] = output
 

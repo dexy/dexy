@@ -41,6 +41,8 @@ class Artifact(object):
     ]
 
     BINARY_EXTENSIONS = [
+        '.amr',
+        '.mp3',
         '.docx',
         '.eot',
         '.epub',
@@ -462,7 +464,7 @@ class Artifact(object):
         if not ext:
             ext = os.path.splitext(key_with_ext)[1]
         new_artifact = self.__class__()
-        new_artifact.key = key_with_ext
+        new_artifact.key = os.path.splitext(key_with_ext)[0]
         if ext.startswith("."):
             new_artifact.ext = ext
         else:
