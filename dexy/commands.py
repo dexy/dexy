@@ -1,59 +1,50 @@
-from dexy.constants import Constants
-from dexy.version import Version
 from modargs import args
-from pygments import highlight
-from pygments.formatters import TerminalFormatter
-from pygments.lexers.agile import PythonLexer
-import cProfile
-import copy
-import datetime
-import dexy.controller
-import dexy.introspect
-import dexy.utils
-import inspect
-import json
+import dexy.exceptions
 import os
-import platform
 import shutil
 import sys
 import warnings
-
-import web
-
-class InternalDexyProblem(Exception):
-    def __init__(self, message):
-        self.message = """\nOops! You may have found a bug in Dexy.
-        The developer would really appreciate if you copy and paste this entire message
-        and the Traceback above it into a bug report at http://dexy.tenderapp.com.
-        Your version of Dexy is %s
-        Your platform is %s\n""" % (Version.VERSION, platform.system())
-        self.message += message
-
-    def __str__(self):
-        return self.message
-
-class UserFeedback(Exception):
-    pass
+from dexy.params import RunParams
 
 MOD = sys.modules[__name__]
 PROG = 'dexy'
 S = "   "
+DEFAULT_COMMAND = 'dexy'
+DEFAULT_PARAMS = RunParams()
 
-# List of filter classes not to include in the filters command
-NODOC_FILTERS = [
-    "SubprocessCompileFilter",
-    "SubprocessCompileInputFilter",
-    "SubprocessFilter",
-    "SubprocessStdoutFilter",
-    "SubprocessStdoutInputFileFilter",
-    "SubprocessStdoutInputFilter"
-    ]
+import pkg_resources
+for dist in pkg_resources.working_set:
+    if dist.key.startswith("dexy-plugin"):
+        import_pkg = dist.egg_name().split("-")[0]
+        __import__(import_pkg)
+
+import dexy.plugin
 
 def run():
     warnings.filterwarnings("ignore",category=DeprecationWarning)
     try:
-        args.parse_and_run_command(sys.argv[1:], MOD, default_command=Constants.DEFAULT_COMMAND)
-    except UserFeedback as e:
+        if len(sys.argv) == 1 or (sys.argv[1] in args.available_commands(MOD)):
+            args.parse_and_run_command(sys.argv[1:], MOD, default_command=DEFAULT_COMMAND)
+        else:
+            if ":" in sys.argv[1]:
+                command, subcommand = sys.argv[1].split(":")
+            else:
+                command = sys.argv[1]
+                subcommand = ""
+
+            command_class = dexy.plugin.Command.aliases.get(command)
+            mod_name = command_class.__module__
+            mod = args.load_module(mod_name)
+
+            if hasattr(command_class, 'DEFAULT_COMMAND'):
+                default_command = command_class.DEFAULT_COMMAND
+            else:
+                default_command = command_class.NAMESPACE
+
+            # TODO improve error message if not a valid command...
+            args.parse_and_run_command([subcommand] + sys.argv[2:], mod, default_command=default_command)
+
+    except dexy.exceptions.UserFeedback as e:
         sys.stderr.write(e.message)
         if not e.message.endswith("\n"):
             sys.stderr.write("\n")
@@ -61,12 +52,10 @@ def run():
 
 def dexy_command(
         allreports=False, # whether to run all available reports
-        artifactclass=Constants.DEFAULT_ACLASS, # name of class to use for artifacts
-        artifactsdir=Constants.DEFAULT_ADIR, # location of directory in which to store artifacts
-        config=Constants.DEFAULT_CONFIG, # name to use for configuration file
+        artifactsdir=DEFAULT_PARAMS.artifacts_dir, # location of directory in which to store artifacts
+        config=DEFAULT_PARAMS.config_file, # name to use for configuration file
         danger=False, # whether to allow running remote files
-        dbclass=Constants.DEFAULT_DBCLASS, # name of database class to use
-        dbfile=Constants.DEFAULT_DBFILE, # name of the database file (it lives in the logs dir)
+        dbfile=DEFAULT_PARAMS.db_file, # name of the database file (it lives in the logs dir)
         directory=".", # the directory to process, you can just process a subdirectory of your project
         disabletests=False, # Whether to disable the dexy 'test' filter
         dryrun=False, # if True, just parse config and print batch info, don't run dexy
@@ -78,14 +67,14 @@ def dexy_command(
         hashfunction='md5', # What hash function to use, set to crc32 or adler32 for more speed, less reliability
         ignore=False, # whether to ignore nonzero exit status or raise an error - may not be supported by all filters
         inputs=False, # whether to log information about inputs for debugging
-        logfile=Constants.DEFAULT_LFILE, # name of log file
-        loglevel=Constants.DEFAULT_LOGLEVEL, # default log level (see Constants.LOGLEVELS.keys), can also be set per-document
-        logsdir=Constants.DEFAULT_LDIR, # location of directory in which to store logs
+        logfile=DEFAULT_PARAMS.log_file, # name of log file
+        loglevel=DEFAULT_PARAMS.log_level, # default log level (see Constants.LOGLEVELS.keys), can also be set per-document
+        logsdir=DEFAULT_PARAMS.log_dir, # location of directory in which to store logs
         nocache=False, # whether to force artifacts to run even if there is a matching file in the cache
         output=False, # Shortcut to mean "I just want the OutputReporter, nothing else"
         recurse=True, # whether to recurse into subdirectories when running Dexy
         reporters=False, # DEPRECATED just to catch people who use the old dexy --reporters syntax
-        reports=Constants.DEFAULT_REPORTS, # reports to be run after dexy runs, enclose in quotes and separate with spaces
+        reports=DEFAULT_PARAMS.reports, # reports to be run after dexy runs, enclose in quotes and separate with spaces
         reset=False, # whether to purge existing artifacts and logs before running Dexy
         run="", # specific document to run. if specified, this document + its dependencies will be all that is run
         setup=False, # DEPRECATED just to catch people who use the old dexy --setup syntax
@@ -126,26 +115,26 @@ def dexy_command(
     """
     # catch deprecated arguments
     if h or help or version or reporters or filters:
-        raise UserFeedback("the command syntax has changed, please type 'dexy help' for help")
+        raise dexy.exceptions.UserFeedback("the command syntax has changed, please type 'dexy help' for help")
 
     ### @export "dexy-command-check-setup"
     if not check_setup(logsdir=logsdir, artifactsdir=artifactsdir):
-        raise UserFeedback("Please run '%s setup' first to create the directories dexy needs to work with" % PROG)
+        raise dexy.exceptions.UserFeedback("Please run '%s setup' first to create the directories dexy needs to work with" % PROG)
 
     ### @export "dexy-command-process-args"
     if reset:
         reset_command(logsdir=logsdir, artifactsdir=artifactsdir)
 
     if output:
-        if not reports == Constants.DEFAULT_REPORTS:
-            raise UserFeedback("if you pass --output you can't also modify reports! pick 1!")
+        if not reports == DEFAULT_PARAMS.reports:
+            raise dexy.exceptions.UserFeedback("if you pass --output you can't also modify reports! pick 1!")
         if allreports:
-            raise UserFeedback("if you pass --output you can't also pass --allreports!")
+            raise dexy.exceptions.UserFeedback("if you pass --output you can't also pass --allreports!")
         reports = "Output"
 
     if allreports:
-        if not reports == Constants.DEFAULT_REPORTS:
-            raise UserFeedback("if you pass --allreports you can't also specify --reports")
+        if not reports == DEFAULT_PARAMS.reports:
+            raise dexy.exceptions.UserFeedback("if you pass --allreports you can't also specify --reports")
 
     controller = run_dexy(locals())
     if not dryrun:
@@ -167,6 +156,9 @@ def dexy_command(
             )
 
 
+def reports_command(args):
+    pass
+
 def run_dexy(args):
     # validate args and do any conversions required
     args['globals'] = dict([g.split("=") for g in args['globals'].split()])
@@ -175,172 +167,9 @@ def run_dexy(args):
     controller.run()
     return controller
 
-def profile_command(
-        reports="ProfileReporter",
-        n=1, # How many times to run dexy for profiling.
-        **kw # Accepts additional keyword arguments for the 'dexy' command
-    ):
-    """
-    Runs dexy using cProfile to do time-based profiling. Uses ProfileReport
-    (the only report enabled by default) to present profiling information.
-    Other reports can be specified, report time is not included in profiling.
-    Running ProfileReport each time ensures that profiling data is stored in
-    sqlite database for comparison (a 'dexy reset' will delete this database).
-    """
-    dexy_fn = args.function_for(dexy.commands, "dexy")
-    defaults = args.determine_kwargs(dexy_fn)
-    defaults.update(kw)
-    defaults['profile'] = True
-
-    locals_for_run_dexy = {'args' : defaults}
-
-    logs_dir = kw.has_key("logsdir") and kw['logsdir'] or Constants.DEFAULT_LDIR
-    prof_file = os.path.join(logs_dir, "dexy.prof")
-
-    report_kwargs = {}
-    if kw.has_key('artifactclass'):
-        report_kwargs['artifactclass'] = kw['artifactclass']
-
-    for i in xrange(n):
-        print "===== run %s of %s =====" % (i+1, n)
-        cProfile.runctx("run_dexy(args)", globals(), copy.deepcopy(locals_for_run_dexy), prof_file)
-        reports_command(reports=reports, **report_kwargs)
-
-def check_setup(logsdir=Constants.DEFAULT_LDIR, artifactsdir=Constants.DEFAULT_ADIR):
+def check_setup(logsdir=DEFAULT_PARAMS.log_dir, artifactsdir=DEFAULT_PARAMS.artifacts_dir):
     return os.path.exists(logsdir) and os.path.exists(artifactsdir)
 
-def setup_command(
-        logsdir=Constants.DEFAULT_LDIR,
-        artifactsdir=Constants.DEFAULT_ADIR,
-        logfile=Constants.DEFAULT_LFILE,
-        showhelp=True,
-        scm="" # set to git or hg to automatically generate ignore files
-        ):
-    """
-    Creates directories to hold artifacts and logs. Dexy needs these
-    directories and they aren't created automatically as a precaution against
-    accidentally running dexy somewhere you didn't mean to.
-    """
-    if check_setup(logsdir=logsdir, artifactsdir=artifactsdir):
-        print "Dexy is already set up. Run 'reset' if you want to reset everything."
-    else:
-        if not os.path.exists(logsdir):
-            os.mkdir(logsdir)
-        if not os.path.exists(artifactsdir):
-            os.mkdir(artifactsdir)
-
-        if not scm or len(scm) == 0:
-            pass
-        elif scm == 'git':
-            if not os.path.exists(".gitignore"):
-                with open(".gitignore", "w") as f:
-                    f.write("artifacts/\nlogs/\noutput/\noutput-long/\n*.sw*\n*.pyc\n")
-        elif scm == 'hg':
-            if not os.path.exists(".hgignore"):
-                with open(".hgignore", "w") as f:
-                    f.write("artifacts/\nlogs/\noutput/\noutput-long/\n")
-        else:
-            sys.stderr.write("Sorry, %s is not a supported scm for automatically creating an ignore file." % scm)
-
-        if showhelp:
-            print "Ok, we've created directories called %s and %s and a .%signore" % (logsdir, artifactsdir, scm)
-            if os.path.exists(Constants.DEFAULT_CONFIG):
-                print "You are now ready to run dexy!  If you have problems,"
-                print "please check the log file at %s/%s for clues." % (logsdir, logfile)
-                print "Online help is available from dexy.it/help"
-            else:
-                print "You are almost ready to run dexy! You just need to create a config file,"
-                print "check out the tutorials dexy.it/docs/tutorials if you aren't sure how."
-                print "You can type '%s help -on %s' (without quotes) for help running dexy" % (PROG, Constants.DEFAULT_COMMAND)
-                print "or visit dexy.it/help for more resources"
-
-def cleanup_command(logsdir=Constants.DEFAULT_LDIR, artifactsdir=Constants.DEFAULT_ADIR):
-    """
-    Removes all dexy-generated content.
-    """
-    # Dexy itself should put all generated content into either artifacts or logs.
-    # Reports may create files in other locations, but they should track where
-    # they do this and be able to purge them.
-    purge_artifacts(remake=False, artifactsdir=artifactsdir)
-    purge_logs(logsdir=logsdir)
-    purge_reports()
-
-def history_command(
-        filename=None,
-        logsdir=Constants.DEFAULT_LDIR,
-        artifactsdir=Constants.DEFAULT_ADIR,
-        dbclass=Constants.DEFAULT_DBCLASS,
-        dbfile=Constants.DEFAULT_DBFILE
-        ):
-    """
-    Returns a list of available versions of the file. This must be run from the
-    dexy project root.
-    """
-    db = dexy.utils.get_db(dbclass, dbfile=dbfile, logsdir=logsdir)
-    versions = {}
-    for row in db.all():
-        key = row['key']
-        batch_id = int(row['batch_id'])
-        if key == filename and not versions.has_key(batch_id):
-            versions[batch_id] = row
-
-    if len(versions) > 0:
-        print
-        print "Dexy found these versions of %s:" % filename
-        for b in sorted(versions.keys()):
-            row = versions[b]
-            artifact_file = os.path.join(artifactsdir, "%s%s" % (row['hashstring'], row['ext']))
-
-            batch_source_dir = os.path.join(logsdir, "batch-source-%0.5d" % b)
-            batch_source_file = os.path.join(batch_source_dir, row['key'])
-            time = row['mtime']
-            if time and not time == 'None':
-                human_time = datetime.datetime.fromtimestamp(float(time))
-            else:
-                human_time = "NA"
-
-            batch_info_file = dexy.utils.batch_info_filename(b, logsdir)
-            batch_ok = os.path.exists(batch_info_file)
-
-            artifact_ok = os.path.exists(artifact_file)
-            batch_source_ok = os.path.exists(batch_source_file)
-
-            if artifact_ok and batch_ok:
-                msg = "  batch id %5d  modified time %s available in %s" % (b, human_time, artifact_file)
-                if batch_source_ok:
-                    msg += " and %s" % batch_source_file
-                print msg
-        print
-    else:
-        print "No versions found for", filename
-
-def reset_command(logsdir=Constants.DEFAULT_LDIR, artifactsdir=Constants.DEFAULT_ADIR):
-    """
-    Runs cleanup and then setup to completely reset your dexy environment.
-    """
-    cleanup_command(logsdir=logsdir, artifactsdir=artifactsdir)
-    setup_command(logsdir=logsdir, artifactsdir=artifactsdir, showhelp=False)
-
-def purge_artifacts(remake=True, artifact_class=None, artifactsdir=Constants.DEFAULT_ADIR):
-    shutil.rmtree(artifactsdir, ignore_errors=True)
-    if remake:
-        os.mkdir(artifactsdir)
-
-    if hasattr(artifact_class, 'purge'):
-        artifact_class.purge()
-
-def purge_logs(logsdir=Constants.DEFAULT_LDIR):
-    shutil.rmtree(logsdir, ignore_errors=True)
-
-def purge_reports():
-    reports_dirs = dexy.introspect.reports_dirs()
-    for d in reports_dirs:
-        safety_file = os.path.join(d, ".dexy-generated")
-        if d and os.path.exists(d) and os.path.exists(safety_file):
-            print "purging contents of %s" % d
-            shutil.rmtree(d)
-        elif d and os.path.exists(d):
-            print "not purging %s, please remove this directory manually" % d
 
 def help_command(on=False):
     args.help_command(PROG, MOD, Constants.DEFAULT_COMMAND, on)
@@ -350,359 +179,5 @@ def help_text(on=False):
 
 def version_command():
     """Print the current version."""
-    print "%s version %s" % (PROG, Version.VERSION)
+    print "%s version %s" % (PROG, dexy.version())
 
-def filters_command(
-        alias="", # If a filter alias is specified, more detailed help for that filter is printed.
-        nocolor=False, # When source = True, whether to omit syntax highlighting
-        showall=False, # Whether to show all filters, including those which need missing software, implies versions=True
-        showmissing=False, # Whether to just show filters missing external software, implies versions=True
-        space=False, # Whether to add extra spacing to the output for extra readability
-        source=False, # Whether to include syntax-highlighted source code when displaying an indvidual filter
-        versions=False # Whether to check the installed version of external software required by filters, slower
-    ):
-    """
-    Lists the available dexy filters and their aliases.
-
-    Does not include filters which require python modules that are not
-    installed.
-
-    Consult the Dexy website http://dexy.it for a complete list of filters.
-    """
-    if len(alias) == 0:
-        # This tends to be slow, let people know it's running
-        print "looking up filter information..."
-    else:
-        if showall:
-            raise UserFeedback("can't specify an alias if showall is True, exiting...")
-
-    if check_setup():
-        log = dexy.utils.get_log()
-    else:
-        log = Constants.NULL_LOGGER
-
-    print filters_text(alias, nocolor, showall, showmissing, space, source, versions, log)
-
-def filters_text(
-        alias="", # If a filter alias is specified, more detailed help for that filter is printed.
-        nocolor=False, # When source = True, whether to omit syntax highlighting
-        showall=False, # Whether to show all filters, including those which need missing software, implies versions=True
-        showmissing=False, # Whether to just show filters missing external software, implies versions=True
-        space=False, # Whether to add extra spacing to the output for extra readability
-        source=False, # Whether to include syntax-highlighted source code when displaying an indvidual filter
-        versions=False, # Whether to check the installed version of external software required by filters, slower
-        log=Constants.NULL_LOGGER
-        ):
-    filters_dict = dexy.introspect.filters(log)
-
-    if len(alias) > 0:
-        # We want help on a particular filter
-        klass = filters_dict[alias]
-        text = []
-        text.append(klass.__name__)
-        text.append("")
-        text.append("Aliases: %s" % ", ".join(klass.ALIASES))
-        text.append("")
-        text.append(inspect.getdoc(klass))
-        text.append("")
-        text.append("http://dexy.it/docs/filters/%s" % alias)
-        if source:
-            text.append("")
-            source_code = inspect.getsource(klass)
-            if nocolor:
-                text.append(source_code)
-            else:
-                formatter = TerminalFormatter()
-                lexer = PythonLexer()
-                text.append(highlight(source_code, lexer, formatter))
-        return "\n".join(text)
-
-    else:
-        def sort_key(k):
-            return k.__name__
-
-        filter_classes = sorted(set(f for f in filters_dict.values()), key=sort_key) # uniqify and sort class names
-
-        text = []
-        for klass in filter_classes:
-            if not showall:
-                skip = klass.__name__ in NODOC_FILTERS
-            else:
-                skip = False
-
-            if (versions or showmissing or showall) and not skip:
-                version = klass.version()
-                no_version_info_available = (version is None)
-                if no_version_info_available:
-                    version_message = ""
-                    if showmissing:
-                        skip = True
-                elif version:
-                    version_message = "Installed version: %s" % version
-                    if showmissing:
-                        skip = True
-                else:
-                    if not (showmissing or showall):
-                        skip = True
-                    version_message = "'%s' failed, filter may not be available." % klass.version_command()
-
-            if not skip:
-                name_and_aliases = "%s (%s) " % (klass.__name__, ", ".join(klass.ALIASES))
-                docstring = inspect.getdoc(klass) or ""
-                if "\n" in docstring:
-                    docstring = docstring.splitlines()[0]
-                filter_help = name_and_aliases + docstring
-                if (versions or showmissing or (showall and not version)):
-                    filter_help += " %s" % version_message
-                text.append(filter_help)
-
-        if space:
-            sep = "\n\n"
-        else:
-            sep = "\n"
-        return sep.join(text)
-
-def reporters_command():
-    """Lists currently available dexy reporters."""
-    print reporters_text(Constants.NULL_LOGGER)
-
-def reporters_text(log):
-    text = []
-    reporters = dexy.introspect.reporters(log)
-    for reporter_name in sorted(reporters.keys()):
-        r = reporters[reporter_name]
-        text.append("\n" + r.__name__.replace("Reporter", ""))
-
-        if r.__doc__:
-            text.append(S + inspect.getdoc(r))
-        else:
-            text.append(S + "no documentation available")
-
-        if r.REPORTS_DIR:
-            text.append(S + "any generated reports will be saved in %s" % r.REPORTS_DIR)
-
-    return "\n".join(text) + "\n"
-
-def report_command(**kwargs):
-    """
-    Alias for reports.
-    """
-    if kwargs.has_key('report'):
-        kwargs['reports'] = kwargs['report']
-        del kwargs['report']
-    reports_command(**kwargs)
-
-def reports_command(
-        allreports=False, # whether to run all available reporters (except those that are specifically excluded by setting ALLREPORTS=False)
-        artifactclass=Constants.DEFAULT_ACLASS, # What artifact class to use (must correspond to artifact class used by batch id)
-        batchid=False, # What batch id to run reports for. Leave false to run the most recent batch available (recommended).
-        controller=False, # can pass the just-run controller instance to save having to load some data from disk which is already in memory
-        hashfunction='md5',
-        logsdir=Constants.DEFAULT_LDIR, # The location of the logs directory.
-        reports="OutputReporter RunReporter LongOutputReporter OutputTgzReporter" # The class names for all reports to be run.
-    ):
-    """
-    Runs reports to present Dexy output.
-    """
-
-    # convert False (needed for CLI) to None (expected by constructor)
-    if not batchid:
-        batchid = None
-    if not controller:
-        controller = None
-
-    if isinstance(reports, str):
-        reports = reports.split()
-    elif isinstance(reports, bool):
-        # either was set to False, or an empty string evaluated to True
-        # either way we don't want to run any reports.
-        reports = []
-    reporters = dexy.introspect.reporters()
-    if allreports:
-        print "using allreports"
-        reports = [k for k, v in reporters.items() if v.ALLREPORTS]
-
-    for r in reports:
-        reporter_class_name = r.endswith("Reporter") and r or ("%sReporter" % r)
-        if not reporters.has_key(reporter_class_name):
-            raise UserFeedback("No reporter class named %s available. Valid reporter classes are: %s" % (r, ", ".join(reporters.keys())))
-        report_class = reporters[reporter_class_name]
-
-        print "running", r
-        reporter = report_class(
-                artifact_class=artifactclass,
-                batch_id=batchid,
-                controller=controller,
-                hashfunction=hashfunction,
-                logsdir=logsdir
-            )
-
-        reporter.load_batch_artifacts()
-        reporter.run()
-
-def fcmds_command(alias=None):
-    """
-    Returns a list of available filter commands (fcmds) defined by the specified alias.
-
-    These commands can then be run using the fcmd command.
-    """
-    if check_setup():
-        log = dexy.utils.get_log()
-    else:
-        log = Constants.NULL_LOGGER
-
-    filters_dict = dexy.introspect.filters(log)
-    if not alias in filters_dict:
-        print "Available aliases are:"
-        for a in sorted(filters_dict):
-            print a
-
-    filter_class = filters_dict[alias]
-
-    print "Filter commands defined in %s..." % filter_class.__name__
-    cmds = []
-    for m in dir(filter_class):
-        # TODO print start of docstring
-        if m.startswith("docmd_"):
-            cmds.append(m.replace("docmd_", ""))
-    print "\n".join(sorted(cmds))
-
-def fcmd_command(
-        alias=None, # The alias of the filter which defines the custom command
-        cmd=None, # The name of the command to run
-        help=False, # If true, just print docstring rather than running command
-        **kwargs # Additional arguments to be passed to the command
-        ):
-    """
-    Run a command defined in a dexy filter.
-    """
-    if check_setup():
-        log = dexy.utils.get_log()
-    else:
-        log = Constants.NULL_LOGGER
-
-    filters_dict = dexy.introspect.filters(log)
-    filter_class = filters_dict[alias]
-
-    cmd_name = "docmd_%s" % cmd
-
-    if not filter_class.__dict__.has_key(cmd_name):
-        raise UserFeedback("%s is not a valid command. There is no method %s defined in %s" % (cmd, cmd_name, filter_class.__name__))
-    else:
-        class_method = filter_class.__dict__[cmd_name]
-        if type(class_method) == classmethod:
-            if help:
-                print inspect.getdoc(class_method.__func__)
-            else:
-                try:
-                    class_method.__func__(filter_class, **kwargs)
-                except TypeError as e:
-                    print e.message
-                    print inspect.getargspec(class_method.__func__)
-                    print inspect.getdoc(class_method.__func__)
-                    raise e
-
-        else:
-            raise InternalDexyProblem("expected %s to be a classmethod of %s" % (cmd_name, filter_class.__name__))
-
-def it_command(**kwargs):
-    dexy_command(kwargs)
-
-def grep_command(
-        expr=None, # The expression to search for
-        keyexpr="", # Only search for keys matching this expression, implies keys=True
-        keys=False, # if True, try to list the keys in any found files
-        recurse=False, # if True, recurse into keys to look for sub keys (implies keys=True)
-        artifactclass=Constants.DEFAULT_ACLASS, # name of class to use for artifacts
-        dbclass=Constants.DEFAULT_DBCLASS, # name of database class to use
-        dbfile=Constants.DEFAULT_DBFILE, # name of the database file (it lives in the logs dir)
-        logsdir=Constants.DEFAULT_LDIR # location of directory in which to store logs
-        ):
-    """
-    Search for a Dexy document in the database matching the expression.
-
-    For sqlite the expression will be wrapped in % for you.
-    """
-    db = dexy.utils.get_db(dbclass, dbfile=dbfile, logsdir=logsdir)
-    for row in db.query_like("%%%s%%" % expr):
-        print row['key']
-        if keys or len(keyexpr) > 0 or recurse:
-            artifact_classes = dexy.introspect.artifact_classes()
-            artifact_class = artifact_classes[artifactclass]
-            artifact = artifact_class.retrieve(row['hashstring'])
-            if artifact.ext in [".json", ".kch", ".sqlite3"]:
-                if len(keyexpr) > 0:
-                    rows = artifact.kv_storage().query("%%%s%%" % keyexpr)
-                else:
-                    rows = artifact.kv_storage().keys()
-
-                if rows:
-                    print "  key-value store keys:"
-                for k in rows:
-                    print "    %s" % k
-                    if recurse:
-                        v = artifact.retrieve_from_kv_storage(k)
-                        try:
-                            if not hasattr(v, "keys"):
-                                v = json.loads(v)
-                            if hasattr(v, "keys"):
-                                for kk in v.keys():
-                                    print "      %s" % kk
-                        except Exception as e:
-                            pass
-
-            if len(artifact.data_dict.keys()) > 1:
-                print "  data dict keys:"
-            for k in artifact.data_dict.keys():
-                if not k == '1':
-                    print "    %s" % k
-
-
-class CustomStaticApp(web.httpserver.StaticApp):
-    def translate_path(self, path):
-        return os.path.join(os.path.dirname(os.path.abspath(__file__)), "viewer", path.lstrip("/"))
-
-import posixpath
-import urllib
-class StaticMiddleware:
-    """WSGI middleware for serving static files."""
-    def __init__(self, app, prefix='/static/'):
-        self.app = app
-        self.prefix = prefix
-
-    def __call__(self, environ, start_response):
-        path = environ.get('PATH_INFO', '')
-        path = self.normpath(path)
-
-        if path.startswith(self.prefix):
-            return CustomStaticApp(environ, start_response)
-        else:
-            return self.app(environ, start_response)
-
-    def normpath(self, path):
-        path2 = posixpath.normpath(urllib.unquote(path))
-        if path.endswith("/"):
-            path2 += "/"
-        return path2
-
-def viewer_command(
-        port=8090 # Port on which to run the viewer
-        ):
-    """
-    Starts a web.py application which lets you preview the snippets generated by your previous dexy run.
-    """
-    import dexy.viewer.app as viewer
-    func = viewer.app.wsgifunc()
-    server_address =("0.0.0.0", port)
-
-    func = StaticMiddleware(func)
-    func = web.httpserver.LogMiddleware(func)
-
-    server = web.httpserver.WSGIServer(server_address, func)
-
-    print "http://%s:%d/" % server_address
-    print "Type ctrl+c to stop the server."
-    try:
-         server.start()
-    except KeyboardInterrupt:
-         server.stop()

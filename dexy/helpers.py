@@ -7,7 +7,7 @@ Intended to help with Python scripts and to serve as templates for implementing
 similar helpers in other languages, or alternate Python implementations.
 """
 import csv
-import dexy.commands
+import dexy.exceptions
 import json
 import os
 
@@ -42,13 +42,13 @@ class DataStorage(object):
             self._storage = DB()
             if not self._storage.open(self.filename, DB.OWRITER | DB.OCREATE):
                 msg = "Error opening kyotocabinet db: %s" % (self._storage.error())
-                raise dexy.commands.UserFeedback(msg)
+                raise dexy.exceptions.UserFeedback(msg)
 
         elif self.ext == ".sqlite3":
             self.init_write_sqlite3()
 
         else:
-            raise dexy.commands.UserFeedback("unsupported extension %s" % self.ext)
+            raise dexy.exceptions.UserFeedback("unsupported extension %s" % self.ext)
 
     def init_read(self):
         self.mode = "read"
@@ -67,7 +67,7 @@ class DataStorage(object):
             self._storage = sqlite3.connect(self.filename)
             self._cursor = self._storage.cursor()
         else:
-            raise dexy.commands.UserFeedback("unsupported extension %s" % self.ext)
+            raise dexy.exceptions.UserFeedback("unsupported extension %s" % self.ext)
 
     def save(self):
         if self.ext == ".csv":
@@ -78,12 +78,12 @@ class DataStorage(object):
                 json.dump(self._storage, f)
         elif self.ext == ".kch":
             if not self._storage.close():
-                raise dexy.commands.UserFeedback(self._storage.error())
+                raise dexy.exceptions.UserFeedback(self._storage.error())
         elif self.ext == ".sqlite3":
             self._storage.commit()
             self._cursor.close()
         else:
-            raise dexy.commands.UserFeedback("unsupported extension %s" % self.ext)
+            raise dexy.exceptions.UserFeedback("unsupported extension %s" % self.ext)
 
 class RowData(DataStorage):
     def init_write_sqlite3(self):
@@ -94,24 +94,24 @@ class RowData(DataStorage):
 
     def append(self, *rowdata):
         if not self.mode == "write":
-            raise dexy.commands.UserFeedback("Trying to write but in %s mode!" % self.mode)
+            raise dexy.exceptions.UserFeedback("Trying to write but in %s mode!" % self.mode)
 
         if self.ext == ".csv":
             self._writer.writerow(rowdata)
         else:
-            raise dexy.commands.UserFeedback("unsupported extension %s" % self.ext)
+            raise dexy.exceptions.UserFeedback("unsupported extension %s" % self.ext)
 
     def read(self):
         """
         Return all available data.
         """
         if not self.mode == "read":
-            raise dexy.commands.UserFeedback("Trying to read but in '%s' mode!" % self.mode)
+            raise dexy.exceptions.UserFeedback("Trying to read but in '%s' mode!" % self.mode)
 
         if self.ext == ".csv":
             return self._file.read()
         else:
-            raise dexy.commands.UserFeedback("unsupported extension %s" % self.ext)
+            raise dexy.exceptions.UserFeedback("unsupported extension %s" % self.ext)
 
 class KeyValueData(DataStorage):
     EXTENSIONS = [".json", ".sqlite3", ".kch"]
@@ -127,15 +127,15 @@ class KeyValueData(DataStorage):
             self._storage[key] = value
         elif self.ext == ".kch":
             if not self._storage.set(key, value):
-                raise dexy.commands.UserFeedback("Error setting key %s in kyotocabinet: %s" % (key, self._storage.error()))
+                raise dexy.exceptions.UserFeedback("Error setting key %s in kyotocabinet: %s" % (key, self._storage.error()))
         elif self.ext == ".sqlite3":
             self._cursor.execute("INSERT INTO kvstore VALUES (?, ?)", (str(key), str(value)))
         else:
-            raise dexy.commands.UserFeedback("unsupported extension %s" % self.ext)
+            raise dexy.exceptions.UserFeedback("unsupported extension %s" % self.ext)
 
     def retrieve(self, key):
         if not self.mode == "read":
-            raise dexy.commands.UserFeedback("Trying to read but in '%s' mode!" % self.mode)
+            raise dexy.exceptions.UserFeedback("Trying to read but in '%s' mode!" % self.mode)
 
         if self.ext == ".json":
             return self._storage[key]
@@ -147,14 +147,14 @@ class KeyValueData(DataStorage):
             if record:
                 return record[0]
         else:
-            raise dexy.commands.UserFeedback("unsupported extension %s" % self.ext)
+            raise dexy.exceptions.UserFeedback("unsupported extension %s" % self.ext)
 
     def get(self, key, default=None):
         """
         Safe mode of 'retrieve' that returns None if no value is available.
         """
         if not self.mode == "read":
-            raise dexy.commands.UserFeedback("Trying to read but in '%s' mode!" % self.mode)
+            raise dexy.exceptions.UserFeedback("Trying to read but in '%s' mode!" % self.mode)
 
         if self.ext == ".json":
             return self._storage.get(key, default)
@@ -168,12 +168,12 @@ class KeyValueData(DataStorage):
             else:
                 return default
         else:
-            raise dexy.commands.UserFeedback("unsupported extension %s" % self.ext)
+            raise dexy.exceptions.UserFeedback("unsupported extension %s" % self.ext)
 
 
     def keys(self):
         if not self.mode == "read":
-            raise dexy.commands.UserFeedback("Trying to read but in '%s' mode!" % self.mode)
+            raise dexy.exceptions.UserFeedback("Trying to read but in '%s' mode!" % self.mode)
 
         if self.ext == ".json":
             return self._storage.keys()
@@ -183,11 +183,11 @@ class KeyValueData(DataStorage):
             self._cursor.execute("SELECT key from kvstore")
             return [str(k[0]) for k in self._cursor.fetchall()]
         else:
-            raise dexy.commands.UserFeedback("unsupported extension %s" % self.ext)
+            raise dexy.exceptions.UserFeedback("unsupported extension %s" % self.ext)
 
     def query(self, query_string):
         if not self.mode == "read":
-            raise dexy.commands.UserFeedback("Trying to read but in '%s' mode!" % self.mode)
+            raise dexy.exceptions.UserFeedback("Trying to read but in '%s' mode!" % self.mode)
 
         if self.ext == ".sqlite3":
             self._cursor.execute("SELECT * from kvstore WHERE key LIKE ? COLLATE RTRIM ORDER BY key", (query_string,))
@@ -195,4 +195,4 @@ class KeyValueData(DataStorage):
         elif self.ext == ".json":
             return [k for k in self.keys() if query_string in k]
         else:
-            raise dexy.commands.UserFeedback("unsupported extension %s" % self.ext)
+            raise dexy.exceptions.UserFeedback("unsupported extension %s" % self.ext)

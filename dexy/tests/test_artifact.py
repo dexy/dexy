@@ -1,92 +1,117 @@
+from dexy.artifact import FilterArtifact
 from dexy.artifact import Artifact
-from dexy.artifacts.file_system_json_artifact import FileSystemJsonArtifact
+from dexy.artifact import InitialArtifact
+from dexy.artifact import InitialVirtualArtifact
+from dexy.doc import Doc
+from dexy.plugin import Metadata
+from dexy.runner import Runner
 from dexy.tests.utils import tempdir
-from ordereddict import OrderedDict
-import dexy.utils
-import os
+from dexy.tests.utils import temprun
+import time
 
-def is_empty_dict(d):
-    return isinstance(d, dict) and not d
-
-def test_empty_dict():
-    x = {}
-    assert is_empty_dict(x)
-    x['a'] = 5
-    assert not is_empty_dict(x)
-
-def test_artifact_init():
-    artifact = Artifact()
-    assert artifact.state == 'new'
-
-def test_artifact_filenames_simple_key():
-    artifact = Artifact()
-    artifact.key = 'abc'
-    artifact.ext = '.out'
-    assert artifact.canonical_filename() == 'abc.out'
-    assert artifact.long_canonical_filename() == 'abc'
-
-def test_artifact_filenames_file_key():
-    artifact = Artifact()
-    artifact.key = 'abc.txt'
-    artifact.ext = '.out'
-    assert artifact.canonical_filename() == 'abc.out'
-    assert artifact.long_canonical_filename() == 'abc.txt'
-
-def test_artifact_filenames_file_key_with_filters():
-    artifact = Artifact()
-    artifact.key = 'abc.txt|def|ghi'
-    artifact.ext = '.out'
-    assert artifact.canonical_filename() == 'abc.out'
-    assert artifact.long_canonical_filename() == 'abc.txt-def-ghi.out'
-
-def test_add_additional_artifact():
-    db = dexy.utils.get_db(logsdir=None, dbfile=None)
-    hashstring = "abcdef123"
-    artifact = Artifact()
-    artifact.db = db
-    artifact.key = 'abc.txt'
-    artifact.artifacts_dir = 'artifactsx'
-    artifact.hashstring = hashstring
-
-    new_artifact = artifact.add_additional_artifact('def.txt', '.txt')
-
-    assert is_empty_dict(new_artifact._inputs)
-    assert new_artifact.args.keys() == ["globals"]
-    assert is_empty_dict(new_artifact.args['globals'])
-    assert new_artifact.additional
-    assert new_artifact.artifact_class_source
-    assert new_artifact.artifacts_dir == 'artifactsx'
-    assert new_artifact.final
-    assert new_artifact.key in artifact.inputs()
-    assert new_artifact.state == 'new'
-    assert new_artifact.inode == hashstring
-
-    assert db.artifact_row(new_artifact)['key'] == new_artifact.key
-
-def test_simple_metadata():
+def test_caching():
     with tempdir():
-        os.mkdir('artifacts')
+        runner1 = Runner()
+        runner1.setup()
 
-        HASHSTRING = 'abc123'
-        a1 = FileSystemJsonArtifact()
-        a1.hashstring = HASHSTRING
-        a1.key = 'xyz'
-        a1.save_meta()
+        with open("abc.txt", "w") as f:
+            f.write("these are the contents")
 
-        a2 = FileSystemJsonArtifact()
-        a2.hashstring = HASHSTRING
-        assert not a2.key
-        a2.load_meta()
-        assert a2.key == 'xyz'
+        doc1 = Doc("abc.txt|dexy")
+        runner1.run(doc1)
 
-def test_artifact_data_dict_to_numbered_dict():
-    artifact = Artifact()
-    artifact.data_dict = OrderedDict()
-    artifact.data_dict['a'] = 10
-    artifact.data_dict['b'] = 20
+        assert isinstance(doc1.artifacts[0], InitialArtifact)
+        hashstring_0_1 = doc1.artifacts[0].metadata.hashstring
 
-    numbered_dict = artifact.convert_data_dict_to_numbered_dict()
-    assert numbered_dict.keys()[0] == '00000:a'
-    assert numbered_dict.keys()[1] == '00001:b'
-    assert numbered_dict['00000:a'] == 10
-    assert numbered_dict['00001:b'] == 20
+        assert isinstance(doc1.artifacts[1], FilterArtifact)
+        hashstring_1_1 = doc1.artifacts[1].metadata.hashstring
+
+        doc2 = Doc("abc.txt|dexy")
+        runner2 = Runner()
+        runner2.run(doc2)
+
+        assert isinstance(doc2.artifacts[0], InitialArtifact)
+        hashstring_0_2 = doc2.artifacts[0].metadata.hashstring
+
+        assert isinstance(doc2.artifacts[1], FilterArtifact)
+        hashstring_1_2 = doc2.artifacts[1].metadata.hashstring
+
+        assert hashstring_0_1 == hashstring_0_2
+        assert hashstring_1_1 == hashstring_1_2
+
+def test_caching_virtual_file():
+    with tempdir():
+        runner1 = Runner()
+        runner1.setup()
+
+        doc1 = Doc("abc.txt|dexy", contents = "these are the contents")
+        runner1.run(doc1)
+
+        assert isinstance(doc1.artifacts[0], InitialVirtualArtifact)
+        hashstring_0_1 = doc1.artifacts[0].metadata.hashstring
+
+        assert isinstance(doc1.artifacts[1], FilterArtifact)
+        hashstring_1_1 = doc1.artifacts[1].metadata.hashstring
+
+        doc2 = Doc("abc.txt|dexy", contents = "these are the contents")
+        runner2 = Runner()
+        runner2.run(doc2)
+
+        assert isinstance(doc2.artifacts[0], InitialVirtualArtifact)
+        hashstring_0_2 = doc2.artifacts[0].metadata.hashstring
+
+        assert isinstance(doc2.artifacts[1], FilterArtifact)
+        hashstring_1_2 = doc2.artifacts[1].metadata.hashstring
+
+        assert hashstring_0_1 == hashstring_0_2
+        assert hashstring_1_1 == hashstring_1_2
+
+def test_setup():
+    a1 = InitialArtifact("abc.txt")
+    a2 = InitialVirtualArtifact("abc.txt")
+    a3 = FilterArtifact("abc.txt")
+
+    # We should have a working log
+    a1.log.debug("hello")
+    a2.log.debug("hello")
+    a3.log.debug("hello")
+
+    # And a metadata instance
+    assert isinstance(a1.metadata, Metadata)
+    assert isinstance(a2.metadata, Metadata)
+    assert isinstance(a3.metadata, Metadata)
+
+def test_virtual_artifact():
+    with temprun() as runner:
+        a = InitialVirtualArtifact("abc.txt", contents="these are the contents")
+        a.name = "abc.txt"
+        runner.run(a)
+        assert a.output_data.is_cached()
+        assert a.output_data.data() == "these are the contents"
+        assert a.state == 'complete'
+
+def test_initial_artifact_hash():
+    with temprun() as runner:
+        filename = "source.txt"
+
+        with open(filename, "w") as f:
+            f.write("hello this is some text")
+
+        artifact = InitialArtifact(filename)
+        artifact.name = filename
+        artifact.run(runner)
+
+        first_hashstring = artifact.metadata.hashstring
+
+        time.sleep(1.1) # make sure mtime is at least 1 second different
+
+        with open(filename, "w") as f:
+            f.write("hello this is different text")
+
+        artifact = InitialArtifact(filename)
+        artifact.name = filename
+        artifact.run(runner)
+
+        second_hashstring = artifact.metadata.hashstring
+
+        assert first_hashstring != second_hashstring

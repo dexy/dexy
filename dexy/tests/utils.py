@@ -1,17 +1,30 @@
 from StringIO import StringIO
-from dexy.controller import Controller
-from dexy.document import Document
+from dexy.artifact import FilterArtifact
+from dexy.doc import Doc
+from dexy.exceptions import InactiveFilter
+from dexy.runner import Runner
+from dexy.utils import char_diff
 from modargs import args as modargs
+from nose.exc import SkipTest
+from ordereddict import OrderedDict
 import dexy.commands
-import dexy.introspect
+import dexy.data
+import dexy.metadata
 import os
-import re
+import random
 import shutil
 import sys
 import tempfile
 
+def create_ordered_dict_from_dict(d):
+    od = OrderedDict()
+    for k, v in d.iteritems():
+        od[k] = v
+    return od
+
 class tempdir():
     def __enter__(self):
+        dexy.metadata.Sqlite3.conn = None
         self.tempdir = tempfile.mkdtemp()
         self.location = os.path.abspath(os.curdir)
         os.chdir(self.tempdir)
@@ -19,6 +32,79 @@ class tempdir():
     def __exit__(self, type, value, traceback):
         os.chdir(self.location)
         shutil.rmtree(self.tempdir)
+
+class temprun(tempdir):
+    """
+    Create a temporary directory and initialize a runner.
+    """
+    def __enter__(self):
+        dexy.metadata.Sqlite3.conn = None
+        self.tempdir = tempfile.mkdtemp()
+        self.location = os.path.abspath(os.curdir)
+        os.chdir(self.tempdir)
+        runner = Runner()
+        runner.setup()
+        return runner
+
+class runfilter(tempdir):
+    """
+    Create a temporary directory, initialize a doc and a runner, run the doc.
+
+    Raises SkipTest on inactive filters.
+    """
+    def __init__(self, filter_alias, doc_contents, ext=".txt"):
+        self.filter_alias = filter_alias
+        self.doc_contents = doc_contents
+        self.ext = ext
+
+    def __enter__(self):
+        # Reset Sqlite3 so it creates a new db in current folder.
+        dexy.metadata.Sqlite3.conn = None
+
+        # Create a temporary working dir and move to it
+        self.tempdir = tempfile.mkdtemp()
+        self.location = os.path.abspath(os.curdir)
+        os.chdir(self.tempdir)
+
+        # Create a runner object.
+        runner = Runner()
+        runner.setup()
+
+        # Create a document. Skip testing documents with inactive filters.
+        try:
+            doc_key = "example%s|%s" % (self.ext, self.filter_alias)
+            doc = Doc(doc_key, contents=self.doc_contents)
+        except InactiveFilter:
+            raise SkipTest
+
+        # Run the document and return it.
+        runner.run(doc)
+        return doc
+
+def assert_output(filter_alias, doc_contents, expected_output, ext=".txt"):
+    if not ext.startswith("."):
+        raise Exception("ext arg to assert_in_output must start with dot")
+
+    if isinstance(expected_output, dict):
+        expected_output = create_ordered_dict_from_dict(expected_output)
+
+    with runfilter(filter_alias, doc_contents, ext=ext) as doc:
+        try:
+            assert doc.output().data() == expected_output
+        except AssertionError as e:
+            print char_diff(doc.output().data_or_dict(), expected_output)
+            raise e
+
+def assert_in_output(filter_alias, doc_contents, expected_output, ext=".txt"):
+    if not ext.startswith("."):
+        raise Exception("ext arg to assert_in_output must start with dot")
+
+    with runfilter(filter_alias, doc_contents, ext=ext) as doc:
+        assert expected_output in doc.output().data()
+
+def assert_not_in_output(filter_alias, doc_contents, expected_output):
+    with runfilter(filter_alias, doc_contents) as doc:
+        assert not expected_output in doc.output().data()
 
 class divert_stdout():
     def __enter__(self):
@@ -54,63 +140,24 @@ def controller_args(additional_args = {}):
 
     return args
 
-def run_dexy_without_tempdir(config_dict, additional_args={}):
-    if not hasattr(Document, 'filter_list'):
-        Document.filter_list = dexy.introspect.filters()
-    
-    args = controller_args(additional_args)
+def run_filter(filter_class, data=None, ordered_dict=None):
+    """
+    Creates just a single filter artifact with enough metadata to be able to run a filter.
+    """
+    with temprun() as runner:
+        artifact = FilterArtifact("key.txt")
+        artifact.input_data = dexy.data.Json("%s" % random.randint(10000,99999), ".txt", runner)
+        artifact.output_data = dexy.data.Json("%s" % random.randint(10000,99999), ".txt", runner)
 
-    c = Controller(args)
-    c.config = config_dict
-    c.process_config()
+        if ordered_dict:
+            artifact.input_data._ordered_dict = ordered_dict
+        elif data:
+            artifact.input_data._data = data
+        else:
+            raise Exception("Must supply either data or ordered_dict")
 
-    [doc.setup() for doc in c.docs]
+        f = filter_class()
+        f.artifact = artifact
+        f.process()
 
-    for doc in c.docs:
-        yield(doc)
-
-    c.persist()
-
-def set_filter_list(additional_filters):
-    filters = dexy.introspect.filters()
-    for filter_class in additional_filters:
-        for a in filter_class.ALIASES:
-            filters[a] = filter_class
-    Document.filter_list = filters
-
-def run_dexy(config_dict, additional_args={}, use_tempdir=True):
-    with tempdir():
-        for doc in run_dexy_without_tempdir(config_dict, additional_args):
-            yield(doc)
-
-def assert_output(key, contents, output, args={}):
-    args["contents"] = contents
-    config = { "." : { ("@%s" % key) : args } }
-    for doc in run_dexy(config):
-        doc.run()
-        print doc.key() + "======="
-        print doc.logstream.getvalue()
-        print "'%s'" % doc.output()
-        print "'%s'" % output
-        assert doc.output() == output
-
-def assert_in_output(key, contents, output, args={}):
-    args["contents"] = contents
-    config = { "." : { ("@%s" % key) : args } }
-    for doc in run_dexy(config):
-        doc.run()
-        print doc.key() + "======="
-        print doc.logstream.getvalue()
-        print "'%s'" % doc.output()
-        print "'%s'" % output
-        assert output in doc.output()
-
-def assert_matches_output(key, contents, output):
-    config = { "." : { ("@%s" % key) : { "contents" : contents } } }
-    for doc in run_dexy(config):
-        doc.run()
-        print doc.key() + "======="
-        print doc.logstream.getvalue()
-        print "'%s'" % doc.output()
-        print "'%s'" % output
-        assert re.match(output, doc.output())
+        yield artifact.output_data

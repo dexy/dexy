@@ -1,6 +1,5 @@
-
 from setuptools import setup, find_packages
-from dexy.version import Version
+import dexy
 
 setup(
         author='Ana Nelson',
@@ -47,6 +46,6 @@ setup(
         packages=find_packages(),
         package_data = { "dexy" : ["ext/*"] },
         url='http://dexy.it',
-        version=Version.VERSION
+        version=dexy.__version__
         )
 
