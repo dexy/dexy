@@ -3,15 +3,15 @@ from ordereddict import OrderedDict
 import dexy.data
 import dexy.exceptions
 import dexy.metadata
-import dexy.workspace
 import os
+import shutil
 import stat
 
 ### @export "artifact-class"
 class Artifact(Task):
     def setup(self):
         self.set_log()
-        self.metadata = dexy.metadata.Sqlite3()
+        self.metadata = dexy.metadata.Sqlite3(self.run_params)
 
     ### @export "set-and-save-hash"
     def set_and_save_hash(self):
@@ -28,6 +28,35 @@ class Artifact(Task):
 
     def long_name(self):
         return "%s%s" % (self.key.replace("|", "-"), self.ext)
+
+    def web_safe_document_key(self):
+        return self.long_name().replace("/", "--")
+
+    def relative_refs(self, relative_to_file):
+        doc_dir = os.path.dirname(relative_to_file)
+        return [
+                os.path.relpath(self.key, doc_dir),
+                os.path.relpath(self.long_name(), doc_dir),
+                "/%s" % self.key,
+                "/%s" % self.long_name()
+        ]
+
+    def tmp_dir(self):
+        return os.path.join(self.run_params.artifacts_dir, self.metadata.hashstring)
+
+    def create_working_dir(self, populate=False):
+        tmpdir = self.tmp_dir()
+        shutil.rmtree(tmpdir, ignore_errors=True)
+        os.mkdir(tmpdir)
+
+        if populate:
+            for key, doc in self.runner.completed.iteritems():
+                if isinstance(doc, dexy.doc.Doc) and (doc.final_artifact.ext in self.filter_class.WORKSPACE_EXTENSIONS):
+                    filename = os.path.join(tmpdir, doc.name)
+                    doc.output().output_to_file(filename)
+
+            input_filepath = os.path.join(tmpdir, self.prior.name)
+            self.input_data.output_to_file(input_filepath)
 
 class InitialVirtualArtifact(Artifact):
     def get_contents(self):
@@ -82,10 +111,7 @@ class InitialArtifact(Artifact):
         self.output_data = dexy.data.Data.aliases['generic'](self.metadata.hashstring, self.ext, self.run_params)
 
         if os.path.exists(self.name):
-            if self.output_data.is_cached():
-                print "Data for %s is already cached in %s" % (self.key, self.output_data.storage.data_file())
-            else:
-                print "Copying the contents of %s" % (self.name)
+            if not self.output_data.is_cached():
                 self.output_data.copy_from_file(self.name)
 
             assert self.output_data.is_cached()
@@ -175,7 +201,6 @@ class FilterArtifact(Artifact):
 
     ### @export "generate"
     def generate(self, *args, **kw):
-        self.workspace = dexy.workspace.Local(self)
         filter_instance = self.filter_class()
         filter_instance.artifact = self
         filter_instance.log = self.log

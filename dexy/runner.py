@@ -1,3 +1,4 @@
+from dexy.params import RunParams
 from dexy.reporter import Reporter
 from ordereddict import OrderedDict
 import os
@@ -6,11 +7,15 @@ class Runner(object):
     """
     Class that stores run state.
     """
-    def __init__(self, **args):
+    def __init__(self, params=None):
+        if not params:
+            params = RunParams()
+
+        self.params = params
+
         self.completed = OrderedDict()
-        self.args = args
-        self.artifacts_dir = args.get('artifacts_dir', 'artifacts')
-        self.logs_dir = args.get('logs_dir', 'logs')
+        self.artifacts_dir = self.params.artifacts_dir
+        self.log_dir = self.params.log_dir
         self.reports_dirs = ['output', 'output-long']
 
     def run(self, *tasks):
@@ -18,15 +23,8 @@ class Runner(object):
         Convenience method to run one or more tasks/docs.
         """
         for task in tasks:
-            print "running task", task.key
             for t in task:
-                if hasattr(t, 'key'):
-                    print "running t", t.key
-                else:
-                    print "running t", t
                 t(self)
-                if hasattr(t, 'logstream'):
-                    print t.logstream.getvalue()
 
     def setup(self):
         """
@@ -34,6 +32,8 @@ class Runner(object):
         """
         if not os.path.exists(self.artifacts_dir):
             os.mkdir(self.artifacts_dir)
+        if not os.path.exists(self.log_dir):
+            os.mkdir(self.log_dir)
 
     def append(self, doc):
         """

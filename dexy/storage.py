@@ -25,12 +25,10 @@ class GenericStorage(Storage):
         return os.path.exists(self.data_file())
 
     def write_data(self, data, filepath=None):
-        print "filepath is", filepath
         if not filepath:
             filepath = self.data_file()
 
         if self.data_file_exists():
-            print "copying from", self.data_file(), "to", filepath
             shutil.copyfile(self.data_file(), filepath)
         else:
             with open(filepath, "wb") as f:

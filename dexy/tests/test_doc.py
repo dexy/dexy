@@ -29,7 +29,7 @@ def test_output_is_data():
 
 ### @export "test-create-doc-with-child"
 def test_create_doc_with_child():
-    with tempdir():
+    with temprun() as runner:
         doc = Doc("parent.txt", Doc("child.txt"))
         assert doc.key == "parent.txt"
         assert doc.children[0].key == "child.txt"

@@ -6,7 +6,6 @@ reporters
 commands
 data
 metadata
-workspaces
 
 Dexy will look in standard locations (TODO - allow disabling any of these)
    - dexy package's own plugin directory

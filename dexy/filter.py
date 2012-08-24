@@ -26,6 +26,7 @@ class Filter:
     TAGS = [] # Descriptive keywords about the filter.
     VERSION_COMMAND = None
     WINDOWS_VERSION_COMMAND = None
+    WORKSPACE_EXTENSIONS = [".*"] # Extensions that should be copied into workspace.
 
     @classmethod
     def output_data_class(klass):
@@ -235,7 +236,7 @@ class Filter:
             method_used = "process_text_to_dict"
 
         elif hasattr(self, "process_dict"):
-            output = self.process_dict(self.artifact.input_data.as_dict())
+            output = self.process_dict(self.artifact.input_data.as_sectioned())
             self.artifact.output_data.set_data(output)
 
             method_used = "process_dict"

@@ -1,7 +1,7 @@
-from dexy.exceptions import *
-import logging
-import StringIO
 from dexy.params import RunParams
+import StringIO
+import dexy.exceptions
+import logging
 
 ### @export "class"
 class Task(object):
@@ -40,7 +40,7 @@ class Task(object):
         if (self.state, to_state) in self.STATE_TRANSITIONS:
             self.state = to_state
         else:
-            raise InvalidStateTransition("%s => %s" % (self.state, to_state))
+            raise dexy.exceptions.InvalidStateTransition("%s => %s" % (self.state, to_state))
 
     ### @export "iter"
     def __iter__(self):
@@ -52,11 +52,11 @@ class Task(object):
                 yield self.post
                 self.transition('complete')
             elif self.state == 'running':
-                raise CircularDependency
+                raise dexy.exceptions.CircularDependency
             elif self.state == 'complete':
                 pass
             else:
-                raise UnexpectedState(self.state)
+                raise dexy.exceptions.UnexpectedState(self.state)
 
         return next_task()
 

@@ -7,12 +7,13 @@ class RunParams(object):
     def __init__(self, **kwargs):
         # Default Values
         self.artifacts_dir = 'artifacts'
+        self.config_file = '.dexy'
+        self.db_file = os.path.join(self.artifacts_dir, 'dexy.sqlite3')
         self.log_dir = 'logs'
         self.log_file = 'dexy.log'
-        self.reports = ['output']
+        self.log_path = os.path.join(self.log_dir, self.log_file)
         self.log_level = 'DEBUG'
-        self.config_file = '.dexy'
-        self.db_file = os.path.join(self.log_dir, 'dexy.sqlite3')
+        self.reports = ['output']
 
         for key, value in kwargs.iteritems():
             if not hasattr(self, key):

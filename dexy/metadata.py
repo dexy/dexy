@@ -19,17 +19,17 @@ class Sqlite3(Metadata):
             ("inode", "int")
             ]
 
-    def __init__(self):
+    def __init__(self, run_params):
         for k in [tup[0] for tup in self.FIELDS]:
             setattr(self, k, None)
 
         if not hasattr(self, 'conn') or not self.conn:
-            self.setup_db_conn()
+            self.setup_db_conn(run_params.db_file)
 
     @classmethod
-    def setup_db_conn(klass):
-        klass.filename = "database.sqlite3"
-        klass.conn = sqlite3.connect(klass.filename)
+    def setup_db_conn(klass, db_file):
+        klass.db_file = db_file
+        klass.conn = sqlite3.connect(klass.db_file)
         klass.conn.row_factory = sqlite3.Row
 
         klass.field_keys = [k[0] for k in klass.FIELDS]

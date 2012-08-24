@@ -12,9 +12,8 @@ class SubprocessFilter(Filter):
         """
         Sets up and populates the working directory as required.
         """
-        workspace = self.artifact.workspace
-        workspace.create_working_dir(True)
-        return workspace.tmp_dir()
+        self.artifact.create_working_dir(True)
+        return self.artifact.tmp_dir()
 
     def command_line_args(self):
         return self.args().get('args')
@@ -75,9 +74,7 @@ class SubprocessFilter(Filter):
 
 class SubprocessStdoutFilter(SubprocessFilter):
     def run_command(self, command, env, input_text = None):
-        print "in run_command"
         wd = self.setup_wd()
-        self.log.debug("about to run '%s' in %s" % (command, wd))
 
         if input_text:
             stdin = subprocess.PIPE
@@ -101,8 +98,7 @@ class SubprocessStdoutFilter(SubprocessFilter):
         command = self.command_string_stdout()
         proc, stdout = self.run_command(command, self.setup_env())
         self.handle_subprocess_proc_return(command, proc.returncode, stdout)
-        self.artifact.output_data._data = stdout
-        self.artifact.output_data.write_to_data_file()
+        self.artifact.output_data.set_data(stdout)
 
         # TODO store stdout somewhere
 #        self.copy_additional_inputs()

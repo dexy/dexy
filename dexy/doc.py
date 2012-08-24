@@ -138,4 +138,3 @@ class DexyJsonConfigDoc(Task):
     """
     def setup(self):
         config = dexy.config.load_config()
-        print "found config", config

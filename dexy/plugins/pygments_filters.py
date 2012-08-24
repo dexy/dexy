@@ -94,7 +94,7 @@ class PygmentsFilter(Filter):
         for k, v in args.iteritems():
             formatter_args[str(k)] = v
 
-        return get_formatter_for_filename(self.artifact.filename(), **formatter_args)
+        return get_formatter_for_filename(self.artifact.name, **formatter_args)
 
     def process_dict(self, input_dict):
         ext = self.artifact.prior.ext
@@ -121,7 +121,7 @@ class PygmentsFilter(Filter):
             for k, v in args.iteritems():
                 formatter_args[str(k)] = v
 
-            formatter = get_formatter_for_filename(self.artifact.filename(), **formatter_args)
+            formatter = get_formatter_for_filename(self.artifact.name, **formatter_args)
 
             if self.artifact.ext in self.IMAGE_OUTPUT_EXTENSIONS:
                 with open(self.artifact.output_data.data_file(), 'wb') as f:
