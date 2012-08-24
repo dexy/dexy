@@ -51,12 +51,20 @@ class Artifact(Task):
 
         if populate:
             for key, doc in self.runner.completed.iteritems():
-                if isinstance(doc, dexy.doc.Doc) and (doc.final_artifact.ext in self.filter_class.WORKSPACE_EXTENSIONS):
-                    filename = os.path.join(tmpdir, doc.name)
+                if isinstance(doc, dexy.doc.Doc):
+                    filename = os.path.join(tmpdir, doc.final_artifact.name)
+                    parent_dir = os.path.dirname(filename)
+                    if not os.path.exists(parent_dir):
+                        os.makedirs(parent_dir)
                     doc.output().output_to_file(filename)
 
             input_filepath = os.path.join(tmpdir, self.prior.name)
-            self.input_data.output_to_file(input_filepath)
+
+        parent_dir = os.path.dirname(input_filepath)
+        if not os.path.exists(parent_dir):
+            os.makedirs(parent_dir)
+        self.input_data.output_to_file(input_filepath)
+        return parent_dir
 
 class InitialVirtualArtifact(Artifact):
     def get_contents(self):
@@ -157,7 +165,8 @@ class FilterArtifact(Artifact):
 
         tree_hash = []
         for key, task in self.runner.completed.iteritems():
-            tree_hash.append("%s: %s" % (key, task.metadata.hashstring))
+            if hasattr(task, 'metadata'):
+                tree_hash.append("%s: %s" % (key, task.metadata.hashstring))
         self.metadata.tree_hash = ", ".join(tree_hash)
 
         # TODO add filter source code

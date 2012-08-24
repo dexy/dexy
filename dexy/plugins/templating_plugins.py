@@ -1,5 +1,6 @@
 from datetime import datetime
 from dexy.artifact import Artifact
+from dexy.doc import Doc
 from ordereddict import OrderedDict
 from pygments.styles import get_all_styles
 import calendar
@@ -224,8 +225,14 @@ class InputsTemplatePlugin(TemplatePlugin):
 
         name = self.filter_instance.artifact.name
 
-        for key, doc in self.filter_instance.artifact.runner.completed.iteritems():
-            a = doc.final_artifact
+        for key, task in self.filter_instance.artifact.runner.completed.iteritems():
+            if isinstance(task, Artifact):
+                a = task
+            elif isinstance(task, Doc):
+                a = task.final_artifact
+            else:
+                raise Exception("task is a %s" % task.__class__.__name__)
+
             keys = a.relative_refs(name)
             data = self.d_data_for_artifact(a)
 
@@ -272,9 +279,9 @@ class InputsJustInTimeTemplatePlugin(InputsTemplatePlugin):
     def run(self):
         self.map_relative_refs = {}
         for key, task in self.filter_instance.artifact.runner.completed.iteritems():
-            if hasattr(a, 'relative_refs'):
-                for ref in a.relative_refs(self.filter_instance.artifact.name):
-                    self.map_relative_refs[ref] = a
+            if hasattr(task, 'relative_refs'):
+                for ref in task.relative_refs(self.filter_instance.artifact.name):
+                    self.map_relative_refs[ref] = task
 
         return {
             'a' : self.a,

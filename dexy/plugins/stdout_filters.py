@@ -12,8 +12,7 @@ class SubprocessFilter(Filter):
         """
         Sets up and populates the working directory as required.
         """
-        self.artifact.create_working_dir(True)
-        return self.artifact.tmp_dir()
+        return self.artifact.create_working_dir(True)
 
     def command_line_args(self):
         return self.args().get('args')
@@ -81,6 +80,7 @@ class SubprocessStdoutFilter(SubprocessFilter):
         else:
             stdin = None
 
+        self.log.debug("About to run '%s' in '%s'" % (command, wd))
         proc = subprocess.Popen(command, shell=True,
                                 cwd=wd,
                                 stdin=stdin,
@@ -92,6 +92,8 @@ class SubprocessStdoutFilter(SubprocessFilter):
             self.log.debug("about to send input '%s'" % input_text)
 
         stdout, stderr = proc.communicate(input_text)
+        self.log.debug("stdout is '%s'" % stdout)
+        self.log.debug("stderr is '%s'" % stderr)
         return (proc, stdout)
 
     def process(self):

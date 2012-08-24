@@ -113,13 +113,13 @@ class PatternDoc(WalkDoc):
         self.file_pattern = self.key.split("|")[0]
         self.filter_aliases = self.key.split("|")[1:]
 
-        exclude_at_root = ['artifacts', 'logs']
+        exclude_at_root = ['artifacts', 'logs', 'output', 'output-long']
         exclude_everywhere = ['.git']
 
         for dirpath, filename in self.walk(".", exclude_at_root, exclude_everywhere):
-            if fnmatch.fnmatch(filename, self.file_pattern):
-                raw_filepath = os.path.join(dirpath, filename)
-                filepath = os.path.normpath(raw_filepath)
+            raw_filepath = os.path.join(dirpath, filename)
+            filepath = os.path.normpath(raw_filepath)
+            if fnmatch.fnmatch(filepath, self.file_pattern):
 
                 if len(self.filter_aliases) > 0:
                     doc_key = "%s|%s" % (filepath, "|".join(self.filter_aliases))

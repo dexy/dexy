@@ -39,3 +39,5 @@ def conf(*args, **kwargs):
 
     runner.run(*docs)
     runner.report()
+
+    print "dexy has run!"

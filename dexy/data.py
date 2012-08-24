@@ -64,7 +64,7 @@ class GenericData(Data):
 
     def output_to_file(self, filepath):
         """
-        Write canonical output to a file.
+        Write canonical output to a file. Parent directory must exist already.
         """
         self.storage.write_data(self._data, filepath)
 

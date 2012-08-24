@@ -1,5 +1,5 @@
-from dexy.reporter import Reporter
 from dexy.doc import Doc
+from dexy.reporter import Reporter
 import os
 
 class OutputReporter(Reporter):
@@ -12,6 +12,11 @@ class OutputReporter(Reporter):
             if isinstance(task, Doc):
                 doc = task
                 fp = os.path.join(self.REPORTS_DIR, doc.final_artifact.name)
+
+                parent_dir = os.path.dirname(fp)
+                if not os.path.exists(parent_dir):
+                    os.makedirs(os.path.dirname(fp))
+
                 doc.output().output_to_file(fp)
 
 class LongOutputReporter(Reporter):
@@ -24,4 +29,9 @@ class LongOutputReporter(Reporter):
             if isinstance(task, Doc):
                 doc = task
                 fp = os.path.join(self.REPORTS_DIR, doc.final_artifact.long_name())
+
+                parent_dir = os.path.dirname(fp)
+                if not os.path.exists(parent_dir):
+                    os.makedirs(os.path.dirname(fp))
+
                 doc.output().output_to_file(fp)
