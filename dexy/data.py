@@ -29,12 +29,21 @@ class GenericData(Data):
 
         self._data = None
 
+        # Allow doing custom setup stuff in subclasses.
+        self.setup()
+
+    def setup(self):
+        pass
+
+    def save(self):
+        self.storage.write_data(self._data)
+
     def set_data(self, data):
         """
         Set data to the passed argument and persist data to disk.
         """
         self._data = data
-        self.storage.write_data(self._data)
+        self.save()
 
     def load_data(self):
         self._data = self.storage.read_data()
@@ -70,7 +79,7 @@ class GenericData(Data):
 
 class SectionedData(GenericData):
     ALIASES = ['sectioned']
-    DEFAULT_STORAGE_TYPE = 'json'
+    DEFAULT_STORAGE_TYPE = 'jsonordered'
 
     def as_text(self):
         return "\n".join(v for v in self.data().values())
@@ -84,3 +93,22 @@ class SectionedData(GenericData):
         """
         with open(filepath, "wb") as f:
             f.write(self.as_text())
+
+class KeyValueData(GenericData):
+    ALIASES  = ['keyvalue']
+    DEFAULT_STORAGE_TYPE = 'json'
+
+    def setup(self):
+        self._data = {}
+
+    def as_text(self):
+        text = []
+        for k, v in self._data.iteritems():
+            text.append("%s: %s" % (k, v))
+        return "\n".join(text)
+
+    def append(self, key, value):
+        self._data[key] = value
+
+    def keys(self):
+        return self._data.keys()

@@ -3,6 +3,8 @@ import shutil
 from ordereddict import OrderedDict
 import os
 
+# Generic Data
+
 class Storage:
     __metaclass__ = PluginMeta
 
@@ -38,9 +40,10 @@ class GenericStorage(Storage):
         with open(self.data_file(), "rb") as f:
             return f.read()
 
+# Sectioned Data
 import json
-class JsonStorage(GenericStorage):
-    ALIASES = ['json']
+class JsonOrderedStorage(GenericStorage):
+    ALIASES = ['jsonordered']
     MAX_DATA_DICT_DECIMALS = 5
     MAX_DATA_DICT_LENGTH = 10 ** MAX_DATA_DICT_DECIMALS
 
@@ -72,7 +75,25 @@ You can increase this limit by changing MAX_DATA_DICT_DECIMALS."""
             numbered_dict = json.load(f)
             return self.convert_numbered_dict_to_ordered_dict(numbered_dict)
 
-    def write_data(self, data):
-        with open(self.data_file(), "wb") as f:
+    def write_data(self, data, filepath=None):
+        if not filepath:
+            filepath = self.data_file()
+
+        with open(filepath, "wb") as f:
             numbered_dict = self.convert_ordered_dict_to_numbered_dict(data)
             json.dump(numbered_dict, f)
+
+# Key Value Data
+class JsonStorage(GenericStorage):
+    ALIASES = ['json']
+
+    def read_data(self):
+        with open(self.data_file(), "rb") as f:
+            return json.load(f)
+
+    def write_data(self, data, filepath=None):
+        if not filepath:
+            filepath = self.data_file()
+
+        with open(filepath, "wb") as f:
+            json.dump(data, f)

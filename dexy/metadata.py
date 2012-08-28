@@ -9,10 +9,8 @@ class Sqlite3(Metadata):
     """
 
     FIELDS = [
-#            ("batch_order" , "int"),
-#            ("elapsed" , "int"),
             ("hashstring" , "text"),
-#            ("source" , "text"),
+            ("parent_hash" , "text"),
             ("created_at", "DATETIME DEFAULT CURRENT_TIMESTAMP"),
             ("mtime", "int"),
             ("ctime", "int"),
@@ -72,13 +70,11 @@ class Sqlite3(Metadata):
         self.conn.commit()
 
     ### @export "compute-hash"
-    def compute_hash(self, debug=False):
+    def compute_hash(self):
         ordered = OrderedDict()
         for k in sorted(self.__dict__):
             if not k in ('hashstring', 'created_at'):
                 ordered[k] = str(self.__dict__[k])
 
         text = str(ordered)
-        if debug:
-            print text
         return hashlib.md5(text).hexdigest()

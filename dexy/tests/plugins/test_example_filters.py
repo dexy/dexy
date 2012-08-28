@@ -34,6 +34,13 @@ def test_add_new_document():
         assert doc.runner.completed.values()[0].key == "example.txt|newdoc"
         assert doc.runner.completed.values()[1].key == "newfile.txt|processtext"
 
+### @export "test-key-value"
+def test_key_value_example():
+    with temprun() as runner:
+        doc = Doc("hello.txt|keyvalueexample", contents="hello")
+        runner.run(doc)
+        assert doc.output().as_text() == "foo: bar"
+
 ### @export "test-access-other-documents"
 def test_access_other_documents():
     with temprun() as runner:

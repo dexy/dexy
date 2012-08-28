@@ -1,5 +1,7 @@
+from dexy.doc import Doc
 from dexy.filter import Filter
 import dexy.exceptions
+import json
 import os
 import subprocess
 
@@ -61,6 +63,32 @@ class SubprocessFilter(Filter):
 
         return env
 
+    def walk_working_directory(self, wd, section_name=None):
+        """
+        Walk the passed working directory and copy all found file contents into a dict.
+        """
+        d = {}
+        for dirpath, dirnames, filenames in os.walk(wd):
+            for filename in filenames:
+                filepath = os.path.join(dirpath, filename)
+                relpath = os.path.relpath(filepath, wd)
+
+                with open(filepath, "rb") as f:
+                    contents = f.read()
+                try:
+                    json.dumps(contents)
+                    d[relpath] = contents
+                except UnicodeDecodeError as e:
+                    d[relpath] = 'binary'
+
+        if section_name:
+            doc_key = "%s-%s-files" % (self.artifact.long_name(), section_name)
+        else:
+            doc_key = "%s-files" % self.artifact.long_name()
+
+        doc = Doc(doc_key, contents=d)
+        self.artifact.add_doc(doc)
+
     def process(self):
         command = self.command_string()
         proc, stdout = self.run_command(command, self.setup_env())
@@ -94,6 +122,9 @@ class SubprocessStdoutFilter(SubprocessFilter):
         stdout, stderr = proc.communicate(input_text)
         self.log.debug("stdout is '%s'" % stdout)
         self.log.debug("stderr is '%s'" % stderr)
+
+        self.walk_working_directory(wd)
+
         return (proc, stdout)
 
     def process(self):

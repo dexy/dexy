@@ -1,3 +1,4 @@
+import inspect
 """
 Plugins can create custom versions of:
 
@@ -28,11 +29,14 @@ class PluginMeta(type):
             # list where plugins can be registered later.
             cls.plugins = []
             cls.aliases = {}
+            cls.source = {}
+            cls.source[cls.__name__] = inspect.getsource(cls)
         else:
             # This must be a plugin implementation, which should be registered.
             # Simply appending it to the list is all that's needed to keep
             # track of it later.
             cls.plugins.append(cls)
+            cls.source[cls.__name__] = inspect.getsource(cls)
             if hasattr(cls, 'ALIASES'):
                 for alias in cls.ALIASES:
                     if alias in cls.aliases:

@@ -2,7 +2,9 @@ from dexy.task import Task
 from ordereddict import OrderedDict
 import dexy.data
 import dexy.exceptions
+import dexy.filter
 import dexy.metadata
+import inspect
 import os
 import shutil
 import stat
@@ -83,16 +85,17 @@ class InitialVirtualArtifact(Artifact):
 
         hashstring = self.metadata.hashstring
 
-        if isinstance(contents, OrderedDict):
-            data_class = dexy.data.Data.aliases['sectioned']
-            self.output_data = data_class(hashstring, self.ext, self.run_params)
+        data_class_alias = self.args.get('data_class')
+        if not data_class_alias:
+            if isinstance(contents, OrderedDict):
+                data_class_alias = 'sectioned'
+            elif isinstance(contents, dict):
+                data_class_alias = 'keyvalue'
+            else:
+                data_class_alias = 'generic'
 
-        elif isinstance(contents, dict):
-            raise Exception("dicts are not accepted. Must be ordereddict.")
-
-        else:
-            data_class = dexy.data.Data.aliases['generic']
-            self.output_data = data_class(hashstring, self.ext, self.run_params)
+        data_class = dexy.data.Data.aliases[data_class_alias]
+        self.output_data = data_class(hashstring, self.ext, self.run_params)
 
         if self.output_data.is_cached():
             self.log.debug("Data for %s is already cached in %s" % (self.key, self.output_data.storage.data_file()))
@@ -143,6 +146,9 @@ class FilterArtifact(Artifact):
         if not self.output_data.is_cached():
             self.log.debug("Running filter %s" % self.filter_class.__name__)
             self.generate()
+        else:
+            # TODO load additional artifacts that are in cache
+            pass
 
         self.runner.append(self)
         ### @end
@@ -169,14 +175,24 @@ class FilterArtifact(Artifact):
                 tree_hash.append("%s: %s" % (key, task.metadata.hashstring))
         self.metadata.tree_hash = ", ".join(tree_hash)
 
-        # TODO add filter source code
+        self.metadata.dexy_version = dexy.__version__
+        self.metadata.pre_method_source = inspect.getsource(self.pre)
+        self.metadata.post_method_source = inspect.getsource(self.post)
+
+        sources = []
+        klass = self.filter_class
+        while klass != dexy.filter.Filter:
+            sources.append(dexy.filter.Filter.source[klass.__name__])
+            klass = klass.__base__
+        sources.append(dexy.filter.Filter.source[klass.__name__])
+        self.metadata.filter_source = "\n".join(sources)
+
         # TODO add filter software version
-        # TODO add dexy version
-        # TODO add pre and post function text
 
         self.set_and_save_hash()
 
     def add_doc(self, doc):
+        doc.parent_hash = self.metadata.hashstring
         self.doc.children.append(doc)
 
     ### @export "set-extension"

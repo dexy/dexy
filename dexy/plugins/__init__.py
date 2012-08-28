@@ -9,3 +9,4 @@ import dexy.plugins.stdout_filters
 import dexy.plugins.pygments_filters
 import dexy.plugins.templating_filters
 import dexy.plugins.markdown_filters
+import dexy.plugins.xdoc_filters

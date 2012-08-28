@@ -5,6 +5,17 @@ from dexy.doc import Doc
 from dexy.filter import Filter
 from ordereddict import OrderedDict
 
+class KeyValueExample(Filter):
+    ALIASES = ['keyvalueexample']
+    OUTPUT_DATA_TYPE = 'keyvalue'
+    OUTPUT_EXTENSIONS = ['.json']
+
+    # TODO Write custom function to determine file extension.
+
+    def process(self):
+        self.artifact.output_data.append("foo", "bar")
+        self.artifact.output_data.save()
+
 ### @export "access-other-documents"
 class AccessOtherDocuments(Filter):
     ALIASES = ["others"]
