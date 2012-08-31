@@ -8,7 +8,7 @@ class OutputReporter(Reporter):
 
     def run(self, runner):
         self.create_reports_dir(self.REPORTS_DIR)
-        for key, task in runner.completed.iteritems():
+        for task in runner.registered:
             if isinstance(task, Doc):
                 doc = task
                 fp = os.path.join(self.REPORTS_DIR, doc.final_artifact.name)
@@ -25,7 +25,7 @@ class LongOutputReporter(Reporter):
 
     def run(self, runner):
         self.create_reports_dir(self.REPORTS_DIR)
-        for key, task in runner.completed.iteritems():
+        for task in runner.registered:
             if isinstance(task, Doc):
                 doc = task
                 fp = os.path.join(self.REPORTS_DIR, doc.final_artifact.long_name())

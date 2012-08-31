@@ -17,26 +17,18 @@ class Sqlite3(Metadata):
             ("inode", "int")
             ]
 
-    def __init__(self, run_params):
+    def __init__(self, runner):
+        self.runner = runner
+        if not hasattr(self.__class__, 'field_keys'):
+            self.__class__.field_keys = [k[0] for k in self.__class__.FIELDS]
+            self.__class__.whitelist_keys = ['key']
+            self.__class__.field_names = ['id'] + self.__class__.field_keys + self.__class__.whitelist_keys
+            self.__class__.db_attributes = [k for k in self.__class__.field_names if not k in ["created_at", "id"]]
+
         for k in [tup[0] for tup in self.FIELDS]:
             setattr(self, k, None)
 
-        if not hasattr(self, 'conn') or not self.conn:
-            self.setup_db_conn(run_params.db_file)
-
-    @classmethod
-    def setup_db_conn(klass, db_file):
-        klass.db_file = db_file
-        klass.conn = sqlite3.connect(klass.db_file)
-        klass.conn.row_factory = sqlite3.Row
-
-        klass.field_keys = [k[0] for k in klass.FIELDS]
-        klass.whitelist_keys = ['key']
-        klass.field_names = ['id'] + klass.field_keys + klass.whitelist_keys
-        klass.db_attributes = [k for k in klass.field_names if not k in ["created_at", "id"]]
-
-        klass.create_table()
-        klass.conn.commit()
+        self.create_table()
 
     @classmethod
     def create_table_sql(klass):
@@ -45,10 +37,10 @@ class Sqlite3(Metadata):
         fields.extend("%s text" % k for k in klass.whitelist_keys)
         return sql % (", ".join(fields))
 
-    @classmethod
-    def create_table(klass):
+    def create_table(self):
         try:
-            klass.conn.execute(klass.create_table_sql())
+            self.runner.conn.execute(self.create_table_sql())
+            self.runner.conn.commit()
         except sqlite3.OperationalError as e:
             if e.message != "table artifacts already exists":
                 raise e
@@ -61,20 +53,22 @@ class Sqlite3(Metadata):
         qs = ("?," * len(self.db_attributes))[:-1]
         sql = "insert into artifacts (%s) VALUES (%s)" % (",".join(self.db_attributes), qs)
         attrs = self.get_attributes()
-        self.conn.execute(sql, attrs)
+        self.runner.conn.execute(sql, attrs)
 
     def get_attributes(self):
         return [getattr(self, k) for k in self.db_attributes]
-
-    def persist(self):
-        self.conn.commit()
 
     ### @export "compute-hash"
     def compute_hash(self):
         ordered = OrderedDict()
         for k in sorted(self.__dict__):
-            if not k in ('hashstring', 'created_at'):
+            if not k in ('runner', 'hashstring', 'created_at'):
                 ordered[k] = str(self.__dict__[k])
+
+        self.runner.log.debug("==================== Calculating hash for %s" % self.key)
+        for k, v in ordered.iteritems():
+            str_v = str(v).split("\n")[0][0:150]
+            self.runner.log.debug("%s: %s" % (k, str_v))
 
         text = str(ordered)
         return hashlib.md5(text).hexdigest()

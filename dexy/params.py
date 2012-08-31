@@ -13,6 +13,7 @@ class RunParams(object):
         self.log_file = 'dexy.log'
         self.log_path = os.path.join(self.log_dir, self.log_file)
         self.log_level = 'DEBUG'
+        self.log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         self.reports = ['output']
 
         for key, value in kwargs.iteritems():

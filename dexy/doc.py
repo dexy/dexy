@@ -25,6 +25,8 @@ class Doc(Task):
 
     ### @export "setup"
     def setup(self):
+        self.set_log()
+
         ### @export "setup-parse-key"
         self.name = self.key.split("|")[0]
         self.filters = self.key.split("|")[1:]
@@ -32,13 +34,15 @@ class Doc(Task):
 
         ### @export "setup-initial-artifact"
         if os.path.exists(self.name):
-            initial = InitialArtifact(self.name)
+            initial = InitialArtifact(self.name, runner=self.runner)
         else:
-            initial = InitialVirtualArtifact(self.name)
+            initial = InitialVirtualArtifact(self.name, runner=self.runner)
 
         initial.args = self.args
         initial.name = self.name
         initial.prior = None
+        initial.doc = self
+
         self.children.append(initial)
         self.artifacts.append(initial)
         self.final_artifact = initial
@@ -49,7 +53,7 @@ class Doc(Task):
             filters = self.filters[0:i+1]
             key = "%s|%s" % (self.name, "|".join(filters))
 
-            fragment = FilterArtifact(key)
+            fragment = FilterArtifact(key, runner=self.runner)
             fragment.args = self.args
             fragment.doc = self
             fragment.filter_alias = filters[-1]
@@ -82,9 +86,14 @@ class Doc(Task):
             # update prior so this fragment will be the 'prior' in next loop
             prior = fragment
 
-    def run(self, runner):
-        self.runner = runner
-        self.runner.append(self)
+        # Make sure all child Doc instances are setup also.
+        for child in self.children:
+            if not child in self.artifacts:
+                if child.state == 'new':
+                    child.runner = self.runner
+                    child.setup()
+
+        self.after_setup()
 
 class WalkDoc(Task):
     """
@@ -120,14 +129,25 @@ class PatternDoc(WalkDoc):
             raw_filepath = os.path.join(dirpath, filename)
             filepath = os.path.normpath(raw_filepath)
             if fnmatch.fnmatch(filepath, self.file_pattern):
-
                 if len(self.filter_aliases) > 0:
                     doc_key = "%s|%s" % (filepath, "|".join(self.filter_aliases))
                 else:
                     doc_key = filepath
+                self.runner.log.debug("Creating doc %s" % doc_key)
 
-                doc = Doc(doc_key)
+                doc_args = self.args.copy()
+                doc_args['runner'] = self.runner
+
+                children = []
+                if doc_args.has_key('depends'):
+                    if doc_args.get('depends'):
+                        children = [a for a in self.runner.registered if isinstance(a, Doc)]
+                    del doc_args['depends']
+
+                doc = Doc(doc_key, *children, **doc_args)
                 self.children.append(doc)
+
+        self.after_setup()
 
 class DexyConfigDoc(Task):
     pass

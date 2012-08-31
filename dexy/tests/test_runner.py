@@ -9,19 +9,19 @@ def test_runner_init():
     runner = Runner()
     assert isinstance(runner.params, RunParams)
     assert isinstance(runner.completed, OrderedDict)
-    assert runner.artifacts_dir == 'artifacts'
+    assert runner.params.artifacts_dir == 'artifacts'
 
 def test_runner_setup():
     with tempdir():
         assert not os.path.exists('artifacts')
         runner = Runner()
-        runner.setup()
+        runner.setup_dexy_dirs()
         assert os.path.exists('artifacts')
 
 def test_runner_run():
     with tempdir():
         runner = Runner()
-        runner.setup()
+        runner.setup_dexy_dirs()
         d1 = Doc("abc.txt|outputabc", contents="these are the contents")
         d2 = Doc("hello.txt|outputabc", contents="these are more contents")
         assert d1.state == 'new'
@@ -31,8 +31,10 @@ def test_runner_run():
         assert d2.state == 'complete'
 
 def test_runner_append():
-    doc = Doc("abc.txt")
-    runner = Runner()
-    runner.append(doc)
-    assert doc.key in runner.completed
-    assert runner.completed[doc.key] == doc
+    with tempdir():
+        doc = Doc("abc.txt")
+        runner = Runner()
+        runner.setup_dexy_dirs()
+        runner.append(doc)
+        assert doc.key in runner.completed
+        assert runner.completed[doc.key] == doc

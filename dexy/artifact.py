@@ -13,17 +13,28 @@ import stat
 class Artifact(Task):
     def setup(self):
         self.set_log()
-        self.metadata = dexy.metadata.Sqlite3(self.run_params)
+        self.metadata = dexy.metadata.Sqlite3(self.runner)
+        self.after_setup()
 
     ### @export "set-and-save-hash"
     def set_and_save_hash(self):
+        self.append_children_hashstrings()
         self.set_hashstring()
         self.metadata.create_record()
-        self.metadata.persist()
+
+    def append_children_hashstrings(self):
+        child_hashes = []
+        for child in self.doc.completed_children.values():
+            if isinstance(child, dexy.doc.Doc):
+                child_hash = child.final_artifact.metadata.hashstring
+                child_hashes.append("%s: %s" % (child.key, child_hash))
+
+        self.metadata.child_hashes = ", ".join(child_hashes)
 
     ### @export "artifact-set-hashstring"
     def set_hashstring(self):
         self.metadata.hashstring = self.metadata.compute_hash()
+        self.log.debug("hashstring for %s is %s" % (self.key, self.metadata.hashstring))
 
     def parent_dir(self):
         return os.path.dirname(self.name)
@@ -72,12 +83,12 @@ class InitialVirtualArtifact(Artifact):
     def get_contents(self):
         return self.args.get('contents')
 
-    def run(self, runner):
+    def run(self, *args, **kw):
+        self.set_log()
         contents = self.get_contents()
         if not contents:
             raise Exception("no contents found for %s" % self.key)
 
-        self.runner = runner
         self.ext = os.path.splitext(self.name)[1]
         self.metadata.key = self.key
         self.metadata.contents = contents
@@ -95,7 +106,7 @@ class InitialVirtualArtifact(Artifact):
                 data_class_alias = 'generic'
 
         data_class = dexy.data.Data.aliases[data_class_alias]
-        self.output_data = data_class(hashstring, self.ext, self.run_params)
+        self.output_data = data_class(hashstring, self.ext, self.runner)
 
         if self.output_data.is_cached():
             self.log.debug("Data for %s is already cached in %s" % (self.key, self.output_data.storage.data_file()))
@@ -105,8 +116,7 @@ class InitialVirtualArtifact(Artifact):
 
 ### @export "initial-artifact-class"
 class InitialArtifact(Artifact):
-    def run(self, runner):
-        self.runner = runner
+    def run(self, *args, **kw):
         self.ext = os.path.splitext(self.name)[1]
 
         ### @export "initial-artifact-set-hashstring"
@@ -119,7 +129,7 @@ class InitialArtifact(Artifact):
         self.set_and_save_hash()
 
         ### @export "initial-artifact-output-data"
-        self.output_data = dexy.data.Data.aliases['generic'](self.metadata.hashstring, self.ext, self.run_params)
+        self.output_data = dexy.data.Data.aliases['generic'](self.metadata.hashstring, self.ext, self.runner)
 
         if os.path.exists(self.name):
             if not self.output_data.is_cached():
@@ -132,8 +142,7 @@ class InitialArtifact(Artifact):
 
 ### @export "filter-artifact-run"
 class FilterArtifact(Artifact):
-    def run(self, runner):
-        self.runner = runner
+    def run(self, *args, **kw):
         self.input_data = self.prior.output_data
 
         self.set_extension()
@@ -147,10 +156,8 @@ class FilterArtifact(Artifact):
             self.log.debug("Running filter %s" % self.filter_class.__name__)
             self.generate()
         else:
+            self.log.debug("Results of %s already cached" % (self.key))
             # TODO load additional artifacts that are in cache
-            pass
-
-        self.runner.append(self)
         ### @end
 
     def set_output_data(self):
@@ -163,21 +170,20 @@ class FilterArtifact(Artifact):
         self.metadata.next_filter_name = self.next_filter_name
         self.metadata.prior_hash = self.prior.metadata.hashstring
 
-        strargs = []
-        for k in sorted(self.args):
-            v = str(self.args[k])
-            strargs.append("%s: %s" % (k, v))
-        self.metadata.argstr = ", ".join(strargs)
-
-        tree_hash = []
-        for key, task in self.runner.completed.iteritems():
-            if hasattr(task, 'metadata'):
-                tree_hash.append("%s: %s" % (key, task.metadata.hashstring))
-        self.metadata.tree_hash = ", ".join(tree_hash)
-
-        self.metadata.dexy_version = dexy.__version__
         self.metadata.pre_method_source = inspect.getsource(self.pre)
         self.metadata.post_method_source = inspect.getsource(self.post)
+
+        strargs = []
+        self.log.debug("args for %s are %s" % (self.key, self.args))
+        for k in sorted(self.args):
+            if not k in ['runner']:
+                v = str(self.args[k])
+                strargs.append("%s: %s" % (k, v))
+        self.metadata.argstr = ", ".join(strargs)
+
+        # Determines if Dexy itself has been updated or if the filter source
+        # code has changed.
+        self.metadata.dexy_version = dexy.__version__
 
         sources = []
         klass = self.filter_class

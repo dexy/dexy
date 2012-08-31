@@ -16,16 +16,19 @@ class GenericData(Data):
     """
     Data in a single lump, which may be binary or text-based.
     """
-    def __init__(self, hashstring, ext, run_params, storage_type=None):
+    def __init__(self, hashstring, ext, runner, storage_type=None):
         if not storage_type:
             storage_type = self.DEFAULT_STORAGE_TYPE
 
+        if not runner.__class__.__name__ == "Runner":
+            raise Exception
+
         self.hashstring = hashstring
         self.ext = ext
-        self.run_params = run_params
+        self.runner = runner
 
         storage_class = dexy.storage.Storage.aliases[storage_type]
-        self.storage = storage_class(hashstring, ext, self.run_params)
+        self.storage = storage_class(hashstring, ext, self.runner)
 
         self._data = None
 

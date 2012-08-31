@@ -12,16 +12,18 @@ class Storage:
     def is_active(klass):
         return True
 
-    def __init__(self, hashstring, ext, run_params):
+    def __init__(self, hashstring, ext, runner):
         self.hashstring = hashstring
         self.ext = ext
-        self.run_params = run_params
+        self.runner = runner
+        if not runner.__class__.__name__ == "Runner":
+            raise Exception
 
 class GenericStorage(Storage):
     ALIASES = ['generic']
 
     def data_file(self):
-        return os.path.join(self.run_params.artifacts_dir, "%s%s" % (self.hashstring, self.ext))
+        return os.path.join(self.runner.params.artifacts_dir, "%s%s" % (self.hashstring, self.ext))
 
     def data_file_exists(self):
         return os.path.exists(self.data_file())

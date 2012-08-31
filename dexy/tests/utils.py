@@ -43,7 +43,9 @@ class temprun(tempdir):
         self.location = os.path.abspath(os.curdir)
         os.chdir(self.tempdir)
         runner = Runner()
-        runner.setup()
+        runner.setup_dexy_dirs()
+        runner.setup_log()
+        runner.setup_db_conn()
         return runner
 
 class runfilter(tempdir):
@@ -68,7 +70,8 @@ class runfilter(tempdir):
 
         # Create a runner object.
         runner = Runner()
-        runner.setup()
+        runner.setup_dexy_dirs()
+        runner.setup_log()
 
         # Create a document. Skip testing documents with inactive filters.
         try:

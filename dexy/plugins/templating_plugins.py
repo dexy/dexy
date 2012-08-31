@@ -1,6 +1,6 @@
 from datetime import datetime
 from dexy.artifact import Artifact
-from dexy.doc import Doc
+from dexy.doc import Doc, PatternDoc
 from ordereddict import OrderedDict
 from pygments.styles import get_all_styles
 import calendar
@@ -225,11 +225,16 @@ class InputsTemplatePlugin(TemplatePlugin):
 
         name = self.filter_instance.artifact.name
 
-        for key, task in self.filter_instance.artifact.runner.completed.iteritems():
+        for task in self.filter_instance.artifact.doc.completed_children.values():
+            if task.state != 'complete':
+                raise Exception("All tasks should be complete! Task %s in state %s" % (task.key, task.state))
+
             if isinstance(task, Artifact):
                 a = task
             elif isinstance(task, Doc):
                 a = task.final_artifact
+            elif isinstance(task, PatternDoc):
+                next
             else:
                 raise Exception("task is a %s" % task.__class__.__name__)
 

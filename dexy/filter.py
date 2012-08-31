@@ -50,6 +50,9 @@ class Filter:
         self.artifact.add_doc(doc)
         return doc
 
+    def inputs(self):
+        pass
+
     def input_data(self):
         return self.artifact.input_data
 
@@ -251,7 +254,7 @@ class Filter:
 
             method_used = "process"
 
-        self.log.debug("Used method %s of default process method.")
+        self.log.debug("Used method %s of default process method." % method_used)
         return method_used
 
 class DexyFilter(Filter):
