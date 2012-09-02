@@ -43,13 +43,6 @@ class PluginMeta(type):
                         raise Exception("duplicate alias %s found in %s, already present in %s" % (alias, cls.__name__, cls.aliases[alias].__name__))
                     cls.aliases[alias] = cls
 
-class Metadata:
-    ALIASES = []
-    __metaclass__ = PluginMeta
-    @classmethod
-    def is_active(klass):
-        return True
-
 class Command:
     NAMESPACE = None
     DEFAULT_COMMAND = None

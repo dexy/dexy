@@ -1,11 +1,10 @@
 from dexy.doc import Doc
+from dexy.database import Database
 from dexy.doc import PatternDoc
 from dexy.params import RunParams
 from dexy.reporter import Reporter
-from ordereddict import OrderedDict
 import logging
 import os
-import sqlite3
 
 class Runner(object):
     """
@@ -44,7 +43,9 @@ class Runner(object):
         """
         Processes args which may be doc objects or filenames with wildcards.
         """
-        self.docs = []
+        if not hasattr(self, 'docs'):
+            self.docs = []
+
         for arg in self.args:
             self.log.debug("Processing arg %s" % arg)
             if isinstance(arg, Doc) or isinstance(arg, PatternDoc):
@@ -73,19 +74,21 @@ class Runner(object):
 
             self.docs.append(doc)
 
-    def setup_db_conn(self):
-        self.conn = sqlite3.connect(self.params.db_file)
-        self.conn.row_factory = sqlite3.Row
+    def setup_db(self):
+        db_class = Database.aliases[self.params.db_alias]
+        self.db = db_class(self)
+        self.batch_id = self.db.get_next_batch_id()
 
     def save_db(self):
-        self.conn.commit()
-        self.conn.close()
+        self.db.save()
 
     def run(self):
         self.setup_dexy_dirs()
         self.setup_log()
-        self.setup_db_conn()
+        self.setup_db()
         self.setup_docs()
+
+        self.log.debug("batch id is %s" % self.batch_id)
 
         for doc in self.docs:
             for task in doc:
@@ -104,6 +107,12 @@ class Runner(object):
         """
         self.registered.append(task)
 
+    def registered_docs(self):
+        """
+        Filter all registered tasks for just Doc instances.
+        """
+        return [t for t in self.registered if isinstance(t, Doc)]
+
     def report(self, *reporters):
         """
         Runs reporters. Either runs reporters which have been passed in or, if
@@ -116,3 +125,6 @@ class Runner(object):
         for reporter in reporters:
             self.log.debug("Running reporter %s" % reporter.ALIASES[0])
             reporter.run(self)
+
+    def get_child_hashes_in_previous_batch(self, parent_hashstring):
+        return self.db.get_child_hashes_in_previous_batch(self.batch_id, parent_hashstring)

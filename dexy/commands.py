@@ -1,10 +1,9 @@
+from dexy.params import RunParams
 from modargs import args
 import dexy.exceptions
 import os
-import shutil
 import sys
 import warnings
-from dexy.params import RunParams
 
 MOD = sys.modules[__name__]
 PROG = 'dexy'

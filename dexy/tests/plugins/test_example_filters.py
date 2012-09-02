@@ -31,43 +31,42 @@ def test_add_new_document():
         assert doc.output().data() == "we added a new file"
         assert isinstance(doc.children[-1], Doc)
         assert doc.children[-1].output().data() == "Dexy processed the text 'newfile'"
-        assert doc.runner.completed.values()[0].key == "example.txt|newdoc"
-        assert doc.runner.completed.values()[1].key == "newfile.txt|processtext"
 
-### @export "test-key-value"
+        assert doc.runner.registered_docs()[0].key == "example.txt|newdoc"
+        assert doc.runner.registered_docs()[1].key == "newfile.txt|processtext"
+
 def test_key_value_example():
     with temprun() as runner:
-        doc = Doc("hello.txt|keyvalueexample", contents="hello")
-        runner.run(doc)
+        doc = Doc("hello.txt|keyvalueexample", contents="hello",runner=runner)
+        runner.docs = [doc]
+        runner.run()
         assert doc.output().as_text() == "foo: bar"
 
-### @export "test-access-other-documents"
 def test_access_other_documents():
     with temprun() as runner:
-        doc = Doc("hello.txt|newdoc", contents="hello")
-        parent = Doc("test.txt|others", doc, contents="hello")
-        runner.run(parent)
+        doc = Doc("hello.txt|newdoc", contents="hello", runner=runner)
+        parent = Doc("test.txt|others", doc, contents="hello", runner=runner)
+        runner.docs = [parent]
+        runner.run()
         assert parent.output().data() == """Here is a list of previous docs in this tree (not including test.txt|others).
         hello.txt|newdoc (3 children, 2 artifacts, length 19)
         newfile.txt|processtext (2 children, 2 artifacts, length 33)"""
 
-### @export "test-doc-children-artifacts"
 def test_doc_children_artifacts():
     with temprun() as runner:
-        doc = Doc("hello.txt|newdoc", contents="hello")
-        parent = Doc("parent.txt|process", doc, contents="hello")
+        doc = Doc("hello.txt|newdoc", contents="hello", runner=runner)
+        parent = Doc("parent.txt|process", doc, contents="hello", runner=runner)
 
-        ### @export "doc-children-before-run"
+        runner.docs = [parent]
+
         assert len(doc.children) == 2
         assert isinstance(doc.children[0], InitialVirtualArtifact)
         assert isinstance(doc.children[1], FilterArtifact)
 
-        ### @export "doc-artifacts-before-run"
         assert len(doc.artifacts) == 2
         assert isinstance(doc.artifacts[0], InitialVirtualArtifact)
         assert isinstance(doc.artifacts[1], FilterArtifact)
 
-        ### @export "parent-children-before-run"
         assert len(parent.children) == 3
 
         assert isinstance(parent.children[0], Doc)
@@ -76,15 +75,12 @@ def test_doc_children_artifacts():
         assert isinstance(parent.children[1], InitialVirtualArtifact)
         assert isinstance(parent.children[2], FilterArtifact)
 
-        ### @export "parent-artifacts-before-run"
         assert len(parent.artifacts) == 2
         assert isinstance(parent.artifacts[0], InitialVirtualArtifact)
         assert isinstance(parent.artifacts[1], FilterArtifact)
 
-        ### @export "run"
-        runner.run(parent)
+        runner.run()
 
-        ### @export "doc-children-after-run"
         assert len(doc.children) == 3
         assert isinstance(doc.children[0], InitialVirtualArtifact)
         assert isinstance(doc.children[1], FilterArtifact)
@@ -92,9 +88,9 @@ def test_doc_children_artifacts():
 
         assert len(doc.artifacts) == 2
 
-        ### @export "parent-children-after-run"
         assert len(parent.children) == 3
         assert len(parent.artifacts) == 2
 
-        ### @export "runner-after-run"
-        assert runner.completed.keys() == ['hello.txt|newdoc', 'newfile.txt|processtext', 'parent.txt|process']
+        assert runner.registered_docs()[0].key == "hello.txt|newdoc"
+        assert runner.registered_docs()[1].key == "parent.txt|process"
+        assert runner.registered_docs()[2].key == "newfile.txt|processtext"

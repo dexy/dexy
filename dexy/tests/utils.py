@@ -1,4 +1,5 @@
 from StringIO import StringIO
+from dexy.params import RunParams
 from dexy.artifact import FilterArtifact
 from dexy.doc import Doc
 from dexy.exceptions import InactiveFilter
@@ -24,7 +25,6 @@ def create_ordered_dict_from_dict(d):
 
 class tempdir():
     def __enter__(self):
-        dexy.metadata.Sqlite3.conn = None
         self.tempdir = tempfile.mkdtemp()
         self.location = os.path.abspath(os.curdir)
         os.chdir(self.tempdir)
@@ -38,14 +38,13 @@ class temprun(tempdir):
     Create a temporary directory and initialize a runner.
     """
     def __enter__(self):
-        dexy.metadata.Sqlite3.conn = None
         self.tempdir = tempfile.mkdtemp()
         self.location = os.path.abspath(os.curdir)
         os.chdir(self.tempdir)
         runner = Runner()
         runner.setup_dexy_dirs()
         runner.setup_log()
-        runner.setup_db_conn()
+        runner.setup_db()
         return runner
 
 class runfilter(tempdir):
@@ -60,29 +59,22 @@ class runfilter(tempdir):
         self.ext = ext
 
     def __enter__(self):
-        # Reset Sqlite3 so it creates a new db in current folder.
-        dexy.metadata.Sqlite3.conn = None
-
         # Create a temporary working dir and move to it
         self.tempdir = tempfile.mkdtemp()
         self.location = os.path.abspath(os.curdir)
         os.chdir(self.tempdir)
 
-        # Create a runner object.
-        runner = Runner()
-        runner.setup_dexy_dirs()
-        runner.setup_log()
-
         # Create a document. Skip testing documents with inactive filters.
         try:
+            params = RunParams()
             doc_key = "example%s|%s" % (self.ext, self.filter_alias)
-            doc = Doc(doc_key, contents=self.doc_contents)
+            doc_spec = [[doc_key, {"contents" : self.doc_contents}]]
+            runner = Runner(params, doc_spec)
+            runner.run()
         except InactiveFilter:
             raise SkipTest
 
-        # Run the document and return it.
-        runner.run(doc)
-        return doc
+        return runner.docs[0]
 
 def assert_output(filter_alias, doc_contents, expected_output, ext=".txt"):
     if not ext.startswith("."):

@@ -213,7 +213,7 @@ class Filter:
         """
         Returns an iterator of previously processed documents in this tree.
         """
-        for key, doc in self.artifact.runner.completed.iteritems():
+        for doc in self.artifact.doc.completed_child_docs():
             yield doc
 
     ### @end

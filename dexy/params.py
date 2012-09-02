@@ -8,6 +8,7 @@ class RunParams(object):
         # Default Values
         self.artifacts_dir = 'artifacts'
         self.config_file = '.dexy'
+        self.db_alias = 'sqlite3'
         self.db_file = os.path.join(self.artifacts_dir, 'dexy.sqlite3')
         self.log_dir = 'logs'
         self.log_file = 'dexy.log'

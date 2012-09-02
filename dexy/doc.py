@@ -4,6 +4,7 @@ from dexy.artifact import InitialVirtualArtifact
 from dexy.exceptions import *
 from dexy.task import Task
 import dexy.filter
+import fnmatch
 import os
 
 class Doc(Task):
@@ -23,16 +24,7 @@ class Doc(Task):
         """
         return self.final_artifact.output_data
 
-    ### @export "setup"
-    def setup(self):
-        self.set_log()
-
-        ### @export "setup-parse-key"
-        self.name = self.key.split("|")[0]
-        self.filters = self.key.split("|")[1:]
-        self.artifacts = []
-
-        ### @export "setup-initial-artifact"
+    def setup_initial_artifact(self):
         if os.path.exists(self.name):
             initial = InitialArtifact(self.name, runner=self.runner)
         else:
@@ -42,57 +34,69 @@ class Doc(Task):
         initial.name = self.name
         initial.prior = None
         initial.doc = self
+        initial.created_by_doc = self.created_by_doc
 
         self.children.append(initial)
         self.artifacts.append(initial)
         self.final_artifact = initial
 
-        ### @export "setup-filter-artifacts"
-        prior = initial
-        for i in range(0,len(self.filters)):
-            filters = self.filters[0:i+1]
-            key = "%s|%s" % (self.name, "|".join(filters))
+    def setup_filter_artifact(self, key, filters):
+        artifact = FilterArtifact(key, runner=self.runner)
+        artifact.args = self.args
+        artifact.doc = self
+        artifact.filter_alias = filters[-1]
+        artifact.doc_filepath = self.name
+        artifact.prior = self.artifacts[-1]
+        artifact.created_by_doc = self.created_by_doc
 
-            fragment = FilterArtifact(key, runner=self.runner)
-            fragment.args = self.args
-            fragment.doc = self
-            fragment.filter_alias = filters[-1]
-            fragment.doc_filepath = self.name
-            fragment.prior = prior
+        try:
+            artifact.filter_class = self.filter_class_for_alias(filters[-1])
+        except BlankAlias:
+            raise UserFeedback("You have a trailing | or you have 2 | symbols together in your specification for %s" % self.key)
 
-            try:
-                fragment.filter_class = self.filter_class_for_alias(filters[-1])
-            except BlankAlias:
-                raise UserFeedback("You have a trailing | or you have 2 | symbols together in your specification for %s" % self.key)
+        if not artifact.filter_class.is_active():
+            raise InactiveFilter
 
-            if not fragment.filter_class.is_active():
-                raise InactiveFilter
+        artifact.next_filter_alias = None
+        artifact.next_filter_class = None
+        artifact.next_filter_name = None
 
-            fragment.next_filter_alias = None
-            fragment.next_filter_class = None
-            fragment.next_filter_name = None
+        if len(filters) < len(self.filters):
+            next_filter_alias = self.filters[len(filters)]
+            artifact.next_filter_alias = next_filter_alias
+            artifact.next_filter_class = self.filter_class_for_alias(next_filter_alias)
+            artifact.next_filter_name = artifact.next_filter_class.__name__
 
-            if i+1 < len(self.filters):
-                next_filter_alias = self.filters[i+1]
-                fragment.next_filter_alias = next_filter_alias
-                fragment.next_filter_class = self.filter_class_for_alias(next_filter_alias)
-                fragment.next_filter_name = fragment.next_filter_class.__name__
+        self.children.append(artifact)
+        self.artifacts.append(artifact)
+        self.final_artifact = artifact
+        self.metadata = artifact.metadata
 
-            self.children.append(fragment)
-            self.artifacts.append(fragment)
-            self.final_artifact = fragment
-            self.metadata = fragment.metadata
-
-            # update prior so this fragment will be the 'prior' in next loop
-            prior = fragment
-
-        # Make sure all child Doc instances are setup also.
+    def setup_child_docs(self):
+        """
+        Make sure all child Doc instances are setup also.
+        """
         for child in self.children:
             if not child in self.artifacts:
                 if child.state == 'new':
                     child.runner = self.runner
                     child.setup()
 
+    def setup(self):
+        self.set_log()
+
+        self.name = self.key.split("|")[0]
+        self.filters = self.key.split("|")[1:]
+        self.artifacts = []
+
+        self.setup_initial_artifact()
+
+        for i in range(0,len(self.filters)):
+            filters = self.filters[0:i+1]
+            key = "%s|%s" % (self.name, "|".join(filters))
+            self.setup_filter_artifact(key, filters)
+
+        self.setup_child_docs()
         self.after_setup()
 
 class WalkDoc(Task):
@@ -102,9 +106,8 @@ class WalkDoc(Task):
     Shares code for skipping dexy directories.
     """
     def walk(self, start, exclude_at_root, exclude_everywhere):
+        # TODO implement exclude_everywhere
         for dirpath, dirnames, filenames in os.walk(start):
-            process_me = True
-
             if dirpath == ".":
                 for x in exclude_at_root:
                     if x in dirnames:
@@ -113,7 +116,6 @@ class WalkDoc(Task):
             for filename in filenames:
                 yield(dirpath, filename)
 
-import fnmatch
 class PatternDoc(WalkDoc):
     """
     A doc which takes a file matching pattern and creates individual Doc objects for all files that match the pattern.
@@ -148,13 +150,3 @@ class PatternDoc(WalkDoc):
                 self.children.append(doc)
 
         self.after_setup()
-
-class DexyConfigDoc(Task):
-    pass
-
-class DexyJsonConfigDoc(Task):
-    """
-    A doc which parses old .dexy files and creates Doc objects as needed. Intended for backwards compatibility.
-    """
-    def setup(self):
-        config = dexy.config.load_config()

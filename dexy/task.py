@@ -1,4 +1,3 @@
-from dexy.params import RunParams
 import dexy.doc
 import StringIO
 import dexy.exceptions
@@ -9,6 +8,8 @@ class Task(object):
         self.key = key
         self.children = list(children)
         self.args = args
+
+        self.created_by_doc = None
 
         self.completed_children = {}
 
@@ -61,16 +62,21 @@ class Task(object):
             for task in child:
                 task(*args, **kw)
 
-            self.completed_children[child.global_key()] = child
+            self.completed_children[child.key_with_class()] = child
             self.completed_children.update(child.completed_children)
 
+        self.runner.db.add_task_before_running(self)
         self.run(*args, **kw)
+        self.runner.db.update_task_after_running(self)
 
     def setup(self):
         self.after_setup()
 
-    def global_key(self):
+    def key_with_class(self):
         return "%s:%s" % (self.__class__.__name__, self.key)
+
+    def key_with_batch_id(self):
+        return "%s:%s:%s" % (self.runner.batch_id, self.__class__.__name__, self.key)
 
     def completed_child_docs(self):
         return [c for c in self.completed_children.values() if isinstance(c, dexy.doc.Doc)]

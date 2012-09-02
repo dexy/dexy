@@ -1,40 +1,38 @@
 from dexy.task import Task
 from ordereddict import OrderedDict
 import dexy.data
+import dexy.doc
 import dexy.exceptions
 import dexy.filter
 import dexy.metadata
 import inspect
+import json
 import os
 import shutil
 import stat
 
-### @export "artifact-class"
 class Artifact(Task):
     def setup(self):
         self.set_log()
-        self.metadata = dexy.metadata.Sqlite3(self.runner)
+        self.metadata = dexy.metadata.Md5()
         self.after_setup()
 
-    ### @export "set-and-save-hash"
     def set_and_save_hash(self):
         self.append_children_hashstrings()
         self.set_hashstring()
-        self.metadata.create_record()
 
     def append_children_hashstrings(self):
         child_hashes = []
         for child in self.doc.completed_children.values():
             if isinstance(child, dexy.doc.Doc):
-                child_hash = child.final_artifact.metadata.hashstring
+                child_hash = child.final_artifact.hashstring
                 child_hashes.append("%s: %s" % (child.key, child_hash))
 
         self.metadata.child_hashes = ", ".join(child_hashes)
 
-    ### @export "artifact-set-hashstring"
     def set_hashstring(self):
-        self.metadata.hashstring = self.metadata.compute_hash()
-        self.log.debug("hashstring for %s is %s" % (self.key, self.metadata.hashstring))
+        self.hashstring = self.metadata.compute_hash()
+        self.log.debug("hashstring for %s is %s" % (self.key, self.hashstring))
 
     def parent_dir(self):
         return os.path.dirname(self.name)
@@ -55,7 +53,7 @@ class Artifact(Task):
         ]
 
     def tmp_dir(self):
-        return os.path.join(self.run_params.artifacts_dir, self.metadata.hashstring)
+        return os.path.join(self.run_params.artifacts_dir, self.hashstring)
 
     def create_working_dir(self, populate=False):
         tmpdir = self.tmp_dir()
@@ -79,68 +77,69 @@ class Artifact(Task):
         self.input_data.output_to_file(input_filepath)
         return parent_dir
 
-class InitialVirtualArtifact(Artifact):
-    def get_contents(self):
-        return self.args.get('contents')
-
-    def run(self, *args, **kw):
-        self.set_log()
-        contents = self.get_contents()
-        if not contents:
-            raise Exception("no contents found for %s" % self.key)
-
-        self.ext = os.path.splitext(self.name)[1]
-        self.metadata.key = self.key
-        self.metadata.contents = contents
-        self.set_and_save_hash()
-
-        hashstring = self.metadata.hashstring
-
-        data_class_alias = self.args.get('data_class')
-        if not data_class_alias:
-            if isinstance(contents, OrderedDict):
-                data_class_alias = 'sectioned'
-            elif isinstance(contents, dict):
-                data_class_alias = 'keyvalue'
-            else:
-                data_class_alias = 'generic'
-
-        data_class = dexy.data.Data.aliases[data_class_alias]
-        self.output_data = data_class(hashstring, self.ext, self.runner)
-
-        if self.output_data.is_cached():
-            self.log.debug("Data for %s is already cached in %s" % (self.key, self.output_data.storage.data_file()))
-
-        else:
-            self.output_data.set_data(contents)
-
-### @export "initial-artifact-class"
 class InitialArtifact(Artifact):
-    def run(self, *args, **kw):
-        self.ext = os.path.splitext(self.name)[1]
+    def append_children_hashstrings(self):
+        # Children don't matter for initial artifact which just copies data
+        # from file and doesn't take any other doc inputs.
+        pass
 
-        ### @export "initial-artifact-set-hashstring"
+    def set_metadata_attrs(self):
         self.metadata.key = self.key
 
         stat_info = os.stat(self.name)
         self.metadata.mtime = stat_info[stat.ST_MTIME]
         self.metadata.size = stat_info[stat.ST_SIZE]
 
+    def data_class_alias(self):
+        return 'generic'
+
+    def setup_output_data(self):
+        data_class = dexy.data.Data.aliases[self.data_class_alias()]
+        self.output_data = data_class(self.hashstring, self.ext, self.runner)
+
+    def set_output_data(self):
+        self.output_data.copy_from_file(self.name)
+
+    def run(self, *args, **kw):
+        self.set_log()
+
+        self.ext = os.path.splitext(self.name)[1]
+
+        self.set_metadata_attrs()
         self.set_and_save_hash()
+        self.setup_output_data()
 
-        ### @export "initial-artifact-output-data"
-        self.output_data = dexy.data.Data.aliases['generic'](self.metadata.hashstring, self.ext, self.runner)
+        if not self.output_data.is_cached():
+            self.set_output_data()
 
-        if os.path.exists(self.name):
-            if not self.output_data.is_cached():
-                self.output_data.copy_from_file(self.name)
+class InitialVirtualArtifact(InitialArtifact):
+    def get_contents(self):
+        contents = self.args.get('contents')
+        if not contents:
+            raise Exception("no contents found for %s" % self.key)
+        return contents
 
-            assert self.output_data.is_cached()
+    def data_class_alias(self):
+        data_class_alias = self.args.get('data_class')
 
+        if data_class_alias:
+            return data_class_alias
         else:
-            raise Exception("No file %s found!" % self.name)
+            contents = self.get_contents()
+            if isinstance(contents, OrderedDict):
+                return 'sectioned'
+            elif isinstance(contents, dict):
+                return 'keyvalue'
+            else:
+                return 'generic'
 
-### @export "filter-artifact-run"
+    def set_metadata_attrs(self):
+        self.metadata.key = self.key
+        self.metadata.contents = self.get_contents()
+
+    def set_output_data(self):
+        self.output_data.set_data(self.get_contents())
+
 class FilterArtifact(Artifact):
     def run(self, *args, **kw):
         self.input_data = self.prior.output_data
@@ -148,27 +147,32 @@ class FilterArtifact(Artifact):
         self.set_extension()
         self.set_name()
         self.set_metadata_hash()
-        self.set_output_data()
-        ### @end
+        self.setup_output_data()
 
-        ### @export "artifact-output-data"
         if not self.output_data.is_cached():
             self.log.debug("Running filter %s" % self.filter_class.__name__)
             self.generate()
+            self.source = 'generated'
         else:
             self.log.debug("Results of %s already cached" % (self.key))
-            # TODO load additional artifacts that are in cache
-        ### @end
+            rows = self.runner.get_child_hashes_in_previous_batch(self.hashstring)
+            for row in rows:
+                if 'Initial' in row['class_name']:
+                    doc_args = json.loads(row['args'])
+                    doc = dexy.doc.Doc(row['doc_key'], **doc_args)
+                    self.add_doc(doc)
+                    assert doc.artifacts[0].hashstring == row['hashstring']
+            self.source = 'cached'
 
-    def set_output_data(self):
+    def setup_output_data(self):
         output_data_class = self.filter_class.output_data_class()
-        self.output_data = output_data_class(self.metadata.hashstring, self.ext, self.runner)
+        self.output_data = output_data_class(self.hashstring, self.ext, self.runner)
 
     def set_metadata_hash(self):
         self.metadata.ext = self.ext
         self.metadata.key = self.key
         self.metadata.next_filter_name = self.next_filter_name
-        self.metadata.prior_hash = self.prior.metadata.hashstring
+        self.metadata.prior_hash = self.prior.hashstring
 
         self.metadata.pre_method_source = inspect.getsource(self.pre)
         self.metadata.post_method_source = inspect.getsource(self.post)
@@ -198,10 +202,17 @@ class FilterArtifact(Artifact):
         self.set_and_save_hash()
 
     def add_doc(self, doc):
-        doc.parent_hash = self.metadata.hashstring
+        self.log.debug("Adding additional doc %s" % doc.key)
+        doc.created_by_doc = self.hashstring
+        doc.runner = self.runner
+        doc.setup()
+
+        for task in (doc,):
+            for t in task:
+                t()
+
         self.doc.children.append(doc)
 
-    ### @export "set-extension"
     def set_extension(self):
         """
         Determine the file extension that should be output by this artifact.
@@ -230,14 +241,12 @@ class FilterArtifact(Artifact):
         self.name_without_ext = os.path.splitext(self.doc_filepath)[0]
         self.name = "%s%s" % (self.name_without_ext, self.ext)
 
-    ### @export "generate"
     def generate(self, *args, **kw):
         filter_instance = self.filter_class()
         filter_instance.artifact = self
         filter_instance.log = self.log
         filter_instance.process()
 
-    ### @export "filter-args"
     def filter_args(self):
         """
         Arguments that are passed by the user which are specifically for the
