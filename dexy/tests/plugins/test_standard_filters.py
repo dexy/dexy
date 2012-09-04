@@ -15,8 +15,9 @@ def test_head_filter():
 
 def test_word_wrap_filter():
     with temprun() as runner:
-        doc = Doc("example.txt|wrap", contents="this is a line of text", wrap={"width" : 5})
-        runner.run(doc)
+        doc = Doc("example.txt|wrap", contents="this is a line of text", wrap={"width" : 5}, runner=runner)
+        runner.docs = [doc]
+        runner.run()
         assert doc.output().data() == "this\nis a\nline\nof\ntext"
 
 def test_lines_filter():
@@ -38,7 +39,8 @@ def test_start_space_filter():
 
 def test_tags_filter():
     with temprun() as runner:
-        doc = Doc("example.txt|tags", contents="<p>the text</p>", tags={"tags" : ["html", "body"]})
-        runner.run(doc)
+        doc = Doc("example.txt|tags", contents="<p>the text</p>", tags={"tags" : ["html", "body"]}, runner=runner)
+        runner.docs = [doc]
+        runner.run()
         assert doc.output().data() == "<html><body>\n<p>the text</p>\n</body></html>"
 

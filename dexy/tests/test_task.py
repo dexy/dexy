@@ -2,6 +2,7 @@ from dexy.exceptions import *
 from dexy.runner import Runner
 from dexy.task import Task
 from dexy.tests.utils import divert_stdout
+from dexy.tests.utils import temprun
 from nose.tools import raises
 
 def test_init():
@@ -84,42 +85,51 @@ class SubclassTask(Task):
 
 def test_run_incorrectly():
     with divert_stdout() as stdout:
-        runner = Runner()
-        for demotaskinstance in (SubclassTask("demo", runner=runner),):
-            demotaskinstance()
+        with temprun() as runner:
+            for demotaskinstance in (SubclassTask("demo", runner=runner),):
+                demotaskinstance()
         assert "run 'demo'" == stdout.getvalue()
 
 def test_run_demo_single():
     with divert_stdout() as stdout:
         runner = Runner()
-        for t in SubclassTask("demo", runner=runner):
-            t()
+        doc = SubclassTask("demo", runner=runner)
+
+        runner.docs = [doc]
+        runner.run()
+
         assert "pre 'demo' run 'demo' post 'demo'" == stdout.getvalue()
 
 def test_run_demo_parent_child():
     with divert_stdout() as stdout:
         runner = Runner()
-        for t in SubclassTask("parent", SubclassTask("child", runner=runner), runner=runner):
-            t()
+        doc = SubclassTask(
+                    "parent",
+                    SubclassTask("child", runner=runner),
+                    runner=runner
+                )
+
+        runner.docs = [doc]
+        runner.run()
+
         assert "pre 'parent' pre 'child' run 'child' post 'child' run 'parent' post 'parent'" == stdout.getvalue()
 
 def test_dependencies_only_run_once():
     with divert_stdout() as stdout:
         runner = Runner()
 
-        t1 = SubclassTask("1")
-        t2 = SubclassTask("2", t1)
-        t3 = SubclassTask("3", t1)
+        t1 = SubclassTask("1", runner=runner)
+        t2 = SubclassTask("2", t1, runner=runner)
+        t3 = SubclassTask("3", t1, runner=runner)
 
-        for task in (t1, t2, t3,):
-            task.runner = runner
-            task.setup()
-
-        for task in (t1, t2, t3,):
-            for t in task:
-                t()
+        runner.docs = [t1, t2, t3]
+        runner.run()
 
         assert stdout.getvalue() == "pre '1' run '1' post '1' pre '2' run '2' post '2' pre '3' run '3' post '3'"
+
+        assert len(t1.completed_children) == 0
+        assert t1 in t2.completed_children.values()
+        assert t1 in t3.completed_children.values()
 
 class AddNewSubtask(Task):
     def pre(self):
@@ -130,7 +140,27 @@ def test_add_new_subtask():
     with divert_stdout() as stdout:
         runner = Runner()
         t1 = AddNewSubtask("parent", runner=runner)
-        for task in (t1,):
-            for t in task:
-                t()
+
+        runner.docs = [t1]
+        runner.run()
+
         assert stdout.getvalue() == "pre 'new' run 'new' post 'new'"
+
+def test_completed_children():
+    with temprun() as runner:
+        with divert_stdout() as stdout:
+            grandchild_task = SubclassTask("grandchild", runner=runner)
+            child_task = SubclassTask("child", grandchild_task, runner=runner)
+            parent_task = SubclassTask("parent", child_task, runner=runner)
+
+            runner.docs = [parent_task]
+            runner.run()
+
+            assert stdout.getvalue() == "pre 'parent' pre 'child' pre 'grandchild' run 'grandchild' post 'grandchild' run 'child' post 'child' run 'parent' post 'parent'"
+
+    assert "SubclassTask:grandchild" in parent_task.completed_children.keys()
+    assert "SubclassTask:child" in parent_task.completed_children.keys()
+
+    assert "SubclassTask:grandchild" in child_task.completed_children.keys()
+
+    assert len(grandchild_task.completed_children) == 0

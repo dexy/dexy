@@ -87,7 +87,7 @@ def test_doc_run():
     with temprun() as runner:
         doc = Doc("abc.txt|dexy|dexy", runner=runner)
         doc.run()
-        assert doc.key in runner.completed.keys()
+        assert doc in runner.registered
 
 def test_setup_pattern_doc_no_filters():
     with temprun() as runner:

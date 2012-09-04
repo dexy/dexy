@@ -5,9 +5,10 @@ from dexy.tests.utils import temprun
 
 def test_output_reporter():
     with temprun() as runner:
-        doc = Doc("hello.txt", contents="hello")
+        doc = Doc("hello.txt", contents="hello", runner=runner)
         reporter = OutputReporter()
-        runner.run(doc)
+        runner.docs = [doc]
+        runner.run()
         runner.report(reporter)
         assert os.path.exists("output")
         assert os.path.exists("output/hello.txt")

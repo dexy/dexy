@@ -11,9 +11,9 @@ def test_unprocessed_directory_archive_filter():
         with open("def.txt", "w") as f:
             f.write('this is def')
 
-        doc = Doc("archive.tgz|tgzdir", contents="ignore", tgzdir={'dir' : '.'})
-
-        runner.run(doc)
+        doc = Doc("archive.tgz|tgzdir", contents="ignore", tgzdir={'dir' : '.'}, runner=runner)
+        runner.docs = [doc]
+        runner.run()
         runner.report()
 
         assert os.path.exists("output/archive.tgz")

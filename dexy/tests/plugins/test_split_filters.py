@@ -13,8 +13,9 @@ def test_split_html_filter():
         bottom
         """
 
-        doc = Doc("example.html|splithtml", contents=contents)
-        runner.run(doc)
+        doc = Doc("example.html|splithtml", contents=contents, runner=runner)
+        runner.docs = [doc]
+        runner.run()
 
         assert doc.children[2].key == "a-page.html"
         assert doc.children[3].key == "another-page.html"
@@ -48,9 +49,11 @@ def test_split_html_additional_filters():
 
         doc = Doc("example.html|splithtml",
                 contents=contents,
-                splithtml = { "additional_doc_filters" : "processtext" }
+                splithtml = { "additional_doc_filters" : "processtext" },
+                runner=runner
               )
-        runner.run(doc)
+        runner.docs = [doc]
+        runner.run()
 
         assert doc.children[2].key == "a-page.html|processtext"
         assert doc.children[3].key == "another-page.html|processtext"
