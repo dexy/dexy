@@ -1,7 +1,7 @@
 from datetime import datetime
 from dexy.artifact import Artifact
 from dexy.doc import Doc, PatternDoc
-from ordereddict import OrderedDict
+from dexy.common import OrderedDict
 from pygments.styles import get_all_styles
 import calendar
 import dexy.artifact

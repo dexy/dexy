@@ -1,11 +1,10 @@
+from dexy.common import OrderedDict
+from dexy.data import Data
 from dexy.doc import Doc
 from dexy.doc import PatternDoc
-from ordereddict import OrderedDict
-from dexy.exceptions import *
+from dexy.exceptions import UserFeedback, BlankAlias
 from dexy.filter import DexyFilter
-from dexy.data import Data
-from dexy.plugins.example_filters import AbcExtension
-from dexy.tests.utils import tempdir, temprun
+from dexy.tests.utils import temprun
 from nose.tools import raises
 
 @raises(UserFeedback)

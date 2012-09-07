@@ -2,7 +2,6 @@ from dexy.doc import Doc
 from dexy.params import RunParams
 from dexy.runner import Runner
 from dexy.tests.utils import tempdir
-from ordereddict import OrderedDict
 import os
 
 def test_runner_init():

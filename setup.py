@@ -34,7 +34,6 @@ setup(
             'idiopidae>=0.5.2',
             'jinja2',
             'nose',
-            'ordereddict', # for Python 2.6
             'pexpect',
             'pygments',
             'python-modargs>=1.4',

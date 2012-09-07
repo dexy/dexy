@@ -1,6 +1,6 @@
-from dexy.exceptions import *
 from dexy.task import Task
 import dexy.artifact
+import dexy.exceptions
 import dexy.filter
 import fnmatch
 import os
@@ -12,7 +12,7 @@ class Doc(Task):
     @classmethod
     def filter_class_for_alias(klass, alias):
         if alias == '':
-            raise BlankAlias
+            raise dexy.exceptions.BlankAlias
         else:
             return dexy.filter.Filter.aliases[alias]
 
@@ -49,11 +49,11 @@ class Doc(Task):
 
         try:
             artifact.filter_class = self.filter_class_for_alias(filters[-1])
-        except BlankAlias:
-            raise UserFeedback("You have a trailing | or you have 2 | symbols together in your specification for %s" % self.key)
+        except dexy.exceptions.BlankAlias:
+            raise dexy.exceptions.UserFeedback("You have a trailing | or you have 2 | symbols together in your specification for %s" % self.key)
 
         if not artifact.filter_class.is_active():
-            raise InactiveFilter
+            raise dexy.exceptions.InactiveFilter
 
         artifact.next_filter_alias = None
         artifact.next_filter_class = None

@@ -1,7 +1,7 @@
 from dexy.filter import Filter
 import json
 import copy
-from ordereddict import OrderedDict
+from dexy.common import OrderedDict
 
 class MarkupTagsFilter(Filter):
     """

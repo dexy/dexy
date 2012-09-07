@@ -1,13 +1,12 @@
 from StringIO import StringIO
-from dexy.params import RunParams
 from dexy.artifact import FilterArtifact
-from dexy.doc import Doc
+from dexy.common import OrderedDict
 from dexy.exceptions import InactiveFilter
+from dexy.params import RunParams
 from dexy.runner import Runner
 from dexy.utils import char_diff
 from modargs import args as modargs
 from nose.exc import SkipTest
-from ordereddict import OrderedDict
 import dexy.commands
 import dexy.data
 import dexy.metadata

@@ -1,5 +1,5 @@
+from dexy.common import OrderedDict
 from dexy.task import Task
-from ordereddict import OrderedDict
 import dexy.data
 import dexy.doc
 import dexy.exceptions

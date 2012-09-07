@@ -1,7 +1,7 @@
+from dexy.common import OrderedDict
 from dexy.plugin import PluginMeta
-import shutil
-from ordereddict import OrderedDict
 import os
+import shutil
 
 # Generic Data
 

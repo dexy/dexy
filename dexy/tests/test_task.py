@@ -1,4 +1,4 @@
-from dexy.exceptions import *
+from dexy.exceptions import UnexpectedState, InvalidStateTransition, CircularDependency
 from dexy.task import Task
 from dexy.tests.utils import divert_stdout
 from dexy.tests.utils import temprun

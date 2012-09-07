@@ -1,6 +1,5 @@
 from dexy.tests.utils import runfilter
 import json
-from dexy.doc import Doc
 
 BEOWULF = """BEOWULF
 

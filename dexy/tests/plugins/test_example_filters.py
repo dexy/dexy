@@ -1,8 +1,5 @@
 from dexy.artifact import InitialVirtualArtifact, FilterArtifact
 from dexy.doc import Doc
-from dexy.exceptions import InactiveFilter
-from dexy.filter import Filter
-from dexy.plugins.example_filters import *
 from dexy.tests.utils import assert_output
 from dexy.tests.utils import runfilter
 from dexy.tests.utils import temprun

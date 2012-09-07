@@ -1,7 +1,6 @@
+from dexy.common import OrderedDict
 from dexy.plugin import PluginMeta
-from ordereddict import OrderedDict
 import hashlib
-import sqlite3
 
 class Metadata:
     ALIASES = []

@@ -1,9 +1,9 @@
 """
 Filters written to be examples of how to write filters.
 """
+from dexy.common import OrderedDict
 from dexy.doc import Doc
 from dexy.filter import Filter
-from ordereddict import OrderedDict
 
 class KeyValueExample(Filter):
     ALIASES = ['keyvalueexample']
