@@ -1,8 +1,7 @@
-from dexy.doc import Doc
-from dexy.database import Database
-from dexy.doc import PatternDoc
 from dexy.params import RunParams
 from dexy.reporter import Reporter
+import dexy.doc
+import dexy.database
 import logging
 import os
 
@@ -10,11 +9,26 @@ class Runner(object):
     """
     Class that manages a dexy run.
     """
-    def __init__(self, params=RunParams(), args=[]):
+    def __init__(self, params=RunParams(), args=[], read=False):
         self.params = params
         self.args = args
         self.registered = []
         self.reports_dirs = [c.REPORTS_DIR for c in Reporter.plugins]
+
+        if read:
+            self.setup_read()
+
+    def setup_read(self, batch_id=None):
+        """
+        Set up the runner in 'read' mode for reviewing last batch.
+        """
+        self.setup_log()
+        self.setup_db()
+
+        if batch_id:
+            self.batch_id = batch_id
+        else:
+            self.batch_id = self.db.max_batch_id()
 
     def setup_dexy_dirs(self):
         """
@@ -48,7 +62,7 @@ class Runner(object):
 
         for arg in self.args:
             self.log.debug("Processing arg %s" % arg)
-            if isinstance(arg, Doc) or isinstance(arg, PatternDoc):
+            if isinstance(arg, dexy.doc.Doc) or isinstance(arg, dexy.doc.PatternDoc):
                 doc = arg
 
             elif isinstance(arg, list):
@@ -58,13 +72,13 @@ class Runner(object):
                     raise Exception("Second arg %s should be a dict" % arg[1])
 
                 if not "*" in arg[0]:
-                    doc = Doc(arg[0], **arg[1])
+                    doc = dexy.doc.Doc(arg[0], **arg[1])
                 else:
                     # This is a pattern doc or real doc TODO better way to verify?
-                    doc = PatternDoc(arg[0], **arg[1])
+                    doc = dexy.doc.PatternDoc(arg[0], **arg[1])
 
             elif isinstance(arg, basestring):
-                doc = PatternDoc(arg)
+                doc = dexy.doc.PatternDoc(arg)
 
             else:
                 raise Exception("unknown arg type %s for arg %s" % (arg.__class__.__name__, arg))
@@ -75,9 +89,9 @@ class Runner(object):
             self.docs.append(doc)
 
     def setup_db(self):
-        db_class = Database.aliases[self.params.db_alias]
+        db_class = dexy.database.Database.aliases[self.params.db_alias]
         self.db = db_class(self)
-        self.batch_id = self.db.get_next_batch_id()
+        self.batch_id = self.db.next_batch_id()
 
     def save_db(self):
         self.db.save()
@@ -111,7 +125,7 @@ class Runner(object):
         """
         Filter all registered tasks for just Doc instances.
         """
-        return [t for t in self.registered if isinstance(t, Doc)]
+        return [t for t in self.registered if isinstance(t, dexy.doc.Doc)]
 
     def report(self, *reporters):
         """

@@ -1,33 +1,42 @@
+from dexy.params import RunParams
 from dexy.plugin import PluginMeta
+from dexy.runner import Runner
 import dexy.storage
+import os
 import shutil
 
 class Data:
-    ALIASES = []
     __metaclass__ = PluginMeta
+
+    ALIASES = []
+    DEFAULT_STORAGE_TYPE = 'generic'
+
     @classmethod
     def is_active(klass):
         return True
 
-class GenericData(Data):
-    ALIASES = ['generic']
-    DEFAULT_STORAGE_TYPE = 'generic'
+    @classmethod
+    def retrieve(klass, data_type, hashstring, ext, storage_type, **kwargs):
+        """
+        Method to retrieve a Data object based on info stored in database.
 
-    """
-    Data in a single lump, which may be binary or text-based.
-    """
-    def __init__(self, hashstring, ext, runner, storage_type=None):
-        if not storage_type:
-            storage_type = self.DEFAULT_STORAGE_TYPE
+        Optional kwags are passed to a RunParams instance.
+        """
+        params = RunParams(**kwargs)
+        runner = Runner(params)
+        data_class = klass.aliases[data_type]
+        return data_class(hashstring, ext, runner, storage_type)
 
-        if not runner.__class__.__name__ == "Runner":
-            raise Exception
-
-        self.hashstring = hashstring
+    def __init__(self, key, ext, hashstring, runner, storage_type=None):
+        self.key = key
         self.ext = ext
+        self.hashstring = hashstring
         self.runner = runner
 
-        storage_class = dexy.storage.Storage.aliases[storage_type]
+        self.calculate_name()
+
+        self.storage_type = storage_type or self.DEFAULT_STORAGE_TYPE
+        storage_class = dexy.storage.Storage.aliases[self.storage_type]
         self.storage = storage_class(hashstring, ext, self.runner)
 
         self._data = None
@@ -38,6 +47,35 @@ class GenericData(Data):
     def setup(self):
         pass
 
+    def calculate_name(self):
+        name_without_ext = os.path.splitext(self.key)[0]
+        self.name = "%s%s" % (name_without_ext, self.ext)
+
+    def parent_dir(self):
+        return os.path.dirname(self.name)
+
+    def long_name(self):
+        return "%s%s" % (self.key.replace("|", "-"), self.ext)
+
+    def web_safe_document_key(self):
+        return self.long_name().replace("/", "--")
+
+    def relative_refs(self, relative_to_file):
+        doc_dir = os.path.dirname(relative_to_file)
+        return [
+                os.path.relpath(self.key, doc_dir),
+                os.path.relpath(self.long_name(), doc_dir),
+                "/%s" % self.key,
+                "/%s" % self.long_name()
+        ]
+
+class GenericData(Data):
+    ALIASES = ['generic']
+    DEFAULT_STORAGE_TYPE = 'generic'
+
+    """
+    Data in a single lump, which may be binary or text-based.
+    """
     def save(self):
         self.storage.write_data(self._data)
 

@@ -27,7 +27,7 @@ def test_add_task():
         assert row['started_at'] < datetime.now()
         assert not row['created_by_doc']
 
-        assert runner.db.get_next_batch_id() == 1002
+        assert runner.db.next_batch_id() == 1002
 
 def test_update_task():
     with temprun() as runner:
@@ -37,17 +37,15 @@ def test_update_task():
                 "key_with_batch_id.return_value" : "def1234556",
                 "runner.batch_id" : 1001,
                 "hashstring" : "abc123001",
-                "state" : "running",
                 "created_by_doc" : None,
+                "output_data_type" : "generic",
+                "ext" : ".txt",
+                "output_data.storage_type" : "generic",
                 "key" : "file.txt"
                 }
         task = MagicMock(**attrs)
         runner.db.add_task_before_running(task)
         runner.db.conn.commit()
-
-        attrs = {
-                "state" : "complete"
-                }
 
         runner.db.update_task_after_running(task)
 

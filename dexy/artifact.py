@@ -34,24 +34,6 @@ class Artifact(Task):
         self.hashstring = self.metadata.compute_hash()
         self.log.debug("hashstring for %s is %s" % (self.key, self.hashstring))
 
-    def parent_dir(self):
-        return os.path.dirname(self.name)
-
-    def long_name(self):
-        return "%s%s" % (self.key.replace("|", "-"), self.ext)
-
-    def web_safe_document_key(self):
-        return self.long_name().replace("/", "--")
-
-    def relative_refs(self, relative_to_file):
-        doc_dir = os.path.dirname(relative_to_file)
-        return [
-                os.path.relpath(self.key, doc_dir),
-                os.path.relpath(self.long_name(), doc_dir),
-                "/%s" % self.key,
-                "/%s" % self.long_name()
-        ]
-
     def tmp_dir(self):
         return os.path.join(self.run_params.artifacts_dir, self.hashstring)
 
@@ -77,6 +59,17 @@ class Artifact(Task):
         self.input_data.output_to_file(input_filepath)
         return parent_dir
 
+    def data_class_alias(self):
+        print "in data_class_alias for class", self.__class__
+        return 'generic'
+
+    def setup_output_data(self):
+        print "in setup_output_data for", self.key, "alias", self.data_class_alias()
+
+        data_class = dexy.data.Data.aliases[self.data_class_alias()]
+        self.output_data_type = data_class.ALIASES[0]
+        self.output_data = data_class(self.key, self.ext, self.hashstring, self.runner)
+
 class InitialArtifact(Artifact):
     def append_children_hashstrings(self):
         # Children don't matter for initial artifact which just copies data
@@ -89,13 +82,6 @@ class InitialArtifact(Artifact):
         stat_info = os.stat(self.name)
         self.metadata.mtime = stat_info[stat.ST_MTIME]
         self.metadata.size = stat_info[stat.ST_SIZE]
-
-    def data_class_alias(self):
-        return 'generic'
-
-    def setup_output_data(self):
-        data_class = dexy.data.Data.aliases[self.data_class_alias()]
-        self.output_data = data_class(self.hashstring, self.ext, self.runner)
 
     def set_output_data(self):
         self.output_data.copy_from_file(self.name)
@@ -141,32 +127,35 @@ class InitialVirtualArtifact(InitialArtifact):
         self.output_data.set_data(self.get_contents())
 
 class FilterArtifact(Artifact):
+    def data_class_alias(self):
+        return self.filter_class.data_class_alias()
+
     def run(self, *args, **kw):
         self.input_data = self.prior.output_data
 
         self.set_extension()
-        self.set_name()
         self.set_metadata_hash()
         self.setup_output_data()
 
         if not self.output_data.is_cached():
-            self.log.debug("Running filter %s" % self.filter_class.__name__)
             self.generate()
             self.source = 'generated'
         else:
-            self.log.debug("Results of %s already cached" % (self.key))
-            rows = self.runner.get_child_hashes_in_previous_batch(self.hashstring)
-            for row in rows:
-                if 'Initial' in row['class_name']:
-                    doc_args = json.loads(row['args'])
-                    doc = dexy.doc.Doc(row['doc_key'], **doc_args)
-                    self.add_doc(doc)
-                    assert doc.artifacts[0].hashstring == row['hashstring']
+            self.reconstitute_cached_children()
             self.source = 'cached'
 
-    def setup_output_data(self):
-        output_data_class = self.filter_class.output_data_class()
-        self.output_data = output_data_class(self.hashstring, self.ext, self.runner)
+    def reconstitute_cached_children(self):
+        """
+        Look for artifacts which were created as side effects of this filter
+        running, re-run these docs (which should be present in cache).
+        """
+        rows = self.runner.get_child_hashes_in_previous_batch(self.hashstring)
+        for row in rows:
+            if 'Initial' in row['class_name']:
+                doc_args = json.loads(row['args'])
+                doc = dexy.doc.Doc(row['doc_key'], **doc_args)
+                self.add_doc(doc)
+                assert doc.artifacts[0].hashstring == row['hashstring']
 
     def set_metadata_hash(self):
         self.metadata.ext = self.ext
@@ -178,17 +167,15 @@ class FilterArtifact(Artifact):
         self.metadata.post_method_source = inspect.getsource(self.post)
 
         strargs = []
-        self.log.debug("args for %s are %s" % (self.key, self.args))
         for k in sorted(self.args):
-            if not k in ['runner']:
+            if not k in ['runner']: # excepted items don't affect outcome
                 v = str(self.args[k])
                 strargs.append("%s: %s" % (k, v))
         self.metadata.argstr = ", ".join(strargs)
 
-        # Determines if Dexy itself has been updated or if the filter source
-        # code has changed.
         self.metadata.dexy_version = dexy.__version__
 
+        # filter source code
         sources = []
         klass = self.filter_class
         while klass != dexy.filter.Filter:
@@ -197,7 +184,7 @@ class FilterArtifact(Artifact):
         sources.append(dexy.filter.Filter.source[klass.__name__])
         self.metadata.filter_source = "\n".join(sources)
 
-        # TODO add filter software version
+        # TODO add software version of underlying software, if any
 
         self.set_and_save_hash()
 
@@ -236,10 +223,6 @@ class FilterArtifact(Artifact):
                     self.prior.ext,
                     self.key,
                     next_inputs)
-
-    def set_name(self):
-        self.name_without_ext = os.path.splitext(self.doc_filepath)[0]
-        self.name = "%s%s" % (self.name_without_ext, self.ext)
 
     def generate(self, *args, **kw):
         filter_instance = self.filter_class()

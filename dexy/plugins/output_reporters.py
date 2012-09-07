@@ -11,7 +11,7 @@ class OutputReporter(Reporter):
         for task in runner.registered:
             if isinstance(task, Doc):
                 doc = task
-                fp = os.path.join(self.REPORTS_DIR, doc.final_artifact.name)
+                fp = os.path.join(self.REPORTS_DIR, doc.output().name)
 
                 parent_dir = os.path.dirname(fp)
                 if not os.path.exists(parent_dir):
@@ -28,7 +28,7 @@ class LongOutputReporter(Reporter):
         for task in runner.registered:
             if isinstance(task, Doc):
                 doc = task
-                fp = os.path.join(self.REPORTS_DIR, doc.final_artifact.long_name())
+                fp = os.path.join(self.REPORTS_DIR, doc.output().long_name())
 
                 parent_dir = os.path.dirname(fp)
                 if not os.path.exists(parent_dir):

@@ -28,15 +28,13 @@ class Filter:
     WINDOWS_VERSION_COMMAND = None
 
     @classmethod
-    def output_data_class(klass):
-        output_data_type = klass.OUTPUT_DATA_TYPE
-
+    def data_class_alias(klass):
         if hasattr(klass, 'process_dict'):
-            output_data_type = 'sectioned'
+            return 'sectioned'
         elif hasattr(klass, 'process_text_to_dict'):
-            output_data_type = 'sectioned'
-
-        return dexy.data.Data.aliases[output_data_type]
+            return 'sectioned'
+        else:
+            return klass.OUTPUT_DATA_TYPE
 
     def add_doc(self, doc_name, doc_contents):
         additional_doc_filters = self.args().get("additional_doc_filters")
@@ -55,6 +53,9 @@ class Filter:
 
     def input_data(self):
         return self.artifact.input_data
+
+    def output_data(self):
+        return self.artifact.output_data
 
     def output_filepath(self):
         return self.artifact.output_data.storage.data_file()

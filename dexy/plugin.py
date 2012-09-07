@@ -42,6 +42,9 @@ class PluginMeta(type):
                     if alias in cls.aliases:
                         raise Exception("duplicate alias %s found in %s, already present in %s" % (alias, cls.__name__, cls.aliases[alias].__name__))
                     cls.aliases[alias] = cls
+            elif hasattr(cls, 'NAMESPACE'):
+                cls.aliases[cls.NAMESPACE] = cls
+
 
 class Command:
     NAMESPACE = None

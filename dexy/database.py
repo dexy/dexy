@@ -1,5 +1,6 @@
 from datetime import datetime
 from dexy.plugin import PluginMeta
+import dexy.data
 import json
 
 class Database:
@@ -25,10 +26,51 @@ class Sqlite3(Database):
             ("doc_key" , "text"),
             ("class_name" , "text"),
             ("hashstring" , "text"),
+            ("ext" , "text"),
+            ("data_type", "text"),
+            ("storage_type", "text"),
             ("created_by_doc" , "text"),
             ("started_at", "timestamp"),
             ("completed_at", "timestamp"),
             ]
+
+    def __init__(self, runner):
+        self.runner = runner
+        self.conn = sqlite3.connect(
+                self.runner.params.db_file,
+                detect_types=sqlite3.PARSE_DECLTYPES
+                )
+        self.conn.row_factory = sqlite3.Row
+        self.cursor = self.conn.cursor()
+        self.create_table()
+
+    def all_in_batch(self, n=10):
+        sql = "select doc_key from tasks where batch_id = ? LIMIT ?"
+        values = (self.runner.batch_id, n,)
+        self.cursor.execute(sql, values)
+        rows = self.cursor.fetchall()
+        return rows
+
+    def query_like(self, query):
+        return []
+
+    def find_data_by_doc_key(self, doc_key):
+        sql = "select data_type, hashstring, ext, storage_type from tasks where key = ? AND class_name = 'FilterArtifact'"
+        self.cursor.execute(sql, (doc_key,))
+        row = self.cursor.fetchone()
+
+        print "row for", doc_key, "is", row
+
+        return dexy.data.Data.retrieve(
+                row['data_type'],
+                row['hashstring'],
+                row['ext'],
+                row['storage_type'])
+
+    def find_data_by_websafe_key(self, web_safe_key):
+        doc_key = web_safe_key.replace("--", "/")
+        print "looking for doc key %s derived from web safe key %s" % (doc_key, web_safe_key)
+        return self.find_data_by_doc_key(doc_key)
 
     def get_child_hashes_in_previous_batch(self, current_batch_id, parent_hashstring):
         sql = "select max(batch_id) as previous_batch_id from tasks where batch_id < ?"
@@ -40,12 +82,16 @@ class Sqlite3(Database):
         self.cursor.execute(sql, (previous_batch_id, parent_hashstring))
         return self.cursor.fetchall()
 
-    def get_next_batch_id(self):
+    def max_batch_id(self):
         sql = "select max(batch_id) as max_batch_id from tasks"
         self.cursor.execute(sql)
         row = self.cursor.fetchone()
-        if row['max_batch_id']:
-            return row['max_batch_id'] + 1
+        return row['max_batch_id']
+
+    def next_batch_id(self):
+        max_batch_id = self.max_batch_id()
+        if max_batch_id:
+            return max_batch_id + 1
         else:
             return self.START_BATCH_ID
 
@@ -77,22 +123,24 @@ class Sqlite3(Database):
         else:
             hashstring = None
 
+        if hasattr(task, 'ext'):
+            ext = task.ext
+            data_type = task.output_data_type
+            storage_type = task.output_data.storage_type
+        else:
+            ext = None
+            data_type = None
+            storage_type = None
+
         attrs = {
                 'completed_at' : datetime.now(),
+                'ext' : ext,
+                'data_type' : data_type,
+                'storage_type' : storage_type,
                 'hashstring' : hashstring
                 }
         unique_key = task.key_with_batch_id()
         self.update_record(unique_key, attrs)
-
-    def __init__(self, runner):
-        self.runner = runner
-        self.conn = sqlite3.connect(
-                self.runner.params.db_file,
-                detect_types=sqlite3.PARSE_DECLTYPES
-                )
-        self.conn.row_factory = sqlite3.Row
-        self.cursor = self.conn.cursor()
-        self.create_table()
 
     def save(self):
         self.conn.commit()

@@ -1,8 +1,6 @@
-from dexy.artifact import FilterArtifact
-from dexy.artifact import InitialArtifact
-from dexy.artifact import InitialVirtualArtifact
 from dexy.exceptions import *
 from dexy.task import Task
+import dexy.artifact
 import dexy.filter
 import fnmatch
 import os
@@ -26,9 +24,9 @@ class Doc(Task):
 
     def setup_initial_artifact(self):
         if os.path.exists(self.name):
-            initial = InitialArtifact(self.name, runner=self.runner)
+            initial = dexy.artifact.InitialArtifact(self.name, runner=self.runner)
         else:
-            initial = InitialVirtualArtifact(self.name, runner=self.runner)
+            initial = dexy.artifact.InitialVirtualArtifact(self.name, runner=self.runner)
 
         initial.args = self.args
         initial.name = self.name
@@ -41,7 +39,7 @@ class Doc(Task):
         self.final_artifact = initial
 
     def setup_filter_artifact(self, key, filters):
-        artifact = FilterArtifact(key, runner=self.runner)
+        artifact = dexy.artifact.FilterArtifact(key, runner=self.runner)
         artifact.args = self.args
         artifact.doc = self
         artifact.filter_alias = filters[-1]

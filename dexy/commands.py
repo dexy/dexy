@@ -35,7 +35,7 @@ def run():
             mod_name = command_class.__module__
             mod = args.load_module(mod_name)
 
-            if hasattr(command_class, 'DEFAULT_COMMAND'):
+            if command_class.DEFAULT_COMMAND:
                 default_command = command_class.DEFAULT_COMMAND
             else:
                 default_command = command_class.NAMESPACE
@@ -178,5 +178,5 @@ def help_text(on=False):
 
 def version_command():
     """Print the current version."""
-    print "%s version %s" % (PROG, dexy.version())
+    print "hello %s version %s" % (PROG, dexy.__version__)
 
