@@ -43,7 +43,7 @@ class Artifact(Task):
         os.mkdir(tmpdir)
 
         if populate:
-            for key, doc in self.runner.completed.iteritems():
+            for key, doc in self.wrapper.completed.iteritems():
                 if isinstance(doc, dexy.doc.Doc):
                     filename = os.path.join(tmpdir, doc.final_artifact.name)
                     parent_dir = os.path.dirname(filename)
@@ -65,7 +65,7 @@ class Artifact(Task):
     def setup_output_data(self):
         data_class = dexy.data.Data.aliases[self.data_class_alias()]
         self.output_data_type = data_class.ALIASES[0]
-        self.output_data = data_class(self.key, self.ext, self.hashstring, self.runner)
+        self.output_data = data_class(self.key, self.ext, self.hashstring, self.wrapper)
 
 class InitialArtifact(Artifact):
     def append_children_hashstrings(self):
@@ -146,7 +146,7 @@ class FilterArtifact(Artifact):
         Look for artifacts which were created as side effects of this filter
         running, re-run these docs (which should be present in cache).
         """
-        rows = self.runner.get_child_hashes_in_previous_batch(self.hashstring)
+        rows = self.wrapper.get_child_hashes_in_previous_batch(self.hashstring)
         for row in rows:
             if 'Initial' in row['class_name']:
                 doc_args = json.loads(row['args'])
@@ -165,7 +165,7 @@ class FilterArtifact(Artifact):
 
         strargs = []
         for k in sorted(self.args):
-            if not k in ['runner']: # excepted items don't affect outcome
+            if not k in ['wrapper']: # excepted items don't affect outcome
                 v = str(self.args[k])
                 strargs.append("%s: %s" % (k, v))
         self.metadata.argstr = ", ".join(strargs)
@@ -188,7 +188,7 @@ class FilterArtifact(Artifact):
     def add_doc(self, doc):
         self.log.debug("Adding additional doc %s" % doc.key)
         doc.created_by_doc = self.hashstring
-        doc.runner = self.runner
+        doc.wrapper = self.wrapper
         doc.setup()
 
         for task in (doc,):

@@ -2,7 +2,7 @@ from dexy.artifact import InitialVirtualArtifact, FilterArtifact
 from dexy.doc import Doc
 from dexy.tests.utils import assert_output
 from dexy.tests.utils import runfilter
-from dexy.tests.utils import temprun
+from dexy.tests.utils import wrap
 
 def test_process_text_filter():
     assert_output("processtext", "hello", "Dexy processed the text 'hello'")
@@ -29,32 +29,32 @@ def test_add_new_document():
         assert isinstance(doc.children[-1], Doc)
         assert doc.children[-1].output().data() == "Dexy processed the text 'newfile'"
 
-        assert doc.runner.registered_docs()[0].key == "example.txt|newdoc"
-        assert doc.runner.registered_docs()[1].key == "newfile.txt|processtext"
+        assert doc.wrapper.registered_docs()[0].key == "example.txt|newdoc"
+        assert doc.wrapper.registered_docs()[1].key == "newfile.txt|processtext"
 
 def test_key_value_example():
-    with temprun() as runner:
-        doc = Doc("hello.txt|keyvalueexample", contents="hello",runner=runner)
-        runner.docs = [doc]
-        runner.run()
+    with wrap() as wrapper:
+        doc = Doc("hello.txt|keyvalueexample", contents="hello",wrapper=wrapper)
+        wrapper.docs = [doc]
+        wrapper.run()
         assert doc.output().as_text() == "foo: bar"
 
 def test_access_other_documents():
-    with temprun() as runner:
-        doc = Doc("hello.txt|newdoc", contents="hello", runner=runner)
-        parent = Doc("test.txt|others", doc, contents="hello", runner=runner)
-        runner.docs = [parent]
-        runner.run()
+    with wrap() as wrapper:
+        doc = Doc("hello.txt|newdoc", contents="hello", wrapper=wrapper)
+        parent = Doc("test.txt|others", doc, contents="hello", wrapper=wrapper)
+        wrapper.docs = [parent]
+        wrapper.run()
         assert parent.output().data() == """Here is a list of previous docs in this tree (not including test.txt|others).
         hello.txt|newdoc (3 children, 2 artifacts, length 19)
         newfile.txt|processtext (2 children, 2 artifacts, length 33)"""
 
 def test_doc_children_artifacts():
-    with temprun() as runner:
-        doc = Doc("hello.txt|newdoc", contents="hello", runner=runner)
-        parent = Doc("parent.txt|process", doc, contents="hello", runner=runner)
+    with wrap() as wrapper:
+        doc = Doc("hello.txt|newdoc", contents="hello", wrapper=wrapper)
+        parent = Doc("parent.txt|process", doc, contents="hello", wrapper=wrapper)
 
-        runner.docs = [parent]
+        wrapper.docs = [parent]
 
         assert len(doc.children) == 2
         assert isinstance(doc.children[0], InitialVirtualArtifact)
@@ -76,7 +76,7 @@ def test_doc_children_artifacts():
         assert isinstance(parent.artifacts[0], InitialVirtualArtifact)
         assert isinstance(parent.artifacts[1], FilterArtifact)
 
-        runner.run()
+        wrapper.run()
 
         assert len(doc.children) == 3
         assert isinstance(doc.children[0], InitialVirtualArtifact)
@@ -88,6 +88,6 @@ def test_doc_children_artifacts():
         assert len(parent.children) == 3
         assert len(parent.artifacts) == 2
 
-        assert runner.registered_docs()[0].key == "hello.txt|newdoc"
-        assert runner.registered_docs()[1].key == "parent.txt|process"
-        assert runner.registered_docs()[2].key == "newfile.txt|processtext"
+        assert wrapper.registered_docs()[0].key == "hello.txt|newdoc"
+        assert wrapper.registered_docs()[1].key == "parent.txt|process"
+        assert wrapper.registered_docs()[2].key == "newfile.txt|processtext"

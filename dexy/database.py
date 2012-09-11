@@ -34,10 +34,10 @@ class Sqlite3(Database):
             ("completed_at", "timestamp"),
             ]
 
-    def __init__(self, runner):
-        self.runner = runner
+    def __init__(self, wrapper):
+        self.wrapper = wrapper
         self.conn = sqlite3.connect(
-                self.runner.params.db_file,
+                self.wrapper.db_file,
                 detect_types=sqlite3.PARSE_DECLTYPES
                 )
         self.conn.row_factory = sqlite3.Row
@@ -46,7 +46,7 @@ class Sqlite3(Database):
 
     def all_in_batch(self, n=10):
         sql = "select doc_key from tasks where batch_id = ? LIMIT ?"
-        values = (self.runner.batch_id, n,)
+        values = (self.wrapper.batch_id, n,)
         self.cursor.execute(sql, values)
         rows = self.cursor.fetchall()
         return rows
@@ -103,13 +103,13 @@ class Sqlite3(Database):
             doc_key = task.key
 
         args_to_serialize = task.args.copy()
-        if args_to_serialize.has_key('runner'):
-            del args_to_serialize['runner']
+        if args_to_serialize.has_key('wrapper'):
+            del args_to_serialize['wrapper']
 
         attrs = {
                 'args' : json.dumps(args_to_serialize),
                 'doc_key' : doc_key,
-                'batch_id' : task.runner.batch_id,
+                'batch_id' : task.wrapper.batch_id,
                 'class_name' : task.__class__.__name__,
                 'created_by_doc' : task.created_by_doc,
                 'key' : task.key,

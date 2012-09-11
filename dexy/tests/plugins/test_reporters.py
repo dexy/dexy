@@ -1,14 +1,14 @@
 from dexy.plugins.output_reporters import OutputReporter
 import os
 from dexy.doc import Doc
-from dexy.tests.utils import temprun
+from dexy.tests.utils import wrap
 
 def test_output_reporter():
-    with temprun() as runner:
-        doc = Doc("hello.txt", contents="hello", runner=runner)
+    with wrap() as wrapper:
+        doc = Doc("hello.txt", contents="hello", wrapper=wrapper)
         reporter = OutputReporter()
-        runner.docs = [doc]
-        runner.run()
-        runner.report(reporter)
+        wrapper.docs = [doc]
+        wrapper.run()
+        wrapper.report(reporter)
         assert os.path.exists("output")
         assert os.path.exists("output/hello.txt")

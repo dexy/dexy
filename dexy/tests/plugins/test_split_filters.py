@@ -1,8 +1,8 @@
-from dexy.tests.utils import temprun
+from dexy.tests.utils import wrap
 from dexy.doc import Doc
 
 def test_split_html_filter():
-    with temprun() as runner:
+    with wrap() as wrapper:
         contents="""
         <p>This is at the top.</p>
         <!-- split "a-page" -->
@@ -13,9 +13,9 @@ def test_split_html_filter():
         bottom
         """
 
-        doc = Doc("example.html|splithtml", contents=contents, runner=runner)
-        runner.docs = [doc]
-        runner.run()
+        doc = Doc("example.html|splithtml", contents=contents, wrapper=wrapper)
+        wrapper.docs = [doc]
+        wrapper.run()
 
         assert doc.children[2].key == "a-page.html"
         assert doc.children[3].key == "another-page.html"
@@ -36,7 +36,7 @@ def test_split_html_filter():
         assert "bottom" in doc.children[3].output().data()
 
 def test_split_html_additional_filters():
-    with temprun() as runner:
+    with wrap() as wrapper:
         contents="""
         <p>This is at the top.</p>
         <!-- split "a-page" -->
@@ -50,10 +50,10 @@ def test_split_html_additional_filters():
         doc = Doc("example.html|splithtml",
                 contents=contents,
                 splithtml = { "additional_doc_filters" : "processtext" },
-                runner=runner
+                wrapper=wrapper
               )
-        runner.docs = [doc]
-        runner.run()
+        wrapper.docs = [doc]
+        wrapper.run()
 
         assert doc.children[2].key == "a-page.html|processtext"
         assert doc.children[3].key == "another-page.html|processtext"

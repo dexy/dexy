@@ -1,6 +1,5 @@
-from dexy.params import RunParams
 from dexy.plugin import PluginMeta
-from dexy.runner import Runner
+from dexy.wrapper import Wrapper
 import dexy.storage
 import os
 import shutil
@@ -22,22 +21,21 @@ class Data:
 
         Optional kwags are passed to a RunParams instance.
         """
-        params = RunParams(**kwargs)
-        runner = Runner(params)
+        wrapper = Wrapper(**kwargs)
         data_class = klass.aliases[data_type]
-        return data_class(key, ext, hashstring, runner, storage_type)
+        return data_class(key, ext, hashstring, wrapper, storage_type)
 
-    def __init__(self, key, ext, hashstring, runner, storage_type=None):
+    def __init__(self, key, ext, hashstring, wrapper, storage_type=None):
         self.key = key
         self.ext = ext
         self.hashstring = hashstring
-        self.runner = runner
+        self.wrapper = wrapper
 
         self.calculate_name()
 
         self.storage_type = storage_type or self.DEFAULT_STORAGE_TYPE
         storage_class = dexy.storage.Storage.aliases[self.storage_type]
-        self.storage = storage_class(hashstring, ext, self.runner)
+        self.storage = storage_class(hashstring, ext, self.wrapper)
 
         self._data = None
 

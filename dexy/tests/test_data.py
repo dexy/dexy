@@ -1,9 +1,9 @@
-from dexy.runner import Runner
+from dexy.wrapper import Wrapper
 import dexy.data
 
 def test_init_data():
-    runner = Runner()
-    data = dexy.data.GenericData("doc.txt", ".abc", "def123", runner)
+    wrapper = Wrapper()
+    data = dexy.data.GenericData("doc.txt", ".abc", "def123", wrapper)
 
     assert data.key == "doc.txt"
     assert data.name == "doc.abc"
@@ -20,7 +20,7 @@ def test_calculate_name():
             ("doc.txt-abc-def.txt", ".pdq", "doc.txt-abc-def.pdq")
             )
 
-    runner = Runner()
+    wrapper = Wrapper()
     for key, ext, name in values:
-        data = dexy.data.Data(key, ext, "abc123", runner)
+        data = dexy.data.Data(key, ext, "abc123", wrapper)
         assert data.name == name

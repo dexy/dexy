@@ -1,7 +1,7 @@
 from dexy.exceptions import UnexpectedState, InvalidStateTransition, CircularDependency
 from dexy.task import Task
 from dexy.tests.utils import divert_stdout
-from dexy.tests.utils import temprun
+from dexy.tests.utils import wrap
 from nose.tools import raises
 
 def test_init():
@@ -42,9 +42,9 @@ def test_set_log():
     assert "please write me to log" in task.logstream.getvalue()
 
 def test_circular():
-    with temprun() as runner:
-        d1 = Task("1",runner=runner)
-        d2 = Task("2",runner=runner)
+    with wrap() as wrapper:
+        d1 = Task("1",wrapper=wrapper)
+        d2 = Task("2",wrapper=wrapper)
 
         d1.children.append(d2)
         d2.children.append(d1)
@@ -58,11 +58,11 @@ def test_circular():
 
 @raises(CircularDependency)
 def test_circular_4_docs():
-    with temprun() as runner:
-        d1 = Task("1", runner=runner)
-        d2 = Task("2", runner=runner)
-        d3 = Task("3", runner=runner)
-        d4 = Task("4", runner=runner)
+    with wrap() as wrapper:
+        d1 = Task("1", wrapper=wrapper)
+        d2 = Task("2", wrapper=wrapper)
+        d3 = Task("3", wrapper=wrapper)
+        d4 = Task("4", wrapper=wrapper)
 
         d1.children.append(d2)
         d2.children.append(d3)
@@ -84,44 +84,44 @@ class SubclassTask(Task):
 
 def test_run_incorrectly():
     with divert_stdout() as stdout:
-        with temprun() as runner:
-            for demotaskinstance in (SubclassTask("demo", runner=runner),):
+        with wrap() as wrapper:
+            for demotaskinstance in (SubclassTask("demo", wrapper=wrapper),):
                 demotaskinstance()
         assert "run 'demo'" == stdout.getvalue()
 
 def test_run_demo_single():
     with divert_stdout() as stdout:
-        with temprun() as runner:
-            doc = SubclassTask("demo", runner=runner)
+        with wrap() as wrapper:
+            doc = SubclassTask("demo", wrapper=wrapper)
 
-            runner.docs = [doc]
-            runner.run()
+            wrapper.docs = [doc]
+            wrapper.run()
 
             assert "pre 'demo' run 'demo' post 'demo'" == stdout.getvalue()
 
 def test_run_demo_parent_child():
     with divert_stdout() as stdout:
-        with temprun() as runner:
+        with wrap() as wrapper:
             doc = SubclassTask(
                         "parent",
-                        SubclassTask("child", runner=runner),
-                        runner=runner
+                        SubclassTask("child", wrapper=wrapper),
+                        wrapper=wrapper
                     )
 
-            runner.docs = [doc]
-            runner.run()
+            wrapper.docs = [doc]
+            wrapper.run()
 
         assert "pre 'parent' pre 'child' run 'child' post 'child' run 'parent' post 'parent'" == stdout.getvalue()
 
 def test_dependencies_only_run_once():
     with divert_stdout() as stdout:
-        with temprun() as runner:
-            t1 = SubclassTask("1", runner=runner)
-            t2 = SubclassTask("2", t1, runner=runner)
-            t3 = SubclassTask("3", t1, runner=runner)
+        with wrap() as wrapper:
+            t1 = SubclassTask("1", wrapper=wrapper)
+            t2 = SubclassTask("2", t1, wrapper=wrapper)
+            t3 = SubclassTask("3", t1, wrapper=wrapper)
 
-            runner.docs = [t1, t2, t3]
-            runner.run()
+            wrapper.docs = [t1, t2, t3]
+            wrapper.run()
 
             assert stdout.getvalue() == "pre '1' run '1' post '1' pre '2' run '2' post '2' pre '3' run '3' post '3'"
 
@@ -131,28 +131,28 @@ def test_dependencies_only_run_once():
 
 class AddNewSubtask(Task):
     def pre(self):
-        new_task = SubclassTask("new", runner=self.runner)
+        new_task = SubclassTask("new", wrapper=self.wrapper)
         self.children.append(new_task)
 
 def test_add_new_subtask():
     with divert_stdout() as stdout:
-        with temprun() as runner:
-            t1 = AddNewSubtask("parent", runner=runner)
+        with wrap() as wrapper:
+            t1 = AddNewSubtask("parent", wrapper=wrapper)
 
-            runner.docs = [t1]
-            runner.run()
+            wrapper.docs = [t1]
+            wrapper.run()
 
             assert stdout.getvalue() == "pre 'new' run 'new' post 'new'"
 
 def test_completed_children():
-    with temprun() as runner:
+    with wrap() as wrapper:
         with divert_stdout() as stdout:
-            grandchild_task = SubclassTask("grandchild", runner=runner)
-            child_task = SubclassTask("child", grandchild_task, runner=runner)
-            parent_task = SubclassTask("parent", child_task, runner=runner)
+            grandchild_task = SubclassTask("grandchild", wrapper=wrapper)
+            child_task = SubclassTask("child", grandchild_task, wrapper=wrapper)
+            parent_task = SubclassTask("parent", child_task, wrapper=wrapper)
 
-            runner.docs = [parent_task]
-            runner.run()
+            wrapper.docs = [parent_task]
+            wrapper.run()
 
             assert stdout.getvalue() == "pre 'parent' pre 'child' pre 'grandchild' run 'grandchild' post 'grandchild' run 'child' post 'child' run 'parent' post 'parent'"
 

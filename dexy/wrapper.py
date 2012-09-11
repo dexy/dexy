@@ -1,4 +1,3 @@
-from dexy.params import RunParams
 from dexy.reporter import Reporter
 import dexy.doc
 import dexy.database
@@ -6,22 +5,43 @@ import logging
 import logging.handlers
 import os
 
-class Runner(object):
+class Wrapper(object):
     """
-    Class that manages a dexy run.
+    Class that assists in interacting with Dexy, including running Dexy.
     """
-    def __init__(self, params=RunParams(), args=[], read=False):
-        self.params = params
-        self.args = args
-        self.registered = []
-        self.reports_dirs = [c.REPORTS_DIR for c in Reporter.plugins]
+    def __init__(self, *args, **kwargs):
+        # Default Values
+        self.artifacts_dir = 'artifacts'
+        self.config_file = '.dexy'
+        self.db_alias = 'sqlite3'
+        self.db_file = os.path.join(self.artifacts_dir, 'dexy.sqlite3')
+        self.log_dir = 'logs'
+        self.log_file = 'dexy.log'
+        self.log_path = os.path.join(self.log_dir, self.log_file)
+        self.log_level = 'DEBUG'
+        self.log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        self.reports = ['output']
 
-        if read:
-            self.setup_read()
+        for key, value in kwargs.iteritems():
+            if not hasattr(self, key):
+                raise Exception("no default for %s" % key)
+
+            setattr(self, key, value)
+
+        self.args = args
+        self.reports_dirs = [c.REPORTS_DIR for c in Reporter.plugins]
+        self.registered = []
+
+    def setup_run(self, setup_docs=True):
+        self.setup_dexy_dirs()
+        self.setup_log()
+        self.setup_db()
+        if setup_docs:
+            self.setup_docs()
 
     def setup_read(self, batch_id=None):
         """
-        Set up the runner in 'read' mode for reviewing last batch.
+        Set up the  in 'read' mode for reviewing last batch.
         """
         self.setup_log()
         self.setup_db()
@@ -35,20 +55,20 @@ class Runner(object):
         """
         Create the artifacts and logs directories if they don't exist already.
         """
-        if not os.path.exists(self.params.artifacts_dir):
-            os.mkdir(self.params.artifacts_dir)
-        if not os.path.exists(self.params.log_dir):
-            os.mkdir(self.params.log_dir)
+        if not os.path.exists(self.artifacts_dir):
+            os.mkdir(self.artifacts_dir)
+        if not os.path.exists(self.log_dir):
+            os.mkdir(self.log_dir)
 
     def setup_log(self):
         self.log = logging.getLogger('dexy')
         self.log.setLevel(logging.DEBUG)
 
         handler = logging.handlers.RotatingFileHandler(
-                self.params.log_path,
+                self.log_path,
                 encoding="UTF-8")
 
-        formatter = logging.Formatter(self.params.log_format)
+        formatter = logging.Formatter(self.log_format)
         handler.setFormatter(formatter)
 
         self.log.addHandler(handler)
@@ -84,13 +104,13 @@ class Runner(object):
             else:
                 raise Exception("unknown arg type %s for arg %s" % (arg.__class__.__name__, arg))
 
-            doc.runner = self
+            doc.wrapper = self
             doc.setup()
 
             self.docs.append(doc)
 
     def setup_db(self):
-        db_class = dexy.database.Database.aliases[self.params.db_alias]
+        db_class = dexy.database.Database.aliases[self.db_alias]
         self.db = db_class(self)
         self.batch_id = self.db.next_batch_id()
 
@@ -98,10 +118,7 @@ class Runner(object):
         self.db.save()
 
     def run(self):
-        self.setup_dexy_dirs()
-        self.setup_log()
-        self.setup_db()
-        self.setup_docs()
+        self.setup_run()
 
         self.log.debug("batch id is %s" % self.batch_id)
 
@@ -118,7 +135,7 @@ class Runner(object):
 
     def register(self, task):
         """
-        Register a task with the runner.
+        Register a task with the wrapper
         """
         self.registered.append(task)
 

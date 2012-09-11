@@ -24,9 +24,9 @@ class Doc(Task):
 
     def setup_initial_artifact(self):
         if os.path.exists(self.name):
-            initial = dexy.artifact.InitialArtifact(self.name, runner=self.runner)
+            initial = dexy.artifact.InitialArtifact(self.name, wrapper=self.wrapper)
         else:
-            initial = dexy.artifact.InitialVirtualArtifact(self.name, runner=self.runner)
+            initial = dexy.artifact.InitialVirtualArtifact(self.name, wrapper=self.wrapper)
 
         initial.args = self.args
         initial.name = self.name
@@ -39,7 +39,7 @@ class Doc(Task):
         self.final_artifact = initial
 
     def setup_filter_artifact(self, key, filters):
-        artifact = dexy.artifact.FilterArtifact(key, runner=self.runner)
+        artifact = dexy.artifact.FilterArtifact(key, wrapper=self.wrapper)
         artifact.args = self.args
         artifact.doc = self
         artifact.filter_alias = filters[-1]
@@ -77,7 +77,7 @@ class Doc(Task):
         for child in self.children:
             if not child in self.artifacts:
                 if child.state == 'new':
-                    child.runner = self.runner
+                    child.wrapper = self.wrapper
                     child.setup()
 
     def setup(self):
@@ -133,15 +133,15 @@ class PatternDoc(WalkDoc):
                     doc_key = "%s|%s" % (filepath, "|".join(self.filter_aliases))
                 else:
                     doc_key = filepath
-                self.runner.log.debug("Creating doc %s" % doc_key)
+                self.wrapper.log.debug("Creating doc %s" % doc_key)
 
                 doc_args = self.args.copy()
-                doc_args['runner'] = self.runner
+                doc_args['wrapper'] = self.wrapper
 
                 children = []
                 if doc_args.has_key('depends'):
                     if doc_args.get('depends'):
-                        children = [a for a in self.runner.registered if isinstance(a, Doc)]
+                        children = [a for a in self.wrapper.registered if isinstance(a, Doc)]
                     del doc_args['depends']
 
                 doc = Doc(doc_key, *children, **doc_args)

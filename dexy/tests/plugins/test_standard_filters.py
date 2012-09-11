@@ -1,7 +1,7 @@
 from dexy.common import OrderedDict
 from dexy.doc import Doc
 from dexy.tests.utils import assert_output
-from dexy.tests.utils import temprun
+from dexy.tests.utils import wrap
 
 def test_join_filter():
     contents = OrderedDict()
@@ -14,10 +14,10 @@ def test_head_filter():
     assert_output("head", "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n", "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n")
 
 def test_word_wrap_filter():
-    with temprun() as runner:
-        doc = Doc("example.txt|wrap", contents="this is a line of text", wrap={"width" : 5}, runner=runner)
-        runner.docs = [doc]
-        runner.run()
+    with wrap() as wrapper:
+        doc = Doc("example.txt|wrap", contents="this is a line of text", wrap={"width" : 5}, wrapper=wrapper)
+        wrapper.docs = [doc]
+        wrapper.run()
         assert doc.output().data() == "this\nis a\nline\nof\ntext"
 
 def test_lines_filter():
@@ -38,9 +38,9 @@ def test_start_space_filter():
     assert_output("startspace", "abc\ndef", " abc\n def")
 
 def test_tags_filter():
-    with temprun() as runner:
-        doc = Doc("example.txt|tags", contents="<p>the text</p>", tags={"tags" : ["html", "body"]}, runner=runner)
-        runner.docs = [doc]
-        runner.run()
+    with wrap() as wrapper:
+        doc = Doc("example.txt|tags", contents="<p>the text</p>", tags={"tags" : ["html", "body"]}, wrapper=wrapper)
+        wrapper.docs = [doc]
+        wrapper.run()
         assert doc.output().data() == "<html><body>\n<p>the text</p>\n</body></html>"
 

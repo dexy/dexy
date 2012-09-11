@@ -1,5 +1,5 @@
-import dexy.doc
 import StringIO
+import dexy.doc
 import dexy.exceptions
 import logging
 
@@ -18,8 +18,8 @@ class Task(object):
         self.post = args.get('post', self.post)
         self.pre = args.get('pre', self.pre)
 
-        if args.has_key('runner') and args['runner']:
-            self.runner = args['runner']
+        if args.has_key('wrapper') and args['wrapper']:
+            self.wrapper = args['wrapper']
             self.setup()
 
     def pre(self, *args, **kw):
@@ -65,9 +65,9 @@ class Task(object):
             self.completed_children[child.key_with_class()] = child
             self.completed_children.update(child.completed_children)
 
-        self.runner.db.add_task_before_running(self)
+        self.wrapper.db.add_task_before_running(self)
         self.run(*args, **kw)
-        self.runner.db.update_task_after_running(self)
+        self.wrapper.db.update_task_after_running(self)
 
     def setup(self):
         self.after_setup()
@@ -76,7 +76,7 @@ class Task(object):
         return "%s:%s" % (self.__class__.__name__, self.key)
 
     def key_with_batch_id(self):
-        return "%s:%s:%s" % (self.runner.batch_id, self.__class__.__name__, self.key)
+        return "%s:%s:%s" % (self.wrapper.batch_id, self.__class__.__name__, self.key)
 
     def completed_child_docs(self):
         return [c for c in self.completed_children.values() if isinstance(c, dexy.doc.Doc)]
@@ -85,7 +85,7 @@ class Task(object):
         """
         Shared code that should always be run at end of setup process.
         """
-        self.runner.register(self)
+        self.wrapper.register(self)
         self.transition('setup')
 
     def run(self, *args, **kw):
