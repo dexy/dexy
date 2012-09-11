@@ -2,9 +2,7 @@ from dexy.filter import Filter
 import json
 
 try:
-    from nltk.collocations import *
     import nltk
-    import numpy # something seemed to need numpy, TODO confirm, this is here so nltk won't load if numpy not available
     AVAILABLE = True
 except ImportError:
     AVAILABLE = False
