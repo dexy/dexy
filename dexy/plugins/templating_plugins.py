@@ -116,7 +116,7 @@ class PygmentsStylesheetTemplatePlugin(TemplatePlugin):
 class SubdirectoriesTemplatePlugin(TemplatePlugin):
     def run(self):
         # The directory containing the document to be processed.
-        doc_dir = os.path.dirname(self.filter_instance.artifact.name)
+        doc_dir = os.path.dirname(self.filter_instance.output_data().name)
 
         # Get a list of subdirectories under this document's directory.
         subdirectories = [d for d in sorted(os.listdir(os.path.join(os.curdir, doc_dir))) if os.path.isdir(os.path.join(os.curdir, doc_dir, d))]
@@ -223,7 +223,7 @@ class InputsTemplatePlugin(TemplatePlugin):
         d_hash = {}
         a_hash = {}
 
-        name = self.filter_instance.artifact.name
+        name = self.filter_instance.output_data().name
 
         for task in self.filter_instance.artifact.doc.completed_children.values():
             if task.state != 'complete':
@@ -238,7 +238,7 @@ class InputsTemplatePlugin(TemplatePlugin):
             else:
                 raise Exception("task is a %s" % task.__class__.__name__)
 
-            keys = a.relative_refs(name)
+            keys = a.output_data.relative_refs(name)
             data = self.d_data_for_artifact(a)
 
             for k in keys:

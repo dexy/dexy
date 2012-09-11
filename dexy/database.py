@@ -55,16 +55,17 @@ class Sqlite3(Database):
         return []
 
     def find_data_by_doc_key(self, doc_key):
-        sql = "select data_type, hashstring, ext, storage_type from tasks where key = ? AND class_name = 'FilterArtifact'"
+        sql = "select key, ext, data_type, hashstring, storage_type from tasks where key = ? AND class_name = 'FilterArtifact'"
         self.cursor.execute(sql, (doc_key,))
         row = self.cursor.fetchone()
 
         print "row for", doc_key, "is", row
 
         return dexy.data.Data.retrieve(
+                row['key'],
+                row['ext'],
                 row['data_type'],
                 row['hashstring'],
-                row['ext'],
                 row['storage_type'])
 
     def find_data_by_websafe_key(self, web_safe_key):

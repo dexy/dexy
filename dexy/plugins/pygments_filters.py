@@ -64,7 +64,7 @@ class PygmentsFilter(Filter):
             lexer = get_lexer_by_name(args['lexer'], **lexer_args)
             del args['lexer']
         else:
-            is_json_file = ext in ('.json', '.dexy') or self.artifact.name.endswith(".dexy")
+            is_json_file = ext in ('.json', '.dexy') or self.output_data().name.endswith(".dexy")
             if ext == '.pycon':
                 lexer_class = PythonConsoleLexer
             elif ext == '.rbcon':
@@ -88,13 +88,13 @@ class PygmentsFilter(Filter):
         return lexer
 
     def create_formatter_instance(self, args):
-        formatter_args = {'lineanchors' : self.artifact.web_safe_document_key() }
+        formatter_args = {'lineanchors' : self.output_data().web_safe_document_key() }
 
         # Python 2.6 doesn't like unicode keys as kwargs
         for k, v in args.iteritems():
             formatter_args[str(k)] = v
 
-        return get_formatter_for_filename(self.artifact.name, **formatter_args)
+        return get_formatter_for_filename(self.output_data().name, **formatter_args)
 
     def process_dict(self, input_dict):
         ext = self.artifact.prior.ext

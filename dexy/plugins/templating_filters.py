@@ -112,7 +112,7 @@ class JinjaTextFilter(TemplateFilter):
                 'key' : self.artifact.key,
                 'lineno' : e.lineno,
                 'message' : e.message,
-                'name' : self.artifact.name,
+                'name' : self.output_data().name,
                 'workfile' : self.artifact.input_data.storage.data_file()
                 }
 

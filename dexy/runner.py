@@ -3,6 +3,7 @@ from dexy.reporter import Reporter
 import dexy.doc
 import dexy.database
 import logging
+import logging.handlers
 import os
 
 class Runner(object):

@@ -17,7 +17,7 @@ class Storage:
         self.ext = ext
         self.runner = runner
         if not runner.__class__.__name__ == "Runner":
-            raise Exception
+            raise Exception("runner is a %s" % runner.__class__.__name__)
 
 class GenericStorage(Storage):
     ALIASES = ['generic']

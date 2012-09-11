@@ -16,7 +16,7 @@ class Data:
         return True
 
     @classmethod
-    def retrieve(klass, data_type, hashstring, ext, storage_type, **kwargs):
+    def retrieve(klass, key, ext, data_type, hashstring, storage_type, **kwargs):
         """
         Method to retrieve a Data object based on info stored in database.
 
@@ -25,7 +25,7 @@ class Data:
         params = RunParams(**kwargs)
         runner = Runner(params)
         data_class = klass.aliases[data_type]
-        return data_class(hashstring, ext, runner, storage_type)
+        return data_class(key, ext, hashstring, runner, storage_type)
 
     def __init__(self, key, ext, hashstring, runner, storage_type=None):
         self.key = key

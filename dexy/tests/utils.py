@@ -71,6 +71,7 @@ class runfilter(tempdir):
             runner = Runner(params, doc_spec)
             runner.run()
         except InactiveFilter:
+            print "Skipping tests for inactive filter", self.filter_alias
             raise SkipTest
 
         return runner.docs[0]

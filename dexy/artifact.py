@@ -60,12 +60,9 @@ class Artifact(Task):
         return parent_dir
 
     def data_class_alias(self):
-        print "in data_class_alias for class", self.__class__
         return 'generic'
 
     def setup_output_data(self):
-        print "in setup_output_data for", self.key, "alias", self.data_class_alias()
-
         data_class = dexy.data.Data.aliases[self.data_class_alias()]
         self.output_data_type = data_class.ALIASES[0]
         self.output_data = data_class(self.key, self.ext, self.hashstring, self.runner)
