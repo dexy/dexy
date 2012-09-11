@@ -11,7 +11,7 @@ class UnprocessedDirectoryArchiveFilter(Filter):
     ALIASES = ['tgzdir']
 
     def process(self):
-        parent_dir = self.output_data().parent_dir()
+        parent_dir = self.result().parent_dir()
         subdir = self.args()['dir']
         dir_to_archive = os.path.join(parent_dir, subdir)
         af = self.output_filepath()

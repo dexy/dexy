@@ -51,14 +51,17 @@ class Filter:
     def inputs(self):
         pass
 
-    def input_data(self):
+    def input(self):
         return self.artifact.input_data
 
-    def output_data(self):
+    def input_data(self):
+        return self.input().data()
+
+    def result(self):
         return self.artifact.output_data
 
     def output_filepath(self):
-        return self.artifact.output_data.storage.data_file()
+        return self.result().storage.data_file()
 
     @classmethod
     def executables(self):

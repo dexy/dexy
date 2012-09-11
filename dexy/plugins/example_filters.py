@@ -13,8 +13,8 @@ class KeyValueExample(Filter):
     # TODO Write custom function to determine file extension.
 
     def process(self):
-        self.artifact.output_data.append("foo", "bar")
-        self.artifact.output_data.save()
+        self.result().append("foo", "bar")
+        self.result().save()
 
 ### @export "access-other-documents"
 class AccessOtherDocuments(Filter):
@@ -99,7 +99,7 @@ class ExampleProcessMethod(Filter):
     def process(self):
         input_data = self.artifact.input_data.data()
         output = "Dexy processed the text '%s'" % input_data
-        self.artifact.output_data.set_data(output)
+        self.result().set_data(output)
 
 class ExampleProcessMethodManualWrite(Filter):
     """
@@ -108,9 +108,9 @@ class ExampleProcessMethodManualWrite(Filter):
     ALIASES = ['processmanual']
 
     def process(self):
-        input_data = self.artifact.input_data.data()
+        input_data = self.input_data()
         output = "Dexy processed the text '%s'" % input_data
-        with open(self.artifact.output_data.storage.data_file(), "wb") as f:
+        with open(self.output_filepath(), "wb") as f:
             f.write(output)
 
 class ExampleProcessWithDictMethod(Filter):
@@ -121,10 +121,10 @@ class ExampleProcessWithDictMethod(Filter):
     OUTPUT_DATA_TYPE = 'sectioned'
 
     def process(self):
-        input_data = self.artifact.input_data.data()
+        input_data = self.input_data()
         output_dict = OrderedDict()
         output_dict['1'] = "Dexy processed the text '%s'" % input_data
-        self.artifact.output_data.set_data(output_dict)
+        self.result().set_data(output_dict)
 
 class AbcExtension(Filter):
     OUTPUT_EXTENSIONS = [".abc"]

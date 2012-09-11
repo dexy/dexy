@@ -33,7 +33,7 @@ class SplitHtmlFilter(Filter):
                     section_url = section_name.replace(" ","-")
 
                     filename = "%s.html" % section_url
-                    filepath = os.path.join(self.output_data().parent_dir(), filename)
+                    filepath = os.path.join(self.result().parent_dir(), filename)
                     pages[section_name] = filename
 
                     new_page = self.add_doc(filepath, header + sections[i+1] + footer)
