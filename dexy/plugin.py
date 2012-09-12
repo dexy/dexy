@@ -45,7 +45,6 @@ class PluginMeta(type):
             elif hasattr(cls, 'NAMESPACE'):
                 cls.aliases[cls.NAMESPACE] = cls
 
-
 class Command:
     NAMESPACE = None
     DEFAULT_COMMAND = None

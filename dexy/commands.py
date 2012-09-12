@@ -1,25 +1,30 @@
-from dexy.params import RunParams
+from dexy.wrapper import Wrapper
 from modargs import args
 import dexy.exceptions
+import dexy.plugin # so all built-in plugins are registered
+import json
 import os
+import pkg_resources
 import sys
 import warnings
 
+DEFAULT_COMMAND = 'dexy'
 MOD = sys.modules[__name__]
 PROG = 'dexy'
 S = "   "
-DEFAULT_COMMAND = 'dexy'
-DEFAULT_PARAMS = RunParams()
 
-import pkg_resources
+# Automatically register plugins in any python package named like dexy_plugin_*
 for dist in pkg_resources.working_set:
     if dist.key.startswith("dexy-plugin"):
         import_pkg = dist.egg_name().split("-")[0]
         __import__(import_pkg)
 
-import dexy.plugin
-
 def run():
+    """
+    Method that runs the command specified on the command line.
+
+    Ensures that UserFeedback exceptions are handled nicely so end users don't see tracebacks.
+    """
     warnings.filterwarnings("ignore",category=DeprecationWarning)
     try:
         if len(sys.argv) == 1 or (sys.argv[1] in args.available_commands(MOD)):
@@ -50,37 +55,33 @@ def run():
         sys.exit(1)
 
 def dexy_command(
-        allreports=False, # whether to run all available reports
-        artifactsdir=DEFAULT_PARAMS.artifacts_dir, # location of directory in which to store artifacts
-        config=DEFAULT_PARAMS.config_file, # name to use for configuration file
+        artifactsdir=Wrapper.DEFAULT_ARTIFACTS_DIR, # location of directory in which to store artifacts
+        conf=Wrapper.DEFAULT_CONFIG_FILE, # name to use for configuration file
         danger=False, # whether to allow running remote files
-        dbfile=DEFAULT_PARAMS.db_file, # name of the database file (it lives in the logs dir)
-        directory=".", # the directory to process, you can just process a subdirectory of your project
+        dbalias=Wrapper.DEFAULT_DB_ALIAS, # type of database to use
+        dbfile=Wrapper.DEFAULT_DB_FILE, # name of the database file (it lives in the logs dir)
+#        directory=".", # the directory to process, you can just process a subdirectory of your project
         disabletests=False, # Whether to disable the dexy 'test' filter
-        dryrun=False, # if True, just parse config and print batch info, don't run dexy
-        exclude="", # directories to exclude from dexy processing
-        filters=False, # DEPRECATED just to catch people who use the old dexy --filters syntax
-        globals="", # global values to make available within dexy documents, should be KEY=VALUE pairs separated by spaces
+        dryrun=Wrapper.DEFAULT_DRYRUN, # if True, just parse config and print batch info, don't run dexy
+        exclude=Wrapper.DEFAULT_EXCLUDE, # directories to exclude from dexy processing
+        globals=Wrapper.DEFAULT_GLOBALS, # global values to make available within dexy documents, should be KEY=VALUE pairs separated by spaces
         help=False, # for people who type -help out of habit
         h=False, # for people who type -h out of habit
-        hashfunction='md5', # What hash function to use, set to crc32 or adler32 for more speed, less reliability
-        ignore=False, # whether to ignore nonzero exit status or raise an error - may not be supported by all filters
-        inputs=False, # whether to log information about inputs for debugging
-        logfile=DEFAULT_PARAMS.log_file, # name of log file
-        loglevel=DEFAULT_PARAMS.log_level, # default log level (see Constants.LOGLEVELS.keys), can also be set per-document
-        logsdir=DEFAULT_PARAMS.log_dir, # location of directory in which to store logs
-        nocache=False, # whether to force artifacts to run even if there is a matching file in the cache
-        output=False, # Shortcut to mean "I just want the OutputReporter, nothing else"
-        recurse=True, # whether to recurse into subdirectories when running Dexy
-        reporters=False, # DEPRECATED just to catch people who use the old dexy --reporters syntax
-        reports=DEFAULT_PARAMS.reports, # reports to be run after dexy runs, enclose in quotes and separate with spaces
-        reset=False, # whether to purge existing artifacts and logs before running Dexy
-        run="", # specific document to run. if specified, this document + its dependencies will be all that is run
-        setup=False, # DEPRECATED just to catch people who use the old dexy --setup syntax
+        hashfunction=Wrapper.DEFAULT_HASHFUNCTION, # What hash function to use, set to crc32 or adler32 for more speed but less reliability
+        ignore=Wrapper.DEFAULT_IGNORE_NONZERO_EXIT, # whether to ignore nonzero exit status or raise an error - may not be supported by all filters
+        logfile=Wrapper.DEFAULT_LOG_FILE, # name of log file
+        logformat=Wrapper.DEFAULT_LOG_FORMAT, # format of log entries
+        loglevel=Wrapper.DEFAULT_LOG_LEVEL, # default log level (see Constants.LOGLEVELS.keys), can also be set per-document
+        logsdir=Wrapper.DEFAULT_LOG_DIR, # location of directory in which to store logs
+        nocache=Wrapper.DEFAULT_DONT_USE_CACHE, # whether to force artifacts to run even if there is a matching file in the cache
+#        output=False, # Shortcut to mean "I just want the OutputReporter, nothing else"
+        recurse=Wrapper.DEFAULT_RECURSE, # whether to recurse into subdirectories when running Dexy
+        reports=Wrapper.DEFAULT_REPORTS, # reports to be run after dexy runs, enclose in quotes and separate with spaces
+#        reset=False, # whether to purge existing artifacts and logs before running Dexy
+#        run="", # specific document to run. if specified, this document + its dependencies will be all that is run
         silent=False, # Whether to not print any output when running dexy
-        strictinherit=False, # set to true if you want 'allinputs' to only reference items in same dir or a subdir
-        uselocals=True, # use cached local copies of remote URLs, faster but might not be up to date, 304 from server will override this setting
-        version=False # DEPRECATED just to catch people who use the old dexy --version syntax
+#        uselocals=True, # use cached local copies of remote URLs, faster but might not be up to date, 304 from server will override this setting
+        version=False # For people who type -version out of habit
     ):
     """
     Runs Dexy, by processing your .dexy configuration file and running content
@@ -112,71 +113,44 @@ def dexy_command(
 
     If you run into trouble, visit http://dexy.it/help
     """
-    # catch deprecated arguments
-    if h or help or version or reporters or filters:
-        raise dexy.exceptions.UserFeedback("the command syntax has changed, please type 'dexy help' for help")
-
-    ### @export "dexy-command-check-setup"
-    if not check_setup(logsdir=logsdir, artifactsdir=artifactsdir):
-        raise dexy.exceptions.UserFeedback("Please run '%s setup' first to create the directories dexy needs to work with" % PROG)
-
-    ### @export "dexy-command-process-args"
-    if reset:
-        reset_command(logsdir=logsdir, artifactsdir=artifactsdir)
-
-    if output:
-        if not reports == DEFAULT_PARAMS.reports:
-            raise dexy.exceptions.UserFeedback("if you pass --output you can't also modify reports! pick 1!")
-        if allreports:
-            raise dexy.exceptions.UserFeedback("if you pass --output you can't also pass --allreports!")
-        reports = "Output"
-
-    if allreports:
-        if not reports == DEFAULT_PARAMS.reports:
-            raise dexy.exceptions.UserFeedback("if you pass --allreports you can't also specify --reports")
-
-    controller = run_dexy(locals())
-    if not dryrun:
-        if allreports:
-            reports_command(
-                allreports=True,
-                artifactclass=artifactclass,
-                controller=controller,
-                hashfunction=hashfunction,
-                logsdir=logsdir
-            )
-        else:
-            reports_command(
-                reports=reports,
-                artifactclass=artifactclass,
-                controller=controller,
-                hashfunction=hashfunction,
-                logsdir=logsdir
-            )
-
+    if h or help:
+        help_command()
+    elif version:
+        version_command()
+    else:
+        wrapper = Wrapper(**locals())
+        wrapper.load_config()
+        wrapper.run()
+        wrapper.report()
 
 def reports_command(args):
     pass
 
-def run_dexy(args):
-    # validate args and do any conversions required
-    args['globals'] = dict([g.split("=") for g in args['globals'].split()])
-    args['exclude'] = [x.strip("/") for x in args['exclude'].split()]
-    controller = dexy.controller.Controller(args)
-    controller.run()
-    return controller
-
-def check_setup(logsdir=DEFAULT_PARAMS.log_dir, artifactsdir=DEFAULT_PARAMS.artifacts_dir):
+def check_setup(logsdir=Wrapper.DEFAULT_LOG_DIR, artifactsdir=Wrapper.DEFAULT_ARTIFACTS_DIR):
     return os.path.exists(logsdir) and os.path.exists(artifactsdir)
 
-
 def help_command(on=False):
-    args.help_command(PROG, MOD, Constants.DEFAULT_COMMAND, on)
+    args.help_command(PROG, MOD, DEFAULT_COMMAND, on)
 
 def help_text(on=False):
-    return args.help_text(PROG, MOD, Constants.DEFAULT_COMMAND, on)
+    return args.help_text(PROG, MOD, DEFAULT_COMMAND, on)
 
 def version_command():
     """Print the current version."""
-    print "hello %s version %s" % (PROG, dexy.__version__)
+    print "%s version %s" % (PROG, dexy.__version__)
 
+def reset_command():
+    pass
+
+def conf_command(
+        conf=Wrapper.DEFAULT_CONFIG_FILE # Name of config file.
+        ):
+    """
+    Write a dexy.conf file using defaults so you can modify it easily.
+    """
+    config = Wrapper.default_config()
+    # No point specifying config file name in config file.
+    del config['conf']
+
+    with open(conf, "wb") as f:
+        json.dump(config, f, sort_keys=True, indent=4)

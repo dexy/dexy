@@ -1,6 +1,7 @@
 from dexy.reporter import Reporter
-import dexy.doc
 import dexy.database
+import dexy.doc
+import json
 import logging
 import logging.handlers
 import os
@@ -9,28 +10,99 @@ class Wrapper(object):
     """
     Class that assists in interacting with Dexy, including running Dexy.
     """
+    DEFAULT_ARTIFACTS_DIR = 'artifacts'
+    DEFAULT_CONFIG_FILE = 'dexy.conf' # Specification of dexy-wide config options.
+    DEFAULT_DANGER = False
+    DEFAULT_DB_ALIAS = 'sqlite3'
+    DEFAULT_DB_FILE = 'dexy.sqlite3'
+    DEFAULT_DOC_FILE = "dexy.docs" # Specification of which docs to process.
+    DEFAULT_DISABLE_TESTS = False
+    DEFAULT_DRYRUN = False
+    DEFAULT_EXCLUDE = ''
+    DEFAULT_GLOBALS = ''
+    DEFAULT_HASHFUNCTION = 'md5'
+    DEFAULT_IGNORE_NONZERO_EXIT = False
+    DEFAULT_LOG_DIR = 'logs'
+    DEFAULT_LOG_FILE = 'dexy.log'
+    DEFAULT_LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    DEFAULT_LOG_LEVEL = 'DEBUG'
+    DEFAULT_DONT_USE_CACHE = False
+    DEFAULT_REPORTS = 'output'
+    DEFAULT_RECURSE = True
+    DEFAULT_SILENT = False
+
+    RENAME_PARAMS = {
+            'artifactsdir' : 'artifacts_dir',
+            'conf' : 'config_file',
+            'dbalias' : 'db_alias',
+            'dbfile' : 'db_file',
+            'disabletests' : 'disable_tests',
+            'dryrun' : 'dry_run',
+            'ignore' : 'ignore_nonzero_exit',
+            'logfile' : 'log_file',
+            'logformat' : 'log_format',
+            'loglevel' : 'log_level',
+            'logsdir' : 'log_dir',
+            'nocache' : 'dont_use_cache'
+            }
+
+    SKIP_KEYS = ['h', 'help', 'version']
+
+    def update_attributes_from_config(self, config):
+        for key, value in config.iteritems():
+            if not key in self.SKIP_KEYS:
+                corrected_key = self.RENAME_PARAMS.get(key, key)
+                if not hasattr(self, corrected_key):
+                    raise Exception("no default for %s" % corrected_key)
+                setattr(self, corrected_key, value)
+
     def __init__(self, *args, **kwargs):
-        # Default Values
-        self.artifacts_dir = 'artifacts'
-        self.config_file = '.dexy'
-        self.db_alias = 'sqlite3'
-        self.db_file = os.path.join(self.artifacts_dir, 'dexy.sqlite3')
-        self.log_dir = 'logs'
-        self.log_file = 'dexy.log'
-        self.log_path = os.path.join(self.log_dir, self.log_file)
-        self.log_level = 'DEBUG'
-        self.log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        self.reports = ['output']
+        # Initialize attributes to their defaults
+        self.artifacts_dir = self.DEFAULT_ARTIFACTS_DIR
+        self.config_file = self.DEFAULT_CONFIG_FILE
+        self.danger = self.DEFAULT_DANGER
+        self.db_alias = self.DEFAULT_DB_ALIAS
+        self.db_file = self.DEFAULT_DB_FILE
+        self.disable_tests = self.DEFAULT_DISABLE_TESTS
+        self.dont_use_cache = self.DEFAULT_DONT_USE_CACHE
+        self.dry_run = self.DEFAULT_DRYRUN
+        self.exclude = self.DEFAULT_EXCLUDE
+        self.globals = self.DEFAULT_GLOBALS
+        self.hashfunction = self.DEFAULT_HASHFUNCTION
+        self.ignore_nonzero_exit = self.DEFAULT_IGNORE_NONZERO_EXIT
+        self.log_dir = self.DEFAULT_LOG_DIR
+        self.log_file = self.DEFAULT_LOG_FILE
+        self.log_format = self.DEFAULT_LOG_FORMAT
+        self.log_level = self.DEFAULT_LOG_LEVEL
+        self.recurse = self.DEFAULT_RECURSE
+        self.reports = self.DEFAULT_REPORTS
+        self.silent = self.DEFAULT_SILENT
 
-        for key, value in kwargs.iteritems():
-            if not hasattr(self, key):
-                raise Exception("no default for %s" % key)
 
-            setattr(self, key, value)
+        self.update_attributes_from_config(kwargs)
 
         self.args = args
-        self.reports_dirs = [c.REPORTS_DIR for c in Reporter.plugins]
+        self.db_path = os.path.join(self.artifacts_dir, self.db_file)
+        self.log_path = os.path.join(self.log_dir, self.log_file)
         self.registered = []
+        self.reports_dirs = [c.REPORTS_DIR for c in Reporter.plugins]
+
+    @classmethod
+    def default_config(klass):
+        conf = klass().__dict__.copy()
+
+        # Remove any attributes that aren't config options
+        del conf['args']
+        del conf['db_path']
+        del conf['log_path']
+        del conf['registered']
+        del conf['reports_dirs']
+
+        for cl_key, internal_key in klass.RENAME_PARAMS.iteritems():
+            conf[cl_key] = conf[internal_key]
+            del conf[internal_key]
+
+        return conf
 
     def setup_run(self, setup_docs=True):
         self.setup_dexy_dirs()
@@ -160,3 +232,13 @@ class Wrapper(object):
 
     def get_child_hashes_in_previous_batch(self, parent_hashstring):
         return self.db.get_child_hashes_in_previous_batch(self.batch_id, parent_hashstring)
+
+    def load_config(self):
+        """
+        Look for a config file in current working dir and loads it.
+        """
+        if os.path.exists(self.config_file):
+            with open(self.config_file) as f:
+                conf = json.load(f)
+
+            self.update_attributes_from_config(conf)

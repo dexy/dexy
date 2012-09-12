@@ -1,5 +1,4 @@
 from dexy.tests.utils import assert_in_output
-from dexy.doc import Doc
 
 def test_easyhtml_filter():
     some_html = "<p>This is some HTML</p>"
