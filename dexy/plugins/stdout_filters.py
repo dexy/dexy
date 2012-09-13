@@ -82,12 +82,30 @@ class SubprocessFilter(Filter):
                     d[relpath] = 'binary'
 
         if section_name:
-            doc_key = "%s-%s-files" % (self.artifact.long_name(), section_name)
+            doc_key = "%s-%s-files" % (self.result().long_name(), section_name)
         else:
-            doc_key = "%s-files" % self.artifact.long_name()
+            doc_key = "%s-files" % self.result().long_name()
 
         doc = Doc(doc_key, contents=d)
         self.artifact.add_doc(doc)
+
+    def run_command(self, command, env):
+        wd = self.setup_wd()
+
+        self.log.debug("About to run '%s' in '%s'" % (command, wd))
+        proc = subprocess.Popen(command, shell=True,
+                                cwd=wd,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE,
+                                env=env)
+
+        stdout, stderr = proc.communicate()
+        self.log.debug("stdout is '%s'" % stdout)
+        self.log.debug("stderr is '%s'" % stderr)
+
+        self.walk_working_directory(wd)
+
+        return (proc, stdout)
 
     def process(self):
         command = self.command_string()
@@ -97,7 +115,11 @@ class SubprocessFilter(Filter):
         # TODO store stdout somewhere
 
         self.copy_canonical_file()
-        #self.copy_additional_inputs()
+
+    def copy_canonical_file(self):
+        canonical_file = os.path.join(self.artifact.tmp_dir(), self.result().name)
+        if not self.result().is_cached() and os.path.exists(canonical_file):
+            self.result().copy_from_file(canonical_file)
 
 class SubprocessStdoutFilter(SubprocessFilter):
     def run_command(self, command, env, input_text = None):
@@ -132,9 +154,6 @@ class SubprocessStdoutFilter(SubprocessFilter):
         proc, stdout = self.run_command(command, self.setup_env())
         self.handle_subprocess_proc_return(command, proc.returncode, stdout)
         self.artifact.output_data.set_data(stdout)
-
-        # TODO store stdout somewhere
-#        self.copy_additional_inputs()
 
 class PythonSubprocessStdoutFilter(SubprocessStdoutFilter):
     ALIASES = ['py', 'pyout']

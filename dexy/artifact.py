@@ -35,7 +35,7 @@ class Artifact(Task):
         self.log.debug("hashstring for %s is %s" % (self.key, self.hashstring))
 
     def tmp_dir(self):
-        return os.path.join(self.run_params.artifacts_dir, self.hashstring)
+        return os.path.join(self.wrapper.artifacts_dir, self.hashstring)
 
     def create_working_dir(self, populate=False):
         tmpdir = self.tmp_dir()
@@ -43,15 +43,15 @@ class Artifact(Task):
         os.mkdir(tmpdir)
 
         if populate:
-            for key, doc in self.wrapper.completed.iteritems():
+            for doc in self.doc.completed_children.values():
                 if isinstance(doc, dexy.doc.Doc):
-                    filename = os.path.join(tmpdir, doc.final_artifact.name)
+                    filename = os.path.join(tmpdir, doc.output().name)
                     parent_dir = os.path.dirname(filename)
                     if not os.path.exists(parent_dir):
                         os.makedirs(parent_dir)
                     doc.output().output_to_file(filename)
 
-            input_filepath = os.path.join(tmpdir, self.prior.name)
+            input_filepath = os.path.join(tmpdir, self.prior.output_data.name)
 
         parent_dir = os.path.dirname(input_filepath)
         if not os.path.exists(parent_dir):
