@@ -1,7 +1,11 @@
 from dexy.wrapper import Wrapper
+from pygments import highlight
+from pygments.formatters import TerminalFormatter
+from pygments.lexers import PythonLexer
 from modargs import args
 import dexy.exceptions
 import dexy.plugin # so all built-in plugins are registered
+import inspect
 import json
 import os
 import pkg_resources
@@ -159,3 +163,93 @@ def conf_command(
 
     with open(conf, "wb") as f:
         json.dump(config, f, sort_keys=True, indent=4)
+
+def filters_command(
+        alias="", # If a filter alias is specified, more detailed help for that filter is printed.
+        nocolor=False, # When source = True, whether to omit syntax highlighting
+        showall=False, # Whether to show all filters, including those which need missing software, implies versions=True
+        showmissing=False, # Whether to just show filters missing external software, implies versions=True
+        space=False, # Whether to add extra spacing to the output for extra readability
+        source=False, # Whether to include syntax-highlighted source code when displaying an indvidual filter
+        versions=False # Whether to check the installed version of external software required by filters, slower
+        ):
+    print filters_text(**locals())
+
+NODOC_FILTERS = []
+
+def filters_text(
+        alias="", # If a filter alias is specified, more detailed help for that filter is printed.
+        nocolor=False, # When source = True, whether to omit syntax highlighting
+        showall=False, # Whether to show all filters, including those which need missing software, implies versions=True
+        showmissing=False, # Whether to just show filters missing external software, implies versions=True
+        space=False, # Whether to add extra spacing to the output for extra readability
+        source=False, # Whether to include syntax-highlighted source code when displaying an indvidual filter
+        versions=False # Whether to check the installed version of external software required by filters, slower
+        ):
+
+    if len(alias) > 0:
+        # We want help on a particular filter
+        klass = dexy.filter.Filter.aliases[alias]
+        text = []
+        text.append(klass.__name__)
+        text.append("")
+        text.append("Aliases: %s" % ", ".join(klass.ALIASES))
+        text.append("")
+        text.append(inspect.getdoc(klass))
+        text.append("")
+        text.append("http://dexy.it/docs/filters/%s" % alias)
+        if source:
+            text.append("")
+            source_code = inspect.getsource(klass)
+            if nocolor:
+                text.append(source_code)
+            else:
+                formatter = TerminalFormatter()
+                lexer = PythonLexer()
+                text.append(highlight(source_code, lexer, formatter))
+        return "\n".join(text)
+
+    else:
+        def sort_key(k):
+            return k.__name__
+
+        filter_classes = sorted(set(f for f in dexy.filter.Filter.plugins), key=sort_key)
+
+        text = []
+        for klass in filter_classes:
+            if not showall:
+                skip = klass.__name__ in NODOC_FILTERS
+            else:
+                skip = False
+
+            if (versions or showmissing or showall) and not skip:
+                version = klass.version()
+                no_version_info_available = (version is None)
+                if no_version_info_available:
+                    version_message = ""
+                    if showmissing:
+                        skip = True
+                elif version:
+                    version_message = "Installed version: %s" % version
+                    if showmissing:
+                        skip = True
+                else:
+                    if not (showmissing or showall):
+                        skip = True
+                    version_message = "'%s' failed, filter may not be available." % klass.version_command()
+
+            if not skip:
+                name_and_aliases = "%s (%s) " % (klass.__name__, ", ".join(klass.ALIASES))
+                docstring = inspect.getdoc(klass) or ""
+                if "\n" in docstring:
+                    docstring = docstring.splitlines()[0]
+                filter_help = name_and_aliases + docstring
+                if (versions or showmissing or (showall and not version)):
+                    filter_help += " %s" % version_message
+                text.append(filter_help)
+
+        if space:
+            sep = "\n\n"
+        else:
+            sep = "\n"
+        return sep.join(text)
