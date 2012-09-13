@@ -37,6 +37,10 @@ def run():
                 subcommand = ""
 
             command_class = dexy.plugin.Command.aliases.get(command)
+
+            if not command_class:
+                args.parse_and_run_command(subcommand, dexy.commands)
+
             mod_name = command_class.__module__
             mod = args.load_module(mod_name)
 
@@ -45,7 +49,6 @@ def run():
             else:
                 default_command = command_class.NAMESPACE
 
-            # TODO improve error message if not a valid command...
             args.parse_and_run_command([subcommand] + sys.argv[2:], mod, default_command=default_command)
 
     except dexy.exceptions.UserFeedback as e:
