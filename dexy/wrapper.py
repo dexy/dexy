@@ -1,6 +1,7 @@
 from dexy.reporter import Reporter
 import dexy.database
 import dexy.doc
+import dexy.parser
 import json
 import logging
 import logging.handlers
@@ -15,8 +16,8 @@ class Wrapper(object):
     DEFAULT_DANGER = False
     DEFAULT_DB_ALIAS = 'sqlite3'
     DEFAULT_DB_FILE = 'dexy.sqlite3'
-    DEFAULT_DOC_FILE = "dexy.docs" # Specification of which docs to process.
     DEFAULT_DISABLE_TESTS = False
+    DEFAULT_DONT_USE_CACHE = False
     DEFAULT_DRYRUN = False
     DEFAULT_EXCLUDE = ''
     DEFAULT_GLOBALS = ''
@@ -26,35 +27,9 @@ class Wrapper(object):
     DEFAULT_LOG_FILE = 'dexy.log'
     DEFAULT_LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     DEFAULT_LOG_LEVEL = 'DEBUG'
-    DEFAULT_DONT_USE_CACHE = False
-    DEFAULT_REPORTS = 'output'
     DEFAULT_RECURSE = True
+    DEFAULT_REPORTS = 'output'
     DEFAULT_SILENT = False
-
-    RENAME_PARAMS = {
-            'artifactsdir' : 'artifacts_dir',
-            'conf' : 'config_file',
-            'dbalias' : 'db_alias',
-            'dbfile' : 'db_file',
-            'disabletests' : 'disable_tests',
-            'dryrun' : 'dry_run',
-            'ignore' : 'ignore_nonzero_exit',
-            'logfile' : 'log_file',
-            'logformat' : 'log_format',
-            'loglevel' : 'log_level',
-            'logsdir' : 'log_dir',
-            'nocache' : 'dont_use_cache'
-            }
-
-    SKIP_KEYS = ['h', 'help', 'version']
-
-    def update_attributes_from_config(self, config):
-        for key, value in config.iteritems():
-            if not key in self.SKIP_KEYS:
-                corrected_key = self.RENAME_PARAMS.get(key, key)
-                if not hasattr(self, corrected_key):
-                    raise Exception("no default for %s" % corrected_key)
-                setattr(self, corrected_key, value)
 
     def __init__(self, *args, **kwargs):
         # Initialize attributes to their defaults
@@ -77,7 +52,6 @@ class Wrapper(object):
         self.recurse = self.DEFAULT_RECURSE
         self.reports = self.DEFAULT_REPORTS
         self.silent = self.DEFAULT_SILENT
-
 
         self.update_attributes_from_config(kwargs)
 
@@ -242,3 +216,40 @@ class Wrapper(object):
                 conf = json.load(f)
 
             self.update_attributes_from_config(conf)
+
+    RENAME_PARAMS = {
+            'artifactsdir' : 'artifacts_dir',
+            'conf' : 'config_file',
+            'dbalias' : 'db_alias',
+            'dbfile' : 'db_file',
+            'disabletests' : 'disable_tests',
+            'dryrun' : 'dry_run',
+            'ignore' : 'ignore_nonzero_exit',
+            'logfile' : 'log_file',
+            'logformat' : 'log_format',
+            'loglevel' : 'log_level',
+            'logsdir' : 'log_dir',
+            'nocache' : 'dont_use_cache'
+            }
+
+    SKIP_KEYS = ['h', 'help', 'version']
+
+    def update_attributes_from_config(self, config):
+        for key, value in config.iteritems():
+            if not key in self.SKIP_KEYS:
+                corrected_key = self.RENAME_PARAMS.get(key, key)
+                if not hasattr(self, corrected_key):
+                    raise Exception("no default for %s" % corrected_key)
+                setattr(self, corrected_key, value)
+
+    def load_doc_config(self):
+        """
+        Look for document config files in current working dir and load them.
+        """
+        parser_aliases = dexy.parser.Parser.aliases
+        for k in parser_aliases.keys():
+            if os.path.exists(k):
+                print "found doc config", k
+                parser = parser_aliases[k](self)
+                with open(k, "r") as f:
+                    self.docs = parser.parse(f.read())

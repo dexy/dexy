@@ -37,7 +37,7 @@ class Sqlite3(Database):
     def __init__(self, wrapper):
         self.wrapper = wrapper
         self.conn = sqlite3.connect(
-                self.wrapper.db_file,
+                self.wrapper.db_path,
                 detect_types=sqlite3.PARSE_DECLTYPES
                 )
         self.conn.row_factory = sqlite3.Row

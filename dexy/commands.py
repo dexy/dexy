@@ -120,6 +120,8 @@ def dexy_command(
     else:
         wrapper = Wrapper(**locals())
         wrapper.load_config()
+        wrapper.setup_log()
+        wrapper.load_doc_config()
         wrapper.run()
         wrapper.report()
 

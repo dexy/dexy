@@ -1,8 +1,8 @@
-import dexy.exceptions
 from dexy.filter import Filter
 from dexy.plugins.templating_plugins import *
 from jinja2.exceptions import TemplateSyntaxError
 from jinja2.exceptions import UndefinedError
+import dexy.exceptions
 import jinja2
 import re
 import sys
@@ -112,7 +112,7 @@ class JinjaTextFilter(TemplateFilter):
                 'key' : self.artifact.key,
                 'lineno' : e.lineno,
                 'message' : e.message,
-                'name' : self.output_data().name,
+                'name' : self.result().name,
                 'workfile' : self.artifact.input_data.storage.data_file()
                 }
 
