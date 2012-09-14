@@ -59,12 +59,7 @@ class Filter:
     def output_filepath(self):
         return self.result().storage.data_file()
 
-
-
     def processed(self):
-        """
-        Returns an iterator of previously processed documents in this tree.
-        """
         for doc in self.artifact.doc.completed_child_docs():
             yield doc
 
@@ -81,41 +76,17 @@ class DexyFilter(Filter):
             return klass.OUTPUT_DATA_TYPE
 
     def process(self):
-        """
-        This is the method that does the "work" of the handler, that is
-        filtering the input and producing output. This method can be overridden
-        in a subclass, or one of the convenience methods named below can be
-        implemented and will be delegated to.
-        """
-
-        if not self.input().has_data():
-            raise Exception("no data!")
-
         if hasattr(self, "process_text_to_dict"):
-            if not self.result().__class__.__name__ == "SectionedData":
-                raise dexy.exceptions.InternalDexyProblem("filter implementing a process_text_to_dict method must specify OUTPUT_DATA_TYPE = 'sectioned'")
-
             output = self.process_text_to_dict(self.input().as_text())
             self.result().set_data(output)
-
-            method_used = "process_text_to_dict"
 
         elif hasattr(self, "process_dict"):
             output = self.process_dict(self.input().as_sectioned())
             self.result().set_data(output)
 
-            method_used = "process_dict"
-
         elif hasattr(self, "process_text"):
             output = self.process_text(self.input().as_text())
             self.result().set_data(output)
 
-            method_used = "process_text"
-
         else:
-            self.result().copy_from_file(self.artifact.input_data.storage.data_file())
-
-            method_used = "process"
-
-        self.log.debug("Used method %s of default process method." % method_used)
-        return method_used
+            self.result().copy_from_file(self.input().storage.data_file())

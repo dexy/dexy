@@ -283,10 +283,9 @@ class InputsJustInTimeTemplatePlugin(InputsTemplatePlugin):
 
     def run(self):
         self.map_relative_refs = {}
-        for key, task in self.filter_instance.artifact.runner.completed.iteritems():
-            if hasattr(task, 'relative_refs'):
-                for ref in task.relative_refs(self.filter_instance.artifact.name):
-                    self.map_relative_refs[ref] = task
+        for task in self.filter_instance.processed():
+            for ref in task.output().relative_refs(self.filter_instance.result().name):
+                self.map_relative_refs[ref] = task
 
         return {
             'a' : self.a,

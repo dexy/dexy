@@ -115,13 +115,13 @@ class PygmentsFilter(DexyFilter):
             args = self.args().copy()
             lexer = self.create_lexer_instance(args)
 
-            formatter_args = {'lineanchors' : self.artifact.web_safe_document_key() }
+            formatter_args = {'lineanchors' : self.result().web_safe_document_key() }
 
             # Python 2.6 hates unicode keys
             for k, v in args.iteritems():
                 formatter_args[str(k)] = v
 
-            formatter = get_formatter_for_filename(self.artifact.name, **formatter_args)
+            formatter = get_formatter_for_filename(self.result().name, **formatter_args)
 
             if self.artifact.ext in self.IMAGE_OUTPUT_EXTENSIONS:
                 with open(self.result().data_file(), 'wb') as f:

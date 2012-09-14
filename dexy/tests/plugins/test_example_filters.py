@@ -10,7 +10,7 @@ def test_process_text_filter():
 def test_process_text_to_dict_filter():
     assert_output("processtexttodict", "hello", {'1': "Dexy processed the text 'hello'"})
 
-def text_process_dict():
+def test_process_dict_filter():
     assert_output("processdict", {'1': 'hello'}, {'1': "Dexy processed the text 'hello'"})
 
 def test_process_method():

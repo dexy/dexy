@@ -151,3 +151,35 @@ def test_bad_file_extension_exception():
             assert False, "should not be here"
         except dexy.exceptions.UserFeedback as e:
             assert "Filter 'py' in 'hello.abc|py' can't handle file extension .abc" in e.message
+
+def test_custom_file_extension():
+    with wrap() as wrapper:
+        doc = Doc("hello.py|pyg",
+                contents="""print "hello, world" """,
+                pyg = { "ext" : ".tex" },
+                wrapper=wrapper)
+        wrapper.docs = [doc]
+        wrapper.run()
+        assert "begin{Verbatim}" in doc.output().as_text()
+
+def test_choose_extension_from_overlap():
+    with wrap() as wrapper:
+        doc = Doc("hello.py|pyg|forcelatex",
+                contents="""print "hello, world" """,
+                wrapper=wrapper)
+        wrapper.docs = [doc]
+        wrapper.run()
+        assert "begin{Verbatim}" in doc.output().as_text()
+
+def test_no_file_extension_overlap():
+    with wrap() as wrapper:
+        doc = Doc("hello.txt|forcetext|forcehtml",
+                contents="hello",
+                wrapper=wrapper)
+        wrapper.docs = [doc]
+
+        try:
+            wrapper.run()
+            assert False, "UserFeedback should be raised"
+        except dexy.exceptions.UserFeedback as e:
+            assert "Filter forcehtml can't go after filter forcetext, no file extensions in common." in e.message

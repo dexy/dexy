@@ -2,6 +2,7 @@ import dexy.plugins.archive_filters
 import dexy.plugins.example_filters
 import dexy.plugins.idio_filters
 import dexy.plugins.markdown_filters
+import dexy.plugins.misc_filters
 import dexy.plugins.nltk_filter
 import dexy.plugins.output_reporters
 import dexy.plugins.pydoc_filters

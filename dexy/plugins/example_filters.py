@@ -65,7 +65,6 @@ class ConvertDict(DexyFilter):
         ordered_dict['1'] = input_text
         return ordered_dict
 
-### @export "example-process-text-method"
 class ExampleProcessTextMethod(DexyFilter):
     ALIASES = ['processtext']
 

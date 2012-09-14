@@ -234,12 +234,12 @@ class FilterArtifact(Artifact):
                 if ".*" in next_filter_accepts:
                     self.ext = this_filter_outputs[0]
                 else:
-                    if set(this_filter_outputs).isdisjoint(set(next_input_accepts)):
+                    if set(this_filter_outputs).isdisjoint(set(next_filter_accepts)):
                         msg = "Filter %s can't go after filter %s, no file extensions in common."
                         raise dexy.exceptions.UserFeedback(msg % (self.next_filter_alias, self.filter_alias))
 
                     for e in this_filter_outputs:
-                        if e in next_input_accepts:
+                        if e in next_filter_accepts:
                             self.ext = e
 
                     if not self.ext:
@@ -252,6 +252,8 @@ class FilterArtifact(Artifact):
         filter_instance = self.filter_class()
         filter_instance.artifact = self
         filter_instance.log = self.log
+        if not self.input_data.has_data():
+            raise Exception("no data!")
         filter_instance.process()
 
     def filter_args(self):
