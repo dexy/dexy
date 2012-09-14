@@ -249,7 +249,13 @@ class Wrapper(object):
         parser_aliases = dexy.parser.Parser.aliases
         for k in parser_aliases.keys():
             if os.path.exists(k):
-                print "found doc config", k
+                self.log.debug("found doc config file '%s'" % k)
                 parser = parser_aliases[k](self)
                 with open(k, "r") as f:
                     self.docs = parser.parse(f.read())
+
+    def setup_config(self):
+        self.load_config()
+        self.setup_dexy_dirs()
+        self.setup_log()
+        self.load_doc_config()

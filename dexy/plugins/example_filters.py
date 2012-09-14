@@ -97,8 +97,7 @@ class ExampleProcessMethod(Filter):
     ALIASES = ['process']
 
     def process(self):
-        input_data = self.artifact.input_data.data()
-        output = "Dexy processed the text '%s'" % input_data
+        output = "Dexy processed the text '%s'" % self.input_data()
         self.result().set_data(output)
 
 class ExampleProcessMethodManualWrite(Filter):

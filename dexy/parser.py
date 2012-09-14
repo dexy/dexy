@@ -37,10 +37,14 @@ class TextFileParser(Parser):
         docs = []
         for line in input_text.splitlines():
             line = line.strip()
-            if not line == "" or re.match("\s*#", line):
+            if not (line == "" or re.match("\s*#", line)):
                 if " " in line:
                     pattern, raw_args = line.split(" ", 1)
-                    args = json.loads(raw_args)
+                    try:
+                        args = json.loads(raw_args)
+                    except ValueError:
+                        self.wrapper.log.debug("Failed to parse '%s' with json parser" % raw_args)
+                        args = {}
                 else:
                     pattern = line
                     args = {}

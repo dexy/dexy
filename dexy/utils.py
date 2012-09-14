@@ -26,6 +26,13 @@ def char_diff(str1, str2):
             p_c2 = printable_for_char(c2)
 
             msg = msg + "\n%5d: %8s\t%8s\t\t%s\t%s %s" % (i, p_c1, p_c2, ord(c1), ord(c2), flag)
+        else:
+            # str1 is longer than str2
+            flag = " <---"
+            p_c1 = printable_for_char(c1)
+            msg = msg + "\n%5d: %8s\t%8s\t\t%s\t%s %s" % (i, p_c1, '  ', ord(c1), '  ', flag)
+
+    # TODO add code for str2 longer than str1
 
     return msg
 

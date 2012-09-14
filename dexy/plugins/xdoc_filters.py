@@ -109,8 +109,8 @@ class PythonDocumentationFilter(Filter):
             else:
                 self.add_source_for_key(key, sections)
 
-            self.artifact.output_data.append("%s:doc" % key, inspect.getdoc(item))
-            self.artifact.output_data.append("%s:comments" % key, inspect.getcomments(item))
+            self.result().append("%s:doc" % key, inspect.getdoc(item))
+            self.result().append("%s:comments" % key, inspect.getcomments(item))
 
         else: # not a function or a method
             try:
@@ -131,12 +131,12 @@ class PythonDocumentationFilter(Filter):
         """
         Appends source code + syntax highlighted source code to persistent store.
         """
-        self.artifact.output_data.append("%s:value" % key, source)
+        self.result().append("%s:value" % key, source)
         if not (type(source) == str or type(source) == unicode):
             source = inspect.getsource(source)
-        self.artifact.output_data.append("%s:source" % key, source)
-        self.artifact.output_data.append("%s:html-source" % key, self.highlight_html(source))
-        self.artifact.output_data.append("%s:latex-source" % key, self.highlight_latex(source))
+        self.result().append("%s:source" % key, source)
+        self.result().append("%s:html-source" % key, self.highlight_html(source))
+        self.result().append("%s:latex-source" % key, self.highlight_latex(source))
 
     def process_members(self, package_name, mod):
         """
@@ -154,8 +154,8 @@ class PythonDocumentationFilter(Filter):
                 key = "%s.%s" % (mod.__name__, k)
                 try:
                     item_content = inspect.getsource(m)
-                    self.artifact.output_data.append("%s:doc" % key, inspect.getdoc(m))
-                    self.artifact.output_data.append("%s:comments" % key, inspect.getcomments(m))
+                    self.result().append("%s:doc" % key, inspect.getdoc(m))
+                    self.result().append("%s:comments" % key, inspect.getcomments(m))
                     self.add_source_for_key(key, item_content)
                 except IOError:
                     self.log.debug("can't get source for %s" % key)
@@ -195,7 +195,7 @@ class PythonDocumentationFilter(Filter):
         """
         input_text should be a list of installed python libraries to document.
         """
-        package_names = self.artifact.input_data.as_text().split()
+        package_names = self.input().as_text().split()
         packages = [__import__(package_name) for package_name in package_names]
 
         for package in packages:
@@ -213,7 +213,7 @@ class PythonDocumentationFilter(Filter):
             else:
                 self.process_module(package.__name__, package.__name__)
 
-        self.artifact.output_data.save()
+        self.result().save()
 
 class RDocumentationFilter(Filter):
     """

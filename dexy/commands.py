@@ -78,7 +78,7 @@ def dexy_command(
         ignore=Wrapper.DEFAULT_IGNORE_NONZERO_EXIT, # whether to ignore nonzero exit status or raise an error - may not be supported by all filters
         logfile=Wrapper.DEFAULT_LOG_FILE, # name of log file
         logformat=Wrapper.DEFAULT_LOG_FORMAT, # format of log entries
-        loglevel=Wrapper.DEFAULT_LOG_LEVEL, # default log level (see Constants.LOGLEVELS.keys), can also be set per-document
+        loglevel=Wrapper.DEFAULT_LOG_LEVEL, # log level
         logsdir=Wrapper.DEFAULT_LOG_DIR, # location of directory in which to store logs
         nocache=Wrapper.DEFAULT_DONT_USE_CACHE, # whether to force artifacts to run even if there is a matching file in the cache
 #        output=False, # Shortcut to mean "I just want the OutputReporter, nothing else"
@@ -126,11 +126,12 @@ def dexy_command(
         version_command()
     else:
         wrapper = Wrapper(**locals())
-        wrapper.load_config()
-        wrapper.setup_log()
-        wrapper.load_doc_config()
+        import time
+        start_time = time.time()
+        wrapper.setup_config()
         wrapper.run()
         wrapper.report()
+        print "finished in %0.4f" % (time.time() - start_time)
 
 def reports_command(args):
     pass

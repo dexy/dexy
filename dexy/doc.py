@@ -119,6 +119,7 @@ class PatternDoc(WalkDoc):
     A doc which takes a file matching pattern and creates individual Doc objects for all files that match the pattern.
     """
     def setup(self):
+        self.set_log()
         self.file_pattern = self.key.split("|")[0]
         self.filter_aliases = self.key.split("|")[1:]
 
@@ -133,7 +134,7 @@ class PatternDoc(WalkDoc):
                     doc_key = "%s|%s" % (filepath, "|".join(self.filter_aliases))
                 else:
                     doc_key = filepath
-                self.wrapper.log.debug("Creating doc %s" % doc_key)
+                self.log.debug("Creating doc %s" % doc_key)
 
                 doc_args = self.args.copy()
                 doc_args['wrapper'] = self.wrapper

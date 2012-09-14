@@ -80,7 +80,8 @@ def assert_output(filter_alias, doc_contents, expected_output, ext=".txt"):
         try:
             assert doc.output().data() == expected_output
         except AssertionError as e:
-            print char_diff(doc.output().data_or_dict(), expected_output)
+            if not isinstance(expected_output, OrderedDict):
+                print char_diff(doc.output().as_text(), expected_output)
             raise e
 
 def assert_in_output(filter_alias, doc_contents, expected_output, ext=".txt"):

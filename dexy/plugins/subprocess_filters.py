@@ -1,4 +1,4 @@
-from dexy.plugins.stdout_filters import SubprocessFilter
+from dexy.plugins.process_filters import SubprocessFilter
 import os
 
 class PandocFilter(SubprocessFilter):
@@ -11,8 +11,7 @@ class PandocFilter(SubprocessFilter):
         args = {
             'prog' : self.executable(),
             'args' : self.command_line_args() or "",
-            'script_file' : os.path.basename(self.artifact.prior.output_data.name),
+            'script_file' : os.path.basename(self.prior().name),
             'output_file' : os.path.basename(self.result().name)
         }
-        print "executable is", self.executable()
         return "%(prog)s %(args)s %(script_file)s -o %(output_file)s" % args

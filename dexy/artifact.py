@@ -148,11 +148,12 @@ class FilterArtifact(Artifact):
         """
         rows = self.wrapper.get_child_hashes_in_previous_batch(self.hashstring)
         for row in rows:
+            self.log.debug("Fetched row %s for parent doc %s" % (row['key'], self.key))
             if 'Initial' in row['class_name']:
                 doc_args = json.loads(row['args'])
                 doc = dexy.doc.Doc(row['doc_key'], **doc_args)
                 self.add_doc(doc)
-                assert doc.artifacts[0].hashstring == row['hashstring']
+                assert doc.artifacts[0].hashstring == row['hashstring'], "Unexpected hashstring for %s" % doc.artifacts[0].key
 
     def set_metadata_hash(self):
         self.metadata.ext = self.ext

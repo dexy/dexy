@@ -3,19 +3,11 @@ import dexy.utils
 import dexy.doc
 import dexy.exceptions
 import os
-import platform
-import subprocess
 
 class FilterException(Exception):
     pass
 
 class Filter:
-    """
-    This is the main DexyFilter class. To make custom filters you should
-    subclass this and override the process() method. You may also want to
-    specify INPUT_EXTENSIONS and OUTPUT_EXTENSIONS. You must define unique
-    ALIASES in each handler, use java-style namespacing, e.g. com.abc.alias
-    """
     __metaclass__ = dexy.plugin.PluginMeta
 
     ALIASES = ['dexy']
@@ -26,6 +18,10 @@ class Filter:
     TAGS = [] # Descriptive keywords about the filter.
     VERSION_COMMAND = None
     WINDOWS_VERSION_COMMAND = None
+
+    @classmethod
+    def version(klass):
+        pass
 
     @classmethod
     def data_class_alias(klass):
@@ -48,9 +44,6 @@ class Filter:
         self.artifact.add_doc(doc)
         return doc
 
-    def inputs(self):
-        pass
-
     def input(self):
         return self.artifact.input_data
 
@@ -60,66 +53,11 @@ class Filter:
     def result(self):
         return self.artifact.output_data
 
+    def prior(self):
+        return self.artifact.prior.output_data
+
     def output_filepath(self):
         return self.result().storage.data_file()
-
-    @classmethod
-    def executables(self):
-        """
-        Returns list of executables defined for this filter, in order of preference. If empty, no executable is required.
-        """
-        executables = []
-
-        if platform.system() == 'Windows' and hasattr(self, 'WINDOWS_EXECUTABLE'):
-            executables.append(self.WINDOWS_EXECUTABLE)
-        else:
-            if hasattr(self, 'EXECUTABLE'):
-                executables.append(self.EXECUTABLE)
-            elif hasattr(self, 'EXECUTABLES'):
-                executables += self.EXECUTABLES
-
-        return executables
-
-    @classmethod
-    def executable(self):
-        """
-        Returns the executable to use. Looks in WINDOWS_EXECUTABLE if on
-        windows. Otherwise looks at EXECUTABLE or EXECUTABLES. If specified
-        executables are not detected on the system, returns None.
-        """
-        for exe in self.executables():
-            if exe:
-                cmd = exe.split()[0] # remove any --arguments
-                if dexy.utils.command_exists(cmd):
-                    return exe
-
-    @classmethod
-    def version_command(klass):
-        if platform.system() == 'Windows':
-            return klass.WINDOWS_VERSION_COMMAND or klass.VERSION_COMMAND
-        else:
-            return klass.VERSION_COMMAND
-
-    @classmethod
-    def version(klass, log=None):
-        vc = klass.version_command()
-
-        if vc:
-            # TODO make custom env available here...
-            proc = subprocess.Popen(vc, shell=True,
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.STDOUT)
-            stdout, stderr = proc.communicate()
-
-            if proc.returncode > 0:
-                err_msg = """An error occurred running %s""" % vc
-                if log:
-                    log.debug(err_msg)
-                return False
-            else:
-                return stdout.strip().split("\n")[0]
-        else:
-            return None
 
     @classmethod
     def output_file_extension(klass, ext, key, next_input_extensions=None):
@@ -229,32 +167,32 @@ class Filter:
         implemented and will be delegated to.
         """
 
-        if not self.artifact.input_data.has_data():
+        if not self.input().has_data():
             raise Exception("no data!")
 
         if hasattr(self, "process_text_to_dict"):
-            if not self.artifact.output_data.__class__.__name__ == "SectionedData":
+            if not self.result().__class__.__name__ == "SectionedData":
                 raise dexy.exceptions.InternalDexyProblem("filter implementing a process_text_to_dict method must specify OUTPUT_DATA_TYPE = 'sectioned'")
 
-            output = self.process_text_to_dict(self.artifact.input_data.as_text())
-            self.artifact.output_data.set_data(output)
+            output = self.process_text_to_dict(self.input().as_text())
+            self.result().set_data(output)
 
             method_used = "process_text_to_dict"
 
         elif hasattr(self, "process_dict"):
-            output = self.process_dict(self.artifact.input_data.as_sectioned())
-            self.artifact.output_data.set_data(output)
+            output = self.process_dict(self.input().as_sectioned())
+            self.result().set_data(output)
 
             method_used = "process_dict"
 
         elif hasattr(self, "process_text"):
-            output = self.process_text(self.artifact.input_data.as_text())
-            self.artifact.output_data.set_data(output)
+            output = self.process_text(self.input().as_text())
+            self.result().set_data(output)
 
             method_used = "process_text"
 
         else:
-            self.artifact.output_data.copy_from_file(self.artifact.input_data.storage.data_file())
+            self.result().copy_from_file(self.artifact.input_data.storage.data_file())
 
             method_used = "process"
 
