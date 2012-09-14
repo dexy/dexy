@@ -1,4 +1,4 @@
-from dexy.filter import Filter
+from dexy.filter import DexyFilter
 import json
 
 try:
@@ -7,7 +7,7 @@ try:
 except ImportError:
     AVAILABLE = False
 
-class NltkFilter(Filter):
+class NltkFilter(DexyFilter):
     """
     Base class for NLTK text processing filters. Returns a JSON object with
     various metadata about the input text. Just a demo of what's possible

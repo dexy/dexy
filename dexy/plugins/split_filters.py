@@ -1,9 +1,9 @@
 from dexy.common import OrderedDict
-from dexy.filter import Filter
+from dexy.filter import DexyFilter
 import os
 import re
 
-class SplitHtmlFilter(Filter):
+class SplitHtmlFilter(DexyFilter):
     """
     Create multiple HTML pages from a single template, with an automatic index page.
 

@@ -199,28 +199,54 @@ class FilterArtifact(Artifact):
         self.doc.children.append(doc)
 
     def set_extension(self):
-        """
-        Determine the file extension that should be output by this artifact.
-        """
+        this_filter_outputs = self.filter_class.OUTPUT_EXTENSIONS
+        this_filter_accepts = self.filter_class.INPUT_EXTENSIONS
 
-        # Extensions can be specified in filter args
+        # Check that we can handle input extension
+        if set([self.prior.ext, ".*"]).isdisjoint(set(this_filter_accepts)):
+            msg = "Filter '%s' in '%s' can't handle file extension %s, supported extensions are %s"
+            params = (self.filter_alias, self.key, self.prior.ext, ", ".join(this_filter_accepts))
+            raise dexy.exceptions.UserFeedback(msg % params)
+
+        # Figure out output extension
         ext = self.filter_args().get('ext')
         if ext:
+            # User has specified desired extension
             if not ext.startswith('.'):
                 ext = '.%s' % ext
+
+            # Make sure it's a valid one
+            if not ext in this_filter_outputs:
+                msg = "You have requested file extension %s in %s but filter %s can't generate that."
+                raise dexy.exceptions.UserFeedback(msg % (ext, self.key, self.filter_alias))
+
             self.ext = ext
 
-        # Or else calculate them based on what next filter can accept
-        else:
-            if self.next_filter_class:
-                next_inputs = self.next_filter_class.INPUT_EXTENSIONS
-            else:
-                next_inputs= None
+        elif ".*" in this_filter_outputs:
+            self.ext = self.prior.ext
 
-            self.ext = self.filter_class.output_file_extension(
-                    self.prior.ext,
-                    self.key,
-                    next_inputs)
+        else:
+            # User has not specified desired extension, and we don't output wildcards,
+            # figure out extension based on next filter in sequence, if any.
+            if self.next_filter_class:
+                next_filter_accepts = self.next_filter_class.INPUT_EXTENSIONS
+
+                if ".*" in next_filter_accepts:
+                    self.ext = this_filter_outputs[0]
+                else:
+                    if set(this_filter_outputs).isdisjoint(set(next_input_accepts)):
+                        msg = "Filter %s can't go after filter %s, no file extensions in common."
+                        raise dexy.exceptions.UserFeedback(msg % (self.next_filter_alias, self.filter_alias))
+
+                    for e in this_filter_outputs:
+                        if e in next_input_accepts:
+                            self.ext = e
+
+                    if not self.ext:
+                        msg = "no file extension found but checked already for disjointed, should not be here"
+                        raise dexy.exceptions.InternalDexyProblem(msg)
+            else:
+                self.ext = this_filter_outputs[0]
 
     def generate(self, *args, **kw):
         filter_instance = self.filter_class()

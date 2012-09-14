@@ -1,11 +1,11 @@
 """
-Filters written to be examples of how to write filters.
+DexyFilters written to be examples of how to write filters.
 """
 from dexy.common import OrderedDict
 from dexy.doc import Doc
-from dexy.filter import Filter
+from dexy.filter import DexyFilter
 
-class KeyValueExample(Filter):
+class KeyValueExample(DexyFilter):
     ALIASES = ['keyvalueexample']
     OUTPUT_DATA_TYPE = 'keyvalue'
     OUTPUT_EXTENSIONS = ['.json']
@@ -17,7 +17,7 @@ class KeyValueExample(Filter):
         self.result().save()
 
 ### @export "access-other-documents"
-class AccessOtherDocuments(Filter):
+class AccessOtherDocuments(DexyFilter):
     ALIASES = ["others"]
 
     ### @export "access-other-docs-process-text"
@@ -44,7 +44,7 @@ class AccessOtherDocuments(Filter):
         return "\n        ".join(info)
         ### @end
 
-class AddNewDocument(Filter):
+class AddNewDocument(DexyFilter):
     """
     A filter which adds an extra document to the tree.
     """
@@ -54,7 +54,7 @@ class AddNewDocument(Filter):
         self.add_doc("newfile.txt|processtext", "newfile")
         return "we added a new file"
 
-class ConvertDict(Filter):
+class ConvertDict(DexyFilter):
     """
     Returns an ordered dict with a single element.
     """
@@ -66,14 +66,14 @@ class ConvertDict(Filter):
         return ordered_dict
 
 ### @export "example-process-text-method"
-class ExampleProcessTextMethod(Filter):
+class ExampleProcessTextMethod(DexyFilter):
     ALIASES = ['processtext']
 
     def process_text(self, input_text):
         return "Dexy processed the text '%s'" % input_text
 
 ### @export "example-process-dict-method"
-class ExampleProcessDictMethod(Filter):
+class ExampleProcessDictMethod(DexyFilter):
     ALIASES = ['processdict']
 
     def process_dict(self, input_dict):
@@ -82,7 +82,7 @@ class ExampleProcessDictMethod(Filter):
             output_dict[k] = "Dexy processed the text '%s'" % v
         return output_dict
 
-class ExampleProcessTextToDictMethod(Filter):
+class ExampleProcessTextToDictMethod(DexyFilter):
     ALIASES = ['processtexttodict']
 
     def process_text_to_dict(self, input_text):
@@ -90,7 +90,7 @@ class ExampleProcessTextToDictMethod(Filter):
         output_dict['1'] = "Dexy processed the text '%s'" % input_text
         return output_dict
 
-class ExampleProcessMethod(Filter):
+class ExampleProcessMethod(DexyFilter):
     """
     A filter implementing a process method which stores raw data.
     """
@@ -100,7 +100,7 @@ class ExampleProcessMethod(Filter):
         output = "Dexy processed the text '%s'" % self.input_data()
         self.result().set_data(output)
 
-class ExampleProcessMethodManualWrite(Filter):
+class ExampleProcessMethodManualWrite(DexyFilter):
     """
     A filter implementing a process method which stores raw data by writing directly to the output file.
     """
@@ -112,7 +112,7 @@ class ExampleProcessMethodManualWrite(Filter):
         with open(self.output_filepath(), "wb") as f:
             f.write(output)
 
-class ExampleProcessWithDictMethod(Filter):
+class ExampleProcessWithDictMethod(DexyFilter):
     """
     A filter implementing a process method which uses OrderedDict to store sectional data.
     """
@@ -125,9 +125,18 @@ class ExampleProcessWithDictMethod(Filter):
         output_dict['1'] = "Dexy processed the text '%s'" % input_data
         self.result().set_data(output_dict)
 
-class AbcExtension(Filter):
+class AbcExtension(DexyFilter):
     OUTPUT_EXTENSIONS = [".abc"]
     ALIASES = ['outputabc']
 
     def process_text(self, input_text):
         return "Dexy processed the text '%s'" % input_text
+
+class ExampleFilterArgs(DexyFilter):
+    ALIASES = ['filterargs']
+
+    def process_text(self, input_text):
+        result = ["Here are the arguments you passed:"]
+        for k, v in self.args().iteritems():
+            result.append("%s: %s" % (k, v))
+        return "\n".join(result)

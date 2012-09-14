@@ -224,7 +224,10 @@ def filters_text(
                 skip = False
 
             if (versions or showmissing or showall) and not skip:
-                version = klass.version()
+                if hasattr(klass, 'version'):
+                    version = klass.version()
+                else:
+                    version = None
                 no_version_info_available = (version is None)
                 if no_version_info_available:
                     version_message = ""

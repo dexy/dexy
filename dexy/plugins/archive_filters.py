@@ -1,9 +1,9 @@
-from dexy.filter import Filter
+from dexy.filter import DexyFilter
 import tarfile
 import zipfile
 import os
 
-class UnprocessedDirectoryArchiveFilter(Filter):
+class UnprocessedDirectoryArchiveFilter(DexyFilter):
     """
     Create a tgz archive containing the original (unprocessed) files in a directory.
     """

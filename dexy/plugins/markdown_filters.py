@@ -1,10 +1,10 @@
-from dexy.filter import Filter
+from dexy.filter import DexyFilter
 import dexy.exceptions
 import logging
 import markdown
 import json
 
-class MarkdownFilter(Filter):
+class MarkdownFilter(DexyFilter):
     """
     Runs a Markdown processor to convert markdown to HTML.
 

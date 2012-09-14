@@ -1,4 +1,4 @@
-from dexy.filter import Filter
+from dexy.filter import DexyFilter
 from dexy.plugins.templating_plugins import *
 from jinja2.exceptions import TemplateSyntaxError
 from jinja2.exceptions import UndefinedError
@@ -8,7 +8,7 @@ import re
 import sys
 import traceback
 
-class TemplateFilter(Filter):
+class TemplateFilter(DexyFilter):
     """
     Base class for templating system filters such as JinjaFilter. Templating
     systems are used to make generated artifacts available within documents.

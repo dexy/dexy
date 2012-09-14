@@ -1,6 +1,6 @@
-from dexy.filter import Filter
+from dexy.filter import DexyFilter
 
-class FluidHtml(Filter):
+class FluidHtml(DexyFilter):
     """
     Wraps your text in HTML header/footer which includes Baseline CSS resets.
     Easy way to add styles (includes Python syntax highlighting).

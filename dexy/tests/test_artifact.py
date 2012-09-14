@@ -2,9 +2,10 @@ from dexy.artifact import FilterArtifact
 from dexy.artifact import InitialArtifact
 from dexy.artifact import InitialVirtualArtifact
 from dexy.doc import Doc
-from dexy.wrapper import Wrapper
 from dexy.tests.utils import tempdir
 from dexy.tests.utils import wrap
+from dexy.wrapper import Wrapper
+import dexy.exceptions
 import time
 
 def test_caching():
@@ -136,3 +137,17 @@ def test_parent_doc_hash_2():
         for doc in wrapper.registered:
             if doc.__class__.__name__ == 'FilterArtifact':
                 assert doc.source == 'cached'
+
+def test_bad_file_extension_exception():
+    with wrap() as wrapper:
+        doc = Doc("hello.abc|py",
+                contents="hello",
+                wrapper=wrapper)
+
+        wrapper.docs = [doc]
+
+        try:
+            wrapper.run()
+            assert False, "should not be here"
+        except dexy.exceptions.UserFeedback as e:
+            assert "Filter 'py' in 'hello.abc|py' can't handle file extension .abc" in e.message

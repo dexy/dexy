@@ -10,6 +10,8 @@ class SubprocessFilter(Filter):
     ALIASES = []
     ENV = None
     CHECK_RETURN_CODE = False
+    VERSION_COMMAND = None
+    WINDOWS_VERSION_COMMAND = None
 
     @classmethod
     def executables(self):

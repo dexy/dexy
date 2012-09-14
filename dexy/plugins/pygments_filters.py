@@ -1,5 +1,5 @@
 from dexy.common import OrderedDict
-from dexy.filter import Filter
+from dexy.filter import DexyFilter
 from pygments import highlight
 from pygments.formatters import HtmlFormatter
 from pygments.formatters import LatexFormatter
@@ -15,7 +15,7 @@ import dexy.commands
 import pygments.lexers.web
 import re
 
-class PygmentsFilter(Filter):
+class PygmentsFilter(DexyFilter):
     """
     Apply Pygments syntax highlighting. Image formats require PIL.
     """
