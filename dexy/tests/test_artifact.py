@@ -204,3 +204,29 @@ def test_virtual_artifact_data_class_generic():
         artifact = doc.artifacts[0]
         assert artifact.__class__.__name__ == "InitialVirtualArtifact"
         assert artifact.data_class_alias() == 'sectioned'
+
+def test_create_working_dir():
+    with wrap() as wrapper:
+        c1 = Doc("data.txt", contents="12345.67", wrapper=wrapper)
+        c2 = Doc("mymod.py", contents="FOO='bar'", wrapper=wrapper)
+        doc = Doc("example.py|py",
+                c1, c2,
+                wrapper=wrapper,
+                contents="""\
+with open("data.txt", "r") as f:
+    print f.read()
+
+import mymod
+print mymod.FOO
+
+import os
+print sorted(os.listdir(os.getcwd()))
+""")
+
+        wrapper.docs = [doc]
+        wrapper.run()
+
+        assert doc.output().data() == """12345.67
+bar
+['data.txt', 'example.py', 'mymod.py', 'mymod.pyc']
+"""

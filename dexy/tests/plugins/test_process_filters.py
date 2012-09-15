@@ -1,6 +1,7 @@
 from dexy.plugins.process_filters import SubprocessFilter
 from dexy.tests.utils import wrap
 from dexy.doc import Doc
+import dexy.exceptions
 
 class NotPresentExecutable(SubprocessFilter):
     EXECUTABLE = 'notreal'
@@ -50,3 +51,27 @@ def test_custom_env_in_args():
         wrapper.run()
 
         assert doc.output().data() == "bar\n"
+
+def test_nonzero_exit():
+    with wrap() as wrapper:
+        doc = Doc("example.py|py",
+                wrapper=wrapper,
+                contents="import sys\nsys.exit(1)"
+                )
+        wrapper.docs = [doc]
+        try:
+            wrapper.run()
+            assert False, "should raise NonzeroExit"
+        except dexy.exceptions.NonzeroExit as e:
+            assert True
+
+def test_ignore_nonzero_exit():
+    with wrap() as wrapper:
+        wrapper.ignore_nonzero_exit = True
+        doc = Doc("example.py|py",
+                wrapper=wrapper,
+                contents="import sys\nsys.exit(1)"
+                )
+        wrapper.docs = [doc]
+        wrapper.run()
+        assert True # no NonzeroExit was raised...

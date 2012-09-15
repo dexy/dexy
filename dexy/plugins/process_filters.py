@@ -9,9 +9,10 @@ import subprocess
 class SubprocessFilter(Filter):
     ALIASES = []
     ENV = None
-    CHECK_RETURN_CODE = False
+    CHECK_RETURN_CODE = True
     VERSION_COMMAND = None
     WINDOWS_VERSION_COMMAND = None
+    WRITE_STDERR_TO_STDOUT = False
 
     @classmethod
     def executables(self):
@@ -98,11 +99,14 @@ class SubprocessFilter(Filter):
         }
         return "%(prog)s %(args)s %(script_file)s %(scriptargs)s %(output_file)s" % args
 
+    def ignore_nonzero_exit(self):
+        return self.artifact.wrapper.ignore_nonzero_exit
+
     def handle_subprocess_proc_return(self, command, exitcode, stderr):
         if exitcode is None:
             raise Exception("no return code, proc not finished!")
         elif exitcode != 0 and self.CHECK_RETURN_CODE:
-            if self.ignore_errors():
+            if self.ignore_nonzero_exit():
                 self.artifact.log.warn("Nonzero exit status %s" % exitcode)
                 self.artifact.log.warn("output from process: %s" % stderr)
             else:
@@ -146,17 +150,34 @@ class SubprocessFilter(Filter):
         doc = Doc(doc_key, contents=d)
         self.artifact.add_doc(doc)
 
-    def run_command(self, command, env):
+    def write_stderr_to_stdout(self):
+        # TODO allow customizing this in args
+        return self.WRITE_STDERR_TO_STDOUT
+
+    def run_command(self, command, env, input_text=None):
         wd = self.setup_wd()
+
+        stdout = subprocess.PIPE
+
+        if input_text:
+            stdin = subprocess.PIPE
+        else:
+            stdin = None
+
+        if self.write_stderr_to_stdout():
+            stderr = stdout
+        else:
+            stderr = subprocess.PIPE
 
         self.log.debug("About to run '%s' in '%s'" % (command, wd))
         proc = subprocess.Popen(command, shell=True,
                                 cwd=wd,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
+                                stdin=stdin,
+                                stdout=stdout,
+                                stderr=stderr,
                                 env=env)
 
-        stdout, stderr = proc.communicate()
+        stdout, stderr = proc.communicate(input_text)
         self.log.debug("stdout is '%s'" % stdout)
         self.log.debug("stderr is '%s'" % stderr)
 
@@ -170,36 +191,11 @@ class SubprocessFilter(Filter):
             self.result().copy_from_file(canonical_file)
 
 class SubprocessStdoutFilter(SubprocessFilter):
-    def run_command(self, command, env, input_text = None):
-        wd = self.setup_wd()
-
-        if input_text:
-            stdin = subprocess.PIPE
-        else:
-            stdin = None
-
-        self.log.debug("About to run '%s' in '%s'" % (command, wd))
-        proc = subprocess.Popen(command, shell=True,
-                                cwd=wd,
-                                stdin=stdin,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
-                                env=env)
-
-        if input_text:
-            self.log.debug("about to send input '%s'" % input_text)
-
-        stdout, stderr = proc.communicate(input_text)
-        self.log.debug("stdout is '%s'" % stdout)
-        self.log.debug("stderr is '%s'" % stderr)
-
-        self.walk_working_directory(wd)
-
-        return (proc, stdout)
+    WRITE_STDERR_TO_STDOUT = False
 
     def process(self):
         command = self.command_string_stdout()
         proc, stdout = self.run_command(command, self.setup_env())
         self.handle_subprocess_proc_return(command, proc.returncode, stdout)
-        self.artifact.output_data.set_data(stdout)
+        self.result().set_data(stdout)
 
