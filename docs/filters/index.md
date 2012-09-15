@@ -228,6 +228,12 @@ Once we have a command string, we pass it to the method which will actually exec
 
 {{ d['modules.txt|pydoc']['dexy.plugins.process_filters.SubprocessFilter.setup_env:html-source'] }}
 
+The environment can be augmented by specifying a dict of env values in the filter class's ENV variable, and also by passing an 'env' argument to the filter:
+
+{{ d['modules.txt|pydoc']['dexy.tests.plugins.test_process_filters.test_custom_env_in_args:html-source'] }}
+
+Here is the `run_command()` method:
+
 {{ d['modules.txt|pydoc']['dexy.plugins.process_filters.SubprocessFilter.run_command:html-source'] }}
 
 ## Individual Filter Reference

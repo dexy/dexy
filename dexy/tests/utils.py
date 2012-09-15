@@ -70,8 +70,6 @@ class runfilter(tempdir):
         return wrapper.docs[0]
 
 def assert_output(filter_alias, doc_contents, expected_output, ext=".txt"):
-    print "calling assert_output with doc contents", doc_contents
-
     if not ext.startswith("."):
         raise Exception("ext arg to assert_in_output must start with dot")
 

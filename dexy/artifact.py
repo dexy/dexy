@@ -182,7 +182,9 @@ class FilterArtifact(Artifact):
         sources.append(dexy.filter.Filter.source[klass.__name__])
         self.metadata.filter_source = "\n".join(sources)
 
-        # TODO add software version of underlying software, if any
+        if hasattr(self.filter_class, 'version'):
+            version = self.filter_class.version()
+            self.metadata.software_version = version
 
         self.set_and_save_hash()
 
@@ -249,12 +251,12 @@ class FilterArtifact(Artifact):
                 self.ext = this_filter_outputs[0]
 
     def generate(self, *args, **kw):
-        filter_instance = self.filter_class()
-        filter_instance.artifact = self
-        filter_instance.log = self.log
+        self.filter_instance = self.filter_class()
+        self.filter_instance.artifact = self
+        self.filter_instance.log = self.log
         if not self.input_data.has_data():
             raise Exception("no data!")
-        filter_instance.process()
+        self.filter_instance.process()
 
     def filter_args(self):
         """

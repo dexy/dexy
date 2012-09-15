@@ -1,5 +1,7 @@
 *.pyc
 dexy.egg-info
+output/
+output-long/
 artifacts/
 logs/
 *.swp

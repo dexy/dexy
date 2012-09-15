@@ -35,6 +35,10 @@ class SubprocessFilter(Filter):
                     return exe
 
     @classmethod
+    def is_active(klass):
+        return klass.executable() and True or False
+
+    @classmethod
     def version_command(klass):
         if platform.system() == 'Windows':
             return klass.WINDOWS_VERSION_COMMAND or klass.VERSION_COMMAND
@@ -42,35 +46,31 @@ class SubprocessFilter(Filter):
             return klass.VERSION_COMMAND
 
     @classmethod
-    def version(klass, log=None):
-        vc = klass.version_command()
+    def version(klass):
+        command = klass.version_command()
+        if command:
+            proc = subprocess.Popen(
+                       command,
+                       shell=True,
+                       stdout=subprocess.PIPE,
+                       stderr=subprocess.STDOUT
+                   )
 
-        if vc:
-            # TODO make custom env available here...
-            proc = subprocess.Popen(vc, shell=True,
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.STDOUT)
             stdout, stderr = proc.communicate()
-
             if proc.returncode > 0:
-                err_msg = """An error occurred running %s""" % vc
-                if log:
-                    log.debug(err_msg)
                 return False
             else:
                 return stdout.strip().split("\n")[0]
-        else:
-            return None
 
-    @classmethod
-    def is_active(klass):
-        """Allow filters to be disabled."""
-        return klass.executable() and True or False
+    def process(self):
+        command = self.command_string()
+        proc, stdout = self.run_command(command, self.setup_env())
+        self.handle_subprocess_proc_return(command, proc.returncode, stdout)
+        self.copy_canonical_file()
+
+    ## Undocumented...
 
     def setup_wd(self):
-        """
-        Sets up and populates the working directory as required.
-        """
         return self.artifact.create_working_dir(True)
 
     def command_line_args(self):
@@ -84,7 +84,7 @@ class SubprocessFilter(Filter):
             'prog' : self.executable(),
             'args' : self.command_line_args() or "",
             'scriptargs' : self.command_line_scriptargs() or "",
-            'script_file' : os.path.basename(self.artifact.prior.name)
+            'script_file' : os.path.basename(self.input().name)
         }
         return "%(prog)s %(args)s %(script_file)s %(scriptargs)s" % args
 
@@ -92,9 +92,9 @@ class SubprocessFilter(Filter):
         args = {
             'prog' : self.executable(),
             'args' : self.command_line_args() or "",
+            'script_file' : os.path.basename(self.input().name),
             'scriptargs' : self.command_line_scriptargs() or "",
-            'script_file' : os.path.basename(self.artifact.previous_canonical_filename),
-            'output_file' : self.artifact.canonical_basename()
+            'output_file' : os.path.basename(self.result().name)
         }
         return "%(prog)s %(args)s %(script_file)s %(scriptargs)s %(output_file)s" % args
 
@@ -163,15 +163,6 @@ class SubprocessFilter(Filter):
         self.walk_working_directory(wd)
 
         return (proc, stdout)
-
-    def process(self):
-        command = self.command_string()
-        proc, stdout = self.run_command(command, self.setup_env())
-        self.handle_subprocess_proc_return(command, proc.returncode, stdout)
-
-        # TODO store stdout somewhere
-
-        self.copy_canonical_file()
 
     def copy_canonical_file(self):
         canonical_file = os.path.join(self.artifact.tmp_dir(), self.result().name)

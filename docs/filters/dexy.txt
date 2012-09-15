@@ -1,2 +1,2 @@
-modules.txt|pydoc {"contents" : "dexy", "version" : 22}
+modules.txt|pydoc {"contents" : "dexy", "version" : 23}
 *.md|jinja|markdown|easyhtml
