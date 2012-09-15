@@ -15,27 +15,18 @@ class SubprocessFilter(Filter):
 
     @classmethod
     def executables(self):
-        """
-        Returns list of executables defined for this filter, in order of preference. If empty, no executable is required.
-        """
-        executables = []
-
         if platform.system() == 'Windows' and hasattr(self, 'WINDOWS_EXECUTABLE'):
-            executables.append(self.WINDOWS_EXECUTABLE)
+            return [self.WINDOWS_EXECUTABLE]
         else:
             if hasattr(self, 'EXECUTABLE'):
-                executables.append(self.EXECUTABLE)
+                return [self.EXECUTABLE]
             elif hasattr(self, 'EXECUTABLES'):
-                executables += self.EXECUTABLES
-
-        return executables
+                return self.EXECUTABLES
 
     @classmethod
     def executable(self):
         """
-        Returns the executable to use. Looks in WINDOWS_EXECUTABLE if on
-        windows. Otherwise looks at EXECUTABLE or EXECUTABLES. If specified
-        executables are not detected on the system, returns None.
+        Returns the executable to use, or None if no executable found on the system.
         """
         for exe in self.executables():
             if exe:

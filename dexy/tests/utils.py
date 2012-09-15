@@ -70,11 +70,15 @@ class runfilter(tempdir):
         return wrapper.docs[0]
 
 def assert_output(filter_alias, doc_contents, expected_output, ext=".txt"):
+    print "calling assert_output with doc contents", doc_contents
+
     if not ext.startswith("."):
         raise Exception("ext arg to assert_in_output must start with dot")
 
     if isinstance(expected_output, dict):
         expected_output = create_ordered_dict_from_dict(expected_output)
+    if isinstance(doc_contents, dict):
+        doc_contents = create_ordered_dict_from_dict(doc_contents)
 
     with runfilter(filter_alias, doc_contents, ext=ext) as doc:
         try:
@@ -82,6 +86,10 @@ def assert_output(filter_alias, doc_contents, expected_output, ext=".txt"):
         except AssertionError as e:
             if not isinstance(expected_output, OrderedDict):
                 print char_diff(doc.output().as_text(), expected_output)
+            else:
+                print "Output: %s" % doc.output().as_text()
+                print "Expected: %s" % expected_output
+
             raise e
 
 def assert_in_output(filter_alias, doc_contents, expected_output, ext=".txt"):

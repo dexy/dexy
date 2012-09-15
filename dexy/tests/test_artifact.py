@@ -1,6 +1,7 @@
 from dexy.artifact import FilterArtifact
 from dexy.artifact import InitialArtifact
 from dexy.artifact import InitialVirtualArtifact
+from dexy.common import OrderedDict
 from dexy.doc import Doc
 from dexy.tests.utils import tempdir
 from dexy.tests.utils import wrap
@@ -183,3 +184,23 @@ def test_no_file_extension_overlap():
             assert False, "UserFeedback should be raised"
         except dexy.exceptions.UserFeedback as e:
             assert "Filter forcehtml can't go after filter forcetext, no file extensions in common." in e.message
+
+def test_virtual_artifact_data_class_generic():
+    with wrap() as wrapper:
+        doc = Doc("virtual.txt",
+                contents = "virtual",
+                wrapper=wrapper)
+        artifact = doc.artifacts[0]
+        assert artifact.__class__.__name__ == "InitialVirtualArtifact"
+        assert artifact.data_class_alias() == 'generic'
+
+def test_virtual_artifact_data_class_generic():
+    with wrap() as wrapper:
+        contents = OrderedDict()
+        contents['foo'] = 'bar'
+        doc = Doc("virtual.txt",
+                contents=contents,
+                wrapper=wrapper)
+        artifact = doc.artifacts[0]
+        assert artifact.__class__.__name__ == "InitialVirtualArtifact"
+        assert artifact.data_class_alias() == 'sectioned'

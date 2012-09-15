@@ -71,7 +71,6 @@ class ExampleProcessTextMethod(DexyFilter):
     def process_text(self, input_text):
         return "Dexy processed the text '%s'" % input_text
 
-### @export "example-process-dict-method"
 class ExampleProcessDictMethod(DexyFilter):
     ALIASES = ['processdict']
 
