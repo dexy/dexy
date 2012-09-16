@@ -42,7 +42,7 @@ class TextFileParser(Parser):
                     try:
                         args = json.loads(raw_args)
                     except ValueError:
-                        self.wrapper.log.debug("Failed to parse '%s' with json parser" % raw_args)
+                        self.wrapper.log.debug("Failed to parse extra args '%s' with json parser" % raw_args)
                         args = {}
                 else:
                     pattern = line
