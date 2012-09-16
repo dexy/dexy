@@ -56,6 +56,9 @@ class Data:
     def long_name(self):
         return "%s%s" % (self.key.replace("|", "-"), self.ext)
 
+    def basename(self):
+        return os.path.basename(self.name)
+
     def web_safe_document_key(self):
         return self.long_name().replace("/", "--")
 
@@ -115,7 +118,7 @@ class GenericData(Data):
         """
         Write canonical output to a file. Parent directory must exist already.
         """
-        self.storage.write_data(self._data, filepath)
+        self.storage.write_data(self.data(), filepath)
 
 class SectionedData(GenericData):
     ALIASES = ['sectioned']
