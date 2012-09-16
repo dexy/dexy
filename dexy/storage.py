@@ -26,7 +26,7 @@ class GenericStorage(Storage):
         return os.path.join(self.wrapper.artifacts_dir, "%s%s" % (self.hashstring, self.ext))
 
     def data_file_exists(self):
-        return os.path.exists(self.data_file())
+        return os.path.exists(self.data_file()) and os.path.getsize(self.data_file()) > 0
 
     def write_data(self, data, filepath=None):
         if not filepath:
