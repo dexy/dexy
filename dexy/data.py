@@ -1,5 +1,6 @@
 from dexy.plugin import PluginMeta
 from dexy.wrapper import Wrapper
+import codecs
 import dexy.storage
 import os
 import shutil
@@ -130,7 +131,7 @@ class SectionedData(GenericData):
         """
         Write canonical output to a file.
         """
-        with open(filepath, "wb") as f:
+        with codecs.open(filepath, "wb", encoding="utf-8") as f:
             f.write(self.as_text())
 
 class KeyValueData(GenericData):

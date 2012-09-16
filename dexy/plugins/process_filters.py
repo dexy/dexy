@@ -72,6 +72,8 @@ class SubprocessFilter(Filter):
     ## Undocumented...
 
     def setup_wd(self):
+        print "setting up wd for", self.artifact.key
+        print self.artifact.completed_children
         return self.artifact.create_working_dir(True)
 
     def command_line_args(self):
@@ -154,6 +156,9 @@ class SubprocessFilter(Filter):
         # TODO allow customizing this in args
         return self.WRITE_STDERR_TO_STDOUT
 
+    def do_walk_working_directory(self):
+        return False
+
     def run_command(self, command, env, input_text=None):
         wd = self.setup_wd()
 
@@ -181,7 +186,8 @@ class SubprocessFilter(Filter):
         self.log.debug("stdout is '%s'" % stdout)
         self.log.debug("stderr is '%s'" % stderr)
 
-        self.walk_working_directory(wd)
+        if self.do_walk_working_directory():
+            self.walk_working_directory(wd)
 
         return (proc, stdout)
 
@@ -198,4 +204,3 @@ class SubprocessStdoutFilter(SubprocessFilter):
         proc, stdout = self.run_command(command, self.setup_env())
         self.handle_subprocess_proc_return(command, proc.returncode, stdout)
         self.result().set_data(stdout)
-

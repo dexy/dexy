@@ -12,6 +12,7 @@ def test_text_parser_blank_lines():
 def test_text_parser_comments():
     with wrap() as wrapper:
         parser = TextFileParser()
+        parser.wrapper = wrapper
         docs = parser.parse("""
         valid.doc
         # commented-out.doc
@@ -23,6 +24,7 @@ def test_text_parser_comments():
 def test_text_parser_valid_json():
     with wrap() as wrapper:
         parser = TextFileParser()
+        parser.wrapper=wrapper
         docs = parser.parse("""
         doc.txt { "contents" : 123 }
         """)

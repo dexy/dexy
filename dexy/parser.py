@@ -34,7 +34,6 @@ class TextFileParser(Parser):
     ALIASES = ["dexy.txt"]
 
     def parse(self, input_text):
-        docs = []
         for line in input_text.splitlines():
             line = line.strip()
             if not (line == "" or re.match("\s*#", line)):
@@ -53,5 +52,6 @@ class TextFileParser(Parser):
                     doc = dexy.doc.Doc(pattern, depends=True, wrapper=self.wrapper, **args)
                 else:
                     doc = dexy.doc.PatternDoc(pattern, depends=True, wrapper=self.wrapper, **args)
-                docs.append(doc)
-        return docs
+
+                self.wrapper.docs.append(doc)
+        return self.wrapper.docs

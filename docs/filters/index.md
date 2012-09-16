@@ -296,7 +296,14 @@ Here is the code that generates our command text:
 
 And after the process has run, instead of copying the canonical file to the cache, we use the `set_data()` method and pass the stdout from the proc, which we received via the pipe.
 
-
 ## Individual Filter Reference
 
 Here we talk about all the filters that are available, their features and their implementation.
+
+{% for line in d['filters.py|py'].splitlines() -%}
+* <a href="#filter-{{ line.split()[0] }}">{{ line }}</a>
+{% endfor -%}
+
+#### filter-bn
+
+here is some info

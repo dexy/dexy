@@ -224,8 +224,7 @@ class InputsTemplatePlugin(TemplatePlugin):
         a_hash = {}
 
         name = self.filter_instance.result().name
-
-        for task in self.filter_instance.artifact.doc.completed_children.values():
+        for task in self.filter_instance.processed():
             if task.state != 'complete':
                 raise Exception("All tasks should be complete! Task %s in state %s" % (task.key, task.state))
 

@@ -57,6 +57,7 @@ class Wrapper(object):
 
         self.args = args
         self.db_path = os.path.join(self.artifacts_dir, self.db_file)
+        self.docs = []
         self.log_path = os.path.join(self.log_dir, self.log_file)
         self.registered = []
         self.reports_dirs = [c.REPORTS_DIR for c in Reporter.plugins]
@@ -67,6 +68,7 @@ class Wrapper(object):
 
         # Remove any attributes that aren't config options
         del conf['args']
+        del conf['docs']
         del conf['db_path']
         del conf['log_path']
         del conf['registered']
@@ -124,9 +126,6 @@ class Wrapper(object):
         """
         Processes args which may be doc objects or filenames with wildcards.
         """
-        if not hasattr(self, 'docs'):
-            self.docs = []
-
         for arg in self.args:
             self.log.debug("Processing arg %s" % arg)
             if isinstance(arg, dexy.doc.Doc) or isinstance(arg, dexy.doc.PatternDoc):
