@@ -72,8 +72,6 @@ class SubprocessFilter(Filter):
     ## Undocumented...
 
     def setup_wd(self):
-        print "setting up wd for", self.artifact.key
-        print self.artifact.completed_children
         return self.artifact.create_working_dir(True)
 
     def command_line_args(self):
