@@ -1,17 +1,18 @@
 from dexy.common import OrderedDict
-from dexy.task import Task
+from dexy.version import DEXY_VERSION
 import dexy.data
 import dexy.doc
 import dexy.exceptions
 import dexy.filter
 import dexy.metadata
+import dexy.task
 import inspect
 import json
 import os
 import shutil
 import stat
 
-class Artifact(Task):
+class Artifact(dexy.task.Task):
     def setup(self):
         self.set_log()
         self.metadata = dexy.metadata.Md5()
@@ -171,7 +172,7 @@ class FilterArtifact(Artifact):
                 strargs.append("%s: %s" % (k, v))
         self.metadata.argstr = ", ".join(strargs)
 
-        self.metadata.dexy_version = dexy.__version__
+        self.metadata.dexy_version = DEXY_VERSION
 
         # filter source code
         sources = []

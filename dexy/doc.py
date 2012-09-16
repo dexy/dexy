@@ -1,11 +1,11 @@
-from dexy.task import Task
 import dexy.artifact
 import dexy.exceptions
 import dexy.filter
+import dexy.task
 import fnmatch
 import os
 
-class Doc(Task):
+class Doc(dexy.task.Task):
     """
     A single file + 0 or more filters applied to that file.
     """
@@ -57,7 +57,7 @@ class Doc(Task):
             raise dexy.exceptions.UserFeedback("You have a trailing | or you have 2 | symbols together in your specification for %s" % self.key)
 
         if not artifact.filter_class.is_active():
-            raise dexy.exceptions.InactiveFilter
+            raise dexy.exceptions.InactiveFilter(artifact.filter_alias)
 
         artifact.next_filter_alias = None
         artifact.next_filter_class = None
@@ -101,7 +101,7 @@ class Doc(Task):
         self.setup_child_docs()
         self.after_setup()
 
-class WalkDoc(Task):
+class WalkDoc(dexy.task.Task):
     """
     Parent class for docs which walk Dexy project directories.
 

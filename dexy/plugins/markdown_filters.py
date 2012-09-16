@@ -1,8 +1,13 @@
 from dexy.filter import DexyFilter
 import dexy.exceptions
 import logging
-import markdown
 import json
+
+try:
+    import markdown
+    AVAILABLE = True
+except ImportError as e:
+    AVAILABLE = False
 
 class MarkdownFilter(DexyFilter):
     """
@@ -15,6 +20,10 @@ class MarkdownFilter(DexyFilter):
     OUTPUT_EXTENSIONS = ['.html']
     ALIASES = ['markdown']
     DEFAULT_EXTENSIONS = {'toc' : {}}
+
+    @classmethod
+    def is_active(klass):
+        return AVAILABLE
 
     def process_text(self, input_text):
         markdown_logger = logging.getLogger('MARKDOWN')

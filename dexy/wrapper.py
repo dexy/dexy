@@ -1,7 +1,7 @@
-from dexy.reporter import Reporter
 import dexy.database
 import dexy.doc
 import dexy.parser
+import dexy.reporter
 import json
 import logging
 import logging.handlers
@@ -60,7 +60,7 @@ class Wrapper(object):
         self.docs = []
         self.log_path = os.path.join(self.log_dir, self.log_file)
         self.registered = []
-        self.reports_dirs = [c.REPORTS_DIR for c in Reporter.plugins]
+        self.reports_dirs = [c.REPORTS_DIR for c in dexy.reporter.Reporter.plugins]
 
     @classmethod
     def default_config(klass):
@@ -197,7 +197,7 @@ class Wrapper(object):
         true.
         """
         if len(reporters) == 0:
-            reporters = [c() for c in Reporter.plugins if c.ALLREPORTS]
+            reporters = [c() for c in dexy.reporter.Reporter.plugins if c.ALLREPORTS]
 
         for reporter in reporters:
             self.log.debug("Running reporter %s" % reporter.ALIASES[0])

@@ -1,18 +1,21 @@
 import platform
 
-class NonzeroExit(Exception):
+class UserFeedback(Exception):
     pass
 
-class InactiveFilter(Exception):
+class InactiveFilter(UserFeedback):
+    pass
+
+class NonzeroExit(UserFeedback):
+    pass
+
+class CircularDependency(UserFeedback):
     pass
 
 class InvalidStateTransition(Exception):
     pass
 
 class UnexpectedState(Exception):
-    pass
-
-class CircularDependency(Exception):
     pass
 
 class InternalDexyProblem(Exception):
@@ -27,8 +30,6 @@ class InternalDexyProblem(Exception):
     def __str__(self):
         return self.message
 
-class UserFeedback(Exception):
-    pass
 
 class BlankAlias(Exception):
     pass

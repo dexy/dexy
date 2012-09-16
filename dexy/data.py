@@ -1,5 +1,5 @@
 from dexy.plugin import PluginMeta
-from dexy.wrapper import Wrapper
+import dexy.wrapper
 import codecs
 import dexy.storage
 import os
@@ -22,7 +22,7 @@ class Data:
 
         Optional kwags are passed to a RunParams instance.
         """
-        wrapper = Wrapper(**kwargs)
+        wrapper = dexy.wrapper.Wrapper(**kwargs)
         data_class = klass.aliases[data_type]
         return data_class(key, ext, hashstring, wrapper, storage_type)
 

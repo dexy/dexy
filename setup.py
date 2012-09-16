@@ -1,5 +1,5 @@
 from setuptools import setup, find_packages
-import dexy
+from dexy.version import DEXY_VERSION
 
 setup(
         author='Ana Nelson',
@@ -29,7 +29,7 @@ setup(
             },
         include_package_data = True,
         install_requires = [
-            'idiopidae>=0.5.2',
+            'idiopidae>=0.5.3',
             'jinja2',
             'nose',
             'ordereddict',
@@ -37,13 +37,12 @@ setup(
             'pygments',
             'python-modargs>=1.4',
             'requests>=0.10.6',
-            'web.py>=0.3', # for viewer
             'zapps'
             ],
         name='dexy',
         packages=find_packages(),
         package_data = { "dexy" : ["ext/*"] },
         url='http://dexy.it',
-        version=dexy.__version__
+        version=DEXY_VERSION
         )
 
