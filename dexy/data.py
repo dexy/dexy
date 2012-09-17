@@ -96,6 +96,9 @@ class GenericData(Data):
     def is_cached(self):
         return self.storage.data_file_exists()
 
+    def size(self):
+        return os.path.getsize(self.storage.data_file())
+
     def data(self):
         if not self._data:
             self.load_data()
