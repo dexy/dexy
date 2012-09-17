@@ -12,6 +12,10 @@ class IdioFilter(PygmentsFilter):
     ALIASES = ['idio', 'idiopidae']
     OUTPUT_EXTENSIONS = PygmentsFilter.MARKUP_OUTPUT_EXTENSIONS + PygmentsFilter.IMAGE_OUTPUT_EXTENSIONS + [".txt"]
 
+    @classmethod
+    def data_class_alias(klass, file_ext):
+        return 'sectioned'
+
     def process_text_to_dict(self, input_text):
         composer = Composer()
         builder = idiopidae.parser.parse('Document', input_text + "\n\0")
