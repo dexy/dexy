@@ -1,6 +1,5 @@
 from dexy.common import OrderedDict
 from dexy.plugin import PluginMeta
-import codecs
 import os
 import shutil
 

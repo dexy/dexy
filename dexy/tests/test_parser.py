@@ -96,13 +96,15 @@ def test_text_parser_virtual_file():
         assert docs[0].output().as_text() == "hello"
 
 def test_original_parser():
-    conf = """{
-    "*.txt" : {}
-    }"""
+    with wrap() as wrapper:
+        conf = """{
+        "*.txt" : {}
+        }"""
 
-    parser = OriginalDexyParser()
-    result = parser.parse(conf)
-    print result
+        parser = OriginalDexyParser()
+        parser.wrapper = wrapper
+        result = parser.parse(conf)
+        print result
 
 def test_original_parser_allinputs():
     with wrap() as wrapper:
@@ -112,5 +114,6 @@ def test_original_parser_allinputs():
         }"""
 
         parser = OriginalDexyParser(wrapper)
+        parser.wrapper = wrapper
         result = parser.parse(conf)
         print result

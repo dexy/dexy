@@ -23,12 +23,12 @@ class OriginalDexyParser(Parser):
 
     def parse(self, input_text):
         info = json.loads(input_text)
-        docs = []
         for k, v in info.iteritems():
             if "allinputs" in v:
                 pass # TODO convert this..
-            docs.append(dexy.doc.PatternDoc([k, v]))
-        return docs
+
+            doc = dexy.doc.PatternDoc(k, wrapper=self.wrapper, **v)
+            self.wrapper.docs.append(doc)
 
 class TextFileParser(Parser):
     ALIASES = ["dexy.txt"]

@@ -1,13 +1,14 @@
 from StringIO import StringIO
 from dexy.common import OrderedDict
 from dexy.exceptions import InactiveFilter
-from dexy.wrapper import Wrapper
 from dexy.utils import char_diff
+from dexy.wrapper import Wrapper
 from nose.exc import SkipTest
 import dexy.commands
 import dexy.data
 import dexy.metadata
 import os
+import re
 import shutil
 import sys
 import tempfile
@@ -79,27 +80,43 @@ def assert_output(filter_alias, doc_contents, expected_output, ext=".txt"):
         doc_contents = create_ordered_dict_from_dict(doc_contents)
 
     with runfilter(filter_alias, doc_contents, ext=ext) as doc:
-        try:
-            assert doc.output().data() == expected_output
-        except AssertionError as e:
-            if not isinstance(expected_output, OrderedDict):
-                print char_diff(doc.output().as_text(), expected_output)
-            else:
-                print "Output: %s" % doc.output().as_text()
-                print "Expected: %s" % expected_output
+        if expected_output:
+            try:
+                assert doc.output().data() == expected_output
+            except AssertionError as e:
+                if not isinstance(expected_output, OrderedDict):
+                    print char_diff(doc.output().as_text(), expected_output)
+                else:
+                    print "Output: %s" % doc.output().data()
+                    print "Expected: %s" % expected_output
 
-            raise e
+                raise e
+        else:
+            raise Exception("Output is '%s'" % doc.output().data())
+
+def assert_output_matches(filter_alias, doc_contents, expected_regex, ext=".txt"):
+    if not ext.startswith("."):
+        raise Exception("ext arg to assert_in_output must start with dot")
+
+    with runfilter(filter_alias, doc_contents, ext=ext) as doc:
+        if expected_regex:
+            assert re.match(expected_regex, doc.output().as_text())
+        else:
+            raise Exception(doc.output().as_text())
 
 def assert_in_output(filter_alias, doc_contents, expected_output, ext=".txt"):
     if not ext.startswith("."):
         raise Exception("ext arg to assert_in_output must start with dot")
 
     with runfilter(filter_alias, doc_contents, ext=ext) as doc:
-        assert expected_output in doc.output().data()
+        if expected_output:
+            assert expected_output in doc.output().as_text()
+        else:
+            print doc.output().as_text()
 
 def assert_not_in_output(filter_alias, doc_contents, expected_output):
     with runfilter(filter_alias, doc_contents) as doc:
-        assert not expected_output in doc.output().data()
+        assert not expected_output in doc.output().as_text()
 
 class divert_stdout():
     def __enter__(self):

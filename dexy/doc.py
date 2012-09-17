@@ -14,7 +14,10 @@ class Doc(dexy.task.Task):
         if alias == '':
             raise dexy.exceptions.BlankAlias
         else:
-            return dexy.filter.Filter.aliases[alias]
+            try:
+                return dexy.filter.Filter.aliases[alias]
+            except KeyError as e:
+                raise dexy.exceptions.UserFeedback("Dexy doesn't have a filter '%s' available." % alias)
 
     def result(self):
         """

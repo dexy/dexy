@@ -114,7 +114,7 @@ class Wrapper(object):
 
         handler = logging.handlers.RotatingFileHandler(
                 self.log_path,
-                encoding="UTF-8")
+                encoding="utf-8")
 
         formatter = logging.Formatter(self.log_format)
         handler.setFormatter(formatter)
@@ -251,7 +251,7 @@ class Wrapper(object):
                 self.log.debug("found doc config file '%s'" % k)
                 parser = parser_aliases[k](self)
                 with open(k, "r") as f:
-                    self.docs = parser.parse(f.read())
+                    parser.parse(f.read())
 
     def setup_config(self):
         self.load_config()

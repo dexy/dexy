@@ -12,7 +12,7 @@ class SubprocessFilter(Filter):
     CHECK_RETURN_CODE = True
     VERSION_COMMAND = None
     WINDOWS_VERSION_COMMAND = None
-    WRITE_STDERR_TO_STDOUT = False
+    WRITE_STDERR_TO_STDOUT = True
 
     @classmethod
     def executables(self):
@@ -181,8 +181,8 @@ class SubprocessFilter(Filter):
                                 env=env)
 
         stdout, stderr = proc.communicate(input_text)
-        self.log.debug("stdout is '%s'" % stdout)
-        self.log.debug("stderr is '%s'" % stderr)
+        self.log.debug(u"stdout is '%s'" % stdout.decode('utf-8'))
+        self.log.debug(u"stderr is '%s'" % stderr.decode('utf-8'))
 
         if self.do_walk_working_directory():
             self.walk_working_directory(wd)
