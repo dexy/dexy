@@ -55,12 +55,11 @@ def run():
 
             args.parse_and_run_command([subcommand] + sys.argv[2:], mod, default_command=default_command)
 
-    except dexy.exceptions.InactiveFilter as e:
-        sys.stderr.write("You are trying to use a filter '%s' which isn't active, maybe some software needs to be installed.\n" % e.message)
     except dexy.exceptions.UserFeedback as e:
         sys.stderr.write(e.message)
         if not e.message.endswith("\n"):
             sys.stderr.write("\n")
+        sys.stderr.write("Dexy is stopping.\n")
         sys.exit(1)
 
 def dexy_command(

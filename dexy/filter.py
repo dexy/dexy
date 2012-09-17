@@ -2,6 +2,7 @@ import dexy.plugin
 import dexy.utils
 import dexy.doc
 import dexy.exceptions
+import inspect
 
 class FilterException(Exception):
     pass
@@ -16,8 +17,15 @@ class Filter:
     TAGS = []
 
     @classmethod
-    def is_active(self):
+    def is_active(klass):
         return True
+
+    @classmethod
+    def inactive_because_missing(klass):
+        if hasattr(klass, 'executables'):
+            return klass.executables()
+        elif hasattr(klass, 'IMPORTS'):
+            return klass.IMPORTS
 
     def args(self):
         return self.artifact.filter_args()

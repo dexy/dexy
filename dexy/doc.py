@@ -57,7 +57,7 @@ class Doc(dexy.task.Task):
             raise dexy.exceptions.UserFeedback("You have a trailing | or you have 2 | symbols together in your specification for %s" % self.key)
 
         if not artifact.filter_class.is_active():
-            raise dexy.exceptions.InactiveFilter(artifact.filter_alias)
+            raise dexy.exceptions.InactiveFilter(artifact.filter_alias, artifact.doc.key)
 
         artifact.next_filter_alias = None
         artifact.next_filter_class = None

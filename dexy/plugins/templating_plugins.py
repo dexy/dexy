@@ -1,7 +1,8 @@
 from datetime import datetime
 from dexy.artifact import Artifact
-from dexy.doc import Doc, PatternDoc
 from dexy.common import OrderedDict
+from dexy.doc import Doc, PatternDoc
+from dexy.version import DEXY_VERSION
 from pygments.styles import get_all_styles
 import calendar
 import dexy.artifact
@@ -52,7 +53,7 @@ class PythonDatetimeTemplatePlugin(TemplatePlugin):
 
 class DexyVersionTemplatePlugin(TemplatePlugin):
     def run(self):
-        return { "dexy_version" : dexy.__version__ }
+        return { "dexy_version" : DEXY_VERSION }
 
 class DexyRootTemplatePlugin(TemplatePlugin):
     def run(self):

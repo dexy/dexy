@@ -1,15 +1,25 @@
+import inspect
 import platform
 
 class UserFeedback(Exception):
     pass
 
 class InactiveFilter(UserFeedback):
-    pass
+    def __init__(self, filter_alias, doc_key):
+        self.message = inspect.cleandoc("""
+        You are trying to use a filter '%s' which isn't active.
+        Some additional software may need to be installed first.
+        Either stop using this filter or install the software to continue your dexy run.
+        '%s' is being used in '%s'
+        """ % (filter_alias, filter_alias, doc_key))
 
 class NonzeroExit(UserFeedback):
     pass
 
 class CircularDependency(UserFeedback):
+    pass
+
+class BlankAlias(UserFeedback):
     pass
 
 class InvalidStateTransition(Exception):
@@ -20,16 +30,13 @@ class UnexpectedState(Exception):
 
 class InternalDexyProblem(Exception):
     def __init__(self, message):
-        self.message = """\nOops! You may have found a bug in Dexy.
+        self.message = inspect.cleandoc("""
+        Oops! You may have found a bug in Dexy.
         The developer would really appreciate if you copy and paste this entire message
         and the Traceback above it into a bug report at http://dexy.tenderapp.com.
         Your version of Dexy is %s
-        Your platform is %s\n""" % ("0.0.0", platform.system())
+        Your platform is %s""" % ("0.0.0", platform.system()))
         self.message += message
 
     def __str__(self):
         return self.message
-
-
-class BlankAlias(Exception):
-    pass
