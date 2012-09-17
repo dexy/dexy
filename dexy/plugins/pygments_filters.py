@@ -26,6 +26,13 @@ class PygmentsFilter(DexyFilter):
     ALIASES = ['pyg', 'pygments']
 
     @classmethod
+    def data_class_alias(klass, file_ext):
+        if file_ext in klass.MARKUP_OUTPUT_EXTENSIONS:
+            return 'sectioned'
+        else:
+            return 'generic'
+
+    @classmethod
     def docmd_css(klass, style='default'):
         print klass.generate_css(style)
 
@@ -96,7 +103,15 @@ class PygmentsFilter(DexyFilter):
 
         return get_formatter_for_filename(self.result().name, **formatter_args)
 
-    def process_dict(self, input_dict):
+    def process(self):
+        if self.artifact.ext in self.IMAGE_OUTPUT_EXTENSIONS:
+            try:
+                import PIL
+            except ImportError:
+                print "python imaging library is required by pygments to create image output"
+                raise dexy.exceptions.InactiveFilter('pyg', self.artifact.key)
+
+        input_dict = self.input().as_sectioned()
         ext = self.artifact.prior.ext
 
         if input_dict.has_key('1') and not input_dict['1'] and ext in [".css", ".sty"]:
@@ -124,11 +139,11 @@ class PygmentsFilter(DexyFilter):
             formatter = get_formatter_for_filename(self.result().name, **formatter_args)
 
             if self.artifact.ext in self.IMAGE_OUTPUT_EXTENSIONS:
-                with open(self.result().data_file(), 'wb') as f:
-                    f.write(highlight(self.input().as_text(), lexer, formatter))
+                with open(self.result().storage.data_file(), 'wb') as f:
+                    f.write(highlight(self.input().data(), lexer, formatter))
+
             else:
                 output_dict = OrderedDict()
                 for k, v in input_dict.items():
                     output_dict[k] = highlight(v.decode("utf-8"), lexer, formatter)
-                return output_dict
-
+                self.result().set_data(output_dict)

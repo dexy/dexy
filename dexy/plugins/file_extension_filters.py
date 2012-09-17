@@ -1,7 +1,10 @@
 from dexy.filter import DexyFilter
-import shutil
 
-class ForceCPickleExtensionFilter(DexyFilter):
+class PreserveDataClassFilter(DexyFilter):
+    ALIASES = []
+    PRESERVE_PRIOR_DATA_CLASS = True
+
+class ForceCPickleExtensionFilter(PreserveDataClassFilter):
     """
     Forces previous filter to output .cpickle extension.
     """
@@ -9,7 +12,7 @@ class ForceCPickleExtensionFilter(DexyFilter):
     OUTPUT_EXTENSIONS = [".cpickle"]
     ALIASES = ['cpickle']
 
-class ForcePickleExtensionFilter(DexyFilter):
+class ForcePickleExtensionFilter(PreserveDataClassFilter):
     """
     Forces previous filter to output .pickle extension.
     """
@@ -17,15 +20,16 @@ class ForcePickleExtensionFilter(DexyFilter):
     OUTPUT_EXTENSIONS = [".pickle"]
     ALIASES = ['pickle']
 
-class ForceHtmlExtensionFilter(DexyFilter):
+class ForceHtmlExtensionFilter(PreserveDataClassFilter):
     """
     Forces previous filter to output .html extension.
     """
     INPUT_EXTENSIONS = [".html"]
     OUTPUT_EXTENSIONS = [".html"]
     ALIASES = ['h', 'forcehtml']
+    PRESERVE_PRIOR_DATA_CLASS = True
 
-class ForceJsonExtensionFilter(DexyFilter):
+class ForceJsonExtensionFilter(PreserveDataClassFilter):
     """
     Forces previous filter to output .json extension.
     """
@@ -33,7 +37,7 @@ class ForceJsonExtensionFilter(DexyFilter):
     OUTPUT_EXTENSIONS = [".json"]
     ALIASES = ['j', 'forcejson']
 
-class ForceSvgExtensionFilter(DexyFilter):
+class ForceSvgExtensionFilter(PreserveDataClassFilter):
     """
     Forces previous filter to output .svg extension.
     """
@@ -41,7 +45,7 @@ class ForceSvgExtensionFilter(DexyFilter):
     OUTPUT_EXTENSIONS = [".svg"]
     ALIASES = ['svg', 'forcesvg']
 
-class ForceXmlExtensionFilter(DexyFilter):
+class ForceXmlExtensionFilter(PreserveDataClassFilter):
     """
     Forces previous filter to output .xml extension.
     """
@@ -49,7 +53,7 @@ class ForceXmlExtensionFilter(DexyFilter):
     OUTPUT_EXTENSIONS = [".xml"]
     ALIASES = ['x', 'forcexml']
 
-class ForceLatexExtensionFilter(DexyFilter):
+class ForceLatexExtensionFilter(PreserveDataClassFilter):
     """
     Forces previous filter to output .tex extension.
     """
@@ -57,7 +61,7 @@ class ForceLatexExtensionFilter(DexyFilter):
     OUTPUT_EXTENSIONS = [".tex"]
     ALIASES = ['l', 'forcelatex']
 
-class ForceTextExtensionFilter(DexyFilter):
+class ForceTextExtensionFilter(PreserveDataClassFilter):
     """
     Forces previous filter to output .txt extension.
     """
@@ -65,7 +69,7 @@ class ForceTextExtensionFilter(DexyFilter):
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['t', 'forcetext']
 
-class ForceRExtensionFilter(DexyFilter):
+class ForceRExtensionFilter(PreserveDataClassFilter):
     """
     Forces previous filter to output .R extension.
     """
@@ -73,67 +77,47 @@ class ForceRExtensionFilter(DexyFilter):
     OUTPUT_EXTENSIONS = [".R"]
     ALIASES = ['forcer']
 
-class ForcePdfExtensionFilter(DexyFilter):
+class ForcePdfExtensionFilter(PreserveDataClassFilter):
     """
     Forces previous filter to output .pdf extension.
     """
     INPUT_EXTENSIONS = [".pdf"]
     OUTPUT_EXTENSIONS = [".pdf"]
     ALIASES = ['p', 'forcepdf']
-    BINARY = True
 
-    def process(self):
-        shutil.copyfile(self.artifact.previous_artifact_filepath, self.artifact.filepath())
-
-class ForceJpgExtensionFilter(DexyFilter):
+class ForceJpgExtensionFilter(PreserveDataClassFilter):
     """
     Forces previous filter to output .jpg extension.
     """
     INPUT_EXTENSIONS = [".jpg"]
     OUTPUT_EXTENSIONS = [".jpg"]
     ALIASES = ['jn', 'forcejpg']
-    BINARY = True
 
-    def process(self):
-        shutil.copyfile(self.artifact.previous_artifact_filepath, self.artifact.filepath())
-
-class ForcePngExtensionFilter(DexyFilter):
+class ForcePngExtensionFilter(PreserveDataClassFilter):
     """
     Forces previous filter to output .png extension.
     """
     INPUT_EXTENSIONS = [".png"]
     OUTPUT_EXTENSIONS = [".png"]
     ALIASES = ['pn', 'forcepng']
-    BINARY = True
 
-    def process(self):
-        shutil.copyfile(self.artifact.previous_artifact_filepath, self.artifact.filepath())
-
-class ForceGifExtensionFilter(DexyFilter):
+class ForceGifExtensionFilter(PreserveDataClassFilter):
     """
     Forces previous filter to output .gif extension.
     """
     INPUT_EXTENSIONS = [".gif"]
     OUTPUT_EXTENSIONS = [".gif"]
     ALIASES = ['gn', 'forcegif']
-    BINARY = True
 
-    def process(self):
-        shutil.copyfile(self.artifact.previous_artifact_filepath, self.artifact.filepath())
-
-class ForceBmpExtensionFilter(DexyFilter):
+class ForceBmpExtensionFilter(PreserveDataClassFilter):
     """
     Forces previous filter to output .bmp extension.
     """
     INPUT_EXTENSIONS = [".bmp"]
     OUTPUT_EXTENSIONS = [".bmp"]
     ALIASES = ['bn', 'forcebmp']
-    BINARY = True
 
-    def process(self):
-        shutil.copyfile(self.artifact.previous_artifact_filepath, self.artifact.filepath())
-
-class ConvertBashExtensionFilter(DexyFilter):
+class ConvertBashExtensionFilter(PreserveDataClassFilter):
     """
     Changes file extension to .sh
     """
@@ -141,7 +125,7 @@ class ConvertBashExtensionFilter(DexyFilter):
     OUTPUT_EXTENSIONS = [".sh"]
     ALIASES = ['cb']
 
-class ConvertTextExtensionFilter(DexyFilter):
+class ConvertTextExtensionFilter(PreserveDataClassFilter):
     """
     Changes file extension to .txt
     """
@@ -149,7 +133,7 @@ class ConvertTextExtensionFilter(DexyFilter):
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['ct']
 
-class ConvertHTMLExtensionFilter(DexyFilter):
+class ConvertHTMLExtensionFilter(PreserveDataClassFilter):
     """
     Changes file extension to .html
     """
@@ -157,7 +141,7 @@ class ConvertHTMLExtensionFilter(DexyFilter):
     OUTPUT_EXTENSIONS = [".html"]
     ALIASES = ['ch']
 
-class ConvertJsonExtensionFilter(DexyFilter):
+class ConvertJsonExtensionFilter(PreserveDataClassFilter):
     """
     Changes file extension to .json
     """

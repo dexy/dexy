@@ -126,7 +126,10 @@ class InitialVirtualArtifact(InitialArtifact):
 
 class FilterArtifact(Artifact):
     def data_class_alias(self):
-        return self.filter_class.data_class_alias()
+        if self.filter_class.PRESERVE_PRIOR_DATA_CLASS:
+            return self.input_data.__class__.ALIASES[0]
+        else:
+            return self.filter_class.data_class_alias(self.ext)
 
     def run(self, *args, **kw):
         self.input_data = self.prior.output_data

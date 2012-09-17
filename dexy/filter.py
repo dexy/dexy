@@ -15,6 +15,7 @@ class Filter:
     OUTPUT_DATA_TYPE = 'generic'
     OUTPUT_EXTENSIONS = [".*"]
     TAGS = []
+    PRESERVE_PRIOR_DATA_CLASS = False
 
     @classmethod
     def is_active(klass):
@@ -34,7 +35,7 @@ class Filter:
         return self.args().get(key, default)
 
     @classmethod
-    def data_class_alias(klass):
+    def data_class_alias(klass, file_ext):
         return klass.OUTPUT_DATA_TYPE
 
     def process(self):
@@ -75,7 +76,7 @@ class DexyFilter(Filter):
     ALIASES = ['dexy']
 
     @classmethod
-    def data_class_alias(klass):
+    def data_class_alias(klass, file_ext):
         if hasattr(klass, 'process_dict'):
             return 'sectioned'
         elif hasattr(klass, 'process_text_to_dict'):
