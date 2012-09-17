@@ -132,6 +132,9 @@ class SectionedData(GenericData):
     def as_sectioned(self):
         return self.data()
 
+    def keys(self):
+        return self.data().keys()
+
     def output_to_file(self, filepath):
         """
         Write canonical output to a file.

@@ -16,7 +16,8 @@ class IdioFilter(PygmentsFilter):
     def data_class_alias(klass, file_ext):
         return 'sectioned'
 
-    def process_text_to_dict(self, input_text):
+    def process(self):
+        input_text = self.input().as_text()
         composer = Composer()
         builder = idiopidae.parser.parse('Document', input_text + "\n\0")
 
@@ -41,4 +42,4 @@ class IdioFilter(PygmentsFilter):
             output_dict[s] = formatted_lines
             lineno += len(lines)
 
-        return output_dict
+        self.result().set_data(output_dict)
