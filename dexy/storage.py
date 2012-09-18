@@ -89,9 +89,33 @@ You can increase this limit by changing MAX_DATA_DICT_DECIMALS."""
 class JsonStorage(GenericStorage):
     ALIASES = ['json']
 
+    def setup(self):
+        self._data = {}
+
+    def append(self, key, value):
+        self._data[key] = value
+
+    def keys(self):
+        return self.data().keys()
+
+    def __getitem__(self, key):
+        return self.data()[key]
+
+    def __getattr__(self, key):
+        return self.data()[key]
+
+    def __iter__(self):
+        for k, v in self.data().iteritems():
+            yield k, v
+
     def read_data(self):
         with open(self.data_file(), "rb") as f:
             return json.load(f)
+
+    def data(self):
+        if len(self._data) == 0:
+            self._data = self.read_data()
+        return self._data
 
     def write_data(self, data, filepath=None):
         if not filepath:

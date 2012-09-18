@@ -6,6 +6,7 @@ import dexy.plugins.latex_filters
 import dexy.plugins.markdown_filters
 import dexy.plugins.nltk_filter
 import dexy.plugins.output_reporters
+import dexy.plugins.pexpect_filters
 import dexy.plugins.pydoc_filters
 import dexy.plugins.pygments_filters
 import dexy.plugins.restructured_text_filters

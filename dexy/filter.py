@@ -41,7 +41,7 @@ class Filter:
     def process(self):
         pass
 
-    def add_doc(self, doc_name, doc_contents):
+    def add_doc(self, doc_name, doc_contents=None):
         additional_doc_filters = self.args().get("additional_doc_filters")
 
         if additional_doc_filters:

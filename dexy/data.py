@@ -1,6 +1,7 @@
+from dexy.common import OrderedDict
 from dexy.plugin import PluginMeta
-import dexy.wrapper
 import dexy.storage
+import dexy.wrapper
 import os
 import shutil
 
@@ -96,8 +97,9 @@ class GenericData(Data):
     def is_cached(self):
         return self.storage.data_file_exists()
 
-    def size(self):
-        return os.path.getsize(self.storage.data_file())
+    def filesize(self):
+        if self.is_cached():
+            return os.path.getsize(self.storage.data_file())
 
     def data(self):
         if not self._data:
@@ -147,16 +149,25 @@ class KeyValueData(GenericData):
     DEFAULT_STORAGE_TYPE = 'json'
 
     def setup(self):
-        self._data = {}
+        self.storage.setup()
 
     def as_text(self):
         text = []
-        for k, v in self._data.iteritems():
+        for k, v in self.storage:
             text.append("%s: %s" % (k, v))
         return "\n".join(text)
 
+    def as_sectioned(self):
+        od = OrderedDict()
+        for k in self.keys():
+            od[k] = self.value(k)
+        return od
+
+    def value(self, key):
+        return self.storage[key]
+
     def append(self, key, value):
-        self._data[key] = value
+        self.storage.append(key, value)
 
     def keys(self):
-        return self._data.keys()
+        return self.storage.keys()

@@ -20,7 +20,7 @@ def test_rst2odt():
                 wrapper=wrapper)
         wrapper.docs = [doc]
         wrapper.run()
-        assert doc.output().size() > 8000
+        assert doc.output().filesize() > 8000
 
 def test_rst2xml():
     assert_in_output('rst2xml', RST, """<list_item><paragraph>a sub-list using "-"</paragraph><bullet_list bullet="+"><list_item>""")

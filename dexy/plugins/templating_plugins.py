@@ -7,6 +7,7 @@ from pygments.styles import get_all_styles
 import calendar
 import dexy.artifact
 import dexy.commands
+import dexy.data
 import dexy.exceptions
 import json
 import os
@@ -200,25 +201,14 @@ class InputsTemplatePlugin(TemplatePlugin):
 
     @classmethod
     def d_data_for_artifact(klass, a):
-        data = a.output_data.data()
-
-        # Do any special handling of data
-#        if a.ext == '.json':
-#            if len(a.output_text()) == 0:
-#                # Hack for JSON data being written directly to a file, e.g. filenames filter
-#                with open(a.filepath(), "rb") as f:
-#                    a.data_dict['1'] = f.read()
-#            data = klass.load_sort_json_data(a)
-#        elif a.ext == ".cpickle":
-#            with open(a.filepath(), "rb") as f:
-#                data = cPickle.load(f)
-#        else:
-#            data = a.data_dict
-
-        if hasattr(data, 'keys') and data.keys() == ['1']:
-            return data['1']
+        if isinstance(a.output_data, dexy.data.KeyValueData):
+            data = a.output_data.storage
         else:
-            return data
+            data = a.output_data.data()
+            if hasattr(data, 'keys') and data.keys() == ['1']:
+                data = data['1']
+
+        return data
 
     def run(self):
         d_hash = {}

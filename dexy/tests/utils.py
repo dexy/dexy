@@ -112,7 +112,7 @@ def assert_in_output(filter_alias, doc_contents, expected_output, ext=".txt"):
         if expected_output:
             assert expected_output in doc.output().as_text()
         else:
-            print doc.output().as_text()
+            raise Exception(doc.output().as_text())
 
 def assert_not_in_output(filter_alias, doc_contents, expected_output):
     with runfilter(filter_alias, doc_contents) as doc:

@@ -8,8 +8,10 @@ import subprocess
 
 class SubprocessFilter(Filter):
     ALIASES = []
-    ENV = None
     CHECK_RETURN_CODE = True
+    ENV = None
+    TIMEOUT = None
+    INITIAL_TIMEOUT = None
     VERSION_COMMAND = None
     WINDOWS_VERSION_COMMAND = None
     WRITE_STDERR_TO_STDOUT = True
@@ -111,6 +113,12 @@ class SubprocessFilter(Filter):
                 self.artifact.log.warn("output from process: %s" % stderr)
             else:
                 raise dexy.exceptions.NonzeroExit(command, exitcode, stderr)
+
+    def setup_timeout(self):
+        return self.args().get('timeout', self.TIMEOUT)
+
+    def setup_initial_timeout(self):
+        return self.args().get('initial_timeout', self.INITIAL_TIMEOUT)
 
     def setup_env(self):
         env = os.environ
