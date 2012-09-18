@@ -1,3 +1,4 @@
+from dexy.common import OrderedDict
 from dexy.doc import Doc
 from dexy.filter import Filter
 import dexy.exceptions
@@ -71,10 +72,13 @@ class SubprocessFilter(Filter):
         self.handle_subprocess_proc_return(command, proc.returncode, stdout)
         self.copy_canonical_file()
 
-    ## Undocumented...
-
     def setup_wd(self):
-        return self.artifact.create_working_dir(True)
+        tmpdir = self.artifact.tmp_dir()
+
+        if not os.path.exists(tmpdir):
+            self.artifact.create_working_dir(True)
+
+        return tmpdir
 
     def command_line_args(self):
         return self.args().get('args')
@@ -210,3 +214,81 @@ class SubprocessStdoutFilter(SubprocessFilter):
         proc, stdout = self.run_command(command, self.setup_env())
         self.handle_subprocess_proc_return(command, proc.returncode, stdout)
         self.result().set_data(stdout)
+
+class SubprocessCompileFilter(SubprocessFilter):
+    """
+    Base class for filters which need to compile code, then run the compiled executable.
+    """
+    ALIASES = ['subprocesscompilefilter']
+    BINARY = False
+    FINAL = False
+    COMPILED_EXTENSION = ".o"
+    CHECK_RETURN_CODE = False # Whether to check return code when running compiled executable.
+    EXECUTABLES = []
+
+    def compile_command_string(self):
+        wf = self.input().name
+        of = self.compiled_filename()
+        return "%s %s -o %s" % (self.executable(), wf, of)
+
+    def compiled_filename(self):
+        nameroot = os.path.splitext(self.input().name)[0]
+        return "%s%s" % (nameroot, self.COMPILED_EXTENSION)
+
+    def run_command_string(self):
+        return "./%s" % self.compiled_filename()
+
+    def process(self):
+        env = self.setup_env()
+
+        # Compile the code
+        command = self.compile_command_string()
+        proc, stdout = self.run_command(command, env)
+
+        # test exitcode from the *compiler*
+        self.handle_subprocess_proc_return(command, proc.returncode, stdout)
+
+        # Run the compiled code
+        command = self.run_command_string()
+        proc, stdout = self.run_command(command, env)
+
+        # This tests exitcode from the compiled script.
+        if self.CHECK_RETURN_CODE:
+            self.handle_subprocess_proc_return(command, proc.returncode, stdout)
+
+        self.result().set_data(stdout)
+
+class SubprocessCompileInputFilter(SubprocessCompileFilter):
+    ALIASES = ['subprocesscompileinputfilter']
+    CHECK_RETURN_CODE = False
+    WRITE_STDERR_TO_STDOUT = False
+    OUTPUT_DATA_TYPE = 'sectioned'
+
+    def process(self):
+        # Compile the code
+        command = self.compile_command_string()
+        proc, stdout = self.run_command(command, self.setup_env())
+        self.handle_subprocess_proc_return(command, proc.returncode, stdout)
+
+        command = self.run_command_string()
+
+        inputs = self.artifact.doc.completed_children
+
+        output = OrderedDict()
+
+        if len(inputs) == 1:
+            doc = inputs.values()[0]
+            for section_name, section_text in doc.as_sectioned().iteritems():
+                proc, stdout = self.run_command(command, self.setup_env(), section_text)
+                if self.CHECK_RETURN_CODE:
+                    self.handle_subprocess_proc_return(command, proc.returncode, stdout)
+                output[section_name] = stdout
+        else:
+            for key, doc in inputs.iteritems():
+                if isinstance(doc, dexy.doc.Doc):
+                    proc, stdout = self.run_command(command, self.setup_env(), doc.output().as_text())
+                    if self.CHECK_RETURN_CODE:
+                        self.handle_subprocess_proc_return(command, proc.returncode, stdout)
+                    output[doc.key] = stdout
+
+        self.result().set_data(output)

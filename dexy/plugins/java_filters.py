@@ -1,0 +1,145 @@
+from dexy.filter import DexyFilter
+from dexy.plugins.pexpect_filters import PexpectReplFilter
+from dexy.plugins.process_filters import SubprocessCompileFilter
+from dexy.plugins.process_filters import SubprocessStdoutFilter
+from pygments import highlight
+from pygments.formatters.html import HtmlFormatter
+from pygments.formatters.latex import LatexFormatter
+from pygments.lexers.compiled import JavaLexer
+import json
+import os
+import platform
+import shutil
+
+class JrubyFilter(SubprocessStdoutFilter):
+    ALIASES = ['jruby']
+    EXECUTABLE = "jruby"
+    INPUT_EXTENSIONS = [".rb", ".txt"]
+    OUTPUT_EXTENSIONS = [".txt"]
+    VERSION_COMMAND = "jruby --version"
+
+class JirbFilter(PexpectReplFilter):
+    ALIASES = ['jirb']
+    ALLOW_MATCH_PROMPT_WITHOUT_NEWLINE = True
+    CHECK_RETURN_CODE = False
+    EXECUTABLE = "jirb --prompt-mode simple"
+    INITIAL_PROMPT_TIMEOUT = 30
+    INPUT_EXTENSIONS = [".rb", ".txt"]
+    OUTPUT_EXTENSIONS = [".rbcon"]
+    PROMPTS = ['>>', '?>']
+    VERSION_COMMAND = "jirb --version"
+
+class JythonFilter(SubprocessStdoutFilter):
+    ALIASES = ['jython']
+    EXECUTABLE = "jython"
+    INPUT_EXTENSIONS = [".py", ".txt"]
+    OUTPUT_EXTENSIONS = [".txt"]
+    VERSION_COMMAND = "jython --version"
+
+    @classmethod
+    def is_active(self):
+        if platform.system() in ('Linux', 'Windows'):
+            return True
+        elif platform.system() in ('Darwin'):
+            if hasattr(self, 'log'):
+                self.log.warn("The jython dexy filter should not be run on MacOS due to a serious bug. This filter is being disabled.")
+            return False
+        else:
+            if hasattr(self, 'log'):
+                self.log.warn("""Can't detect your system. If you see this message please report this to the dexy project maintainer, your platform.system() value is '%s'. The jython dexy filter should not be run on MacOS due to a serious bug.""" % platform.system())
+            return True
+
+class JythonInteractiveFilter(PexpectReplFilter):
+    ALIASES = ['jythoni']
+    CHECK_RETURN_CODE = False
+    EXECUTABLE = "jython -i"
+    INITIAL_PROMPT_TIMEOUT = 30
+    INPUT_EXTENSIONS = [".py", ".txt"]
+    OUTPUT_EXTENSIONS = [".pycon"]
+    VERSION_COMMAND = "jython --version"
+
+    @classmethod
+    def is_active(self):
+        if platform.system() in ('Linux', 'Windows'):
+            return True
+        elif platform.system() in ('Darwin'):
+            print "The jythoni dexy filter should not be run on MacOS due to a serious bug. This filter is being disabled."
+            return False
+        else:
+            print """Can't detect your system. If you see this message please report this to the dexy project maintainer, your platform.system() value is '%s'. The jythoni dexy filter should not be run on MacOS due to a serious bug.""" % platform.system()
+            return True
+
+class JavaFilter(SubprocessCompileFilter):
+    ALIASES = ['java']
+    CHECK_RETURN_CODE = True # Whether to check return code when running compiled executable.
+    COMPILED_EXTENSION = ".class"
+    EXECUTABLE = "javac"
+    FINAL = False
+    INPUT_EXTENSIONS = [".java"]
+    OUTPUT_EXTENSIONS = [".txt"]
+    VERSION_COMMAND = "java -version"
+
+    def setup_cp(self):
+        """
+        Makes sure the current working directory is on the classpath, also adds
+        any specified CLASSPATH elements. Assumes that CLASSPATH elements are either
+        absolute paths, or paths relative to the artifacts directory. Also, if
+        an input has been passed through the javac filter, its directory is
+        added to the classpath.
+        """
+        self.log.debug("in setup_cp for %s" % self.artifact.key)
+        env = self.setup_env()
+
+        classpath_elements = []
+
+        working_dir = os.path.join(self.artifact.tmp_dir(), self.result().parent_dir())
+        abs_working_dir = os.path.abspath(working_dir)
+        self.log.debug("Adding working dir %s to classpath" % abs_working_dir)
+        classpath_elements.append(abs_working_dir)
+
+        for doc in self.processed():
+            if (doc.output().ext == ".class") and ("javac" in doc.key):
+                classpath_elements.append(doc.result().parent_dir())
+
+        for item in self.args().get('classpath', []):
+            for x in item.split(":"):
+                classpath_elements.append(x)
+
+        if env and env.has_key("CLASSPATH"):
+            for x in env['CLASSPATH'].split(":"):
+                classpath_elements.append(x)
+
+        cp = ":".join(classpath_elements)
+        self.log.debug("Classpath %s" % cp)
+        return cp
+
+    def compile_command_string(self):
+        cp = self.setup_cp()
+        if len(cp) == 0:
+            return "javac %s" % self.input().name
+        else:
+            return "javac -classpath %s %s" % (cp, self.input().name)
+
+    def run_command_string(self):
+        cp = self.setup_cp()
+        main_method = self.setup_main_method()
+        args = self.command_line_args() or ""
+        return "java %s -cp %s %s" % (args, cp, main_method)
+
+    def setup_main_method(self):
+        default_main = os.path.splitext(self.prior().name)[0]
+        return self.args().get('main', default_main)
+
+class JavacFilter(JavaFilter):
+    ALIASES = ['javac']
+    EXECUTABLE = "javac"
+    INPUT_EXTENSIONS = [".java"]
+    OUTPUT_EXTENSIONS = [".class"]
+    VERSION_COMMAND = "java -version"
+
+    def process(self):
+        # Compile the code
+        command = self.compile_command_string()
+        proc, stdout = self.run_command(command, self.setup_env())
+        self.handle_subprocess_proc_return(command, proc.returncode, stdout)
+        self.copy_canonical_file()

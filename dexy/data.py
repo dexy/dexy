@@ -54,13 +54,19 @@ class Data:
         return os.path.dirname(self.name)
 
     def long_name(self):
-        return "%s%s" % (self.key.replace("|", "-"), self.ext)
+        if "|" in self.key:
+            return "%s%s" % (self.key.replace("|", "-"), self.ext)
+        else:
+            return self.name
 
     def basename(self):
         return os.path.basename(self.name)
 
     def web_safe_document_key(self):
         return self.long_name().replace("/", "--")
+
+    def relative_path_to(self, relative_to):
+        return os.path.relpath(relative_to, self.parent_dir())
 
     def relative_refs(self, relative_to_file):
         doc_dir = os.path.dirname(relative_to_file)

@@ -1,6 +1,8 @@
+from dexy.doc import Doc
+from dexy.plugins.process_filters import SubprocessCompileFilter
 from dexy.plugins.process_filters import SubprocessFilter
 from dexy.tests.utils import wrap
-from dexy.doc import Doc
+from mock import MagicMock
 import dexy.exceptions
 
 class NotPresentExecutable(SubprocessFilter):
