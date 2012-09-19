@@ -152,7 +152,7 @@ class SectionedData(GenericData):
 
 class KeyValueData(GenericData):
     ALIASES  = ['keyvalue']
-    DEFAULT_STORAGE_TYPE = 'json'
+    DEFAULT_STORAGE_TYPE = 'sqlite3'
 
     def setup(self):
         self.storage.setup()
@@ -165,9 +165,12 @@ class KeyValueData(GenericData):
 
     def as_sectioned(self):
         od = OrderedDict()
-        for k in self.keys():
-            od[k] = self.value(k)
+        for k, v in self.storage:
+            od[k] = v
         return od
+
+    def data(self):
+        return self.as_sectioned()
 
     def value(self, key):
         return self.storage[key]
@@ -177,3 +180,6 @@ class KeyValueData(GenericData):
 
     def keys(self):
         return self.storage.keys()
+
+    def save(self):
+        self.storage.save()

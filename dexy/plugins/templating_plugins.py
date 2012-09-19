@@ -201,12 +201,9 @@ class InputsTemplatePlugin(TemplatePlugin):
 
     @classmethod
     def d_data_for_artifact(klass, a):
-        if isinstance(a.output_data, dexy.data.KeyValueData):
-            data = a.output_data.storage
-        else:
-            data = a.output_data.data()
-            if hasattr(data, 'keys') and data.keys() == ['1']:
-                data = data['1']
+        data = a.output_data.data()
+        if hasattr(data, 'keys') and data.keys() == ['1']:
+            data = data['1']
 
         return data
 
@@ -236,7 +233,7 @@ class InputsTemplatePlugin(TemplatePlugin):
                 if a_hash.has_key(k):
                     next
 
-                a_hash[k] = a
+                a_hash[k] = a.output_data
                 d_hash[k] = data
 
         return {

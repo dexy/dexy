@@ -8,19 +8,15 @@ from dexy.filter import DexyFilter
 class KeyValueExample(DexyFilter):
     ALIASES = ['keyvalueexample']
     OUTPUT_DATA_TYPE = 'keyvalue'
-    OUTPUT_EXTENSIONS = ['.json']
-
-    # TODO Write custom function to determine file extension.
+    OUTPUT_EXTENSIONS = ['.sqlite3', '.json']
 
     def process(self):
         self.result().append("foo", "bar")
         self.result().save()
 
-### @export "access-other-documents"
 class AccessOtherDocuments(DexyFilter):
     ALIASES = ["others"]
 
-    ### @export "access-other-docs-process-text"
     def process_text(self, input_text):
         info = []
         info.append("Here is a list of previous docs in this tree (not including %s)." % self.artifact.key)

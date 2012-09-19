@@ -6,7 +6,7 @@ import os
 
 def test_key_value_data():
     with wrap() as wrapper:
-        data = dexy.data.KeyValueData("doc.json", ".json", "hash1", wrapper)
+        data = dexy.data.KeyValueData("doc.json", ".json", "hash1", wrapper, storage_type='json')
 
         assert not data._data
         assert data.storage._data == {}
@@ -19,6 +19,18 @@ def test_key_value_data():
         assert data.storage['foo'] == 'bar'
         assert data.as_text() == "foo: bar"
         data.as_sectioned()['foo'] == 'bar'
+
+def test_key_value_data_sqlite():
+    with wrap() as wrapper:
+        data = dexy.data.KeyValueData("doc.sqlite3", ".sqlite3", "hash1", wrapper)
+
+        data.append('foo', 'bar')
+        assert len(data.keys()) == 1
+
+        assert data.value('foo') == 'bar'
+        assert ["%s: %s" % (k, v) for k, v in data.storage][0] == "foo: bar"
+
+        data.as_text() == "foo: bar"
 
 def test_generic_data():
     with wrap() as wrapper:

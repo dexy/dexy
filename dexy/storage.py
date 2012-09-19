@@ -2,6 +2,7 @@ from dexy.common import OrderedDict
 from dexy.plugin import PluginMeta
 import os
 import shutil
+import sqlite3
 
 # Generic Data
 
@@ -98,11 +99,14 @@ class JsonStorage(GenericStorage):
     def keys(self):
         return self.data().keys()
 
-    def __getitem__(self, key):
+    def value(self, key):
         return self.data()[key]
 
+    def __getitem__(self, key):
+        return self.value(key)
+
     def __getattr__(self, key):
-        return self.data()[key]
+        return self.value(key)
 
     def __iter__(self):
         for k, v in self.data().iteritems():
@@ -123,3 +127,46 @@ class JsonStorage(GenericStorage):
 
         with open(filepath, "wb") as f:
             json.dump(data, f)
+
+class Sqlite3Storage(GenericStorage):
+    ALIASES = ['sqlite3']
+
+    def working_file(self):
+        return os.path.join(self.wrapper.artifacts_dir, "%s-tmp%s" % (self.hashstring, self.ext))
+
+    def setup(self):
+        if os.path.exists(self.data_file()):
+            self._storage = sqlite3.connect(self.data_file())
+            self._cursor = self._storage.cursor()
+        else:
+            self._storage = sqlite3.connect(self.working_file())
+            self._cursor = self._storage.cursor()
+            self._cursor.execute("CREATE TABLE kvstore (key TEXT, value TEXT)")
+
+    def append(self, key, value):
+        self._cursor.execute("INSERT INTO kvstore VALUES (?, ?)", (str(key), str(value)))
+
+    def keys(self):
+        self._cursor.execute("SELECT key from kvstore")
+        return [str(k[0]) for k in self._cursor.fetchall()]
+
+    def value(self, key):
+        self._cursor.execute("SELECT value from kvstore where key = ?", (key,))
+        return self._cursor.fetchone()[0]
+
+    def __getitem__(self, key):
+        return self.value(key)
+
+    def __getattr__(self, key):
+        return self.value(key)
+
+    def __iter__(self):
+        self._cursor = self._storage.cursor()
+        self._cursor.execute("SELECT * from kvstore")
+        rows = self._cursor.fetchall()
+        for k, v in rows:
+            yield k, v
+
+    def save(self):
+        self._storage.commit()
+        shutil.copyfile(self.working_file(), self.data_file())

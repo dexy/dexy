@@ -71,14 +71,22 @@ class SubprocessFilter(Filter):
         proc, stdout = self.run_command(command, self.setup_env())
         self.handle_subprocess_proc_return(command, proc.returncode, stdout)
         self.copy_canonical_file()
+        if self.args().get('add-new-files', False):
+            self.add_new_files()
 
     def setup_wd(self):
         tmpdir = self.artifact.tmp_dir()
 
         if not os.path.exists(tmpdir):
-            self.artifact.create_working_dir(True)
+            self.artifact.create_working_dir(
+                    input_filepath=self.input_filepath(),
+                    populate=True
+                )
 
         return tmpdir
+
+    def input_filepath(self):
+        return self.artifact.input_filepath()
 
     def command_line_args(self):
         return self.args().get('args')
@@ -91,7 +99,7 @@ class SubprocessFilter(Filter):
             'prog' : self.executable(),
             'args' : self.command_line_args() or "",
             'scriptargs' : self.command_line_scriptargs() or "",
-            'script_file' : os.path.basename(self.input().name)
+            'script_file' : self.input_filepath()
         }
         return "%(prog)s %(args)s %(script_file)s %(scriptargs)s" % args
 
@@ -99,9 +107,9 @@ class SubprocessFilter(Filter):
         args = {
             'prog' : self.executable(),
             'args' : self.command_line_args() or "",
-            'script_file' : os.path.basename(self.input().name),
+            'script_file' : self.input_filepath(),
             'scriptargs' : self.command_line_scriptargs() or "",
-            'output_file' : os.path.basename(self.result().name)
+            'output_file' : self.result().name
         }
         return "%(prog)s %(args)s %(script_file)s %(scriptargs)s %(output_file)s" % args
 
@@ -135,6 +143,30 @@ class SubprocessFilter(Filter):
         env.update(self.args().get('env', {}))
 
         return env
+
+    # clarify how file names will work for additional files
+    # 1 mode - act as though files are in original locations
+    # 2 mode - use generating file as a base namespace for new filenames
+
+    # todo method where you walk working directory and make first class objects for everything there, plus apply extra filters if specified
+
+    # convert walk_working_directory to use key value storage
+
+    # fix issue with creating new key value files on the fly
+
+    def add_new_files(self):
+        wd = self.artifact.tmp_dir()
+        for dirpath, dirnames, filenames in os.walk(wd):
+            for filename in filenames:
+                filepath = os.path.join(dirpath, filename)
+                relpath = os.path.relpath(filepath, wd)
+
+                if not relpath in self.artifact.wrapper.registered_doc_names():
+                    filesize = os.path.getsize(filepath)
+                    if filesize > 0:
+                        with open(filepath, 'rb') as f:
+                            contents = f.read()
+                        self.add_doc(relpath, contents)
 
     def walk_working_directory(self, wd, section_name=None):
         """
@@ -214,6 +246,8 @@ class SubprocessStdoutFilter(SubprocessFilter):
         proc, stdout = self.run_command(command, self.setup_env())
         self.handle_subprocess_proc_return(command, proc.returncode, stdout)
         self.result().set_data(stdout)
+        if self.args().get('add-new-files', False):
+            self.add_new_files()
 
 class SubprocessCompileFilter(SubprocessFilter):
     """

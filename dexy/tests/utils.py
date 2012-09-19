@@ -13,6 +13,8 @@ import shutil
 import sys
 import tempfile
 
+TEST_DATA_DIR = os.path.join(os.getcwd(), 'dexy', 'tests', 'data')
+
 def create_ordered_dict_from_dict(d):
     od = OrderedDict()
     for k, v in d.iteritems():

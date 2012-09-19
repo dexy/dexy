@@ -49,7 +49,7 @@ def test_split_html_additional_filters():
 
         doc = Doc("example.html|splithtml",
                 contents=contents,
-                splithtml = { "additional_doc_filters" : "processtext" },
+                splithtml = { "additional-doc-filters" : "processtext" },
                 wrapper=wrapper
               )
         wrapper.docs = [doc]

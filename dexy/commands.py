@@ -1,8 +1,9 @@
+from dexy.version import DEXY_VERSION
 from dexy.wrapper import Wrapper
+from modargs import args
 from pygments import highlight
 from pygments.formatters import TerminalFormatter
 from pygments.lexers import PythonLexer
-from modargs import args
 import dexy.exceptions
 import dexy.plugins # so all built-in plugins are registered
 import inspect
@@ -148,7 +149,7 @@ def help_text(on=False):
 
 def version_command():
     """Print the current version."""
-    print "%s version %s" % (PROG, dexy.__version__)
+    print "%s version %s" % (PROG, DEXY_VERSION)
 
 def reset_command():
     pass

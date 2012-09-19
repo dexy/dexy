@@ -190,6 +190,9 @@ class Wrapper(object):
         """
         return [t for t in self.registered if isinstance(t, dexy.doc.Doc)]
 
+    def registered_doc_names(self):
+        return [d.name for d in self.registered_docs()]
+
     def report(self, *reporters):
         """
         Runs reporters. Either runs reporters which have been passed in or, if

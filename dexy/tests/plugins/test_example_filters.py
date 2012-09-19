@@ -34,9 +34,15 @@ def test_add_new_document():
 
 def test_key_value_example():
     with wrap() as wrapper:
-        doc = Doc("hello.txt|keyvalueexample", contents="hello",wrapper=wrapper)
+        doc = Doc(
+                "hello.txt|keyvalueexample",
+                contents="hello",
+                wrapper=wrapper
+                )
+
         wrapper.docs = [doc]
         wrapper.run()
+
         assert doc.output().as_text() == "foo: bar"
 
 def test_access_other_documents():

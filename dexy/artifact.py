@@ -38,8 +38,17 @@ class Artifact(dexy.task.Task):
     def tmp_dir(self):
         return os.path.join(self.wrapper.artifacts_dir, self.hashstring)
 
-    def create_working_dir(self, populate=False):
+    def input_filepath(self):
+        prior_name = self.prior.output_data.name
+
+        if self.ext == self.prior.ext:
+            return "%s-work%s" % (os.path.splitext(prior_name)[0], self.prior.ext)
+        else:
+            return prior_name
+
+    def create_working_dir(self, input_filepath, populate=False):
         tmpdir = self.tmp_dir()
+
         shutil.rmtree(tmpdir, ignore_errors=True)
         os.mkdir(tmpdir)
 
@@ -52,12 +61,10 @@ class Artifact(dexy.task.Task):
                         os.makedirs(parent_dir)
                     doc.output().output_to_file(filename)
 
-            input_filepath = os.path.join(tmpdir, self.prior.output_data.name)
-
-        parent_dir = os.path.dirname(input_filepath)
+        parent_dir = os.path.join(tmpdir, os.path.dirname(input_filepath))
         if not os.path.exists(parent_dir):
             os.makedirs(parent_dir)
-        self.input_data.output_to_file(input_filepath)
+        self.input_data.output_to_file(os.path.join(tmpdir, input_filepath))
         return parent_dir
 
     def data_class_alias(self):

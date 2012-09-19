@@ -13,7 +13,7 @@ import sys
 class PythonDocumentationFilter(DexyFilter):
     ALIASES = ["pydoc"]
     INPUT_EXTENSIONS = [".txt"]
-    OUTPUT_EXTENSIONS = ['.json']
+    OUTPUT_EXTENSIONS = ['.sqlite3', '.json']
     COMPOSER = Composer()
     OUTPUT_DATA_TYPE = 'keyvalue'
     LEXER = PythonLexer()

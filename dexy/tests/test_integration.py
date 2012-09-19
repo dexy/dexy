@@ -5,25 +5,25 @@ import inspect
 import os
 import shutil
 
-#def test_ragel_state_chart_to_image():
-#    ragel = inspect.cleandoc("""
-#        %%{
-#          machine hello_and_welcome;
-#          main := ( 'h' @ { puts "hello world!" }
-#                  | 'w' @ { puts "welcome" }
-#                  )*;
-#        }%%
-#          data = 'whwwwwhw'
-#          %% write data;
-#          %% write init;
-#          %% write exec;
-#        """)
-#    with wrap() as wrapper:
-#        doc = Doc("example.rl|rlrbd|dot",
-#                contents=ragel,
-#                wrapper=wrapper)
-#    wrapper.docs = [doc]
-#    wrapper.run()
+def test_ragel_state_chart_to_image():
+    ragel = inspect.cleandoc("""
+        %%{
+          machine hello_and_welcome;
+          main := ( 'h' @ { puts "hello world!" }
+                  | 'w' @ { puts "welcome" }
+                  )*;
+        }%%
+          data = 'whwwwwhw'
+          %% write data;
+          %% write init;
+          %% write exec;
+        """)
+    with wrap() as wrapper:
+        doc = Doc("example.rl|rlrbd|dot",
+                contents=ragel,
+                wrapper=wrapper)
+    wrapper.docs = [doc]
+    wrapper.run()
 
 #def test_latex_filter_with_unicode():
 #    project_dir = os.path.abspath(os.getcwd())

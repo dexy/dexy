@@ -15,7 +15,7 @@ class SplitHtmlFilter(DexyFilter):
     OUTPUT_EXTENSIONS = [".html"]
 
     def process(self):
-        input_text = self.artifact.input_data.data()
+        input_text = self.input().data()
 
         if input_text.find("<!-- endsplit -->") > 0:
             body, footer = re.split("<!-- endsplit -->", input_text, maxsplit=1)

@@ -3,6 +3,7 @@ import dexy.utils
 import dexy.doc
 import dexy.exceptions
 import inspect
+import os
 
 class FilterException(Exception):
     pass
@@ -42,10 +43,21 @@ class Filter:
         pass
 
     def add_doc(self, doc_name, doc_contents=None):
-        additional_doc_filters = self.args().get("additional_doc_filters")
+        additional_doc_filters = self.args().get("additional-doc-filters", {})
 
-        if additional_doc_filters:
-            doc_key = "%s|%s" % (doc_name, additional_doc_filters)
+        doc_ext = os.path.splitext(doc_name)[1]
+
+        if isinstance(additional_doc_filters, dict):
+            filters = additional_doc_filters.get(doc_ext, '')
+        elif isinstance(additional_doc_filters, str):
+            filters = additional_doc_filters
+        else:
+            # TODO allow passing a list of tuples so input can be
+            # used in more than 1 way
+            raise Exception("not implemented")
+
+        if len(filters) > 0:
+            doc_key = "%s|%s" % (doc_name, filters)
         else:
             doc_key = doc_name
 

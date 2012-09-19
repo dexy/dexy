@@ -5,12 +5,28 @@ from dexy.tests.utils import wrap
 from mock import MagicMock
 import dexy.exceptions
 
-class NotPresentExecutable(SubprocessFilter):
-    EXECUTABLE = 'notreal'
+def test_add_new_files():
+    with wrap() as wrapper:
+        doc = Doc("example.sh|sh",
+                contents = "echo 'hello' > newfile.txt",
+                sh = {
+                    "add-new-files" : True,
+                    "additional-doc-filters" : { '.txt' : 'markdown' }
+                    },
+                wrapper=wrapper)
+
+        wrapper.docs = [doc]
+        wrapper.run()
+
+        assert wrapper.registered_docs()[1].key == 'newfile.txt|markdown'
+        assert wrapper.registered_docs()[1].output().data() == "<p>hello</p>"
 
 def test_not_present_executable():
     assert 'notreal' in NotPresentExecutable.executables()
     assert not NotPresentExecutable.executable()
+
+class NotPresentExecutable(SubprocessFilter):
+    EXECUTABLE = 'notreal'
 
 def test_command_line_args():
     with wrap() as wrapper:
