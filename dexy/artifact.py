@@ -6,6 +6,7 @@ import dexy.exceptions
 import dexy.filter
 import dexy.metadata
 import dexy.task
+import hashlib
 import inspect
 import json
 import os
@@ -110,8 +111,15 @@ class InitialVirtualArtifact(InitialArtifact):
             raise Exception("no contents found for %s" % self.key)
         return contents
 
+    def get_contents_hash(self):
+        if self.args.get('contentshash'):
+            return self.args['contentshash']
+        else:
+            contents = self.get_contents()
+            return hashlib.md5(str(self.get_contents())).hexdigest()
+
     def data_class_alias(self):
-        data_class_alias = self.args.get('data_class')
+        data_class_alias = self.args.get('data-class-alias')
 
         if data_class_alias:
             return data_class_alias
@@ -126,7 +134,7 @@ class InitialVirtualArtifact(InitialArtifact):
 
     def set_metadata_attrs(self):
         self.metadata.key = self.key
-        self.metadata.contents = self.get_contents()
+        self.metadata.contentshash = self.get_contents_hash()
 
     def set_output_data(self):
         self.output_data.set_data(self.get_contents())
@@ -162,6 +170,7 @@ class FilterArtifact(Artifact):
             self.log.debug("Fetched row %s for parent doc %s" % (row['key'], self.key))
             if 'Initial' in row['class_name']:
                 doc_args = json.loads(row['args'])
+                print "doc args for %s are %s" % (row['doc_key'],  doc_args)
                 doc = dexy.doc.Doc(row['doc_key'], **doc_args)
                 self.add_doc(doc)
                 assert doc.artifacts[0].hashstring == row['hashstring'], "Unexpected hashstring for %s" % doc.artifacts[0].key

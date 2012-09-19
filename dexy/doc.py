@@ -47,7 +47,16 @@ class Doc(dexy.task.Task):
 
     def setup_filter_artifact(self, key, filters):
         artifact = dexy.artifact.FilterArtifact(key, wrapper=self.wrapper)
-        artifact.args = self.args
+
+        # Remove args that are only relevant to the doc or to the initial artifact.
+        filter_artifact_args = self.args.copy()
+        for k in ['contents', 'contentshash', 'data-class-alias', 'depends']:
+            if filter_artifact_args.has_key(k):
+                del filter_artifact_args[k]
+
+        self.log.debug("assigning filter args to %s of %s" % (key, filter_artifact_args))
+        artifact.args = filter_artifact_args
+
         artifact.doc = self
         artifact.filter_alias = filters[-1]
         artifact.doc_filepath = self.name
@@ -146,13 +155,14 @@ class PatternDoc(WalkDoc):
                 doc_args = self.args.copy()
                 doc_args['wrapper'] = self.wrapper
 
-                children = []
                 if doc_args.has_key('depends'):
                     if doc_args.get('depends'):
-                        children = [a for a in self.wrapper.registered if isinstance(a, Doc)]
+                        doc_children = [a for a in self.wrapper.registered if isinstance(a, Doc)]
                     del doc_args['depends']
+                else:
+                    doc_children = self.children
 
-                doc = Doc(doc_key, *children, **doc_args)
+                doc = Doc(doc_key, *doc_children, **doc_args)
                 self.children.append(doc)
 
         self.after_setup()

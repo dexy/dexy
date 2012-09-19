@@ -207,24 +207,27 @@ class InputsTemplatePlugin(TemplatePlugin):
 
         return data
 
-    def run(self):
-        d_hash = {}
-        a_hash = {}
-
-        name = self.filter_instance.result().name
+    def input_tasks(self):
         for task in self.filter_instance.processed():
             if task.state != 'complete':
                 raise Exception("All tasks should be complete! Task %s in state %s" % (task.key, task.state))
 
             if isinstance(task, Artifact):
-                a = task
+                yield task
             elif isinstance(task, Doc):
-                a = task.final_artifact
+                yield task.final_artifact
             elif isinstance(task, PatternDoc):
                 next
             else:
                 raise Exception("task is a %s" % task.__class__.__name__)
 
+    def run(self):
+        d_hash = {}
+        a_hash = {}
+
+        name = self.filter_instance.result().name
+
+        for a in self.input_tasks():
             keys = a.output_data.relative_refs(name)
             data = self.d_data_for_artifact(a)
 
@@ -270,9 +273,10 @@ class InputsJustInTimeTemplatePlugin(InputsTemplatePlugin):
 
     def run(self):
         self.map_relative_refs = {}
-        for task in self.filter_instance.processed():
-            for ref in task.output().relative_refs(self.filter_instance.result().name):
-                self.map_relative_refs[ref] = task
+
+        for task in self.input_tasks():
+            for ref in task.output_data.relative_refs(self.filter_instance.result().name):
+                self.map_relative_refs[ref] = task.output_data
 
         return {
             'a' : self.a,

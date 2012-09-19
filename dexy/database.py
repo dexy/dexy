@@ -105,9 +105,20 @@ class Sqlite3(Database):
         args_to_serialize = task.args.copy()
         if args_to_serialize.has_key('wrapper'):
             del args_to_serialize['wrapper']
+        if args_to_serialize.has_key('contents'):
+            del args_to_serialize['contents']
+            if hasattr(task, 'get_contents_hash'):
+                args_to_serialize['contentshash'] = task.get_contents_hash()
+                args_to_serialize['data-class-alias'] = task.data_class_alias()
+
+        try:
+            serialized_args = json.dumps(args_to_serialize)
+        except UnicodeDecodeError:
+            msg = "Unable to serialize args. Keys are %s" % args_to_serialize.keys()
+            raise dexy.exceptions.InternalDexyProblem(msg)
 
         attrs = {
-                'args' : json.dumps(args_to_serialize),
+                'args' : serialized_args,
                 'doc_key' : doc_key,
                 'batch_id' : task.wrapper.batch_id,
                 'class_name' : task.__class__.__name__,

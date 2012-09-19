@@ -103,6 +103,9 @@ class GenericData(Data):
     def is_cached(self):
         return self.storage.data_file_exists()
 
+    def __unicode__(self):
+        return self.as_text()
+
     def filesize(self):
         if self.is_cached():
             return os.path.getsize(self.storage.data_file())
@@ -174,6 +177,12 @@ class KeyValueData(GenericData):
 
     def value(self, key):
         return self.storage[key]
+
+    def __getitem__(self, key):
+        return self.value(key)
+
+    def __getattr__(self, key):
+        return self.value(key)
 
     def append(self, key, value):
         self.storage.append(key, value)

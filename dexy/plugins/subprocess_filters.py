@@ -1,6 +1,7 @@
 from dexy.plugins.process_filters import SubprocessFilter
 import os
 import shutil
+import subprocess
 
 class PandocFilter(SubprocessFilter):
     EXECUTABLE = "pandoc"
@@ -260,23 +261,16 @@ class HtLatexFilter(SubprocessFilter):
     OUTPUT_EXTENSIONS = [".html"]
     EXECUTABLES = ['htlatex']
     ALIASES = ['htlatex']
+    ADD_NEW_FILES = {".html", ".png", ".css"}
 
-    def process(self):
-        wd = self.setup_cwd()
-        env = self.setup_env()
-
-        htlatex_args = self.args().get('htlatex', {})
-
-        command = "%s %s %s" % (self.executable(), self.input().name, htlatex_args)
-        self.log.debug("running '%s' in '%s'" % (command, wd))
-        proc = subprocess.Popen(command, shell=True,
-                                cwd=cwd,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT,
-                                env=env)
-
-        stdout, stderr = proc.communicate()
-        self.log.debug("Finished running. Output is %s" % stdout)
-
-        self.copy_canonical_file()
-        self.add_new_files()
+    def command_string(self):
+        latexargs = self.args().get('latexargs', '') + ' -interaction=batchmode'
+        args = {
+            'prog' : self.executable(),
+            'args' : self.command_line_args() or '',
+            'tex4htargs' : self.args().get('tex4htargs', ''),
+            't4htargs' : self.args().get('t4htargs', ''),
+            'latexargs' : latexargs,
+            'script_file' : os.path.basename(self.prior().name),
+        }
+        return """%(prog)s %(script_file)s "%(args)s" "%(tex4htargs)s" "%(t4htargs)s" "%(latexargs)s" """ % args

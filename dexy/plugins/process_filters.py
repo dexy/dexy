@@ -8,6 +8,7 @@ import platform
 import subprocess
 
 class SubprocessFilter(Filter):
+    ADD_NEW_FILES = True # whether to add new files by defaut
     ALIASES = []
     CHECK_RETURN_CODE = True
     ENV = None
@@ -71,7 +72,8 @@ class SubprocessFilter(Filter):
         proc, stdout = self.run_command(command, self.setup_env())
         self.handle_subprocess_proc_return(command, proc.returncode, stdout)
         self.copy_canonical_file()
-        if self.args().get('add-new-files', False):
+
+        if self.do_add_new_files():
             self.add_new_files()
 
     def setup_wd(self):
@@ -144,29 +146,34 @@ class SubprocessFilter(Filter):
 
         return env
 
-    # clarify how file names will work for additional files
-    # 1 mode - act as though files are in original locations
-    # 2 mode - use generating file as a base namespace for new filenames
-
-    # todo method where you walk working directory and make first class objects for everything there, plus apply extra filters if specified
-
     # convert walk_working_directory to use key value storage
 
     # fix issue with creating new key value files on the fly
+
+    def do_add_new_files(self):
+        return self.ADD_NEW_FILES or self.args().get('add-new-files', False)
 
     def add_new_files(self):
         wd = self.artifact.tmp_dir()
         for dirpath, dirnames, filenames in os.walk(wd):
             for filename in filenames:
                 filepath = os.path.join(dirpath, filename)
+                filesize = os.path.getsize(filepath)
                 relpath = os.path.relpath(filepath, wd)
+                ext = os.path.splitext(filepath)[1]
 
-                if not relpath in self.artifact.wrapper.registered_doc_names():
-                    filesize = os.path.getsize(filepath)
-                    if filesize > 0:
-                        with open(filepath, 'rb') as f:
-                            contents = f.read()
-                        self.add_doc(relpath, contents)
+                already_have_file = (relpath in self.artifact.wrapper.registered_doc_names())
+                empty_file = (filesize == 0)
+
+                if hasattr(self.ADD_NEW_FILES, 'len'):
+                    is_valid_file_extension = ext in self.ADD_NEW_FILES
+                else:
+                    is_valid_file_extension = True
+
+                if (not already_have_file) and is_valid_file_extension and (not empty_file):
+                    with open(filepath, 'rb') as f:
+                        contents = f.read()
+                    self.add_doc(relpath, contents)
 
     def walk_working_directory(self, wd, section_name=None):
         """
@@ -228,9 +235,6 @@ class SubprocessFilter(Filter):
         self.log.debug(u"stdout is '%s'" % stdout.decode('utf-8'))
         self.log.debug(u"stderr is '%s'" % stderr.decode('utf-8'))
 
-        if self.do_walk_working_directory():
-            self.walk_working_directory(wd)
-
         return (proc, stdout)
 
     def copy_canonical_file(self):
@@ -246,7 +250,11 @@ class SubprocessStdoutFilter(SubprocessFilter):
         proc, stdout = self.run_command(command, self.setup_env())
         self.handle_subprocess_proc_return(command, proc.returncode, stdout)
         self.result().set_data(stdout)
-        if self.args().get('add-new-files', False):
+
+        if self.do_walk_working_directory():
+            self.walk_working_directory(wd)
+
+        if self.do_add_new_files():
             self.add_new_files()
 
 class SubprocessCompileFilter(SubprocessFilter):

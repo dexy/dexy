@@ -6,6 +6,25 @@ from dexy.doc import Doc
 import os
 import shutil
 
+LATEX = """\
+\documentclass{article}
+\\title{Hello, World!}
+\\begin{document}
+\maketitle
+Hello!
+\end{document}
+"""
+
+def test_ht_latex():
+    with wrap() as wrapper:
+        doc = Doc("article.tex|htlatex",
+                contents=LATEX,
+                wrapper=wrapper)
+
+        wrapper.docs = [doc]
+        wrapper.run()
+        assert doc.output().is_cached()
+
 def test_r_batch():
     assert_output('rout', 'print(1+1)', "[1] 2\n")
 
