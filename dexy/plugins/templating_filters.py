@@ -154,7 +154,7 @@ class JinjaFilter(JinjaTextFilter):
     Runs the Jinja templating engine on your document to incorporate dynamic
     content.
     """
-    ALIASES = ['jinja']
+    ALIASES = ['jinjaold']
     TAGS = ['template']
 
     def process(self):
@@ -171,7 +171,7 @@ class JinjaFilter(JinjaTextFilter):
             self.handle_jinja_exception(e, self.artifact.input_data.as_text(), template_data)
 
 class JinjaJustInTimeFilter(JinjaFilter):
-    ALIASES = ['jinjajit']
+    ALIASES = ['jinja']
     TEMPLATE_PLUGINS = [
         ClippyHelperTemplatePlugin,
         DexyVersionTemplatePlugin,

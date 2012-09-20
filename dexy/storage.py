@@ -73,6 +73,15 @@ You can increase this limit by changing MAX_DATA_DICT_DECIMALS."""
             data_dict[fmt % (i, k)] = v
         return data_dict
 
+    def value(self, key):
+        return self.data()[key]
+
+    def __getitem__(self, key):
+        return self.value(key)
+
+    def __getattr__(self, key):
+        return self.value(key)
+
     def read_data(self):
         with open(self.data_file(), "rb") as f:
             numbered_dict = json.load(f)

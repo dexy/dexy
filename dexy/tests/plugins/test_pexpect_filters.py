@@ -2,6 +2,9 @@ from dexy.doc import Doc
 from dexy.tests.utils import assert_in_output
 from dexy.tests.utils import wrap
 
+def test_matlab_filter():
+    assert_in_output('matlabint', "fprintf (1, 'Hello, world\\n')\n", "< M A T L A B (R) >")
+
 def test_clj_filter():
     assert_in_output('cljint', '1+1', "user=> 1+1")
 

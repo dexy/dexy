@@ -340,6 +340,15 @@ class KshInteractiveFilter(PexpectReplFilter):
     TRIM_PROMPT = r"\d*(\$|#)"
     PS1 = "$ "
 
+class MatlabInteractiveFilter(PexpectReplFilter):
+    ALIASES = ['matlabint']
+    EXECUTABLE = 'matlab -nodesktop -nosplash -nodisplay'
+    INPUT_EXTENSIONS = ['.m', '.txt']
+    OUTPUT_EXTENSIONS = ['.mout']
+    LINE_ENDING = "\r\n"
+    PROMPT = ">>"
+    # TODO handle EOF errors if people have 'quit' in their script
+
 class ClojureInteractiveFilter(PexpectReplFilter):
     """
     Runs clojure.

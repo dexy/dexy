@@ -153,6 +153,15 @@ class SectionedData(GenericData):
         with open(filepath, "wb") as f:
             f.write(self.as_text())
 
+    def value(self, key):
+        return self.data()[key]
+
+    def __getitem__(self, key):
+        return self.value(key)
+
+    def __getattr__(self, key):
+        return self.value(key)
+
 class KeyValueData(GenericData):
     ALIASES  = ['keyvalue']
     DEFAULT_STORAGE_TYPE = 'sqlite3'
