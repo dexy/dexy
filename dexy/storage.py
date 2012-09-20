@@ -1,5 +1,6 @@
 from dexy.common import OrderedDict
 from dexy.plugin import PluginMeta
+import dexy.exceptions
 import os
 import shutil
 import sqlite3
@@ -12,6 +13,11 @@ class Storage:
     @classmethod
     def is_active(klass):
         return True
+
+    def check_location_is_in_project_dir(self, filepath):
+        project_root = os.path.abspath(os.getcwd())
+        if not project_root in os.path.abspath(filepath):
+            raise dexy.exceptions.UserFeedback("Trying to write '%s' outside of '%s'" % (filepath, project_root))
 
     def __init__(self, hashstring, ext, wrapper):
         self.hashstring = hashstring
@@ -32,6 +38,8 @@ class GenericStorage(Storage):
     def write_data(self, data, filepath=None):
         if not filepath:
             filepath = self.data_file()
+
+        self.check_location_is_in_project_dir(filepath)
 
         if self.data_file_exists():
             shutil.copyfile(self.data_file(), filepath)
@@ -91,6 +99,8 @@ You can increase this limit by changing MAX_DATA_DICT_DECIMALS."""
         if not filepath:
             filepath = self.data_file()
 
+        self.check_location_is_in_project_dir(filepath)
+
         with open(filepath, "wb") as f:
             numbered_dict = self.convert_ordered_dict_to_numbered_dict(data)
             json.dump(numbered_dict, f)
@@ -133,6 +143,8 @@ class JsonStorage(GenericStorage):
     def write_data(self, data, filepath=None):
         if not filepath:
             filepath = self.data_file()
+
+        self.check_location_is_in_project_dir(filepath)
 
         with open(filepath, "wb") as f:
             json.dump(data, f)
@@ -177,5 +189,6 @@ class Sqlite3Storage(GenericStorage):
             yield k, v
 
     def save(self):
+        self.check_location_is_in_project_dir(self.data_file())
         self._storage.commit()
         shutil.copyfile(self.working_file(), self.data_file())
