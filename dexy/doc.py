@@ -110,6 +110,11 @@ class Doc(dexy.task.Task):
             key = "%s|%s" % (self.name, "|".join(filters))
             self.setup_filter_artifact(key, filters)
 
+        if self.args.get('depends', False):
+            for a in self.wrapper.registered:
+                if isinstance(a, Doc) and (not a in self.children) and (not a == self):
+                    self.children.insert(0, a)
+
         self.setup_child_docs()
         self.after_setup()
 
