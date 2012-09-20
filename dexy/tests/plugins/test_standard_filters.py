@@ -35,7 +35,9 @@ def test_ppjson_filter():
             )
 
 def test_start_space_filter():
-    assert_output("startspace", "abc\ndef", " abc\n def")
+    o = OrderedDict()
+    o['1'] = " abc\n def"
+    assert_output("startspace", "abc\ndef", o)
 
 def test_tags_filter():
     with wrap() as wrapper:

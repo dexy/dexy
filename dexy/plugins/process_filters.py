@@ -147,8 +147,6 @@ class SubprocessFilter(Filter):
 
         return env
 
-    # fix issue with creating new key value files on the fly
-
     def do_add_new_files(self):
         return self.ADD_NEW_FILES or self.args().get('add-new-files', False)
 

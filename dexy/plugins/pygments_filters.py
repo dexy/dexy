@@ -1,5 +1,6 @@
 from dexy.common import OrderedDict
 from dexy.filter import DexyFilter
+from dexy.plugins.standard_filters import StartSpaceFilter
 from pygments import highlight
 from pygments.formatters import HtmlFormatter
 from pygments.formatters import LatexFormatter
@@ -14,6 +15,22 @@ from pygments.lexers.web import XmlLexer
 import dexy.commands
 import pygments.lexers.web
 import re
+
+class SyntaxHighlightRstFilter(DexyFilter):
+    ALIASES = ['pyg4rst']
+
+    def process_dict(self, input_dict):
+        n = self.args().get('n', 2)
+        result = OrderedDict()
+
+        lexer = get_lexer_for_filename(self.prior().storage.data_file())
+        lexer_alias = lexer.aliases[0]
+
+        for section_name, section_text in input_dict.iteritems():
+            with_spaces = StartSpaceFilter.add_spaces_at_start(section_text, n)
+            result[section_name] = ".. code:: %s\n%s" % (lexer_alias, with_spaces)
+
+        return result
 
 class PygmentsFilter(DexyFilter):
     """

@@ -25,8 +25,17 @@ class StartSpaceFilter(DexyFilter):
     """
     ALIASES = ['ss', 'startspace']
 
-    def process_text(self, input_text):
-        return "\n".join(" %s" % line for line in input_text.splitlines())
+    @classmethod
+    def add_spaces_at_start(self, text, n):
+        spaces = " " * n
+        return "\n".join("%s%s" % (spaces, line) for line in text.splitlines())
+
+    def process_dict(self, input_dict):
+        result = OrderedDict()
+        n = self.args().get('n', 1)
+        for section_name, section_text in input_dict.iteritems():
+            result[section_name] = self.add_spaces_at_start(section_text, n)
+        return result
 
 class SectionsByLineFilter(DexyFilter):
     ALIASES = ['lines']

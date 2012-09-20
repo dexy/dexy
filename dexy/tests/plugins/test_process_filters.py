@@ -34,8 +34,11 @@ def test_add_new_files():
         wrapper.docs = [doc]
         wrapper.run()
 
-        assert wrapper.registered_docs()[1].key == 'newfile.txt|markdown'
-        assert wrapper.registered_docs()[1].output().data() == "<p>hello</p>"
+        assert wrapper.registered_docs()[1].key == 'newfile.txt'
+        assert wrapper.registered_docs()[1].output().data() == "hello\n"
+
+        assert wrapper.registered_docs()[2].key == 'newfile.txt|markdown'
+        assert wrapper.registered_docs()[2].output().data() == "<p>hello</p>"
 
 def test_not_present_executable():
     assert 'notreal' in NotPresentExecutable.executables()

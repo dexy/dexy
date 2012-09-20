@@ -1,3 +1,5 @@
+import dexy.plugins.api_filters
+import dexy.plugins.wordpress_filters
 import dexy.plugins.archive_filters
 import dexy.plugins.clang_filters
 import dexy.plugins.example_filters

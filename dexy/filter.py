@@ -49,7 +49,7 @@ class Filter:
 
         if isinstance(additional_doc_filters, dict):
             filters = additional_doc_filters.get(doc_ext, '')
-        elif isinstance(additional_doc_filters, str):
+        elif isinstance(additional_doc_filters, str) or isinstance(additional_doc_filters, unicode):
             filters = additional_doc_filters
         else:
             # TODO allow passing a list of tuples so input can be
@@ -57,12 +57,20 @@ class Filter:
             raise Exception("not implemented")
 
         if len(filters) > 0:
+            if self.args().get('keep-originals', True):
+                doc_key = doc_name
+                doc = dexy.doc.Doc(doc_key, contents=doc_contents)
+                self.artifact.add_doc(doc)
+
             doc_key = "%s|%s" % (doc_name, filters)
+            doc = dexy.doc.Doc(doc_key, contents=doc_contents)
+            self.artifact.add_doc(doc)
+
         else:
             doc_key = doc_name
+            doc = dexy.doc.Doc(doc_key, contents=doc_contents)
+            self.artifact.add_doc(doc)
 
-        doc = dexy.doc.Doc(doc_key, contents=doc_contents)
-        self.artifact.add_doc(doc)
         return doc
 
     def input(self):

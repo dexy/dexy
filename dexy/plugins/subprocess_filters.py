@@ -7,7 +7,14 @@ class PandocFilter(SubprocessFilter):
     EXECUTABLE = "pandoc"
     VERSION_COMMAND = "pandoc --version"
     ALIASES = ['pandoc']
-    OUTPUT_EXTENSIONS = ['.html', '.txt', '.tex', '.pdf', '.rtf', '.json', '.docx']
+    OUTPUT_EXTENSIONS = ['.html', '.txt', '.tex', '.pdf', '.rtf', '.json', '.docx', '.odt', '.epub']
+
+    # TODO Support all these + test them.
+    #Output formats: native, json, html, html5, html+lhs, html5+lhs, s5, slidy,
+    #                dzslides, docbook, opendocument, latex, latex+lhs, beamer,
+    #                context, texinfo, man, markdown, markdown+lhs, plain, rst,
+    #                rst+lhs, mediawiki, textile, rtf, org, asciidoc, odt, docx,
+    #                epub
 
     def command_string(self):
         args = {
