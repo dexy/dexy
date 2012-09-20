@@ -5,6 +5,22 @@ from dexy.tests.utils import wrap
 from mock import MagicMock
 import dexy.exceptions
 
+def test_walk_working_dir():
+    with wrap() as wrapper:
+        doc = Doc("example.sh|sh",
+                contents = "echo 'hello' > newfile.txt",
+                sh = {
+                    "walk-working-dir" : True,
+                    },
+                wrapper=wrapper)
+
+        wrapper.docs = [doc]
+        wrapper.run()
+
+        for doc in wrapper.registered:
+            if doc.key_with_class() == "Doc:example.sh-sh.txt-files":
+                assert doc.output().as_sectioned()['newfile.txt'] == "hello\n"
+
 def test_add_new_files():
     with wrap() as wrapper:
         doc = Doc("example.sh|sh",

@@ -261,10 +261,14 @@ class HtLatexFilter(SubprocessFilter):
     OUTPUT_EXTENSIONS = [".html"]
     EXECUTABLES = ['htlatex']
     ALIASES = ['htlatex']
-    ADD_NEW_FILES = {".html", ".png", ".css"}
+    ADD_NEW_FILES = [".html", ".png", ".css"]
 
     def command_string(self):
-        latexargs = self.args().get('latexargs', '') + ' -interaction=batchmode'
+        latexargs = self.args().get('latexargs', '')
+
+        if not '-interaction=' in latexargs:
+            latexargs = latexargs + ' -interaction=batchmode'
+
         args = {
             'prog' : self.executable(),
             'args' : self.command_line_args() or '',

@@ -41,7 +41,8 @@ class TextFileParser(Parser):
                     pattern, raw_args = line.split(" ", 1)
                     try:
                         args = json.loads(raw_args)
-                    except ValueError:
+                    except ValueError as e:
+                        print e.message
                         self.wrapper.log.debug("Failed to parse extra args '%s' with json parser" % raw_args)
                         args = {}
                 else:

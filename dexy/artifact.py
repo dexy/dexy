@@ -107,7 +107,7 @@ class InitialArtifact(Artifact):
 class InitialVirtualArtifact(InitialArtifact):
     def get_contents(self):
         contents = self.args.get('contents')
-        if not contents:
+        if not contents and not isinstance(contents, dict):
             raise Exception("no contents found for %s" % self.key)
         return contents
 
@@ -170,7 +170,6 @@ class FilterArtifact(Artifact):
             self.log.debug("Fetched row %s for parent doc %s" % (row['key'], self.key))
             if 'Initial' in row['class_name']:
                 doc_args = json.loads(row['args'])
-                print "doc args for %s are %s" % (row['doc_key'],  doc_args)
                 doc = dexy.doc.Doc(row['doc_key'], **doc_args)
                 self.add_doc(doc)
                 assert doc.artifacts[0].hashstring == row['hashstring'], "Unexpected hashstring for %s" % doc.artifacts[0].key

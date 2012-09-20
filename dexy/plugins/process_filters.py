@@ -15,6 +15,7 @@ class SubprocessFilter(Filter):
     TIMEOUT = None
     INITIAL_TIMEOUT = None
     VERSION_COMMAND = None
+    WALK_WORKING_DIRECTORY = False
     WINDOWS_VERSION_COMMAND = None
     WRITE_STDERR_TO_STDOUT = True
 
@@ -146,8 +147,6 @@ class SubprocessFilter(Filter):
 
         return env
 
-    # convert walk_working_directory to use key value storage
-
     # fix issue with creating new key value files on the fly
 
     def do_add_new_files(self):
@@ -175,11 +174,22 @@ class SubprocessFilter(Filter):
                         contents = f.read()
                     self.add_doc(relpath, contents)
 
-    def walk_working_directory(self, wd, section_name=None):
-        """
-        Walk the passed working directory and copy all found file contents into a dict.
-        """
-        d = {}
+    def do_walk_working_directory(self):
+        if self.args().has_key('walk-working-dir'):
+            return self.args()['walk-working-dir']
+        else:
+            return self.WALK_WORKING_DIRECTORY
+
+    def walk_working_directory(self, doc=None, section_name=None):
+        if not doc:
+            if section_name:
+                doc_key = "%s-%s-files" % (self.result().long_name(), section_name)
+            else:
+                doc_key = "%s-files" % self.result().long_name()
+
+            doc = self.add_doc(doc_key, {})
+
+        wd = self.artifact.tmp_dir()
         for dirpath, dirnames, filenames in os.walk(wd):
             for filename in filenames:
                 filepath = os.path.join(dirpath, filename)
@@ -189,24 +199,15 @@ class SubprocessFilter(Filter):
                     contents = f.read()
                 try:
                     json.dumps(contents)
-                    d[relpath] = contents
+                    doc.result().append(relpath, contents)
                 except UnicodeDecodeError as e:
-                    d[relpath] = 'binary'
+                    doc.result().append(relpath, 'binary')
 
-        if section_name:
-            doc_key = "%s-%s-files" % (self.result().long_name(), section_name)
-        else:
-            doc_key = "%s-files" % self.result().long_name()
-
-        doc = Doc(doc_key, contents=d)
-        self.artifact.add_doc(doc)
+        return doc
 
     def write_stderr_to_stdout(self):
         # TODO allow customizing this in args
         return self.WRITE_STDERR_TO_STDOUT
-
-    def do_walk_working_directory(self):
-        return False
 
     def run_command(self, command, env, input_text=None):
         wd = self.setup_wd()
@@ -252,7 +253,7 @@ class SubprocessStdoutFilter(SubprocessFilter):
         self.result().set_data(stdout)
 
         if self.do_walk_working_directory():
-            self.walk_working_directory(wd)
+            self.walk_working_directory()
 
         if self.do_add_new_files():
             self.add_new_files()

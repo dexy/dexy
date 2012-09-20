@@ -27,7 +27,6 @@ class ForceHtmlExtensionFilter(PreserveDataClassFilter):
     INPUT_EXTENSIONS = [".html"]
     OUTPUT_EXTENSIONS = [".html"]
     ALIASES = ['h', 'forcehtml']
-    PRESERVE_PRIOR_DATA_CLASS = True
 
 class ForceJsonExtensionFilter(PreserveDataClassFilter):
     """

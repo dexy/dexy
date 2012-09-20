@@ -202,6 +202,8 @@ class PexpectReplFilter(SubprocessFilter):
 
             yield section_key, section_transcript
 
+        self.add_new_files()
+
         try:
             proc.close()
         except pexpect.ExceptionPexpect:
