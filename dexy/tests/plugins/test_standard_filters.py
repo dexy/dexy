@@ -2,6 +2,23 @@ from dexy.common import OrderedDict
 from dexy.doc import Doc
 from dexy.tests.utils import assert_output
 from dexy.tests.utils import wrap
+import os
+
+def test_header_footer_filters():
+    with wrap() as wrapper:
+        os.makedirs('subdir/subsubdir')
+        doc = Doc("subdir/file.txt|hd|ft",
+                Doc("_header.txt", wrapper=wrapper, contents="This is a header in parent dir."),
+                Doc("subdir/_header.txt|jinja", wrapper=wrapper, contents="This is a header."),
+                Doc("subdir/_footer.txt|jinja", wrapper=wrapper, contents="This is a footer."),
+                Doc("subdir/subsubdir/_header.txt", wrapper=wrapper, contents="This is a header in a subdirectory."),
+                contents="These are main contents.",
+                wrapper=wrapper)
+
+        wrapper.docs = [doc]
+        wrapper.run()
+
+        assert doc.output().data() == "This is a header.\nThese are main contents.\nThis is a footer."
 
 def test_join_filter():
     contents = OrderedDict()

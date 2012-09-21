@@ -1,7 +1,37 @@
 from dexy.common import OrderedDict
 from dexy.filter import DexyFilter
 import copy
+import dexy.exceptions
 import json
+import os
+
+class HeaderFilter(DexyFilter):
+    ALIASES = ['hd']
+
+    def find_input_in_parent_dir(self, matches):
+        docs = self.artifact.doc.completed_child_docs()
+        docs_d = dict((task.result().long_name(), task) for task in docs)
+
+        matched_key = None
+        for k in sorted(docs_d.keys()):
+            if (os.path.dirname(k) in self.result().parent_dir()) and (matches in k):
+                matched_key = k
+
+        if not matched_key:
+            raise dexy.exceptions.UserFeedback("No input found for %s" % self.artifact.key)
+
+        return docs_d[matched_key].output()
+
+    def process_text(self, input_text):
+        header_data = self.find_input_in_parent_dir("_header")
+        return "%s\n%s" % (header_data.as_text(), input_text)
+
+class FooterFilter(HeaderFilter):
+    ALIASES = ['ft']
+
+    def process_text(self, input_text):
+        footer_data = self.find_input_in_parent_dir("_footer")
+        return "%s\n%s" % (input_text, footer_data.as_text())
 
 class MarkupTagsFilter(DexyFilter):
     """
