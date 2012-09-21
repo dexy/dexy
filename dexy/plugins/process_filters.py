@@ -260,20 +260,25 @@ class SubprocessCompileFilter(SubprocessFilter):
     """
     Base class for filters which need to compile code, then run the compiled executable.
     """
+    ADD_NEW_FILES = True
     ALIASES = ['subprocesscompilefilter']
-    BINARY = False
-    FINAL = False
     COMPILED_EXTENSION = ".o"
     CHECK_RETURN_CODE = False # Whether to check return code when running compiled executable.
     EXECUTABLES = []
 
+    def setup_wd(self):
+        if not os.path.exists(self.artifact.tmp_dir()):
+            self.artifact.create_working_dir(self.input_filepath(), True)
+        return os.path.join(self.artifact.tmp_dir(), self.result().parent_dir())
+
     def compile_command_string(self):
-        wf = self.input().name
+        wf = os.path.basename(self.input().name)
         of = self.compiled_filename()
         return "%s %s -o %s" % (self.executable(), wf, of)
 
     def compiled_filename(self):
-        nameroot = os.path.splitext(self.input().name)[0]
+        basename = os.path.basename(self.input().name)
+        nameroot = os.path.splitext(basename)[0]
         return "%s%s" % (nameroot, self.COMPILED_EXTENSION)
 
     def run_command_string(self):
@@ -298,6 +303,9 @@ class SubprocessCompileFilter(SubprocessFilter):
             self.handle_subprocess_proc_return(command, proc.returncode, stdout)
 
         self.result().set_data(stdout)
+
+        if self.do_add_new_files():
+            self.add_new_files()
 
 class SubprocessCompileInputFilter(SubprocessCompileFilter):
     ALIASES = ['subprocesscompileinputfilter']

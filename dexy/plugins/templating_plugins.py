@@ -133,16 +133,13 @@ class VariablesTemplatePlugin(TemplatePlugin):
             variables.update(self.filter_instance.artifact.args['$variables'])
         return variables
 
-#class GlobalsTemplatePlugin(TemplatePlugin):
-#    """
-#    Makes available the global variables specified on the dexy command line
-#    using the --globals option
-#    """
-#    def run(self):
-#        if self.filter_instance.artifact.controller_args.has_key('globals'):
-#            return self.filter_instance.artifact.controller_args['globals']
-#        else:
-#            return {}
+class GlobalsTemplatePlugin(TemplatePlugin):
+    """
+    Makes available the global variables specified on the dexy command line
+    using the --globals option
+    """
+    def run(self):
+        return dict(x.split("=") for x in self.artifact.wrapper.globals.split("="))
 
 #class NavigationTemplatePlugin(TemplatePlugin):
 #    """

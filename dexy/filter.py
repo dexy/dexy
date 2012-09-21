@@ -2,7 +2,6 @@ import dexy.plugin
 import dexy.utils
 import dexy.doc
 import dexy.exceptions
-import inspect
 import os
 
 class FilterException(Exception):

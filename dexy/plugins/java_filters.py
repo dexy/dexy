@@ -74,7 +74,6 @@ class JavaFilter(SubprocessCompileFilter):
     CHECK_RETURN_CODE = True # Whether to check return code when running compiled executable.
     COMPILED_EXTENSION = ".class"
     EXECUTABLE = "javac"
-    FINAL = False
     INPUT_EXTENSIONS = [".java"]
     OUTPUT_EXTENSIONS = [".txt"]
     VERSION_COMMAND = "java -version"
@@ -88,7 +87,6 @@ class JavaFilter(SubprocessCompileFilter):
         added to the classpath.
         """
         self.log.debug("in setup_cp for %s" % self.artifact.key)
-        env = self.setup_env()
 
         classpath_elements = []
 
@@ -105,6 +103,7 @@ class JavaFilter(SubprocessCompileFilter):
             for x in item.split(":"):
                 classpath_elements.append(x)
 
+        env = self.setup_env()
         if env and env.has_key("CLASSPATH"):
             for x in env['CLASSPATH'].split(":"):
                 classpath_elements.append(x)
@@ -115,10 +114,11 @@ class JavaFilter(SubprocessCompileFilter):
 
     def compile_command_string(self):
         cp = self.setup_cp()
+        basename = os.path.basename(self.input().name)
         if len(cp) == 0:
-            return "javac %s" % self.input().name
+            return "javac %s" % basename
         else:
-            return "javac -classpath %s %s" % (cp, self.input().name)
+            return "javac -classpath %s %s" % (cp, basename)
 
     def run_command_string(self):
         cp = self.setup_cp()
@@ -127,7 +127,8 @@ class JavaFilter(SubprocessCompileFilter):
         return "java %s -cp %s %s" % (args, cp, main_method)
 
     def setup_main_method(self):
-        default_main = os.path.splitext(self.prior().name)[0]
+        basename = os.path.basename(self.input().name)
+        default_main = os.path.splitext(basename)[0]
         return self.args().get('main', default_main)
 
 class JavacFilter(JavaFilter):
