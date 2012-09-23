@@ -17,7 +17,16 @@ class Doc(dexy.task.Task):
             try:
                 return dexy.filter.Filter.aliases[alias]
             except KeyError:
-                raise dexy.exceptions.UserFeedback("Dexy doesn't have a filter '%s' available." % alias)
+                msg = "Dexy doesn't have a filter '%s' available." % alias
+
+                all_plugins = dexy.filter.Filter.aliases.values()
+                num_plugins = len(all_plugins)
+                if num_plugins < 10:
+                    plugin_list = ", ".join(p.__name__ for p in all_plugins)
+                    msg += " Note that only %s plugins are available: %s" % (num_plugins, plugin_list)
+                    msg += " There may be a problem loading plugins, adding 'import dexy.plugins' might help."
+
+                raise dexy.exceptions.UserFeedback(msg)
 
     def result(self):
         """

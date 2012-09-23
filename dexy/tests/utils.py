@@ -5,6 +5,7 @@ from dexy.utils import char_diff
 from dexy.wrapper import Wrapper
 from mock import MagicMock
 from nose.exc import SkipTest
+import dexy.plugins # make sure plugins are loaded
 import os
 import re
 import shutil
