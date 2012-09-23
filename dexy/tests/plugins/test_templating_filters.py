@@ -1,10 +1,8 @@
 from dexy.doc import Doc
 from dexy.plugins.templating_filters import TemplateFilter
 from dexy.plugins.templating_plugins import TemplatePlugin
-from dexy.tests.utils import assert_output
 from dexy.tests.utils import wrap
 import dexy.exceptions
-import jinja2
 
 def test_jinja_filter_inputs():
     with wrap() as wrapper:

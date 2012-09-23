@@ -194,7 +194,7 @@ def test_virtual_artifact_data_class_generic():
         assert artifact.__class__.__name__ == "InitialVirtualArtifact"
         assert artifact.data_class_alias() == 'generic'
 
-def test_virtual_artifact_data_class_generic():
+def test_virtual_artifact_data_class_sectioned():
     with wrap() as wrapper:
         contents = OrderedDict()
         contents['foo'] = 'bar'

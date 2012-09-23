@@ -27,14 +27,13 @@ class PythonDocumentationFilter(DexyFilter):
             # Get source code
             try:
                 source = inspect.getsource(item)
-            except IOError as e:
+            except IOError:
                 source = ""
             # Process any idiopidae tags
             builder = idiopidae.parser.parse('Document', source + "\n\0")
 
             sections = {}
             for i, s in enumerate(builder.sections):
-                lines = builder.statements[i]['lines']
                 sections[s] = "\n".join(l[1] for l in builder.statements[i]['lines'])
 
             if isinstance(sections, dict):

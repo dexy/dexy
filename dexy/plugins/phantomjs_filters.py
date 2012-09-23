@@ -1,10 +1,6 @@
-from dexy.common import OrderedDict
 from dexy.plugins.process_filters import SubprocessFilter
 from dexy.plugins.process_filters import SubprocessStdoutFilter
-import json
 import os
-import re
-import shutil
 
 class CasperJsSvg2PdfFilter(SubprocessFilter):
     """
@@ -25,8 +21,12 @@ class CasperJsSvg2PdfFilter(SubprocessFilter):
         return "%(prog)s %(args)s script.js" % args
 
     def script_js(self, width, height):
-        svgfile = self.prior().name
-        pdffile = self.result().name
+        args = {
+                'width' : width,
+                'height' : height,
+                'svgfile' : self.prior().name,
+                'pdffile' : self.result().name
+                }
         return """
         var casper = require('casper').create({
              viewportSize : {width : %(width)s, height : %(height)s}
@@ -36,7 +36,7 @@ class CasperJsSvg2PdfFilter(SubprocessFilter):
         });
 
         casper.run();
-        """ % locals()
+        """ % args
 
     def setup_wd(self):
         tmpdir = self.artifact.tmp_dir()

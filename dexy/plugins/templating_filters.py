@@ -35,7 +35,7 @@ class TemplateFilter(DexyFilter):
                 new_keys = ", ".join(sorted(new_env_vars))
                 existing_keys = ", ".join(sorted(env))
                 msg = "plugin class '%s' is trying to add new keys '%s', already have '%s'"
-                raise dexy.exceptions.InternalDexyProblem(mgs % (plugin_class.__name__, new_keys, existing_keys))
+                raise dexy.exceptions.InternalDexyProblem(msg % (plugin_class.__name__, new_keys, existing_keys))
             env.update(new_env_vars)
         return env
 

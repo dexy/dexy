@@ -116,7 +116,7 @@ class InitialVirtualArtifact(InitialArtifact):
             return self.args['contentshash']
         else:
             contents = self.get_contents()
-            return hashlib.md5(str(self.get_contents())).hexdigest()
+            return hashlib.md5(str(contents)).hexdigest()
 
     def data_class_alias(self):
         data_class_alias = self.args.get('data-class-alias')

@@ -1,5 +1,4 @@
 from dexy.common import OrderedDict
-from dexy.doc import Doc
 from dexy.filter import Filter
 import dexy.exceptions
 import json
@@ -198,7 +197,7 @@ class SubprocessFilter(Filter):
                 try:
                     json.dumps(contents)
                     doc.result().append(relpath, contents)
-                except UnicodeDecodeError as e:
+                except UnicodeDecodeError:
                     doc.result().append(relpath, 'binary')
 
         return doc

@@ -1,7 +1,6 @@
 from dexy.plugins.process_filters import SubprocessFilter
 import os
 import shutil
-import subprocess
 
 class PandocFilter(SubprocessFilter):
     EXECUTABLE = "pandoc"

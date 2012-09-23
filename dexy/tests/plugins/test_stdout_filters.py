@@ -1,9 +1,6 @@
-from dexy.doc import Doc
 from dexy.tests.utils import assert_in_output
 from dexy.tests.utils import assert_output
 from dexy.tests.utils import assert_output_matches
-from dexy.tests.utils import runfilter
-from dexy.tests.utils import wrap
 import inspect
 
 def test_rd_stdout_filter():

@@ -1,15 +1,8 @@
-from dexy.filter import DexyFilter
 from dexy.plugins.pexpect_filters import PexpectReplFilter
 from dexy.plugins.process_filters import SubprocessCompileFilter
 from dexy.plugins.process_filters import SubprocessStdoutFilter
-from pygments import highlight
-from pygments.formatters.html import HtmlFormatter
-from pygments.formatters.latex import LatexFormatter
-from pygments.lexers.compiled import JavaLexer
-import json
 import os
 import platform
-import shutil
 
 class JrubyFilter(SubprocessStdoutFilter):
     ALIASES = ['jruby']

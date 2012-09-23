@@ -8,8 +8,7 @@ import inspect
 import os
 
 def test_base():
-    with run(TemplatePlugin) as env:
-        pass
+    run(TemplatePlugin)
 
 def test_ppjson():
     with run(plugin.PrettyPrintJson) as env:

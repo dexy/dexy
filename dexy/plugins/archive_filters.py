@@ -38,12 +38,13 @@ class ArchiveFilter(DexyFilter):
         self.archive.add(filepath, arcname=archivename)
 
     def process(self):
-        use_short_names = self.args().get('use-short-names', False)
+        self.open_archive()
 
-        archive = self.open_archive()
-
-        # Place files in the archive within a directory with the same name as the archive
+        # Place files in the archive within a directory with the same name as the archive.
         dirname = os.path.splitext(self.result().basename())[0]
+
+        # Figure out whether to use short names or longer, unambiguous names.
+        use_short_names = self.args().get('use-short-names', False)
 
         for doc in self.processed():
             if not doc.output().is_cached():

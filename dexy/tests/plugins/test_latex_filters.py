@@ -1,5 +1,4 @@
 from dexy.tests.utils import runfilter
-import os
 
 def test_tikz_filter():
     with runfilter('tikz', TIKZ) as doc:

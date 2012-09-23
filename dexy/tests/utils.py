@@ -5,16 +5,13 @@ from dexy.utils import char_diff
 from dexy.wrapper import Wrapper
 from mock import MagicMock
 from nose.exc import SkipTest
-import dexy.commands
-import dexy.data
-import dexy.metadata
 import os
 import re
 import shutil
 import sys
 import tempfile
 
-TEST_DATA_DIR = os.path.join(os.getcwd(), 'dexy', 'tests', 'data')
+TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
 def create_ordered_dict_from_dict(d):
     od = OrderedDict()

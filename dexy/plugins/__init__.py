@@ -20,4 +20,4 @@ import dexy.plugins.stationery
 import dexy.plugins.stdout_filters
 import dexy.plugins.subprocess_filters
 import dexy.plugins.templating_filters
-import dexy.plugins.wordpress_filters
+#import dexy.plugins.wordpress_filters

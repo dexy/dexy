@@ -1,10 +1,8 @@
-from dexy.common import OrderedDict
 from dexy.doc import Doc
 from dexy.tests.utils import wrap
 from dexy.wrapper import Wrapper
 import dexy.data
 import dexy.exceptions
-import os
 
 def test_write_outside_project_root():
     with wrap() as wrapper:

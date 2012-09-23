@@ -41,11 +41,3 @@ def test_gif():
                 wrapper=wrapper)
         wrapper.docs = [doc]
         wrapper.run()
-
-def test_gif():
-    with wrap() as wrapper:
-        doc = Doc("example.py|pyg|gn",
-                contents="print 'hello'\n",
-                wrapper=wrapper)
-        wrapper.docs = [doc]
-        wrapper.run()

@@ -1,8 +1,6 @@
 from dexy.doc import Doc
-from dexy.plugins.process_filters import SubprocessCompileFilter
 from dexy.plugins.process_filters import SubprocessFilter
 from dexy.tests.utils import wrap
-from mock import MagicMock
 import dexy.exceptions
 
 def test_walk_working_dir():
@@ -99,7 +97,7 @@ def test_nonzero_exit():
         try:
             wrapper.run()
             assert False, "should raise NonzeroExit"
-        except dexy.exceptions.NonzeroExit as e:
+        except dexy.exceptions.NonzeroExit:
             assert True
 
 def test_ignore_nonzero_exit():

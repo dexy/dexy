@@ -16,7 +16,6 @@ import pprint
 import pygments
 import pygments.formatters
 import re
-import urllib
 
 class TemplatePlugin():
     __metaclass__ = PluginMeta

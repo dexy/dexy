@@ -1,6 +1,5 @@
 from dexy.tests.utils import wrap
 from dexy.doc import Doc
-import inspect
 
 def test_multiple_sections():
     with wrap() as wrapper:

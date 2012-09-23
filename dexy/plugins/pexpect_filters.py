@@ -2,13 +2,6 @@ from dexy.common import OrderedDict
 from dexy.exceptions import InternalDexyProblem
 from dexy.exceptions import UserFeedback
 from dexy.plugins.process_filters import SubprocessFilter
-from pygments import highlight
-from pygments.formatters.html import HtmlFormatter
-from pygments.formatters.latex import LatexFormatter
-from pygments.lexers import get_lexer_by_name
-import codecs
-import json
-import os
 import pexpect
 import re
 
