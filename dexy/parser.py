@@ -31,7 +31,7 @@ class OriginalDexyParser(Parser):
             self.wrapper.docs.append(doc)
 
 class TextFileParser(Parser):
-    ALIASES = ["dexy.txt"]
+    ALIASES = ["docs.txt"]
 
     def parse(self, input_text):
         for line in input_text.splitlines():
