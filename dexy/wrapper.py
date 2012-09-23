@@ -173,6 +173,13 @@ class Wrapper(object):
 
         self.save_db()
 
+    def run_docs(self, *docs):
+        """
+        Shortcut to add docs and then run them.
+        """
+        self.docs = docs
+        self.run()
+
     def run_tasks(self, *tasks):
         for task in tasks:
             for t in task:
@@ -261,3 +268,7 @@ class Wrapper(object):
         self.setup_dexy_dirs()
         self.setup_log()
         self.load_doc_config()
+
+    def cleanup_partial_run(self):
+        # TODO remove any entries which don't have 
+        self.db.save()

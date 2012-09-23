@@ -3,6 +3,7 @@ from dexy.common import OrderedDict
 from dexy.exceptions import InactiveFilter
 from dexy.utils import char_diff
 from dexy.wrapper import Wrapper
+from mock import MagicMock
 from nose.exc import SkipTest
 import dexy.commands
 import dexy.data
@@ -72,7 +73,10 @@ class runfilter(tempdir):
 
         return wrapper.docs[0]
 
-def assert_output(filter_alias, doc_contents, expected_output, ext=".txt",args={}):
+def assert_output(filter_alias, doc_contents, expected_output, ext=".txt",args=None):
+    if not args:
+        args = {}
+
     if not ext.startswith("."):
         raise Exception("ext arg to assert_in_output must start with dot")
 
@@ -141,3 +145,18 @@ class divert_stderr():
     def __exit__(self, type, value, traceback):
         sys.stderr = self.old_stderr
         self.my_stderr.close()
+
+class run_templating_plugin():
+    def __init__(self, klass, mock_attrs=None):
+        if not mock_attrs:
+            mock_attrs = {}
+        self.f = MagicMock(**mock_attrs)
+        self.plugin = klass(self.f)
+
+    def __enter__(self):
+        env = self.plugin.run()
+        assert isinstance(env, dict)
+        return env
+
+    def __exit__(self, type, value, traceback):
+        pass

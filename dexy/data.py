@@ -2,6 +2,7 @@ from dexy.common import OrderedDict
 from dexy.plugin import PluginMeta
 import dexy.storage
 import dexy.wrapper
+import json
 import os
 import shutil
 
@@ -106,6 +107,15 @@ class GenericData(Data):
     def __unicode__(self):
         return self.as_text()
 
+    def __getattr__(self, key):
+        if self.__dict__.has_key(key):
+            return self.__dict__[key]
+        else:
+            if self.ext == '.json':
+                return json.loads(self.data())[key]
+            else:
+                raise Exception("what's happening here")
+
     def filesize(self):
         if self.is_cached():
             return os.path.getsize(self.storage.data_file())
@@ -160,7 +170,10 @@ class SectionedData(GenericData):
         return self.value(key)
 
     def __getattr__(self, key):
-        return self.value(key)
+        if self.__dict__.has_item(key):
+            return self.__dict__[key]
+        else:
+            return self.value(key)
 
 class KeyValueData(GenericData):
     ALIASES  = ['keyvalue']
@@ -191,7 +204,10 @@ class KeyValueData(GenericData):
         return self.value(key)
 
     def __getattr__(self, key):
-        return self.value(key)
+        if self.__dict__.has_item(key):
+            return self.__dict__[key]
+        else:
+            return self.value(key)
 
     def append(self, key, value):
         self.storage.append(key, value)

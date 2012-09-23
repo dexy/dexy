@@ -1,3 +1,4 @@
+from dexy.version import DEXY_VERSION
 import inspect
 import platform
 
@@ -35,7 +36,8 @@ class InternalDexyProblem(Exception):
         The developer would really appreciate if you copy and paste this entire message
         and the Traceback above it into a bug report at http://dexy.tenderapp.com.
         Your version of Dexy is %s
-        Your platform is %s""" % ("0.0.0", platform.system()))
+        Your platform is %s""" % (DEXY_VERSION, platform.system()))
+        self.message += "\n"
         self.message += message
 
     def __str__(self):

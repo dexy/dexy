@@ -5,6 +5,16 @@ import dexy.exceptions
 import json
 import os
 
+class KeyValueStoreFilter(DexyFilter):
+    ALIASES = ['kv']
+    OUTPUT_DATA_TYPE = 'keyvalue'
+
+    def process(self):
+        self.result().copy_from_file(self.input().storage.data_file())
+
+        # Call setup() again since it will have created a new blank database.
+        self.result().storage.setup()
+
 class HeaderFilter(DexyFilter):
     ALIASES = ['hd']
 

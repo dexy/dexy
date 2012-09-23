@@ -31,37 +31,30 @@ def run():
     Ensures that UserFeedback exceptions are handled nicely so end users don't see tracebacks.
     """
     warnings.filterwarnings("ignore",category=DeprecationWarning)
-    try:
-        if len(sys.argv) == 1 or (sys.argv[1] in args.available_commands(MOD)):
-            args.parse_and_run_command(sys.argv[1:], MOD, default_command=DEFAULT_COMMAND)
+
+    if len(sys.argv) == 1 or (sys.argv[1] in args.available_commands(MOD)):
+        args.parse_and_run_command(sys.argv[1:], MOD, default_command=DEFAULT_COMMAND)
+    else:
+        if ":" in sys.argv[1]:
+            command, subcommand = sys.argv[1].split(":")
         else:
-            if ":" in sys.argv[1]:
-                command, subcommand = sys.argv[1].split(":")
-            else:
-                command = sys.argv[1]
-                subcommand = ""
+            command = sys.argv[1]
+            subcommand = ""
 
-            command_class = dexy.plugin.Command.aliases.get(command)
+        command_class = dexy.plugin.Command.aliases.get(command)
 
-            if not command_class:
-                args.parse_and_run_command(subcommand, dexy.commands)
+        if not command_class:
+            args.parse_and_run_command(subcommand, dexy.commands)
 
-            mod_name = command_class.__module__
-            mod = args.load_module(mod_name)
+        mod_name = command_class.__module__
+        mod = args.load_module(mod_name)
 
-            if command_class.DEFAULT_COMMAND:
-                default_command = command_class.DEFAULT_COMMAND
-            else:
-                default_command = command_class.NAMESPACE
+        if command_class.DEFAULT_COMMAND:
+            default_command = command_class.DEFAULT_COMMAND
+        else:
+            default_command = command_class.NAMESPACE
 
-            args.parse_and_run_command([subcommand] + sys.argv[2:], mod, default_command=default_command)
-
-    except dexy.exceptions.UserFeedback as e:
-        sys.stderr.write(e.message)
-        if not e.message.endswith("\n"):
-            sys.stderr.write("\n")
-        sys.stderr.write("Dexy is stopping.\n")
-        sys.exit(1)
+        args.parse_and_run_command([subcommand] + sys.argv[2:], mod, default_command=default_command)
 
 def dexy_command(
         artifactsdir=Wrapper.DEFAULT_ARTIFACTS_DIR, # location of directory in which to store artifacts
@@ -130,10 +123,18 @@ def dexy_command(
         wrapper = Wrapper(**locals())
         import time
         start_time = time.time()
-        wrapper.setup_config()
-        wrapper.run()
-        wrapper.report()
-        print "finished in %0.4f" % (time.time() - start_time)
+        try:
+            wrapper.setup_config()
+            wrapper.run()
+            wrapper.report()
+            print "finished in %0.4f" % (time.time() - start_time)
+        except dexy.exceptions.UserFeedback as e:
+            wrapper.cleanup_partial_run()
+            sys.stderr.write(e.message)
+            if not e.message.endswith("\n"):
+                sys.stderr.write("\n")
+            sys.stderr.write("Dexy is stopping.\n")
+            sys.exit(1)
 
 def reports_command(args):
     pass

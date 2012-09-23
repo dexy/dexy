@@ -15,6 +15,11 @@ class LatexFilter(SubprocessFilter):
     BINARY = True
     FINAL = True
 
+    def setup_wd(self):
+        if not os.path.exists(self.artifact.tmp_dir()):
+            self.artifact.create_working_dir(self.input_filepath(), True)
+        return os.path.join(self.artifact.tmp_dir(), self.result().parent_dir())
+
     def process(self):
         wd = self.setup_wd()
         env = self.setup_env()

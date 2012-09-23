@@ -2,6 +2,7 @@ from datetime import datetime
 from dexy.artifact import Artifact
 from dexy.common import OrderedDict
 from dexy.doc import Doc, PatternDoc
+from dexy.plugin import PluginMeta
 from dexy.version import DEXY_VERSION
 from pygments.styles import get_all_styles
 import calendar
@@ -17,7 +18,13 @@ import pygments.formatters
 import re
 import urllib
 
-class TemplatePlugin(object):
+class TemplatePlugin():
+    __metaclass__ = PluginMeta
+
+    @classmethod
+    def is_active(klass):
+        return True
+
     def __init__(self, filter_instance):
         self.filter_instance = filter_instance
         self.log = self.filter_instance.artifact.log
@@ -25,7 +32,9 @@ class TemplatePlugin(object):
     def run(self):
         return {}
 
-class PrettyPrintJsonTemplatePlugin(TemplatePlugin):
+class PrettyPrintJson(TemplatePlugin):
+    ALIASES = ['ppjson']
+
     def ppjson(self, json_string):
         return json.dumps(json.loads(json_string), sort_keys = True, indent = 4)
 
@@ -34,7 +43,8 @@ class PrettyPrintJsonTemplatePlugin(TemplatePlugin):
             'ppjson' : self.ppjson
          }
 
-class PythonDatetimeTemplatePlugin(TemplatePlugin):
+class PythonDatetime(TemplatePlugin):
+    ALIASES = ['datetime', 'calendar']
     def run(self):
         today = datetime.today()
         month = today.month
@@ -52,27 +62,28 @@ class PythonDatetimeTemplatePlugin(TemplatePlugin):
             "year" : year
             }
 
-class DexyVersionTemplatePlugin(TemplatePlugin):
+class DexyVersion(TemplatePlugin):
+    ALIASES = ['dexyversion']
     def run(self):
-        return { "dexy_version" : DEXY_VERSION }
+        return { "DEXY_VERSION" : DEXY_VERSION }
 
-class DexyRootTemplatePlugin(TemplatePlugin):
-    def run(self):
-        return { "DEXY_ROOT" : os.path.abspath(os.getcwd()) }
-
-class SimpleJsonTemplatePlugin(TemplatePlugin):
+class SimpleJson(TemplatePlugin):
+    ALIASES = ['json']
     def run(self):
         return { 'json' : json }
 
-class PrettyPrinterTemplatePlugin(TemplatePlugin):
+class PrettyPrinter(TemplatePlugin):
+    ALIASES = ['pprint']
     def run(self):
         return { 'pformat' : pprint.pformat}
 
-class RegularExpressionsTemplatePlugin(TemplatePlugin):
+class RegularExpressions(TemplatePlugin):
+    ALIASES = ['regex']
     def run(self):
         return { 're_match' : re.match, 're_search' : re.search}
 
-class PythonBuiltinsTemplatePlugin(TemplatePlugin):
+class PythonBuiltins(TemplatePlugin):
+    ALIASES = ['builtins']
     # Intended to be all builtins that make sense to run within a document.
     PYTHON_BUILTINS = [abs, all, any, bin, bool, bytearray, callable, chr,
         cmp, complex, dict, dir, divmod, enumerate, filter, float, format,
@@ -83,7 +94,8 @@ class PythonBuiltinsTemplatePlugin(TemplatePlugin):
     def run(self):
         return dict((f.__name__, f) for f in self.PYTHON_BUILTINS)
 
-class PygmentsStylesheetTemplatePlugin(TemplatePlugin):
+class PygmentsStylesheet(TemplatePlugin):
+    ALIASES = ['pygments']
     def highlight(self, text, lexer_name, fmt = 'html', noclasses = False, lineanchors = 'l'):
         if text:
             formatter_options = { "lineanchors" : lineanchors, "noclasses" : noclasses }
@@ -91,8 +103,7 @@ class PygmentsStylesheetTemplatePlugin(TemplatePlugin):
             formatter = pygments.formatters.get_formatter_by_name(fmt, **formatter_options)
             return pygments.highlight(text, lexer, formatter)
         else:
-            #raise dexy.commands.UserFeedback("calling highlight on blank text in %s" % self.filter_instance.artifact.key)
-            pass
+            raise dexy.commands.UserFeedback("calling 'highlight' command on blank text in %s" % self.filter_instance.artifact.key)
 
     def run(self):
         pygments_stylesheets = {}
@@ -115,7 +126,8 @@ class PygmentsStylesheetTemplatePlugin(TemplatePlugin):
                     pygments_stylesheets[key] = style_info
         return {'pygments' : pygments_stylesheets, 'highlight' : self.highlight }
 
-class SubdirectoriesTemplatePlugin(TemplatePlugin):
+class Subdirectories(TemplatePlugin):
+    ALIASES = ['subdirectories']
     def run(self):
         # The directory containing the document to be processed.
         doc_dir = os.path.dirname(self.filter_instance.result().name)
@@ -124,53 +136,35 @@ class SubdirectoriesTemplatePlugin(TemplatePlugin):
         subdirectories = [d for d in sorted(os.listdir(os.path.join(os.curdir, doc_dir))) if os.path.isdir(os.path.join(os.curdir, doc_dir, d))]
         return {'subdirectories' : subdirectories}
 
-class VariablesTemplatePlugin(TemplatePlugin):
+class Variables(TemplatePlugin):
+    """
+    Allow users to set variables in document args which will be available to an individual document.
+    """
+    ALIASES = ['variables']
     def run(self):
         variables = {}
-        if self.filter_instance.artifact.args.has_key('variables'):
-            variables.update(self.filter_instance.artifact.args['variables'])
-        if self.filter_instance.artifact.args.has_key('$variables'):
-            variables.update(self.filter_instance.artifact.args['$variables'])
+        variables.update(self.filter_instance.arg_value('variables', {}))
+        variables.update(self.filter_instance.arg_value('vars', {}))
         return variables
 
-class GlobalsTemplatePlugin(TemplatePlugin):
+class Globals(TemplatePlugin):
     """
     Makes available the global variables specified on the dexy command line
     using the --globals option
     """
+    ALIASES = ['globals']
     def run(self):
-        return dict(x.split("=") for x in self.artifact.wrapper.globals.split("="))
+        raw_globals = self.filter_instance.artifact.wrapper.globals
+        env = {}
+        for kvpair in raw_globals.split(","):
+            if "=" in kvpair:
+                k, v = kvpair.split("=")
+                env[k] = v
+        return env
 
-#class NavigationTemplatePlugin(TemplatePlugin):
-#    """
-#    Creates a sitemap - dict with keys for each directory, values for each key
-#    are a set of final artifacts in that directory
-#    """
-#    def run(self):
-#        sitemap = {}
-#        inputs = self.filter_instance.artifact.inputs()
-#
-#        keys = inputs.keys()
-#        keys.append(self.filter_instance.artifact.key)
-#
-#        for key in keys:
-#            artifact = inputs.get(key, self.filter_instance.artifact)
-#            if artifact.name and artifact.final:
-#                artifact_dir = artifact.canonical_dir()
-#                if not artifact_dir in sitemap:
-#                    sitemap[artifact_dir] = []
-#                sitemap[artifact_dir].append(key)
-#
-#        for k, v in sitemap.iteritems():
-#            v.sort()
-#
-#        return {
-#                'sitemap' : sitemap,
-#                'artifacts' : inputs,
-#                's' : self.filter_instance.artifact
-#                }
+class Inputs(TemplatePlugin):
+    ALIASES = ['inputs']
 
-class InputsTemplatePlugin(TemplatePlugin):
     @classmethod
     def load_sort_json_data(klass, a):
         try:
@@ -218,44 +212,6 @@ class InputsTemplatePlugin(TemplatePlugin):
             else:
                 raise Exception("task is a %s" % task.__class__.__name__)
 
-    def run(self):
-        d_hash = {}
-        a_hash = {}
-
-        name = self.filter_instance.result().name
-
-        for a in self.input_tasks():
-            keys = a.output_data.relative_refs(name)
-            data = self.d_data_for_artifact(a)
-
-            for k in keys:
-                # Avoid adding duplicate keys
-                if a_hash.has_key(k):
-                    next
-
-                a_hash[k] = a.output_data
-                d_hash[k] = data
-
-        return {
-            'a' : a_hash,
-            's' : self.filter_instance.artifact,
-            'd' : d_hash,
-            'f' : self.filter_instance,
-        }
-
-
-class D(object):
-    def __init__(self, artifact, map_relative_refs):
-        self._artifact = artifact
-        self._map_relative_refs = map_relative_refs
-
-    def __getitem__(self, relative_ref):
-        if self._map_relative_refs.has_key(relative_ref):
-            return self._map_relative_refs[relative_ref]
-        else:
-            raise dexy.exceptions.UserFeedback("There is no document named %s available to %s" % (relative_ref, self._artifact.key))
-
-class InputsJustInTimeTemplatePlugin(InputsTemplatePlugin):
     def a(self, relative_ref):
         return self.map_relative_refs[relative_ref]
 
@@ -275,6 +231,7 @@ class InputsJustInTimeTemplatePlugin(InputsTemplatePlugin):
             for ref in task.output_data.relative_refs(self.filter_instance.result().name):
                 self.map_relative_refs[ref] = task.output_data
 
+        self.log.debug("relative refs are %s" % sorted(self.map_relative_refs))
         return {
             'a' : self.a,
             'd' : D(self.filter_instance.artifact, self.map_relative_refs),
@@ -283,53 +240,13 @@ class InputsJustInTimeTemplatePlugin(InputsTemplatePlugin):
             's' : self.filter_instance.artifact
             }
 
-class ClippyHelperTemplatePlugin(TemplatePlugin):
-    PRE_AND_CLIPPY_STRING = """
-<pre>
-%s
-</pre>%s
-    """
-    CLIPPY_HELPER_STRING = """
-<object classid="clsid:d27cdb6e-ae6d-11cf-96b8-444553540000"
-                width="110"
-                height="14"
-                id="clippy" >
-<param name="movie" value="/clippy.swf"/>
-<param name="allowScriptAccess" value="always" />
-<param name="quality" value="high" />
-<param name="scale" value="noscale" />
-<param NAME="FlashVars" value="text=%s">
-<param name="bgcolor" value="#ffffff">
-<embed src="/clippy.swf"
-       width="110"
-       height="14"
-       name="clippy"
-       quality="high"
-       allowScriptAccess="always"
-       type="application/x-shockwave-flash"
-       pluginspage="http://www.macromedia.com/go/getflashplayer"
-       FlashVars="text=%s"
-       bgcolor="#ffffff"
-/>
-</object>"""
+class D(object):
+    def __init__(self, artifact, map_relative_refs):
+        self._artifact = artifact
+        self._map_relative_refs = map_relative_refs
 
-    def run(self):
-        return {
-            'pre_and_clippy' : self.pre_and_clippy,
-            'clippy_helper' : self.clippy_helper
-        }
-
-    def pre_and_clippy(self, text):
-        self.log.debug("in pre_and_clippy")
-        return self.PRE_AND_CLIPPY_STRING % (text, self.clippy_helper(text))
-
-    def clippy_helper(self, text):
-        if isinstance(text, dexy.artifact.Artifact):
-            text = text.output_text()
-
-        if not text or len(text) == 0:
-            raise dexy.exceptions.UserFeedback("You passed blank text to clippy helper!")
-
-        self.log.debug("Applying clippy helper to %s" % text)
-        quoted_text = urllib.quote(text)
-        return self.CLIPPY_HELPER_STRING % (quoted_text, quoted_text)
+    def __getitem__(self, relative_ref):
+        if self._map_relative_refs.has_key(relative_ref):
+            return self._map_relative_refs[relative_ref]
+        else:
+            raise dexy.exceptions.UserFeedback("There is no document named %s available to %s" % (relative_ref, self._artifact.key))

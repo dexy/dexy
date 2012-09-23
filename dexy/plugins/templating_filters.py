@@ -1,11 +1,10 @@
 from dexy.filter import DexyFilter
-from dexy.plugins.templating_plugins import *
+from dexy.plugins.templating_plugins import TemplatePlugin
 from jinja2.exceptions import TemplateSyntaxError
 from jinja2.exceptions import UndefinedError
 import dexy.exceptions
 import jinja2
 import re
-import sys
 import traceback
 
 class TemplateFilter(DexyFilter):
@@ -16,23 +15,15 @@ class TemplateFilter(DexyFilter):
     Plugins are used to prepare content.
     """
     ALIASES = ['template']
-    FINAL = True
-    TEMPLATE_PLUGINS = [
-        ClippyHelperTemplatePlugin,
-        DexyVersionTemplatePlugin,
-        DexyRootTemplatePlugin,
-#        GlobalsTemplatePlugin,
-        InputsTemplatePlugin,
-        PrettyPrintJsonTemplatePlugin,
-#        NavigationTemplatePlugin,
-        PrettyPrinterTemplatePlugin,
-        PygmentsStylesheetTemplatePlugin,
-        PythonBuiltinsTemplatePlugin,
-        PythonDatetimeTemplatePlugin,
-        RegularExpressionsTemplatePlugin,
-        SubdirectoriesTemplatePlugin,
-        VariablesTemplatePlugin
-        ]
+
+    def template_plugins(self):
+        """
+        Returns a list of plugin classes for run_plugins to use.
+        """
+        if self.args().get('plugins'):
+            return [TemplatePlugin.aliases[alias] for alias in self.args()['plugins']]
+        else:
+            return TemplatePlugin.plugins
 
     def run_plugins(self):
         env = {}
@@ -41,59 +32,41 @@ class TemplateFilter(DexyFilter):
             plugin = plugin_class(self)
             new_env_vars = plugin.run()
             if any(v in env.keys() for v in new_env_vars):
-                raise InternalDexyProblem("plugin class %s trying to add new keys %s, already have %s" % (plugin_class.__name__, u", ".join(new_env_vars.keys()), u", ".join(env.keys())))
+                new_keys = ", ".join(sorted(new_env_vars))
+                existing_keys = ", ".join(sorted(env))
+                msg = "plugin class '%s' is trying to add new keys '%s', already have '%s'"
+                raise dexy.exceptions.InternalDexyProblem(mgs % (plugin_class.__name__, new_keys, existing_keys))
             env.update(new_env_vars)
         return env
 
-    def template_plugins(self):
-        if self.artifact.args.has_key('plugins'):
-            plugin_names = self.artifact.args['plugins']
-            dict_items = sys.modules[self.__module__].__dict__
-            return [dict_items[name] for name in plugin_names]
-        else:
-            return self.TEMPLATE_PLUGINS
-
     def process_text(self, input_text):
-        """
-        Overwrite this in your subclass, or, perhaps better, overwrite
-        process() and write output directly to artifact file.
-        """
         template_data = self.run_plugins()
         return input_text % template_data
 
 class JinjaTextFilter(TemplateFilter):
     """
-    Runs the Jinja templating engine. Uses process_text and returns text rather
-    than writing to file.
+    Runs the Jinja templating engine. Works on templates as strings in memory.
     """
     ALIASES = ['jinjatext']
 
-    def process_text(self, input_text):
-        env = self.setup_jinja_env()
-        template_data = self.run_plugins()
-        try:
-            template = env.from_string(input_text)
-            return template.render(template_data)
-        except (TemplateSyntaxError, UndefinedError, TypeError) as e:
-            self.handle_jinja_exception(e, input_text, template_data)
-
     def setup_jinja_env(self):
+        env_attrs = self.args().copy()
+
+        # TODO load other Undefined classes from a string.
+        # Currently it's not possible to pass subclasses of Undefined since params must be json serializable.
+        env_attrs['undefined'] = jinja2.StrictUndefined
+
         if self.artifact.ext == ".tex":
-            self.log.debug("changing jinja tags to << >> etc. for %s" % self.artifact.key)
-            env = jinja2.Environment(
-                block_start_string = '<%',
-                block_end_string = '%>',
-                variable_start_string = '<<',
-                variable_end_string = '>>',
-                comment_start_string = '<#',
-                comment_end_string = '#>',
-                undefined = jinja2.StrictUndefined
-                )
-        else:
-            env = jinja2.Environment(
-                undefined = jinja2.StrictUndefined
-            )
-        return env
+            env_attrs.setdefault('block_start_string', '<%')
+            env_attrs.setdefault('block_end_string', '%>')
+            env_attrs.setdefault('variable_start_string', '<<')
+            env_attrs.setdefault('variable_end_string', '>>')
+            env_attrs.setdefault('comment_start_string', '<#')
+            env_attrs.setdefault('comment_end_string', '#>')
+
+        debug_attr_string = ", ".join("%s: %r" % (k, v) for k, v in env_attrs.iteritems())
+        self.log.debug("Creating jinja2 environment with: %s" % debug_attr_string)
+        return jinja2.Environment(**env_attrs)
 
     def handle_jinja_exception(self, e, input_text, template_data):
         result = []
@@ -106,14 +79,14 @@ class JinjaTextFilter(TemplateFilter):
             if m:
                 e.lineno = int(m.groups()[0])
             else:
-                raise InternalDexyProblem("Unable to parse line number from %s" % traceback.format_exc())
+                raise dexy.exceptions.InternalDexyProblem("Unable to parse line number from %s" % traceback.format_exc())
 
         args = {
                 'key' : self.artifact.key,
                 'lineno' : e.lineno,
                 'message' : e.message,
                 'name' : self.result().name,
-                'workfile' : self.artifact.input_data.storage.data_file()
+                'workfile' : self.input().storage.data_file()
                 }
 
         result.append("A problem was detected: %(message)s" % args)
@@ -135,7 +108,7 @@ class JinjaTextFilter(TemplateFilter):
                         result.append("line %04d: %s" % (i+1, line))
                         match_lines.append(i)
                 if len(match_lines) == 0:
-                    raise InternalDexyProblem("Tried to find source of: %s. Could not find match for '%s'" % (e.message, undefined_object))
+                    raise dexy.exceptions.InternalDexyProblem("Tried to find source of: %s. Could not find match for '%s'" % (e.message, undefined_object))
 
             elif match_is_undefined:
                 undefined_object = match_is_undefined.groups()[0]
@@ -143,79 +116,38 @@ class JinjaTextFilter(TemplateFilter):
                     if undefined_object in line:
                         result.append("line %04d: %s" % (i+1, line))
             else:
-                raise InternalDexyProblem("don't know how to match pattern: %s" % e.message)
+                raise dexy.exceptions.InternalDexyProblem("don't know how to match pattern: %s" % e.message)
         else:
             result.append("line %04d: %s" % (e.lineno, input_lines[e.lineno-1]))
 
         raise dexy.exceptions.UserFeedback("\n".join(result))
+
+    def process_text(self, input_text):
+        env = self.setup_jinja_env()
+        template_data = self.run_plugins()
+        try:
+            template = env.from_string(input_text)
+            return template.render(template_data)
+        except (TemplateSyntaxError, UndefinedError, TypeError) as e:
+            self.handle_jinja_exception(e, input_text, template_data)
 
 class JinjaFilter(JinjaTextFilter):
     """
     Runs the Jinja templating engine on your document to incorporate dynamic
     content.
     """
-    ALIASES = ['jinjaold']
-    TAGS = ['template']
+    ALIASES = ['jinja']
 
     def process(self):
         self.log.debug("entering JinjaFilter, about to create jinja env")
         env = self.setup_jinja_env()
         self.log.debug("jinja env created. about to run plugins")
         template_data = self.run_plugins()
+        self.log.debug("template data keys are %s" % ", ".join(sorted(template_data)))
         try:
             self.log.debug("creating jinja template from input text")
-            template = env.from_string(self.artifact.input_data.as_text())
+            template = env.from_string(self.input().as_text())
             self.log.debug("about to process jinja template")
-            template.stream(template_data).dump(self.artifact.output_data.storage.data_file(), encoding="utf-8")
+            template.stream(template_data).dump(self.result().storage.data_file(), encoding="utf-8")
         except (TemplateSyntaxError, UndefinedError, TypeError) as e:
-            self.handle_jinja_exception(e, self.artifact.input_data.as_text(), template_data)
-
-class JinjaJustInTimeFilter(JinjaFilter):
-    ALIASES = ['jinja']
-    TEMPLATE_PLUGINS = [
-        ClippyHelperTemplatePlugin,
-        DexyVersionTemplatePlugin,
-#        GlobalsTemplatePlugin,
-        InputsJustInTimeTemplatePlugin,
-        PrettyPrintJsonTemplatePlugin,
-        PrettyPrinterTemplatePlugin,
-        PygmentsStylesheetTemplatePlugin,
-        PythonBuiltinsTemplatePlugin,
-        PythonDatetimeTemplatePlugin,
-        RegularExpressionsTemplatePlugin,
-        SimpleJsonTemplatePlugin,
-        SubdirectoriesTemplatePlugin,
-        VariablesTemplatePlugin
-        ]
-
-class WebsiteTemplateJinjaFilter(JinjaFilter):
-    """
-    Makes website-relevant tags available to a jinja-based website template.
-    """
-    ALIASES = ['ws']
-    TEMPLATE_PLUGINS = [
-        DexyVersionTemplatePlugin,
-#        GlobalsTemplatePlugin,
-#        NavigationTemplatePlugin,
-        PrettyPrinterTemplatePlugin,
-        PygmentsStylesheetTemplatePlugin,
-        PythonBuiltinsTemplatePlugin,
-        PythonDatetimeTemplatePlugin,
-        RegularExpressionsTemplatePlugin,
-        SubdirectoriesTemplatePlugin,
-        VariablesTemplatePlugin
-        ]
-
-    def process(self):
-        website_template = self.find_closest_parent('template')
-
-        env = self.setup_jinja_env()
-        template_data = self.run_plugins()
-        template_data['page_content'] = self.artifact.input_data.as_text()
-
-        try:
-            template = env.from_string(website_template.output_text())
-            template.stream(template_data).dump(self.artifact.output_data.storage.data_file(), encoding="utf-8")
-        except (TemplateSyntaxError, UndefinedError, TypeError) as e:
-            self.handle_jinja_exception(e, website_template.output_text(), template_data)
-
+            self.handle_jinja_exception(e, self.input().as_text(), template_data)
