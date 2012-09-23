@@ -270,5 +270,6 @@ class Wrapper(object):
         self.load_doc_config()
 
     def cleanup_partial_run(self):
-        # TODO remove any entries which don't have 
-        self.db.save()
+        if hasattr(self, 'db'):
+            # TODO remove any entries which don't have 
+            self.db.save()

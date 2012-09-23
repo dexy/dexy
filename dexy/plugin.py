@@ -1,22 +1,5 @@
 import inspect
-"""
-Plugins can create custom versions of:
 
-filters
-reporters
-commands
-data
-metadata
-
-Dexy will look in standard locations (TODO - allow disabling any of these)
-   - dexy package's own plugin directory
-   - all installed packages whose names start with 'dexy-' or 'dexy_'
-   - system-wide plugin directory
-   - user-level plugin directory
-   - project plugin directory
-
-Also can explicitly import a package and its plugins will be loaded.
-"""
 class PluginMeta(type):
     """
     Based on http://martyalchin.com/2008/jan/10/simple-plugin-framework/

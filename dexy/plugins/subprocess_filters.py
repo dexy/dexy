@@ -1,4 +1,5 @@
 from dexy.plugins.process_filters import SubprocessFilter
+from dexy.common import OrderedDict
 import os
 import shutil
 
@@ -220,6 +221,57 @@ class RBatchFilter(SubprocessFilter):
     INPUT_EXTENSIONS = ['.txt', '.r', '.R']
     OUTPUT_EXTENSIONS = [".Rout", '.txt']
     VERSION_COMMAND = "R --version"
+
+class RIntBatchSectionsFilter(SubprocessFilter):
+    ALIASES = ['rintmock']
+    EXECUTABLE = 'R CMD BATCH --quiet --no-timing'
+    INPUT_EXTENSIONS = ['.txt', '.r', '.R']
+    OUTPUT_EXTENSIONS = [".Rout", '.txt']
+    VERSION_COMMAND = "R --version"
+    WRITE_STDERR_TO_STDOUT = False
+    OUTPUT_DATA_TYPE = 'sectioned'
+
+    def command_string(self, section_name, section_text, wd):
+        input_basename = os.path.splitext(self.input().name)[0]
+        work_file = "%s-%s%s" % (input_basename, section_name, self.input().ext)
+        outfile = "%s-%s-out%s" % (input_basename, section_name, self.result().ext)
+
+        work_filepath = os.path.join(wd, work_file)
+
+        with open(work_filepath, "wb") as f:
+            f.write(section_text)
+
+        args = {
+            'prog' : self.executable(),
+            'args' : self.command_line_args() or "",
+            'script_file' : work_file,
+            'scriptargs' : self.command_line_scriptargs() or "",
+            'output_file' : outfile
+        }
+
+        command = """%(prog)s %(args)s "%(script_file)s" %(scriptargs)s "%(output_file)s" """ % args
+        return command, outfile
+
+    def process(self):
+        wd = self.setup_wd()
+
+        result = OrderedDict()
+
+        for section_name, section_text in self.input().as_sectioned().iteritems():
+            command, outfile = self.command_string(section_name, section_text, wd)
+            proc, stdout = self.run_command(command, self.setup_env())
+            self.handle_subprocess_proc_return(command, proc.returncode, stdout)
+
+            with open(os.path.join(wd, outfile), "rb") as f:
+                result[section_name] = f.read()
+
+        if self.do_walk_working_directory():
+            self.walk_working_directory()
+
+        if self.do_add_new_files():
+            self.add_new_files()
+
+        self.result().set_data(result)
 
 class ROutputBatchFilter(SubprocessFilter):
     """Runs R code in batch mode. Uses the --slave flag so doesn't echo commands, just returns output."""

@@ -6,14 +6,25 @@ from dexy.doc import Doc
 import os
 import shutil
 
-LATEX = """\
-\documentclass{article}
-\\title{Hello, World!}
-\\begin{document}
-\maketitle
-Hello!
-\end{document}
+R_SECTIONS = """\
+### @export "assign-vars"
+x <- 6
+y <- 7
+
+### @export "multiply"
+x * y
 """
+
+def test_rint_mock():
+    with wrap() as wrapper:
+        doc = Doc("example.R|idio|rintmock",
+                contents=R_SECTIONS,
+                wrapper=wrapper)
+
+        wrapper.run_docs(doc)
+        assert doc.output().is_cached()
+        assert doc.output().as_sectioned()['assign-vars'] == "> x <- 6\n> y <- 7\n> \n"
+        assert doc.output().as_sectioned()['multiply'] == "> x * y\n[1] 42\n> \n"
 
 def test_ht_latex():
     with wrap() as wrapper:
@@ -144,4 +155,13 @@ RAGEL = """%%{
   %% write data;
   %% write init;
   %% write exec;
+"""
+
+LATEX = """\
+\documentclass{article}
+\\title{Hello, World!}
+\\begin{document}
+\maketitle
+Hello!
+\end{document}
 """
