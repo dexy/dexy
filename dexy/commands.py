@@ -136,6 +136,19 @@ def dexy_command(
             sys.stderr.write("Dexy is stopping.\n")
             sys.exit(1)
 
+
+def reset_command(
+        artifactsdir=Wrapper.DEFAULT_ARTIFACTS_DIR, # location of directory in which to store artifacts
+        logsdir=Wrapper.DEFAULT_LOG_DIR # location of directory in which to store logs
+        ):
+    """
+    Empty the artifacts and logs directories.
+    """
+    wrapper = Wrapper(**locals())
+    wrapper.load_config()
+    wrapper.remove_dexy_dirs()
+    wrapper.setup_dexy_dirs()
+
 def reports_command(args):
     pass
 
@@ -151,9 +164,6 @@ def help_text(on=False):
 def version_command():
     """Print the current version."""
     print "%s version %s" % (PROG, DEXY_VERSION)
-
-def reset_command():
-    pass
 
 def conf_command(
         conf=Wrapper.DEFAULT_CONFIG_FILE # Name of config file.
