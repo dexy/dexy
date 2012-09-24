@@ -2,18 +2,17 @@ from dexy.parser import OriginalDexyParser
 from dexy.parser import TextFileParser
 from dexy.parser import YamlFileParser
 from dexy.tests.utils import wrap
+import dexy.exceptions
 
-YAML = """\
-code:
-    - "*.R|pyg":
-         "pyg" : { "foo" : "bar" }
-    - "*.R|idio"
-
-wordpress:
-    - code
-    - test.txt|jinja
-    - \*.md|jinja|markdown|wp
-"""
+def test_invalid_yaml():
+    with wrap() as wrapper:
+        parser = YamlFileParser()
+        parser.wrapper = wrapper
+        try:
+            parser.parse(INVALID_YAML)
+            assert False, "should raise UserFeedback"
+        except dexy.exceptions.UserFeedback as e:
+            assert 'YAML' in e.message
 
 def test_yaml_parser():
     with wrap() as wrapper:
@@ -22,8 +21,8 @@ def test_yaml_parser():
         parser.parse(YAML)
         docs = wrapper.docs
         for doc in docs:
-            print doc
-
+            assert doc.__class__.__name__ == 'BundleDoc'
+            assert doc.key in ['code', 'wordpress']
 
 def test_text_parser_blank_lines():
     with wrap() as wrapper:
@@ -149,3 +148,21 @@ def test_original_parser_allinputs():
         assert wrapper.docs[0].key_with_class() == "PatternDoc:*.txt"
         assert wrapper.docs[1].key_with_class() == "Doc:hello.txt"
         assert wrapper.docs[2].key_with_class() == "PatternDoc:*.md|jinja"
+
+INVALID_YAML = """\
+code:
+    - abc
+    def
+"""
+
+YAML = """\
+code:
+    - "*.R|pyg":
+         "pyg" : { "foo" : "bar" }
+    - "*.R|idio"
+
+wordpress:
+    - code
+    - test.txt|jinja
+    - \*.md|jinja|markdown|wp
+"""

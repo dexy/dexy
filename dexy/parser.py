@@ -1,5 +1,6 @@
 from dexy.plugin import PluginMeta
 import dexy.doc
+import inspect
 import json
 import re
 import yaml
@@ -72,7 +73,14 @@ class YamlFileParser(Parser):
     ALIASES = ["docs.yaml"]
 
     def parse(self, input_text):
-        data = yaml.load(input_text)
+        try:
+            data = yaml.load(input_text)
+        except yaml.scanner.ScannerError as e:
+            msg = inspect.cleandoc("""Was unable to parse the YAML in your config file.
+            Here is information from the YAML scanner:""")
+            msg += "\n"
+            msg += str(e)
+            raise dexy.exceptions.UserFeedback(msg)
 
         refs = dict((k, dexy.doc.BundleDoc(k)) for k in data.keys())
 
