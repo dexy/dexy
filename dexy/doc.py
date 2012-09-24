@@ -159,6 +159,7 @@ class PatternDoc(WalkDoc):
         for dirpath, filename in self.walk(".", exclude_at_root, exclude_everywhere):
             raw_filepath = os.path.join(dirpath, filename)
             filepath = os.path.normpath(raw_filepath)
+
             if fnmatch.fnmatch(filepath, self.file_pattern):
                 if len(self.filter_aliases) > 0:
                     doc_key = "%s|%s" % (filepath, "|".join(self.filter_aliases))
@@ -172,6 +173,8 @@ class PatternDoc(WalkDoc):
                 if doc_args.has_key('depends'):
                     if doc_args.get('depends'):
                         doc_children = [a for a in self.wrapper.registered if isinstance(a, Doc)]
+                    else:
+                        doc_children = []
                     del doc_args['depends']
                 else:
                     doc_children = self.children
@@ -179,4 +182,11 @@ class PatternDoc(WalkDoc):
                 doc = Doc(doc_key, *doc_children, **doc_args)
                 self.children.append(doc)
 
+        self.after_setup()
+
+class BundleDoc(dexy.task.Task):
+    """
+    A doc which represents a collection of docs.
+    """
+    def setup(self):
         self.after_setup()
