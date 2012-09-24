@@ -6,6 +6,7 @@ import json
 import logging
 import logging.handlers
 import os
+import shutil
 
 class Wrapper(object):
     """
@@ -107,6 +108,10 @@ class Wrapper(object):
             os.mkdir(self.artifacts_dir)
         if not os.path.exists(self.log_dir):
             os.mkdir(self.log_dir)
+
+    def remove_dexy_dirs(self):
+        shutil.rmtree(self.artifacts_dir)
+        shutil.rmtree(self.log_dir)
 
     def setup_log(self):
         self.log = logging.getLogger('dexy')
