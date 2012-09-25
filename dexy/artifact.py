@@ -12,6 +12,7 @@ import json
 import os
 import shutil
 import stat
+import time
 
 class Artifact(dexy.task.Task):
     def setup(self):
@@ -133,6 +134,9 @@ class InitialVirtualArtifact(InitialArtifact):
                 return 'generic'
 
     def set_metadata_attrs(self):
+        if self.args.get('dirty'):
+            self.metadata.dirty = time.time()
+
         self.metadata.key = self.key
         self.metadata.contentshash = self.get_contents_hash()
 
