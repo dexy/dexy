@@ -63,7 +63,6 @@ class Doc(dexy.task.Task):
             if filter_artifact_args.has_key(k):
                 del filter_artifact_args[k]
 
-        self.log.debug("assigning filter args to %s of %s" % (key, filter_artifact_args))
         artifact.args = filter_artifact_args
 
         artifact.doc = self
@@ -141,8 +140,13 @@ class WalkDoc(dexy.task.Task):
                     if x in dirnames:
                         dirnames.remove(x)
 
-            for filename in filenames:
-                yield(dirpath, filename)
+            nodexy_file = os.path.join(dirpath, '.nodexy')
+            if os.path.exists(nodexy_file):
+                self.log.debug("skipping dir '%s', found .nodexy file" % dirpath)
+            else:
+                self.log.debug("walking dir '%s'" % dirpath)
+                for filename in filenames:
+                    yield(dirpath, filename)
 
 class PatternDoc(WalkDoc):
     """
