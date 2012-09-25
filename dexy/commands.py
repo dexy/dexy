@@ -32,7 +32,7 @@ def run():
     """
     warnings.filterwarnings("ignore",category=DeprecationWarning)
 
-    if len(sys.argv) == 1 or (sys.argv[1] in args.available_commands(MOD)):
+    if len(sys.argv) == 1 or (sys.argv[1] in args.available_commands(MOD)) or sys.argv[1].startswith("-"):
         args.parse_and_run_command(sys.argv[1:], MOD, default_command=DEFAULT_COMMAND)
     else:
         if ":" in sys.argv[1]:
@@ -177,6 +177,8 @@ def conf_command(
 
     with open(conf, "wb") as f:
         json.dump(config, f, sort_keys=True, indent=4)
+
+    print "Config file has been written to '%s'" % conf
 
 def filters_command(
         alias="", # If a filter alias is specified, more detailed help for that filter is printed.

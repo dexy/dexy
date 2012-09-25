@@ -53,7 +53,8 @@ class WordPressFilter(ApiFilter):
         Creates a key file for WordPress in the local directory.
         """
         if os.path.exists(klass.PROJECT_API_KEY_FILE):
-            raise Exception("File %s already exists!" % klass.PROJECT_API_KEY_FILE)
+            msg = "File %s already exists!" % klass.PROJECT_API_KEY_FILE
+            raise dexy.exceptions.UserFeedback(msg)
 
         keyfile_content = {}
         keyfile_content[klass.API_KEY_NAME] = dict((k, "TODO") for k in klass.API_KEY_KEYS)
@@ -67,7 +68,9 @@ class WordPressFilter(ApiFilter):
         if base_url.endswith("xmlrpc.php"):
             return base_url
         else:
-            return "%s/xmlrpc.php" % base_url
+            if not base_url.endswith("/"):
+                base_url = "%s/" % base_url
+            return "%sxmlrpc.php" % base_url
 
     @classmethod
     def api(klass):
@@ -98,14 +101,9 @@ class WordPressFilter(ApiFilter):
     def upload_page_content(self):
         input_text = self.input().as_text()
         document_config = self.read_document_config()
+
         document_config['description'] = input_text
-        if document_config.has_key('post-id'):
-            self.log.warn("using post-id is deprecated, please use postid instead")
-            post_id = document_config['post-id']
-            del document_config['post-id']
-            document_config['postid'] = post_id
-        else:
-            post_id = document_config.get('postid')
+        post_id = document_config.get('postid')
         publish = document_config.get('publish', False)
 
         for key, value in document_config.iteritems():
@@ -143,7 +141,6 @@ class WordPressFilter(ApiFilter):
         del document_config['description']
         document_config['publish'] = publish
         self.save_document_config(document_config)
-
 
         if publish:
             self.result().set_data(post_info['permaLink'])

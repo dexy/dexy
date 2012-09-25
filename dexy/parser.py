@@ -2,6 +2,7 @@ from dexy.plugin import PluginMeta
 import dexy.doc
 import inspect
 import json
+import os
 import re
 import yaml
 
@@ -72,6 +73,18 @@ class OriginalDexyParser(Parser):
 class YamlFileParser(Parser):
     ALIASES = ["docs.yaml"]
 
+    def process_pattern_yaml(self, pattern, bundles=None, args=None):
+        """
+        """
+        if pattern.startswith("."):
+            if os.path.exists(pattern):
+                print "Leaving pattern '%s' alone." % pattern
+            else:
+                print "adding * to pattern '%s'" % pattern
+                pattern = "*%s" % pattern
+
+        return self.process_pattern(pattern, bundles, args)
+
     def parse(self, input_text):
         try:
             data = yaml.load(input_text)
@@ -108,10 +121,10 @@ class YamlFileParser(Parser):
                     # Create a doc with extra args.
                     assert len(directive) == 1
                     for pattern, args in directive.iteritems():
-                        doc = self.process_pattern(pattern, bundles, args)
+                        doc = self.process_pattern_yaml(pattern, bundles, args)
                 else:
                     # Create a doc with no special args.
-                    doc = self.process_pattern(directive, bundles)
+                    doc = self.process_pattern_yaml(directive, bundles)
 
                 docs.append(doc)
 

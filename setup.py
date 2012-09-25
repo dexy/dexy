@@ -31,6 +31,7 @@ setup(
         install_requires = [
             'idiopidae>=0.5.3',
             'jinja2',
+            'mock',
             'nose',
             'ordereddict',
             'pexpect',

@@ -131,6 +131,10 @@ class GenericData(Data):
     def as_sectioned(self):
         return {'1' : self.data()}
 
+    def json_as_dict(self):
+        # todo error checking, load from file not string, make sure ext is json
+        return json.loads(self.data())
+
     def copy_from_file(self, filename):
         shutil.copyfile(filename, self.storage.data_file())
 

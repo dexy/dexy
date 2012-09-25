@@ -60,10 +60,7 @@ class ApiFilter(DexyFilter):
             json.dump(keyfile_content, f, sort_keys = True, indent=4)
 
     def document_api_config_file(self):
-        if self.artifact.args.has_key(self.DOCUMENT_API_CONFIG_FILE_KEY):
-            return self.artifact.args[self.DOCUMENT_API_CONFIG_FILE_KEY]
-        else:
-            return self.DOCUMENT_API_CONFIG_FILE
+        return self.args().get(self.DOCUMENT_API_CONFIG_FILE_KEY, self.DOCUMENT_API_CONFIG_FILE)
 
     def document_config_file(self):
         postfix_config_filename = "%s%s" % (os.path.splitext(self.result().name)[0], self.DOCUMENT_API_CONFIG_POSTFIX)
@@ -78,7 +75,8 @@ class ApiFilter(DexyFilter):
             with open(document_config, "r") as f:
                 return json.load(f)
         else:
-            raise Exception("no file %s found" % document_config)
+            msg = "Filter %s needs a file %s, couldn't find it."
+            raise dexy.exceptions.UserFeedback(msg % (self.artifact.filter_alias, document_config))
 
     def save_document_config(self, config):
         document_config = self.document_config_file()
