@@ -61,7 +61,7 @@ class runfilter(tempdir):
 
         # Create a document. Skip testing documents with inactive filters.
         try:
-            doc_key = "example%s|%s" % (self.ext, self.filter_alias)
+            doc_key = "subdir/example%s|%s" % (self.ext, self.filter_alias)
             doc_spec = [doc_key, {"contents" : self.doc_contents}]
             wrapper = Wrapper(doc_spec)
             wrapper.run()

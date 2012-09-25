@@ -83,14 +83,14 @@ class JavaFilter(SubprocessCompileFilter):
 
         classpath_elements = []
 
-        working_dir = os.path.join(self.artifact.tmp_dir(), self.result().parent_dir())
+        working_dir = os.path.join(self.artifact.tmp_dir(), self.output().parent_dir())
         abs_working_dir = os.path.abspath(working_dir)
         self.log.debug("Adding working dir %s to classpath" % abs_working_dir)
         classpath_elements.append(abs_working_dir)
 
         for doc in self.processed():
             if (doc.output().ext == ".class") and ("javac" in doc.key):
-                classpath_elements.append(doc.result().parent_dir())
+                classpath_elements.append(doc.output().parent_dir())
 
         for item in self.args().get('classpath', []):
             for x in item.split(":"):

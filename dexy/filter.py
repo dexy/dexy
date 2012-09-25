@@ -42,6 +42,10 @@ class Filter:
         pass
 
     def add_doc(self, doc_name, doc_contents=None):
+        # Adjust path of doc
+        if not "/" in doc_name:
+            doc_name = os.path.join(self.input().parent_dir(), doc_name)
+
         additional_doc_filters = self.args().get("additional-doc-filters", {})
 
         doc_ext = os.path.splitext(doc_name)[1]
@@ -78,14 +82,17 @@ class Filter:
     def input_data(self):
         return self.input().data()
 
-    def result(self):
+    def input_filename(self):
+        return self.artifact.input_filename()
+
+    def output_filename(self):
+        return self.artifact.output_filename()
+
+    def output(self):
         return self.artifact.output_data
 
-    def prior(self):
-        return self.artifact.prior.output_data
-
     def output_filepath(self):
-        return self.result().storage.data_file()
+        return self.output().storage.data_file()
 
     def processed(self):
         for doc in self.artifact.doc.completed_child_docs():
@@ -106,15 +113,15 @@ class DexyFilter(Filter):
     def process(self):
         if hasattr(self, "process_text_to_dict"):
             output = self.process_text_to_dict(self.input().as_text())
-            self.result().set_data(output)
+            self.output().set_data(output)
 
         elif hasattr(self, "process_dict"):
             output = self.process_dict(self.input().as_sectioned())
-            self.result().set_data(output)
+            self.output().set_data(output)
 
         elif hasattr(self, "process_text"):
             output = self.process_text(self.input().as_text())
-            self.result().set_data(output)
+            self.output().set_data(output)
 
         else:
-            self.result().copy_from_file(self.input().storage.data_file())
+            self.output().copy_from_file(self.input().storage.data_file())

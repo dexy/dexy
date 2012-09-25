@@ -23,7 +23,7 @@ class SyntaxHighlightRstFilter(DexyFilter):
         n = self.args().get('n', 2)
         result = OrderedDict()
 
-        lexer = get_lexer_for_filename(self.prior().storage.data_file())
+        lexer = get_lexer_for_filename(self.input().storage.data_file())
         lexer_alias = lexer.aliases[0]
 
         for section_name, section_text in input_dict.iteritems():
@@ -88,7 +88,7 @@ class PygmentsFilter(DexyFilter):
             lexer = get_lexer_by_name(args['lexer'], **lexer_args)
             del args['lexer']
         else:
-            is_json_file = ext in ('.json', '.dexy') or self.result().name.endswith(".dexy")
+            is_json_file = ext in ('.json', '.dexy') or self.output().name.endswith(".dexy")
             if ext == '.pycon':
                 lexer_class = PythonConsoleLexer
             elif ext == '.rbcon':
@@ -112,13 +112,13 @@ class PygmentsFilter(DexyFilter):
         return lexer
 
     def create_formatter_instance(self, args):
-        formatter_args = {'lineanchors' : self.result().web_safe_document_key() }
+        formatter_args = {'lineanchors' : self.output().web_safe_document_key() }
 
         # Python 2.6 doesn't like unicode keys as kwargs
         for k, v in args.iteritems():
             formatter_args[str(k)] = v
 
-        return get_formatter_for_filename(self.result().name, **formatter_args)
+        return get_formatter_for_filename(self.output().name, **formatter_args)
 
     def process(self):
         if self.artifact.ext in self.IMAGE_OUTPUT_EXTENSIONS:
@@ -147,20 +147,20 @@ class PygmentsFilter(DexyFilter):
             args = self.args().copy()
             lexer = self.create_lexer_instance(args)
 
-            formatter_args = {'lineanchors' : self.result().web_safe_document_key() }
+            formatter_args = {'lineanchors' : self.output().web_safe_document_key() }
 
             # Python 2.6 hates unicode keys
             for k, v in args.iteritems():
                 formatter_args[str(k)] = v
 
-            formatter = get_formatter_for_filename(self.result().name, **formatter_args)
+            formatter = get_formatter_for_filename(self.output().name, **formatter_args)
 
             if self.artifact.ext in self.IMAGE_OUTPUT_EXTENSIONS:
-                with open(self.result().storage.data_file(), 'wb') as f:
+                with open(self.output_filepath(), 'wb') as f:
                     f.write(highlight(self.input().data(), lexer, formatter))
 
             else:
                 output_dict = OrderedDict()
                 for k, v in input_dict.items():
                     output_dict[k] = highlight(v.decode("utf-8"), lexer, formatter)
-                self.result().set_data(output_dict)
+                self.output().set_data(output_dict)

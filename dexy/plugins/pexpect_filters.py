@@ -215,7 +215,7 @@ class PexpectReplFilter(SubprocessFilter):
 
             output[section_key] = section_output
 
-        self.result().set_data(output)
+        self.output().set_data(output)
 
 class RubyPexpectReplFilter(PexpectReplFilter):
     ALIASES = ['irb', 'rbrepl']

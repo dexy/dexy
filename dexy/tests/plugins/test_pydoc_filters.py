@@ -7,3 +7,7 @@ def test_pydoc_filter():
         wrapper.docs = [doc]
         wrapper.run()
         assert "os.ttyname:html-source" in doc.output().keys()
+
+        print doc.output().query("math.log")
+#        for k in doc.output().keys():
+#            print k

@@ -135,7 +135,7 @@ class ManPageSubprocessStdoutFilter(SubprocessStdoutFilter):
             self.handle_subprocess_proc_return(command, proc.returncode, stdout)
             man_info[prog_name] = stdout
 
-        self.result().set_data(json.dumps(man_info))
+        self.output().set_data(json.dumps(man_info))
 
 class LynxDumpFilter(SubprocessStdoutFilter):
     """

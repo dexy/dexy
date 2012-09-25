@@ -181,6 +181,12 @@ class Sqlite3Storage(GenericStorage):
         self._cursor.execute("SELECT value from kvstore where key = ?", (key,))
         return self._cursor.fetchone()[0]
 
+    def query(self, query):
+        if not '%' in query:
+            query = "%%%s%%" % query
+        self._cursor.execute("SELECT * from kvstore where key like ?", (query,))
+        return self._cursor.fetchall()
+
     def __getitem__(self, key):
         return self.value(key)
 

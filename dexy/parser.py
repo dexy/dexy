@@ -77,10 +77,7 @@ class YamlFileParser(Parser):
         """
         """
         if pattern.startswith("."):
-            if os.path.exists(pattern):
-                print "Leaving pattern '%s' alone." % pattern
-            else:
-                print "adding * to pattern '%s'" % pattern
+            if not os.path.exists(pattern):
                 pattern = "*%s" % pattern
 
         return self.process_pattern(pattern, bundles, args)

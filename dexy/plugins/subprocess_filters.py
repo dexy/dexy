@@ -20,8 +20,8 @@ class PandocFilter(SubprocessFilter):
         args = {
             'prog' : self.executable(),
             'args' : self.command_line_args() or "",
-            'script_file' : os.path.basename(self.prior().name),
-            'output_file' : os.path.basename(self.result().name)
+            'script_file' : self.input_filename(),
+            'output_file' : self.output_filename()
         }
         return "%(prog)s %(args)s %(script_file)s -o %(output_file)s" % args
 
@@ -36,8 +36,8 @@ class EspeakFilter(SubprocessFilter):
             'prog' : self.executable(),
             'args' : self.command_line_args() or "",
             'scriptargs' : self.command_line_scriptargs() or "",
-            'script_file' : self.prior().name,
-            'output_file' : self.result().name
+            'script_file' : self.input_filename(),
+            'output_file' : self.output_filename()
         }
         return "%(prog)s %(args)s -w %(output_file)s %(script_file)s" % args
 
@@ -67,8 +67,8 @@ class AsciidocFilter(SubprocessFilter):
 
         args = {
             'backend' : backend,
-            'infile' : self.prior().name,
-            'outfile' : self.result().name,
+            'infile' : self.input_filename(),
+            'outfile' : self.output_filename(),
             'prog' : self.executable(),
             'args' : self.command_line_args() or ""
         }
@@ -82,12 +82,12 @@ class BlackWhitePdfFilter(SubprocessFilter):
     OUTPUT_EXTENSIONS = [".pdf"]
 
     def command_string(self):
-        s = "%(prog)s -dSAFER -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sColorConversionStrategy=Gray -dProcessColorModel=/DeviceGray -sOutputFile=%(out)s %(in)s"
         args = {
             'prog' : self.executable(),
-            'in' : self.input_filepath(),
-            'out' : self.result().name
+            'in' : self.input_filename(),
+            'out' : self.output_filename()
         }
+        s = "%(prog)s -dSAFER -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sColorConversionStrategy=Gray -dProcessColorModel=/DeviceGray -sOutputFile=%(out)s %(in)s"
         return s % args
 
 class Pdf2ImgSubprocessFilter(SubprocessFilter):
@@ -105,13 +105,13 @@ class Pdf2ImgSubprocessFilter(SubprocessFilter):
     VERSION_COMMAND = "gs --version"
 
     def command_string(self):
-        s = "%(prog)s -dSAFER -dNOPAUSE -dBATCH -sDEVICE=%(device)s -sOutputFile=%%d-%(out)s %(in)s"
         args = {
             'prog' : self.executable(),
             'device' : self.GS_DEVICE,
-            'in' : self.prior().name,
-            'out' : self.result().name
+            'in' : self.input_filename(),
+            'out' : self.output_filename()
         }
+        s = "%(prog)s -dSAFER -dNOPAUSE -dBATCH -sDEVICE=%(device)s -sOutputFile=%%d-%(out)s %(in)s"
         return s % args
 
     def process(self):
@@ -121,9 +121,11 @@ class Pdf2ImgSubprocessFilter(SubprocessFilter):
 
 
         page = self.args().get('page', 1)
-        page_file = "%s-%s" % (page, self.result().name)
-        page_path = os.path.join(self.artifact.tmp_dir(), page_file)
-        shutil.copyfile(page_path, self.result().storage.data_file())
+        page_file = "%s-%s" % (page, self.output().basename())
+
+        wd = self.setup_wd()
+        page_path = os.path.join(wd, page_file)
+        shutil.copyfile(page_path, self.output_filepath())
 
 class Pdf2JpgSubprocessFilter(Pdf2ImgSubprocessFilter):
     ALIASES = ['pdf2jpg']
@@ -144,8 +146,8 @@ class DotFilter(SubprocessFilter):
         args = {
             'prog' : self.executable(),
             'format' : self.artifact.ext.replace(".",""),
-            'workfile' : self.prior().name,
-            'outfile' : self.result().name
+            'workfile' : self.input_filename(),
+            'outfile' : self.output_filename()
         }
         return "%(prog)s -T%(format)s -o%(outfile)s %(workfile)s" % args
 
@@ -168,8 +170,8 @@ class Html2PdfSubprocessFilter(SubprocessFilter):
     def command_string(self):
         args = {
             'prog' : self.executable(),
-            'in' : self.prior().name,
-            'out' : self.result().name
+            'in' : self.input_filename(),
+            'out' : self.output_filename()
         }
         return "%(prog)s %(in)s %(out)s" % args
 
@@ -193,8 +195,8 @@ class RagelRubySubprocessFilter(SubprocessFilter):
     VERSION_COMMAND = 'ragel --version'
 
     def command_string(self):
-        wf = self.prior().name
-        of = self.result().name
+        wf = self.input_filename()
+        of = self.output_filename()
         return "%s %s -o %s" % (self.executable(), wf, of)
 
 class Rd2PdfFilter(SubprocessFilter):
@@ -205,11 +207,11 @@ class Rd2PdfFilter(SubprocessFilter):
     ALIASES = ['rd2pdf', 'Rd2pdf']
 
     def command_string(self):
-        title = os.path.splitext(self.result().name)[0].replace("_", " ")
+        title = self.baserootname().replace("_", " ")
         args = {
             'prog' : self.executable(),
-            'out' : self.result().name,
-            'in' : self.prior().name,
+            'out' : self.output_filename(),
+            'in' : self.input_filename(),
             'title' : title
         }
         return "%(prog)s --output=%(out)s --title=\"%(title)s\" %(in)s" % args
@@ -232,9 +234,9 @@ class RIntBatchSectionsFilter(SubprocessFilter):
     OUTPUT_DATA_TYPE = 'sectioned'
 
     def command_string(self, section_name, section_text, wd):
-        input_basename = os.path.splitext(self.input().name)[0]
-        work_file = "%s-%s%s" % (input_basename, section_name, self.input().ext)
-        outfile = "%s-%s-out%s" % (input_basename, section_name, self.result().ext)
+        br = self.input().baserootname()
+        work_file = "%s-%s%s" % (br, section_name, self.input().ext)
+        outfile = "%s-%s-out%s" % (br, section_name, self.output().ext)
 
         work_filepath = os.path.join(wd, work_file)
 
@@ -271,7 +273,7 @@ class RIntBatchSectionsFilter(SubprocessFilter):
         if self.do_add_new_files():
             self.add_new_files()
 
-        self.result().set_data(result)
+        self.output().set_data(result)
 
 class ROutputBatchFilter(SubprocessFilter):
     """Runs R code in batch mode. Uses the --slave flag so doesn't echo commands, just returns output."""
@@ -291,8 +293,8 @@ class EmbedFonts(SubprocessFilter):
     ALIASES = ['embedfonts', 'prepress']
 
     def preprocess_command_string(self):
-        pf = self.input_filepath()
-        af = self.result().name
+        pf = self.input_filename()
+        af = self.output_filename()
         return "%s -dPDFSETTINGS=/prepress %s %s" % (self.EXECUTABLE, pf, af)
 
     def pdffonts_command_string(self):
@@ -333,6 +335,6 @@ class HtLatexFilter(SubprocessFilter):
             'tex4htargs' : self.args().get('tex4htargs', ''),
             't4htargs' : self.args().get('t4htargs', ''),
             'latexargs' : latexargs,
-            'script_file' : os.path.basename(self.prior().name),
+            'script_file' : self.input_filename()
         }
         return """%(prog)s %(script_file)s "%(args)s" "%(tex4htargs)s" "%(t4htargs)s" "%(latexargs)s" """ % args

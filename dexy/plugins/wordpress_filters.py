@@ -143,17 +143,17 @@ class WordPressFilter(ApiFilter):
         self.save_document_config(document_config)
 
         if publish:
-            self.result().set_data(post_info['permaLink'])
+            self.output().set_data(post_info['permaLink'])
         else:
-            self.result().set_data(json.dumps(post_info))
+            self.output().set_data(json.dumps(post_info))
 
     def upload_image_content(self):
-        with open(self.prior().storage.data_file(), 'rb') as f:
+        with open(self.input().storage.data_file(), 'rb') as f:
             image_base_64 = xmlrpclib.Binary(f.read())
 
             upload_file = {
-                     'name' : os.path.basename(self.prior().name),
-                     'type' : mimetypes.types_map[os.path.splitext(self.prior().name)[1]],
+                     'name' : self.input_filename(),
+                     'type' : mimetypes.types_map[os.path.splitext(self.input_filename())[1]],
                      'bits' : image_base_64,
                      'overwrite' : 'true'
                      }
@@ -169,11 +169,11 @@ class WordPressFilter(ApiFilter):
             url = upload_result['url']
             self.log.debug("uploaded %s to %s" % (self.artifact.key, url))
 
-        self.result().set_data(url)
+        self.output().set_data(url)
 
     def process(self):
         try:
-            if self.prior().ext in self.PAGE_CONTENT_EXTENSIONS:
+            if self.input().ext in self.PAGE_CONTENT_EXTENSIONS:
                 self.upload_page_content()
             else:
                 self.upload_image_content()

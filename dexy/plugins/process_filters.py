@@ -78,17 +78,16 @@ class SubprocessFilter(Filter):
 
     def setup_wd(self):
         tmpdir = self.artifact.tmp_dir()
+        parent_dir = self.output().parent_dir()
+        wd = os.path.join(tmpdir, parent_dir)
 
-        if not os.path.exists(tmpdir):
+        if not os.path.exists(wd):
             self.artifact.create_working_dir(
-                    input_filepath=self.input_filepath(),
+                    self.input_filename(),
                     populate=True
                 )
 
-        return tmpdir
-
-    def input_filepath(self):
-        return self.artifact.input_filepath()
+        return wd
 
     def command_line_args(self):
         return self.args().get('args')
@@ -101,7 +100,7 @@ class SubprocessFilter(Filter):
             'prog' : self.executable(),
             'args' : self.command_line_args() or "",
             'scriptargs' : self.command_line_scriptargs() or "",
-            'script_file' : self.input_filepath()
+            'script_file' : self.input_filename()
         }
         return "%(prog)s %(args)s %(script_file)s %(scriptargs)s" % args
 
@@ -109,9 +108,9 @@ class SubprocessFilter(Filter):
         args = {
             'prog' : self.executable(),
             'args' : self.command_line_args() or "",
-            'script_file' : self.input_filepath(),
+            'script_file' : self.input_filename(),
             'scriptargs' : self.command_line_scriptargs() or "",
-            'output_file' : self.result().name
+            'output_file' : self.output_filename()
         }
         return "%(prog)s %(args)s %(script_file)s %(scriptargs)s %(output_file)s" % args
 
@@ -180,9 +179,9 @@ class SubprocessFilter(Filter):
     def walk_working_directory(self, doc=None, section_name=None):
         if not doc:
             if section_name:
-                doc_key = "%s-%s-files" % (self.result().long_name(), section_name)
+                doc_key = "%s-%s-files" % (self.output().long_name(), section_name)
             else:
-                doc_key = "%s-files" % self.result().long_name()
+                doc_key = "%s-files" % self.output().long_name()
 
             doc = self.add_doc(doc_key, {})
 
@@ -196,9 +195,9 @@ class SubprocessFilter(Filter):
                     contents = f.read()
                 try:
                     json.dumps(contents)
-                    doc.result().append(relpath, contents)
+                    doc.output().append(relpath, contents)
                 except UnicodeDecodeError:
-                    doc.result().append(relpath, 'binary')
+                    doc.output().append(relpath, 'binary')
 
         return doc
 
@@ -236,9 +235,9 @@ class SubprocessFilter(Filter):
         return (proc, stdout)
 
     def copy_canonical_file(self):
-        canonical_file = os.path.join(self.artifact.tmp_dir(), self.result().name)
-        if not self.result().is_cached() and os.path.exists(canonical_file):
-            self.result().copy_from_file(canonical_file)
+        canonical_file = os.path.join(self.artifact.tmp_dir(), self.output().name)
+        if not self.output().is_cached() and os.path.exists(canonical_file):
+            self.output().copy_from_file(canonical_file)
 
 class SubprocessStdoutFilter(SubprocessFilter):
     WRITE_STDERR_TO_STDOUT = False
@@ -247,7 +246,7 @@ class SubprocessStdoutFilter(SubprocessFilter):
         command = self.command_string_stdout()
         proc, stdout = self.run_command(command, self.setup_env())
         self.handle_subprocess_proc_return(command, proc.returncode, stdout)
-        self.result().set_data(stdout)
+        self.output().set_data(stdout)
 
         if self.do_walk_working_directory():
             self.walk_working_directory()
@@ -267,8 +266,8 @@ class SubprocessCompileFilter(SubprocessFilter):
 
     def setup_wd(self):
         if not os.path.exists(self.artifact.tmp_dir()):
-            self.artifact.create_working_dir(self.input_filepath(), True)
-        return os.path.join(self.artifact.tmp_dir(), self.result().parent_dir())
+            self.artifact.create_working_dir(self.input_filename(), True)
+        return os.path.join(self.artifact.tmp_dir(), self.output().parent_dir())
 
     def compile_command_string(self):
         wf = os.path.basename(self.input().name)
@@ -301,7 +300,7 @@ class SubprocessCompileFilter(SubprocessFilter):
         if self.CHECK_RETURN_CODE:
             self.handle_subprocess_proc_return(command, proc.returncode, stdout)
 
-        self.result().set_data(stdout)
+        self.output().set_data(stdout)
 
         if self.do_add_new_files():
             self.add_new_files()
@@ -339,4 +338,4 @@ class SubprocessCompileInputFilter(SubprocessCompileFilter):
                         self.handle_subprocess_proc_return(command, proc.returncode, stdout)
                     output[doc.key] = stdout
 
-        self.result().set_data(output)
+        self.output().set_data(output)

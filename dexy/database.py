@@ -52,7 +52,9 @@ class Sqlite3(Database):
         return rows
 
     def query_like(self, query):
-        return []
+        sql = "select * from tasks where batch_id = ? and key like ?"
+        self.cursor.execute(sql, (self.max_batch_id(), "%%%s%%" % query))
+        return self.cursor.fetchall()
 
     def find_data_by_doc_key(self, doc_key):
         sql = "select key, ext, data_type, hashstring, storage_type from tasks where key = ? AND class_name = 'FilterArtifact'"

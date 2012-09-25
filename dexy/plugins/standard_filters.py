@@ -10,21 +10,21 @@ class KeyValueStoreFilter(DexyFilter):
     OUTPUT_DATA_TYPE = 'keyvalue'
 
     def process(self):
-        self.result().copy_from_file(self.input().storage.data_file())
+        self.output().copy_from_file(self.input().storage.data_file())
 
         # Call setup() again since it will have created a new blank database.
-        self.result().storage.setup()
+        self.output().storage.setup()
 
 class HeaderFilter(DexyFilter):
     ALIASES = ['hd']
 
     def find_input_in_parent_dir(self, matches):
         docs = self.artifact.doc.completed_child_docs()
-        docs_d = dict((task.result().long_name(), task) for task in docs)
+        docs_d = dict((task.output().long_name(), task) for task in docs)
 
         matched_key = None
         for k in sorted(docs_d.keys()):
-            if (os.path.dirname(k) in self.result().parent_dir()) and (matches in k):
+            if (os.path.dirname(k) in self.output().parent_dir()) and (matches in k):
                 matched_key = k
 
         if not matched_key:

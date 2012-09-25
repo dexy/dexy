@@ -11,8 +11,8 @@ class KeyValueExample(DexyFilter):
     OUTPUT_EXTENSIONS = ['.sqlite3', '.json']
 
     def process(self):
-        self.result().append("foo", "bar")
-        self.result().save()
+        self.output().append("foo", "bar")
+        self.output().save()
 
 class AccessOtherDocuments(DexyFilter):
     ALIASES = ["others"]
@@ -92,7 +92,7 @@ class ExampleProcessMethod(DexyFilter):
 
     def process(self):
         output = "Dexy processed the text '%s'" % self.input_data()
-        self.result().set_data(output)
+        self.output().set_data(output)
 
 class ExampleProcessMethodManualWrite(DexyFilter):
     """
@@ -117,7 +117,7 @@ class ExampleProcessWithDictMethod(DexyFilter):
         input_data = self.input_data()
         output_dict = OrderedDict()
         output_dict['1'] = "Dexy processed the text '%s'" % input_data
-        self.result().set_data(output_dict)
+        self.output().set_data(output_dict)
 
 class AbcExtension(DexyFilter):
     OUTPUT_EXTENSIONS = [".abc"]

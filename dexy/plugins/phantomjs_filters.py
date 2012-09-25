@@ -24,8 +24,8 @@ class CasperJsSvg2PdfFilter(SubprocessFilter):
         args = {
                 'width' : width,
                 'height' : height,
-                'svgfile' : self.prior().name,
-                'pdffile' : self.result().name
+                'svgfile' : self.input_filename(),
+                'pdffile' : self.output_filename()
                 }
         return """
         var casper = require('casper').create({
@@ -43,7 +43,7 @@ class CasperJsSvg2PdfFilter(SubprocessFilter):
 
         if not os.path.exists(tmpdir):
             self.artifact.create_working_dir(
-                    input_filepath=self.input_filepath(),
+                    self.input_filename(),
                     populate=True
                 )
 
@@ -51,13 +51,13 @@ class CasperJsSvg2PdfFilter(SubprocessFilter):
         height = self.args().get('height', 200)
         js = self.script_js(width, height)
 
-        script_name = "script.js"
-
-        workfile_path = os.path.join(tmpdir, script_name)
-        with open(workfile_path, "w") as f:
+        wd = os.path.join(self.artifact.tmp_dir(), self.input().parent_dir())
+        scriptfile = os.path.join(wd, "script.js")
+        self.log.debug("scriptfile: %s" % scriptfile)
+        with open(scriptfile, "w") as f:
             f.write(js)
 
-        return tmpdir
+        return wd
 
 class CasperJsStdoutFilter(SubprocessStdoutFilter):
     """
@@ -75,7 +75,7 @@ class CasperJsStdoutFilter(SubprocessStdoutFilter):
             'prog' : self.executable(),
             'args' : self.command_line_args() or "",
             'scriptargs' : self.command_line_scriptargs() or "",
-            'script_file' : self.prior().name
+            'script_file' : self.input_filename()
         }
         return "%(prog)s --cookies-file=%(cookie_file)s %(args)s %(script_file)s %(scriptargs)s" % args
 
@@ -111,7 +111,7 @@ class PhantomJsRenderSubprocessFilter(SubprocessFilter):
         return "%(prog)s %(args)s script.js" % args
 
     def setup_wd(self):
-        wd = self.artifact.create_working_dir(self.input_filepath())
+        self.artifact.create_working_dir(self.input_filename())
 
         width = self.arg_value('width', self.DEFAULT_WIDTH)
         height = self.arg_value('height', self.DEFAULT_HEIGHT)
@@ -121,8 +121,8 @@ class PhantomJsRenderSubprocessFilter(SubprocessFilter):
             timeout = 200
 
         args = {
-                'address' : self.prior().name,
-                'output' : self.result().name,
+                'address' : self.input_filename(),
+                'output' : self.output_filename(),
                 'width' : width,
                 'height' : height,
                 'timeout' : timeout
@@ -147,6 +147,7 @@ class PhantomJsRenderSubprocessFilter(SubprocessFilter):
         });
         """ % args
 
+        wd = os.path.join(self.artifact.tmp_dir(), self.input().parent_dir())
         scriptfile = os.path.join(wd, "script.js")
         self.log.debug("scriptfile: %s" % scriptfile)
         with open(scriptfile, "w") as f:

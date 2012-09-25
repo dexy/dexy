@@ -6,6 +6,19 @@ import dexy.commands
 import os
 import sys
 
+@patch.object(sys, 'argv', ['dexy', 'grep', '-expr', 'hello'])
+def test_grep():
+    dexy.commands.run()
+
+@patch.object(sys, 'argv', ['dexy', 'grep'])
+@patch('sys.stdout', new_callable=StringIO)
+def test_grep_without_expr(stdout):
+    try:
+        dexy.commands.run()
+    except SystemExit as e:
+        assert e.message == 1
+        assert 'Option -expr' in stdout.getvalue()
+
 def test_help_text():
     assert "Available commands" in dexy.commands.help_text()
 

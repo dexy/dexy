@@ -85,7 +85,7 @@ class JinjaTextFilter(TemplateFilter):
                 'key' : self.artifact.key,
                 'lineno' : e.lineno,
                 'message' : e.message,
-                'name' : self.result().name,
+                'name' : self.output().name,
                 'workfile' : self.input().storage.data_file()
                 }
 
@@ -148,6 +148,6 @@ class JinjaFilter(JinjaTextFilter):
             self.log.debug("creating jinja template from input text")
             template = env.from_string(self.input().as_text())
             self.log.debug("about to process jinja template")
-            template.stream(template_data).dump(self.result().storage.data_file(), encoding="utf-8")
+            template.stream(template_data).dump(self.output_filepath(), encoding="utf-8")
         except (TemplateSyntaxError, UndefinedError, TypeError) as e:
             self.handle_jinja_exception(e, self.input().as_text(), template_data)

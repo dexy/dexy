@@ -129,7 +129,7 @@ class Subdirectories(TemplatePlugin):
     ALIASES = ['subdirectories']
     def run(self):
         # The directory containing the document to be processed.
-        doc_dir = os.path.dirname(self.filter_instance.result().name)
+        doc_dir = os.path.dirname(self.filter_instance.output().name)
 
         # Get a list of subdirectories under this document's directory.
         subdirectories = [d for d in sorted(os.listdir(os.path.join(os.curdir, doc_dir))) if os.path.isdir(os.path.join(os.curdir, doc_dir, d))]
@@ -227,7 +227,7 @@ class Inputs(TemplatePlugin):
         self.map_relative_refs = {}
 
         for task in self.input_tasks():
-            for ref in task.output_data.relative_refs(self.filter_instance.result().name):
+            for ref in task.output_data.relative_refs(self.filter_instance.output().name):
                 self.map_relative_refs[ref] = task.output_data
 
         self.log.debug("relative refs are %s" % sorted(self.map_relative_refs))

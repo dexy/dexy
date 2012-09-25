@@ -24,13 +24,13 @@ def test_process_method_with_dict():
 
 def test_add_new_document():
     with runfilter("newdoc", "hello") as doc:
-        assert doc.children[-1].key == "newfile.txt|processtext"
+        assert doc.children[-1].key == "subdir/newfile.txt|processtext"
         assert doc.output().data() == "we added a new file"
         assert isinstance(doc.children[-1], Doc)
         assert doc.children[-1].output().data() == "Dexy processed the text 'newfile'"
 
-        assert doc.wrapper.registered_docs()[0].key == "example.txt|newdoc"
-        assert doc.wrapper.registered_docs()[1].key == "newfile.txt|processtext"
+        assert doc.wrapper.registered_docs()[0].key == "subdir/example.txt|newdoc"
+        assert doc.wrapper.registered_docs()[1].key == "subdir/newfile.txt|processtext"
 
 def test_key_value_example():
     with wrap() as wrapper:

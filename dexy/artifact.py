@@ -40,15 +40,16 @@ class Artifact(dexy.task.Task):
     def tmp_dir(self):
         return os.path.join(self.wrapper.artifacts_dir, self.hashstring)
 
-    def input_filepath(self):
-        prior_name = self.prior.output_data.name
-
+    def input_filename(self):
         if self.ext == self.prior.ext:
-            return "%s-work%s" % (os.path.splitext(prior_name)[0], self.prior.ext)
+            return "%s-work%s" % (self.input_data.baserootname(), self.prior.ext)
         else:
-            return prior_name
+            return self.input_data.basename()
 
-    def create_working_dir(self, input_filepath, populate=False):
+    def output_filename(self):
+        return self.output_data.basename()
+
+    def create_working_dir(self, input_filename, populate=False):
         tmpdir = self.tmp_dir()
 
         shutil.rmtree(tmpdir, ignore_errors=True)
@@ -63,11 +64,13 @@ class Artifact(dexy.task.Task):
                         os.makedirs(parent_dir)
                     doc.output().output_to_file(filename)
 
-        parent_dir = os.path.join(tmpdir, os.path.dirname(input_filepath))
+        parent_dir = os.path.join(tmpdir, self.input_data.parent_dir())
+        input_filepath = os.path.join(parent_dir, input_filename)
+
         if not os.path.exists(parent_dir):
             os.makedirs(parent_dir)
-        self.input_data.output_to_file(os.path.join(tmpdir, input_filepath))
-        return parent_dir
+
+        self.input_data.output_to_file(input_filepath)
 
     def data_class_alias(self):
         return 'generic'
@@ -109,7 +112,12 @@ class InitialVirtualArtifact(InitialArtifact):
     def get_contents(self):
         contents = self.args.get('contents')
         if not contents and not isinstance(contents, dict):
-            raise Exception("no contents found for %s" % self.key)
+            msg = "No contents found for virtual file '%s'.\n" % self.key
+            msg += inspect.cleandoc("""If you didn't mean to request a virtual file of this name,
+            and want dexy to look for only real files, you need a wildcard character
+            in the file name. Otherwise either assign contents to the virtual file
+            or remove the entry from your config file.""")
+            raise dexy.exceptions.UserFeedback(msg)
         return contents
 
     def get_contents_hash(self):
@@ -277,8 +285,6 @@ class FilterArtifact(Artifact):
         self.filter_instance = self.filter_class()
         self.filter_instance.artifact = self
         self.filter_instance.log = self.log
-        if not self.input_data.has_data():
-            raise Exception("no data!")
         self.filter_instance.process()
 
     def filter_args(self):

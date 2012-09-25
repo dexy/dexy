@@ -13,12 +13,12 @@ def test_split_html_filter():
         bottom
         """
 
-        doc = Doc("example.html|splithtml", contents=contents, wrapper=wrapper)
+        doc = Doc("subdir/example.html|splithtml", contents=contents, wrapper=wrapper)
         wrapper.docs = [doc]
         wrapper.run()
 
-        assert doc.children[2].key == "a-page.html"
-        assert doc.children[3].key == "another-page.html"
+        assert doc.children[2].key == "subdir/a-page.html"
+        assert doc.children[3].key == "subdir/another-page.html"
 
         od = doc.output().data()
 

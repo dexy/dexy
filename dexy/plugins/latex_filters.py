@@ -16,8 +16,8 @@ class LatexFilter(SubprocessFilter):
 
     def setup_wd(self):
         if not os.path.exists(self.artifact.tmp_dir()):
-            self.artifact.create_working_dir(self.input_filepath(), True)
-        return os.path.join(self.artifact.tmp_dir(), self.result().parent_dir())
+            self.artifact.create_working_dir(self.input_filename(), True)
+        return os.path.join(self.artifact.tmp_dir(), self.output().parent_dir())
 
     def process(self):
         wd = self.setup_wd()
@@ -27,7 +27,7 @@ class LatexFilter(SubprocessFilter):
 
         bibtex_command = None
         if dexy.utils.command_exists("bibtex"):
-            bibtex_command = "bibtex %s" % os.path.splitext(self.result().basename())[0]
+            bibtex_command = "bibtex %s" % os.path.splitext(self.output().basename())[0]
 
         def run_cmd(command):
             self.log.info("running %s in %s" % (command, wd))
@@ -48,7 +48,7 @@ class LatexFilter(SubprocessFilter):
         run_cmd(latex_command) # second run - fix references
         run_cmd(latex_command) # third run - just to be sure
 
-        if not os.path.exists(os.path.join(wd, self.result().basename())):
+        if not os.path.exists(os.path.join(wd, self.output().basename())):
             msg = "Latex file not generated. Look for information in latex log in %s directory." % wd
             raise dexy.exceptions.UserFeedback(msg)
 
@@ -61,7 +61,8 @@ class TikzPgfFilter(LatexFilter):
     ALIASES = ['tikz']
 
     def process(self):
-        latex_filename = self.result().name.replace(self.artifact.ext, ".tex")
+        latex_filename = self.output().basename().replace(self.artifact.ext, ".tex")
+
         # TODO allow setting tikz libraries per-document, or just include all of them?
         # TODO how to create a page size that just includes the content
         latex_header = """\documentclass[tikz]{standalone}
@@ -72,7 +73,8 @@ class TikzPgfFilter(LatexFilter):
 
         wd = self.setup_wd()
 
-        work_path = os.path.join(self.artifact.tmp_dir(), latex_filename)
+        work_path = os.path.join(wd, latex_filename)
+        self.log.debug("writing latex header + tikz content to %s" % work_path)
         with codecs.open(work_path, "w", encoding="utf-8") as f:
             f.write(latex_header)
             f.write(self.input().as_text())
@@ -81,7 +83,7 @@ class TikzPgfFilter(LatexFilter):
         latex_command = "%s -interaction=batchmode %s" % (self.executable(), latex_filename)
 
         def run_cmd(command):
-            self.log.info("running: %s" % command)
+            self.log.info("about to run %s in %s" % (command, wd))
             proc = subprocess.Popen(command, shell=True,
                                     cwd=wd,
                                     stdout=subprocess.PIPE,

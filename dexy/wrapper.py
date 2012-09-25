@@ -92,6 +92,7 @@ class Wrapper(object):
         """
         Set up the  in 'read' mode for reviewing last batch.
         """
+        self.load_config()
         self.setup_log()
         self.setup_db()
 

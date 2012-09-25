@@ -11,7 +11,7 @@ class UnprocessedDirectoryArchiveFilter(DexyFilter):
     ALIASES = ['tgzdir']
 
     def process(self):
-        parent_dir = self.result().parent_dir()
+        parent_dir = self.output().parent_dir()
         subdir = self.args()['dir']
         dir_to_archive = os.path.join(parent_dir, subdir)
         af = self.output_filepath()
@@ -32,7 +32,7 @@ class ArchiveFilter(DexyFilter):
     ALIASES = ['archive', 'tgz']
 
     def open_archive(self):
-        self.archive = tarfile.open(self.result().storage.data_file(), mode="w:gz")
+        self.archive = tarfile.open(self.output_filepath(), mode="w:gz")
 
     def add_to_archive(self, filepath, archivename):
         self.archive.add(filepath, arcname=archivename)
@@ -41,7 +41,7 @@ class ArchiveFilter(DexyFilter):
         self.open_archive()
 
         # Place files in the archive within a directory with the same name as the archive.
-        dirname = os.path.splitext(self.result().basename())[0]
+        dirname = self.output().baserootname()
 
         # Figure out whether to use short names or longer, unambiguous names.
         use_short_names = self.args().get('use-short-names', False)
@@ -75,7 +75,7 @@ class ZipArchiveFilter(ArchiveFilter):
     ALIASES = ['zip']
 
     def open_archive(self):
-        self.archive = zipfile.ZipFile(self.result().storage.data_file(), mode="w")
+        self.archive = zipfile.ZipFile(self.output_filepath(), mode="w")
 
     def add_to_archive(self, filepath, archivename):
         self.archive.write(filepath, arcname=archivename)

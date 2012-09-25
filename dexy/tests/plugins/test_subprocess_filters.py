@@ -26,6 +26,16 @@ def test_rint_mock():
         assert doc.output().as_sectioned()['assign-vars'] == "> x <- 6\n> y <- 7\n> \n"
         assert doc.output().as_sectioned()['multiply'] == "> x * y\n[1] 42\n> \n"
 
+def test_ht_latex_in_subdir():
+    with wrap() as wrapper:
+        doc = Doc("subdir/article.tex|htlatex",
+                contents=LATEX,
+                wrapper=wrapper)
+
+        wrapper.docs = [doc]
+        wrapper.run()
+        assert doc.output().is_cached()
+
 def test_ht_latex():
     with wrap() as wrapper:
         doc = Doc("article.tex|htlatex",

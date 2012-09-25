@@ -9,6 +9,15 @@ from dexy.wrapper import Wrapper
 import dexy.exceptions
 import time
 
+def test_no_data():
+    with wrap() as wrapper:
+        doc = Doc("hello.txt", wrapper=wrapper)
+        try:
+            wrapper.run_docs(doc)
+            assert False, 'should raise UserFeedback'
+        except dexy.exceptions.UserFeedback as e:
+            assert "No contents found" in e.message
+
 def test_caching():
     with tempdir():
         wrapper1 = Wrapper()

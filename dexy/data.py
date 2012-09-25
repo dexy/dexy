@@ -63,6 +63,12 @@ class Data:
     def basename(self):
         return os.path.basename(self.name)
 
+    def baserootname(self):
+        """
+        Returns basename stripped of file extension.
+        """
+        return os.path.splitext(self.basename())[0]
+
     def web_safe_document_key(self):
         return self.long_name().replace("/", "--")
 
@@ -215,6 +221,9 @@ class KeyValueData(GenericData):
 
     def append(self, key, value):
         self.storage.append(key, value)
+
+    def query(self, query):
+        return self.storage.query(query)
 
     def keys(self):
         return self.storage.keys()

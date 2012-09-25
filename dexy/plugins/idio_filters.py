@@ -42,4 +42,4 @@ class IdioFilter(PygmentsFilter):
             output_dict[s] = formatted_lines
             lineno += len(lines)
 
-        self.result().set_data(output_dict)
+        self.output().set_data(output_dict)

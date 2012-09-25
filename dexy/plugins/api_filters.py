@@ -63,11 +63,11 @@ class ApiFilter(DexyFilter):
         return self.args().get(self.DOCUMENT_API_CONFIG_FILE_KEY, self.DOCUMENT_API_CONFIG_FILE)
 
     def document_config_file(self):
-        postfix_config_filename = "%s%s" % (os.path.splitext(self.result().name)[0], self.DOCUMENT_API_CONFIG_POSTFIX)
+        postfix_config_filename = "%s%s" % (os.path.splitext(self.output().name)[0], self.DOCUMENT_API_CONFIG_POSTFIX)
         if os.path.exists(postfix_config_filename):
             return postfix_config_filename
         else:
-            return os.path.join(self.result().parent_dir(), self.document_api_config_file())
+            return os.path.join(self.output().parent_dir(), self.document_api_config_file())
 
     def read_document_config(self):
         document_config = self.document_config_file()

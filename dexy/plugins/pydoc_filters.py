@@ -45,8 +45,8 @@ class PythonDocumentationFilter(DexyFilter):
             else:
                 self.add_source_for_key(key, sections)
 
-            self.result().append("%s:doc" % key, inspect.getdoc(item))
-            self.result().append("%s:comments" % key, inspect.getcomments(item))
+            self.output().append("%s:doc" % key, inspect.getdoc(item))
+            self.output().append("%s:comments" % key, inspect.getcomments(item))
 
         else: # not a function or a method
             try:
@@ -67,12 +67,12 @@ class PythonDocumentationFilter(DexyFilter):
         """
         Appends source code + syntax highlighted source code to persistent store.
         """
-        self.result().append("%s:value" % key, source)
+        self.output().append("%s:value" % key, source)
         if not (type(source) == str or type(source) == unicode):
             source = inspect.getsource(source)
-        self.result().append("%s:source" % key, source)
-        self.result().append("%s:html-source" % key, self.highlight_html(source))
-        self.result().append("%s:latex-source" % key, self.highlight_latex(source))
+        self.output().append("%s:source" % key, source)
+        self.output().append("%s:html-source" % key, self.highlight_html(source))
+        self.output().append("%s:latex-source" % key, self.highlight_latex(source))
 
     def process_members(self, package_name, mod):
         """
@@ -90,8 +90,8 @@ class PythonDocumentationFilter(DexyFilter):
                 key = "%s.%s" % (mod.__name__, k)
                 try:
                     item_content = inspect.getsource(m)
-                    self.result().append("%s:doc" % key, inspect.getdoc(m))
-                    self.result().append("%s:comments" % key, inspect.getcomments(m))
+                    self.output().append("%s:doc" % key, inspect.getdoc(m))
+                    self.output().append("%s:comments" % key, inspect.getcomments(m))
                     self.add_source_for_key(key, item_content)
                 except IOError:
                     self.log.debug("can't get source for %s" % key)
@@ -149,4 +149,4 @@ class PythonDocumentationFilter(DexyFilter):
             else:
                 self.process_module(package.__name__, package.__name__)
 
-        self.result().save()
+        self.output().save()
