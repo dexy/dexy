@@ -32,9 +32,9 @@ So `input_data()` in our filter's `process()` method returns the raw data being 
 
 {{ d['modules.txt|pydoc']['dexy.plugins.example_filters.ExampleProcessMethod.process:html-source'] }}
 
-In the second line, we call the `result()` method, which returns the `output_data` instance of the filter's artifact, which represents the entity we will use to store the results of our processing:
+In the second line, we call the `output()` method, which returns the `output_data` instance of the filter's artifact, which represents the entity we will use to store the results of our processing:
 
-{{ d['modules.txt|pydoc']['dexy.filter.Filter.result:html-source'] }}
+{{ d['modules.txt|pydoc']['dexy.filter.Filter.output:html-source'] }}
 
 We call the `set_data()` method of this GenericData object, passing our `output` string as the argument:
 
@@ -103,6 +103,8 @@ A third option is `keyvalue`, and this is used, for example, by the `pydoc` filt
 Data types can be defined using Dexy's plugin system. Different data types may expose different API methods, for example key value storage provides an `append` method to add new key-value items, here is an example of this in use:
 
 {{ d['modules.txt|pydoc']['dexy.plugins.example_filters.KeyValueExample.process:html-source'] }}
+
+
 
 ### Additional Documents
 
@@ -300,7 +302,7 @@ And after the process has run, instead of copying the canonical file to the cach
 
 Here we talk about all the filters that are available, their features and their implementation.
 
-{% for line in d['filters.py|py'].splitlines() -%}
+{% for line in d['filters.py|py'].as_text().splitlines() -%}
 * <a href="#filter-{{ line.split()[0] }}">{{ line }}</a>
 {% endfor -%}
 
