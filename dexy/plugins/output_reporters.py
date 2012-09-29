@@ -6,9 +6,9 @@ class OutputReporter(Reporter):
     ALIASES = ['output']
     REPORTS_DIR = 'output'
 
-    def run(self, runner):
+    def run(self, wrapper):
         self.create_reports_dir(self.REPORTS_DIR)
-        for task in runner.registered:
+        for task in wrapper.registered:
             if isinstance(task, Doc):
                 doc = task
                 fp = os.path.join(self.REPORTS_DIR, doc.output().name)
@@ -23,9 +23,9 @@ class LongOutputReporter(Reporter):
     ALIASES = ['long']
     REPORTS_DIR = 'output-long'
 
-    def run(self, runner):
+    def run(self, wrapper):
         self.create_reports_dir(self.REPORTS_DIR)
-        for task in runner.registered:
+        for task in wrapper.registered:
             if isinstance(task, Doc):
                 doc = task
                 fp = os.path.join(self.REPORTS_DIR, doc.output().long_name())

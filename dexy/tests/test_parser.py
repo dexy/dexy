@@ -61,12 +61,15 @@ def test_text_parser_invalid_json():
     with wrap() as wrapper:
         parser = TextFileParser()
         parser.wrapper = wrapper
-        parser.parse("""
-        doc.txt { "contents" : 123
-        """)
-        docs = wrapper.docs
-        assert docs[0].key == "doc.txt"
-        assert not "contents" in docs[0].args
+
+        try:
+            parser.parse("""
+            doc.txt { "contents" : 123
+            """)
+            docs = wrapper.docs
+            assert False, 'should raise UserFeedback'
+        except dexy.exceptions.UserFeedback as e:
+            assert 'unable to parse' in e.message
 
 def test_text_parser():
     with wrap() as wrapper:

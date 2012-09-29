@@ -52,6 +52,12 @@ class JinjaTextFilter(TemplateFilter):
     def setup_jinja_env(self):
         env_attrs = self.args().copy()
 
+        # Remove jinja attrs not intended for env
+        if env_attrs.has_key('vars'):
+            del env_attrs['vars']
+        if env_attrs.has_key('variables'):
+            del env_attrs['variables']
+
         # TODO load other Undefined classes from a string.
         # Currently it's not possible to pass subclasses of Undefined since params must be json serializable.
         env_attrs['undefined'] = jinja2.StrictUndefined

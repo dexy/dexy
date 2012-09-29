@@ -17,15 +17,24 @@ class KeyValueStoreFilter(DexyFilter):
 
 class HeaderFilter(DexyFilter):
     ALIASES = ['hd']
+    KEY_NAME = 'header'
 
     def find_input_in_parent_dir(self, matches):
         docs = self.artifact.doc.completed_child_docs()
         docs_d = dict((task.output().long_name(), task) for task in docs)
 
-        matched_key = None
-        for k in sorted(docs_d.keys()):
-            if (os.path.dirname(k) in self.output().parent_dir()) and (matches in k):
-                matched_key = k
+        if self.args().has_key(self.KEY_NAME):
+            requested = self.args()[self.KEY_NAME]
+            if docs_d.has_key(requested):
+                matched_key = requested
+            else:
+                msg = "Couldn't find the %s file %s you requested" % (self.KEY_NAME, requested)
+                raise dexy.exceptions.UserFeedback(msg)
+        else:
+            matched_key = None
+            for k in sorted(docs_d.keys()):
+                if (os.path.dirname(k) in self.output().parent_dir()) and (matches in k):
+                    matched_key = k
 
         if not matched_key:
             raise dexy.exceptions.UserFeedback("No input found for %s" % self.artifact.key)
@@ -38,6 +47,7 @@ class HeaderFilter(DexyFilter):
 
 class FooterFilter(HeaderFilter):
     ALIASES = ['ft']
+    KEY_NAME = 'footer'
 
     def process_text(self, input_text):
         footer_data = self.find_input_in_parent_dir("_footer")

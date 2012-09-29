@@ -8,6 +8,7 @@ import dexy.exceptions
 import dexy.plugins # so all built-in plugins are registered
 import inspect
 import json
+import logging
 import os
 import pkg_resources
 import sys
@@ -30,7 +31,7 @@ def run():
 
     Ensures that UserFeedback exceptions are handled nicely so end users don't see tracebacks.
     """
-    warnings.filterwarnings("ignore",category=DeprecationWarning)
+    logging.captureWarnings(True)
 
     if len(sys.argv) == 1 or (sys.argv[1] in args.available_commands(MOD)) or sys.argv[1].startswith("-"):
         args.parse_and_run_command(sys.argv[1:], MOD, default_command=DEFAULT_COMMAND)
@@ -135,9 +136,6 @@ def dexy_command(
                 sys.stderr.write("\n")
             sys.stderr.write("Dexy is stopping.\n")
             sys.exit(1)
-        except Exception as e:
-            wrapper.cleanup_partial_run()
-            raise dexy.exceptions.InternalDexyProblem(e.message)
 
 def reset_command(
         artifactsdir=Wrapper.DEFAULT_ARTIFACTS_DIR, # location of directory in which to store artifacts

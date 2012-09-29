@@ -120,7 +120,7 @@ class GenericData(Data):
             if self.ext == '.json':
                 return json.loads(self.data())[key]
             else:
-                raise Exception("what's happening here")
+                raise Exception("item of type %s has no method %s" % (self.__class__.__name__, key))
 
     def filesize(self):
         if self.is_cached():

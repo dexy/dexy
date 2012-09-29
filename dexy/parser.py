@@ -85,9 +85,9 @@ class YamlFileParser(Parser):
     def parse(self, input_text):
         try:
             data = yaml.load(input_text)
-        except yaml.scanner.ScannerError as e:
+        except (yaml.scanner.ScannerError, yaml.parser.ParserError) as e:
             msg = inspect.cleandoc("""Was unable to parse the YAML in your config file.
-            Here is information from the YAML scanner:""")
+            Here is information from the YAML parser:""")
             msg += "\n"
             msg += str(e)
             raise dexy.exceptions.UserFeedback(msg)
@@ -145,9 +145,11 @@ class TextFileParser(Parser):
                     try:
                         args = json.loads(raw_args)
                     except ValueError as e:
-                        self.wrapper.log.debug("Failed to parse extra args '%s' with json parser" % raw_args)
-                        self.wrapper.log.debug(e.message)
-                        args = {}
+                        msg = inspect.cleandoc("""Was unable to parse the json in your config file.
+                        Here is information from the json parser:""")
+                        msg += "\n"
+                        msg += str(e)
+                        raise dexy.exceptions.UserFeedback(msg)
                 else:
                     pattern = line
                     args = {}

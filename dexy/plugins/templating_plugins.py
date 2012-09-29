@@ -95,6 +95,8 @@ class PythonBuiltins(TemplatePlugin):
 
 class PygmentsStylesheet(TemplatePlugin):
     ALIASES = ['pygments']
+
+    # TODO figure out default fmt based on document ext
     def highlight(self, text, lexer_name, fmt = 'html', noclasses = False, lineanchors = 'l'):
         if text:
             formatter_options = { "lineanchors" : lineanchors, "noclasses" : noclasses }
@@ -236,7 +238,8 @@ class Inputs(TemplatePlugin):
             'd' : D(self.filter_instance.artifact, self.map_relative_refs),
             'tc' : self.tc,
             'f' : self.filter_instance,
-            's' : self.filter_instance.artifact
+            's' : self.filter_instance.output(),
+            'w' : self.filter_instance.artifact.wrapper
             }
 
 class D(object):

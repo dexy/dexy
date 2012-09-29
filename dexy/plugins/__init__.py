@@ -1,6 +1,8 @@
 import dexy.plugins.api_filters
 import dexy.plugins.archive_filters
+import dexy.plugins.boto_filters
 import dexy.plugins.clang_filters
+import dexy.plugins.ec2_filters
 import dexy.plugins.example_filters
 import dexy.plugins.file_extension_filters
 import dexy.plugins.idio_filters

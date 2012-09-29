@@ -166,7 +166,7 @@ class FilterArtifact(Artifact):
         self.setup_output_data()
 
         if not self.output_data.is_cached():
-            self.generate()
+            self.filter_instance.process()
             self.source = 'generated'
         else:
             self.reconstitute_cached_children()
@@ -280,12 +280,6 @@ class FilterArtifact(Artifact):
                         raise dexy.exceptions.InternalDexyProblem(msg)
             else:
                 self.ext = this_filter_outputs[0]
-
-    def generate(self, *args, **kw):
-        self.filter_instance = self.filter_class()
-        self.filter_instance.artifact = self
-        self.filter_instance.log = self.log
-        self.filter_instance.process()
 
     def filter_args(self):
         """

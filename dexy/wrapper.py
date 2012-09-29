@@ -61,6 +61,7 @@ class Wrapper(object):
         self.docs = []
         self.log_path = os.path.join(self.log_dir, self.log_file)
         self.registered = []
+        self.registered_dict = {}
         self.reports_dirs = [c.REPORTS_DIR for c in dexy.reporter.Reporter.plugins]
 
     @classmethod
@@ -196,6 +197,7 @@ class Wrapper(object):
         Register a task with the wrapper
         """
         self.registered.append(task)
+        self.registered_dict[task.key_with_class()] = task
 
     def registered_docs(self):
         """

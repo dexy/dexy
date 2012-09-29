@@ -75,6 +75,10 @@ class Doc(dexy.task.Task):
         if not artifact.filter_class.is_active():
             raise dexy.exceptions.InactiveFilter(artifact.filter_alias, artifact.doc.key)
 
+        artifact.filter_instance = artifact.filter_class()
+        artifact.filter_instance.artifact = artifact
+        artifact.filter_instance.log = self.log
+
         artifact.next_filter_alias = None
         artifact.next_filter_class = None
         artifact.next_filter_name = None
@@ -99,6 +103,16 @@ class Doc(dexy.task.Task):
                 if child.state == 'new':
                     child.wrapper = self.wrapper
                     child.setup()
+
+    def pre(self, *args, **kw):
+        for artifact in self.artifacts[1:]:
+            if hasattr(artifact.filter_instance, 'pre'):
+                artifact.filter_instance.pre(*args, **kw)
+
+    def post(self, *args, **kw):
+        for artifact in reversed(self.artifacts[1:]):
+            if hasattr(artifact.filter_instance, 'post'):
+                artifact.filter_instance.post(*args, **kw)
 
     def setup(self):
         self.set_log()
