@@ -1,3 +1,4 @@
+from dexy.common import OrderedDict
 import dexy.database
 import dexy.doc
 import dexy.parser
@@ -32,8 +33,41 @@ class Wrapper(object):
     DEFAULT_REPORTS = 'output'
     DEFAULT_SILENT = False
 
+    LOG_LEVELS = {
+            'DEBUG' : logging.DEBUG,
+            'INFO' : logging.INFO,
+            'WARN' : logging.WARN
+            }
+
+    RENAME_PARAMS = {
+            'artifactsdir' : 'artifacts_dir',
+            'conf' : 'config_file',
+            'dbalias' : 'db_alias',
+            'dbfile' : 'db_file',
+            'disabletests' : 'disable_tests',
+            'dryrun' : 'dry_run',
+            'ignore' : 'ignore_nonzero_exit',
+            'logfile' : 'log_file',
+            'logformat' : 'log_format',
+            'loglevel' : 'log_level',
+            'logsdir' : 'log_dir',
+            'nocache' : 'dont_use_cache'
+            }
+
+    SKIP_KEYS = ['h', 'help', 'version']
+
     def __init__(self, *args, **kwargs):
-        # Initialize attributes to their defaults
+        self.initialize_attribute_defaults()
+        self.check_config_file_location(kwargs)
+        self.load_config_file()
+        self.update_attributes_from_config(kwargs)
+
+        self.args = args
+        self.docs_to_run = []
+        self.tasks = OrderedDict()
+        self.pre_attrs = {}
+
+    def initialize_attribute_defaults(self):
         self.artifacts_dir = self.DEFAULT_ARTIFACTS_DIR
         self.config_file = self.DEFAULT_CONFIG_FILE
         self.danger = self.DEFAULT_DANGER
@@ -54,202 +88,8 @@ class Wrapper(object):
         self.reports = self.DEFAULT_REPORTS
         self.silent = self.DEFAULT_SILENT
 
+    def check_config_file_location(self, kwargs):
         self.update_attributes_from_config(kwargs)
-
-        self.args = args
-        self.db_path = os.path.join(self.artifacts_dir, self.db_file)
-        self.docs = []
-        self.log_path = os.path.join(self.log_dir, self.log_file)
-        self.registered = []
-        self.registered_dict = {}
-        self.reports_dirs = [c.REPORTS_DIR for c in dexy.reporter.Reporter.plugins]
-
-    @classmethod
-    def default_config(klass):
-        conf = klass().__dict__.copy()
-
-        # Remove any attributes that aren't config options
-        del conf['args']
-        del conf['docs']
-        del conf['db_path']
-        del conf['log_path']
-        del conf['registered']
-        del conf['reports_dirs']
-
-        for cl_key, internal_key in klass.RENAME_PARAMS.iteritems():
-            conf[cl_key] = conf[internal_key]
-            del conf[internal_key]
-
-        return conf
-
-    def setup_run(self, setup_docs=True):
-        self.setup_dexy_dirs()
-        self.setup_log()
-        self.setup_db()
-        if setup_docs:
-            self.setup_docs()
-
-    def setup_read(self, batch_id=None):
-        """
-        Set up the  in 'read' mode for reviewing last batch.
-        """
-        self.load_config()
-        self.setup_log()
-        self.setup_db()
-
-        if batch_id:
-            self.batch_id = batch_id
-        else:
-            self.batch_id = self.db.max_batch_id()
-
-    def setup_dexy_dirs(self):
-        """
-        Create the artifacts and logs directories if they don't exist already.
-        """
-        if not os.path.exists(self.artifacts_dir):
-            os.mkdir(self.artifacts_dir)
-        if not os.path.exists(self.log_dir):
-            os.mkdir(self.log_dir)
-
-    def remove_dexy_dirs(self):
-        shutil.rmtree(self.artifacts_dir)
-        shutil.rmtree(self.log_dir)
-
-    def setup_log(self):
-        self.log = logging.getLogger('dexy')
-        self.log.setLevel(logging.DEBUG)
-
-        handler = logging.handlers.RotatingFileHandler(
-                self.log_path,
-                encoding="utf-8")
-
-        formatter = logging.Formatter(self.log_format)
-        handler.setFormatter(formatter)
-
-        self.log.addHandler(handler)
-        self.log.debug("================================================== Starting new dexy run.")
-
-    def setup_docs(self):
-        """
-        Processes args which may be doc objects or filenames with wildcards.
-        """
-        for arg in self.args:
-            self.log.debug("Processing arg %s" % arg)
-            if isinstance(arg, dexy.doc.Doc) or isinstance(arg, dexy.doc.PatternDoc):
-                doc = arg
-
-            elif isinstance(arg, list):
-                if not isinstance(arg[0], basestring):
-                    raise Exception("First arg %s should be a string" % arg[0])
-                if not isinstance(arg[1], dict):
-                    raise Exception("Second arg %s should be a dict" % arg[1])
-
-                if not "*" in arg[0]:
-                    doc = dexy.doc.Doc(arg[0], **arg[1])
-                else:
-                    # This is a pattern doc or real doc TODO better way to verify?
-                    doc = dexy.doc.PatternDoc(arg[0], **arg[1])
-
-            elif isinstance(arg, basestring):
-                doc = dexy.doc.PatternDoc(arg)
-
-            else:
-                raise Exception("unknown arg type %s for arg %s" % (arg.__class__.__name__, arg))
-
-            doc.wrapper = self
-            doc.setup()
-
-            self.docs.append(doc)
-
-    def setup_db(self):
-        db_class = dexy.database.Database.aliases[self.db_alias]
-        self.db = db_class(self)
-        self.batch_id = self.db.next_batch_id()
-
-    def save_db(self):
-        self.db.save()
-
-    def run(self):
-        self.setup_run()
-
-        self.log.debug("batch id is %s" % self.batch_id)
-
-        for doc in self.docs:
-            for task in doc:
-                task()
-
-        self.save_db()
-
-    def run_docs(self, *docs):
-        """
-        Shortcut to add docs and then run them.
-        """
-        self.docs = docs
-        self.run()
-
-    def run_tasks(self, *tasks):
-        for task in tasks:
-            for t in task:
-                t()
-
-    def register(self, task):
-        """
-        Register a task with the wrapper
-        """
-        self.registered.append(task)
-        self.registered_dict[task.key_with_class()] = task
-
-    def registered_docs(self):
-        """
-        Filter all registered tasks for just Doc instances.
-        """
-        return [t for t in self.registered if isinstance(t, dexy.doc.Doc)]
-
-    def registered_doc_names(self):
-        return [d.name for d in self.registered_docs()]
-
-    def report(self, *reporters):
-        """
-        Runs reporters. Either runs reporters which have been passed in or, if
-        none, then runs all available reporters which have ALLREPORTS set to
-        true.
-        """
-        if len(reporters) == 0:
-            reporters = [c() for c in dexy.reporter.Reporter.plugins if c.ALLREPORTS]
-
-        for reporter in reporters:
-            self.log.debug("Running reporter %s" % reporter.ALIASES[0])
-            reporter.run(self)
-
-    def get_child_hashes_in_previous_batch(self, parent_hashstring):
-        return self.db.get_child_hashes_in_previous_batch(self.batch_id, parent_hashstring)
-
-    def load_config(self):
-        """
-        Look for a config file in current working dir and loads it.
-        """
-        if os.path.exists(self.config_file):
-            with open(self.config_file) as f:
-                conf = json.load(f)
-
-            self.update_attributes_from_config(conf)
-
-    RENAME_PARAMS = {
-            'artifactsdir' : 'artifacts_dir',
-            'conf' : 'config_file',
-            'dbalias' : 'db_alias',
-            'dbfile' : 'db_file',
-            'disabletests' : 'disable_tests',
-            'dryrun' : 'dry_run',
-            'ignore' : 'ignore_nonzero_exit',
-            'logfile' : 'log_file',
-            'logformat' : 'log_format',
-            'loglevel' : 'log_level',
-            'logsdir' : 'log_dir',
-            'nocache' : 'dont_use_cache'
-            }
-
-    SKIP_KEYS = ['h', 'help', 'version']
 
     def update_attributes_from_config(self, config):
         for key, value in config.iteritems():
@@ -258,6 +98,194 @@ class Wrapper(object):
                 if not hasattr(self, corrected_key):
                     raise Exception("no default for %s" % corrected_key)
                 setattr(self, corrected_key, value)
+
+    def load_config_file(self):
+        """
+        Look for a config file in current working dir and loads it.
+        """
+        if os.path.exists(self.config_file):
+            with open(self.config_file) as f:
+                try:
+                    conf = json.load(f)
+                except ValueError as e:
+                    msg = inspect.cleandoc("""Was unable to parse the json in your config file '%s'.
+                    Here is information from the json parser:""" % self.config_file)
+                    msg += "\n"
+                    msg += str(e)
+                    raise dexy.exceptions.UserFeedback(msg)
+
+            self.update_attributes_from_config(conf)
+
+    @classmethod
+    def default_config(klass):
+        conf = klass().__dict__.copy()
+
+        # Remove any attributes that aren't config options
+        del conf['args']
+        del conf['docs_to_run']
+        del conf['tasks']
+
+        for cl_key, internal_key in klass.RENAME_PARAMS.iteritems():
+            conf[cl_key] = conf[internal_key]
+            del conf[internal_key]
+
+        return conf
+
+    def db_path(self):
+        return os.path.join(self.artifacts_dir, self.db_file)
+
+    def log_path(self):
+        return os.path.join(self.log_dir, self.log_file)
+
+    def run(self):
+        self.setup_run()
+
+        self.log.debug("batch id is %s" % self.batch_id)
+
+        for doc in self.docs_to_run:
+            for task in doc:
+                task()
+
+        self.save_db()
+
+    def setup_run(self):
+        self.check_dexy_dirs()
+        self.setup_log()
+        self.setup_db()
+
+        self.batch_id = self.db.next_batch_id()
+
+        if not self.docs_to_run:
+            self.setup_docs()
+
+    def setup_read(self, batch_id=None):
+        self.check_dexy_dirs()
+        self.setup_log()
+        self.setup_db()
+
+        if batch_id:
+            self.batch_id = batch_id
+        else:
+            self.batch_id = self.db.max_batch_id()
+
+    def check_dexy_dirs(self):
+        if not (os.path.exists(self.artifacts_dir) and os.path.exists(self.log_dir)):
+            raise dexy.exceptions.UserFeedback("Need to run 'dexy setup' first.")
+
+    def setup_dexy_dirs(self):
+        if not os.path.exists(self.artifacts_dir):
+            os.mkdir(self.artifacts_dir)
+        if not os.path.exists(self.log_dir):
+            os.mkdir(self.log_dir)
+
+    def remove_dexy_dirs(self):
+        shutil.rmtree(self.artifacts_dir)
+        shutil.rmtree(self.log_dir)
+        # TODO remove reports dirs
+
+    def setup_log(self):
+        try:
+            loglevel = self.LOG_LEVELS[self.log_level.upper()]
+        except KeyError:
+            msg = "'%s' is not a valid log level, check python logging module docs."
+            raise dexy.exceptions.UserFeedback(msg % self.log_level)
+
+        self.log = logging.getLogger('dexy')
+        self.log.setLevel(loglevel)
+
+        handler = logging.handlers.RotatingFileHandler(
+                self.log_path(),
+                encoding="utf-8")
+
+        formatter = logging.Formatter(self.log_format)
+        handler.setFormatter(formatter)
+
+        self.log.addHandler(handler)
+
+    def setup_db(self):
+        db_class = dexy.database.Database.aliases[self.db_alias]
+        self.db = db_class(self)
+
+    def setup_docs(self):
+        for arg in self.args:
+            self.log.debug("Processing arg %s" % arg)
+            doc = self.create_doc_from_arg(arg)
+            if not doc:
+                raise Exception("no doc created for %s" % arg)
+            doc.wrapper = self
+            doc.setup()
+            self.docs_to_run.append(doc)
+
+    def create_doc_from_arg(self, arg, *children, **kwargs):
+        if isinstance(arg, dexy.task.Task):
+            return arg
+
+        elif isinstance(arg, list):
+            if not isinstance(arg[0], basestring):
+                msg = "First arg in %s should be a string" % arg
+                raise dexy.exceptions.UserFeedback(msg)
+
+            if not isinstance(arg[1], dict):
+                msg = "Second arg in %s should be a dict" % arg
+                raise dexy.exceptions.UserFeedback(msg)
+
+            if kwargs:
+                raise Exception("Shouldn't have kwargs if arg is a list")
+
+            if children:
+                raise Exception("Shouldn't have children if arg is a list")
+
+            return dexy.task.Task.create_from_arg(arg[0], **arg[1])
+
+        elif isinstance(arg, basestring):
+            return dexy.task.Task.create_from_arg(arg, *children, **kwargs)
+
+        else:
+            raise Exception("unknown arg type %s for arg %s" % (arg.__class__.__name__, arg))
+
+    def save_db(self):
+        self.db.save()
+
+    ## DOCUMENTED above here..
+
+    def run_docs(self, *docs):
+        """
+        Convenience method for testing to add docs and then run them.
+        """
+        self.setup_dexy_dirs()
+        self.docs_to_run = docs
+        self.run()
+
+    def register(self, task):
+        """
+        Register a task with the wrapper
+        """
+        self.tasks[task.key_with_class()] = task
+
+    def registered_docs(self):
+        return [d for d in self.tasks.values() if isinstance(d, dexy.doc.Doc)]
+
+    def registered_doc_names(self):
+        return [d.name for d in self.registered_docs()]
+
+    def reports_dirs(self):
+        return [c.REPORTS_DIR for c in dexy.reporter.Reporter.plugins]
+
+    def report(self, *reporters):
+        """
+        Runs reporters. Either runs reporters which have been passed in or, if
+        none, then runs all available reporters which have ALLREPORTS set to
+        true.
+        """
+        if not reporters:
+            reporters = [c() for c in dexy.reporter.Reporter.plugins if c.ALLREPORTS]
+
+        for reporter in reporters:
+            self.log.debug("Running reporter %s" % reporter.ALIASES[0])
+            reporter.run(self)
+
+    def get_child_hashes_in_previous_batch(self, parent_hashstring):
+        return self.db.get_child_hashes_in_previous_batch(self.batch_id, parent_hashstring)
 
     def load_doc_config(self):
         """
@@ -272,7 +300,6 @@ class Wrapper(object):
                     parser.parse(f.read())
 
     def setup_config(self):
-        self.load_config()
         self.setup_dexy_dirs()
         self.setup_log()
         self.load_doc_config()

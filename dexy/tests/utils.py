@@ -39,7 +39,8 @@ class wrap(tempdir):
         self.location = os.path.abspath(os.curdir)
         os.chdir(self.tempdir)
         wrapper = Wrapper()
-        wrapper.setup_run(setup_docs=False)
+        wrapper.setup_dexy_dirs()
+        wrapper.setup_run()
         return wrapper
 
 class runfilter(tempdir):
@@ -64,12 +65,13 @@ class runfilter(tempdir):
             doc_key = "subdir/example%s|%s" % (self.ext, self.filter_alias)
             doc_spec = [doc_key, {"contents" : self.doc_contents}]
             wrapper = Wrapper(doc_spec)
+            wrapper.setup_dexy_dirs()
             wrapper.run()
         except InactiveFilter:
             print "Skipping tests for inactive filter", self.filter_alias
             raise SkipTest
 
-        return wrapper.docs[0]
+        return wrapper.docs_to_run[0]
 
 def assert_output(filter_alias, doc_contents, expected_output, ext=".txt",args=None):
     if not args:
@@ -107,6 +109,15 @@ def assert_output_matches(filter_alias, doc_contents, expected_regex, ext=".txt"
             assert re.match(expected_regex, doc.output().as_text())
         else:
             raise Exception(doc.output().as_text())
+
+def assert_output_cached(filter_alias, doc_contents, ext=".txt", min_filesize=None):
+    if not ext.startswith("."):
+        raise Exception("ext arg to assert_output_cached must start with dot")
+
+    with runfilter(filter_alias, doc_contents, ext=ext) as doc:
+        assert doc.output().is_cached()
+        if min_filesize:
+            assert doc.output().filesize() > min_filesize
 
 def assert_in_output(filter_alias, doc_contents, expected_output, ext=".txt"):
     if not ext.startswith("."):

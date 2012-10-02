@@ -15,8 +15,7 @@ def test_header_footer_filters():
                 contents="These are main contents.",
                 wrapper=wrapper)
 
-        wrapper.docs = [doc]
-        wrapper.run()
+        wrapper.run_docs(doc)
 
         assert doc.output().data() == "This is a header.\nThese are main contents.\nThis is a footer."
 
@@ -33,8 +32,7 @@ def test_head_filter():
 def test_word_wrap_filter():
     with wrap() as wrapper:
         doc = Doc("example.txt|wrap", contents="this is a line of text", wrap={"width" : 5}, wrapper=wrapper)
-        wrapper.docs = [doc]
-        wrapper.run()
+        wrapper.run_docs(doc)
         assert doc.output().data() == "this\nis a\nline\nof\ntext"
 
 def test_lines_filter():
@@ -59,7 +57,6 @@ def test_start_space_filter():
 def test_tags_filter():
     with wrap() as wrapper:
         doc = Doc("example.txt|tags", contents="<p>the text</p>", tags={"tags" : ["html", "body"]}, wrapper=wrapper)
-        wrapper.docs = [doc]
-        wrapper.run()
+        wrapper.run_docs(doc)
         assert doc.output().data() == "<html><body>\n<p>the text</p>\n</body></html>"
 

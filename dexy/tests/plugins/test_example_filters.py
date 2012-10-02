@@ -40,8 +40,7 @@ def test_key_value_example():
                 wrapper=wrapper
                 )
 
-        wrapper.docs = [doc]
-        wrapper.run()
+        wrapper.run_docs(doc)
 
         assert doc.output().as_text() == "foo: bar"
 
@@ -49,8 +48,7 @@ def test_access_other_documents():
     with wrap() as wrapper:
         doc = Doc("hello.txt|newdoc", contents="hello", wrapper=wrapper)
         parent = Doc("test.txt|others", doc, contents="hello", wrapper=wrapper)
-        wrapper.docs = [parent]
-        wrapper.run()
+        wrapper.run_docs(parent)
         assert parent.output().data() == """Here is a list of previous docs in this tree (not including test.txt|others).
         hello.txt|newdoc (3 children, 2 artifacts, length 19)
         newfile.txt|processtext (2 children, 2 artifacts, length 33)"""
@@ -60,7 +58,7 @@ def test_doc_children_artifacts():
         doc = Doc("hello.txt|newdoc", contents="hello", wrapper=wrapper)
         parent = Doc("parent.txt|process", doc, contents="hello", wrapper=wrapper)
 
-        wrapper.docs = [parent]
+        wrapper.docs_to_run = [parent]
 
         assert len(doc.children) == 2
         assert isinstance(doc.children[0], InitialVirtualArtifact)

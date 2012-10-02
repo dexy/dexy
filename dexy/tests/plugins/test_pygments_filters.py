@@ -2,6 +2,8 @@ from dexy.common import OrderedDict
 from dexy.doc import Doc
 from dexy.tests.utils import assert_output
 from dexy.tests.utils import wrap
+from dexy.tests.utils import assert_in_output
+from dexy.tests.utils import assert_output_cached
 
 def test_pyg4rst():
     o = OrderedDict()
@@ -9,35 +11,13 @@ def test_pyg4rst():
     assert_output("pyg4rst", "print 'hello'", o, ext=".py")
 
 def test_html():
-    with wrap() as wrapper:
-        doc = Doc("example.py|pyg|h",
-                contents="print 'hello'\n",
-                wrapper=wrapper)
-        wrapper.docs = [doc]
-        wrapper.run()
-
-        assert """<div class="highlight">""" in doc.output().as_text()
+    assert_in_output("pyg|h", "print 'hello'", """<div class="highlight">""")
 
 def test_png():
-    with wrap() as wrapper:
-        doc = Doc("example.py|pyg|pn",
-                contents="print 'hello'\n",
-                wrapper=wrapper)
-        wrapper.docs = [doc]
-        wrapper.run()
+    assert_output_cached("pyg|pn", "print 'hello'")
 
 def test_jpg():
-    with wrap() as wrapper:
-        doc = Doc("example.py|pyg|jn",
-                contents="print 'hello'\n",
-                wrapper=wrapper)
-        wrapper.docs = [doc]
-        wrapper.run()
+    assert_output_cached("pyg|jn", "print 'hello'")
 
 def test_gif():
-    with wrap() as wrapper:
-        doc = Doc("example.py|pyg|gn",
-                contents="print 'hello'\n",
-                wrapper=wrapper)
-        wrapper.docs = [doc]
-        wrapper.run()
+    assert_output_cached("pyg|gn", "print 'hello'")

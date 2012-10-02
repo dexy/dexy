@@ -6,7 +6,7 @@
 
 Filters are run by artifact objects, when necessary, as follows:
 
-{{ d['modules.txt|pydoc']['dexy.artifact.FilterArtifact.generate:html-source'] }}
+{{ d['modules.txt|pydoc']['dexy.artifact.FilterArtifact.run:html-source'] }}
 
 So an instance of the relevant filter class is initialized, its generating artifact is assigned as an attribute, it gets a copy of the artifact's log, and then its `process()` method is called.
 

@@ -14,16 +14,14 @@ def test_javac_filter():
         doc = Doc("hello.java|javac",
                 contents=JAVA_SRC,
                 wrapper=wrapper)
-        wrapper.docs = [doc]
-        wrapper.run()
+        wrapper.run_docs(doc)
 
 def test_java_filter():
     with wrap() as wrapper:
         doc = Doc("hello.java|java",
                 contents=JAVA_SRC,
                 wrapper=wrapper)
-        wrapper.docs = [doc]
-        wrapper.run()
+        wrapper.run_docs(doc)
         assert doc.output().data() == "Java Hello World!\n"
 
 def test_jruby_filter():

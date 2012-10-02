@@ -7,8 +7,7 @@ def test_output_reporter():
     with wrap() as wrapper:
         doc = Doc("hello.txt", contents="hello", wrapper=wrapper)
         reporter = OutputReporter()
-        wrapper.docs = [doc]
-        wrapper.run()
+        wrapper.run_docs(doc)
         wrapper.report(reporter)
         assert os.path.exists("output")
         assert os.path.exists("output/hello.txt")

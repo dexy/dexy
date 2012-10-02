@@ -37,6 +37,7 @@ setup(
             'pexpect',
             'pygments',
             'python-modargs>=1.4',
+            'PyYAML',
             'requests>=0.10.6',
             'zapps'
             ],

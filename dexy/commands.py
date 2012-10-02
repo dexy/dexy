@@ -145,15 +145,18 @@ def reset_command(
     Empty the artifacts and logs directories.
     """
     wrapper = Wrapper(**locals())
-    wrapper.load_config()
     wrapper.remove_dexy_dirs()
     wrapper.setup_dexy_dirs()
 
 def reports_command(args):
     pass
 
-def check_setup(logsdir=Wrapper.DEFAULT_LOG_DIR, artifactsdir=Wrapper.DEFAULT_ARTIFACTS_DIR):
-    return os.path.exists(logsdir) and os.path.exists(artifactsdir)
+def setup_command(**kwargs):
+    """
+    Create the directories dexy needs to run. This helps make sure you mean to run dexy in this directory.
+    """
+    wrapper = Wrapper(**kwargs)
+    wrapper.setup_dexy_dirs()
 
 def help_command(on=False):
     args.help_command(PROG, MOD, DEFAULT_COMMAND, on)
@@ -169,9 +172,14 @@ def conf_command(
         conf=Wrapper.DEFAULT_CONFIG_FILE # Name of config file.
         ):
     """
-    Write a dexy.conf file using defaults so you can modify it easily.
+    Write a config file containing dexy's defaults.
     """
+    if os.path.exists(conf):
+        print "Config file %s already exists!" % conf
+        sys.exit(1)
+
     config = Wrapper.default_config()
+
     # No point specifying config file name in config file.
     del config['conf']
 

@@ -1,5 +1,6 @@
 from dexy.tests.utils import assert_output
 from dexy.tests.utils import assert_in_output
+from dexy.tests.utils import assert_output_cached
 from dexy.tests.utils import wrap
 from dexy.tests.utils import TEST_DATA_DIR
 from dexy.doc import Doc
@@ -26,25 +27,8 @@ def test_rint_mock():
         assert doc.output().as_sectioned()['assign-vars'] == "> x <- 6\n> y <- 7\n> \n"
         assert doc.output().as_sectioned()['multiply'] == "> x * y\n[1] 42\n> \n"
 
-def test_ht_latex_in_subdir():
-    with wrap() as wrapper:
-        doc = Doc("subdir/article.tex|htlatex",
-                contents=LATEX,
-                wrapper=wrapper)
-
-        wrapper.docs = [doc]
-        wrapper.run()
-        assert doc.output().is_cached()
-
 def test_ht_latex():
-    with wrap() as wrapper:
-        doc = Doc("article.tex|htlatex",
-                contents=LATEX,
-                wrapper=wrapper)
-
-        wrapper.docs = [doc]
-        wrapper.run()
-        assert doc.output().is_cached()
+    assert_output_cached("htlatex", LATEX)
 
 def test_r_batch():
     assert_output('rout', 'print(1+1)', "[1] 2\n")
@@ -60,30 +44,15 @@ def test_ps2pdf_filter():
         doc = Doc("hello.ps|ps2pdf",
                 contents = PS,
                 wrapper=wrapper)
-        wrapper.docs = [doc]
-        wrapper.run()
+        wrapper.run_docs(doc)
         assert doc.output().is_cached()
         assert doc.output().filesize() > 1000
 
 def test_html2pdf_filter():
-    with wrap() as wrapper:
-        doc = Doc("hello.html|html2pdf",
-                contents = "<p>hello</p>",
-                wrapper=wrapper)
-        wrapper.docs = [doc]
-        wrapper.run()
-        assert doc.output().is_cached()
-        assert doc.output().filesize() > 1000
+    assert_output_cached("html2pdf", "<p>hello</p>", min_filesize=1000)
 
 def test_dot_filter():
-    with wrap() as wrapper:
-        doc = Doc("graph.dot|dot",
-                contents = "digraph { a -> b } ",
-                wrapper=wrapper)
-        wrapper.docs = [doc]
-        wrapper.run()
-        assert doc.output().is_cached()
-        assert doc.output().filesize() > 1000
+    assert_output_cached("dot", "digraph { a -> b }", min_filesize=1000, ext=".dot")
 
 def test_pdf2img_filter():
     with wrap() as wrapper:
@@ -92,8 +61,7 @@ def test_pdf2img_filter():
         doc = Doc("example.pdf|pdf2img",
                 wrapper=wrapper)
 
-        wrapper.docs = [doc]
-        wrapper.run()
+        wrapper.run_docs(doc)
         assert doc.output().is_cached()
         assert doc.output().filesize() > 1000
 
@@ -104,8 +72,7 @@ def test_pdf2jpg_filter():
         doc = Doc("example.pdf|pdf2jpg",
                 wrapper=wrapper)
 
-        wrapper.docs = [doc]
-        wrapper.run()
+        wrapper.run_docs(doc)
         assert doc.output().is_cached()
 
 def test_bw_filter():
@@ -115,8 +82,7 @@ def test_bw_filter():
         doc = Doc("example.pdf|bw",
                 wrapper=wrapper)
 
-        wrapper.docs = [doc]
-        wrapper.run()
+        wrapper.run_docs(doc)
         assert doc.output().is_cached()
 
 def test_asciidoc_filter():
@@ -126,15 +92,7 @@ def test_pandoc_filter():
     assert_output("pandoc", "hello", "<p>hello</p>\n", ext=".md")
 
 def test_espeak_filter():
-    with wrap() as wrapper:
-        doc = Doc("subdir/hello.txt|espeak",
-                contents="hello",
-                wrapper=wrapper)
-
-        wrapper.docs = [doc]
-        wrapper.run()
-
-        assert doc.output().is_cached()
+    assert_output_cached("espeak", "hello", min_filesize = 1000)
 
 PS = """%!PS
 1.00000 0.99083 scale

@@ -17,6 +17,7 @@ import dexy.plugins.pydoc_filters
 import dexy.plugins.pygments_filters
 import dexy.plugins.restructured_text_filters
 import dexy.plugins.split_filters
+import dexy.plugins.ssh_filters
 import dexy.plugins.standard_filters
 import dexy.plugins.stationery
 import dexy.plugins.stdout_filters

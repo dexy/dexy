@@ -16,8 +16,7 @@ x*y
                 contents=src,
                 wrapper=wrapper)
 
-        wrapper.docs = [doc]
-        wrapper.run()
+        wrapper.run_docs(doc)
 
         assert doc.output().keys() == ['1', 'vars', 'multiply']
 
@@ -26,8 +25,8 @@ def test_force_text():
         doc = Doc("example.py|idio|t",
                 contents="print 'hello'\n",
                 wrapper=wrapper)
-        wrapper.docs = [doc]
-        wrapper.run()
+
+        wrapper.run_docs(doc)
 
         assert doc.output().as_text() == "print 'hello'\n"
 
@@ -36,7 +35,7 @@ def test_force_latex():
         doc = Doc("example.py|idio|l",
                 contents="print 'hello'\n",
                 wrapper=wrapper)
-        wrapper.docs = [doc]
-        wrapper.run()
+
+        wrapper.run_docs(doc)
 
         assert "begin{Verbatim}" in doc.output().as_text()

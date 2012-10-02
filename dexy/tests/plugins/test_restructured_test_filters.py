@@ -18,8 +18,7 @@ def test_rst2odt():
         doc = Doc("example.txt|rst2odt",
                 contents=RST,
                 wrapper=wrapper)
-        wrapper.docs = [doc]
-        wrapper.run()
+        wrapper.run_docs(doc)
         assert doc.output().filesize() > 8000
 
 def test_rst2xml():
@@ -40,8 +39,7 @@ def test_rest_to_tex():
                 rst={"ext" : ".tex"},
                 wrapper=wrapper)
 
-        wrapper.docs = [doc]
-        wrapper.run()
+        wrapper.run_docs(doc)
         assert doc.output().as_text() == """\
 %
 \\begin{itemize}

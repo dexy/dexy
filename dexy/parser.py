@@ -21,27 +21,6 @@ class Parser:
     def __init__(self, wrapper=None):
         self.wrapper = wrapper
 
-    def process_pattern(self, pattern, children=None, args=None):
-        if not children:
-            children = []
-
-        if not args:
-            args = {}
-
-        args['wrapper'] = self.wrapper
-
-        if not "*" in pattern:
-            doc_class = dexy.doc.Doc
-        else:
-            doc_class = dexy.doc.PatternDoc
-
-        doc = doc_class(
-                pattern,
-                *children,
-                **args)
-
-        return doc
-
 class OriginalDexyParser(Parser):
     ALIASES = [".dexy", "docs.json"]
 
@@ -67,20 +46,25 @@ class OriginalDexyParser(Parser):
                 args['depends'] = args['allinputs']
                 del args['allinputs']
 
-            doc = self.process_pattern(pattern, None, args)
-            self.wrapper.docs.append(doc)
+            doc = self.wrapper.create_doc_from_arg(pattern, **args)
+            doc.wrapper = self.wrapper
+            doc.setup()
+            self.wrapper.docs_to_run.append(doc)
 
 class YamlFileParser(Parser):
     ALIASES = ["docs.yaml"]
 
-    def process_pattern_yaml(self, pattern, bundles=None, args=None):
+    def process_pattern_yaml(self, pattern, *bundles, **args):
         """
         """
         if pattern.startswith("."):
             if not os.path.exists(pattern):
                 pattern = "*%s" % pattern
 
-        return self.process_pattern(pattern, bundles, args)
+        if (not "." in pattern) and (not ":" in pattern):
+            pattern = "bundle:%s" % pattern
+
+        return self.wrapper.create_doc_from_arg(pattern, *bundles, **args)
 
     def parse(self, input_text):
         try:
@@ -92,7 +76,7 @@ class YamlFileParser(Parser):
             msg += str(e)
             raise dexy.exceptions.UserFeedback(msg)
 
-        refs = dict((k, dexy.doc.BundleDoc(k)) for k in data.keys())
+        refs = dict((k, self.process_pattern_yaml(k)) for k in data.keys())
 
         for name, directives in data.iteritems():
             # List of docs we have created in this section.
@@ -118,20 +102,23 @@ class YamlFileParser(Parser):
                     # Create a doc with extra args.
                     assert len(directive) == 1
                     for pattern, args in directive.iteritems():
-                        doc = self.process_pattern_yaml(pattern, bundles, args)
+                        doc = self.process_pattern_yaml(pattern, **args)
                 else:
                     # Create a doc with no special args.
-                    doc = self.process_pattern_yaml(directive, bundles)
+                    doc = self.process_pattern_yaml(directive)
 
                 docs.append(doc)
 
             # Assign our docs to our own bundle.
             bundle = refs[name]
+            bundle.children.extend(bundles)
             bundle.children.extend(docs)
-            if bundle.state == 'new':
+
+        for bundle in refs.values():
+            if not any(bundle in b.children for b in refs.values()):
+                self.wrapper.docs_to_run.append(bundle)
                 bundle.wrapper = self.wrapper
                 bundle.setup()
-                self.wrapper.docs.append(bundle)
 
 class TextFileParser(Parser):
     ALIASES = ["docs.txt"]
@@ -155,5 +142,7 @@ class TextFileParser(Parser):
                     args = {}
 
                 args['depends'] = True
-                doc = self.process_pattern(pattern, None, args)
-                self.wrapper.docs.append(doc)
+                doc = self.wrapper.create_doc_from_arg(pattern, **args)
+                doc.wrapper = self.wrapper
+                doc.setup()
+                self.wrapper.docs_to_run.append(doc)
