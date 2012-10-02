@@ -23,8 +23,7 @@ def test_ragel_state_chart_to_image():
         doc = Doc("example.rl|rlrbd|dot",
                 contents=ragel,
                 wrapper=wrapper)
-    wrapper.docs = [doc]
-    wrapper.run()
+        wrapper.run_docs(doc)
 
 def test_latex_filter_with_unicode():
     with wrap() as wrapper:
@@ -35,5 +34,4 @@ def test_latex_filter_with_unicode():
         doc = PatternDoc("*.tex|jinja|latex",
                 PatternDoc("*.py|idio|pycon|pyg|l", wrapper=wrapper),
                 wrapper=wrapper)
-        wrapper.docs = [doc]
-        wrapper.run()
+        wrapper.run_docs(doc)

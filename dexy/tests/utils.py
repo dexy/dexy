@@ -43,6 +43,11 @@ class wrap(tempdir):
         wrapper.setup_run()
         return wrapper
 
+    def __exit__(self, type, value, traceback):
+        if isinstance(value, dexy.exceptions.InactiveFilter):
+            raise SkipTest
+            return True
+
 class runfilter(tempdir):
     """
     Create a temporary directory, initialize a doc and a wrapper, run the doc.
