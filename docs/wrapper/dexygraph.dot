@@ -1,0 +1,4 @@
+digraph G {
+   "Doc:index.md|jinja|markdown|easyhtml" -> "Doc:modules.txt|pydoc";
+   "PatternDoc:*.md|jinja|markdown|easyhtml" -> "Doc:index.md|jinja|markdown|easyhtml";
+}
