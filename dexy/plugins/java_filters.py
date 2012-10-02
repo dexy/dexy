@@ -30,9 +30,9 @@ class JythonFilter(SubprocessStdoutFilter):
     VERSION_COMMAND = "jython --version"
 
     @classmethod
-    def is_active(self):
+    def is_active(klass):
         if platform.system() in ('Linux', 'Windows'):
-            return True
+            return klass.executable() and True or False
         elif platform.system() in ('Darwin'):
             if hasattr(self, 'log'):
                 self.log.warn("The jython dexy filter should not be run on MacOS due to a serious bug. This filter is being disabled.")
@@ -40,7 +40,7 @@ class JythonFilter(SubprocessStdoutFilter):
         else:
             if hasattr(self, 'log'):
                 self.log.warn("""Can't detect your system. If you see this message please report this to the dexy project maintainer, your platform.system() value is '%s'. The jython dexy filter should not be run on MacOS due to a serious bug.""" % platform.system())
-            return True
+            return klass.executable() and True or False
 
 class JythonInteractiveFilter(PexpectReplFilter):
     ALIASES = ['jythoni']
@@ -52,15 +52,15 @@ class JythonInteractiveFilter(PexpectReplFilter):
     VERSION_COMMAND = "jython --version"
 
     @classmethod
-    def is_active(self):
+    def is_active(klass):
         if platform.system() in ('Linux', 'Windows'):
-            return True
+            return klass.executable() and True or False
         elif platform.system() in ('Darwin'):
             print "The jythoni dexy filter should not be run on MacOS due to a serious bug. This filter is being disabled."
             return False
         else:
             print """Can't detect your system. If you see this message please report this to the dexy project maintainer, your platform.system() value is '%s'. The jythoni dexy filter should not be run on MacOS due to a serious bug.""" % platform.system()
-            return True
+            return klass.executable() and True or False
 
 class JavaFilter(SubprocessCompileFilter):
     ALIASES = ['java']
