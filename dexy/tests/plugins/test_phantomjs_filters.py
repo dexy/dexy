@@ -20,8 +20,7 @@ def test_casperjs_svg2pdf_filter():
         doc = Doc("butterfly.svg|svg2pdf",
                 wrapper=wrapper)
 
-        wrapper.docs = [doc]
-        wrapper.run()
+        wrapper.run_docs(doc)
         assert doc.output().is_cached()
         assert doc.output().filesize() > 1000
 
@@ -31,8 +30,7 @@ def test_casperjs_stdout_filter():
                 contents=CASPER_JS,
                 wrapper=wrapper)
 
-        wrapper.docs = [doc]
-        wrapper.run()
+        wrapper.run_docs(doc)
 
         assert 'google.pdf' in wrapper.registered_doc_names()
         assert 'cookies.txt' in wrapper.registered_doc_names()

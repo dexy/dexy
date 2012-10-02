@@ -41,8 +41,7 @@ ls
         doc = Doc("example.sh|idio|shint|pyg",
                 contents = src,
                 wrapper=wrapper)
-        wrapper.docs = [doc]
-        wrapper.run()
+        wrapper.run_docs(doc)
 
         assert doc.output().keys() == ['1', 'touch', 'ls']
 
@@ -61,8 +60,7 @@ x*y
                 contents=src,
                 wrapper=wrapper)
 
-        wrapper.docs = [doc]
-        wrapper.run()
+        wrapper.run_docs(doc)
 
         assert doc.output().keys() == ['1', 'vars', 'multiply']
         assert doc.output().as_sectioned()['vars'] == """

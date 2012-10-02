@@ -1,9 +1,27 @@
+from dexy.plugin import PluginMeta
 import StringIO
 import dexy.doc
 import dexy.exceptions
 import logging
 
-class Task(object):
+class Task():
+    ALIASES = []
+    __metaclass__ = PluginMeta
+
+    @classmethod
+    def create_from_arg(klass, arg, *children, **kwargs):
+        if ":" in arg:
+            alias, pattern = arg.split(":")
+        else:
+            if "*" in arg:
+                alias = 'pattern'
+            else:
+                alias = 'doc'
+            pattern = arg
+
+        task_class = dexy.task.Task.aliases[alias]
+        return task_class(arg, *children, **kwargs)
+
     def __init__(self, key, *children, **args):
         self.key = key
         self.children = list(children)

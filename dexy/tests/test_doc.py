@@ -23,7 +23,7 @@ def test_filter_class_for_alias():
 def test_output_is_data():
     with wrap() as wrapper:
         doc = Doc("abc.txt", contents="these are the contents", wrapper=wrapper)
-        wrapper.run_tasks(doc)
+        wrapper.run_docs(doc)
         assert isinstance(doc.output(), Data)
 
 ### @export "test-create-doc-with-child"
@@ -38,7 +38,7 @@ def test_create_doc_with_child():
 def test_create_virtual_initial_artifact():
     with wrap() as wrapper:
         doc = Doc("abc.txt", contents="these are the contents", wrapper=wrapper)
-        wrapper.run_tasks(doc)
+        wrapper.run_docs(doc)
         assert doc.children[0].__class__.__name__ == "InitialVirtualArtifact"
         assert doc.children[0].output_data.__class__.__name__ == "GenericData"
 
@@ -47,13 +47,13 @@ def test_create_virtual_initial_artifact_with_dict():
         od_contents = OrderedDict()
         od_contents['1'] = "these are the contents"
         doc = Doc("abc.txt", contents = od_contents, wrapper=wrapper)
-        wrapper.run_tasks(doc)
+        wrapper.run_docs(doc)
         assert doc.children[0].output_data.__class__.__name__ == "SectionedData"
 
 def test_create_doc_with_filters():
     with wrap() as wrapper:
         doc = Doc("abc.txt|outputabc", contents="these are the contents", wrapper=wrapper)
-        wrapper.run_tasks(doc)
+        wrapper.run_docs(doc)
 
 def test_doc_setup():
     with wrap() as wrapper:
@@ -86,7 +86,7 @@ def test_doc_run():
     with wrap() as wrapper:
         doc = Doc("abc.txt|dexy|dexy", wrapper=wrapper)
         doc.run()
-        assert doc in wrapper.registered
+        assert doc in wrapper.tasks.values()
 
 def test_setup_pattern_doc_no_filters():
     with wrap() as wrapper:

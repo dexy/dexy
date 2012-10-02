@@ -51,8 +51,7 @@ def test_subdirectories():
                 contents="hello",
                 wrapper=wrapper)
 
-        wrapper.docs = [doc]
-        wrapper.run()
+        wrapper.run_docs(doc)
 
         env = doc.final_artifact.filter_instance.run_plugins()
         assert 's1' in env['subdirectories']
@@ -69,8 +68,7 @@ def test_variables():
                 testvars = { "variables" : {"foo" : "bar", "x" : 123.4 } },
                 wrapper=wrapper)
 
-        wrapper.docs = [doc]
-        wrapper.run()
+        wrapper.run_docs(doc)
 
         env = doc.final_artifact.filter_instance.run_plugins()
         assert env['foo'] == 'bar'
@@ -87,8 +85,7 @@ def test_globals():
                 contents = "hello",
                 wrapper=wrapper)
 
-        wrapper.docs = [doc]
-        wrapper.run()
+        wrapper.run_docs(doc)
 
         env = doc.final_artifact.filter_instance.run_plugins()
         assert env['foo'] == 'bar'

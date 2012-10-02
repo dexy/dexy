@@ -12,10 +12,9 @@ def test_walk_working_dir():
                     },
                 wrapper=wrapper)
 
-        wrapper.docs = [doc]
-        wrapper.run()
+        wrapper.run_docs(doc)
 
-        for doc in wrapper.registered:
+        for doc in wrapper.registered_docs():
             if doc.key_with_class() == "Doc:example.sh-sh.txt-files":
                 assert doc.output().as_sectioned()['newfile.txt'] == "hello\n"
 
@@ -29,8 +28,7 @@ def test_add_new_files():
                     },
                 wrapper=wrapper)
 
-        wrapper.docs = [doc]
-        wrapper.run()
+        wrapper.run_docs(doc)
 
         assert wrapper.registered_docs()[1].key == 'newfile.txt'
         assert wrapper.registered_docs()[1].output().data() == "hello\n"
@@ -52,8 +50,7 @@ def test_command_line_args():
                 wrapper=wrapper,
                 contents="print 'hello'"
                 )
-        wrapper.docs = [doc]
-        wrapper.run()
+        wrapper.run_docs(doc)
 
         assert doc.output().data() == "hello\n"
 
@@ -67,8 +64,7 @@ def test_scriptargs():
                 wrapper=wrapper,
                 contents="import sys\nprint sys.argv[1]"
                 )
-        wrapper.docs = [doc]
-        wrapper.run()
+        wrapper.run_docs(doc)
 
         assert doc.output().data() == "--foo\n"
 
@@ -82,8 +78,7 @@ def test_custom_env_in_args():
                 wrapper=wrapper,
                 contents="import os\nprint os.environ['FOO']"
                 )
-        wrapper.docs = [doc]
-        wrapper.run()
+        wrapper.run_docs(doc)
 
         assert doc.output().data() == "bar\n"
 
@@ -93,9 +88,8 @@ def test_nonzero_exit():
                 wrapper=wrapper,
                 contents="import sys\nsys.exit(1)"
                 )
-        wrapper.docs = [doc]
         try:
-            wrapper.run()
+            wrapper.run_docs(doc)
             assert False, "should raise NonzeroExit"
         except dexy.exceptions.NonzeroExit:
             assert True
@@ -107,6 +101,5 @@ def test_ignore_nonzero_exit():
                 wrapper=wrapper,
                 contents="import sys\nsys.exit(1)"
                 )
-        wrapper.docs = [doc]
-        wrapper.run()
+        wrapper.run_docs(doc)
         assert True # no NonzeroExit was raised...

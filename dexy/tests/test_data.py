@@ -10,8 +10,7 @@ def test_write_outside_project_root():
                 contents = "hello",
                 wrapper=wrapper)
 
-        wrapper.docs = [doc]
-        wrapper.run()
+        wrapper.run_docs(doc)
 
         try:
             wrapper.report()

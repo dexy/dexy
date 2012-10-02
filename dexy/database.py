@@ -37,7 +37,7 @@ class Sqlite3(Database):
     def __init__(self, wrapper):
         self.wrapper = wrapper
         self.conn = sqlite3.connect(
-                self.wrapper.db_path,
+                self.wrapper.db_path(),
                 detect_types=sqlite3.PARSE_DECLTYPES
                 )
         self.conn.row_factory = sqlite3.Row
@@ -45,7 +45,7 @@ class Sqlite3(Database):
         self.create_table()
 
     def all_in_batch(self, n=10):
-        sql = "select doc_key from tasks where batch_id = ? LIMIT ?"
+        sql = "select unique_key from tasks where batch_id = ? LIMIT ?"
         values = (self.wrapper.batch_id, n,)
         self.cursor.execute(sql, values)
         rows = self.cursor.fetchall()
@@ -72,7 +72,6 @@ class Sqlite3(Database):
 
     def find_data_by_websafe_key(self, web_safe_key):
         doc_key = web_safe_key.replace("--", "/")
-        print "looking for doc key %s derived from web safe key %s" % (doc_key, web_safe_key)
         return self.find_data_by_doc_key(doc_key)
 
     def get_child_hashes_in_previous_batch(self, current_batch_id, parent_hashstring):

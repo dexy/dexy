@@ -30,5 +30,5 @@ def test_pre_post():
         assert parent.post_return == 43
 
 CHILD_TEXT = """\
-Parent's pre return is {{ w.registered_dict['Doc:parent.txt|prepost'].pre_return }}
-Parent's post return exists {{ hasattr(w.registered_dict['Doc:parent.txt|prepost'], 'post_return') }}"""
+Parent's pre return is {{ w.tasks['Doc:parent.txt|prepost'].pre_return }}
+Parent's post return exists {{ hasattr(w.tasks['Doc:parent.txt|prepost'], 'post_return') }}"""

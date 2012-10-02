@@ -9,11 +9,12 @@ class GraphReporter(Reporter):
         dotfile = 'dexygraph.dot'
 
         graph = ["digraph G {"]
+        print wrapper.registered
         for task in wrapper.registered:
-            if isinstance(task, Doc):
+            if task.is_doc():
                 for child in task.children:
-                    if isinstance(child, Doc):
-                        graph.append("""   "%s" -> "%s";""" % (task.key, child.key))
+                    if child.is_doc():
+                        graph.append("""   "%s" -> "%s";""" % (task.key_with_class(), child.key_with_class()))
 
         graph.append("}")
 

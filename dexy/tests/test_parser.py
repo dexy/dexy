@@ -19,17 +19,17 @@ def test_yaml_parser():
         parser = YamlFileParser()
         parser.wrapper = wrapper
         parser.parse(YAML)
-        docs = wrapper.docs
+        docs = wrapper.docs_to_run
         for doc in docs:
             assert doc.__class__.__name__ == 'BundleDoc'
-            assert doc.key in ['code', 'wordpress']
+            assert doc.key in ['code', 'bundle:wordpress']
 
 def test_text_parser_blank_lines():
     with wrap() as wrapper:
         parser = TextFileParser()
         parser.wrapper = wrapper
         parser.parse("\n\n")
-        docs = wrapper.docs
+        docs = wrapper.docs_to_run
         assert len(docs) == 0
 
 def test_text_parser_comments():
@@ -41,7 +41,7 @@ def test_text_parser_comments():
         # commented-out.doc
         """)
 
-        docs = wrapper.docs
+        docs = wrapper.docs_to_run
         assert len(docs) == 1
         assert docs[0].key == "valid.doc"
 
@@ -53,7 +53,7 @@ def test_text_parser_valid_json():
         doc.txt { "contents" : 123 }
         """)
 
-        docs = wrapper.docs
+        docs = wrapper.docs_to_run
         assert docs[0].key == "doc.txt"
         assert docs[0].args['contents'] == 123
 
@@ -66,7 +66,7 @@ def test_text_parser_invalid_json():
             parser.parse("""
             doc.txt { "contents" : 123
             """)
-            docs = wrapper.docs
+            docs = wrapper.docs_to_run
             assert False, 'should raise UserFeedback'
         except dexy.exceptions.UserFeedback as e:
             assert 'unable to parse' in e.message
@@ -90,8 +90,7 @@ def test_text_parser():
         *.md|jinja
         """)
 
-        docs = [task for task in wrapper.registered if task.__class__.__name__ == 'Doc']
-
+        docs = wrapper.registered_docs()
         assert len(docs) == 5
 
         assert docs[0] in docs[1].children
@@ -119,7 +118,7 @@ def test_text_parser_virtual_file():
         """)
 
         wrapper.run()
-        docs = wrapper.docs
+        docs = wrapper.docs_to_run
 
         assert docs[0].key == "virtual.txt"
         assert docs[0].output().as_text() == "hello"
@@ -134,7 +133,7 @@ def test_original_parser():
         parser.wrapper = wrapper
         parser.parse(conf)
 
-        assert wrapper.docs[0].key_with_class() == "PatternDoc:*.txt"
+        assert wrapper.docs_to_run[0].key_with_class() == "PatternDoc:*.txt"
 
 def test_original_parser_allinputs():
     with wrap() as wrapper:
@@ -148,9 +147,9 @@ def test_original_parser_allinputs():
         parser.wrapper = wrapper
         parser.parse(conf)
 
-        assert wrapper.docs[0].key_with_class() == "PatternDoc:*.txt"
-        assert wrapper.docs[1].key_with_class() == "Doc:hello.txt"
-        assert wrapper.docs[2].key_with_class() == "PatternDoc:*.md|jinja"
+        assert wrapper.docs_to_run[0].key_with_class() == "PatternDoc:*.txt"
+        assert wrapper.docs_to_run[1].key_with_class() == "Doc:hello.txt"
+        assert wrapper.docs_to_run[2].key_with_class() == "PatternDoc:*.md|jinja"
 
 INVALID_YAML = """\
 code:
