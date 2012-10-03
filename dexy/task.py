@@ -20,7 +20,7 @@ class Task():
             pattern = arg
 
         task_class = dexy.task.Task.aliases[alias]
-        return task_class(arg, *children, **kwargs)
+        return task_class(pattern, *children, **kwargs)
 
     def __init__(self, key, *children, **args):
         self.key = key

@@ -13,7 +13,7 @@ def test_latex():
 
 def test_broken_latex():
     try:
-        with runfilter('latex', BROKEN_LATEX) as doc:
+        with runfilter('latex', BROKEN_LATEX):
             pass
         assert False, 'should raise UserFeedback'
     except dexy.exceptions.UserFeedback as e:

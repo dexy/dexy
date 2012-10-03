@@ -130,7 +130,7 @@ def test_parent_doc_hash():
 
         wrapper.setup_run()
         rows = wrapper.get_child_hashes_in_previous_batch(hashstring)
-
+        assert len(rows) == 3
 
 def test_parent_doc_hash_2():
     with tempdir():

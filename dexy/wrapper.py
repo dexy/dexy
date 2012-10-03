@@ -3,6 +3,7 @@ import dexy.database
 import dexy.doc
 import dexy.parser
 import dexy.reporter
+import inspect
 import json
 import logging
 import logging.handlers

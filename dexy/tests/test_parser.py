@@ -22,7 +22,7 @@ def test_yaml_parser():
         docs = wrapper.docs_to_run
         for doc in docs:
             assert doc.__class__.__name__ == 'BundleDoc'
-            assert doc.key in ['code', 'bundle:wordpress']
+            assert doc.key in ['code', 'wordpress']
 
 def test_text_parser_blank_lines():
     with wrap() as wrapper:
@@ -66,7 +66,6 @@ def test_text_parser_invalid_json():
             parser.parse("""
             doc.txt { "contents" : 123
             """)
-            docs = wrapper.docs_to_run
             assert False, 'should raise UserFeedback'
         except dexy.exceptions.UserFeedback as e:
             assert 'unable to parse' in e.message

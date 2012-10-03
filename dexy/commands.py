@@ -12,7 +12,6 @@ import logging
 import os
 import pkg_resources
 import sys
-import warnings
 
 DEFAULT_COMMAND = 'dexy'
 MOD = sys.modules[__name__]

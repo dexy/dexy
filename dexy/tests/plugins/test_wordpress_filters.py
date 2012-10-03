@@ -10,13 +10,13 @@ import os
 import shutil
 
 def test_docmd_create_keyfile():
-    with wrap() as wrapper:
+    with wrap():
         assert not os.path.exists(".dexyapis")
         WordPressFilter.docmd_create_keyfile()
         assert os.path.exists(".dexyapis")
 
 def test_docmd_create_keyfile_if_exists():
-    with wrap() as wrapper:
+    with wrap():
         with open(".dexyapis", "w") as f:
             f.write("{}")
         assert os.path.exists(".dexyapis")
@@ -27,7 +27,7 @@ def test_docmd_create_keyfile_if_exists():
             assert ".dexyapis already exists" in e.message
 
 def test_api_url_with_php_ending():
-    with wrap() as wrapper:
+    with wrap():
         with open(".dexyapis", "wb") as f:
             json.dump({
                     "wordpress" : {"url" : "http://example.com/api/xmlrpc.php"}
@@ -37,7 +37,7 @@ def test_api_url_with_php_ending():
         assert url == "http://example.com/api/xmlrpc.php"
 
 def test_api_url_without_php_ending():
-    with wrap() as wrapper:
+    with wrap():
         with open(".dexyapis", "wb") as f:
             json.dump({ "wordpress" : {"url" : "http://example.com/api"} }, f)
 
@@ -45,7 +45,7 @@ def test_api_url_without_php_ending():
         assert url == "http://example.com/api/xmlrpc.php"
 
 def test_api_url_without_php_ending_with_trailing_slash():
-    with wrap() as wrapper:
+    with wrap():
         with open(".dexyapis", "wb") as f:
             json.dump({ "wordpress" : {"url" : "http://example.com/api/"} }, f)
 

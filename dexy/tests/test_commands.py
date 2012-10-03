@@ -1,7 +1,8 @@
 from StringIO import StringIO
-from dexy.version import DEXY_VERSION
 from dexy.tests.utils import tempdir
+from dexy.version import DEXY_VERSION
 from mock import patch
+from nose.exc import SkipTest
 import dexy.commands
 import os
 import sys
@@ -74,7 +75,7 @@ def test_run_version(stdout):
 
 @patch.object(sys, 'argv', ['dexy'])
 @patch('sys.stdout', new_callable=StringIO)
-def test_run_help(stdout):
+def test_run_dexy(stdout):
     with tempdir():
         dexy.commands.run()
         assert os.path.exists('artifacts')
@@ -82,8 +83,11 @@ def test_run_help(stdout):
 @patch.object(sys, 'argv', ['dexy', 'viewer:ping'])
 @patch('sys.stdout', new_callable=StringIO)
 def test_viewer_command(stdout):
-    dexy.commands.run()
-    assert "pong" in stdout.getvalue()
+    try:
+        dexy.commands.run()
+        assert "pong" in stdout.getvalue()
+    except SystemExit:
+        raise SkipTest
 
 @patch.object(sys, 'argv', ['dexy', 'conf'])
 @patch('sys.stdout', new_callable=StringIO)

@@ -34,12 +34,12 @@ class JythonFilter(SubprocessStdoutFilter):
         if platform.system() in ('Linux', 'Windows'):
             return klass.executable() and True or False
         elif platform.system() in ('Darwin'):
-            if hasattr(self, 'log'):
-                self.log.warn("The jython dexy filter should not be run on MacOS due to a serious bug. This filter is being disabled.")
+            if hasattr(klass, 'log'):
+                klass.log.warn("The jython dexy filter should not be run on MacOS due to a serious bug. This filter is being disabled.")
             return False
         else:
-            if hasattr(self, 'log'):
-                self.log.warn("""Can't detect your system. If you see this message please report this to the dexy project maintainer, your platform.system() value is '%s'. The jython dexy filter should not be run on MacOS due to a serious bug.""" % platform.system())
+            if hasattr(klass, 'log'):
+                klass.log.warn("""Can't detect your system. If you see this message please report this to the dexy project maintainer, your platform.system() value is '%s'. The jython dexy filter should not be run on MacOS due to a serious bug.""" % platform.system())
             return klass.executable() and True or False
 
 class JythonInteractiveFilter(PexpectReplFilter):

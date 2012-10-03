@@ -1,7 +1,6 @@
 from dexy.doc import Doc
-from dexy.utils import char_diff
-from dexy.tests.utils import wrap
 from dexy.filter import DexyFilter
+from dexy.tests.utils import wrap
 
 class PrePost(DexyFilter):
     ALIASES = ['prepost']

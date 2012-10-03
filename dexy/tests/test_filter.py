@@ -1,6 +1,5 @@
 from dexy.doc import Doc
 from dexy.tests.utils import wrap
-import dexy.exceptions
 
 def test_filter_args():
     with wrap() as wrapper:

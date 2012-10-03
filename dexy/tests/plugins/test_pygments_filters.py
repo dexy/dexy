@@ -1,8 +1,6 @@
 from dexy.common import OrderedDict
-from dexy.doc import Doc
-from dexy.tests.utils import assert_output
-from dexy.tests.utils import wrap
 from dexy.tests.utils import assert_in_output
+from dexy.tests.utils import assert_output
 from dexy.tests.utils import assert_output_cached
 
 def test_pyg4rst():

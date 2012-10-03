@@ -1,4 +1,3 @@
-from dexy.doc import Doc
 from dexy.reporter import Reporter
 import os
 
