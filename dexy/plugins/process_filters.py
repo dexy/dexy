@@ -11,8 +11,9 @@ class SubprocessFilter(Filter):
     ALIASES = []
     CHECK_RETURN_CODE = True
     ENV = None
-    TIMEOUT = None
     INITIAL_TIMEOUT = None
+    REQUIRED_EXECUTABLES = []
+    TIMEOUT = None
     VERSION_COMMAND = None
     WALK_WORKING_DIRECTORY = False
     WINDOWS_VERSION_COMMAND = None
@@ -40,8 +41,12 @@ class SubprocessFilter(Filter):
                     return exe
 
     @classmethod
+    def required_executables_present(klass):
+        return all(dexy.utils.command_exists(exe) for exe in klass.REQUIRED_EXECUTABLES)
+
+    @classmethod
     def is_active(klass):
-        return klass.executable() and True or False
+        return klass.executable() and klass.required_executables_present()
 
     @classmethod
     def version_command(klass):

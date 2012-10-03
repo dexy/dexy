@@ -119,6 +119,7 @@ class ManPageSubprocessStdoutFilter(SubprocessStdoutFilter):
     """
     ALIASES = ['man']
     EXECUTABLE = 'man'
+    REQUIRED_EXECUTABLES = ['strings']
     VERSION_COMMAND = 'man --version'
     INPUT_EXTENSIONS = [".txt"]
     OUTPUT_EXTENSIONS = [".json"]
