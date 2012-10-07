@@ -147,6 +147,16 @@ def reset_command(
     wrapper.remove_dexy_dirs()
     wrapper.setup_dexy_dirs()
 
+def cleanup_command(
+        artifactsdir=Wrapper.DEFAULT_ARTIFACTS_DIR, # location of directory in which to store artifacts
+        logsdir=Wrapper.DEFAULT_LOG_DIR # location of directory in which to store logs
+        ):
+    """
+    Remove the artifacts and logs directories.
+    """
+    wrapper = Wrapper(**locals())
+    wrapper.remove_dexy_dirs()
+
 def reports_command(args):
     pass
 
