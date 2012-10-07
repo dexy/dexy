@@ -1,10 +1,15 @@
-from boto.s3.key import Key
 from datetime import datetime
 from dexy.plugins.api_filters import ApiFilter
-import boto
 import dexy.exceptions
 import getpass
 import os
+
+try:
+    import boto
+    from boto.s3.key import Key
+    AVAILABLE = True
+except ImportError:
+    AVAILABLE = False
 
 class BotoUploadFilter(ApiFilter):
     """
@@ -37,6 +42,10 @@ class BotoUploadFilter(ApiFilter):
     OUTPUT_EXTENSIONS = [".txt"]
     API_KEY_NAME = 'AWS'
     API_KEY_KEYS = ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_BUCKET_NAME']
+
+    @classmethod
+    def is_active(klass):
+        return AVAILABLE
 
     def bucket_name(self):
         """
