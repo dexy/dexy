@@ -97,9 +97,6 @@ class Doc(dexy.task.Task):
         self.metadata = artifact.metadata
 
     def setup_child_docs(self):
-        """
-        Make sure all child Doc instances are setup also.
-        """
         for child in self.children:
             if not child in self.artifacts:
                 if child.state == 'new':
@@ -221,9 +218,3 @@ class BundleDoc(dexy.task.Task):
         self.set_log()
         self.setup_child_docs()
         self.after_setup()
-
-#class ExtendableDoc(dexy.task.Task):
-#    NAMESPACE = None
-#    DEFAULT_COMMAND = None
-#
-#

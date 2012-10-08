@@ -41,10 +41,10 @@ class EC2Launch(dexy.task.Task):
         return self.args.get('ami', self.AMI)
 
     def instance_type(self):
-        return self.args.get('instance-type', self.INSTANCE_TYPE)
+        return self.args.get('instance_type', self.INSTANCE_TYPE)
 
     def shutdown_behavior(self):
-        behavior = self.args.get('shutdown-behavior', self.SHUTDOWN_BEHAVIOR)
+        behavior = self.args.get('shutdown_behavior', self.SHUTDOWN_BEHAVIOR)
         if not behavior in self.VALID_SHUTDOWN_BEHAVIORS:
             msg = "Specified shutdown behavior '%s' not available, choose from %s"
             args = (behavior, ", ".join(self.VALID_SHUTDOWN_BEHAVIORS))
@@ -52,11 +52,17 @@ class EC2Launch(dexy.task.Task):
         return behavior
 
     def ec2_keypair_name(self):
-        # TODO specify in the other normal ways
-        keypair_name = os.getenv('EC2_KEYPAIR_NAME')
-        if not keypair_name:
-            raise Exception("no EC2_KEYPAIR_NAME defined")
-        return keypair_name
+        if self.args.get('ec2_keypair'):
+            self.log.debug("Reading ec2 keypair name from args")
+            ec2_keypair_name = self.args.get('ec2_keypair')
+        else:
+            self.log.debug("Reading ec2 keypair name from EC2_KEYPAIR_NAME environment variable")
+            ec2_keypair_name = os.getenv('EC2_KEYPAIR_NAME')
+
+        if not ec2_keypair_name:
+            raise dexy.exceptions.UserFeedback("no ec2 keypair name defined")
+
+        return ec2_keypair_name
 
     def ec2_keypair_filepath(self):
         return os.path.expanduser("~/.ec2/%s.pem" % self.ec2_keypair_name())
@@ -97,7 +103,7 @@ class EC2Launch(dexy.task.Task):
                 raise dexy.exceptions.UserFeedback("Oops! instance shutting down already.")
 
             elif instance.state == 'terminated':
-                raise dexy.exceptions.UserFeedback("Oops! instance terminating already.")
+                raise dexy.exceptions.UserFeedback("Oops! instance terminated already.")
 
             else:
                 raise dexy.exceptions.InternalDexyProblem("unexpected instance state '%s'" % instance.state)

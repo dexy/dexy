@@ -158,12 +158,12 @@ code:
 
 YAML = """\
 code:
-    - "*.R|pyg":
+    - .R|pyg:
          "pyg" : { "foo" : "bar" }
-    - "*.R|idio"
+    - .R|idio
 
 wordpress:
     - code
     - test.txt|jinja
-    - \*.md|jinja|markdown|wp
+    - .md|jinja|markdown|wp
 """

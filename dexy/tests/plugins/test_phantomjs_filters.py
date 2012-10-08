@@ -1,8 +1,9 @@
 from dexy.doc import Doc
 from dexy.tests.utils import TEST_DATA_DIR
 from dexy.tests.utils import assert_output
-from dexy.tests.utils import wrap
 from dexy.tests.utils import runfilter
+from dexy.tests.utils import wrap
+from nose.exc import SkipTest
 import os
 import shutil
 
@@ -33,7 +34,17 @@ def test_casperjs_stdout_filter():
         wrapper.run_docs(doc)
 
         assert 'google.pdf' in wrapper.registered_doc_names()
-        assert 'cookies.txt' in wrapper.registered_doc_names()
+
+        try:
+            assert 'cookies.txt' in wrapper.registered_doc_names()
+        except AssertionError as e:
+            import urllib
+            try:
+                urllib.urlopen("http://google.com")
+                raise e
+            except IOError:
+                raise SkipTest
+
 
 PHANTOM_JS = """
 console.log('Hello, world!');

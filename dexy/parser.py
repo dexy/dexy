@@ -55,8 +55,6 @@ class YamlFileParser(Parser):
     ALIASES = ["docs.yaml"]
 
     def process_pattern_yaml(self, pattern, *bundles, **args):
-        """
-        """
         if pattern.startswith("."):
             if not os.path.exists(pattern):
                 pattern = "*%s" % pattern
