@@ -148,6 +148,7 @@ class Wrapper(object):
                 task()
 
         self.save_db()
+        self.setup_graph()
 
     def setup_run(self):
         self.check_dexy_dirs()
@@ -171,7 +172,7 @@ class Wrapper(object):
 
     def check_dexy_dirs(self):
         if not (os.path.exists(self.artifacts_dir) and os.path.exists(self.log_dir)):
-            raise dexy.exceptions.UserFeedback("Need to run 'dexy setup' first.")
+            raise dexy.exceptions.UserFeedback("You need to run 'dexy setup' in this directory first.")
 
     def setup_dexy_dirs(self):
         if not os.path.exists(self.artifacts_dir):
@@ -296,9 +297,14 @@ class Wrapper(object):
         for k in parser_aliases.keys():
             if os.path.exists(k):
                 self.log.debug("found doc config file '%s'" % k)
+
                 parser = parser_aliases[k](self)
+
                 with open(k, "r") as f:
-                    parser.parse(f.read())
+                    self.doc_config = f.read()
+                    parser.parse(self.doc_config)
+
+                break
 
     def setup_config(self):
         self.setup_dexy_dirs()
@@ -307,5 +313,37 @@ class Wrapper(object):
 
     def cleanup_partial_run(self):
         if hasattr(self, 'db'):
-            # TODO remove any entries which don't have 
+            # TODO remove any entries which don't have
             self.db.save()
+
+    def setup_graph(self):
+        """
+        Creates a dot representation of the tree.
+        """
+        graph = ["digraph G {"]
+
+        for task in self.tasks.values():
+            if hasattr(task, 'artifacts'):
+                task_label = task.key_with_class().replace("|", "\|")
+                label = """   "%s" [shape=record, label="%s\\n\\n""" % (task.key_with_class(), task_label)
+                for child in task.artifacts:
+                    label += "%s\l" % child.key_with_class().replace("|", "\|")
+
+                label += "\"];"
+                graph.append(label)
+
+                for child in task.children:
+                    if not child in task.artifacts:
+                        graph.append("""   "%s" -> "%s";""" % (task.key_with_class(), child.key_with_class()))
+
+            elif "Artifact" in task.__class__.__name__:
+                pass
+            else:
+                graph.append("""   "%s" [shape=record];""" % task.key_with_class())
+                for child in task.children:
+                    graph.append("""   "%s" -> "%s";""" % (task.key_with_class(), child.key_with_class()))
+
+
+        graph.append("}")
+
+        self.graph = "\n".join(graph)

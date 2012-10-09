@@ -3,13 +3,34 @@ import StringIO
 import dexy.doc
 import dexy.exceptions
 import logging
+import os
 
 class Task():
     ALIASES = []
     __metaclass__ = PluginMeta
 
+    def __repr__(self):
+        return self.key_with_class()
+
     @classmethod
-    def create_from_arg(klass, arg, *children, **kwargs):
+    def qualified_arg_from_arg(klass, arg):
+        # Allow .ext instead of *.ext
+        if arg.startswith("."):
+            if not os.path.exists(arg):
+                arg = "*%s" % arg
+
+        # Assume names are bundles unless they match a file, look like a file,
+        # or have an explicit alias
+        if (not "." in arg) and (not ":" in arg):
+            if (not os.path.exists(arg)):
+                arg = "bundle:%s" % arg
+
+        return arg
+
+    @classmethod
+    def task_class_from_arg(klass, arg):
+        arg = klass.qualified_arg_from_arg(arg)
+
         if ":" in arg:
             alias, pattern = arg.split(":")
         else:
@@ -19,8 +40,16 @@ class Task():
                 alias = 'doc'
             pattern = arg
 
-        task_class = dexy.task.Task.aliases[alias]
+        return dexy.task.Task.aliases[alias], pattern
+
+    @classmethod
+    def create_from_arg(klass, arg, *children, **kwargs):
+        task_class, pattern = klass.task_class_from_arg(arg)
         return task_class(pattern, *children, **kwargs)
+
+    def to_arg(self):
+        alias = self.ALIASES[0]
+        return "%s:%s" % (alias, self.key)
 
     def __init__(self, key, *children, **args):
         self.key = key

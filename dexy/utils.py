@@ -1,4 +1,21 @@
 import os
+import yaml
+import inspect
+import dexy.exceptions
+
+def parse_json(input_text):
+    raise "TODO implement"
+
+def parse_yaml(input_text):
+    try:
+        return yaml.load(input_text)
+    except (yaml.scanner.ScannerError, yaml.parser.ParserError) as e:
+        msg = inspect.cleandoc("""Was unable to parse the YAML in your config file.
+        Here is information from the YAML parser:""")
+        msg += "\n"
+        msg += str(e)
+        raise dexy.exceptions.UserFeedback(msg)
+
 
 def printable_for_char(c):
     if ord(c) >= ord('!'):

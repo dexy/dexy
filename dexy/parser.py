@@ -1,10 +1,10 @@
 from dexy.plugin import PluginMeta
+from dexy.utils import parse_yaml
+import dexy.exceptions
 import dexy.doc
 import inspect
 import json
-import os
 import re
-import yaml
 
 class Parser:
     """
@@ -54,69 +54,73 @@ class OriginalDexyParser(Parser):
 class YamlFileParser(Parser):
     ALIASES = ["docs.yaml"]
 
-    def process_pattern_yaml(self, pattern, *bundles, **args):
-        if pattern.startswith("."):
-            if not os.path.exists(pattern):
-                pattern = "*%s" % pattern
-
-        if (not "." in pattern) and (not ":" in pattern):
-            pattern = "bundle:%s" % pattern
-
-        return self.wrapper.create_doc_from_arg(pattern, *bundles, **args)
-
     def parse(self, input_text):
-        try:
-            data = yaml.load(input_text)
-        except (yaml.scanner.ScannerError, yaml.parser.ParserError) as e:
-            msg = inspect.cleandoc("""Was unable to parse the YAML in your config file.
-            Here is information from the YAML parser:""")
-            msg += "\n"
-            msg += str(e)
-            raise dexy.exceptions.UserFeedback(msg)
+        config = parse_yaml(input_text)
+        print "raw config", config
 
-        refs = dict((k, self.process_pattern_yaml(k)) for k in data.keys())
-
-        for name, directives in data.iteritems():
-            # List of docs we have created in this section.
+        def parse_key_mapping(mapping):
             docs = []
+            for k, v in mapping.iteritems():
+                # k is a document key
+                # v is a sequence of children or kwargs
+                children = []
+                kwargs = {}
+                for element in v:
+                    if hasattr(element, 'keys'):
+                        assert len(element) == 1, "WTF why does '%s' have len > 1?!" % element
+                        for kk, vv in element.iteritems():
+                            if isinstance(vv, list):
+                                # This is a sequence, probably a child doc but
+                                # if starts with 'args' then is nested complex
+                                # keyword args.
+                                if kk == "args":
+                                    kwargs.update(vv[0])
 
-            # List of doc directives we will create in this sectoin.
-            doc_directives = []
+                                else:
+                                    children.append(*parse_key_mapping(element))
 
-            # List of bundles which docs in this section depend on.
-            bundles = []
+                            else:
+                                # This is a key:value argument
+                                kwargs.update(element)
 
-            for element in directives:
-                if isinstance(element, str) or isinstance(element, unicode):
-                    if element in refs:
-                        bundles.append(refs[element])
                     else:
-                        doc_directives.append(element)
-                else:
-                    doc_directives.append(element)
+                        # This is a child doc with no args
+                        assert isinstance(element, basestring), "WTF why isn't '%s' a string?!" % element
+                        children.append(parse_single_key(element))
 
-            for directive in doc_directives:
-                if isinstance(directive, dict):
-                    # Create a doc with extra args.
-                    assert len(directive) == 1
-                    for pattern, args in directive.iteritems():
-                        doc = self.process_pattern_yaml(pattern, **args)
-                else:
-                    # Create a doc with no special args.
-                    doc = self.process_pattern_yaml(directive)
+                docs.append(parse_single_key(k, *children, **kwargs))
 
-                docs.append(doc)
+            return docs
 
-            # Assign our docs to our own bundle.
-            bundle = refs[name]
-            bundle.children.extend(bundles)
-            bundle.children.extend(docs)
+        def parse_single_key(key, *children, **kwargs):
+            task_class, pattern = dexy.task.Task.task_class_from_arg(key)
+            qual_arg = "%s:%s" % (task_class.__name__, pattern)
+            if qual_arg in self.wrapper.tasks.keys():
+                return self.wrapper.tasks[qual_arg]
+            else:
+                return dexy.task.Task.create_from_arg(key, *children, wrapper=self.wrapper, **kwargs)
 
-        for bundle in refs.values():
-            if not any(bundle in b.children for b in refs.values()):
-                self.wrapper.docs_to_run.append(bundle)
-                bundle.wrapper = self.wrapper
-                bundle.setup()
+        def parse_keys(data):
+            # The next thing we parse must be a single key or a mapping
+            # with one or more keys
+            if hasattr(data, 'keys'):
+                return parse_key_mapping(data)
+            elif isinstance(data, basestring):
+                return parse_single_key(data)
+            elif isinstance(data, list):
+                docs = []
+                for element in data:
+                    docs.append(*parse_keys(element))
+                return docs
+            else:
+                raise Exception("invalid input %s" % data)
+
+        keys = parse_keys(config)
+
+        if isinstance(keys, dexy.task.Task):
+            return [keys]
+        else:
+            return keys
 
 class TextFileParser(Parser):
     ALIASES = ["docs.txt"]

@@ -5,22 +5,14 @@ import subprocess
 class GraphReporter(Reporter):
     ALIASES = ['graph', 'dot']
 
-    def run(self, wrapper):
-        dotfile = 'dexygraph.dot'
-
-        graph = ["digraph G {"]
-
-        for doc in wrapper.registered_docs():
-            for child in doc.children:
-                if not child in doc.artifacts:
-                    graph.append("""   "%s" -> "%s";""" % (doc.key_with_class(), child.key_with_class()))
-
-        graph.append("}")
-
+    @classmethod
+    def write_graph_to_dotfile(klass, wrapper, dotfile):
         with open(dotfile, "w") as f:
-            f.write("\n".join(graph))
+            f.write(wrapper.graph)
 
-        command = "dot %s -Tpng -odexygraph.png" % dotfile
+    @classmethod
+    def render_dotfile_to_png(klass, dotfile, pngfile):
+        command = "dot %s -Tpng -o%s" % (dotfile, pngfile)
         proc = subprocess.Popen(
                    command,
                    shell=True,
@@ -28,3 +20,10 @@ class GraphReporter(Reporter):
                    stderr=subprocess.STDOUT
                )
         proc.communicate()
+
+    def run(self, wrapper):
+        dotfile = os.path.join(wrapper.log_dir, 'dexygraph.dot')
+        pngfile = os.path.join(wrapper.log_dir, 'dexygraph.png')
+
+        self.write_graph_to_dotfile(self.wrapper, dotfile)
+        self.render_dotfile_to_image(dotfile, pngfile)

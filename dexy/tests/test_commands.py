@@ -77,8 +77,9 @@ def test_run_version(stdout):
 @patch('sys.stdout', new_callable=StringIO)
 def test_run_dexy(stdout):
     with tempdir():
+        os.makedirs('logs')
+        os.makedirs('artifacts')
         dexy.commands.run()
-        assert os.path.exists('artifacts')
 
 @patch.object(sys, 'argv', ['dexy', 'viewer:ping'])
 @patch('sys.stdout', new_callable=StringIO)

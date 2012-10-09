@@ -12,6 +12,7 @@ import logging
 import os
 import pkg_resources
 import sys
+import time
 
 DEFAULT_COMMAND = 'dexy'
 MOD = sys.modules[__name__]
@@ -121,9 +122,10 @@ def dexy_command(
         version_command()
     else:
         wrapper = Wrapper(**locals())
-        import time
-        start_time = time.time()
+
         try:
+            start_time = time.time()
+            wrapper.check_dexy_dirs()
             wrapper.setup_config()
             wrapper.run()
             wrapper.report()
