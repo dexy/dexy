@@ -35,7 +35,7 @@ class AbstractSyntaxTree():
         child_task_key = self.standardize_key(child_task_key)
 
         if task_key == child_task_key:
-            return False
+            return
 
         if not task_key in self.tree:
             self.tree.append(task_key)
@@ -52,7 +52,7 @@ class AbstractSyntaxTree():
 
     def clean_tree(self):
         """
-        Removes duplicates and tasks which are already represented as children.
+        Removes tasks which are already represented as children.
         """
         all_children = self.all_children()
 
@@ -183,6 +183,8 @@ class Parser:
             children = ast.task_children(key)
             kwargs = ast.task_kwargs(key)
             kwargs['wrapper'] = self.wrapper
+            if kwargs.get('inactive'):
+                return
             for child in children:
                 parse_item(child)
             return create_dexy_task(key, *children, **kwargs)
