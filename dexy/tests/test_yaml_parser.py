@@ -11,9 +11,6 @@ def test_single_file_doc():
 
         wrapper.run()
 
-        print "docs to run are", wrapper.docs_to_run
-        print "wrapper tasks are", wrapper.tasks
-
 def test_single_bundle_doc():
     with wrap() as wrapper:
         parser = YamlFileParser(wrapper)
@@ -21,14 +18,11 @@ def test_single_bundle_doc():
 
         wrapper.run()
 
-        print "docs to run are", wrapper.docs_to_run
-        print "wrapper tasks are", wrapper.tasks
-
 def test_single_bundle_doc_with_args():
     with wrap() as wrapper:
         parser = YamlFileParser(wrapper)
         parser.parse("""
-        a_parent:
+        more:
             - hello
             - one-more-task
             - foo: bar
@@ -47,8 +41,8 @@ def test_single_bundle_doc_with_args():
 
         wrapper.run()
 
-        print "docs to run are", wrapper.docs_to_run
-        print "wrapper tasks are", wrapper.tasks
+        assert wrapper.docs_to_run[0].key_with_class() == "BundleDoc:more"
+        assert len(wrapper.tasks) == 5
 
 def test_single_bundle_doc_with_args_2():
     with wrap() as wrapper:
@@ -68,11 +62,12 @@ def test_single_bundle_doc_with_args_2():
 
       -  more:
             - hello
+            - one-more-task
             - foo: bar
 
         """)
 
         wrapper.run()
 
-        print "docs to run are", wrapper.docs_to_run
-        print "wrapper tasks are", wrapper.tasks
+        assert wrapper.docs_to_run[0].key_with_class() == "BundleDoc:more"
+        assert len(wrapper.tasks) == 5
