@@ -2,8 +2,13 @@ from dexy.common import OrderedDict
 from dexy.exceptions import InternalDexyProblem
 from dexy.exceptions import UserFeedback
 from dexy.plugins.process_filters import SubprocessFilter
-import pexpect
 import re
+
+try:
+    import pexpect
+    AVAILABLE = True
+except ImportError:
+    AVAILABLE = False
 
 class DexyEOFException(UserFeedback):
     pass
@@ -29,6 +34,10 @@ class PexpectReplFilter(SubprocessFilter):
     TRIM_PROMPT = '>>>'
     STRIP_REGEX = None
 
+    @classmethod
+    def is_active(klass):
+        return AVAILABLE and klass.executable() and klass.required_executables_present()
+
     def prompt_search_terms(self):
         """
         Search first for the prompt (or prompts) following a line ending.
@@ -50,7 +59,7 @@ class PexpectReplFilter(SubprocessFilter):
     def lines_for_section(self, section_text):
         """
         Take the section text and split it into lines which will be sent to the
-        interpreter. This can be overridden if lines need to be defined
+        T
         differently, or if you don't want the extra newline at the end.
         """
         return section_text.splitlines() + ["\n"]
