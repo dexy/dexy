@@ -1,6 +1,6 @@
-from dexy.parser import OriginalDexyParser
-from dexy.parser import TextFileParser
-from dexy.parser import YamlFileParser
+from dexy.plugins.parsers import OriginalDexyParser
+from dexy.plugins.parsers import TextFileParser
+from dexy.plugins.parsers import YamlFileParser
 from dexy.tests.utils import wrap
 import dexy.exceptions
 
@@ -92,22 +92,6 @@ def test_text_parser():
         docs = wrapper.registered_docs()
         assert len(docs) == 5
 
-        assert docs[0] in docs[1].children
-
-        assert docs[0] in docs[2].children
-        assert docs[1] in docs[2].children
-
-        assert docs[0] in docs[3].children
-        assert docs[1] in docs[3].children
-        assert docs[2] in docs[3].children
-
-        assert docs[0] in docs[4].children
-        assert docs[1] in docs[4].children
-        assert docs[2] in docs[4].children
-        assert docs[3] in docs[4].children
-
-        assert docs[4].key == "index.md|jinja"
-
 def test_text_parser_virtual_file():
     with wrap() as wrapper:
         parser = TextFileParser()
@@ -146,9 +130,8 @@ def test_original_parser_allinputs():
         parser.wrapper = wrapper
         parser.parse(conf)
 
-        assert wrapper.docs_to_run[0].key_with_class() == "PatternDoc:*.txt"
-        assert wrapper.docs_to_run[1].key_with_class() == "Doc:hello.txt"
-        assert wrapper.docs_to_run[2].key_with_class() == "PatternDoc:*.md|jinja"
+        assert len(wrapper.docs_to_run) == 1
+        assert wrapper.docs_to_run[0].key_with_class() == "PatternDoc:*.md|jinja"
 
 INVALID_YAML = """\
 code:

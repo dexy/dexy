@@ -1,6 +1,6 @@
 from dexy.reporter import Reporter
-from dexy.doc import Doc
 import subprocess
+import os
 
 class GraphReporter(Reporter):
     ALIASES = ['graph', 'dot']
@@ -25,5 +25,5 @@ class GraphReporter(Reporter):
         dotfile = os.path.join(wrapper.log_dir, 'dexygraph.dot')
         pngfile = os.path.join(wrapper.log_dir, 'dexygraph.png')
 
-        self.write_graph_to_dotfile(self.wrapper, dotfile)
-        self.render_dotfile_to_image(dotfile, pngfile)
+        self.write_graph_to_dotfile(wrapper, dotfile)
+        self.render_dotfile_to_png(dotfile, pngfile)

@@ -237,10 +237,12 @@ class Wrapper(object):
             if children:
                 raise Exception("Shouldn't have children if arg is a list")
 
-            return dexy.task.Task.create_from_arg(arg[0], **arg[1])
+            alias, pattern = dexy.parser.AbstractSyntaxTree.qualify_key(arg[0])
+            return dexy.task.Task.create(alias, pattern, **arg[1])
 
         elif isinstance(arg, basestring):
-            return dexy.task.Task.create_from_arg(arg, *children, **kwargs)
+            alias, pattern = dexy.parser.AbstractSyntaxTree.qualify_key(arg[0])
+            return dexy.task.Task.create(alias, pattern, *children, **kwargs)
 
         else:
             raise Exception("unknown arg type %s for arg %s" % (arg.__class__.__name__, arg))

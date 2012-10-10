@@ -3,7 +3,6 @@ import StringIO
 import dexy.doc
 import dexy.exceptions
 import logging
-import os
 
 class Task():
     ALIASES = []
@@ -13,38 +12,8 @@ class Task():
         return self.key_with_class()
 
     @classmethod
-    def qualified_arg_from_arg(klass, arg):
-        # Allow .ext instead of *.ext
-        if arg.startswith("."):
-            if not os.path.exists(arg):
-                arg = "*%s" % arg
-
-        # Assume names are bundles unless they match a file, look like a file,
-        # or have an explicit alias
-        if (not "." in arg) and (not ":" in arg):
-            if (not os.path.exists(arg)):
-                arg = "bundle:%s" % arg
-
-        return arg
-
-    @classmethod
-    def task_class_from_arg(klass, arg):
-        arg = klass.qualified_arg_from_arg(arg)
-
-        if ":" in arg:
-            alias, pattern = arg.split(":")
-        else:
-            if "*" in arg:
-                alias = 'pattern'
-            else:
-                alias = 'doc'
-            pattern = arg
-
-        return dexy.task.Task.aliases[alias], pattern
-
-    @classmethod
-    def create_from_arg(klass, arg, *children, **kwargs):
-        task_class, pattern = klass.task_class_from_arg(arg)
+    def create(klass, alias, pattern, *children, **kwargs):
+        task_class = klass.aliases[alias]
         return task_class(pattern, *children, **kwargs)
 
     def to_arg(self):

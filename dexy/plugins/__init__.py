@@ -11,6 +11,7 @@ import dexy.plugins.latex_filters
 import dexy.plugins.markdown_filters
 import dexy.plugins.nltk_filter
 import dexy.plugins.output_reporters
+import dexy.plugins.parsers
 import dexy.plugins.pexpect_filters
 import dexy.plugins.phantomjs_filters
 import dexy.plugins.pydoc_filters
