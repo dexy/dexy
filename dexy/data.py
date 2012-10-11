@@ -27,6 +27,10 @@ class Data:
         data_class = klass.aliases[data_type]
         return data_class(key, ext, hashstring, wrapper, storage_type)
 
+    @classmethod
+    def storage_class_alias(klass, file_ext):
+        return klass.DEFAULT_STORAGE_TYPE
+
     def __init__(self, key, ext, hashstring, wrapper, storage_type=None):
         self.key = key
         self.ext = ext
@@ -35,7 +39,7 @@ class Data:
 
         self.calculate_name()
 
-        self.storage_type = storage_type or self.DEFAULT_STORAGE_TYPE
+        self.storage_type = storage_type or self.storage_class_alias(ext)
         storage_class = dexy.storage.Storage.aliases[self.storage_type]
         self.storage = storage_class(hashstring, ext, self.wrapper)
 
@@ -188,6 +192,15 @@ class SectionedData(GenericData):
 class KeyValueData(GenericData):
     ALIASES  = ['keyvalue']
     DEFAULT_STORAGE_TYPE = 'sqlite3'
+
+    @classmethod
+    def storage_class_alias(klass, file_ext):
+        if file_ext == '.sqlite3':
+            return 'sqlite3'
+        elif file_ext == '.json':
+            return 'json'
+        else:
+            return klass.DEFAULT_STORAGE_TYPE
 
     def setup(self):
         self.storage.setup()
