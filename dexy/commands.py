@@ -151,13 +151,21 @@ def reset_command(
 
 def cleanup_command(
         artifactsdir=Wrapper.DEFAULT_ARTIFACTS_DIR, # location of directory in which to store artifacts
-        logsdir=Wrapper.DEFAULT_LOG_DIR # location of directory in which to store logs
+        logsdir=Wrapper.DEFAULT_LOG_DIR, # location of directory in which to store logs
+        reports=False # Also remove report generated dirs
         ):
     """
     Remove the artifacts and logs directories.
     """
     wrapper = Wrapper(**locals())
     wrapper.remove_dexy_dirs()
+
+    if reports:
+        if isinstance(reports, bool):
+            reports=dexy.reporter.Reporter.plugins
+
+        for report in reports:
+            report.remove_reports_dir()
 
 def reports_command(args):
     pass
