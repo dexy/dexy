@@ -3,13 +3,19 @@ from dexy.plugins.ec2_filters import EC2Launch
 from dexy.tests.utils import wrap
 from mock import Mock
 from mock import patch
+from nose.exc import SkipTest
 import dexy.exceptions
+
+try:
+    import boto
+except ImportError:
+    raise SkipTest
 
 def test_ec2_launch_setup_child_docs():
     with wrap() as wrapper:
         doc = Doc("hello.txt|jinja")
         assert doc.state == 'new'
-        task = EC2Launch("test", doc, wrapper=wrapper)
+        EC2Launch("test", doc, wrapper=wrapper)
         assert doc.state == 'setup'
 
 def test_ec2_launch_invalid_shutdown_behavior():
