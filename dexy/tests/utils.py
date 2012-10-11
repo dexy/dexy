@@ -28,7 +28,11 @@ class tempdir():
 
     def __exit__(self, type, value, traceback):
         os.chdir(self.location)
-        shutil.rmtree(self.tempdir)
+        try:
+            shutil.rmtree(self.tempdir)
+        except Exception:
+            print "Was not able to remove tempdir '%s'" % self.tempdir
+            pass
 
 class wrap(tempdir):
     """
