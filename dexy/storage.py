@@ -128,7 +128,7 @@ class JsonStorage(GenericStorage):
         return self.value(key)
 
     def __getattr__(self, key):
-        if self.__dict__.has_item(key):
+        if self.__dict__.has_key(key):
             return self.__dict__[key]
         else:
             return self.value(key)
@@ -154,6 +154,10 @@ class JsonStorage(GenericStorage):
 
         with open(filepath, "wb") as f:
             json.dump(data, f)
+
+    def save(self):
+        with open(self.data_file(), "wb") as f:
+            json.dump(self._data, f)
 
 class Sqlite3Storage(GenericStorage):
     ALIASES = ['sqlite3']
@@ -191,7 +195,7 @@ class Sqlite3Storage(GenericStorage):
         return self.value(key)
 
     def __getattr__(self, key):
-        if self.__dict__.has_item(key):
+        if self.__dict__.has_key(key):
             return self.__dict__[key]
         else:
             return self.value(key)
