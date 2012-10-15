@@ -32,7 +32,10 @@ def run():
 
     Ensures that UserFeedback exceptions are handled nicely so end users don't see tracebacks.
     """
-    warnings.filterwarnings("ignore",category=DeprecationWarning)
+    if hasattr(logging, 'captureWarnings'):
+        logging.captureWarnings(True)
+    else:
+        warnings.filterwarnings("ignore",category=Warning)
 
     if len(sys.argv) == 1 or (sys.argv[1] in args.available_commands(MOD)) or sys.argv[1].startswith("-"):
         args.parse_and_run_command(sys.argv[1:], MOD, default_command=DEFAULT_COMMAND)
@@ -133,10 +136,11 @@ def dexy_command(
             print "finished in %0.4f" % (time.time() - start_time)
         except dexy.exceptions.UserFeedback as e:
             wrapper.cleanup_partial_run()
+            sys.stderr.write("Oops, there's a problem processing one of your documents. Here is the error message:" + os.linesep)
             sys.stderr.write(e.message)
-            if not e.message.endswith("\n"):
-                sys.stderr.write("\n")
-            sys.stderr.write("Dexy is stopping.\n")
+            if not e.message.endswith(os.linesep) or e.message.endswith("\n"):
+                sys.stderr.write(os.linesep)
+            sys.stderr.write("Dexy is stopping. There might be more information at the end of the dexy log." + os.linesep)
             sys.exit(1)
 
 def reset_command(
