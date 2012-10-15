@@ -13,6 +13,7 @@ import os
 import pkg_resources
 import sys
 import time
+import warnings
 
 DEFAULT_COMMAND = 'dexy'
 MOD = sys.modules[__name__]
@@ -31,7 +32,7 @@ def run():
 
     Ensures that UserFeedback exceptions are handled nicely so end users don't see tracebacks.
     """
-    logging.captureWarnings(True)
+    warnings.filterwarnings("ignore",category=DeprecationWarning)
 
     if len(sys.argv) == 1 or (sys.argv[1] in args.available_commands(MOD)) or sys.argv[1].startswith("-"):
         args.parse_and_run_command(sys.argv[1:], MOD, default_command=DEFAULT_COMMAND)

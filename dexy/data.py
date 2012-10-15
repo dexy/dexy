@@ -137,7 +137,7 @@ class GenericData(Data):
         return self._data
 
     def as_text(self):
-        return self.data().decode(encoding="utf-8")
+        return self.data().decode("utf-8")
 
     def as_sectioned(self):
         return {'1' : self.data()}
