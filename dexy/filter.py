@@ -1,8 +1,10 @@
-import dexy.plugin
-import dexy.utils
+from dexy.utils import os_to_posix
 import dexy.doc
 import dexy.exceptions
+import dexy.plugin
+import dexy.utils
 import os
+import posixpath
 
 class FilterException(Exception):
     pass
@@ -42,9 +44,9 @@ class Filter:
         pass
 
     def add_doc(self, doc_name, doc_contents=None):
-        # Adjust path of doc
-        if not "/" in doc_name:
-            doc_name = os.path.join(self.input().parent_dir(), doc_name)
+        doc_name = os_to_posix(doc_name)
+        if not posixpath.sep in doc_name:
+            doc_name = posixpath.join(self.input().parent_dir(), doc_name)
 
         additional_doc_filters = self.args().get("additional-doc-filters", {})
 

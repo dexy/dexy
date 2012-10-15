@@ -4,6 +4,7 @@ DexyFilters written to be examples of how to write filters.
 from dexy.common import OrderedDict
 from dexy.doc import Doc
 from dexy.filter import DexyFilter
+import os
 
 class KeyValueExample(DexyFilter):
     ALIASES = ['keyvalueexample']
@@ -37,7 +38,8 @@ class AccessOtherDocuments(DexyFilter):
 
             ### @export "access-other-docs-finish"
             info.append("%s (%s children, %s artifacts, length %s)" % (doc.key, n_children, n_artifacts, length))
-        return "\n        ".join(info)
+        s = "%s        " % os.linesep
+        return s.join(info)
         ### @end
 
 class AddNewDocument(DexyFilter):
@@ -133,4 +135,4 @@ class ExampleFilterArgs(DexyFilter):
         result = ["Here are the arguments you passed:"]
         for k, v in self.args().iteritems():
             result.append("%s: %s" % (k, v))
-        return "\n".join(result)
+        return os.linesep.join(result)

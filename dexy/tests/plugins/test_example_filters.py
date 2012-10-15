@@ -49,9 +49,16 @@ def test_access_other_documents():
         doc = Doc("hello.txt|newdoc", contents="hello", wrapper=wrapper)
         parent = Doc("test.txt|others", doc, contents="hello", wrapper=wrapper)
         wrapper.run_docs(parent)
-        assert parent.output().data() == """Here is a list of previous docs in this tree (not including test.txt|others).
-        hello.txt|newdoc (3 children, 2 artifacts, length 19)
-        newfile.txt|processtext (2 children, 2 artifacts, length 33)"""
+
+        expected_items = [
+            "Here is a list of previous docs in this tree (not including test.txt|others).",
+            "hello.txt|newdoc (3 children, 2 artifacts, length 19)",
+            "newfile.txt|processtext (2 children, 2 artifacts, length 33)"
+            ]
+
+        output = parent.output().as_text()
+        for item in expected_items:
+            assert item in output
 
 def test_doc_children_artifacts():
     with wrap() as wrapper:

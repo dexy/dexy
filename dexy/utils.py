@@ -3,6 +3,10 @@ import inspect
 import json
 import os
 import yaml
+import posixpath
+
+def os_to_posix(path):
+    return posixpath.join(*os.path.split(path))
 
 def parse_json(input_text):
     try:

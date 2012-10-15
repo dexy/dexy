@@ -2,6 +2,7 @@ from dexy.tests.utils import assert_in_output
 from dexy.tests.utils import assert_output
 from dexy.tests.utils import assert_output_matches
 import inspect
+import os
 
 def test_rd_stdout_filter():
     rd = """
@@ -17,11 +18,11 @@ def test_rd_stdout_filter():
     assert_in_output('rdconv', rd, expected, ext=".Rd")
 
 def test_redcloth_stdout_filter():
-    expected = "<p>hello <strong>bold</strong></p>\n"
+    expected = "<p>hello <strong>bold</strong></p>" + os.linesep
     assert_output("redcloth", "hello *bold*", expected)
 
 def test_redcloth_stdout_latex_filter():
-    expected = "hello \\textbf{bold}\n\n"
+    expected = "hello \\textbf{bold}" + os.linesep + os.linesep
     assert_output("redclothl", "hello *bold*", expected)
 
 def test_lynx_dump_stdout_filter():
@@ -53,7 +54,7 @@ def test_ragel_ruby_dot_filter():
     assert_in_output('ragelrubydot', ragel, "digraph hello_and_welcome", ext=".rl")
 
 def test_python_stdout_filter():
-    assert_output('py', 'print 1+1', "2\n")
+    assert_output('py', 'print 1+1', "2" + os.linesep)
 
 def test_bash_stdout_filter():
     assert_output('bash', 'echo "hello"', "hello\n")

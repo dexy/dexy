@@ -4,6 +4,7 @@ import dexy.storage
 import dexy.wrapper
 import json
 import os
+import posixpath
 import shutil
 
 class Data:
@@ -52,11 +53,11 @@ class Data:
         pass
 
     def calculate_name(self):
-        name_without_ext = os.path.splitext(self.key)[0]
+        name_without_ext = posixpath.splitext(self.key)[0]
         self.name = "%s%s" % (name_without_ext, self.ext)
 
     def parent_dir(self):
-        return os.path.dirname(self.name)
+        return posixpath.dirname(self.name)
 
     def long_name(self):
         if "|" in self.key:
@@ -65,25 +66,25 @@ class Data:
             return self.name
 
     def basename(self):
-        return os.path.basename(self.name)
+        return posixpath.basename(self.name)
 
     def baserootname(self):
         """
         Returns basename stripped of file extension.
         """
-        return os.path.splitext(self.basename())[0]
+        return posixpath.splitext(self.basename())[0]
 
     def web_safe_document_key(self):
         return self.long_name().replace("/", "--")
 
     def relative_path_to(self, relative_to):
-        return os.path.relpath(relative_to, self.parent_dir())
+        return posixpath.relpath(relative_to, self.parent_dir())
 
     def relative_refs(self, relative_to_file):
-        doc_dir = os.path.dirname(relative_to_file)
+        doc_dir = posixpath.dirname(relative_to_file)
         return [
-                os.path.relpath(self.key, doc_dir),
-                os.path.relpath(self.long_name(), doc_dir),
+                posixpath.relpath(self.key, doc_dir),
+                posixpath.relpath(self.long_name(), doc_dir),
                 "/%s" % self.key,
                 "/%s" % self.long_name()
         ]

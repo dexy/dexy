@@ -2,6 +2,7 @@ from dexy.doc import Doc
 from dexy.plugins.process_filters import SubprocessFilter
 from dexy.tests.utils import wrap
 import dexy.exceptions
+import os
 
 def test_walk_working_dir():
     with wrap() as wrapper:
@@ -16,7 +17,7 @@ def test_walk_working_dir():
 
         for doc in wrapper.registered_docs():
             if doc.key_with_class() == "Doc:example.sh-sh.txt-files":
-                assert doc.output().as_sectioned()['newfile.txt'] == "hello\n"
+                assert doc.output().as_sectioned()['newfile.txt'] == "hello" + os.linesep
 
 def test_add_new_files():
     with wrap() as wrapper:
@@ -31,7 +32,7 @@ def test_add_new_files():
         wrapper.run_docs(doc)
 
         assert wrapper.registered_docs()[1].key == 'newfile.txt'
-        assert wrapper.registered_docs()[1].output().data() == "hello\n"
+        assert wrapper.registered_docs()[1].output().data() == "hello" + os.linesep
 
         assert wrapper.registered_docs()[2].key == 'newfile.txt|markdown'
         assert wrapper.registered_docs()[2].output().data() == "<p>hello</p>"
@@ -52,7 +53,7 @@ def test_command_line_args():
                 )
         wrapper.run_docs(doc)
 
-        assert doc.output().data() == "hello\n"
+        assert doc.output().data() == "hello" + os.linesep
 
         command_used = doc.artifacts[-1].filter_instance.command_string()
         assert command_used == "python -B example.py  example.txt"
@@ -66,7 +67,7 @@ def test_scriptargs():
                 )
         wrapper.run_docs(doc)
 
-        assert doc.output().data() == "--foo\n"
+        assert doc.output().data() == "--foo" + os.linesep
 
         command_used = doc.artifacts[-1].filter_instance.command_string()
         assert command_used == "python  example.py --foo example.txt"
@@ -80,7 +81,7 @@ def test_custom_env_in_args():
                 )
         wrapper.run_docs(doc)
 
-        assert doc.output().data() == "bar\n"
+        assert doc.output().data() == "bar" + os.linesep
 
 def test_nonzero_exit():
     with wrap() as wrapper:

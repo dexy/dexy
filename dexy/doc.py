@@ -180,7 +180,6 @@ class PatternDoc(WalkDoc):
                     doc_key = "%s|%s" % (filepath, "|".join(self.filter_aliases))
                 else:
                     doc_key = filepath
-                self.log.debug("Creating doc %s" % doc_key)
 
                 doc_args = self.args.copy()
                 doc_args['wrapper'] = self.wrapper

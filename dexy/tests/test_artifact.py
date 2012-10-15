@@ -231,7 +231,7 @@ print sorted(os.listdir(os.getcwd()))
 
         wrapper.run_docs(doc)
 
-        assert doc.output().data() == """12345.67
-bar
-['data.txt', 'example.py', 'mymod.py', 'mymod.pyc']
-"""
+        output = doc.output().as_text()
+        assert "12345.67" in output
+        assert 'bar' in output
+        assert "['data.txt', 'example.py', 'mymod.py', 'mymod.pyc']" in output

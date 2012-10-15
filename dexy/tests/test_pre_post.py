@@ -24,7 +24,10 @@ def test_pre_post():
 
         wrapper.run_docs(parent)
 
-        assert child.output().as_text() == "Parent's pre return is 42\nParent's post return exists False"
+        output = child.output().as_text()
+        assert "Parent's pre return is 42" in output
+        assert "Parent's post return exists False" in output
+
         assert parent.pre_return == 42
         assert parent.post_return == 43
 

@@ -3,6 +3,7 @@ import StringIO
 import dexy.doc
 import dexy.exceptions
 import logging
+from dexy.utils import os_to_posix
 
 class Task():
     ALIASES = []
@@ -21,7 +22,7 @@ class Task():
         return "%s:%s" % (alias, self.key)
 
     def __init__(self, key, *children, **args):
-        self.key = key
+        self.key = os_to_posix(key)
         self.children = list(children)
         self.args = args
 
