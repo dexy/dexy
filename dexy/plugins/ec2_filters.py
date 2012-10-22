@@ -25,17 +25,6 @@ class EC2Launch(dexy.task.Task):
 
     def setup(self):
         self.set_log()
-        self.setup_child_docs()
-        self.after_setup()
-
-    def setup_child_docs(self):
-        """
-        Make sure all child Doc instances are setup also.
-        """
-        for child in self.children:
-            if child.state == 'new':
-                child.wrapper = self.wrapper
-                child.setup()
 
     def ami(self):
         return self.args.get('ami', self.AMI)
@@ -68,7 +57,11 @@ class EC2Launch(dexy.task.Task):
         return os.path.expanduser("~/.ec2/%s.pem" % self.ec2_keypair_name())
 
     def pre(self, *args, **kwargs):
-        conn = boto.connect_ec2()
+        try:
+            conn = boto.connect_ec2()
+        except Exception as e:
+            if e.__class__.__name__.startswith("boto"):
+                raise dexy.exceptions.UserFeedback(e.message)
 
         ami = self.ami()
 

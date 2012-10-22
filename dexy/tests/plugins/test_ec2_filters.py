@@ -13,10 +13,13 @@ except ImportError:
 
 def test_ec2_launch_setup_child_docs():
     with wrap() as wrapper:
+        with open("hello.txt", "w") as f:
+            f.write("hello")
+
         doc = Doc("hello.txt|jinja")
         assert doc.state == 'new'
         EC2Launch("test", doc, wrapper=wrapper)
-        assert doc.state == 'setup'
+        assert doc.state == 'new'
 
 def test_ec2_launch_invalid_shutdown_behavior():
     try:
@@ -33,7 +36,7 @@ def test_ec2_launch_shutting_down(mock_connect_ec2):
     mock_ec2_instance.state = 'shutting-down'
 
     with wrap() as wrapper:
-        doc = Doc("hello.txt|jinja", contents="hello")
+        doc = Doc("hello.txt|jinja", contents="hello", wrapper=wrapper)
 
         task = EC2Launch("test",
                 doc,
@@ -54,7 +57,7 @@ def test_ec2_launch_terminated(mock_connect_ec2):
     mock_ec2_instance.state = 'terminated'
 
     with wrap() as wrapper:
-        doc = Doc("hello.txt|jinja", contents="hello")
+        doc = Doc("hello.txt|jinja", contents="hello",wrapper=wrapper)
 
         task = EC2Launch("test",
                 doc,
@@ -84,7 +87,7 @@ def test_ec2_launch(mock_connect_ec2):
     mock_ec2_instance.update = side_effect
 
     with wrap() as wrapper:
-        doc = Doc("hello.txt|jinja", contents="hello")
+        doc = Doc("hello.txt|jinja", contents="hello", wrapper=wrapper)
 
         task = EC2Launch("test",
                 doc,
@@ -94,6 +97,8 @@ def test_ec2_launch(mock_connect_ec2):
                 instance_type="xxxlarge",
                 shutdown_behavior="stop"
                 )
+
+        task.set_log()
 
         assert task.ami() == "abc123"
         assert task.instance_type() == "xxxlarge"

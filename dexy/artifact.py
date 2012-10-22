@@ -15,21 +15,15 @@ import stat
 import time
 
 class Artifact(dexy.task.Task):
-    def setup(self):
-        self.set_log()
-        self.metadata = dexy.metadata.Md5()
-        self.after_setup()
-
     def set_and_save_hash(self):
         self.append_children_hashstrings()
         self.set_hashstring()
 
     def append_children_hashstrings(self):
         child_hashes = []
-        for child in self.doc.completed_children.values():
-            if isinstance(child, dexy.doc.Doc):
-                child_hash = child.final_artifact.hashstring
-                child_hashes.append("%s: %s" % (child.key, child_hash))
+        for child in self.doc.setup_child_docs():
+            child_hash = child.final_artifact.hashstring
+            child_hashes.append("%s: %s" % (child.key, child_hash))
 
         self.metadata.child_hashes = ", ".join(child_hashes)
 
@@ -41,7 +35,7 @@ class Artifact(dexy.task.Task):
         return os.path.join(self.wrapper.artifacts_dir, self.hashstring)
 
     def input_filename(self):
-        if self.ext == self.prior.ext:
+        if self.ext and (self.ext == self.prior.ext):
             return "%s-work%s" % (self.input_data.baserootname(), self.prior.ext)
         else:
             return self.input_data.basename()
@@ -56,8 +50,8 @@ class Artifact(dexy.task.Task):
         os.mkdir(tmpdir)
 
         if populate:
-            for doc in self.doc.completed_children.values():
-                if isinstance(doc, dexy.doc.Doc):
+            for doc in self.doc.setup_child_docs():
+                if doc.state == 'complete' or len(doc.filters) == 0:
                     filename = os.path.join(tmpdir, doc.output().name)
                     parent_dir = os.path.dirname(filename)
                     if not os.path.exists(parent_dir):
@@ -96,15 +90,17 @@ class InitialArtifact(Artifact):
     def set_output_data(self):
         self.output_data.copy_from_file(self.name)
 
-    def run(self, *args, **kw):
+    def setup(self):
         self.set_log()
-
+        self.metadata = dexy.metadata.Md5()
         self.ext = os.path.splitext(self.name)[1]
 
         self.set_metadata_attrs()
         self.set_and_save_hash()
         self.setup_output_data()
+        self.run()
 
+    def run(self, *args, **kw):
         if not self.output_data.is_cached():
             self.set_output_data()
 
@@ -158,13 +154,15 @@ class FilterArtifact(Artifact):
         else:
             return self.filter_class.data_class_alias(self.ext)
 
-    def run(self, *args, **kw):
+    def setup(self):
+        self.set_log()
+        self.metadata = dexy.metadata.Md5()
         self.input_data = self.prior.output_data
-
         self.set_extension()
         self.set_metadata_hash()
         self.setup_output_data()
 
+    def run(self, *args, **kw):
         if not self.output_data.is_cached():
             self.filter_instance.process()
             self.source = 'generated'
@@ -220,16 +218,25 @@ class FilterArtifact(Artifact):
         self.set_and_save_hash()
 
     def add_doc(self, doc):
+        if doc.state == 'complete':
+            raise Exception("Already complete!")
+
         self.log.debug("Adding additional doc %s" % doc.key)
         doc.created_by_doc = self.hashstring
         doc.wrapper = self.wrapper
-        doc.setup()
 
+        for task in (doc,):
+            for t in task:
+                t()
+        for task in (doc,):
+            for t in task:
+                t()
         for task in (doc,):
             for t in task:
                 t()
 
         self.doc.children.append(doc)
+        self.doc.deps[doc.key_with_class()] = doc
 
     def set_extension(self):
         this_filter_outputs = self.filter_class.OUTPUT_EXTENSIONS

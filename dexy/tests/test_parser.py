@@ -89,6 +89,8 @@ def test_text_parser():
         *.md|jinja
         """)
 
+        wrapper.run()
+
         docs = wrapper.registered_docs()
         assert len(docs) == 5
 

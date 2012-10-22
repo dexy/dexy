@@ -10,7 +10,8 @@ from nose.tools import raises
 @raises(UserFeedback)
 def test_blank_alias():
     with wrap() as wrapper:
-        Doc("abc.txt|", wrapper=wrapper)
+        doc = Doc("abc.txt|", wrapper=wrapper)
+        doc.populate()
 
 @raises(BlankAlias)
 def test_blank_alias_exception():
@@ -30,6 +31,7 @@ def test_output_is_data():
 def test_create_doc_with_child():
     with wrap() as wrapper:
         doc = Doc("parent.txt", Doc("child.txt", wrapper=wrapper), wrapper=wrapper)
+        doc.populate()
         assert doc.key == "parent.txt"
         assert doc.children[0].key == "child.txt"
         assert doc.children[1].key == "parent.txt"
@@ -58,6 +60,10 @@ def test_create_doc_with_filters():
 def test_doc_setup():
     with wrap() as wrapper:
         doc = Doc("abc.txt|dexy|dexy", wrapper=wrapper)
+
+        doc.populate()
+        doc.setup()
+
         assert doc.key == "abc.txt|dexy|dexy"
         assert doc.name == "abc.txt"
         assert doc.filters == ["dexy", "dexy"]
@@ -82,27 +88,27 @@ def test_doc_setup():
         assert doc.children[1].prior.key == "abc.txt"
         assert doc.children[2].prior.key == "abc.txt|dexy"
 
-def test_doc_run():
-    with wrap() as wrapper:
-        doc = Doc("abc.txt|dexy|dexy", wrapper=wrapper)
-        doc.run()
-        assert doc in wrapper.tasks.values()
-
 def test_setup_pattern_doc_no_filters():
     with wrap() as wrapper:
         doc = PatternDoc("*.txt", wrapper=wrapper)
+        doc.populate()
+        doc.setup()
         assert doc.file_pattern == "*.txt"
         assert doc.filter_aliases == []
 
 def test_setup_pattern_doc_one_filter():
     with wrap() as wrapper:
         doc = PatternDoc("*.txt|dexy", wrapper=wrapper)
+        doc.populate()
+        doc.setup()
         assert doc.file_pattern == "*.txt"
         assert doc.filter_aliases == ['dexy']
 
 def test_setup_pattern_doc_many_filters():
     with wrap() as wrapper:
         doc = PatternDoc("*.txt|dexy|dexy|dexy", wrapper=wrapper)
+        doc.populate()
+        doc.setup()
         assert doc.file_pattern == "*.txt"
         assert doc.filter_aliases == ['dexy', 'dexy', 'dexy']
 
@@ -112,6 +118,8 @@ def test_pattern_doc_args():
             f.write("hello!")
 
         doc = PatternDoc("*.txt", foo="bar", wrapper=wrapper)
+        doc.populate()
+        doc.setup()
         assert doc.args['foo'] == 'bar'
         assert isinstance(doc.children[0], Doc)
         assert doc.children[0].key == "hello.txt"

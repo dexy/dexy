@@ -82,13 +82,6 @@ class SubclassTask(dexy.task.Task):
     def post(self, *args, **kw):
         print "post '%s'" % self.key,
 
-def test_run_incorrectly():
-    with divert_stdout() as stdout:
-        with wrap() as wrapper:
-            for demotaskinstance in (SubclassTask("demo", wrapper=wrapper),):
-                demotaskinstance()
-        assert "run 'demo'" == stdout.getvalue()
-
 def test_run_demo_single():
     with divert_stdout() as stdout:
         with wrap() as wrapper:
@@ -122,23 +115,9 @@ def test_dependencies_only_run_once():
 
             assert stdout.getvalue() == "pre '1' run '1' post '1' pre '2' run '2' post '2' pre '3' run '3' post '3'"
 
-            assert len(t1.completed_children) == 0
-            assert t1 in t2.completed_children.values()
-            assert t1 in t3.completed_children.values()
-
-class AddNewSubtask(dexy.task.Task):
-    def pre(self):
-        new_task = SubclassTask("new", wrapper=self.wrapper)
-        self.children.append(new_task)
-
-def test_add_new_subtask():
-    with divert_stdout() as stdout:
-        with wrap() as wrapper:
-            t1 = AddNewSubtask("parent", wrapper=wrapper)
-
-            wrapper.run_docs(t1)
-
-            assert stdout.getvalue() == "pre 'new' run 'new' post 'new'"
+            assert len(t1.deps) == 0
+            assert t1 in t2.deps.values()
+            assert t1 in t3.deps.values()
 
 def test_completed_children():
     with wrap() as wrapper:
@@ -151,9 +130,9 @@ def test_completed_children():
 
             assert stdout.getvalue() == "pre 'parent' pre 'child' pre 'grandchild' run 'grandchild' post 'grandchild' run 'child' post 'child' run 'parent' post 'parent'"
 
-    assert "SubclassTask:grandchild" in parent_task.completed_children.keys()
-    assert "SubclassTask:child" in parent_task.completed_children.keys()
+    assert "SubclassTask:grandchild" in parent_task.deps.keys()
+    assert "SubclassTask:child" in parent_task.deps.keys()
 
-    assert "SubclassTask:grandchild" in child_task.completed_children.keys()
+    assert "SubclassTask:grandchild" in child_task.deps.keys()
 
-    assert len(grandchild_task.completed_children) == 0
+    assert len(grandchild_task.deps) == 0

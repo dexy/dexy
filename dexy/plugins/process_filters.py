@@ -324,23 +324,22 @@ class SubprocessCompileInputFilter(SubprocessCompileFilter):
 
         command = self.run_command_string()
 
-        inputs = self.artifact.doc.completed_children
+        inputs = self.artifact.doc.completed_child_docs()
 
         output = OrderedDict()
 
         if len(inputs) == 1:
-            doc = inputs.values()[0]
-            for section_name, section_text in doc.as_sectioned().iteritems():
+            doc = inputs[0]
+            for section_name, section_text in doc.output().as_sectioned().iteritems():
                 proc, stdout = self.run_command(command, self.setup_env(), section_text)
                 if self.CHECK_RETURN_CODE:
                     self.handle_subprocess_proc_return(command, proc.returncode, stdout)
                 output[section_name] = stdout
         else:
-            for key, doc in inputs.iteritems():
-                if isinstance(doc, dexy.doc.Doc):
-                    proc, stdout = self.run_command(command, self.setup_env(), doc.output().as_text())
-                    if self.CHECK_RETURN_CODE:
-                        self.handle_subprocess_proc_return(command, proc.returncode, stdout)
-                    output[doc.key] = stdout
+            for doc in inputs:
+                proc, stdout = self.run_command(command, self.setup_env(), doc.output().as_text())
+                if self.CHECK_RETURN_CODE:
+                    self.handle_subprocess_proc_return(command, proc.returncode, stdout)
+                output[doc.key] = stdout
 
         self.output().set_data(output)

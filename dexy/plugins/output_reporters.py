@@ -8,6 +8,7 @@ class OutputReporter(Reporter):
     def run(self, wrapper):
         self.create_reports_dir(self.REPORTS_DIR)
         for doc in wrapper.registered_docs():
+            wrapper.log.debug("Writing %s" % doc.key)
             fp = os.path.join(self.REPORTS_DIR, doc.output().name)
 
             parent_dir = os.path.dirname(fp)
@@ -23,6 +24,7 @@ class LongOutputReporter(Reporter):
     def run(self, wrapper):
         self.create_reports_dir(self.REPORTS_DIR)
         for doc in wrapper.registered_docs():
+            wrapper.log.debug("Writing %s" % doc.key)
             fp = os.path.join(self.REPORTS_DIR, doc.output().long_name())
 
             parent_dir = os.path.dirname(fp)

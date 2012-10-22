@@ -103,7 +103,7 @@ def test_unprocessed_directory_archive_filter():
         assert os.path.exists("output/archive.tgz")
         tar = tarfile.open("output/archive.tgz", mode="r:gz")
         names = tar.getnames()
-        print names
+
         assert ("./abc.txt" in names) or ("abc.txt" in names)
         assert ("./def.txt" in names) or ("def.txt" in names)
         tar.close()

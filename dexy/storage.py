@@ -30,7 +30,11 @@ class GenericStorage(Storage):
     ALIASES = ['generic']
 
     def data_file(self):
-        return os.path.join(self.wrapper.artifacts_dir, "%s%s" % (self.hashstring, self.ext))
+        ext = self.ext
+        if not ext:
+            ext = ".ext"
+
+        return os.path.join(self.wrapper.artifacts_dir, "%s%s" % (self.hashstring, ext))
 
     def data_file_exists(self):
         return os.path.exists(self.data_file()) and os.path.getsize(self.data_file()) > 0
@@ -41,7 +45,7 @@ class GenericStorage(Storage):
 
         self.check_location_is_in_project_dir(filepath)
 
-        if self.data_file_exists():
+        if self.data_file_exists() and not filepath == self.data_file():
             shutil.copyfile(self.data_file(), filepath)
         else:
             with open(filepath, "wb") as f:

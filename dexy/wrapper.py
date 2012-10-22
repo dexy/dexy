@@ -67,6 +67,7 @@ class Wrapper(object):
         self.docs_to_run = []
         self.tasks = OrderedDict()
         self.pre_attrs = {}
+        self.state = None
 
     def initialize_attribute_defaults(self):
         self.artifacts_dir = self.DEFAULT_ARTIFACTS_DIR
@@ -142,10 +143,25 @@ class Wrapper(object):
         self.setup_run()
 
         self.log.debug("batch id is %s" % self.batch_id)
+        self.state = 'populating'
 
         for doc in self.docs_to_run:
             for task in doc:
                 task()
+
+        self.state = 'settingup'
+
+        for doc in self.docs_to_run:
+            for task in doc:
+                task()
+
+        self.state = 'running'
+
+        for doc in self.docs_to_run:
+            for task in doc:
+                task()
+
+        self.state = 'complete'
 
         self.save_db()
         self.setup_graph()
@@ -215,7 +231,6 @@ class Wrapper(object):
             if not doc:
                 raise Exception("no doc created for %s" % arg)
             doc.wrapper = self
-            doc.setup()
             self.docs_to_run.append(doc)
 
     def create_doc_from_arg(self, arg, *children, **kwargs):

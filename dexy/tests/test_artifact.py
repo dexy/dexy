@@ -87,6 +87,8 @@ def test_virtual_artifact():
                 wrapper=wrapper)
 
         a.name = "abc.txt"
+
+        a.setup()
         a.run()
 
         assert a.output_data.is_cached()
@@ -101,6 +103,7 @@ def test_initial_artifact_hash():
 
         artifact = InitialArtifact(filename, wrapper=wrapper)
         artifact.name = filename
+        artifact.setup()
         artifact.run()
 
         first_hashstring = artifact.hashstring
@@ -112,6 +115,7 @@ def test_initial_artifact_hash():
 
         artifact = InitialArtifact(filename, wrapper=wrapper)
         artifact.name = filename
+        artifact.setup()
         artifact.run()
 
         second_hashstring = artifact.hashstring
@@ -196,6 +200,7 @@ def test_virtual_artifact_data_class_generic():
         doc = Doc("virtual.txt",
                 contents = "virtual",
                 wrapper=wrapper)
+        doc.populate()
         artifact = doc.artifacts[0]
         assert artifact.__class__.__name__ == "InitialVirtualArtifact"
         assert artifact.data_class_alias() == 'generic'
@@ -207,6 +212,7 @@ def test_virtual_artifact_data_class_sectioned():
         doc = Doc("virtual.txt",
                 contents=contents,
                 wrapper=wrapper)
+        doc.populate()
         artifact = doc.artifacts[0]
         assert artifact.__class__.__name__ == "InitialVirtualArtifact"
         assert artifact.data_class_alias() == 'sectioned'

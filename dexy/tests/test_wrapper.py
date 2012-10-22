@@ -36,8 +36,8 @@ def test_wrapper_run():
         wrapper.setup_dexy_dirs()
         d1 = Doc("abc.txt|outputabc", contents="these are the contents", wrapper=wrapper)
         d2 = Doc("hello.txt|outputabc", contents="these are more contents", wrapper=wrapper)
-        assert d1.state == 'setup'
-        assert d2.state == 'setup'
+        assert d1.state == 'new'
+        assert d2.state == 'new'
         wrapper.run_docs(d1, d2)
         assert d1.state == 'complete'
         assert d2.state == 'complete'

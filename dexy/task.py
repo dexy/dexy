@@ -1,16 +1,25 @@
 from dexy.plugin import PluginMeta
+from dexy.utils import os_to_posix
 import StringIO
 import dexy.doc
 import dexy.exceptions
 import logging
-from dexy.utils import os_to_posix
 
 class Task():
     ALIASES = []
     __metaclass__ = PluginMeta
 
-    def __repr__(self):
-        return self.key_with_class()
+    STATE_TRANSITIONS = [
+            ('new', 'populating'),
+            ('populating', 'populated'),
+            ('populated', 'settingup'),
+            ('settingup', 'setup'),
+            ('setup', 'running'),
+            ('running', 'complete'),
+
+            # sometimes want to skip directly to populated
+            ('new', 'populated')
+            ]
 
     @classmethod
     def create(klass, alias, pattern, *children, **kwargs):
@@ -21,35 +30,20 @@ class Task():
         alias = self.ALIASES[0]
         return "%s:%s" % (alias, self.key)
 
+    def __repr__(self):
+        return self.key_with_class()
+
     def __init__(self, key, *children, **args):
         self.key = os_to_posix(key)
         self.children = list(children)
         self.args = args
 
         self.created_by_doc = None
-
-        self.completed_children = {}
-
+        self.deps = {}
         self.state = 'new'
-
-        self.post = args.get('post', self.post)
-        self.pre = args.get('pre', self.pre)
 
         if args.has_key('wrapper') and args['wrapper']:
             self.wrapper = args['wrapper']
-            self.setup()
-
-    def pre(self, *args, **kw):
-        pass
-
-    def post(self, *args, **kw):
-        pass
-
-    STATE_TRANSITIONS = [
-            ('new', 'setup'),
-            ('setup', 'running'),
-            ('running', 'complete')
-            ]
 
     def transition(self, to_state):
         if (self.state, to_state) in self.STATE_TRANSITIONS:
@@ -59,16 +53,30 @@ class Task():
 
     def __iter__(self):
         def next_task():
-            if self.state == 'setup':
-                self.transition('running')
-                yield self.pre
+            if self.state == 'new':
+                self.transition('populating')
                 yield self
-                yield self.post
-                self.transition('complete')
-            elif self.state == 'running':
+                self.transition('populated')
+
+            elif self.state == 'populated':
+                self.transition('settingup')
+                yield self
+                self.transition('setup')
+
+            elif self.state == 'setup':
+                if self.wrapper.state == 'running':
+                    self.transition('running')
+                    yield self.pre
+                    yield self
+                    yield self.post
+                    self.transition('complete')
+
+            elif self.state in ('running', 'populating', 'settingup',):
                 raise dexy.exceptions.CircularDependency
+
             elif self.state == 'complete':
                 pass
+
             else:
                 raise dexy.exceptions.UnexpectedState("%s in %s" % (self.state, self.key))
 
@@ -79,15 +87,38 @@ class Task():
             for task in child:
                 task(*args, **kw)
 
-            self.completed_children[child.key_with_class()] = child
-            self.completed_children.update(child.completed_children)
+            self.deps[child.key_with_class()] = child
+            self.deps.update(child.deps)
 
-        self.wrapper.db.add_task_before_running(self)
-        self.run(*args, **kw)
-        self.wrapper.db.update_task_after_running(self)
+        if self.state == 'populating':
+            self.populate()
+
+        elif self.state == 'settingup':
+            self.setup()
+            self.wrapper.register(self)
+
+        elif self.state == 'running':
+            self.wrapper.db.add_task_before_running(self)
+            self.run(*args, **kw)
+            self.wrapper.db.update_task_after_running(self)
+
+        else:
+            raise dexy.exceptions.UnexpectedState("%s in %s" % (self.state, self.key))
 
     def setup(self):
-        self.after_setup()
+        pass
+
+    def run(self, *args, **kw):
+        pass
+
+    def populate(self):
+        pass
+
+    def pre(self, *args, **kw):
+        pass
+
+    def post(self, *args, **kw):
+        pass
 
     def key_with_class(self):
         return "%s:%s" % (self.__class__.__name__, self.key)
@@ -96,17 +127,10 @@ class Task():
         return "%s:%s:%s" % (self.wrapper.batch_id, self.__class__.__name__, self.key)
 
     def completed_child_docs(self):
-        return [c for c in self.completed_children.values() if isinstance(c, dexy.doc.Doc)]
+        return [c for c in self.deps.values() if isinstance(c, dexy.doc.Doc) and c.state == 'complete']
 
-    def after_setup(self):
-        """
-        Shared code that should always be run at end of setup process.
-        """
-        self.wrapper.register(self)
-        self.transition('setup')
-
-    def run(self, *args, **kw):
-        pass
+    def setup_child_docs(self):
+        return [c for c in self.deps.values() if isinstance(c, dexy.doc.Doc) and c.state in ('setup', 'complete',)]
 
     def set_log(self):
         self.log = logging.getLogger(self.key)

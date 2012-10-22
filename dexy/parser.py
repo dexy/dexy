@@ -103,9 +103,9 @@ class AbstractSyntaxTree():
                 if not os.path.exists(pattern):
                     pattern = "*%s" % pattern
 
-            if os.path.exists(pattern):
+            if os.path.exists(pattern.split("|")[0]):
                 alias = 'doc'
-            elif (not "." in pattern):
+            elif (not "." in pattern) and (not "|" in pattern):
                 alias = 'bundle'
             elif "*" in pattern:
                 alias = 'pattern'

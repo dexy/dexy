@@ -57,6 +57,9 @@ def test_access_other_documents():
             ]
 
         output = parent.output().as_text()
+
+        print "output is", output
+
         for item in expected_items:
             assert item in output
 
@@ -66,6 +69,9 @@ def test_doc_children_artifacts():
         parent = Doc("parent.txt|process", doc, contents="hello", wrapper=wrapper)
 
         wrapper.docs_to_run = [parent]
+
+        doc.populate()
+        parent.populate()
 
         assert len(doc.children) == 2
         assert isinstance(doc.children[0], InitialVirtualArtifact)
@@ -87,6 +93,10 @@ def test_doc_children_artifacts():
         assert isinstance(parent.artifacts[0], InitialVirtualArtifact)
         assert isinstance(parent.artifacts[1], FilterArtifact)
 
+        doc = Doc("hello.txt|newdoc", contents="hello", wrapper=wrapper)
+        parent = Doc("parent.txt|process", doc, contents="hello", wrapper=wrapper)
+
+        wrapper.docs_to_run = [parent]
         wrapper.run()
 
         assert len(doc.children) == 3
