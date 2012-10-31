@@ -148,6 +148,13 @@ class SubprocessFilter(Filter):
         # Add parameters set in filter arguments.
         env.update(self.args().get('env', {}))
 
+        # Add parameters in wrapper's env dict
+        for doc in self.processed():
+            if doc.final_artifact.ext == '.json':
+                for env_item, env_value in doc.output().json_as_dict().iteritems():
+                    if env_item.startswith("DEXY_"):
+                        env[env_item] = env_value
+
         return env
 
     def do_add_new_files(self):

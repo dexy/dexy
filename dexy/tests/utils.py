@@ -80,7 +80,7 @@ class runfilter(tempdir):
             print "Skipping tests for inactive filter", self.filter_alias
             raise SkipTest
 
-        return wrapper.docs_to_run[0]
+        return wrapper.root_nodes[0]
 
 def assert_output(filter_alias, doc_contents, expected_output, ext=".txt",args=None):
     if not args:

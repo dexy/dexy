@@ -3,8 +3,21 @@ from dexy.tests.utils import wrap
 from dexy.wrapper import Wrapper
 import dexy.data
 import dexy.exceptions
+import os
 
-def test_write_outside_project_root():
+def test_canonical_name():
+    with wrap() as wrapper:
+        doc = Doc("hello.txt",
+                contents="hello",
+                canonical_name="yello.abc",
+                wrapper=wrapper)
+
+        wrapper.run_docs(doc)
+        assert doc.output().name == "yello.abc"
+        wrapper.report()
+        assert os.path.exists(os.path.join('output', 'yello.abc'))
+
+def test_attempt_write_outside_project_root():
     with wrap() as wrapper:
         doc = Doc("../../example.txt",
                 contents = "hello",
@@ -20,7 +33,7 @@ def test_write_outside_project_root():
 
 def test_key_value_data():
     with wrap() as wrapper:
-        data = dexy.data.KeyValueData("doc.json", ".json", "hash1", wrapper, storage_type='json')
+        data = dexy.data.KeyValueData("doc.json", ".json", "hash1", {}, wrapper, storage_type='json')
 
         assert not data._data
         assert data.storage._data == {}
@@ -36,7 +49,7 @@ def test_key_value_data():
 
 def test_key_value_data_sqlite():
     with wrap() as wrapper:
-        data = dexy.data.KeyValueData("doc.sqlite3", ".sqlite3", "hash1", wrapper)
+        data = dexy.data.KeyValueData("doc.sqlite3", ".sqlite3", "hash1", {}, wrapper)
 
         data.append('foo', 'bar')
         assert len(data.keys()) == 1
@@ -51,7 +64,7 @@ def test_generic_data():
         CONTENTS = "contents go here"
 
         # Create a GenericData object
-        data = dexy.data.GenericData("doc.txt", ".txt", "hash1", wrapper)
+        data = dexy.data.GenericData("doc.txt", ".txt", "hash1", {}, wrapper)
 
         # Assign some text contents
         data._data = CONTENTS
@@ -82,7 +95,7 @@ def test_generic_data():
 
 def test_init_data():
     wrapper = Wrapper()
-    data = dexy.data.GenericData("doc.txt", ".abc", "def123", wrapper)
+    data = dexy.data.GenericData("doc.txt", ".abc", "def123", {}, wrapper)
 
     assert data.key == "doc.txt"
     assert data.name == "doc.abc"
@@ -101,5 +114,5 @@ def test_calculate_name():
 
     wrapper = Wrapper()
     for key, ext, name in values:
-        data = dexy.data.Data(key, ext, "abc123", wrapper)
+        data = dexy.data.Data(key, ext, "abc123", {}, wrapper)
         assert data.name == name

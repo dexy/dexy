@@ -59,9 +59,16 @@ def test_create_doc_with_filters():
 
 def test_doc_setup():
     with wrap() as wrapper:
+        with open("abc.txt", "w") as f:
+            f.write("def")
+
         doc = Doc("abc.txt|dexy|dexy", wrapper=wrapper)
 
         doc.populate()
+
+        for child in doc.children:
+            child.setup()
+
         doc.setup()
 
         assert doc.key == "abc.txt|dexy|dexy"
@@ -72,7 +79,7 @@ def test_doc_setup():
         assert doc.children[1].key == "abc.txt|dexy"
         assert doc.children[2].key == "abc.txt|dexy|dexy"
 
-        assert doc.children[0].__class__.__name__ == "InitialVirtualArtifact"
+        assert doc.children[0].__class__.__name__ == "InitialArtifact"
         assert doc.children[1].__class__.__name__ == "FilterArtifact"
         assert doc.children[2].__class__.__name__ == "FilterArtifact"
 
@@ -81,7 +88,7 @@ def test_doc_setup():
         assert doc.children[2].next_filter_alias == None
 
         assert not doc.children[0].prior
-        assert doc.children[1].prior.__class__.__name__ == "InitialVirtualArtifact"
+        assert doc.children[1].prior.__class__.__name__ == "InitialArtifact"
         assert doc.children[2].prior.__class__.__name__ == "FilterArtifact"
 
         assert not doc.children[0].prior

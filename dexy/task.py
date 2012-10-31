@@ -1,3 +1,4 @@
+from dexy.common import OrderedDict
 from dexy.plugin import PluginMeta
 from dexy.utils import os_to_posix
 import StringIO
@@ -39,7 +40,7 @@ class Task():
         self.args = args
 
         self.created_by_doc = None
-        self.deps = {}
+        self.deps = OrderedDict()
         self.state = 'new'
 
         if args.has_key('wrapper') and args['wrapper']:
@@ -82,8 +83,22 @@ class Task():
 
         return next_task()
 
+    def add_dep(self, new_dep):
+        self.deps[new_dep.key_with_class()] = new_dep
+
+    def handle_newchild(self, new_child_doc):
+        if new_child_doc.created_by_doc in self.deps.values():
+            self.add_dep(new_child_doc)
+
     def __call__(self, *args, **kw):
+        siblings = []
         for child in self.children:
+            child.parent = self
+
+            for s in siblings:
+                child.deps[s.key_with_class()] = s
+            siblings.append(child)
+
             for task in child:
                 task(*args, **kw)
 
@@ -133,13 +148,14 @@ class Task():
         return [c for c in self.deps.values() if isinstance(c, dexy.doc.Doc) and c.state in ('setup', 'complete',)]
 
     def set_log(self):
-        self.log = logging.getLogger(self.key)
-        self.logstream = StringIO.StringIO()
-        handler = logging.StreamHandler(self.logstream)
-        self.log.addHandler(handler)
-        self.log.setLevel(logging.DEBUG)
+        if not hasattr(self, 'log'):
+            self.log = logging.getLogger(self.key)
+            self.logstream = StringIO.StringIO()
+            handler = logging.StreamHandler(self.logstream)
+            self.log.addHandler(handler)
+            self.log.setLevel(logging.DEBUG)
 
-        try:
-            self.log.addHandler(logging.getLogger('dexy').handlers[0])
-        except IndexError:
-            pass
+            try:
+                self.log.addHandler(logging.getLogger('dexy').handlers[0])
+            except IndexError:
+                pass

@@ -15,6 +15,7 @@ class TemplateFilter(DexyFilter):
     Plugins are used to prepare content.
     """
     ALIASES = ['template']
+    FRAGMENT = False
 
     def template_plugins(self):
         """
@@ -62,7 +63,7 @@ class JinjaTextFilter(TemplateFilter):
         # Currently it's not possible to pass subclasses of Undefined since params must be json serializable.
         env_attrs['undefined'] = jinja2.StrictUndefined
 
-        if self.artifact.ext == ".tex":
+        if self.artifact.ext in (".tex", ".wiki"):
             env_attrs.setdefault('block_start_string', '<%')
             env_attrs.setdefault('block_end_string', '%>')
             env_attrs.setdefault('variable_start_string', '<<')

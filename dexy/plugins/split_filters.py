@@ -13,6 +13,7 @@ class SplitHtmlFilter(DexyFilter):
     ALIASES = ['split', 'splithtml']
     INPUT_EXTENSIONS = [".html"]
     OUTPUT_EXTENSIONS = [".html"]
+    FRAGMENT = False
 
     def process(self):
         input_text = self.input().data()

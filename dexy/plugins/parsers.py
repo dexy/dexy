@@ -2,6 +2,7 @@ from dexy.parser import AbstractSyntaxTree
 from dexy.parser import Parser
 from dexy.utils import parse_json
 from dexy.utils import parse_yaml
+import dexy.exceptions
 import re
 
 class YamlFileParser(Parser):
@@ -11,6 +12,12 @@ class YamlFileParser(Parser):
         def parse_key_mapping(mapping):
             for task_key, v in mapping.iteritems():
                 # v is a sequence whose members may be children or kwargs
+                if not v:
+                    raise dexy.exceptions.UserFeedback("Empty doc config for %s" % task_key)
+
+                if hasattr(v, 'keys'):
+                    raise dexy.exceptions.UserFeedback("You passed a dict to %s, please pass a sequence" % task_key)
+
                 for element in v:
                     if hasattr(element, 'keys'):
                         # This is a dict of length 1
@@ -19,12 +26,13 @@ class YamlFileParser(Parser):
 
                         if isinstance(vv, list):
                             # This is a sequence. It probably represents a
-                            # child task but if starts with 'args' then it
-                            # is nested complex kwargs.
-
-                            if kk == "args":
+                            # child task but if starts with 'args' or if it
+                            # matches a filter alias for the parent doc, then
+                            # it is nested complex kwargs.
+                            if kk == "args" or (kk in task_key.split("|")):
                                 # nested complex kwargs
-                                ast.add_task_info(task_key, **vv[0])
+                                for vvv in vv:
+                                    ast.add_task_info(task_key, **vvv)
 
                             else:
                                 # child task. we note the dependency and

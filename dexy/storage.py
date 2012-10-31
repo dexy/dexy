@@ -37,7 +37,11 @@ class GenericStorage(Storage):
         return os.path.join(self.wrapper.artifacts_dir, "%s%s" % (self.hashstring, ext))
 
     def data_file_exists(self):
-        return os.path.exists(self.data_file()) and os.path.getsize(self.data_file()) > 0
+        return os.path.exists(self.data_file())
+
+    def data_file_size(self):
+        if self.data_file_exists():
+            return os.path.getsize(self.data_file())
 
     def write_data(self, data, filepath=None):
         if not filepath:
@@ -174,6 +178,8 @@ class Sqlite3Storage(GenericStorage):
             self._storage = sqlite3.connect(self.data_file())
             self._cursor = self._storage.cursor()
         else:
+            if os.path.exists(self.working_file()):
+                os.remove(self.working_file())
             self._storage = sqlite3.connect(self.working_file())
             self._cursor = self._storage.cursor()
             self._cursor.execute("CREATE TABLE kvstore (key TEXT, value TEXT)")
@@ -201,6 +207,8 @@ class Sqlite3Storage(GenericStorage):
     def __getattr__(self, key):
         if self.__dict__.has_key(key):
             return self.__dict__[key]
+        elif key == "_cursor":
+            return self._cursor
         else:
             return self.value(key)
 

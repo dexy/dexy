@@ -23,8 +23,8 @@ class HeaderFilter(DexyFilter):
         docs = self.artifact.doc.completed_child_docs()
         docs_d = dict((task.output().long_name(), task) for task in docs)
 
-        if self.args().has_key(self.KEY_NAME):
-            requested = self.args()[self.KEY_NAME]
+        if self.artifact.args.has_key(self.KEY_NAME):
+            requested = self.artifact.args[self.KEY_NAME]
             if docs_d.has_key(requested):
                 matched_key = requested
             else:
@@ -37,7 +37,7 @@ class HeaderFilter(DexyFilter):
                     matched_key = k
 
         if not matched_key:
-            raise dexy.exceptions.UserFeedback("No input found for %s" % self.artifact.key)
+            raise dexy.exceptions.UserFeedback("No %s input found for %s" % (self.KEY_NAME, self.artifact.key))
 
         return docs_d[matched_key].output()
 

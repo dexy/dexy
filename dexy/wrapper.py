@@ -1,4 +1,5 @@
 from dexy.common import OrderedDict
+from dexy.notify import Notify
 import dexy.database
 import dexy.doc
 import dexy.parser
@@ -30,6 +31,7 @@ class Wrapper(object):
     DEFAULT_LOG_FILE = 'dexy.log'
     DEFAULT_LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     DEFAULT_LOG_LEVEL = 'DEBUG'
+    DEFAULT_PROFILE=False
     DEFAULT_RECURSE = True
     DEFAULT_REPORTS = 'output'
     DEFAULT_SILENT = False
@@ -64,10 +66,11 @@ class Wrapper(object):
         self.update_attributes_from_config(kwargs)
 
         self.args = args
-        self.docs_to_run = []
+        self.root_nodes = []
         self.tasks = OrderedDict()
-        self.pre_attrs = {}
         self.state = None
+
+        self.notifier = Notify(self)
 
     def initialize_attribute_defaults(self):
         self.artifacts_dir = self.DEFAULT_ARTIFACTS_DIR
@@ -86,6 +89,7 @@ class Wrapper(object):
         self.log_file = self.DEFAULT_LOG_FILE
         self.log_format = self.DEFAULT_LOG_FORMAT
         self.log_level = self.DEFAULT_LOG_LEVEL
+        self.profile = self.DEFAULT_PROFILE
         self.recurse = self.DEFAULT_RECURSE
         self.reports = self.DEFAULT_REPORTS
         self.silent = self.DEFAULT_SILENT
@@ -124,8 +128,9 @@ class Wrapper(object):
 
         # Remove any attributes that aren't config options
         del conf['args']
-        del conf['docs_to_run']
+        del conf['root_nodes']
         del conf['tasks']
+        del conf['notifier']
 
         for cl_key, internal_key in klass.RENAME_PARAMS.iteritems():
             conf[cl_key] = conf[internal_key]
@@ -139,25 +144,46 @@ class Wrapper(object):
     def log_path(self):
         return os.path.join(self.log_dir, self.log_file)
 
+    def ete_tree(self):
+        try:
+            from ete2 import Tree
+            t = Tree()
+        except ImportError:
+            return None
+
+        t.name = "%s" % self.batch_id
+
+        def add_children(doc, doc_node):
+            for child in doc.children:
+                child_node = doc_node.add_child(name=child.key_with_class())
+                add_children(child, child_node)
+
+        for doc in self.root_nodes:
+            doc_node = t.add_child(name=doc.key_with_class())
+            add_children(doc, doc_node)
+
+        return t
+
     def run(self):
         self.setup_run()
 
         self.log.debug("batch id is %s" % self.batch_id)
         self.state = 'populating'
 
-        for doc in self.docs_to_run:
+        for doc in self.root_nodes:
             for task in doc:
                 task()
 
         self.state = 'settingup'
 
-        for doc in self.docs_to_run:
+        for doc in self.root_nodes:
             for task in doc:
                 task()
 
         self.state = 'running'
 
-        for doc in self.docs_to_run:
+
+        for doc in self.root_nodes:
             for task in doc:
                 task()
 
@@ -173,7 +199,7 @@ class Wrapper(object):
 
         self.batch_id = self.db.next_batch_id()
 
-        if not self.docs_to_run:
+        if not self.root_nodes:
             self.setup_docs()
 
     def setup_read(self, batch_id=None):
@@ -231,7 +257,7 @@ class Wrapper(object):
             if not doc:
                 raise Exception("no doc created for %s" % arg)
             doc.wrapper = self
-            self.docs_to_run.append(doc)
+            self.root_nodes.append(doc)
 
     def create_doc_from_arg(self, arg, *children, **kwargs):
         if isinstance(arg, dexy.task.Task):
@@ -272,7 +298,7 @@ class Wrapper(object):
         Convenience method for testing to add docs and then run them.
         """
         self.setup_dexy_dirs()
-        self.docs_to_run = docs
+        self.root_nodes = docs
         self.run()
 
     def register(self, task):
@@ -280,6 +306,7 @@ class Wrapper(object):
         Register a task with the wrapper
         """
         self.tasks[task.key_with_class()] = task
+        self.notifier.subscribe("newchild", task.handle_newchild)
 
     def registered_docs(self):
         return [d for d in self.tasks.values() if isinstance(d, dexy.doc.Doc)]
@@ -337,6 +364,7 @@ class Wrapper(object):
         """
         Creates a dot representation of the tree.
         """
+#        graph = self.ete_tree()
         graph = ["digraph G {"]
 
         for task in self.tasks.values():

@@ -10,7 +10,6 @@ import inspect
 import json
 import logging
 import os
-import pkg_resources
 import sys
 import time
 import warnings
@@ -20,17 +19,18 @@ MOD = sys.modules[__name__]
 PROG = 'dexy'
 S = "   "
 
-# Automatically register plugins in any python package named like dexy_plugin_*
-for dist in pkg_resources.working_set:
-    if dist.key.startswith("dexy-plugin"):
-        import_pkg = dist.egg_name().split("-")[0]
-        __import__(import_pkg)
+def parse_and_run_command(argv, module, default_command):
+    try:
+        args.parse_and_run_command(argv, module, default_command)
+    except dexy.exceptions.UserFeedback as e:
+        sys.stderr.write("Oops, there's a problem running your command. Here is the error message:" + os.linesep)
+        sys.stderr.write(e.message)
+        sys.stderr.write(os.linesep)
+        sys.exit(1)
 
 def run():
     """
     Method that runs the command specified on the command line.
-
-    Ensures that UserFeedback exceptions are handled nicely so end users don't see tracebacks.
     """
     if hasattr(logging, 'captureWarnings'):
         logging.captureWarnings(True)
@@ -38,7 +38,8 @@ def run():
         warnings.filterwarnings("ignore",category=Warning)
 
     if len(sys.argv) == 1 or (sys.argv[1] in args.available_commands(MOD)) or sys.argv[1].startswith("-"):
-        args.parse_and_run_command(sys.argv[1:], MOD, default_command=DEFAULT_COMMAND)
+        parse_and_run_command(sys.argv[1:], MOD, default_command=DEFAULT_COMMAND)
+
     else:
         if ":" in sys.argv[1]:
             command, subcommand = sys.argv[1].split(":")
@@ -59,7 +60,7 @@ def run():
         else:
             default_command = command_class.NAMESPACE
 
-        args.parse_and_run_command([subcommand] + sys.argv[2:], mod, default_command=default_command)
+        parse_and_run_command([subcommand] + sys.argv[2:], mod, default_command=default_command)
 
 def dexy_command(
         artifactsdir=Wrapper.DEFAULT_ARTIFACTS_DIR, # location of directory in which to store artifacts
@@ -82,6 +83,7 @@ def dexy_command(
         logsdir=Wrapper.DEFAULT_LOG_DIR, # location of directory in which to store logs
         nocache=Wrapper.DEFAULT_DONT_USE_CACHE, # whether to force artifacts to run even if there is a matching file in the cache
 #        output=False, # Shortcut to mean "I just want the OutputReporter, nothing else"
+        profile=False, # whether to run with cProfile
         recurse=Wrapper.DEFAULT_RECURSE, # whether to recurse into subdirectories when running Dexy
         reports=Wrapper.DEFAULT_REPORTS, # reports to be run after dexy runs, enclose in quotes and separate with spaces
 #        reset=False, # whether to purge existing artifacts and logs before running Dexy
@@ -131,10 +133,22 @@ def dexy_command(
             start_time = time.time()
             wrapper.check_dexy_dirs()
             wrapper.setup_config()
-            wrapper.run()
+            if profile:
+                import cProfile
+                cProfile.runctx("wrapper.run()", None, locals(), "dexy.prof")
+                import pstats
+                s = pstats.Stats("dexy.prof")
+                s.sort_stats("cumulative")
+                s.print_stats(25)
+            else:
+                wrapper.run()
+
             wrapper.report()
             print "finished in %0.4f" % (time.time() - start_time)
         except dexy.exceptions.UserFeedback as e:
+            if hasattr(wrapper, 'log'):
+                wrapper.log.warn("A problem has occurred with one of your documents:")
+                wrapper.log.warn(e.message)
             wrapper.cleanup_partial_run()
             sys.stderr.write("Oops, there's a problem processing one of your documents. Here is the error message:" + os.linesep)
             sys.stderr.write(e.message)
@@ -142,6 +156,13 @@ def dexy_command(
                 sys.stderr.write(os.linesep)
             sys.stderr.write("Dexy is stopping. There might be more information at the end of the dexy log." + os.linesep)
             sys.exit(1)
+        except Exception as e:
+            if hasattr(wrapper, 'log'):
+                wrapper.log.warn("An error has occurred.")
+                wrapper.log.warn(e)
+                wrapper.log.warn(e.message)
+            import traceback
+            traceback.print_exc()
 
 def reset_command(
         artifactsdir=Wrapper.DEFAULT_ARTIFACTS_DIR, # location of directory in which to store artifacts
@@ -357,3 +378,66 @@ def grep_command(
 #            for k in artifact.data_dict.keys():
 #                if not k == '1':
 #                    print "    %s" % k
+
+def fcmds_command(alias=False):
+    """
+    Returns a list of available filter commands (fcmds) defined by the specified alias.
+
+    These commands can then be run using the fcmd command.
+    """
+
+    def filter_class_commands(filter_alias):
+        filter_class = dexy.filter.Filter.aliases[filter_alias]
+        cmds = []
+        for m in dir(filter_class):
+            if m.startswith("docmd_"):
+                cmds.append(m.replace("docmd_", ""))
+        return sorted(cmds)
+
+    filters_dict = dexy.filter.Filter.aliases
+    if (not alias) or (not alias in filters_dict):
+        print "Aliases with filter commands defined are:"
+        for a in sorted(filters_dict):
+            cmds = filter_class_commands(a)
+            if len(cmds) > 0:
+                print a
+    else:
+        print "Filter commands defined for %s:" % alias
+        cmds = filter_class_commands(alias)
+        print os.linesep.join(cmds)
+
+def fcmd_command(
+        alias=None, # The alias of the filter which defines the custom command
+        cmd=None, # The name of the command to run
+        help=False, # If true, just print docstring rather than running command
+        **kwargs # Additional arguments to be passed to the command
+        ):
+    """
+    Run a command defined in a dexy filter.
+    """
+    filter_class = dexy.filter.Filter.aliases.get(alias)
+
+    if not filter_class:
+        raise dexy.exceptions.UserFeedback("%s is not a valid alias" % alias)
+
+    cmd_name = "docmd_%s" % cmd
+
+    if not filter_class.__dict__.has_key(cmd_name):
+        raise dexy.exceptions.UserFeedback("%s is not a valid command. There is no method %s defined in %s" % (cmd, cmd_name, filter_class.__name__))
+    else:
+        class_method = filter_class.__dict__[cmd_name]
+        if type(class_method) == classmethod:
+            if help:
+                print inspect.getdoc(class_method.__func__)
+            else:
+                try:
+                    class_method.__func__(filter_class, **kwargs)
+                except TypeError as e:
+                    print e.message
+                    print inspect.getargspec(class_method.__func__)
+                    print inspect.getdoc(class_method.__func__)
+                    raise e
+
+        else:
+            raise dexy.exceptions.InternalDexyProblem("expected %s to be a classmethod of %s" % (cmd_name, filter_class.__name__))
+

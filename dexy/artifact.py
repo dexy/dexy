@@ -16,20 +16,22 @@ import time
 
 class Artifact(dexy.task.Task):
     def set_and_save_hash(self):
-        self.append_children_hashstrings()
+        self.append_child_hashstrings()
         self.set_hashstring()
 
-    def append_children_hashstrings(self):
+    def append_child_hashstrings(self):
         child_hashes = []
-        for child in self.doc.setup_child_docs():
-            child_hash = child.final_artifact.hashstring
-            child_hashes.append("%s: %s" % (child.key, child_hash))
+        for child in self.doc.deps.values():
+            if not hasattr(child, 'hashstring'):
+                raise Exception("Doc %s child %s has no hashstring" % (self.key_with_class(), child.key_with_class()))
+
+            child_hashes.append("%s: %s" % (child.key_with_class(), child.hashstring))
 
         self.metadata.child_hashes = ", ".join(child_hashes)
 
     def set_hashstring(self):
         self.hashstring = self.metadata.compute_hash()
-        self.log.debug("hashstring for %s is %s" % (self.key, self.hashstring))
+        self.log.debug("Setting hashstring for %s to %s" % (self.key, self.hashstring))
 
     def tmp_dir(self):
         return os.path.join(self.wrapper.artifacts_dir, self.hashstring)
@@ -72,12 +74,10 @@ class Artifact(dexy.task.Task):
     def setup_output_data(self):
         data_class = dexy.data.Data.aliases[self.data_class_alias()]
         self.output_data_type = data_class.ALIASES[0]
-        self.output_data = data_class(self.key, self.ext, self.hashstring, self.wrapper)
+        self.output_data = data_class(self.key, self.ext, self.hashstring, self.args, self.wrapper)
 
 class InitialArtifact(Artifact):
-    def append_children_hashstrings(self):
-        # Children don't matter for initial artifact which just copies data
-        # from file and doesn't take any other doc inputs.
+    def append_child_hashstrings(self):
         pass
 
     def set_metadata_attrs(self):
@@ -92,6 +92,7 @@ class InitialArtifact(Artifact):
 
     def setup(self):
         self.set_log()
+        self.log.debug("Setting up %s" % self.key_with_class())
         self.metadata = dexy.metadata.Md5()
         self.ext = os.path.splitext(self.name)[1]
 
@@ -156,6 +157,7 @@ class FilterArtifact(Artifact):
 
     def setup(self):
         self.set_log()
+        self.log.debug("Setting up %s" % self.key_with_class())
         self.metadata = dexy.metadata.Md5()
         self.input_data = self.prior.output_data
         self.set_extension()
@@ -163,10 +165,15 @@ class FilterArtifact(Artifact):
         self.setup_output_data()
 
     def run(self, *args, **kw):
+        self.log.debug("Running %s" % self.key_with_class())
         if not self.output_data.is_cached():
+            self.log.debug("Output is not cached, running...")
             self.filter_instance.process()
+            if not self.output_data.is_cached():
+                raise dexy.exceptions.InternalDexyProblem("No output file after filter ran: %s" % self.key)
             self.source = 'generated'
         else:
+            self.log.debug("Output is cached, reconstituting...")
             self.reconstitute_cached_children()
             self.source = 'cached'
 
@@ -177,7 +184,7 @@ class FilterArtifact(Artifact):
         """
         rows = self.wrapper.get_child_hashes_in_previous_batch(self.hashstring)
         for row in rows:
-            self.log.debug("Fetched row %s for parent doc %s" % (row['key'], self.key))
+            self.log.debug("Reconstituting %s from database and cache" % row['doc_key'])
             if 'Initial' in row['class_name']:
                 doc_args = json.loads(row['args'])
                 doc = dexy.doc.Doc(row['doc_key'], **doc_args)
@@ -224,6 +231,7 @@ class FilterArtifact(Artifact):
         self.log.debug("Adding additional doc %s" % doc.key)
         doc.created_by_doc = self.hashstring
         doc.wrapper = self.wrapper
+        doc.canon = True
 
         for task in (doc,):
             for t in task:
@@ -235,8 +243,8 @@ class FilterArtifact(Artifact):
             for t in task:
                 t()
 
+        self.wrapper.notifier.notify("%s:%s" % (self.key_with_class(), 'newchild'), doc)
         self.doc.children.append(doc)
-        self.doc.deps[doc.key_with_class()] = doc
 
     def set_extension(self):
         this_filter_outputs = self.filter_class.OUTPUT_EXTENSIONS

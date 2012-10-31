@@ -32,10 +32,11 @@ class Data:
     def storage_class_alias(klass, file_ext):
         return klass.DEFAULT_STORAGE_TYPE
 
-    def __init__(self, key, ext, hashstring, wrapper, storage_type=None):
+    def __init__(self, key, ext, hashstring, args, wrapper, storage_type=None):
         self.key = key
         self.ext = ext
         self.hashstring = hashstring
+        self.args = args
         self.wrapper = wrapper
 
         self.calculate_name()
@@ -53,8 +54,13 @@ class Data:
         pass
 
     def calculate_name(self):
-        name_without_ext = posixpath.splitext(self.key)[0]
-        self.name = "%s%s" % (name_without_ext, self.ext)
+        if self.args.get('canonical-name'):
+            self.name = self.args.get('canonical-name')
+        elif self.args.get('canonical_name'):
+            self.name = self.args.get('canonical_name')
+        else:
+            name_without_ext = posixpath.splitext(self.key)[0]
+            self.name = "%s%s" % (name_without_ext, self.ext)
 
     def parent_dir(self):
         return posixpath.dirname(self.name)
@@ -113,6 +119,8 @@ class GenericData(Data):
         return self._data or self.storage.data_file_exists()
 
     def is_cached(self):
+        if self.storage.data_file_size() == 0:
+            self.wrapper.log.debug("Data file for %s (%s) has size 0" % (self.key, self.storage.data_file()))
         return self.storage.data_file_exists()
 
     def __unicode__(self):

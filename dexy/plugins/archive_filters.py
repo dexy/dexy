@@ -9,6 +9,7 @@ class UnprocessedDirectoryArchiveFilter(DexyFilter):
     """
     OUTPUT_EXTENSIONS = [".tgz"]
     ALIASES = ['tgzdir']
+    FRAGMENT = False
 
     def process(self):
         parent_dir = self.output().parent_dir()
@@ -31,6 +32,7 @@ class ArchiveFilter(DexyFilter):
     """
     OUTPUT_EXTENSIONS = [".tgz"]
     ALIASES = ['archive', 'tgz']
+    FRAGMENT = False
 
     def open_archive(self):
         self.archive = tarfile.open(self.output_filepath(), mode="w:gz")

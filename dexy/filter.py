@@ -17,6 +17,7 @@ class Filter:
     OUTPUT_DATA_TYPE = 'generic'
     OUTPUT_EXTENSIONS = [".*"]
     TAGS = []
+    FRAGMENT = True
     PRESERVE_PRIOR_DATA_CLASS = False
 
     @classmethod
@@ -35,6 +36,9 @@ class Filter:
 
     def arg_value(self, key, default=None):
         return self.args().get(key, default)
+
+    def deps(self):
+        return self.artifact.doc.deps
 
     @classmethod
     def data_class_alias(klass, file_ext):

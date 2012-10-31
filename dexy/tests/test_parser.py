@@ -19,7 +19,7 @@ def test_yaml_parser():
         parser = YamlFileParser()
         parser.wrapper = wrapper
         parser.parse(YAML)
-        docs = wrapper.docs_to_run
+        docs = wrapper.root_nodes
         for doc in docs:
             assert doc.__class__.__name__ == 'BundleDoc'
             assert doc.key in ['code', 'wordpress']
@@ -29,7 +29,7 @@ def test_text_parser_blank_lines():
         parser = TextFileParser()
         parser.wrapper = wrapper
         parser.parse("\n\n")
-        docs = wrapper.docs_to_run
+        docs = wrapper.root_nodes
         assert len(docs) == 0
 
 def test_text_parser_comments():
@@ -41,7 +41,7 @@ def test_text_parser_comments():
         # commented-out.doc
         """)
 
-        docs = wrapper.docs_to_run
+        docs = wrapper.root_nodes
         assert len(docs) == 1
         assert docs[0].key == "valid.doc"
 
@@ -53,7 +53,7 @@ def test_text_parser_valid_json():
         doc.txt { "contents" : 123 }
         """)
 
-        docs = wrapper.docs_to_run
+        docs = wrapper.root_nodes
         assert docs[0].key == "doc.txt"
         assert docs[0].args['contents'] == 123
 
@@ -103,7 +103,7 @@ def test_text_parser_virtual_file():
         """)
 
         wrapper.run()
-        docs = wrapper.docs_to_run
+        docs = wrapper.root_nodes
 
         assert docs[0].key == "virtual.txt"
         assert docs[0].output().as_text() == "hello"
@@ -118,7 +118,7 @@ def test_original_parser():
         parser.wrapper = wrapper
         parser.parse(conf)
 
-        assert wrapper.docs_to_run[0].key_with_class() == "PatternDoc:*.txt"
+        assert wrapper.root_nodes[0].key_with_class() == "PatternDoc:*.txt"
 
 def test_original_parser_allinputs():
     with wrap() as wrapper:
@@ -132,8 +132,8 @@ def test_original_parser_allinputs():
         parser.wrapper = wrapper
         parser.parse(conf)
 
-        assert len(wrapper.docs_to_run) == 1
-        assert wrapper.docs_to_run[0].key_with_class() == "PatternDoc:*.md|jinja"
+        assert len(wrapper.root_nodes) == 1
+        assert wrapper.root_nodes[0].key_with_class() == "PatternDoc:*.md|jinja"
 
 INVALID_YAML = """\
 code:

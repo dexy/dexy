@@ -191,4 +191,4 @@ class Parser:
 
         for key in ast.tree:
             task = parse_item(key)
-            self.wrapper.docs_to_run.append(task)
+            self.wrapper.root_nodes.append(task)

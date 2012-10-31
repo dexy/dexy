@@ -58,8 +58,6 @@ def test_access_other_documents():
 
         output = parent.output().as_text()
 
-        print "output is", output
-
         for item in expected_items:
             assert item in output
 
@@ -68,7 +66,7 @@ def test_doc_children_artifacts():
         doc = Doc("hello.txt|newdoc", contents="hello", wrapper=wrapper)
         parent = Doc("parent.txt|process", doc, contents="hello", wrapper=wrapper)
 
-        wrapper.docs_to_run = [parent]
+        wrapper.root_nodes = [parent]
 
         doc.populate()
         parent.populate()
@@ -96,7 +94,7 @@ def test_doc_children_artifacts():
         doc = Doc("hello.txt|newdoc", contents="hello", wrapper=wrapper)
         parent = Doc("parent.txt|process", doc, contents="hello", wrapper=wrapper)
 
-        wrapper.docs_to_run = [parent]
+        wrapper.root_nodes = [parent]
         wrapper.run()
 
         assert len(doc.children) == 3

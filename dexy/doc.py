@@ -99,24 +99,18 @@ class Doc(dexy.task.Task):
         self.artifacts.append(artifact)
         self.final_artifact = artifact
 
+    def setup(self):
+        self.hashstring = self.final_artifact.hashstring
+
     def metadata(self):
         return self.final_artifact.metadata
-
-    def pre(self, *args, **kw):
-        for artifact in self.artifacts[1:]:
-            if hasattr(artifact.filter_instance, 'pre') and len(self.artifacts) == 2:
-                artifact.filter_instance.pre(*args, **kw)
-
-    def post(self, *args, **kw):
-        for artifact in reversed(self.artifacts[1:]):
-            if hasattr(artifact.filter_instance, 'post') and len(self.artifacts) == 2:
-                artifact.filter_instance.post(*args, **kw)
 
     def populate(self):
         self.set_log()
         self.name = self.key.split("|")[0]
         self.filters = self.key.split("|")[1:]
         self.artifacts = []
+        self.canon = self.args.get('canon', len(self.filters) == 0)
 
         self.setup_initial_artifact()
 
@@ -124,6 +118,7 @@ class Doc(dexy.task.Task):
             filters = self.filters[0:i+1]
             key = "%s|%s" % (self.name, "|".join(filters))
             self.setup_filter_artifact(key, filters)
+            self.canon = self.canon or (not self.final_artifact.filter_class.FRAGMENT)
 
 class WalkDoc(dexy.task.Task):
     """
@@ -155,6 +150,9 @@ class PatternDoc(WalkDoc):
     A doc which takes a file matching pattern and creates individual Doc objects for all files that match the pattern.
     """
     ALIASES = ['pattern']
+
+    def setup(self):
+        self.hashstring = ''
 
     def populate(self):
         self.set_log()
@@ -199,3 +197,6 @@ class BundleDoc(dexy.task.Task):
 
     def populate(self):
         self.set_log()
+
+    def setup(self):
+        self.hashstring = ''
