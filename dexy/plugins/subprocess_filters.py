@@ -1,5 +1,6 @@
-from dexy.plugins.process_filters import SubprocessFilter
 from dexy.common import OrderedDict
+from dexy.plugins.process_filters import SubprocessFilter
+import dexy.exceptions
 import os
 import shutil
 
@@ -338,3 +339,50 @@ class HtLatexFilter(SubprocessFilter):
             'script_file' : self.input_filename()
         }
         return """%(prog)s %(script_file)s "%(args)s" "%(tex4htargs)s" "%(t4htargs)s" "%(latexargs)s" """ % args
+
+class AbcFilter(SubprocessFilter):
+    ALIASES = ['abc']
+    INPUT_EXTENSIONS = ['.abc']
+    OUTPUT_EXTENSIONS = ['.svg', '.html', '.xhtml', '.eps']
+    EXECUTABLE = 'abcm2ps'
+
+    def command_string(self):
+        clargs = self.command_line_args()
+
+        if not any(x in clargs for x in ['-E', '-g', '-v', '-X']):
+            if self.artifact.ext in ('.eps'):
+                output_flag = '-E'
+            elif self.artifact.ext in ('.svg'):
+                output_flag = '-g'
+            elif self.artifact.ext in ('.html', '.xhtml'):
+                output_flag = '-X'
+            else:
+                raise dexy.exceptions.UserFeedback("File extension %s is not supported for abc filter. Supported extensions are %s" % (self.artifact.ext, ", ".join(self.OUTPUT_EXTENSIONS)))
+        else:
+            output_flag = ''
+
+        args = {
+            'prog' : self.executable(),
+            'args' : self.command_line_args() or '',
+            'output_flag' : output_flag,
+            'script_file' : self.input_filename(),
+            'output_file' : self.output_filename()
+        }
+        return "%(prog)s %(args)s %(output_flag)s -O %(output_file)s %(script_file)s" % args
+
+    def process(self):
+        command = self.command_string()
+        proc, stdout = self.run_command(command, self.setup_env())
+        self.handle_subprocess_proc_return(command, proc.returncode, stdout)
+
+        if self.artifact.ext in ('.svg', '.eps'):
+            # Fix for abcm2ps adding 001 to file name.
+            nameparts = os.path.splitext(self.output().name)
+            output_filename = "%s001%s" % (nameparts[0], nameparts[1])
+            output_filepath = os.path.join(self.artifact.tmp_dir(), output_filename)
+            self.output().copy_from_file(output_filepath)
+        else:
+            self.copy_canonical_file()
+
+        if self.do_add_new_files():
+            self.add_new_files()

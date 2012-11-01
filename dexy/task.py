@@ -87,14 +87,12 @@ class Task():
         self.deps[new_dep.key_with_class()] = new_dep
 
     def handle_newchild(self, new_child_doc):
-        if new_child_doc.created_by_doc in self.deps.values():
+        if new_child_doc.created_by_doc_key in self.deps:
             self.add_dep(new_child_doc)
 
     def __call__(self, *args, **kw):
         siblings = []
         for child in self.children:
-            child.parent = self
-
             for s in siblings:
                 child.deps[s.key_with_class()] = s
             siblings.append(child)

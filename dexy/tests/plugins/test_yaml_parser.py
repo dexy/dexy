@@ -38,7 +38,6 @@ def test_children_siblings_order():
                 ]
 
         c3 = wrapper.tasks['BundleDoc:c3']
-        print c3.deps.keys()
         assert c3.deps.keys() == [
                 'BundleDoc:c1',
                 'BundleDoc:c2'

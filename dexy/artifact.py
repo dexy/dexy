@@ -230,6 +230,7 @@ class FilterArtifact(Artifact):
 
         self.log.debug("Adding additional doc %s" % doc.key)
         doc.created_by_doc = self.hashstring
+        doc.created_by_doc_key = self.doc.key_with_class()
         doc.wrapper = self.wrapper
         doc.canon = True
 
@@ -243,7 +244,7 @@ class FilterArtifact(Artifact):
             for t in task:
                 t()
 
-        self.wrapper.notifier.notify("%s:%s" % (self.key_with_class(), 'newchild'), doc)
+        self.wrapper.notifier.notify('newchild', doc)
         self.doc.children.append(doc)
 
     def set_extension(self):

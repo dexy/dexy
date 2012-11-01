@@ -11,11 +11,11 @@ class Notify(object):
         if not callback in self.channels[channel]:
             self.channels[channel].append(callback)
 
-    def notify(self, channel, *args):
+    def notify(self, channel, arg):
         if not self.channels.get(channel):
-            self.wrapper.log.warn("Trying to pass message '%s' to nonexistent channel %s" % (args, channel))
+            self.wrapper.log.warn("Trying to pass message '%s' to nonexistent channel %s" % (arg, channel))
         else:
-            self.wrapper.log.debug("Sending message '%s' on channel '%s'" % (args, channel))
+            self.wrapper.log.debug("Sending message '%s' on channel '%s'" % (arg, channel))
             for callback in self.channels[channel]:
                 self.wrapper.log.debug("Passing message to callback '%s'..." % callback)
-                callback(*args)
+                callback(arg)
