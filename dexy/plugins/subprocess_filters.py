@@ -347,7 +347,7 @@ class AbcFilter(SubprocessFilter):
     EXECUTABLE = 'abcm2ps'
 
     def command_string(self):
-        clargs = self.command_line_args()
+        clargs = self.command_line_args() or ''
 
         if not any(x in clargs for x in ['-E', '-g', '-v', '-X']):
             if self.artifact.ext in ('.eps'):
