@@ -1,5 +1,6 @@
 from dexy.doc import Doc
 from dexy.wrapper import Wrapper
+from dexy.commands import init_wrapper
 from dexy.tests.utils import tempdir
 import os
 
@@ -8,7 +9,7 @@ def test_config_file():
         with open("dexy.conf", "w") as f:
             f.write("""{ "logfile" : "a.log" }""")
 
-        wrapper = Wrapper()
+        wrapper = init_wrapper({'conf' : 'dexy.conf'})
         assert wrapper.log_file == "a.log"
 
 def test_kwargs_override_config_file():
@@ -16,7 +17,11 @@ def test_kwargs_override_config_file():
         with open("dexy.conf", "w") as f:
             f.write("""{ "logfile" : "a.log" }""")
 
-        wrapper = Wrapper(logfile="b.log")
+        wrapper = init_wrapper({
+            '__cli_options' : { 'logfile' : 'b.log' },
+            'logfile' : "b.log",
+            'conf' : 'dexy.conf'
+            })
         assert wrapper.log_file == "b.log"
 
 def test_wrapper_init():
@@ -26,13 +31,13 @@ def test_wrapper_init():
 def test_wrapper_setup():
     with tempdir():
         assert not os.path.exists('artifacts')
-        wrapper = Wrapper()
+        wrapper = init_wrapper({'conf' : 'dexy.conf'})
         wrapper.setup_dexy_dirs()
         assert os.path.exists('artifacts')
 
 def test_wrapper_run():
     with tempdir():
-        wrapper = Wrapper()
+        wrapper = init_wrapper({'conf' : 'dexy.conf'})
         wrapper.setup_dexy_dirs()
         d1 = Doc("abc.txt|outputabc", contents="these are the contents", wrapper=wrapper)
         d2 = Doc("hello.txt|outputabc", contents="these are more contents", wrapper=wrapper)
@@ -45,7 +50,7 @@ def test_wrapper_run():
 def test_wrapper_register():
     with tempdir():
         doc = Doc("abc.txt")
-        wrapper = Wrapper()
+        wrapper = init_wrapper({'conf' : 'dexy.conf'})
         wrapper.setup_dexy_dirs()
         wrapper.setup_run()
         wrapper.register(doc)

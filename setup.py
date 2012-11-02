@@ -36,7 +36,7 @@ setup(
             'ordereddict',
             'pexpect',
             'pygments',
-            'python-modargs>=1.4',
+            'python-modargs>=1.5',
             'PyYAML',
             'requests>=0.10.6',
             'zapps'

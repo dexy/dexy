@@ -4,8 +4,6 @@ import dexy.database
 import dexy.doc
 import dexy.parser
 import dexy.reporter
-import inspect
-import json
 import logging
 import logging.handlers
 import os
@@ -15,26 +13,31 @@ class Wrapper(object):
     """
     Class that assists in interacting with Dexy, including running Dexy.
     """
-    DEFAULT_ARTIFACTS_DIR = 'artifacts'
-    DEFAULT_CONFIG_FILE = 'dexy.conf' # Specification of dexy-wide config options.
-    DEFAULT_DANGER = False
-    DEFAULT_DB_ALIAS = 'sqlite3'
-    DEFAULT_DB_FILE = 'dexy.sqlite3'
-    DEFAULT_DISABLE_TESTS = False
-    DEFAULT_DONT_USE_CACHE = False
-    DEFAULT_DRYRUN = False
-    DEFAULT_EXCLUDE = ''
-    DEFAULT_GLOBALS = ''
-    DEFAULT_HASHFUNCTION = 'md5'
-    DEFAULT_IGNORE_NONZERO_EXIT = False
-    DEFAULT_LOG_DIR = 'logs'
-    DEFAULT_LOG_FILE = 'dexy.log'
-    DEFAULT_LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    DEFAULT_LOG_LEVEL = 'DEBUG'
-    DEFAULT_PROFILE=False
-    DEFAULT_RECURSE = True
-    DEFAULT_REPORTS = 'output'
-    DEFAULT_SILENT = False
+
+    DEFAULTS = {
+            'artifacts_dir' : 'artifacts',
+            'config_file' : 'dexy.conf',
+            'danger' : False,
+            'db_alias' : 'sqlite3',
+            'db_file' : 'dexy.sqlite3',
+            'disable_tests' : False,
+            'dont_use_cache' : False,
+            'dry_run' : False,
+            'exclude' : '',
+            'globals' : '',
+            'hashfunction' : 'md5',
+            'ignore_nonzero_exit' : False,
+            'log_dir' : 'logs',
+            'log_file' : 'dexy.log',
+            'log_format' : "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            'log_level' : "DEBUG",
+            'profile' : False,
+            'recurse' : True,
+            'reports' : 'output',
+            'silent' : False,
+            'target' : False,
+            'uselocals' : False
+        }
 
     LOG_LEVELS = {
             'DEBUG' : logging.DEBUG,
@@ -42,28 +45,9 @@ class Wrapper(object):
             'WARN' : logging.WARN
             }
 
-    RENAME_PARAMS = {
-            'artifactsdir' : 'artifacts_dir',
-            'conf' : 'config_file',
-            'dbalias' : 'db_alias',
-            'dbfile' : 'db_file',
-            'disabletests' : 'disable_tests',
-            'dryrun' : 'dry_run',
-            'ignore' : 'ignore_nonzero_exit',
-            'logfile' : 'log_file',
-            'logformat' : 'log_format',
-            'loglevel' : 'log_level',
-            'logsdir' : 'log_dir',
-            'nocache' : 'dont_use_cache'
-            }
-
-    SKIP_KEYS = ['h', 'help', 'version']
-
     def __init__(self, *args, **kwargs):
         self.initialize_attribute_defaults()
-        self.check_config_file_location(kwargs)
-        self.load_config_file()
-        self.update_attributes_from_config(kwargs)
+        self.update_attributes_from_kwargs(kwargs)
 
         self.args = args
         self.root_nodes = []
@@ -73,70 +57,14 @@ class Wrapper(object):
         self.notifier = Notify(self)
 
     def initialize_attribute_defaults(self):
-        self.artifacts_dir = self.DEFAULT_ARTIFACTS_DIR
-        self.config_file = self.DEFAULT_CONFIG_FILE
-        self.danger = self.DEFAULT_DANGER
-        self.db_alias = self.DEFAULT_DB_ALIAS
-        self.db_file = self.DEFAULT_DB_FILE
-        self.disable_tests = self.DEFAULT_DISABLE_TESTS
-        self.dont_use_cache = self.DEFAULT_DONT_USE_CACHE
-        self.dry_run = self.DEFAULT_DRYRUN
-        self.exclude = self.DEFAULT_EXCLUDE
-        self.globals = self.DEFAULT_GLOBALS
-        self.hashfunction = self.DEFAULT_HASHFUNCTION
-        self.ignore_nonzero_exit = self.DEFAULT_IGNORE_NONZERO_EXIT
-        self.log_dir = self.DEFAULT_LOG_DIR
-        self.log_file = self.DEFAULT_LOG_FILE
-        self.log_format = self.DEFAULT_LOG_FORMAT
-        self.log_level = self.DEFAULT_LOG_LEVEL
-        self.profile = self.DEFAULT_PROFILE
-        self.recurse = self.DEFAULT_RECURSE
-        self.reports = self.DEFAULT_REPORTS
-        self.silent = self.DEFAULT_SILENT
+        for name, value in self.DEFAULTS.iteritems():
+            setattr(self, name, value)
 
-    def check_config_file_location(self, kwargs):
-        self.update_attributes_from_config(kwargs)
-
-    def update_attributes_from_config(self, config):
-        for key, value in config.iteritems():
-            if not key in self.SKIP_KEYS:
-                corrected_key = self.RENAME_PARAMS.get(key, key)
-                if not hasattr(self, corrected_key):
-                    raise Exception("no default for %s" % corrected_key)
-                setattr(self, corrected_key, value)
-
-    def load_config_file(self):
-        """
-        Look for a config file in current working dir and loads it.
-        """
-        if os.path.exists(self.config_file):
-            with open(self.config_file) as f:
-                try:
-                    conf = json.load(f)
-                except ValueError as e:
-                    msg = inspect.cleandoc("""Was unable to parse the json in your config file '%s'.
-                    Here is information from the json parser:""" % self.config_file)
-                    msg += "\n"
-                    msg += str(e)
-                    raise dexy.exceptions.UserFeedback(msg)
-
-            self.update_attributes_from_config(conf)
-
-    @classmethod
-    def default_config(klass):
-        conf = klass().__dict__.copy()
-
-        # Remove any attributes that aren't config options
-        del conf['args']
-        del conf['root_nodes']
-        del conf['tasks']
-        del conf['notifier']
-
-        for cl_key, internal_key in klass.RENAME_PARAMS.iteritems():
-            conf[cl_key] = conf[internal_key]
-            del conf[internal_key]
-
-        return conf
+    def update_attributes_from_kwargs(self, kwargs):
+        for key, value in kwargs.iteritems():
+            if not key in self.DEFAULTS:
+                raise Exception("invalid kwargs %s" % key)
+            setattr(self, key, value)
 
     def db_path(self):
         return os.path.join(self.artifacts_dir, self.db_file)
@@ -167,23 +95,34 @@ class Wrapper(object):
     def run(self):
         self.setup_run()
 
+        self.log.debug("Running dexy with config:")
+        for k in sorted(self.__dict__):
+            if not k in ('args', 'root_nodes', 'tasks', 'notifier'):
+                self.log.debug("%s: %s" % (k, self.__dict__[k]))
+
         self.log.debug("batch id is %s" % self.batch_id)
         self.state = 'populating'
 
-        for doc in self.root_nodes:
+        if self.target:
+            self.log.debug("Limiting root nodes to %s" % self.target)
+            docs = [doc for doc in self.root_nodes if doc.key.startswith(self.target)]
+            self.log.debug("Processing nodes %s" % ", ".join(doc.key_with_class() for doc in docs))
+        else:
+            docs = self.root_nodes
+
+        for doc in docs:
             for task in doc:
                 task()
 
         self.state = 'settingup'
 
-        for doc in self.root_nodes:
+        for doc in docs:
             for task in doc:
                 task()
 
         self.state = 'running'
 
-
-        for doc in self.root_nodes:
+        for doc in docs:
             for task in doc:
                 task()
 

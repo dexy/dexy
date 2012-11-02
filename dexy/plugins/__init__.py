@@ -1,4 +1,3 @@
-import dexy.plugins.ansi2html_filters
 import dexy.plugins.api_filters
 import dexy.plugins.archive_filters
 import dexy.plugins.boto_filters
@@ -14,7 +13,6 @@ import dexy.plugins.output_reporters
 import dexy.plugins.parsers
 import dexy.plugins.pexpect_filters
 import dexy.plugins.phantomjs_filters
-import dexy.plugins.pjsua_filters
 import dexy.plugins.pydoc_filters
 import dexy.plugins.pygments_filters
 import dexy.plugins.restructured_text_filters

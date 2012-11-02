@@ -1,3 +1,5 @@
+from dexy.utils import parse_json
+from dexy.utils import parse_yaml
 from dexy.version import DEXY_VERSION
 from dexy.wrapper import Wrapper
 from modargs import args
@@ -13,6 +15,9 @@ import os
 import sys
 import time
 import warnings
+import yaml
+
+D = Wrapper.DEFAULTS
 
 DEFAULT_COMMAND = 'dexy'
 MOD = sys.modules[__name__]
@@ -62,34 +67,109 @@ def run():
 
         parse_and_run_command([subcommand] + sys.argv[2:], mod, default_command=default_command)
 
+def config_args(modargs):
+    cliargs = modargs.get("__cli_options", {})
+    kwargs = modargs.copy()
+
+    # Update from config file
+    if modargs.has_key('conf'):
+        config_file = modargs['conf']
+        if os.path.exists(config_file):
+            with open(config_file, "rb") as f:
+                if config_file.endswith(".yaml"):
+                    conf_args = parse_yaml(f.read())
+                elif config_file.endswith(".json") or config_file.endswith(".conf"):
+                    conf_args = parse_json(f.read())
+                else:
+                    raise dexy.exceptions.UserFeedback("Don't know how to load config from '%s'" % config_file)
+
+            kwargs.update(conf_args)
+
+    for k in cliargs.keys(): kwargs[k] = modargs[k]
+
+    # TODO allow updating from env variables, e.g. DEXY_ARTIFACTS_DIR
+
+    return kwargs
+
+RENAME_PARAMS = {
+        'artifactsdir' : 'artifacts_dir',
+        'conf' : 'config_file',
+        'dbalias' : 'db_alias',
+        'dbfile' : 'db_file',
+        'disabletests' : 'disable_tests',
+        'dryrun' : 'dry_run',
+        'ignore' : 'ignore_nonzero_exit',
+        'logfile' : 'log_file',
+        'logformat' : 'log_format',
+        'loglevel' : 'log_level',
+        'logdir' : 'log_dir',
+        'nocache' : 'dont_use_cache'
+        }
+
+def rename_params(kwargs):
+    renamed_args = {}
+    for k, v in kwargs.iteritems():
+        renamed_key = RENAME_PARAMS.get(k, k)
+        renamed_args[renamed_key] = v
+    return renamed_args
+
+def skip_params(kwargs):
+    ok_params = {}
+    for k, v in kwargs.iteritems():
+        if k in D.keys():
+            ok_params[k] = v
+    return ok_params
+
+def init_wrapper(modargs):
+    kwargs = config_args(modargs)
+    print "first", kwargs
+    kwargs = rename_params(kwargs)
+    print "after rename", kwargs
+    kwargs = skip_params(kwargs)
+    print "after skip params", kwargs
+    return Wrapper(**kwargs)
+
+def default_config():
+    wrapper = Wrapper()
+    conf = wrapper.__dict__.copy()
+
+    for k in conf.keys():
+        if not k in D.keys():
+            del conf[k]
+
+    reverse_rename = dict((v,k) for k, v in RENAME_PARAMS.iteritems())
+    for k in conf.keys():
+        renamed_key = reverse_rename.get(k, k)
+        conf[renamed_key] = conf[k]
+
+    return conf
+
 def dexy_command(
-        artifactsdir=Wrapper.DEFAULT_ARTIFACTS_DIR, # location of directory in which to store artifacts
-        conf=Wrapper.DEFAULT_CONFIG_FILE, # name to use for configuration file
-        danger=False, # whether to allow running remote files
-        dbalias=Wrapper.DEFAULT_DB_ALIAS, # type of database to use
-        dbfile=Wrapper.DEFAULT_DB_FILE, # name of the database file (it lives in the logs dir)
-#        directory=".", # the directory to process, you can just process a subdirectory of your project
-        disabletests=False, # Whether to disable the dexy 'test' filter
-        dryrun=Wrapper.DEFAULT_DRYRUN, # if True, just parse config and print batch info, don't run dexy
-        exclude=Wrapper.DEFAULT_EXCLUDE, # directories to exclude from dexy processing
-        globals=Wrapper.DEFAULT_GLOBALS, # global values to make available within dexy documents, should be KEY=VALUE pairs separated by spaces
+        __cli_options=False,
+        artifactsdir=D['artifacts_dir'], # location of directory in which to store artifacts
+        conf=D['config_file'], # name to use for configuration file
+        danger=D['danger'], # whether to allow running remote files
+        dbalias=D['db_alias'], # type of database to use
+        dbfile=D['db_file'], # name of the database file (it lives in the logs dir)
+        disabletests=D['disable_tests'], # Whether to disable the dexy 'test' filter
+        dryrun=D['dry_run'], # if True, just parse config and print batch info, don't run dexy
+        exclude=D['exclude'], # directories to exclude from dexy processing
+        globals=D['globals'], # global values to make available within dexy documents, should be KEY=VALUE pairs separated by spaces
         help=False, # for people who type -help out of habit
         h=False, # for people who type -h out of habit
-        hashfunction=Wrapper.DEFAULT_HASHFUNCTION, # What hash function to use, set to crc32 or adler32 for more speed but less reliability
-        ignore=Wrapper.DEFAULT_IGNORE_NONZERO_EXIT, # whether to ignore nonzero exit status or raise an error - may not be supported by all filters
-        logfile=Wrapper.DEFAULT_LOG_FILE, # name of log file
-        logformat=Wrapper.DEFAULT_LOG_FORMAT, # format of log entries
-        loglevel=Wrapper.DEFAULT_LOG_LEVEL, # log level
-        logsdir=Wrapper.DEFAULT_LOG_DIR, # location of directory in which to store logs
-        nocache=Wrapper.DEFAULT_DONT_USE_CACHE, # whether to force artifacts to run even if there is a matching file in the cache
-#        output=False, # Shortcut to mean "I just want the OutputReporter, nothing else"
-        profile=False, # whether to run with cProfile
-        recurse=Wrapper.DEFAULT_RECURSE, # whether to recurse into subdirectories when running Dexy
-        reports=Wrapper.DEFAULT_REPORTS, # reports to be run after dexy runs, enclose in quotes and separate with spaces
-#        reset=False, # whether to purge existing artifacts and logs before running Dexy
-#        run="", # specific document to run. if specified, this document + its dependencies will be all that is run
-        silent=False, # Whether to not print any output when running dexy
-#        uselocals=True, # use cached local copies of remote URLs, faster but might not be up to date, 304 from server will override this setting
+        hashfunction=D['hashfunction'], # What hash function to use, set to crc32 or adler32 for more speed but less reliability
+        ignore=D['ignore_nonzero_exit'], # whether to ignore nonzero exit status or raise an error - may not be supported by all filters
+        logfile=D['log_file'], # name of log file
+        logformat=D['log_format'], # format of log entries
+        loglevel=D['log_level'], # log level
+        logdir=D['log_dir'], # location of directory in which to store logs
+        nocache=D['dont_use_cache'], # whether to force artifacts to run even if there is a matching file in the cache
+        profile=D['profile'], # whether to run with cProfile
+        recurse=D['recurse'], # whether to recurse into subdirectories when running Dexy
+        reports=D['reports'], # reports to be run after dexy runs, enclose in quotes and separate with spaces
+        silent=D['silent'], # Whether to not print any output when running dexy
+        uselocals=D['uselocals'], # use cached local copies of remote URLs, faster but might not be up to date, 304 from server will override this setting
+        target=D['target'], # Which target to run. By default all targets are run, this allows you to run only 1 bundle (and its dependencies).
         version=False # For people who type -version out of habit
     ):
     """
@@ -127,7 +207,7 @@ def dexy_command(
     elif version:
         version_command()
     else:
-        wrapper = Wrapper(**locals())
+        wrapper = init_wrapper(locals())
 
         try:
             start_time = time.time()
@@ -147,8 +227,8 @@ def dexy_command(
             print "finished in %0.4f" % (time.time() - start_time)
         except dexy.exceptions.UserFeedback as e:
             if hasattr(wrapper, 'log'):
-                wrapper.log.warn("A problem has occurred with one of your documents:")
-                wrapper.log.warn(e.message)
+                wrapper.log.error("A problem has occurred with one of your documents:")
+                wrapper.log.error(e.message)
             wrapper.cleanup_partial_run()
             sys.stderr.write("Oops, there's a problem processing one of your documents. Here is the error message:" + os.linesep)
             sys.stderr.write(e.message)
@@ -158,32 +238,34 @@ def dexy_command(
             sys.exit(1)
         except Exception as e:
             if hasattr(wrapper, 'log'):
-                wrapper.log.warn("An error has occurred.")
-                wrapper.log.warn(e)
-                wrapper.log.warn(e.message)
+                wrapper.log.error("An error has occurred.")
+                wrapper.log.error(e)
+                wrapper.log.error(e.message)
             import traceback
             traceback.print_exc()
 
 def reset_command(
-        artifactsdir=Wrapper.DEFAULT_ARTIFACTS_DIR, # location of directory in which to store artifacts
-        logsdir=Wrapper.DEFAULT_LOG_DIR # location of directory in which to store logs
+        __cli_options=False,
+        artifactsdir=D['artifacts_dir'], # location of directory in which to store artifacts
+        logdir=D['log_dir']# location of directory in which to store logs
         ):
     """
     Empty the artifacts and logs directories.
     """
-    wrapper = Wrapper(**locals())
+    wrapper = init_wrapper(locals())
     wrapper.remove_dexy_dirs()
     wrapper.setup_dexy_dirs()
 
 def cleanup_command(
-        artifactsdir=Wrapper.DEFAULT_ARTIFACTS_DIR, # location of directory in which to store artifacts
-        logsdir=Wrapper.DEFAULT_LOG_DIR, # location of directory in which to store logs
+        __cli_options=False,
+        artifactsdir=D['artifacts_dir'], # location of directory in which to store artifacts
+        logdir=D['log_dir'], # location of directory in which to store logs
         reports=False # Also remove report generated dirs
         ):
     """
     Remove the artifacts and logs directories.
     """
-    wrapper = Wrapper(**locals())
+    wrapper = init_wrapper(locals())
     wrapper.remove_dexy_dirs()
 
     if reports:
@@ -196,11 +278,11 @@ def cleanup_command(
 def reports_command(args):
     pass
 
-def setup_command(**kwargs):
+def setup_command(__cli_options=False, **kwargs):
     """
     Create the directories dexy needs to run. This helps make sure you mean to run dexy in this directory.
     """
-    wrapper = Wrapper(**kwargs)
+    wrapper = init_wrapper(locals())
     wrapper.setup_dexy_dirs()
 
 def help_command(on=False):
@@ -214,7 +296,7 @@ def version_command():
     print "%s version %s" % (PROG, DEXY_VERSION)
 
 def conf_command(
-        conf=Wrapper.DEFAULT_CONFIG_FILE # Name of config file.
+        conf=D['config_file'] # Name of config file.
         ):
     """
     Write a config file containing dexy's defaults.
@@ -223,13 +305,18 @@ def conf_command(
         print "Config file %s already exists!" % conf
         sys.exit(1)
 
-    config = Wrapper.default_config()
+    config = default_config()
 
     # No point specifying config file name in config file.
     del config['conf']
 
     with open(conf, "wb") as f:
-        json.dump(config, f, sort_keys=True, indent=4)
+        if conf.endswith(".json") or conf.endswith(".conf"):
+            json.dump(config, f, sort_keys=True, indent=4)
+        elif conf.endswith(".yaml"):
+            f.write(yaml.dump(config))
+        else:
+            raise dexy.exceptions.UserFeedback("Don't know how to write config file %s" % conf)
 
     print "Config file has been written to '%s'" % conf
 
@@ -331,19 +418,20 @@ def it_command(**kwargs):
     dexy_command(kwargs)
 
 def grep_command(
+        __cli_options=False,
         expr=None, # The expression to search for
         keyexpr="", # Only search for keys matching this expression, implies keys=True
         keys=False, # if True, try to list the keys in any found files
         recurse=False, # if True, recurse into keys to look for sub keys (implies keys=True)
-        artifactsdir=Wrapper.DEFAULT_ARTIFACTS_DIR, # location of directory in which to store artifacts
-        logsdir=Wrapper.DEFAULT_LOG_DIR # location of directory in which to store logs
+        artifactsdir=D['artifacts_dir'], # location of directory in which to store artifacts
+        logdir=D['log_dir'] # location of directory in which to store logs
         ):
     """
     Search for a Dexy document in the database matching the expression.
 
     For sqlite the expression will be wrapped in % for you.
     """
-    wrapper = Wrapper(artifactsdir=artifactsdir, logsdir=logsdir)
+    wrapper = init_wrapper(locals())
     wrapper.setup_read()
 
     for row in wrapper.db.query_like("%%%s%%" % expr):
