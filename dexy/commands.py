@@ -122,11 +122,8 @@ def skip_params(kwargs):
 
 def init_wrapper(modargs):
     kwargs = config_args(modargs)
-    print "first", kwargs
     kwargs = rename_params(kwargs)
-    print "after rename", kwargs
     kwargs = skip_params(kwargs)
-    print "after skip params", kwargs
     return Wrapper(**kwargs)
 
 def default_config():
