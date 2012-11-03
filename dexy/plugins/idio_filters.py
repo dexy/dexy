@@ -37,9 +37,16 @@ class IdioFilter(PygmentsFilter):
                 # Manually named section, the sectioning comment takes up a
                 # line, so account for this to keep line nos in sync.
                 lineno += 1
+
             formatter.linenostart = lineno
             formatted_lines = composer.format(lines, lexer, formatter)
-            output_dict[s] = formatted_lines
+            doc = self.add_doc("%s--%s%s" % (self.output().baserootname(), s, self.artifact.ext), formatted_lines)
+
+            if not self.artifact.ext in self.IMAGE_OUTPUT_EXTENSIONS:
+                doc.canon = False
+                output_dict[s] = formatted_lines
+
             lineno += len(lines)
 
         self.output().set_data(output_dict)
+
