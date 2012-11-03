@@ -263,14 +263,7 @@ def cleanup_command(
     Remove the artifacts and logs directories.
     """
     wrapper = init_wrapper(locals())
-    wrapper.remove_dexy_dirs()
-
-    if reports:
-        if isinstance(reports, bool):
-            reports=dexy.reporter.Reporter.plugins
-
-        for report in reports:
-            report.remove_reports_dir()
+    wrapper.remove_dexy_dirs(reports)
 
 def reports_command(args):
     pass

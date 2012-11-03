@@ -28,7 +28,7 @@ class SyntaxHighlightRstFilter(DexyFilter):
 
         for section_name, section_text in input_dict.iteritems():
             with_spaces = StartSpaceFilter.add_spaces_at_start(section_text, n)
-            result[section_name] = ".. code:: %s\n%s" % (lexer_alias, with_spaces)
+            result[section_name] = ".. code:: %s\n\n%s" % (lexer_alias, with_spaces)
 
         return result
 
@@ -41,6 +41,7 @@ class PygmentsFilter(DexyFilter):
     MARKUP_OUTPUT_EXTENSIONS = [".html", ".tex", ".svg"] # make sure .html is first!
     OUTPUT_EXTENSIONS = MARKUP_OUTPUT_EXTENSIONS + IMAGE_OUTPUT_EXTENSIONS
     ALIASES = ['pyg', 'pygments']
+    FRAGMENT = True
 
     @classmethod
     def data_class_alias(klass, file_ext):

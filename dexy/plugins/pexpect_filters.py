@@ -259,6 +259,12 @@ json.dump(dexy__x, dexy__vars_file)
 dexy__vars_file.close()
 """
 
+try:
+    import ipython
+    IPYTHON_AVAILABLE = True
+except ImportError:
+    IPYTHON_AVAILABLE = False
+
 class IpythonPexpectReplFilter(PythonPexpectReplFilter):
     # TODO test for version of ipython that supports --classic
     ALIASES = ['ipython']
@@ -267,6 +273,10 @@ class IpythonPexpectReplFilter(PythonPexpectReplFilter):
     INPUT_EXTENSIONS = [".txt", ".py"]
     OUTPUT_EXTENSIONS = [".pycon"]
     VERSION_COMMAND = 'ipython -Version'
+
+    @classmethod
+    def is_active(klass):
+        return klass.executable() and IPYTHON_AVAILABLE
 
 class RPexpectReplFilter(PexpectReplFilter):
     ALIASES = ['r', 'rint']

@@ -4,6 +4,9 @@ class PreserveDataClassFilter(DexyFilter):
     ALIASES = []
     PRESERVE_PRIOR_DATA_CLASS = True
 
+class ChangeExtensionManuallyFilter(PreserveDataClassFilter):
+    ALIASES = ['chext']
+
 class ForceCPickleExtensionFilter(PreserveDataClassFilter):
     """
     Forces previous filter to output .cpickle extension.

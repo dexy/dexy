@@ -5,7 +5,7 @@ from dexy.tests.utils import assert_output_cached
 
 def test_pyg4rst():
     o = OrderedDict()
-    o['1'] = ".. code:: python\n  print 'hello'"
+    o['1'] = ".. code:: python\n\n  print 'hello'"
     assert_output("pyg4rst", "print 'hello'", o, ext=".py")
 
 def test_html():

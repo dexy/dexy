@@ -161,10 +161,18 @@ class Wrapper(object):
         if not os.path.exists(self.log_dir):
             os.mkdir(self.log_dir)
 
-    def remove_dexy_dirs(self):
-        shutil.rmtree(self.artifacts_dir)
-        shutil.rmtree(self.log_dir)
-        # TODO remove reports dirs
+    def remove_dexy_dirs(self, reports=False):
+        if os.path.exists(self.artifacts_dir):
+            shutil.rmtree(self.artifacts_dir)
+        if os.path.exists(self.log_dir):
+            shutil.rmtree(self.log_dir)
+
+        if reports:
+            if isinstance(reports, bool):
+                reports=dexy.reporter.Reporter.plugins
+
+            for report in reports:
+                report.remove_reports_dir()
 
     def setup_log(self):
         try:

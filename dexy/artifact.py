@@ -265,7 +265,7 @@ class FilterArtifact(Artifact):
                 ext = '.%s' % ext
 
             # Make sure it's a valid one
-            if not ext in this_filter_outputs:
+            if (not ext in this_filter_outputs) and (not ".*" in this_filter_outputs):
                 msg = "You have requested file extension %s in %s but filter %s can't generate that."
                 raise dexy.exceptions.UserFeedback(msg % (ext, self.key, self.filter_alias))
 
