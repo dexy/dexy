@@ -4,6 +4,30 @@ import dexy.exceptions
 import os
 import shutil
 
+class LyxFilter(SubprocessFilter):
+    """
+    Invokes lyx on the command line. By default generates a latex file.
+    """
+    EXECUTABLE = 'lyx'
+    ALIASES = ['lyx']
+    VERSION_COMMAND = 'lyx -version'
+    OUTPUT_EXTENSIONS = ['.tex', '.pdf', '.lyx']
+
+    def command_string(self):
+        cl_args = self.command_line_args()
+        if cl_args and ("-e" in cl_args):
+            format_string = ''
+        else:
+            format_string = "-e latex"
+
+        args = {
+            'format_string' : format_string,
+            'prog' : self.executable(),
+            'args' : self.command_line_args() or "",
+            'input_file' : self.input_filename(),
+        }
+        return "%(prog)s %(format_string)s %(args)s %(input_file)s" % args
+
 class PandocFilter(SubprocessFilter):
     EXECUTABLE = "pandoc"
     VERSION_COMMAND = "pandoc --version"

@@ -13,6 +13,7 @@ class LatexFilter(SubprocessFilter):
     OUTPUT_EXTENSIONS = [".pdf", ".png"]
     EXECUTABLES = ['pdflatex', 'latex']
     ALIASES = ['latex']
+    FRAGMENT = False
 
     def setup_wd(self):
         if not os.path.exists(self.artifact.tmp_dir()):
