@@ -28,7 +28,7 @@ def test_rint_mock():
         assert doc.output().as_sectioned()['multiply'] == "> x * y\n[1] 42\n> \n"
 
 def test_ht_latex():
-    assert_output_cached("htlatex", LATEX)
+    assert_output_cached("htlatex", LATEX, ext=".tex")
 
 def test_r_batch():
     assert_output('rout', 'print(1+1)', "[1] 2\n")

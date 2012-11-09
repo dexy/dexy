@@ -5,6 +5,9 @@ import platform
 class UserFeedback(Exception):
     pass
 
+class NoFilterOutput(UserFeedback):
+    pass
+
 class InactiveFilter(UserFeedback):
     def __init__(self, filter_alias, doc_key):
         self.message = inspect.cleandoc("""

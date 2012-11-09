@@ -19,6 +19,7 @@ class Filter:
     TAGS = []
     FRAGMENT = True
     PRESERVE_PRIOR_DATA_CLASS = False
+    REQUIRE_OUTPUT = True
 
     @classmethod
     def is_active(klass):

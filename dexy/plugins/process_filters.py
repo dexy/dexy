@@ -253,6 +253,7 @@ class SubprocessFilter(Filter):
 
 class SubprocessStdoutFilter(SubprocessFilter):
     WRITE_STDERR_TO_STDOUT = False
+    REQUIRE_OUTPUT = False
 
     def process(self):
         command = self.command_string_stdout()

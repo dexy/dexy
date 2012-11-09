@@ -85,7 +85,7 @@ def test_text_parser():
         parser.wrapper = wrapper
         parser.parse("""
         *.py
-        *.py|idio
+        *.py|pyg
         *.md|jinja
         """)
 
