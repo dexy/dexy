@@ -260,7 +260,7 @@ dexy__vars_file.close()
 """
 
 try:
-    import ipython
+    import IPython
     IPYTHON_AVAILABLE = True
 except ImportError:
     IPYTHON_AVAILABLE = False
