@@ -170,7 +170,8 @@ class FilterArtifact(Artifact):
             self.log.debug("Output is not cached under %s, running..." % self.hashstring)
             self.filter_instance.process()
             if not self.output_data.is_cached():
-                raise dexy.exceptions.InternalDexyProblem("No output file after filter ran: %s" % self.key)
+                if self.filter_instance.REQUIRE_OUTPUT:
+                    raise dexy.exceptions.NoFilterOutput("No output file after filter ran: %s" % self.key)
             self.source = 'generated'
         else:
             self.log.debug("Output is cached under %s, reconstituting..." % self.hashstring)
