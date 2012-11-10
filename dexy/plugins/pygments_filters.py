@@ -13,8 +13,10 @@ from pygments.lexers.text import TexLexer
 from pygments.lexers.web import JavascriptLexer
 from pygments.lexers.web import XmlLexer
 import dexy.commands
+import dexy.exceptions
 import pygments.lexers.web
 import re
+
 
 class SyntaxHighlightRstFilter(DexyFilter):
     ALIASES = ['pyg4rst']
@@ -23,7 +25,12 @@ class SyntaxHighlightRstFilter(DexyFilter):
         n = self.args().get('n', 2)
         result = OrderedDict()
 
-        lexer = get_lexer_for_filename(self.input().storage.data_file())
+        try:
+            lexer = get_lexer_for_filename(self.input().storage.data_file())
+        except pygments.util.ClassNotFound:
+            msg = PygmentsFilter.LEXER_ERR_MSG
+            raise dexy.exceptions.UserFeedback(msg % (self.input().name, self.artifact.key))
+
         lexer_alias = lexer.aliases[0]
 
         for section_name, section_text in input_dict.iteritems():
@@ -42,6 +49,7 @@ class PygmentsFilter(DexyFilter):
     OUTPUT_EXTENSIONS = MARKUP_OUTPUT_EXTENSIONS + IMAGE_OUTPUT_EXTENSIONS
     ALIASES = ['pyg', 'pygments']
     FRAGMENT = True
+    LEXER_ERR_MSG = "Pygments doesn't know how to syntax highlight files like '%s' (for '%s'). Either it can't be done or you need to specify the lexer manually."
 
     @classmethod
     def data_class_alias(klass, file_ext):
@@ -104,7 +112,10 @@ class PygmentsFilter(DexyFilter):
                 lexer_class = XmlLexer
             else:
                 fake_file_name = "input_text%s" % ext
-                lexer = get_lexer_for_filename(fake_file_name, **lexer_args)
+                try:
+                    lexer = get_lexer_for_filename(fake_file_name, **lexer_args)
+                except pygments.util.ClassNotFound:
+                    raise dexy.exceptions.UserFeedback(self.LEXER_ERR_MSG % (self.input().name, self.artifact.key))
 
             if not lexer:
                 lexer = lexer_class(**lexer_args)

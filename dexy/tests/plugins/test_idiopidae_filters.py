@@ -1,5 +1,13 @@
-from dexy.tests.utils import wrap
 from dexy.doc import Doc
+from dexy.tests.utils import wrap
+from nose.tools import raises
+import dexy.exceptions
+
+@raises(dexy.exceptions.UserFeedback)
+def test_idio_bad_file_extension():
+    with wrap() as wrapper:
+        doc = Doc("hello.xyz|idio", wrapper=wrapper, contents=" ")
+        wrapper.run_docs(doc)
 
 def test_multiple_sections():
     with wrap() as wrapper:
