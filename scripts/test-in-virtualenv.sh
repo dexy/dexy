@@ -9,7 +9,4 @@ virtualenv testenv
 source testenv/bin/activate
 cd dexy
 pip install .
-nosetests
-cd docs
-dexy setup
-dexy
+nosetests && git push git@github.com:ananelson/dexy.git
