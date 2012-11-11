@@ -13,46 +13,44 @@ class YamlFileParser(Parser):
             for task_key, v in mapping.iteritems():
                 task_key = self.adjust_task_key(directory, config_dirpath, task_key)
 
-                if not task_key:
-                    next
+                if task_key:
+                    # v is a sequence whose members may be children or kwargs
+                    if not v:
+                        raise dexy.exceptions.UserFeedback("Empty doc config for %s" % task_key)
 
-                # v is a sequence whose members may be children or kwargs
-                if not v:
-                    raise dexy.exceptions.UserFeedback("Empty doc config for %s" % task_key)
+                    if hasattr(v, 'keys'):
+                        raise dexy.exceptions.UserFeedback("You passed a dict to %s, please pass a sequence" % task_key)
 
-                if hasattr(v, 'keys'):
-                    raise dexy.exceptions.UserFeedback("You passed a dict to %s, please pass a sequence" % task_key)
+                    for element in v:
+                        if hasattr(element, 'keys'):
+                            # This is a dict of length 1
+                            kk = element.keys()[0]
+                            vv = element[kk]
 
-                for element in v:
-                    if hasattr(element, 'keys'):
-                        # This is a dict of length 1
-                        kk = element.keys()[0]
-                        vv = element[kk]
+                            if isinstance(vv, list):
+                                # This is a sequence. It probably represents a
+                                # child task but if starts with 'args' or if it
+                                # matches a filter alias for the parent doc, then
+                                # it is nested complex kwargs.
+                                if kk == "args" or (kk in task_key.split("|")):
+                                    # nested complex kwargs
+                                    for vvv in vv:
+                                        ast.add_task_info(task_key, **vvv)
 
-                        if isinstance(vv, list):
-                            # This is a sequence. It probably represents a
-                            # child task but if starts with 'args' or if it
-                            # matches a filter alias for the parent doc, then
-                            # it is nested complex kwargs.
-                            if kk == "args" or (kk in task_key.split("|")):
-                                # nested complex kwargs
-                                for vvv in vv:
-                                    ast.add_task_info(task_key, **vvv)
+                                else:
+                                    # child task. we note the dependency and
+                                    # recurse to process the child.
+                                    ast.add_dependency(task_key, kk)
+                                    parse_key_mapping(element)
 
                             else:
-                                # child task. we note the dependency and
-                                # recurse to process the child.
-                                ast.add_dependency(task_key, kk)
-                                parse_key_mapping(element)
+                                # This is a key:value argument for this task
+                                ast.add_task_info(task_key, **element)
 
                         else:
-                            # This is a key:value argument for this task
-                            ast.add_task_info(task_key, **element)
-
-                    else:
-                        # This is a child task with no args, we only have to
-                        # note the dependency.
-                        ast.add_dependency(task_key, element)
+                            # This is a child task with no args, we only have to
+                            # note the dependency.
+                            ast.add_dependency(task_key, element)
 
         def parse_keys(data):
             if hasattr(data, 'keys'):
