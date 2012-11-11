@@ -6,7 +6,7 @@ import os
 import shutil
 
 class RunReporter(Reporter):
-    ALLREPORTS = True
+    ALLREPORTS = False
     ALIASES = ['run']
 
     def run(self, wrapper):
