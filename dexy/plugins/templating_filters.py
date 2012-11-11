@@ -58,12 +58,19 @@ class JinjaTextFilter(TemplateFilter):
             del env_attrs['vars']
         if env_attrs.has_key('variables'):
             del env_attrs['variables']
+        if env_attrs.has_key('ext'):
+            del env_attrs['ext']
+        if env_attrs.has_key('changetags'):
+            changetags = env_attrs['changetags']
+            del env_attrs['changetags']
+        else:
+            changetags = True
 
         # TODO load other Undefined classes from a string.
         # Currently it's not possible to pass subclasses of Undefined since params must be json serializable.
         env_attrs['undefined'] = jinja2.StrictUndefined
 
-        if self.artifact.ext in (".tex", ".wiki"):
+        if self.artifact.ext in (".tex", ".wiki") and changetags:
             env_attrs.setdefault('block_start_string', '<%')
             env_attrs.setdefault('block_end_string', '%>')
             env_attrs.setdefault('variable_start_string', '<<')

@@ -2,7 +2,46 @@ from dexy.doc import Doc
 from dexy.wrapper import Wrapper
 from dexy.commands import init_wrapper
 from dexy.tests.utils import tempdir
+from dexy.tests.utils import wrap
 import os
+
+def test_config_for_directory():
+    with wrap() as wrapper:
+        with open("docs.yaml", "w") as f:
+            f.write(""".abc""")
+
+        with open("root.abc", "w") as f:
+            f.write("hello")
+
+        with open("root.def", "w") as f:
+            f.write("hello")
+
+        os.makedirs("s1")
+        os.makedirs("s2")
+
+        with open("s1/s1.abc", "w") as f:
+            f.write("hello")
+
+        with open("s1/s1.def", "w") as f:
+            f.write("hello")
+
+        with open("s2/s2.abc", "w") as f:
+            f.write("hello")
+
+        with open("s2/s2.def", "w") as f:
+            f.write("hello")
+
+        with open(os.path.join('s1', 'docs.yaml'), 'w') as f:
+            f.write(""".def|dexy""")
+
+        wrapper.setup_config()
+        wrapper.run()
+
+        assert len(wrapper.tasks) == 13
+
+        p = wrapper.tasks["PatternDoc:s2/*.abc"]
+        c = wrapper.tasks["Doc:s2/s2.abc"]
+        assert c in p.children
 
 def test_config_file():
     with tempdir():

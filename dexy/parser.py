@@ -1,8 +1,9 @@
 from dexy.plugin import PluginMeta
-import os
 import copy
 import dexy.doc
 import dexy.exceptions
+import os
+import posixpath
 
 class AbstractSyntaxTree():
     def __init__(self):
@@ -157,21 +158,43 @@ class Parser:
     def __init__(self, wrapper=None):
         self.wrapper = wrapper
 
-    def parse(self, input_text):
-        ast = self.build_ast(input_text)
+    def parse(self, input_text, directory=".", config_dirpath="."):
+        ast = self.build_ast(directory, config_dirpath, input_text)
         self.wrapper.ast = ast
         ast.debug(self.wrapper.log)
         self.walk_ast(ast)
 
-    def build_ast(self, input_text):
+    def build_ast(self, directory, config_dirpath, input_text):
         raise Exception("Implement in subclass.")
+
+    def adjust_task_key(self, directory, config_dirpath, task_key):
+        alias, pattern = AbstractSyntaxTree.qualify_key(task_key)
+
+        if directory == ".":
+            adjusted_task_key = pattern
+        else:
+            adjusted_task_key = posixpath.normpath(posixpath.join(directory, pattern))
+
+        qualified_adjusted_task_key = "%s:%s" % (alias, adjusted_task_key)
+
+        if alias == 'pattern':
+            return qualified_adjusted_task_key
+        elif alias == 'doc':
+            if os.path.exists(adjusted_task_key.split("|")[0]):
+                return qualified_adjusted_task_key
+            elif directory == config_dirpath:
+                return qualified_adjusted_task_key
+        elif alias == 'bundle':
+            if directory == config_dirpath:
+                return qualified_adjusted_task_key
+        else:
+            raise dexy.exceptions.InternalDexyProblem("Don't know how to add task of alias '%s'" % alias)
 
     def walk_ast(self, ast):
         created_tasks = {}
 
-        def create_dexy_task(key, *children, **kwargs):
+        def create_dexy_task(key, *child_tasks, **kwargs):
             if not key in created_tasks:
-                child_tasks = [created_tasks[child] for child in children]
                 msg = "Creating task '%s' with children '%s' with args '%s'"
                 self.wrapper.log.debug(msg % (key, child_tasks, kwargs))
                 alias, pattern = ast.qualify_key(key)
@@ -185,9 +208,13 @@ class Parser:
             kwargs['wrapper'] = self.wrapper
             if kwargs.get('inactive'):
                 return
-            for child in children:
-                parse_item(child)
-            return create_dexy_task(key, *children, **kwargs)
+
+            child_tasks = [parse_item(child) for child in children if child]
+
+            # filter out inactive children
+            child_tasks = [child for child in child_tasks if child]
+
+            return create_dexy_task(key, *child_tasks, **kwargs)
 
         for key in ast.tree:
             task = parse_item(key)

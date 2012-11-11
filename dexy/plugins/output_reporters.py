@@ -2,6 +2,9 @@ from dexy.reporter import Reporter
 import os
 
 class OutputReporter(Reporter):
+    """
+    Creates canonical dexy output with files given short filenames.
+    """
     ALIASES = ['output']
     REPORTS_DIR = 'output'
 
@@ -18,6 +21,9 @@ class OutputReporter(Reporter):
                 doc.output().output_to_file(fp)
 
 class LongOutputReporter(Reporter):
+    """
+    Creates complete dexy output with files given long, unique filenames.
+    """
     ALIASES = ['long']
     REPORTS_DIR = 'output-long'
 

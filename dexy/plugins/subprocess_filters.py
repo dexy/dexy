@@ -1,6 +1,7 @@
 from dexy.common import OrderedDict
 from dexy.plugins.process_filters import SubprocessFilter
 import dexy.exceptions
+import json
 import os
 import shutil
 
@@ -387,7 +388,7 @@ class AbcFilter(SubprocessFilter):
 
         args = {
             'prog' : self.executable(),
-            'args' : self.command_line_args() or '',
+            'args' : clargs,
             'output_flag' : output_flag,
             'script_file' : self.input_filename(),
             'output_file' : self.output_filename()
@@ -410,3 +411,58 @@ class AbcFilter(SubprocessFilter):
 
         if self.do_add_new_files():
             self.add_new_files()
+
+class AbcMultipleFormatsFilter(SubprocessFilter):
+    ALIASES = ['abcm']
+    INPUT_EXTENSIONS = ['.abc']
+    OUTPUT_EXTENSIONS = ['.json']
+    EXECUTABLE = 'abcm2ps'
+
+    def command_string(self, ext):
+        clargs = self.command_line_args() or ''
+
+        if any(x in clargs for x in ['-E', '-g', '-v', '-X']):
+            raise dexy.exceptions.UserFeedback("Please do not pass any output format flags!")
+
+        if ext in ('.eps'):
+            output_flag = '-E'
+        elif ext in ('.svg'):
+            output_flag = '-g'
+        elif ext in ('.html', '.xhtml'):
+            output_flag = '-X'
+        else:
+            raise dexy.exceptions.InternalDexyProblem("bad ext '%s'" % ext)
+
+        args = {
+            'prog' : self.executable(),
+            'args' : clargs,
+            'output_flag' : output_flag,
+            'script_file' : self.input_filename(),
+            'output_file' : self.output_workfile(ext)
+        }
+        return "%(prog)s %(args)s %(output_flag)s -O %(output_file)s %(script_file)s" % args
+
+    def output_workfile(self, ext):
+        return "%s%s" % (self.artifact.output_data.baserootname(), ext)
+
+    def process(self):
+        output = {}
+
+        for ext in ('.eps', '.svg', '.html', '.xhtml'):
+            command = self.command_string(ext)
+            proc, stdout = self.run_command(command, self.setup_env())
+            self.handle_subprocess_proc_return(command, proc.returncode, stdout)
+
+            if ext in ('.svg', '.eps'):
+                # Fix for abcm2ps adding 001 to file name.
+                nameparts = os.path.splitext(self.output_workfile(ext))
+                output_filename = "%s001%s" % (nameparts[0], nameparts[1])
+                output_filepath = os.path.join(self.artifact.tmp_dir(), output_filename)
+            else:
+                output_filename = self.output_workfile(ext)
+                output_filepath = os.path.join(self.artifact.tmp_dir(), output_filename)
+
+            with open(output_filepath, "r") as f:
+                output[ext] = f.read()
+
+        self.output().set_data(json.dumps(output))

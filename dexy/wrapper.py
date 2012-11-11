@@ -8,6 +8,7 @@ import logging
 import logging.handlers
 import os
 import shutil
+import time
 
 class Wrapper(object):
     """
@@ -23,7 +24,7 @@ class Wrapper(object):
             'disable_tests' : False,
             'dont_use_cache' : False,
             'dry_run' : False,
-            'exclude' : '',
+            'exclude' : '.git, .svn, tmp, cache, artifacts, logs, output, output-long',
             'globals' : '',
             'hashfunction' : 'md5',
             'ignore_nonzero_exit' : False,
@@ -33,7 +34,7 @@ class Wrapper(object):
             'log_level' : "DEBUG",
             'profile' : False,
             'recurse' : True,
-            'reports' : 'output',
+            'reports' : '',
             'silent' : False,
             'target' : False,
             'uselocals' : False
@@ -93,15 +94,16 @@ class Wrapper(object):
         return t
 
     def run(self):
+        self.batch_info = {}
+        self.batch_info['start_time'] = time.time()
+
         self.setup_run()
+        self.log.debug("batch id is %s" % self.batch_id)
 
         self.log.debug("Running dexy with config:")
         for k in sorted(self.__dict__):
             if not k in ('args', 'root_nodes', 'tasks', 'notifier'):
                 self.log.debug("%s: %s" % (k, self.__dict__[k]))
-
-        self.log.debug("batch id is %s" % self.batch_id)
-        self.state = 'populating'
 
         if self.target:
             self.log.debug("Limiting root nodes to %s" % self.target)
@@ -109,6 +111,8 @@ class Wrapper(object):
             self.log.debug("Processing nodes %s" % ", ".join(doc.key_with_class() for doc in docs))
         else:
             docs = self.root_nodes
+
+        self.state = 'populating'
 
         for doc in docs:
             for task in doc:
@@ -130,6 +134,9 @@ class Wrapper(object):
 
         self.save_db()
         self.setup_graph()
+
+        self.batch_info['end_time'] = time.time()
+        self.batch_info['elapsed_time'] = self.batch_info['end_time'] - self.batch_info['start_time']
 
     def setup_run(self):
         self.check_dexy_dirs()
@@ -238,8 +245,6 @@ class Wrapper(object):
     def save_db(self):
         self.db.save()
 
-    ## DOCUMENTED above here..
-
     def run_docs(self, *docs):
         """
         Convenience method for testing to add docs and then run them.
@@ -280,22 +285,47 @@ class Wrapper(object):
     def get_child_hashes_in_previous_batch(self, parent_hashstring):
         return self.db.get_child_hashes_in_previous_batch(self.batch_id, parent_hashstring)
 
+    def config_for_directory(self, path):
+        path_elements = path.split(os.sep)
+
+        config = OrderedDict()
+
+        for i in range(1,len(path_elements)+1):
+            parent_dir_path = os.path.join(*(path_elements[0:i]))
+            config[parent_dir_path] = {}
+
+            for k in dexy.parser.Parser.aliases.keys():
+                config_file_in_directory = os.path.join(parent_dir_path, k)
+                if os.path.exists(config_file_in_directory):
+                    self.log.debug("found doc config file '%s'" % config_file_in_directory)
+                    with open(config_file_in_directory, "r") as f:
+                        config[parent_dir_path][k] = f.read()
+
+        return config
+
     def load_doc_config(self):
         """
-        Look for document config files in current working dir and load them.
+        Look for document config files in current working tree and load them.
         """
-        parser_aliases = dexy.parser.Parser.aliases
-        for k in parser_aliases.keys():
-            if os.path.exists(k):
-                self.log.debug("found doc config file '%s'" % k)
+        exclude = self.exclude_dirs()
 
-                parser = parser_aliases[k](self)
+        for dirpath, dirnames, filenames in os.walk("."):
+            for x in exclude:
+                if x in dirnames:
+                    dirnames.remove(x)
 
-                with open(k, "r") as f:
-                    self.doc_config = f.read()
-                    parser.parse(self.doc_config)
-
-                break
+            nodexy_file = os.path.join(dirpath, '.nodexy')
+            if os.path.exists(nodexy_file):
+                # ...remove all child dirs from processing...
+                for i in xrange(len(dirnames)):
+                    dirnames.pop()
+            else:
+                # this dir is ok
+                config_for_dir = self.config_for_directory(dirpath)
+                for config_dirname, config_dict in config_for_dir.iteritems():
+                    for alias, config_text in config_dict.iteritems():
+                        parser = dexy.parser.Parser.aliases[alias](self)
+                        parser.parse(config_text, dirpath, config_dirname)
 
     def setup_config(self):
         self.setup_dexy_dirs()
@@ -339,3 +369,19 @@ class Wrapper(object):
         graph.append("}")
 
         self.graph = "\n".join(graph)
+
+    def exclude_dirs(self):
+        return [d.strip() for d in self.exclude.split(",")]
+
+    def walk(self, start):
+        exclude = self.exclude_dirs()
+
+        for dirpath, dirnames, filenames in os.walk(start):
+            for x in exclude:
+                if x in dirnames:
+                    dirnames.remove(x)
+
+            nodexy_file = os.path.join(dirpath, '.nodexy')
+            if not os.path.exists(nodexy_file):
+                for filename in filenames:
+                    yield(dirpath, filename)

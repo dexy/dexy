@@ -13,7 +13,6 @@ import json
 import logging
 import os
 import sys
-import time
 import warnings
 import yaml
 
@@ -150,7 +149,7 @@ def dexy_command(
         dbfile=D['db_file'], # name of the database file (it lives in the logs dir)
         disabletests=D['disable_tests'], # Whether to disable the dexy 'test' filter
         dryrun=D['dry_run'], # if True, just parse config and print batch info, don't run dexy
-        exclude=D['exclude'], # directories to exclude from dexy processing
+        exclude=D['exclude'], # comma-separated list of directory names to exclude from dexy processing
         globals=D['globals'], # global values to make available within dexy documents, should be KEY=VALUE pairs separated by spaces
         help=False, # for people who type -help out of habit
         h=False, # for people who type -h out of habit
@@ -207,7 +206,6 @@ def dexy_command(
         wrapper = init_wrapper(locals())
 
         try:
-            start_time = time.time()
             wrapper.check_dexy_dirs()
             wrapper.setup_config()
             if profile:
@@ -221,7 +219,8 @@ def dexy_command(
                 wrapper.run()
 
             wrapper.report()
-            print "finished in %0.4f" % (time.time() - start_time)
+            print "finished in %0.4f" % wrapper.batch_info['elapsed_time']
+
         except dexy.exceptions.UserFeedback as e:
             if hasattr(wrapper, 'log'):
                 wrapper.log.error("A problem has occurred with one of your documents:")
@@ -518,4 +517,18 @@ def fcmd_command(
 
         else:
             raise dexy.exceptions.InternalDexyProblem("expected %s to be a classmethod of %s" % (cmd_name, filter_class.__name__))
+
+def reporters_command(
+        ):
+    """
+    List available reporters.
+    """
+    FMT = "%-10s %-20s %s"
+
+    if dexy.reporter.Reporter.aliases:
+        print FMT % ('ALIAS', 'DIRECTORY', 'INFO')
+
+    for k in sorted(dexy.reporter.Reporter.aliases):
+        reporter_class = dexy.reporter.Reporter.aliases[k]
+        print FMT % (k, reporter_class.REPORTS_DIR, inspect.getdoc(reporter_class))
 

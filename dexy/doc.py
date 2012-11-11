@@ -2,7 +2,7 @@ import dexy.artifact
 import dexy.exceptions
 import dexy.filter
 import dexy.task
-import fnmatch
+import glob
 import os
 
 class Doc(dexy.task.Task):
@@ -12,6 +12,8 @@ class Doc(dexy.task.Task):
     def filter_class_for_alias(klass, alias):
         if alias == '':
             raise dexy.exceptions.BlankAlias
+        elif alias.startswith("-"):
+            return dexy.filter.DexyFilter
         else:
             try:
                 return dexy.filter.Filter.aliases[alias]
@@ -120,32 +122,7 @@ class Doc(dexy.task.Task):
             self.setup_filter_artifact(key, filters)
             self.canon = self.canon or (not self.final_artifact.filter_class.FRAGMENT)
 
-class WalkDoc(dexy.task.Task):
-    """
-    Parent class for docs which walk Dexy project directories.
-
-    Shares code for skipping dexy directories.
-    """
-    def walk(self, start, exclude_at_root, exclude_everywhere):
-        for dirpath, dirnames, filenames in os.walk(start):
-            if dirpath == ".":
-                for x in exclude_at_root:
-                    if x in dirnames:
-                        dirnames.remove(x)
-
-            for x in exclude_everywhere:
-                if x in dirnames:
-                    dirnames.remove(x)
-
-            nodexy_file = os.path.join(dirpath, '.nodexy')
-            if os.path.exists(nodexy_file):
-                self.log.debug("skipping dir '%s', found .nodexy file" % dirpath)
-            else:
-                self.log.debug("walking dir '%s'" % dirpath)
-                for filename in filenames:
-                    yield(dirpath, filename)
-
-class PatternDoc(WalkDoc):
+class PatternDoc(dexy.task.Task):
     """
     A doc which takes a file matching pattern and creates individual Doc objects for all files that match the pattern.
     """
@@ -159,35 +136,28 @@ class PatternDoc(WalkDoc):
         self.file_pattern = self.key.split("|")[0]
         self.filter_aliases = self.key.split("|")[1:]
 
-        exclude_at_root = []
-        exclude_everywhere = ['.git', 'tmp', 'cache', 'artifacts', 'logs', 'output', 'output-long']
+        for filepath in glob.iglob(self.file_pattern):
+            if len(self.filter_aliases) > 0:
+                doc_key = "%s|%s" % (filepath, "|".join(self.filter_aliases))
+            else:
+                doc_key = filepath
 
-        for dirpath, filename in self.walk(".", exclude_at_root, exclude_everywhere):
-            raw_filepath = os.path.join(dirpath, filename)
-            filepath = os.path.normpath(raw_filepath)
+            doc_args = self.args.copy()
+            doc_args['wrapper'] = self.wrapper
 
-            if fnmatch.fnmatch(filepath, self.file_pattern):
-                if len(self.filter_aliases) > 0:
-                    doc_key = "%s|%s" % (filepath, "|".join(self.filter_aliases))
+            if doc_args.has_key('depends'):
+                if doc_args.get('depends'):
+                    doc_children = self.wrapper.registered_docs()
                 else:
-                    doc_key = filepath
+                    doc_children = []
+                del doc_args['depends']
+            else:
+                doc_children = self.children
 
-                doc_args = self.args.copy()
-                doc_args['wrapper'] = self.wrapper
-
-                if doc_args.has_key('depends'):
-                    if doc_args.get('depends'):
-                        doc_children = self.wrapper.registered_docs()
-                    else:
-                        doc_children = []
-                    del doc_args['depends']
-                else:
-                    doc_children = self.children
-
-                doc = Doc(doc_key, *doc_children, **doc_args)
-                self.children.append(doc)
-                doc.populate()
-                doc.transition('populated')
+            doc = Doc(doc_key, *doc_children, **doc_args)
+            self.children.append(doc)
+            doc.populate()
+            doc.transition('populated')
 
 class BundleDoc(dexy.task.Task):
     """

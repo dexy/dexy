@@ -81,6 +81,8 @@ def test_run_dexy(stdout):
         os.makedirs('artifacts')
         dexy.commands.run()
 
+    assert "finished in" in stdout.getvalue()
+
 @patch.object(sys, 'argv', ['dexy', 'viewer:ping'])
 @patch('sys.stdout', new_callable=StringIO)
 def test_viewer_command(stdout):

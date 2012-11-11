@@ -8,9 +8,14 @@ import re
 class YamlFileParser(Parser):
     ALIASES = ["docs.yaml"]
 
-    def build_ast(self, input_text):
+    def build_ast(self, directory, config_dirpath, input_text):
         def parse_key_mapping(mapping):
             for task_key, v in mapping.iteritems():
+                task_key = self.adjust_task_key(directory, config_dirpath, task_key)
+
+                if not task_key:
+                    next
+
                 # v is a sequence whose members may be children or kwargs
                 if not v:
                     raise dexy.exceptions.UserFeedback("Empty doc config for %s" % task_key)
@@ -53,7 +58,9 @@ class YamlFileParser(Parser):
             if hasattr(data, 'keys'):
                 parse_key_mapping(data)
             elif isinstance(data, basestring):
-                ast.add_task_info(data)
+                task_key = self.adjust_task_key(directory, config_dirpath, data)
+                if task_key:
+                    ast.add_task_info(task_key)
             elif isinstance(data, list):
                 for element in data:
                     parse_keys(element)
@@ -68,7 +75,7 @@ class YamlFileParser(Parser):
 class TextFileParser(Parser):
     ALIASES = ["docs.txt"]
 
-    def build_ast(self, input_text):
+    def build_ast(self, directory, config_dirpath, input_text):
         ast = AbstractSyntaxTree()
         for line in input_text.splitlines():
             line = line.strip()
@@ -90,31 +97,36 @@ class TextFileParser(Parser):
                     key = line
                     kwargs = {}
 
-                ast.add_task_info(key, **kwargs)
+                key = self.adjust_task_key(directory, config_dirpath, key)
 
-                # all tasks already in the ast are children
-                for child_key in ast.lookup_table.keys():
-                    ast.add_dependency(key, child_key)
+                if key:
+                    ast.add_task_info(key, **kwargs)
+                    # all tasks already in the ast are children
+                    for child_key in ast.lookup_table.keys():
+                        ast.add_dependency(key, child_key)
 
         return ast
 
 class OriginalDexyParser(Parser):
     ALIASES = ["docs.json", ".dexy"]
 
-    def build_ast(self, input_text):
+    def build_ast(self, directory, config_dirpath, input_text):
         data = parse_json(input_text)
 
         ast = AbstractSyntaxTree()
         for task_key, v in data.iteritems():
-            ast.add_task_info(task_key)
+            task_key = self.adjust_task_key(directory, config_dirpath, task_key)
 
-            for kk, vv in v.iteritems():
-                if kk == 'depends':
-                    for child_key in vv:
-                        ast.add_dependency(task_key, child_key)
-                else:
-                    task_kwargs = {kk : vv}
-                    ast.add_task_info(task_key, **task_kwargs)
+            if task_key:
+                ast.add_task_info(task_key)
+
+                for kk, vv in v.iteritems():
+                    if kk == 'depends':
+                        for child_key in vv:
+                            ast.add_dependency(task_key, child_key)
+                    else:
+                        task_kwargs = {kk : vv}
+                        ast.add_task_info(task_key, **task_kwargs)
 
         def children_for_allinputs(priority=None):
             children = []
