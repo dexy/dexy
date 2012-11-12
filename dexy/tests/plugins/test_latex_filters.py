@@ -11,6 +11,11 @@ def test_latex():
         assert ".pdf" in doc.output().name
         assert doc.output().is_cached()
 
+def test_xetex():
+    with runfilter('xetex', LATEX) as doc:
+        assert ".pdf" in doc.output().name
+        assert doc.output().is_cached()
+
 def test_broken_latex():
     try:
         with runfilter('latex', BROKEN_LATEX):

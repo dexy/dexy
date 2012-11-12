@@ -55,6 +55,10 @@ class LatexFilter(SubprocessFilter):
 
         self.copy_canonical_file()
 
+class XelatexFilter(LatexFilter):
+    ALIASES = ['xetex', 'xelatex']
+    EXECUTABLE = 'xelatex'
+
 class TikzPgfFilter(LatexFilter):
     """
     Takes a snippet of Tikz code, wraps it in a LaTeX document, and renders it to PDF.
