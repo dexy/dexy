@@ -126,6 +126,9 @@ class GenericData(Data):
     def __unicode__(self):
         return self.as_text()
 
+    def __str__(self):
+        return str(self.as_text())
+
     def __getattr__(self, key):
         if self.__dict__.has_key(key):
             return self.__dict__[key]
