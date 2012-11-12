@@ -3,6 +3,7 @@ import copy
 import dexy.doc
 import dexy.exceptions
 import os
+import posixpath
 
 class AbstractSyntaxTree():
     def __init__(self):
@@ -205,8 +206,15 @@ class Parser:
             print "For testing only!"
 
         self.ast = AbstractSyntaxTree()
-        self.build_ast(directory, config_dirpath, input_text)
+        self.ast.wrapper = self.wrapper
+        self.build_ast(directory, input_text)
         self.wrapper.root_nodes = self.ast.walk()
 
     def build_ast(self, directory, input_text):
         raise Exception("Implement in subclass.")
+
+    def join_dir(self, directory, key):
+        if directory == ".":
+            return key
+        else:
+            return posixpath.join(directory, key)
