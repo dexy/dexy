@@ -199,12 +199,7 @@ class Parser:
     def __init__(self, wrapper=None):
         self.wrapper = wrapper
 
-    def parse(self, input_text, directory=".", config_dirpath="."):
-        if hasattr(self.wrapper, 'ast'):
-            raise Exception("parse is deprecated")
-        else:
-            print "For testing only!"
-
+    def parse(self, input_text, directory="."):
         self.ast = AbstractSyntaxTree()
         self.ast.wrapper = self.wrapper
         self.build_ast(directory, input_text)

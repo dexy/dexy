@@ -1,4 +1,3 @@
-from dexy.parser import AbstractSyntaxTree
 from dexy.parser import Parser
 from dexy.utils import parse_json
 from dexy.utils import parse_yaml
@@ -71,7 +70,6 @@ class TextFileParser(Parser):
     ALIASES = ["dexy.txt", "docs.txt"]
 
     def build_ast(self, directory, input_text):
-        ast = AbstractSyntaxTree()
         for line in input_text.splitlines():
             line = line.strip()
 
@@ -92,12 +90,10 @@ class TextFileParser(Parser):
                     key = line
                     kwargs = {}
 
-                ast.add_task_info(self.join_dir(directory, key), **kwargs)
+                self.ast.add_task_info(self.join_dir(directory, key), **kwargs)
                 # all tasks already in the ast are children
-                for child_key in ast.lookup_table.keys():
-                    ast.add_dependency(self.join_dir(directory, key), self.join_dir(directory, child_key))
-
-        return ast
+                for child_key in self.ast.lookup_table.keys():
+                    self.ast.add_dependency(self.join_dir(directory, key), self.join_dir(directory, child_key))
 
 class OriginalDexyParser(Parser):
     ALIASES = ["dexy.json", "docs.json", ".dexy"]
@@ -105,21 +101,20 @@ class OriginalDexyParser(Parser):
     def build_ast(self, directory, input_text):
         data = parse_json(input_text)
 
-        ast = AbstractSyntaxTree()
         for task_key, v in data.iteritems():
-            ast.add_task_info(self.join_dir(directory, task_key))
+            self.ast.add_task_info(self.join_dir(directory, task_key))
 
             for kk, vv in v.iteritems():
                 if kk == 'depends':
                     for child_key in vv:
-                        ast.add_dependency(self.join_dir(directory, task_key), self.join_dir(directory, child_key))
+                        self.ast.add_dependency(self.join_dir(directory, task_key), self.join_dir(directory, child_key))
                 else:
                     task_kwargs = {kk : vv}
-                    ast.add_task_info(self.join_dir(directory, task_key), **task_kwargs)
+                    self.ast.add_task_info(self.join_dir(directory, task_key), **task_kwargs)
 
         def children_for_allinputs(priority=None):
             children = []
-            for k, v in ast.lookup_table.iteritems():
+            for k, v in self.ast.lookup_table.iteritems():
                 if 'allinputs' in v:
                     if priority:
                         k_priority = v.get('priority', 10)
@@ -130,11 +125,9 @@ class OriginalDexyParser(Parser):
             return children
 
         # Make another pass to implement 'allinputs'
-        for task_key, kwargs in ast.lookup_table.iteritems():
+        for task_key, kwargs in self.ast.lookup_table.iteritems():
             if kwargs.get('allinputs', False):
                 priority = kwargs.get('priority')
                 for child_key in children_for_allinputs(priority):
                     # These keys are already adjusted for directory.
-                    ast.add_dependency(task_key, child_key)
-
-        return ast
+                    self.ast.add_dependency(task_key, child_key)

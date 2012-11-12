@@ -37,9 +37,9 @@ def test_config_for_directory():
         wrapper.setup_config()
         wrapper.run()
 
-        assert len(wrapper.tasks) == 13
+        assert len(wrapper.tasks) == 8
 
-        p = wrapper.tasks["PatternDoc:s2/*.abc"]
+        p = wrapper.tasks["PatternDoc:*.abc"]
         c = wrapper.tasks["Doc:s2/s2.abc"]
         assert c in p.children
 
