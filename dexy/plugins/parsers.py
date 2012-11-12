@@ -3,18 +3,24 @@ from dexy.parser import Parser
 from dexy.utils import parse_json
 from dexy.utils import parse_yaml
 import dexy.exceptions
+import posixpath
 import re
 
 class YamlFileParser(Parser):
     ALIASES = ["dexy.yaml", "docs.yaml"]
 
-    def build_ast(self, directory, config_dirpath, input_text):
-        def parse_key_mapping(mapping):
-            for task_key, v in mapping.iteritems():
-                task_key = self.adjust_task_key(directory, config_dirpath, task_key)
+    def join_dir(self, directory, key):
+        if directory == ".":
+            return key
+        else:
+            return posixpath.join(directory, key)
 
-                if not task_key:
-                    continue
+    def build_ast(self, directory, input_text):
+        self.wrapper.log.debug("In build_ast")
+        def parse_key_mapping(mapping):
+            for original_task_key, v in mapping.iteritems():
+                self.wrapper.log.debug("Processing task key %s" % original_task_key)
+                task_key = self.join_dir(directory, original_task_key)
 
                 # v is a sequence whose members may be children or kwargs
                 if not v:
@@ -42,8 +48,7 @@ class YamlFileParser(Parser):
                             else:
                                 # child task. we note the dependency and
                                 # recurse to process the child.
-                                kk = self.adjust_task_key(directory, config_dirpath, kk)
-                                self.ast.add_dependency(task_key, kk)
+                                self.ast.add_dependency(task_key, self.join_dir(directory, kk))
                                 parse_key_mapping(element)
 
                         else:
@@ -53,16 +58,13 @@ class YamlFileParser(Parser):
                     else:
                         # This is a child task with no args, we only have to
                         # note the dependency.
-                        element = self.adjust_task_key(directory, config_dirpath, element)
-                        self.ast.add_dependency(task_key, element)
+                        self.ast.add_dependency(task_key, self.join_dir(directory, element))
 
         def parse_keys(data):
             if hasattr(data, 'keys'):
                 parse_key_mapping(data)
             elif isinstance(data, basestring):
-                task_key = self.adjust_task_key(directory, config_dirpath, data)
-                if task_key:
-                    self.ast.add_task_info(task_key)
+                self.ast.add_task_info(self.join_dir(directory, data))
             elif isinstance(data, list):
                 for element in data:
                     parse_keys(element)

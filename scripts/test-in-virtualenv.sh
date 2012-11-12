@@ -8,5 +8,6 @@ git clone ~/dev/dexy $TEST_DIR/dexy
 virtualenv testenv
 source testenv/bin/activate
 cd dexy
+git remote add origin git@github.com:ananelson/dexy.git
 pip install .
-nosetests && git push git@github.com:ananelson/dexy.git
+nosetests && git push origin develop

@@ -235,11 +235,11 @@ class Wrapper(object):
             if children:
                 raise Exception("Shouldn't have children if arg is a list")
 
-            alias, pattern = dexy.parser.AbstractSyntaxTree.qualify_key(arg[0])
+            alias, pattern = dexy.parser.Parser.qualify_key(arg[0])
             return dexy.task.Task.create(alias, pattern, **arg[1])
 
         elif isinstance(arg, basestring):
-            alias, pattern = dexy.parser.AbstractSyntaxTree.qualify_key(arg[0])
+            alias, pattern = dexy.parser.Parser.qualify_key(arg[0])
             return dexy.task.Task.create(alias, pattern, *children, **kwargs)
 
         else:
@@ -288,24 +288,6 @@ class Wrapper(object):
     def get_child_hashes_in_previous_batch(self, parent_hashstring):
         return self.db.get_child_hashes_in_previous_batch(self.batch_id, parent_hashstring)
 
-    def config_for_directory(self, path):
-        path_elements = path.split(os.sep)
-
-        config = OrderedDict()
-
-        for i in range(1,len(path_elements)+1):
-            parent_dir_path = os.path.join(*(path_elements[0:i]))
-            config[parent_dir_path] = {}
-
-            for k in dexy.parser.Parser.aliases.keys():
-                config_file_in_directory = os.path.join(parent_dir_path, k)
-                if os.path.exists(config_file_in_directory):
-                    self.log.debug("  found doc config file '%s'" % config_file_in_directory)
-                    with open(config_file_in_directory, "r") as f:
-                        config[parent_dir_path][k] = f.read()
-
-        return config
-
     def load_doc_config(self):
         """
         Look for document config files in current working tree and load them.
@@ -317,24 +299,27 @@ class Wrapper(object):
         for dirpath, dirnames, filenames in os.walk("."):
             for x in exclude:
                 if x in dirnames:
+                    skipping_dir = os.path.join(dirpath, x)
+                    self.log.debug("Skipping directory '%s' because it matches exclude '%s'" % (skipping_dir, x))
                     dirnames.remove(x)
 
             nodexy_file = os.path.join(dirpath, '.nodexy')
             if os.path.exists(nodexy_file):
+                self.log.debug("Skipping directory '%s' and its children because .nodexy file found." % dirpath)
                 # ...remove all child dirs from processing...
                 for i in xrange(len(dirnames)):
                     dirnames.pop()
             else:
-                # this dir is ok
-                self.log.debug("loading doc config for directory '%s'..." % dirpath)
-                config_for_dir = self.config_for_directory(dirpath)
-                self.log.debug("doc config applied to directory '%s' is:" % dirpath)
-                for config_dirname, config_dict in config_for_dir.iteritems():
-                    self.log.debug("  dir %s %s" % (config_dirname, config_dict))
-                    for alias, config_text in config_dict.iteritems():
+                # no excludes or .nodexy file, this dir is ok to process
+                for alias in dexy.parser.Parser.aliases.keys():
+                    config_file_in_directory = os.path.join(dirpath, alias)
+                    if os.path.exists(config_file_in_directory):
+                        self.log.debug("  found doc config file '%s'" % config_file_in_directory)
                         parser = dexy.parser.Parser.aliases[alias](self)
                         parser.ast = self.ast
-                        parser.build_ast(dirpath, config_dirname, config_text)
+                        with open(config_file_in_directory, "r") as f:
+                            config_text = f.read()
+                        parser.build_ast(dirpath, config_text)
 
         self.log.debug("About to walk AST:")
         self.ast.debug(self.log)

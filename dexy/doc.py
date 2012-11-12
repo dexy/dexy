@@ -2,7 +2,7 @@ import dexy.artifact
 import dexy.exceptions
 import dexy.filter
 import dexy.task
-import glob
+import fnmatch
 import os
 
 class Doc(dexy.task.Task):
@@ -136,28 +136,32 @@ class PatternDoc(dexy.task.Task):
         self.file_pattern = self.key.split("|")[0]
         self.filter_aliases = self.key.split("|")[1:]
 
-        for filepath in glob.iglob(self.file_pattern):
-            if len(self.filter_aliases) > 0:
-                doc_key = "%s|%s" % (filepath, "|".join(self.filter_aliases))
-            else:
-                doc_key = filepath
+        for dirpath, filename in self.wrapper.walk("."):
+            raw_filepath = os.path.join(dirpath, filename)
+            filepath = os.path.normpath(raw_filepath)
 
-            doc_args = self.args.copy()
-            doc_args['wrapper'] = self.wrapper
-
-            if doc_args.has_key('depends'):
-                if doc_args.get('depends'):
-                    doc_children = self.wrapper.registered_docs()
+            if fnmatch.fnmatch(filepath, self.file_pattern):
+                if len(self.filter_aliases) > 0:
+                    doc_key = "%s|%s" % (filepath, "|".join(self.filter_aliases))
                 else:
-                    doc_children = []
-                del doc_args['depends']
-            else:
-                doc_children = self.children
+                    doc_key = filepath
 
-            doc = Doc(doc_key, *doc_children, **doc_args)
-            self.children.append(doc)
-            doc.populate()
-            doc.transition('populated')
+                doc_args = self.args.copy()
+                doc_args['wrapper'] = self.wrapper
+
+                if doc_args.has_key('depends'):
+                    if doc_args.get('depends'):
+                        doc_children = self.wrapper.registered_docs()
+                    else:
+                        doc_children = []
+                    del doc_args['depends']
+                else:
+                    doc_children = self.children
+
+                doc = Doc(doc_key, *doc_children, **doc_args)
+                self.children.append(doc)
+                doc.populate()
+                doc.transition('populated')
 
 class BundleDoc(dexy.task.Task):
     """

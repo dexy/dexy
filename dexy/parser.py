@@ -3,12 +3,14 @@ import copy
 import dexy.doc
 import dexy.exceptions
 import os
-import posixpath
 
 class AbstractSyntaxTree():
     def __init__(self):
         self.lookup_table = {}
         self.tree = []
+
+    def standardize_key(self, key):
+        return Parser.standardize_key(key)
 
     def add_task_info(self, task_key, **kwargs):
         """
@@ -89,11 +91,73 @@ class AbstractSyntaxTree():
         """
         return self.lookup_table[parent_key]['children']
 
+    def debug(self, log=None):
+        def emit(text):
+            if log:
+                log.debug(text)
+            else:
+                print text
+
+        emit("tree:")
+        for item in self.tree:
+            emit("  %s" % item)
+        emit("lookup table:")
+        for k, v in self.lookup_table.iteritems():
+            emit("  %s: %s" % (k, v))
+
+    def walk(self):
+        created_tasks = {}
+        root_nodes = []
+
+        def create_dexy_task(key, *child_tasks, **kwargs):
+            if not key in created_tasks:
+                msg = "Creating task '%s' with children '%s' with args '%s'"
+                self.wrapper.log.debug(msg % (key, child_tasks, kwargs))
+                alias, pattern = Parser.qualify_key(key)
+                task = dexy.task.Task.create(alias, pattern, *child_tasks, **kwargs)
+                created_tasks[key] = task
+            return created_tasks[key]
+
+        def parse_item(key):
+            children = self.task_children(key)
+            kwargs = self.task_kwargs(key)
+            kwargs['wrapper'] = self.wrapper
+            if kwargs.get('inactive'):
+                return
+
+            child_tasks = [parse_item(child) for child in children if child]
+
+            # filter out inactive children
+            child_tasks = [child for child in child_tasks if child]
+
+            return create_dexy_task(key, *child_tasks, **kwargs)
+
+        for key in self.tree:
+            task = parse_item(key)
+            root_nodes.append(task)
+
+        return root_nodes
+
+class Parser:
+    """
+    Parse various types of config file.
+    """
+    ALIASES = []
+
+    __metaclass__ = PluginMeta
+
+    @classmethod
+    def is_active(klass):
+        return True
+
     @classmethod
     def qualify_key(klass, key):
         """
         Returns key split into pattern and alias, figuring out alias if not explict.
         """
+        if not key:
+            raise dexy.exceptions.InternalDexyProblem("Trying to call qualify_key with key of '%s'!" % key)
+
         if ":" in key:
             # split qualified key into alias & pattern
             alias, pattern = key.split(":")
@@ -131,65 +195,6 @@ class AbstractSyntaxTree():
         alias, pattern = klass.qualify_key(key)
         return "%s:%s" % (alias, pattern)
 
-    def debug(self, log=None):
-        def emit(text):
-            if log:
-                log.debug(text)
-            else:
-                print text
-
-        emit("tree:")
-        for item in self.tree:
-            emit("  %s" % item)
-        emit("lookup table:")
-        for k, v in self.lookup_table.iteritems():
-            emit("  %s: %s" % (k, v))
-
-    def walk(self):
-        created_tasks = {}
-        root_nodes = []
-
-        def create_dexy_task(key, *child_tasks, **kwargs):
-            if not key in created_tasks:
-                msg = "Creating task '%s' with children '%s' with args '%s'"
-                self.wrapper.log.debug(msg % (key, child_tasks, kwargs))
-                alias, pattern = self.qualify_key(key)
-                task = dexy.task.Task.create(alias, pattern, *child_tasks, **kwargs)
-                created_tasks[key] = task
-            return created_tasks[key]
-
-        def parse_item(key):
-            children = self.task_children(key)
-            kwargs = self.task_kwargs(key)
-            kwargs['wrapper'] = self.wrapper
-            if kwargs.get('inactive'):
-                return
-
-            child_tasks = [parse_item(child) for child in children if child]
-
-            # filter out inactive children
-            child_tasks = [child for child in child_tasks if child]
-
-            return create_dexy_task(key, *child_tasks, **kwargs)
-
-        for key in self.tree:
-            task = parse_item(key)
-            root_nodes.append(task)
-
-        return root_nodes
-
-class Parser:
-    """
-    Parse various types of config file.
-    """
-    ALIASES = []
-
-    __metaclass__ = PluginMeta
-
-    @classmethod
-    def is_active(klass):
-        return True
-
     def __init__(self, wrapper=None):
         self.wrapper = wrapper
 
@@ -203,32 +208,5 @@ class Parser:
         self.build_ast(directory, config_dirpath, input_text)
         self.wrapper.root_nodes = self.ast.walk()
 
-    def build_ast(self, directory, config_dirpath, input_text):
+    def build_ast(self, directory, input_text):
         raise Exception("Implement in subclass.")
-
-    def adjust_task_key(self, directory, config_dirpath, task_key):
-        """
-        Adjust task key to take into account its directory and make sure correct full path is used.
-        """
-        alias, pattern = AbstractSyntaxTree.qualify_key(task_key)
-
-        if directory == ".":
-            adjusted_task_key = pattern
-        else:
-            adjusted_task_key = posixpath.normpath(posixpath.join(directory, pattern))
-
-        qualified_adjusted_task_key = "%s:%s" % (alias, adjusted_task_key)
-
-        if alias == 'pattern':
-            return qualified_adjusted_task_key
-        elif alias == 'doc':
-            if os.path.exists(adjusted_task_key.split("|")[0]):
-                return qualified_adjusted_task_key
-            elif directory == config_dirpath:
-                return qualified_adjusted_task_key
-        elif alias == 'bundle':
-            if directory == config_dirpath:
-                return qualified_adjusted_task_key
-        else:
-            raise dexy.exceptions.InternalDexyProblem("Don't know how to add task of alias '%s'" % alias)
-
