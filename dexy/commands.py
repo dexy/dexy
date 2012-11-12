@@ -97,6 +97,7 @@ RENAME_PARAMS = {
         'dbfile' : 'db_file',
         'disabletests' : 'disable_tests',
         'dryrun' : 'dry_run',
+        'excludealso' : 'exclude_also',
         'ignore' : 'ignore_nonzero_exit',
         'logfile' : 'log_file',
         'logformat' : 'log_format',
@@ -136,7 +137,9 @@ def default_config():
     reverse_rename = dict((v,k) for k, v in RENAME_PARAMS.iteritems())
     for k in conf.keys():
         renamed_key = reverse_rename.get(k, k)
-        conf[renamed_key] = conf[k]
+        if renamed_key != k:
+            conf[renamed_key] = conf[k]
+            del conf[k]
 
     return conf
 
@@ -150,6 +153,7 @@ def dexy_command(
         disabletests=D['disable_tests'], # Whether to disable the dexy 'test' filter
         dryrun=D['dry_run'], # if True, just parse config and print batch info, don't run dexy
         exclude=D['exclude'], # comma-separated list of directory names to exclude from dexy processing
+        excludealso=D['exclude_also'], # comma-separated list of directory names to exclude from dexy processing
         globals=D['globals'], # global values to make available within dexy documents, should be KEY=VALUE pairs separated by spaces
         help=False, # for people who type -help out of habit
         h=False, # for people who type -h out of habit

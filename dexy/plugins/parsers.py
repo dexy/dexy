@@ -6,51 +6,55 @@ import dexy.exceptions
 import re
 
 class YamlFileParser(Parser):
-    ALIASES = ["docs.yaml"]
+    ALIASES = ["dexy.yaml", "docs.yaml"]
 
     def build_ast(self, directory, config_dirpath, input_text):
         def parse_key_mapping(mapping):
             for task_key, v in mapping.iteritems():
                 task_key = self.adjust_task_key(directory, config_dirpath, task_key)
 
-                if task_key:
-                    # v is a sequence whose members may be children or kwargs
-                    if not v:
-                        raise dexy.exceptions.UserFeedback("Empty doc config for %s" % task_key)
+                if not task_key:
+                    continue
 
-                    if hasattr(v, 'keys'):
-                        raise dexy.exceptions.UserFeedback("You passed a dict to %s, please pass a sequence" % task_key)
+                # v is a sequence whose members may be children or kwargs
+                if not v:
+                    raise dexy.exceptions.UserFeedback("Empty doc config for %s" % task_key)
 
-                    for element in v:
-                        if hasattr(element, 'keys'):
-                            # This is a dict of length 1
-                            kk = element.keys()[0]
-                            vv = element[kk]
+                if hasattr(v, 'keys'):
+                    raise dexy.exceptions.UserFeedback("You passed a dict to %s, please pass a sequence" % task_key)
 
-                            if isinstance(vv, list):
-                                # This is a sequence. It probably represents a
-                                # child task but if starts with 'args' or if it
-                                # matches a filter alias for the parent doc, then
-                                # it is nested complex kwargs.
-                                if kk == "args" or (kk in task_key.split("|")):
-                                    # nested complex kwargs
-                                    for vvv in vv:
-                                        ast.add_task_info(task_key, **vvv)
+                for element in v:
+                    if hasattr(element, 'keys'):
+                        # This is a dict of length 1
+                        kk = element.keys()[0]
+                        vv = element[kk]
 
-                                else:
-                                    # child task. we note the dependency and
-                                    # recurse to process the child.
-                                    ast.add_dependency(task_key, kk)
-                                    parse_key_mapping(element)
+                        if isinstance(vv, list):
+                            # This is a sequence. It probably represents a
+                            # child task but if starts with 'args' or if it
+                            # matches a filter alias for the parent doc, then
+                            # it is nested complex kwargs.
+                            if kk == "args" or (kk in task_key.split("|")):
+                                # nested complex kwargs
+                                for vvv in vv:
+                                    self.ast.add_task_info(task_key, **vvv)
 
                             else:
-                                # This is a key:value argument for this task
-                                ast.add_task_info(task_key, **element)
+                                # child task. we note the dependency and
+                                # recurse to process the child.
+                                kk = self.adjust_task_key(directory, config_dirpath, kk)
+                                self.ast.add_dependency(task_key, kk)
+                                parse_key_mapping(element)
 
                         else:
-                            # This is a child task with no args, we only have to
-                            # note the dependency.
-                            ast.add_dependency(task_key, element)
+                            # This is a key:value argument for this task
+                            self.ast.add_task_info(task_key, **element)
+
+                    else:
+                        # This is a child task with no args, we only have to
+                        # note the dependency.
+                        element = self.adjust_task_key(directory, config_dirpath, element)
+                        self.ast.add_dependency(task_key, element)
 
         def parse_keys(data):
             if hasattr(data, 'keys'):
@@ -58,20 +62,18 @@ class YamlFileParser(Parser):
             elif isinstance(data, basestring):
                 task_key = self.adjust_task_key(directory, config_dirpath, data)
                 if task_key:
-                    ast.add_task_info(task_key)
+                    self.ast.add_task_info(task_key)
             elif isinstance(data, list):
                 for element in data:
                     parse_keys(element)
             else:
                 raise Exception("invalid input %s" % data)
 
-        ast = AbstractSyntaxTree()
         config = parse_yaml(input_text)
         parse_keys(config)
-        return ast
 
 class TextFileParser(Parser):
-    ALIASES = ["docs.txt"]
+    ALIASES = ["dexy.txt", "docs.txt"]
 
     def build_ast(self, directory, config_dirpath, input_text):
         ast = AbstractSyntaxTree()
@@ -106,7 +108,7 @@ class TextFileParser(Parser):
         return ast
 
 class OriginalDexyParser(Parser):
-    ALIASES = ["docs.json", ".dexy"]
+    ALIASES = ["dexy.json", "docs.json", ".dexy"]
 
     def build_ast(self, directory, config_dirpath, input_text):
         data = parse_json(input_text)

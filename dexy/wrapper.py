@@ -25,6 +25,7 @@ class Wrapper(object):
             'dont_use_cache' : False,
             'dry_run' : False,
             'exclude' : '.git, .svn, tmp, cache, artifacts, logs, output, output-long',
+            'exclude_also' : '',
             'globals' : '',
             'hashfunction' : 'md5',
             'ignore_nonzero_exit' : False,
@@ -100,10 +101,10 @@ class Wrapper(object):
         self.setup_run()
         self.log.debug("batch id is %s" % self.batch_id)
 
-        self.log.debug("Running dexy with config:")
+        self.log.debug("running dexy with config:")
         for k in sorted(self.__dict__):
-            if not k in ('args', 'root_nodes', 'tasks', 'notifier'):
-                self.log.debug("%s: %s" % (k, self.__dict__[k]))
+            if not k in ('ast', 'args', 'db', 'log', 'root_nodes', 'tasks', 'notifier'):
+                self.log.debug("  %s: %s" % (k, self.__dict__[k]))
 
         if self.target:
             self.log.debug("Limiting root nodes to %s" % self.target)
@@ -181,24 +182,26 @@ class Wrapper(object):
             for report in reports:
                 report.remove_reports_dir()
 
-    def setup_log(self):
+    def logging_log_level(self):
         try:
-            loglevel = self.LOG_LEVELS[self.log_level.upper()]
+            return self.LOG_LEVELS[self.log_level.upper()]
         except KeyError:
             msg = "'%s' is not a valid log level, check python logging module docs."
             raise dexy.exceptions.UserFeedback(msg % self.log_level)
 
-        self.log = logging.getLogger('dexy')
-        self.log.setLevel(loglevel)
+    def setup_log(self):
+        if not hasattr(self, 'log') or not self.log:
+            self.log = logging.getLogger('dexy')
+            self.log.setLevel(self.logging_log_level())
 
-        handler = logging.handlers.RotatingFileHandler(
-                self.log_path(),
-                encoding="utf-8")
+            handler = logging.handlers.RotatingFileHandler(
+                    self.log_path(),
+                    encoding="utf-8")
 
-        formatter = logging.Formatter(self.log_format)
-        handler.setFormatter(formatter)
+            formatter = logging.Formatter(self.log_format)
+            handler.setFormatter(formatter)
 
-        self.log.addHandler(handler)
+            self.log.addHandler(handler)
 
     def setup_db(self):
         db_class = dexy.database.Database.aliases[self.db_alias]
@@ -297,7 +300,7 @@ class Wrapper(object):
             for k in dexy.parser.Parser.aliases.keys():
                 config_file_in_directory = os.path.join(parent_dir_path, k)
                 if os.path.exists(config_file_in_directory):
-                    self.log.debug("found doc config file '%s'" % config_file_in_directory)
+                    self.log.debug("  found doc config file '%s'" % config_file_in_directory)
                     with open(config_file_in_directory, "r") as f:
                         config[parent_dir_path][k] = f.read()
 
@@ -308,6 +311,8 @@ class Wrapper(object):
         Look for document config files in current working tree and load them.
         """
         exclude = self.exclude_dirs()
+        self.ast = dexy.parser.AbstractSyntaxTree()
+        self.ast.wrapper = self
 
         for dirpath, dirnames, filenames in os.walk("."):
             for x in exclude:
@@ -321,11 +326,19 @@ class Wrapper(object):
                     dirnames.pop()
             else:
                 # this dir is ok
+                self.log.debug("loading doc config for directory '%s'..." % dirpath)
                 config_for_dir = self.config_for_directory(dirpath)
+                self.log.debug("doc config applied to directory '%s' is:" % dirpath)
                 for config_dirname, config_dict in config_for_dir.iteritems():
+                    self.log.debug("  dir %s %s" % (config_dirname, config_dict))
                     for alias, config_text in config_dict.iteritems():
                         parser = dexy.parser.Parser.aliases[alias](self)
-                        parser.parse(config_text, dirpath, config_dirname)
+                        parser.ast = self.ast
+                        parser.build_ast(dirpath, config_dirname, config_text)
+
+        self.log.debug("About to walk AST:")
+        self.ast.debug(self.log)
+        self.root_nodes = self.ast.walk()
 
     def setup_config(self):
         self.setup_dexy_dirs()
@@ -371,7 +384,10 @@ class Wrapper(object):
         self.graph = "\n".join(graph)
 
     def exclude_dirs(self):
-        return [d.strip() for d in self.exclude.split(",")]
+        exclude = self.exclude
+        if self.exclude_also:
+            exclude += ",%s" % self.exclude_also
+        return [d.strip() for d in exclude.split(",")]
 
     def walk(self, start):
         exclude = self.exclude_dirs()

@@ -15,6 +15,7 @@ class AbstractSyntaxTree():
         Adds kw args to kwarg dict in lookup table dict for this task
         """
         task_key = self.standardize_key(task_key)
+        self.wrapper.log.debug("adding task info for %s" % task_key)
 
         if not task_key in self.tree:
             self.tree.append(task_key)
@@ -34,6 +35,7 @@ class AbstractSyntaxTree():
         """
         task_key = self.standardize_key(task_key)
         child_task_key = self.standardize_key(child_task_key)
+        self.wrapper.log.debug("adding dependency of %s on %s" % (child_task_key, task_key))
 
         if task_key == child_task_key:
             return
@@ -143,6 +145,39 @@ class AbstractSyntaxTree():
         for k, v in self.lookup_table.iteritems():
             emit("  %s: %s" % (k, v))
 
+    def walk(self):
+        created_tasks = {}
+        root_nodes = []
+
+        def create_dexy_task(key, *child_tasks, **kwargs):
+            if not key in created_tasks:
+                msg = "Creating task '%s' with children '%s' with args '%s'"
+                self.wrapper.log.debug(msg % (key, child_tasks, kwargs))
+                alias, pattern = self.qualify_key(key)
+                task = dexy.task.Task.create(alias, pattern, *child_tasks, **kwargs)
+                created_tasks[key] = task
+            return created_tasks[key]
+
+        def parse_item(key):
+            children = self.task_children(key)
+            kwargs = self.task_kwargs(key)
+            kwargs['wrapper'] = self.wrapper
+            if kwargs.get('inactive'):
+                return
+
+            child_tasks = [parse_item(child) for child in children if child]
+
+            # filter out inactive children
+            child_tasks = [child for child in child_tasks if child]
+
+            return create_dexy_task(key, *child_tasks, **kwargs)
+
+        for key in self.tree:
+            task = parse_item(key)
+            root_nodes.append(task)
+
+        return root_nodes
+
 class Parser:
     """
     Parse various types of config file.
@@ -159,15 +194,22 @@ class Parser:
         self.wrapper = wrapper
 
     def parse(self, input_text, directory=".", config_dirpath="."):
-        ast = self.build_ast(directory, config_dirpath, input_text)
-        self.wrapper.ast = ast
-        ast.debug(self.wrapper.log)
-        self.walk_ast(ast)
+        if hasattr(self.wrapper, 'ast'):
+            raise Exception("parse is deprecated")
+        else:
+            print "For testing only!"
+
+        self.ast = AbstractSyntaxTree()
+        self.build_ast(directory, config_dirpath, input_text)
+        self.wrapper.root_nodes = self.ast.walk()
 
     def build_ast(self, directory, config_dirpath, input_text):
         raise Exception("Implement in subclass.")
 
     def adjust_task_key(self, directory, config_dirpath, task_key):
+        """
+        Adjust task key to take into account its directory and make sure correct full path is used.
+        """
         alias, pattern = AbstractSyntaxTree.qualify_key(task_key)
 
         if directory == ".":
@@ -190,32 +232,3 @@ class Parser:
         else:
             raise dexy.exceptions.InternalDexyProblem("Don't know how to add task of alias '%s'" % alias)
 
-    def walk_ast(self, ast):
-        created_tasks = {}
-
-        def create_dexy_task(key, *child_tasks, **kwargs):
-            if not key in created_tasks:
-                msg = "Creating task '%s' with children '%s' with args '%s'"
-                self.wrapper.log.debug(msg % (key, child_tasks, kwargs))
-                alias, pattern = ast.qualify_key(key)
-                task = dexy.task.Task.create(alias, pattern, *child_tasks, **kwargs)
-                created_tasks[key] = task
-            return created_tasks[key]
-
-        def parse_item(key):
-            children = ast.task_children(key)
-            kwargs = ast.task_kwargs(key)
-            kwargs['wrapper'] = self.wrapper
-            if kwargs.get('inactive'):
-                return
-
-            child_tasks = [parse_item(child) for child in children if child]
-
-            # filter out inactive children
-            child_tasks = [child for child in child_tasks if child]
-
-            return create_dexy_task(key, *child_tasks, **kwargs)
-
-        for key in ast.tree:
-            task = parse_item(key)
-            self.wrapper.root_nodes.append(task)
