@@ -64,6 +64,13 @@ Directory {{ k }}:
 </pre>
 {% endif -%}
 
+<h1>Slow Artifacts</h1>
+<ul>
+{% for task in wrapper.tasks_by_elapsed() -%}
+<li><a href="#{{ task.doc.websafe_key() }}">{{ task.key }}</a> {{ task.elapsed }}</li>
+{% endfor -%}
+</ul>
+
                     <h1>Documents</h1>
 
                     {% for doc in docs -%}

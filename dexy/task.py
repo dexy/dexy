@@ -42,6 +42,7 @@ class Task():
         self.created_by_doc = None
         self.deps = OrderedDict()
         self.state = 'new'
+        self.elapsed = None
 
         if args.has_key('wrapper') and args['wrapper']:
             self.wrapper = args['wrapper']

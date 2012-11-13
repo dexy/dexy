@@ -58,6 +58,9 @@ class Wrapper(object):
 
         self.notifier = Notify(self)
 
+    def tasks_by_elapsed(self, n=10):
+        return sorted(self.tasks.values(), key=lambda task: task.elapsed, reverse=True)[0:n]
+
     def initialize_attribute_defaults(self):
         for name, value in self.DEFAULTS.iteritems():
             setattr(self, name, value)
