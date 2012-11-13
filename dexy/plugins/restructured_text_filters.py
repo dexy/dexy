@@ -45,6 +45,7 @@ class Rst2HtmlFilter(SubprocessStdoutFilter):
     """
     This uses the command line tool rst2html.
     """
+    ADD_NEW_FILES = False
     EXECUTABLES = ['rst2html', 'rst2html.py']
     VERSION_COMMAND = 'rst2html.py --version'
     INPUT_EXTENSIONS = [".rst", ".txt"]
@@ -55,6 +56,7 @@ class Rst2LatexFilter(SubprocessStdoutFilter):
     """
     This uses the command line tool rst2latex.
     """
+    ADD_NEW_FILES = False
     EXECUTABLES = ['rst2latex', 'rst2latex.py']
     VERSION_COMMAND = 'rst2latex.py --version'
     INPUT_EXTENSIONS = [".rst", ".txt"]
@@ -65,6 +67,7 @@ class Rst2XmlFilter(SubprocessStdoutFilter):
     """
     This uses the command line tool rst2xml.
     """
+    ADD_NEW_FILES = False
     EXECUTABLES = ['rst2xml', 'rst2xml.py']
     VERSION_COMMAND = 'rst2xml.py --version'
     INPUT_EXTENSIONS = [".rst", ".txt"]
@@ -85,6 +88,7 @@ class Rst2BeamerFilter(SubprocessStdoutFilter):
     """
     Filter for rst2beamer command line tool, requires docutils plus rst2beamer package.
     """
+    ADD_NEW_FILES = False
     ALIASES = ['rst2beamer']
     EXECUTABLES = ['rst2beamer', 'rst2beamer.py']
     INPUT_EXTENSIONS = [".rst", ".txt"]

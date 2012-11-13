@@ -18,7 +18,7 @@ class AbstractSyntaxTree():
         Adds kw args to kwarg dict in lookup table dict for this task
         """
         task_key = self.standardize_key(task_key)
-        self.wrapper.log.debug("adding task info for %s" % task_key)
+        self.wrapper.log.debug("adding task info for '%s'" % task_key)
 
         if not task_key in self.tree:
             self.tree.append(task_key)
@@ -38,7 +38,7 @@ class AbstractSyntaxTree():
         """
         task_key = self.standardize_key(task_key)
         child_task_key = self.standardize_key(child_task_key)
-        self.wrapper.log.debug("adding dependency of %s on %s" % (child_task_key, task_key))
+        self.wrapper.log.debug("adding dependency of '%s' on '%s'" % (child_task_key, task_key))
 
         if task_key == child_task_key:
             return

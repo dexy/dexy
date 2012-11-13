@@ -20,11 +20,29 @@ class LatexFilter(SubprocessFilter):
             self.artifact.create_working_dir(self.input_filename(), True)
         return os.path.join(self.artifact.tmp_dir(), self.output().parent_dir())
 
+    def command_string(self):
+        clargs = self.command_line_args() or ''
+
+        self.log.debug("Command line args specified by user '%s'" % clargs)
+
+        if "-interaction=" in clargs:
+            interaction_args = ''
+        else:
+            interaction_args = '-interaction=batchmode'
+
+        args = {
+            'prog' : self.executable(),
+            'inter' : interaction_args,
+            'args' : clargs,
+            'input_file' : self.input().basename()
+        }
+        return "%(prog)s %(inter)s %(args)s %(input_file)s" % args
+
     def process(self):
         wd = self.setup_wd()
         env = self.setup_env()
 
-        latex_command = "%s -interaction=batchmode %s" % (self.executable(), self.input().basename())
+        latex_command = self.command_string()
 
         bibtex_command = None
         if dexy.utils.command_exists("bibtex"):

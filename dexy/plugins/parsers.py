@@ -8,10 +8,8 @@ class YamlFileParser(Parser):
     ALIASES = ["dexy.yaml", "docs.yaml"]
 
     def build_ast(self, directory, input_text):
-        self.wrapper.log.debug("In build_ast")
         def parse_key_mapping(mapping):
             for original_task_key, v in mapping.iteritems():
-                self.wrapper.log.debug("Processing task key %s" % original_task_key)
                 task_key = self.join_dir(directory, original_task_key)
 
                 # v is a sequence whose members may be children or kwargs

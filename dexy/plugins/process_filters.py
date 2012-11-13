@@ -81,29 +81,18 @@ class SubprocessFilter(Filter):
         if self.do_add_new_files():
             self.add_new_files()
 
-    def setup_wd(self):
-        tmpdir = self.artifact.tmp_dir()
-        parent_dir = self.output().parent_dir()
-        wd = os.path.join(tmpdir, parent_dir)
-
-        if not os.path.exists(wd):
-            self.artifact.create_working_dir(
-                    self.input_filename(),
-                    populate=True
-                )
-
-        return wd
-
     def command_line_args(self):
-        return self.args().get('args')
+        return self.args().get('args') or self.args().get('clargs')
 
     def command_line_scriptargs(self):
         return self.args().get('scriptargs')
 
     def command_string_stdout(self):
+        clargs = self.command_line_args() or ''
+        self.log.debug("command line args specified by user are '%s'" % clargs)
         args = {
             'prog' : self.executable(),
-            'args' : self.command_line_args() or "",
+            'args' : clargs,
             'scriptargs' : self.command_line_scriptargs() or "",
             'script_file' : self.input_filename()
         }

@@ -29,7 +29,7 @@ setup(
             },
         include_package_data = True,
         install_requires = [
-            'idiopidae>=0.5.3',
+            'idiopidae>=0.5.4',
             'jinja2',
             'mock',
             'nose',

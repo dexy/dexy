@@ -105,6 +105,22 @@ class Filter:
         for doc in self.artifact.doc.completed_child_docs():
             yield doc
 
+    def final_ext(self):
+        return self.artifact.doc.final_artifact.ext
+
+    def setup_wd(self):
+        tmpdir = self.artifact.tmp_dir()
+        parent_dir = self.output().parent_dir()
+        wd = os.path.join(tmpdir, parent_dir)
+
+        if not os.path.exists(wd):
+            self.artifact.create_working_dir(
+                    self.input_filename(),
+                    populate=True
+                )
+
+        return wd
+
 class DexyFilter(Filter):
     ALIASES = ['dexy']
 

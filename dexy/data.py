@@ -174,7 +174,7 @@ class SectionedData(GenericData):
     DEFAULT_STORAGE_TYPE = 'jsonordered'
 
     def as_text(self):
-        return "\n".join(v for v in self.data().values())
+        return u"\n".join(v for v in self.data().values())
 
     def as_sectioned(self):
         return self.data()
@@ -196,10 +196,14 @@ class SectionedData(GenericData):
         return self.value(key)
 
     def __getattr__(self, key):
-        if self.__dict__.has_item(key):
+        if self.__dict__.has_key(key):
             return self.__dict__[key]
+        elif self.data().has_key(key):
+            return self.data()[key]
+        elif hasattr(self.as_text(), key):
+            return getattr(self.as_text(), key)
         else:
-            return self.value(key)
+            raise dexy.exceptions.UserFeedback("No method %s defined for %s" % (key, self))
 
 class KeyValueData(GenericData):
     ALIASES  = ['keyvalue']

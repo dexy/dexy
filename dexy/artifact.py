@@ -45,6 +45,9 @@ class Artifact(dexy.task.Task):
     def output_filename(self):
         return self.output_data.basename()
 
+    def working_dir(self):
+        return os.path.join(self.tmp_dir(), self.input_data.parent_dir())
+
     def create_working_dir(self, input_filename, populate=False):
         tmpdir = self.tmp_dir()
 
@@ -60,7 +63,7 @@ class Artifact(dexy.task.Task):
                         os.makedirs(parent_dir)
                     doc.output().output_to_file(filename)
 
-        parent_dir = os.path.join(tmpdir, self.input_data.parent_dir())
+        parent_dir = self.working_dir()
         input_filepath = os.path.join(parent_dir, input_filename)
 
         if not os.path.exists(parent_dir):
@@ -229,7 +232,7 @@ class FilterArtifact(Artifact):
         if doc.state == 'complete':
             raise Exception("Already complete!")
 
-        self.log.debug("Adding additional doc %s" % doc.key)
+        self.log.debug("Adding additional doc %s (created by %s)" % (doc.key, self.key))
         doc.created_by_doc = self.hashstring
         doc.created_by_doc_key = self.doc.key_with_class()
         doc.wrapper = self.wrapper

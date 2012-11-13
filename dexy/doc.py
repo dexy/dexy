@@ -85,7 +85,8 @@ class Doc(dexy.task.Task):
 
         artifact.filter_instance = artifact.filter_class()
         artifact.filter_instance.artifact = artifact
-        artifact.filter_instance.log = self.log
+        artifact.set_log()
+        artifact.filter_instance.log = artifact.log
 
         artifact.next_filter_alias = None
         artifact.next_filter_class = None

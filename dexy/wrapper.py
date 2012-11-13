@@ -297,15 +297,11 @@ class Wrapper(object):
         self.ast.wrapper = self
 
         for dirpath, dirnames, filenames in os.walk("."):
-            for x in exclude:
-                if x in dirnames:
-                    skipping_dir = os.path.join(dirpath, x)
-                    self.log.debug("Skipping directory '%s' because it matches exclude '%s'" % (skipping_dir, x))
-                    dirnames.remove(x)
+            self.log.debug("looking for doc config files in '%s'" % dirpath)
 
             nodexy_file = os.path.join(dirpath, '.nodexy')
             if os.path.exists(nodexy_file):
-                self.log.debug("Skipping directory '%s' and its children because .nodexy file found." % dirpath)
+                self.log.debug("  skipping directory '%s' and its children because .nodexy file found" % dirpath)
                 # ...remove all child dirs from processing...
                 for i in xrange(len(dirnames)):
                     dirnames.pop()
@@ -314,15 +310,24 @@ class Wrapper(object):
                 for alias in dexy.parser.Parser.aliases.keys():
                     config_file_in_directory = os.path.join(dirpath, alias)
                     if os.path.exists(config_file_in_directory):
-                        self.log.debug("  found doc config file '%s'" % config_file_in_directory)
                         parser = dexy.parser.Parser.aliases[alias](self)
                         parser.ast = self.ast
                         with open(config_file_in_directory, "r") as f:
                             config_text = f.read()
+
+                        self.log.debug("found doc config file '%s':\n%s" % (config_file_in_directory, config_text))
                         parser.build_ast(dirpath, config_text)
 
-        self.log.debug("About to walk AST:")
+            self.log.debug("Removing any child directories of '%s' that match excludes..." % dirpath)
+            for x in exclude:
+                if x in dirnames:
+                    skipping_dir = os.path.join(dirpath, x)
+                    self.log.debug("  skipping directory '%s' because it matches exclude '%s'" % (skipping_dir, x))
+                    dirnames.remove(x)
+
+        self.log.debug("AST completed:")
         self.ast.debug(self.log)
+        self.log.debug("walking AST:")
         self.root_nodes = self.ast.walk()
 
     def setup_config(self):

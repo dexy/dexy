@@ -2,6 +2,7 @@ from dexy.filter import DexyFilter
 from dexy.plugins.templating_plugins import TemplatePlugin
 from jinja2.exceptions import TemplateSyntaxError
 from jinja2.exceptions import UndefinedError
+from jinja2 import FileSystemLoader
 import dexy.exceptions
 import jinja2
 import re
@@ -50,7 +51,7 @@ class JinjaTextFilter(TemplateFilter):
     """
     ALIASES = ['jinjatext']
 
-    def setup_jinja_env(self):
+    def setup_jinja_env(self, loader=None):
         env_attrs = self.args().copy()
 
         # Remove jinja attrs not intended for env
@@ -77,6 +78,9 @@ class JinjaTextFilter(TemplateFilter):
             env_attrs.setdefault('variable_end_string', '>>')
             env_attrs.setdefault('comment_start_string', '<#')
             env_attrs.setdefault('comment_end_string', '#>')
+
+        if loader:
+            env_attrs['loader'] = loader
 
         debug_attr_string = ", ".join("%s: %r" % (k, v) for k, v in env_attrs.iteritems())
         self.log.debug("Creating jinja2 environment with: %s" % debug_attr_string)
@@ -154,13 +158,14 @@ class JinjaFilter(JinjaTextFilter):
 
     def process(self):
         self.log.debug("entering JinjaFilter, about to create jinja env")
-        env = self.setup_jinja_env()
+        wd = self.setup_wd()
+        loader = FileSystemLoader(wd)
+        env = self.setup_jinja_env(loader=loader)
+        template = env.get_template(self.input_filename())
         self.log.debug("jinja env created. about to run plugins")
         template_data = self.run_plugins()
         self.log.debug("template data keys are %s" % ", ".join(sorted(template_data)))
         try:
-            self.log.debug("creating jinja template from input text")
-            template = env.from_string(self.input().as_text())
             self.log.debug("about to process jinja template")
             template.stream(template_data).dump(self.output_filepath(), encoding="utf-8")
         except (TemplateSyntaxError, UndefinedError, TypeError) as e:
