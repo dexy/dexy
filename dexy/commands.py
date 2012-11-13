@@ -223,7 +223,7 @@ def dexy_command(
                 wrapper.run()
 
             wrapper.report()
-            print "finished in %0.4f" % wrapper.batch_info['elapsed_time']
+            print "finished in %0.4f" % wrapper.batch_info['elapsed']
 
         except dexy.exceptions.UserFeedback as e:
             if hasattr(wrapper, 'log'):

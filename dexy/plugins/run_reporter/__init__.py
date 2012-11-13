@@ -6,7 +6,7 @@ import os
 import shutil
 
 class RunReporter(Reporter):
-    ALLREPORTS = False
+    ALLREPORTS = True
     ALIASES = ['run']
 
     def run(self, wrapper):
@@ -25,8 +25,18 @@ class RunReporter(Reporter):
 
         env_data = {}
 
+        env_data['float'] = float
+        env_data['len'] = len
+        env_data['sorted'] = sorted
+        env_data['hasattr'] = hasattr
+        env_data['dict'] = dict
+        env_data['isinstance'] = isinstance
+
         env_data['batch_id'] = wrapper.batch_id
         env_data['batch_info'] = wrapper.batch_info
+
+        env_data['docs'] = wrapper.registered_docs()
+        env_data['wrapper'] = wrapper
 
         env = Environment()
         env.loader = FileSystemLoader(os.path.dirname(__file__))

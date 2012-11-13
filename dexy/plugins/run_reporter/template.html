@@ -42,65 +42,56 @@
         <div class="zp-wrapper">
             <div class="zp-70 content">
                 <div class="padding">
-                    <h1>Dexy Run Report</h1>
+                    <h1 id="top">Dexy Run Report</h1>
                     <h2>Results of your Run</h2>
                     <br />
                     <p>This is a logfile to help you understand how dexy has processed your files and to assist with troubleshooting.</p>
                     <br />
                     <br />
                     <h3>Timing</h3>
-{% if False -%}
                     <p>The total elapsed time for batch {{ batch_id }} was {{ "%0.2f" % batch_info.elapsed }} ({{ "%0.2f" % (float(batch_info.elapsed)/60)}} minutes).</p>
-                    <p>A total of {{ total_artifacts }} artifacts were created, of which {{ base_artifacts }} were base artifacts (the initial stage of processing), {{ cached_artifacts }} were cached from previous runs, and {{ run_artifacts }} were run. The total time spent running artifacts was {{ total_run_elapsed }}, or {{ "%0.2f%%" % (float(total_run_elapsed) / float(batch_info.elapsed) * 100) }} of the total batch time.</p>
 
+</pre>
+{% if hasattr(wrapper, 'doc_config') -%}
+                    <h3>Config</h3>
+                    <p>This is the configuration which was used for this run:</p>
 <pre>
-Controller Times:
-{% for name, elapsed in batch_info['timing'] -%}
-&nbsp;&nbsp;{{ "%0.3f" % elapsed }} {{ name }}
-{% endfor -%}
-&nbsp;
-&nbsp;
-
-Filter Run Times:
-{% for filter_class in sorted(run_time_by_key) -%}
-{% set times = run_time_by_key[filter_class] -%}
-{{ filter_class }}
-n {{ len(times) }}
-min: {{ min(times) }}
-max: {{ max(times) }}
-avg: {{ float(sum(times))/len(times) }}
+{% for k, v in wrapper.doc_config.iteritems() -%}
+Directory {{ k }}:
+{{ v }}
 
 {% endfor -%}
 </pre>
-                    <h3>Config</h3>
-                    <p>This is the configuration which was used for this run:</p>
-                    {{ dexy_config }}
+{% endif -%}
 
                     <h1>Documents</h1>
 
-                    {% for key, doc in docs.iteritems() -%}
+                    {% for doc in docs -%}
                     <hr />
-                    <h2 id="{{ key }}">{{ key }}</h2>
-<pre>
-Total elapsed time: {{ "%0.3f" % doc.elapsed }}
-{% for name, elapsed in doc['timing'] -%}
-&nbsp;&nbsp;{{ "%0.3f" % elapsed }} {{ name }}
-{% endfor -%}
-</pre>
-                    {% if doc.args.__len__() > 0 %}
+                    <h2 id="{{ doc.websafe_key() }}">{{ doc.key }} &nbsp;&nbsp;&nbsp; <a href="#top">&uarr;</a></h2>
                     <br />
                     <h4>Arguments</h4>
-                    <pre><code>
-                    {{ highlight_json(doc.args) }}
-                    </code></pre>
-                    {% endif %}
+<pre><code>
+{% for k, v in doc.args.iteritems() -%}
+{% if not k in ('wrapper') -%}
+{% if isinstance(v, dict) -%}
+{{ k }}:
+{% for kk, vv in v.iteritems() -%}
+&nbsp;&nbsp;&nbsp;&nbsp;{{ kk }}: {{ vv }}
+{% endfor -%}
+{% else -%}
+{{ k }}: {{ v }}
+{% endif -%}
+{% endif -%}
+{% endfor -%}
+</code></pre>
 
-                    {% if doc.inputs.__len__() > 0 %}
+                    {% if len(doc.inputs) > 0 %}
                     <br />
                     <h4>Inputs</h4>
                     <ul>
-                        {% for key in doc.inputs %}
-                        <li><a href="#{{ key }}">{{ key }}</a></li>
+                        {% for d in doc.children %}
+                        <li><a href="#{{ d.websafe_key() }}">{{ d.key }}</a></li>
                         {% endfor %}
                     </ul>
                     {% endif %}
@@ -108,18 +99,16 @@ Total elapsed time: {{ "%0.3f" % doc.elapsed }}
                     <br />
                     <h4>Artifacts</h4>
                     <table style="width: 800px; border: thin solid black; border-collapse: collapse;">
-                        <tr><th>Key</th><th>Link</th><th>Final</th><th>Elapsed</th><th>Run Type</th><th>Sections</th></tr>
-                        {% for h, source, elapsed in doc.artifacts -%}
-                        {% set a = artifacts[h] -%}
+                        <tr><th>Key</th><th>Link</th><th>Elapsed</th><th>Run Type</th><th>Sections</th></tr>
+                        {% for a in doc.artifacts -%}
                         <tr>
                             <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">{{ a.key }}</td>
-                            <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;"><a href="../../{{ a.filepath() }}">{{ a.filepath() }}</a></td>
-                            <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">{{ a.final }}</td>
-                            <td style="padding-left: 10px; padding-right: 10px; border:thin solid black; text-align:center;">{{ "%0.4f" % elapsed }}</td>
-                            <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">{{ source }}</td>
+                            <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;"><a href="../../{{ a.output_data.storage.data_file() }}">{{ a.output_data.storage.data_file() }}</a></td>
+                            <td style="padding-left: 10px; padding-right: 10px; border:thin solid black; text-align:center;">{{ "%0.4f" % a.elapsed }}</td>
+                            <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">{{ a.content_source }}</td>
                             <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">
-                                {% if a.data_dict -%}
-                                {% for k in a.data_dict.keys() -%}
+                                {% if hasattr(a.output_data, 'keys') -%}
+                                {% for k in a.output_data.keys() -%}
                                 {{ k }}<br />
                                 {% endfor -%}
                                 {% endif -%}
@@ -128,8 +117,7 @@ Total elapsed time: {{ "%0.3f" % doc.elapsed }}
                         {% endfor -%}
                     </table>
                     <br />
-                    {% for h, source, elapsed in doc.artifacts -%}
-                    {% set a = artifacts[h] -%}
+                    {% for a in doc.artifacts -%}
                     {% if a.stdout -%}
                     <p><b>{{ a.key }} stdout</b></p>
                     {{ a.stdout }}
@@ -138,7 +126,7 @@ Total elapsed time: {{ "%0.3f" % doc.elapsed }}
                     <br />
                     <h4>Document Log</h4>
 <pre>
-{{ doc.log }}
+{{ doc.logstream.getvalue() }}
 </pre>
                     <br />
                     {% endfor %}
@@ -149,9 +137,8 @@ Total elapsed time: {{ "%0.3f" % doc.elapsed }}
                 <h2>List of Documents</h2>
                 <ul>
                     {% for doc in sorted(docs) %}
-                    <li><a href="#{{ doc }}">{{ doc }}</a></li>
+                    <li><a href="#{{ doc.websafe_key() }}">{{ doc }}</a></li>
                     {% endfor %}
-{% endif %}
                 </ul>
             </div>
         </div>

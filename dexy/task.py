@@ -150,6 +150,8 @@ class Task():
             self.log = logging.getLogger(self.key)
             self.logstream = StringIO.StringIO()
             handler = logging.StreamHandler(self.logstream)
+            if hasattr(self, 'wrapper'):
+                handler.setFormatter(logging.Formatter(self.wrapper.log_format))
             self.log.addHandler(handler)
             self.log.setLevel(logging.DEBUG)
 

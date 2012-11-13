@@ -105,8 +105,10 @@ class InitialArtifact(Artifact):
         self.run()
 
     def run(self, *args, **kw):
+        start_time = time.time()
         if not self.output_data.is_cached():
             self.set_output_data()
+        self.elapsed = time.time() - start_time
 
 class InitialVirtualArtifact(InitialArtifact):
     def get_contents(self):
@@ -168,6 +170,7 @@ class FilterArtifact(Artifact):
         self.setup_output_data()
 
     def run(self, *args, **kw):
+        start_time = time.time()
         self.log.debug("Running %s" % self.key_with_class())
         if not self.output_data.is_cached():
             self.log.debug("Output is not cached under %s, running..." % self.hashstring)
@@ -175,11 +178,12 @@ class FilterArtifact(Artifact):
             if not self.output_data.is_cached():
                 if self.filter_instance.REQUIRE_OUTPUT:
                     raise dexy.exceptions.NoFilterOutput("No output file after filter ran: %s" % self.key)
-            self.source = 'generated'
+            self.content_source = 'generated'
         else:
             self.log.debug("Output is cached under %s, reconstituting..." % self.hashstring)
             self.reconstitute_cached_children()
-            self.source = 'cached'
+            self.content_source = 'cached'
+        self.elapsed = time.time() - start_time
 
     def reconstitute_cached_children(self):
         """

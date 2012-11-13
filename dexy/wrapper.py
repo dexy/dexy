@@ -137,7 +137,7 @@ class Wrapper(object):
         self.setup_graph()
 
         self.batch_info['end_time'] = time.time()
-        self.batch_info['elapsed_time'] = self.batch_info['end_time'] - self.batch_info['start_time']
+        self.batch_info['elapsed'] = self.batch_info['end_time'] - self.batch_info['start_time']
 
     def setup_run(self):
         self.check_dexy_dirs()
@@ -295,6 +295,7 @@ class Wrapper(object):
         exclude = self.exclude_dirs()
         self.ast = dexy.parser.AbstractSyntaxTree()
         self.ast.wrapper = self
+        self.doc_config = OrderedDict()
 
         for dirpath, dirnames, filenames in os.walk("."):
             self.log.debug("looking for doc config files in '%s'" % dirpath)
@@ -316,6 +317,7 @@ class Wrapper(object):
                             config_text = f.read()
 
                         self.log.debug("found doc config file '%s':\n%s" % (config_file_in_directory, config_text))
+                        self.doc_config[dirpath] = config_text
                         parser.build_ast(dirpath, config_text)
 
             self.log.debug("Removing any child directories of '%s' that match excludes..." % dirpath)
