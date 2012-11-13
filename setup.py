@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 from dexy.version import DEXY_VERSION
 
 setup(
@@ -42,9 +42,10 @@ setup(
             'zapps'
             ],
         name='dexy',
-        packages=find_packages(),
+        packages=['dexy'],
+        package_dir={'dexy' : 'dexy'},
         package_data = { "dexy" : [
-            "plugins/run_reporter/*",
+            "plugins/run_reporter/*.html",
             "plugins/run_reporter/files/*"
             ] },
         url='http://dexy.it',
