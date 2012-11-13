@@ -83,7 +83,7 @@ Directory {{ k }}:
                     <h4>Arguments</h4>
 <pre><code>
 {% for k, v in doc.args.iteritems() -%}
-{% if not k in ('wrapper') -%}
+{% if not k in ('wrapper', 'contents') -%}
 {% if isinstance(v, dict) -%}
 {{ k }}:
 {% for kk, vv in v.iteritems() -%}

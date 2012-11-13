@@ -236,7 +236,7 @@ class FilterArtifact(Artifact):
         if doc.state == 'complete':
             raise Exception("Already complete!")
 
-        self.log.debug("Adding additional doc %s (created by %s)" % (doc.key, self.key))
+        self.log.debug("adding additional doc %s (created by %s)" % (doc.key, self.key))
         doc.created_by_doc = self.hashstring
         doc.created_by_doc_key = self.doc.key_with_class()
         doc.wrapper = self.wrapper
