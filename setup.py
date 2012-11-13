@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 from dexy.version import DEXY_VERSION
 
 setup(
@@ -29,6 +29,7 @@ setup(
             },
         include_package_data = True,
         install_requires = [
+            'PyYAML',
             'idiopidae>=0.5.4',
             'jinja2',
             'mock',
@@ -37,13 +38,11 @@ setup(
             'pexpect',
             'pygments',
             'python-modargs>=1.5',
-            'PyYAML',
             'requests>=0.10.6',
             'zapps'
             ],
         name='dexy',
-        packages=['dexy'],
-        package_dir={'dexy' : 'dexy'},
+        packages=find_packages(),
         package_data = { "dexy" : [
             "plugins/run_reporter/*.html",
             "plugins/run_reporter/files/*"
