@@ -84,7 +84,8 @@ def config_args(modargs):
 
             kwargs.update(conf_args)
 
-    for k in cliargs.keys(): kwargs[k] = modargs[k]
+    if cliargs:
+        for k in cliargs.keys(): kwargs[k] = modargs[k]
 
     # TODO allow updating from env variables, e.g. DEXY_ARTIFACTS_DIR
 
@@ -166,6 +167,8 @@ def dexy_command(
         nocache=D['dont_use_cache'], # whether to force artifacts to run even if there is a matching file in the cache
         profile=D['profile'], # whether to run with cProfile
         recurse=D['recurse'], # whether to recurse into subdirectories when running Dexy
+        r=False, # whether to clear cache before running dexy
+        reset=False, # whether to clear cache before running dexy
         reports=D['reports'], # reports to be run after dexy runs, enclose in quotes and separate with spaces
         silent=D['silent'], # Whether to not print any output when running dexy
         uselocals=D['uselocals'], # use cached local copies of remote URLs, faster but might not be up to date, 304 from server will override this setting
@@ -207,7 +210,13 @@ def dexy_command(
     elif version:
         version_command()
     else:
-        wrapper = init_wrapper(locals())
+        wrapper_args = locals()
+
+        if r or reset:
+            print "Resetting dexy cache..."
+            reset_command(artifactsdir=artifactsdir, logdir=logdir)
+
+        wrapper = init_wrapper(wrapper_args)
 
         try:
             wrapper.check_dexy_dirs()

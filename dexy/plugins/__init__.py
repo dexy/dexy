@@ -15,6 +15,7 @@ import dexy.plugins.pexpect_filters
 import dexy.plugins.phantomjs_filters
 import dexy.plugins.pydoc_filters
 import dexy.plugins.pygments_filters
+import dexy.plugins.pygments_plugins
 import dexy.plugins.restructured_text_filters
 import dexy.plugins.split_filters
 import dexy.plugins.standard_filters

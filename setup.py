@@ -23,6 +23,9 @@ setup(
         dependency_links = [ "http://dexy.it/external-dependencies/" ],
         description='Document Automation',
         entry_points = {
+            'pygments.lexers' : [
+                'rst+django = dexy.plugins.pygments_plugins:RstDjangoLexer'
+                ],
             'console_scripts' : [
                 'dexy = dexy.commands:run'
                 ]
