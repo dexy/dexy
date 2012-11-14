@@ -9,6 +9,7 @@ from pygments.lexers import get_lexer_by_name
 from pygments.lexers import get_lexer_for_filename
 from pygments.lexers.agile import PythonConsoleLexer
 from pygments.lexers.agile import RubyConsoleLexer
+from pygments.lexers.templates import DjangoLexer
 from pygments.lexers.text import TexLexer
 from pygments.lexers.web import JavascriptLexer
 from pygments.lexers.web import XmlLexer
@@ -16,7 +17,6 @@ import dexy.commands
 import dexy.exceptions
 import pygments.lexers.web
 import re
-
 
 class SyntaxHighlightRstFilter(DexyFilter):
     ALIASES = ['pyg4rst']
@@ -110,6 +110,8 @@ class PygmentsFilter(DexyFilter):
                 lexer_class = TexLexer # does a passable job
             elif ext == '.svg':
                 lexer_class = XmlLexer
+            elif ext == '.jinja':
+                lexer_class = DjangoLexer
             else:
                 fake_file_name = "input_text%s" % ext
                 try:

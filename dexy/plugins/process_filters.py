@@ -79,6 +79,7 @@ class SubprocessFilter(Filter):
         self.copy_canonical_file()
 
         if self.do_add_new_files():
+            self.log.debug("adding new files found in %s for %s" % (self.artifact.tmp_dir(), self.artifact.key))
             self.add_new_files()
 
     def command_line_args(self):
@@ -254,6 +255,7 @@ class SubprocessStdoutFilter(SubprocessFilter):
             self.walk_working_directory()
 
         if self.do_add_new_files():
+            self.log.debug("adding new files found in %s for %s" % (self.artifact.tmp_dir(), self.artifact.key))
             self.add_new_files()
 
 class SubprocessCompileFilter(SubprocessFilter):
@@ -305,6 +307,7 @@ class SubprocessCompileFilter(SubprocessFilter):
         self.output().set_data(stdout)
 
         if self.do_add_new_files():
+            self.log.debug("adding new files found in %s for %s" % (self.artifact.tmp_dir(), self.artifact.key))
             self.add_new_files()
 
 class SubprocessCompileInputFilter(SubprocessCompileFilter):

@@ -141,7 +141,8 @@ class PatternDoc(dexy.task.Task):
         self.file_pattern = self.key.split("|")[0]
         self.filter_aliases = self.key.split("|")[1:]
 
-        for dirpath, filename in self.wrapper.walk("."):
+        recurse = self.args.get('recurse', True)
+        for dirpath, filename in self.wrapper.walk(".", recurse):
             raw_filepath = os.path.join(dirpath, filename)
             filepath = os.path.normpath(raw_filepath)
 
@@ -163,6 +164,7 @@ class PatternDoc(dexy.task.Task):
                 else:
                     doc_children = self.children
 
+                self.log.debug("creating child of patterndoc %s: %s" % (self.key, doc_key))
                 doc = Doc(doc_key, *doc_children, **doc_args)
                 self.children.append(doc)
                 doc.populate()

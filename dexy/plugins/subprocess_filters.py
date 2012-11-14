@@ -366,10 +366,12 @@ class HtLatexFilter(SubprocessFilter):
         return """%(prog)s %(script_file)s "%(args)s" "%(tex4htargs)s" "%(t4htargs)s" "%(latexargs)s" """ % args
 
 class AbcFilter(SubprocessFilter):
+    ADD_NEW_FILES = False
     ALIASES = ['abc']
+    EXECUTABLE = 'abcm2ps'
+    FRAGMENT = False
     INPUT_EXTENSIONS = ['.abc']
     OUTPUT_EXTENSIONS = ['.svg', '.html', '.xhtml', '.eps']
-    EXECUTABLE = 'abcm2ps'
 
     def command_string(self):
         clargs = self.command_line_args() or ''
@@ -410,6 +412,7 @@ class AbcFilter(SubprocessFilter):
             self.copy_canonical_file()
 
         if self.do_add_new_files():
+            self.log.debug("adding new files found in %s for %s" % (self.artifact.tmp_dir(), self.artifact.key))
             self.add_new_files()
 
 class AbcMultipleFormatsFilter(SubprocessFilter):
@@ -417,6 +420,7 @@ class AbcMultipleFormatsFilter(SubprocessFilter):
     INPUT_EXTENSIONS = ['.abc']
     OUTPUT_EXTENSIONS = ['.json']
     EXECUTABLE = 'abcm2ps'
+    ADD_NEW_FILES = False
 
     def command_string(self, ext):
         clargs = self.command_line_args() or ''

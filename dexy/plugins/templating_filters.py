@@ -45,11 +45,11 @@ class TemplateFilter(DexyFilter):
         template_data = self.run_plugins()
         return input_text % template_data
 
-class JinjaTextFilter(TemplateFilter):
+class JinjaFilter(TemplateFilter):
     """
-    Runs the Jinja templating engine. Works on templates as strings in memory.
+    Runs the Jinja templating engine.
     """
-    ALIASES = ['jinjatext']
+    ALIASES = ['jinja']
 
     def setup_jinja_env(self, loader=None):
         env_attrs = self.args().copy()
@@ -140,31 +140,20 @@ class JinjaTextFilter(TemplateFilter):
 
         raise dexy.exceptions.UserFeedback("\n".join(result))
 
-    def process_text(self, input_text):
-        env = self.setup_jinja_env()
-        template_data = self.run_plugins()
-        try:
-            template = env.from_string(input_text)
-            return template.render(template_data)
-        except (TemplateSyntaxError, UndefinedError, TypeError) as e:
-            self.handle_jinja_exception(e, input_text, template_data)
-
-class JinjaFilter(JinjaTextFilter):
-    """
-    Runs the Jinja templating engine on your document to incorporate dynamic
-    content.
-    """
-    ALIASES = ['jinja']
-
     def process(self):
-        self.log.debug("entering JinjaFilter, about to create jinja env")
         wd = self.setup_wd()
-        loader = FileSystemLoader(wd)
+        dirs = [wd, self.artifact.tmp_dir()]
+        self.log.debug("setting up jinja FileSystemLoader with dirs %s" % ", ".join(dirs))
+        loader = FileSystemLoader(dirs)
+
+        self.log.debug("setting up jinja environment")
         env = self.setup_jinja_env(loader=loader)
+
+        self.log.debug("initializing template")
         template = env.get_template(self.input_filename())
-        self.log.debug("jinja env created. about to run plugins")
+
         template_data = self.run_plugins()
-        self.log.debug("template data keys are %s" % ", ".join(sorted(template_data)))
+        self.log.debug("jinja template data keys are %s" % ", ".join(sorted(template_data)))
         try:
             self.log.debug("about to process jinja template")
             template.stream(template_data).dump(self.output_filepath(), encoding="utf-8")

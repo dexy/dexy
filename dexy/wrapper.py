@@ -384,13 +384,16 @@ class Wrapper(object):
             exclude += ",%s" % self.exclude_also
         return [d.strip() for d in exclude.split(",")]
 
-    def walk(self, start):
+    def walk(self, start, recurse=True):
         exclude = self.exclude_dirs()
 
         for dirpath, dirnames, filenames in os.walk(start):
             for x in exclude:
                 if x in dirnames:
                     dirnames.remove(x)
+
+            if not recurse:
+                dirnames[:] = []
 
             nodexy_file = os.path.join(dirpath, '.nodexy')
             if not os.path.exists(nodexy_file):
