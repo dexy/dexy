@@ -70,38 +70,37 @@ def config_args(modargs):
     cliargs = modargs.get("__cli_options", {})
     kwargs = modargs.copy()
 
-    # Update from config file
-    if modargs.has_key('conf'):
-        config_file = modargs['conf']
-        if os.path.exists(config_file):
-            with open(config_file, "rb") as f:
-                if config_file.endswith(".conf"):
-                    try:
-                        conf_args = parse_yaml(f.read())
-                    except dexy.exceptions.UserFeedback as yaml_exception:
-                        try:
-                            conf_args = parse_json(f.read())
-                        except dexy.exceptions.UserFeedback as json_exception:
-                            print "--------------------------------------------------"
-                            print "Tried to parse YAML:"
-                            print yaml_exception
-                            print "--------------------------------------------------"
-                            print "Tried to parse JSON:"
-                            print json_exception
-                            print "--------------------------------------------------"
-                            raise dexy.exceptions.UserFeedback("Unable to parse config file '%s' as YAML or as JSON." % config_file)
+    config_file = modargs.get('conf', Wrapper.DEFAULTS['config_file'])
 
-                elif config_file.endswith(".yaml"):
+    # Update from config file
+    if os.path.exists(config_file):
+        with open(config_file, "rb") as f:
+            if config_file.endswith(".conf"):
+                try:
                     conf_args = parse_yaml(f.read())
-                elif config_file.endswith(".json"):
-                    conf_args = parse_json(f.read())
-                else:
-                    raise dexy.exceptions.UserFeedback("Don't know how to load config from '%s'" % config_file)
+                except dexy.exceptions.UserFeedback as yaml_exception:
+                    try:
+                        conf_args = parse_json(f.read())
+                    except dexy.exceptions.UserFeedback as json_exception:
+                        print "--------------------------------------------------"
+                        print "Tried to parse YAML:"
+                        print yaml_exception
+                        print "--------------------------------------------------"
+                        print "Tried to parse JSON:"
+                        print json_exception
+                        print "--------------------------------------------------"
+                        raise dexy.exceptions.UserFeedback("Unable to parse config file '%s' as YAML or as JSON." % config_file)
+
+            elif config_file.endswith(".yaml"):
+                conf_args = parse_yaml(f.read())
+            elif config_file.endswith(".json"):
+                conf_args = parse_json(f.read())
+            else:
+                raise dexy.exceptions.UserFeedback("Don't know how to load config from '%s'" % config_file)
 
             kwargs.update(conf_args)
 
-    if cliargs:
-        for k in cliargs.keys(): kwargs[k] = modargs[k]
+    for k in cliargs.keys(): kwargs[k] = modargs[k]
 
     # TODO allow updating from env variables, e.g. DEXY_ARTIFACTS_DIR
 
@@ -573,8 +572,6 @@ def gen_command(
         d=None,  # The directory to place generated files in, must not exist.
         t=False, # Shorter alternative to --template.
         template=DEFAULT_TEMPLATE, # The alias of the template to use.
-        artifactsdir=D['artifacts_dir'], # location of directory in which to store artifacts
-        logdir=D['log_dir'], # location of directory in which to store logs
         **kwargs # Additional kwargs passed to template's run() method.
         ):
     """
@@ -588,9 +585,10 @@ def gen_command(
     template_class = dexy.template.Template.aliases[template]
     template_class().run(d, **kwargs)
 
+    # We run dexy setup. This will respect any dexy.conf file in the template
+    # but passing command line options for 'setup' to 'gen' currently not supported.
     os.chdir(d)
-    wrapper_args = {'artifactsdir':artifactsdir, 'logdir':logdir}
-    wrapper = init_wrapper(rename_params(wrapper_args))
+    wrapper = init_wrapper({})
     wrapper.setup_dexy_dirs()
     print "Success! Your new dexy project has been created in directory '%s'" % d
 

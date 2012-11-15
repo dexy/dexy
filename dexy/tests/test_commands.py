@@ -1,5 +1,6 @@
 from StringIO import StringIO
 from dexy.tests.utils import tempdir
+from dexy.tests.utils import wrap
 from dexy.version import DEXY_VERSION
 from mock import patch
 from nose.exc import SkipTest
@@ -7,9 +8,31 @@ import dexy.commands
 import os
 import sys
 
+def test_init_wrapper():
+    with tempdir():
+        with open("dexy.conf", "w") as f:
+            f.write("artifactsdir: custom")
+
+        modargs = {}
+        wrapper = dexy.commands.init_wrapper(modargs)
+        assert wrapper.artifacts_dir == 'custom'
+
+@patch.object(sys, 'argv', ['dexy', 'setup'])
+def test_setup_with_dexy_conf_file():
+    with tempdir():
+        with open("dexy.conf", "w") as f:
+            f.write("artifactsdir: custom")
+
+        dexy.commands.run()
+        assert os.path.exists("custom")
+        assert os.path.isdir("custom")
+        assert not os.path.exists("artifacts")
+
 @patch.object(sys, 'argv', ['dexy', 'grep', '-expr', 'hello'])
 def test_grep():
-    dexy.commands.run()
+    with wrap() as wrapper:
+        wrapper.setup_dexy_dirs()
+        dexy.commands.run()
 
 @patch.object(sys, 'argv', ['dexy', 'grep'])
 @patch('sys.stdout', new_callable=StringIO)
