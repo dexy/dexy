@@ -100,6 +100,7 @@ class JinjaFilter(TemplateFilter):
                 raise dexy.exceptions.InternalDexyProblem("Unable to parse line number from %s" % traceback.format_exc())
 
         args = {
+                'error_type' : e.__class__.__name__,
                 'key' : self.artifact.key,
                 'lineno' : e.lineno,
                 'message' : e.message,
@@ -107,7 +108,7 @@ class JinjaFilter(TemplateFilter):
                 'workfile' : self.input().storage.data_file()
                 }
 
-        result.append("A problem was detected: %(message)s" % args)
+        result.append("A %(error_type)s problem was detected: %(message)s" % args)
 
 #        if hasattr(self.artifact, 'doc') and self.artifact.doc.step > 1:
 #            result.append("Your file has been processed through other filters before going through jinja.")
@@ -150,11 +151,12 @@ class JinjaFilter(TemplateFilter):
         env = self.setup_jinja_env(loader=loader)
 
         self.log.debug("initializing template")
-        template = env.get_template(self.input_filename())
 
         template_data = self.run_plugins()
         self.log.debug("jinja template data keys are %s" % ", ".join(sorted(template_data)))
         try:
+            self.log.debug("about to create jinja template")
+            template = env.get_template(self.input_filename())
             self.log.debug("about to process jinja template")
             template.stream(template_data).dump(self.output_filepath(), encoding="utf-8")
         except (TemplateSyntaxError, UndefinedError, TypeError) as e:

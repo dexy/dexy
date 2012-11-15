@@ -1,5 +1,7 @@
-import dexy.plugin
+import StringIO
 import dexy.artifact
+import dexy.plugin
+import logging
 import os
 import shutil
 
@@ -18,7 +20,10 @@ class Reporter(object):
     README_FILENAME = "README"
 
     @classmethod
-    def create_reports_dir(self, reports_dir):
+    def create_reports_dir(self, reports_dir=None):
+        if not reports_dir:
+            reports_dir = self.REPORTS_DIR
+
         self.remove_reports_dir(reports_dir)
 
         safety_filepath = os.path.join(reports_dir, self.SAFETY_FILENAME)
@@ -47,5 +52,20 @@ class Reporter(object):
         elif os.path.exists(reports_dir):
             shutil.rmtree(reports_dir)
 
-    def run(self, runner):
+    def run(self, wrapper):
         pass
+
+    def set_log(self):
+        if not hasattr(self, 'log'):
+            self.log = logging.getLogger("report:%s" % self.ALIASES[0])
+            self.logstream = StringIO.StringIO()
+            handler = logging.StreamHandler(self.logstream)
+            if hasattr(self, 'wrapper'):
+                handler.setFormatter(logging.Formatter(self.wrapper.log_format))
+            self.log.addHandler(handler)
+            self.log.setLevel(logging.DEBUG)
+
+            try:
+                self.log.addHandler(logging.getLogger('dexy').handlers[0])
+            except IndexError:
+                pass

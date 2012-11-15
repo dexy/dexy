@@ -2,6 +2,17 @@ from dexy.doc import Doc
 from dexy.plugins.templating_filters import TemplateFilter
 from dexy.plugins.templating_plugins import TemplatePlugin
 from dexy.tests.utils import wrap
+from nose.tools import raises
+import dexy.exceptions
+
+@raises(dexy.exceptions.UserFeedback)
+def test_jinja_syntax_error():
+    with wrap() as wrapper:
+        doc = Doc("template.txt|jinja",
+                contents = """{% < set foo = 'bar' -%}\nfoo is {{ foo }}\n""",
+                wrapper=wrapper)
+
+        wrapper.run_docs(doc)
 
 def test_jinja_filter_inputs():
     with wrap() as wrapper:

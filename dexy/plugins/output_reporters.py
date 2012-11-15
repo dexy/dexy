@@ -8,28 +8,33 @@ class OutputReporter(Reporter):
     ALIASES = ['output']
     REPORTS_DIR = 'output'
 
-    def run(self, wrapper):
-        keys_to_outfiles = []
+    def write_canonical_doc(self, doc):
+        fp = os.path.join(self.REPORTS_DIR, doc.output().name)
 
-        self.create_reports_dir(self.REPORTS_DIR)
+        parent_dir = os.path.dirname(fp)
+        if not os.path.exists(parent_dir):
+            os.makedirs(os.path.dirname(fp))
+
+        self.log.debug("writing %s to %s" % (doc.key, fp))
+        if os.path.exists(fp):
+            print "WARNING %s is overwriting file %s. Already written to by:" % (doc.key, fp)
+            for tup in self.keys_to_outfiles:
+                k, v = tup
+                if v == fp:
+                    print "  %s" % k
+        self.keys_to_outfiles.append((doc.key, fp))
+
+        doc.output().output_to_file(fp)
+
+    def run(self, wrapper):
+        self.wrapper=wrapper
+        self.set_log()
+        self.keys_to_outfiles = []
+
+        self.create_reports_dir()
         for doc in wrapper.registered_docs():
             if doc.canon:
-                fp = os.path.join(self.REPORTS_DIR, doc.output().name)
-
-                parent_dir = os.path.dirname(fp)
-                if not os.path.exists(parent_dir):
-                    os.makedirs(os.path.dirname(fp))
-
-                wrapper.log.debug("Writing %s to %s" % (doc.key, fp))
-                if os.path.exists(fp):
-                    print "WARNING %s is overwriting file %s. Already written to by:" % (doc.key, fp)
-                    for tup in keys_to_outfiles:
-                        k, v = tup
-                        if v == fp:
-                            print "  %s" % k
-                keys_to_outfiles.append((doc.key, fp))
-
-                doc.output().output_to_file(fp)
+                self.write_canonical_doc(doc)
 
 class LongOutputReporter(Reporter):
     """
@@ -39,7 +44,9 @@ class LongOutputReporter(Reporter):
     REPORTS_DIR = 'output-long'
 
     def run(self, wrapper):
-        self.create_reports_dir(self.REPORTS_DIR)
+        self.wrapper=wrapper
+        self.set_log()
+        self.create_reports_dir()
         for doc in wrapper.registered_docs():
             fp = os.path.join(self.REPORTS_DIR, doc.output().long_name())
 
@@ -47,4 +54,5 @@ class LongOutputReporter(Reporter):
             if not os.path.exists(parent_dir):
                 os.makedirs(os.path.dirname(fp))
 
+            self.log.debug("writing %s to %s" % (doc.key, fp))
             doc.output().output_to_file(fp)

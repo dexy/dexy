@@ -25,6 +25,7 @@ import dexy.plugins.subprocess_filters
 import dexy.plugins.templating_filters
 import dexy.plugins.wordpress_filters
 import dexy.plugins.run_reporter
+import dexy.plugins.website_reporters
 
 import pkg_resources
 # Automatically register plugins in any python package named like dexy_*

@@ -24,7 +24,7 @@ class Wrapper(object):
             'disable_tests' : False,
             'dont_use_cache' : False,
             'dry_run' : False,
-            'exclude' : '.git, .svn, tmp, cache, artifacts, logs, output, output-long',
+            'exclude' : '.git, .svn, tmp, cache',
             'exclude_also' : '',
             'globals' : '',
             'hashfunction' : 'md5',
@@ -275,17 +275,25 @@ class Wrapper(object):
     def reports_dirs(self):
         return [c.REPORTS_DIR for c in dexy.reporter.Reporter.plugins]
 
-    def report(self, *reporters):
+    def report(self):
         """
         Runs reporters. Either runs reporters which have been passed in or, if
         none, then runs all available reporters which have ALLREPORTS set to
         true.
         """
-        if not reporters:
+        if self.reports:
+            self.log.debug("generating user-specified reports '%s'" % self.reports)
+            reporters = []
+            for alias in self.reports.split():
+                reporter_class = dexy.reporter.Reporter.aliases[alias]
+                self.log.debug("initializing reporter %s for alias %s" % (reporter_class.__name__, alias))
+                reporters.append(reporter_class())
+        else:
+            self.log.debug("initializing all reporters where ALLREPORTS is True")
             reporters = [c() for c in dexy.reporter.Reporter.plugins if c.ALLREPORTS]
 
         for reporter in reporters:
-            self.log.debug("Running reporter %s" % reporter.ALIASES[0])
+            self.log.debug("running reporter %s" % reporter.ALIASES[0])
             reporter.run(self)
 
     def get_child_hashes_in_previous_batch(self, parent_hashstring):
@@ -379,10 +387,16 @@ class Wrapper(object):
         self.graph = "\n".join(graph)
 
     def exclude_dirs(self):
-        exclude = self.exclude
+        exclude_str = self.exclude
         if self.exclude_also:
-            exclude += ",%s" % self.exclude_also
-        return [d.strip() for d in exclude.split(",")]
+            exclude_str += ",%s" % self.exclude_also
+        exclude = [d.strip() for d in exclude_str.split(",")]
+
+        exclude.append(self.artifacts_dir)
+        exclude.append(self.log_dir)
+        exclude.extend(self.reports_dirs())
+
+        return exclude
 
     def walk(self, start, recurse=True):
         exclude = self.exclude_dirs()
