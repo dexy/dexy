@@ -3,6 +3,26 @@ from dexy.filter import DexyFilter
 import os
 import re
 
+class HtmlSectionsFilter(DexyFilter):
+    """
+    Split content according to HTML comments.
+    """
+    ALIASES = ['htmlsections']
+    OUTPUT_EXTENSIONS = ['.json']
+    OUTPUT_DATA_TYPE = 'sectioned'
+
+    def process(self):
+        output = OrderedDict()
+
+        sections = re.split("<!-- section \"(.+)\" -->\n", self.input().as_text())
+
+        for i in range(1, len(sections), 2):
+            section_name = sections[i]
+            section_content = sections[i+1]
+            output[section_name] = section_content
+
+        self.output().set_data(output)
+
 class SplitHtmlFilter(DexyFilter):
     """
     Create multiple HTML pages from a single template, with an automatic index page.

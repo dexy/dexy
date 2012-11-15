@@ -76,6 +76,7 @@ class Artifact(dexy.task.Task):
 
     def setup_output_data(self):
         data_class = dexy.data.Data.aliases[self.data_class_alias()]
+        self.log.debug("setting up output data of class %s" % data_class.__name__)
         self.output_data_type = data_class.ALIASES[0]
         self.output_data = data_class(self.key, self.ext, self.hashstring, self.args, self.wrapper)
 
