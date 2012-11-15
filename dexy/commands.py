@@ -546,19 +546,45 @@ def reporters_command(
         print FMT % (k, reporter_class.REPORTS_DIR, inspect.getdoc(reporter_class))
 
 import dexy.template
+DEFAULT_TEMPLATE = 'default'
 def gen_command(
-        d=None,  #
-        template='default'
+        d=None,  # The directory to place generated files in, must not exist.
+        t=False, # Shorter alternative to --template.
+        template=DEFAULT_TEMPLATE, # The alias of the template to use.
+        artifactsdir=D['artifacts_dir'], # location of directory in which to store artifacts
+        logdir=D['log_dir'], # location of directory in which to store logs
+        **kwargs # Additional kwargs passed to template's run() method.
         ):
     """
     Generate a new dexy project in the specified directory, using the template.
     """
-    template_class = dexy.template.Template.aliases[template]
-    template_class().run(d)
+    if t and (template == DEFAULT_TEMPLATE):
+        template = t
+    elif t and template != DEFAULT_TEMPLATE:
+        raise dexy.exceptions.UserFeedback("Only specify one of --t or --template, not both.")
 
-def templates_command():
+    template_class = dexy.template.Template.aliases[template]
+    template_class().run(d, **kwargs)
+
+    os.chdir(d)
+    wrapper_args = {'artifactsdir':artifactsdir, 'logdir':logdir}
+    wrapper = init_wrapper(rename_params(wrapper_args))
+    wrapper.setup_dexy_dirs()
+    print "Success! Your new dexy project has been created in directory '%s'" % d
+
+def templates_command(
+        simple=False # Only print template names, without docstring or headers.
+        ):
     """
     List templates that can be used to generate new projects.
     """
-    for k in sorted(dexy.template.Template.aliases):
-        print k
+    aliases = sorted(dexy.template.Template.aliases)
+
+    if simple:
+        print "\n".join(aliases)
+    else:
+        FMT = "%-20s %s"
+        print FMT % ("template alias", "info")
+        for alias in aliases:
+            klass = dexy.template.Template.aliases[alias]
+            print FMT % (alias, inspect.getdoc(klass))

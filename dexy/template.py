@@ -22,7 +22,7 @@ class Template(object):
 
         return os.path.join(template_install_dir, contents_dirname)
 
-    def run(self, directory):
+    def run(self, directory, **kwargs):
         if os.path.exists(directory):
             raise dexy.exceptions.UserFeedback("Directory '%s' already exists, aborting." % directory)
         source = self.template_source_dir()
