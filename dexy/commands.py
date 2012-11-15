@@ -547,13 +547,14 @@ def reporters_command(
 
 import dexy.template
 def gen_command(
-        template='default',
-        directory=None):
+        d=None,  #
+        template='default'
+        ):
     """
     Generate a new dexy project in the specified directory, using the template.
     """
     template_class = dexy.template.Template.aliases[template]
-    template_class().run(directory)
+    template_class().run(d)
 
 def templates_command():
     """
