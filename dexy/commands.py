@@ -75,9 +75,25 @@ def config_args(modargs):
         config_file = modargs['conf']
         if os.path.exists(config_file):
             with open(config_file, "rb") as f:
-                if config_file.endswith(".yaml"):
+                if config_file.endswith(".conf"):
+                    try:
+                        conf_args = parse_yaml(f.read())
+                    except dexy.exceptions.UserFeedback as yaml_exception:
+                        try:
+                            conf_args = parse_json(f.read())
+                        except dexy.exceptions.UserFeedback as json_exception:
+                            print "--------------------------------------------------"
+                            print "Tried to parse YAML:"
+                            print yaml_exception
+                            print "--------------------------------------------------"
+                            print "Tried to parse JSON:"
+                            print json_exception
+                            print "--------------------------------------------------"
+                            raise dexy.exceptions.UserFeedback("Unable to parse config file '%s' as YAML or as JSON." % config_file)
+
+                elif config_file.endswith(".yaml"):
                     conf_args = parse_yaml(f.read())
-                elif config_file.endswith(".json") or config_file.endswith(".conf"):
+                elif config_file.endswith(".json"):
                     conf_args = parse_json(f.read())
                 else:
                     raise dexy.exceptions.UserFeedback("Don't know how to load config from '%s'" % config_file)
@@ -312,13 +328,19 @@ def conf_command(
     # No point specifying config file name in config file.
     del config['conf']
 
+    YAML_HELP = """# YAML config file for dexy.
+# You can delete any lines you don't wish to customize.
+# Options are same as command line options, for more info run 'dexy help -on dexy'.\n"""
+
     with open(conf, "wb") as f:
-        if conf.endswith(".json") or conf.endswith(".conf"):
+        if conf.endswith(".yaml") or conf.endswith(".conf"):
+
+            f.write(YAML_HELP)
+            f.write(yaml.dump(config, default_flow_style=False))
+        elif conf.endswith(".json"):
             json.dump(config, f, sort_keys=True, indent=4)
-        elif conf.endswith(".yaml"):
-            f.write(yaml.dump(config))
         else:
-            raise dexy.exceptions.UserFeedback("Don't know how to write config file %s" % conf)
+            raise dexy.exceptions.UserFeedback("Don't know how to write config file '%s'" % conf)
 
     print "Config file has been written to '%s'" % conf
 
