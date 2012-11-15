@@ -20,10 +20,9 @@ nosetests
 dexy filters
 dexy reporters
 
-for template in `dexy templates` ; do
+for template in `dexy templates --simple` ; do
   dexy gen -d ${template}_gen --template $template
   cd ${template}_gen
-  dexy setup
   dexy
   cd ..
 done
