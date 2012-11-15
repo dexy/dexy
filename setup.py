@@ -46,10 +46,6 @@ setup(
             ],
         name='dexy',
         packages=find_packages(),
-        package_data = { "dexy" : [
-            "plugins/run_reporter/*.html",
-            "plugins/run_reporter/files/*"
-            ] },
         url='http://dexy.it',
         version=DEXY_VERSION
         )
