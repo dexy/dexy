@@ -587,4 +587,5 @@ def templates_command(
         print FMT % ("template alias", "info")
         for alias in aliases:
             klass = dexy.template.Template.aliases[alias]
-            print FMT % (alias, inspect.getdoc(klass))
+            docs = inspect.getdoc(klass) or ''
+            print FMT % (alias, docs)
