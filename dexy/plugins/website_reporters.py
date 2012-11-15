@@ -65,9 +65,9 @@ class WebsiteReporter(OutputReporter):
         env_data['navigation']['pages'] = "..."
 
         if doc.final_artifact.ext == '.html':
-            env_data['contents'] = doc.output().as_text()
+            env_data['content'] = doc.output().as_text()
         else:
-            env_data['contents'] = doc.output()
+            env_data['content'] = doc.output()
 
         fp = os.path.join(self.REPORTS_DIR, doc.output().name).replace(".json", ".html")
 
