@@ -1,13 +1,32 @@
-#!/bin/bash -e
+#!/bin/bash -ev
+
 TIMESTAMP=`date +%s`
 TEST_DIR="/tmp/test-dexy/$TIMESTAMP"
+
 echo "Running in $TEST_DIR"
 mkdir -p $TEST_DIR
 pushd $TEST_DIR
-git clone ~/dev/dexy $TEST_DIR/dexy
+
 virtualenv testenv
 source testenv/bin/activate
+
+git clone ~/dev/dexy $TEST_DIR/dexy
 cd dexy
 git remote add github git@github.com:ananelson/dexy.git
+
 pip install .
-nosetests && git push github develop
+nosetests
+
+dexy filters
+dexy reporters
+
+for template in `dexy templates` ; do
+  dexy gen -d ${template}_gen --template $template
+  cd ${template}_gen
+  dexy setup
+  dexy
+  cd ..
+done
+
+cd ../dexy
+git push github develop
