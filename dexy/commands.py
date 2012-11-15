@@ -545,3 +545,19 @@ def reporters_command(
         reporter_class = dexy.reporter.Reporter.aliases[k]
         print FMT % (k, reporter_class.REPORTS_DIR, inspect.getdoc(reporter_class))
 
+import dexy.template
+def gen_command(
+        template='default',
+        directory=None):
+    """
+    Generate a new dexy project in the specified directory, using the template.
+    """
+    template_class = dexy.template.Template.aliases[template]
+    template_class().run(directory)
+
+def templates_command():
+    """
+    List templates that can be used to generate new projects.
+    """
+    for k in sorted(dexy.template.Template.aliases):
+        print k

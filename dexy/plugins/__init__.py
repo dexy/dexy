@@ -17,15 +17,16 @@ import dexy.plugins.pydoc_filters
 import dexy.plugins.pygments_filters
 import dexy.plugins.pygments_plugins
 import dexy.plugins.restructured_text_filters
+import dexy.plugins.run_reporter
 import dexy.plugins.split_filters
 import dexy.plugins.standard_filters
 import dexy.plugins.stationery
 import dexy.plugins.stdout_filters
 import dexy.plugins.subprocess_filters
+import dexy.plugins.templates
 import dexy.plugins.templating_filters
-import dexy.plugins.wordpress_filters
-import dexy.plugins.run_reporter
 import dexy.plugins.website_reporters
+import dexy.plugins.wordpress_filters
 
 import pkg_resources
 # Automatically register plugins in any python package named like dexy_*
