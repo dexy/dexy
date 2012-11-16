@@ -5,6 +5,16 @@ import os
 import yaml
 import posixpath
 
+def getdoc(element, firstline=True):
+    docstring = inspect.getdoc(element)
+    if docstring and firstline:
+        docstring = docstring.splitlines()[0]
+
+    if not docstring:
+        docstring = ''
+
+    return docstring
+
 def os_to_posix(path):
     return posixpath.join(*os.path.split(path))
 

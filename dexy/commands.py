@@ -1,3 +1,4 @@
+from dexy.utils import getdoc
 from dexy.utils import parse_json
 from dexy.utils import parse_yaml
 from dexy.version import DEXY_VERSION
@@ -422,10 +423,7 @@ def filters_text(
 
             if not skip:
                 name_and_aliases = "%s (%s) " % (klass.__name__, ", ".join(klass.ALIASES))
-                docstring = inspect.getdoc(klass) or ""
-                if "\n" in docstring:
-                    docstring = docstring.splitlines()[0]
-                filter_help = name_and_aliases + docstring
+                filter_help = name_and_aliases + getdoc(klass)
                 if (versions or showmissing or (showall and not version)):
                     filter_help += " %s" % version_message
                 text.append(filter_help)
@@ -564,7 +562,8 @@ def reporters_command(
 
     for k in sorted(dexy.reporter.Reporter.aliases):
         reporter_class = dexy.reporter.Reporter.aliases[k]
-        print FMT % (k, reporter_class.REPORTS_DIR, inspect.getdoc(reporter_class))
+        reports_dir = reporter_class.REPORTS_DIR or ''
+        print FMT % (k, reports_dir, getdoc(reporter_class))
 
 import dexy.template
 DEFAULT_TEMPLATE = 'default'
@@ -607,5 +606,4 @@ def templates_command(
         print FMT % ("template alias", "info")
         for alias in aliases:
             klass = dexy.template.Template.aliases[alias]
-            docs = inspect.getdoc(klass) or ''
-            print FMT % (alias, docs)
+            print FMT % (alias, getdoc(klass))
