@@ -167,7 +167,7 @@ class Parser:
             pattern = key
 
             # Allow '.ext' instead of '*.ext', shorter + easier for YAML
-            if pattern.startswith("."):
+            if pattern.startswith(".") and not pattern.startswith("./"):
                 if not os.path.exists(pattern):
                     pattern = "*%s" % pattern
 

@@ -204,7 +204,8 @@ class PexpectReplFilter(SubprocessFilter):
 
             yield section_key, section_transcript
 
-        self.add_new_files()
+        if self.do_add_new_files():
+            self.add_new_files()
 
         try:
             proc.close()

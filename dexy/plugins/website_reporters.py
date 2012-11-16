@@ -31,11 +31,14 @@ class WebsiteReporter(OutputReporter):
         return directories
 
     def apply_and_render_template(self, doc):
-        template_file = "_template.html"
+        if doc.args.get('ws_template'):
+            template_file = doc.args.get('ws_template')
+        else:
+            template_file = "_template.html"
         template_path = None
 
         path_elements = doc.output().parent_dir().split(os.sep)
-        for i in range(len(path_elements)+1, 0, -1):
+        for i in range(len(path_elements), -1, -1):
             template_path = os.path.join(*(path_elements[0:i] + [template_file]))
             if os.path.exists(template_path):
                 self.log.debug("using template %s for %s" % (template_path, doc.key))
@@ -46,9 +49,13 @@ class WebsiteReporter(OutputReporter):
 
         env = Environment(undefined=jinja2.StrictUndefined)
         env.loader = FileSystemLoader([".", os.path.dirname(template_path)])
+        self.log.debug("loading template at %s" % template_path)
         template = env.get_template(template_path)
 
         env_data = {}
+        env_data['locals'] = locals
+        env_data['dict'] = dict
+        env_data['isinstance'] = isinstance
         env_data['wrapper'] = self.wrapper
         env_data['page_title'] = doc.title()
         env_data['source'] = doc.name

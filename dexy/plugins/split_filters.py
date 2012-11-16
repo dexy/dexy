@@ -10,6 +10,7 @@ class HtmlSectionsFilter(DexyFilter):
     ALIASES = ['htmlsections']
     OUTPUT_EXTENSIONS = ['.json']
     OUTPUT_DATA_TYPE = 'sectioned'
+    FRAGMENT = False
 
     def process(self):
         output = OrderedDict()

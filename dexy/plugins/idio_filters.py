@@ -12,11 +12,15 @@ class IdioFilter(PygmentsFilter):
     "section-name" comments.
     """
     ALIASES = ['idio', 'idiopidae']
+    ADD_NEW_FILES = False
     OUTPUT_EXTENSIONS = PygmentsFilter.MARKUP_OUTPUT_EXTENSIONS + PygmentsFilter.IMAGE_OUTPUT_EXTENSIONS + [".txt"]
 
     @classmethod
     def data_class_alias(klass, file_ext):
         return 'sectioned'
+
+    def do_add_new_files(self):
+        return self.ADD_NEW_FILES or self.args().get('add-new-files', False)
 
     def process(self):
         input_text = self.input().as_text()
@@ -29,6 +33,8 @@ class IdioFilter(PygmentsFilter):
 
         output_dict = OrderedDict()
         lineno = 1
+
+        add_new_docs = self.do_add_new_files()
 
         for i, s in enumerate(builder.sections):
             self.log.debug("In section no. %s name %s" % (i, s))
@@ -43,10 +49,12 @@ class IdioFilter(PygmentsFilter):
             formatter.linenostart = lineno
             formatted_lines = composer.format(lines, lexer, formatter)
 
-            doc = self.add_doc("%s--%s%s" % (self.output().baserootname(), s, self.artifact.ext), formatted_lines)
+            if add_new_docs:
+                doc = self.add_doc("%s--%s%s" % (self.output().baserootname(), s, self.artifact.ext), formatted_lines)
 
             if not self.artifact.ext in self.IMAGE_OUTPUT_EXTENSIONS:
-                doc.canon = False
+                if add_new_docs:
+                    doc.canon = False
                 output_dict[s] = formatted_lines
 
             lineno += len(lines)
