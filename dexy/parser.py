@@ -212,4 +212,8 @@ class Parser:
         if directory == ".":
             return key
         else:
+            starts_with_dot = key.startswith(".") and not key.startswith("./")
+            does_not_exist = not os.path.exists(os.path.join(directory, key))
+            if starts_with_dot and does_not_exist:
+                key = "*%s" % key
             return posixpath.join(directory, key)
