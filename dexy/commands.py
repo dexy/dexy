@@ -101,7 +101,8 @@ def config_args(modargs):
 
             kwargs.update(conf_args)
 
-    for k in cliargs.keys(): kwargs[k] = modargs[k]
+    if cliargs: # cliargs may be False
+        for k in cliargs.keys(): kwargs[k] = modargs[k]
 
     # TODO allow updating from env variables, e.g. DEXY_ARTIFACTS_DIR
 
