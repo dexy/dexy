@@ -46,7 +46,7 @@ class PygmentsFilter(DexyFilter):
     INPUT_EXTENSIONS = [".*"]
     IMAGE_OUTPUT_EXTENSIONS = ['.png', '.bmp', '.gif', '.jpg']
     MARKUP_OUTPUT_EXTENSIONS = [".html", ".tex", ".svg"] # make sure .html is first!
-    OUTPUT_EXTENSIONS = MARKUP_OUTPUT_EXTENSIONS + IMAGE_OUTPUT_EXTENSIONS
+    OUTPUT_EXTENSIONS = MARKUP_OUTPUT_EXTENSIONS + IMAGE_OUTPUT_EXTENSIONS + ['.css', '.sty']
     ALIASES = ['pyg', 'pygments']
     FRAGMENT = True
     LEXER_ERR_MSG = "Pygments doesn't know how to syntax highlight files like '%s' (for '%s'). Either it can't be done or you need to specify the lexer manually."
@@ -144,19 +144,18 @@ class PygmentsFilter(DexyFilter):
 
         input_dict = self.input().as_sectioned()
         ext = self.artifact.prior.ext
+        if ext in [".css", ".sty"] and self.artifact.ext == ext and len(self.input().as_text()) < 3:
 
-        if input_dict.has_key('1') and not input_dict['1'] and ext in [".css", ".sty"]:
             # Special case if we get a virtual empty file, generate style file
-            self.artifact.final = True
-            self.artifact.ext = ext
-            output_dict = OrderedDict()
             if ext == '.css':
-                output_dict['1'] = self.generate_css(self.arg_value('style', 'default'))
+                output = self.generate_css(self.arg_value('style', 'default'))
             elif ext == '.sty':
-                output_dict['1'] = self.generate_sty(self.arg_value('style', 'default'))
+                output = self.generate_sty(self.arg_value('style', 'default'))
             else:
                 raise dexy.commands.UserFeedback("pyg filter doesn't know how to generate a stylesheet for %s extension" % ext)
-            return output_dict
+
+            self.output().set_data(output)
+
         else:
             args = self.args().copy()
             lexer = self.create_lexer_instance(args)

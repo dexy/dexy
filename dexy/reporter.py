@@ -24,12 +24,13 @@ class Reporter(object):
         if not reports_dir:
             reports_dir = self.REPORTS_DIR
 
-        self.remove_reports_dir(reports_dir)
+        self.remove_reports_dir(reports_dir, keep_empty_dir=True)
 
         safety_filepath = os.path.join(reports_dir, self.SAFETY_FILENAME)
         readme_filepath = os.path.join(reports_dir, self.README_FILENAME)
 
-        os.mkdir(reports_dir)
+        if not os.path.exists(reports_dir):
+            os.mkdir(reports_dir)
 
         with open(safety_filepath, "w") as f:
             f.write("""
@@ -41,7 +42,7 @@ class Reporter(object):
             may be deleted without notice.\n\n""" % self.__class__.__name__)
 
     @classmethod
-    def remove_reports_dir(self, reports_dir=None):
+    def remove_reports_dir(self, reports_dir=None, keep_empty_dir=False):
         if not reports_dir:
             reports_dir = self.REPORTS_DIR
 
@@ -50,7 +51,17 @@ class Reporter(object):
         if os.path.exists(reports_dir) and not os.path.exists(safety_filepath):
             raise Exception("Please remove directory %s, Dexy wants to put a report here but doesn't want to overwrite anything by accident." % os.path.abspath(reports_dir))
         elif os.path.exists(reports_dir):
-            shutil.rmtree(reports_dir)
+            if keep_empty_dir:
+                # Does not remove the base directory, useful if you are running
+                # a process (like 'dexy serve') from inside that directory
+                for f in os.listdir(reports_dir):
+                    path = os.path.join(reports_dir, f)
+                    if os.path.isdir(path):
+                        shutil.rmtree(path)
+                    else:
+                        os.remove(path)
+            else:
+                shutil.rmtree(reports_dir)
 
     def run(self, wrapper):
         pass

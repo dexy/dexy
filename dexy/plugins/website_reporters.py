@@ -85,6 +85,7 @@ class WebsiteReporter(OutputReporter):
         self.create_reports_dir()
 
         for doc in wrapper.registered_docs():
+            self.log.debug("Processing doc %s" % doc.key)
             if doc.canon:
                 if doc.final_artifact.ext == ".html":
                     has_html_header = any(html_fragment in doc.output().as_text() for html_fragment in ('<html', '<body', '<head'))

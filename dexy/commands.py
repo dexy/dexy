@@ -590,6 +590,10 @@ def gen_command(
     wrapper = init_wrapper({})
     wrapper.setup_dexy_dirs()
     print "Success! Your new dexy project has been created in directory '%s'" % d
+    if os.path.exists("README"):
+        with open("README", "r") as f:
+            print f.read()
+        print "\nThis information is in the 'README' file for future reference."
 
 def templates_command(
         simple=False # Only print template names, without docstring or headers.
@@ -607,3 +611,38 @@ def templates_command(
         for alias in aliases:
             klass = dexy.template.Template.aliases[alias]
             print FMT % (alias, getdoc(klass))
+
+import SimpleHTTPServer
+import SocketServer
+from dexy.plugins.website_reporters import WebsiteReporter
+from dexy.plugins.output_reporters import OutputReporter
+NO_OUTPUT_MSG = """Please run dexy first, or specify a directory to serve. \
+For help run 'dexy help -on serve'"""
+
+def serve_command(
+        port=8085,
+        directory=False
+        ):
+    """
+    Runs a simple web server on dexy-generated files. Will look first to see if
+    the Website Reporter has run, if so this content is served. If not the
+    standard output/ directory contents are served. You can also specify
+    another directory to be served. The port defaults to 8085, this can also be
+    customized.
+
+    """
+    if not directory:
+        if os.path.exists(WebsiteReporter.REPORTS_DIR):
+            directory = WebsiteReporter.REPORTS_DIR
+        elif os.path.exists(OutputReporter.REPORTS_DIR):
+            directory = OutputReporter.REPORTS_DIR
+        else:
+            print NO_OUTPUT_MSG
+            sys.exit(1)
+
+    os.chdir(directory)
+
+    Handler = SimpleHTTPServer.SimpleHTTPRequestHandler
+    httpd = SocketServer.TCPServer(("", port), Handler)
+    print "serving contents of %s on http://localhost:%s" % (directory, port)
+    httpd.serve_forever()
