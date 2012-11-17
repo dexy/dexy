@@ -79,15 +79,16 @@ class PexpectReplFilter(SubprocessFilter):
         """
         # If we want to automatically record values of local variables in the
         # script we are running, we add a section at the end of script
-        do_record_vars = self.artifact.args.has_key('record-vars') and self.artifact.args['record-vars']
+        do_record_vars = self.args().get('record_vars', False) or self.args().get('record-vars', False)
         if do_record_vars:
             if not self.SAVE_VARS_TO_JSON_CMD:
                 raise UserFeedback("You specified record-vars but this option isn't available since SAVE_VARS_TO_JSON_CMD is not set for this filter.")
-            artifact = self.artifact.add_additional_artifact(self.artifact.key + "-vars.json", 'json')
-            self.log.debug("Added additional artifact %s (hashstring %s) to store variables" % (artifact.key, artifact.hashstring))
-            section_text = self.SAVE_VARS_TO_JSON_CMD % artifact.filename()
+
+            section_text = self.SAVE_VARS_TO_JSON_CMD % self.input().basename()
+            self.log.debug("Adding SAVE_VARS_TO_JSON_CMD code:\n%s" % section_text)
             input_dict['dexy--save-vars'] = section_text
-            # TODO this may cause unexpected results if original script only had 1 section
+            if not self.args().get('add-new-files'):
+                self.args()['add-new-files'] = (".json")
 
         search_terms = self.prompt_search_terms()
 
@@ -251,13 +252,11 @@ class PythonPexpectReplFilter(PexpectReplFilter):
 
     SAVE_VARS_TO_JSON_CMD = """
 import json
-dexy__vars_file = open("%s", "w")
-dexy__x = {}
-for dexy__k, dexy__v in locals().items():
-    dexy__x[dexy__k] = str(dexy__v)
-
-json.dump(dexy__x, dexy__vars_file)
-dexy__vars_file.close()
+with open("%s-vars.json", "w") as dexy__vars_file:
+    dexy__x = {}
+    for dexy__k, dexy__v in locals().items():
+        dexy__x[dexy__k] = str(dexy__v)
+    json.dump(dexy__x, dexy__vars_file)
 """
 
 try:
