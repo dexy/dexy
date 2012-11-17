@@ -567,7 +567,7 @@ def reporters_command(
         print FMT % (k, reports_dir, getdoc(reporter_class))
 
 import dexy.template
-DEFAULT_TEMPLATE = 'default'
+DEFAULT_TEMPLATE = 'dexy:default'
 def gen_command(
         d=None,  # The directory to place generated files in, must not exist.
         t=False, # Shorter alternative to --template.
@@ -581,6 +581,10 @@ def gen_command(
         template = t
     elif t and template != DEFAULT_TEMPLATE:
         raise dexy.exceptions.UserFeedback("Only specify one of --t or --template, not both.")
+
+    if not template in dexy.template.Template.aliases:
+        print "Can't find a template named '%s'. Run 'dexy templates' for a list of templates." % template
+        sys.exit(1)
 
     template_class = dexy.template.Template.aliases[template]
     template_class().run(d, **kwargs)
@@ -607,11 +611,14 @@ def templates_command(
     if simple:
         print "\n".join(aliases)
     else:
-        FMT = "%-20s %s"
-        print FMT % ("template alias", "info")
+        FMT = "%-30s %s"
+        print FMT % ("Alias", "Info")
         for alias in aliases:
             klass = dexy.template.Template.aliases[alias]
             print FMT % (alias, getdoc(klass))
+
+        if len(aliases) == 1:
+            print "Run '[sudo] pip install dexy-templates' to install some more templates."
 
 import SimpleHTTPServer
 import SocketServer

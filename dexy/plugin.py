@@ -20,8 +20,20 @@ class PluginMeta(type):
             # track of it later.
             cls.plugins.append(cls)
             cls.source[cls.__name__] = inspect.getsource(cls)
+
+            basenames = [k.__name__ for k in cls.__bases__]
+
             if hasattr(cls, 'ALIASES'):
                 for alias in cls.ALIASES:
+
+                    # Namespace templates by their plugin name (after dexy_)
+                    if 'Template' in basenames:
+                        if cls.__module__ == 'dexy.plugins.templates':
+                            prefix = 'dexy'
+                        else:
+                            prefix = cls.__module__.replace("dexy_", "")
+                        alias = "%s:%s" % (prefix, alias)
+
                     if alias in cls.aliases:
                         raise Exception("duplicate alias %s found in %s, already present in %s" % (alias, cls.__name__, cls.aliases[alias].__name__))
                     cls.aliases[alias] = cls

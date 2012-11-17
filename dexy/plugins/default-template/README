@@ -1,0 +1,4 @@
+This is the very boring default template.
+
+To get more templates, install the dexy-templates plugin:
+[sudo] pip install dexy-templates

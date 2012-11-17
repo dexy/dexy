@@ -17,8 +17,8 @@ class Template(object):
         if hasattr(self, 'CONTENTS'):
             contents_dirname = self.CONTENTS
         else:
-            # default is to have contents in directory with same name as alias followed by "_template"
-            contents_dirname = "%s_template" % self.ALIASES[0]
+            # default is to have contents in directory with same name as alias followed by "-template"
+            contents_dirname = "%s-template" % self.ALIASES[0]
 
         return os.path.join(template_install_dir, contents_dirname)
 
