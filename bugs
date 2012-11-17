@@ -1,0 +1,28 @@
+[feature] implement is_active method for templates and list dependencies that need to be installed | id:1e5d9d273c8db7d4c38d85b76442f0d2ae7dd637
+[feature] add javascript search widget helper to dexy for searching generated content, e.g. http://www.tipue.com/search/demo/ | id:205430dabd1a07653925609b005c8e3e1a0ee4d0
+[feature] add template arg to rst2html and other rst handlers | id:241f612602d54ae078579720d74e1f931561528a
+[feature] how to generate class inheritance diagram for pydoc filter? | id:292ef032418f240c1c28be0a0f8bfe4c95fc76d7
+[issue] fix issue if bundle in docs.yaml is given same name as a top level directory in the project | id:2f11a44a222435efdf9612035ae309ef7bade12a
+[idea] how to cite code in scientific papers | id:36d5729d63e3da51009543f198b31ad26e917657
+[feature] dump dexy env into working dir so easy to troubleshoot | id:3c03b3aadc4b3e799be0b4da8022dc1b56f7bc68
+[feature] make it possible to pass unordered mappings to bundle docs so siblings don't depend on each other | id:425b356f06accb394eb0a84fe6d9ed41ec5cbe17
+[feature] add sqlite3 filter which takes .sqlite file as main input and scripts as extra inputs | id:48e75022ebcf40eb9ca7716ad3b45bf736705451
+[feature] generate doc config files based on python document objects | id:4aa1593ac56ff4d31666aeba81b06f07dd6f96d6
+[issue] better feedback for named docs not being pattern docs, user should add an asterisk or specify exact path to file | id:58336d8495093b1d9574f02a2314845916bdb713
+[feature] add a dexy plugins command to list pluginnable classes | id:61186f7dd456c9a4f69d9fce88d002640f0ed1ad
+[feature] make a PLY-based parsing filter for any filter which needs to parse input text, e.g. parse html to detect images | id:69a2cb1700175885a5d11a1fd1edbaebcffe0c1c
+[feature] detect if files get passed through jinja filter and, if so, pygments/idio should default to using ext+jinja lexer | id:6b1c952501e257aafd9957b260da93473c5162eb
+[feature] have reporters which run only if errors have occurred to help with debugging | id:7245f038315fc112abf73eac1d82404cca5c5d27
+[feature] figure out how to allow extra config for plugins. maybe don't white list things in dexy.conf files. | id:74a6bc572cf4a7ca00c3af63fdc9824a8be52e04
+[feature] missing plugins should detect which package they are avaliable in and suggest installing that | id:7e19102f14c4521e4a3d0bef98ba4e630e92594b
+[todo] add more tests for unicode support | id:9d71bbceb819a41ee352f07381de6b235e3c49bb
+[issue] make sure all exceptions are handled in user-friendly way | id:9f6b58cc32e7d3651dfa86c1cb25abb8db54d048
+[feature] add winpexpect support https://bitbucket.org/geertj/winpexpect/wiki/Home | id:b7590f29225431071a22bc72520ebfad0ab6afc6
+[feature] standard way to give feedback on what packages need to be installed to use a filter | id:bce8eeb2b2d39665a51da781b5e4fa0de83a0ba9
+[feature] have auto-tab-completion for dexy gen (and other dexy commands) | id:be551899ac9a205c6a9acd19a4b979c5a4f42bbd
+[feature] make decorator to skip tests that require internet if no internet available | id:db01a7088bc471ec8e09480c2941647713d8afd7
+[feature] create a grep interface, use this for dexy viewer app | id:dc66fa59797564452b1ac977988b11c44df7a069
+[feature] make a data url filter which embeds any referenced images as data urls http://stackoverflow.com/questions/6375942/how-do-you-base-64-encode-a-png-image-for-use-in-a-data-uri-in-a-css-file http://bitworking.org/news/Sparklines_in_data_URIs_in_Python | id:e3177b0dfd3d0de73f98cf3c40684d2242db98ba
+[feature] add a workspaces feature to help for GUI apps that need includes in relative locations | id:e39a9deab5765d282a88b976011a574bd186daee
+[issue] key value filters should sync file extension with storage type | id:ea56460ba928c6b9353cc74646592baa968ceffc
+[docs] document how to have a python file reference other python files | id:fd64954a721661eef3b159035210fa5f922cce97
