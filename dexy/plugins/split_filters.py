@@ -84,4 +84,4 @@ class SplitHtmlFilter(DexyFilter):
             # No endsplit found, do nothing.
             output = input_text
 
-        self.artifact.output_data.set_data("\n".join(output))
+        self.output().set_data("\n".join(output))
