@@ -1,10 +1,11 @@
 from dexy.filter import DexyFilter
 from dexy.plugins.templating_plugins import TemplatePlugin
+from jinja2 import FileSystemLoader
 from jinja2.exceptions import TemplateSyntaxError
 from jinja2.exceptions import UndefinedError
-from jinja2 import FileSystemLoader
 import dexy.exceptions
 import jinja2
+import os
 import re
 import traceback
 
@@ -154,6 +155,7 @@ class JinjaFilter(TemplateFilter):
 
         template_data = self.run_plugins()
         self.log.debug("jinja template data keys are %s" % ", ".join(sorted(template_data)))
+
         try:
             self.log.debug("about to create jinja template")
             template = env.get_template(self.input_filename())
@@ -161,3 +163,11 @@ class JinjaFilter(TemplateFilter):
             template.stream(template_data).dump(self.output_filepath(), encoding="utf-8")
         except (TemplateSyntaxError, UndefinedError, TypeError) as e:
             self.handle_jinja_exception(e, self.input().as_text(), template_data)
+            if os.path.exists(self.output_filepath()):
+                self.log.debug("removing %s since jinja had an error" % self.output_filepath())
+                os.remove(self.output_filepath())
+        except Exception:
+            if os.path.exists(self.output_filepath()):
+                self.log.debug("removing %s since jinja had an error" % self.output_filepath())
+                os.remove(self.output_filepath())
+            raise

@@ -611,7 +611,7 @@ def templates_command(
     if simple:
         print "\n".join(aliases)
     else:
-        FMT = "%-30s %s"
+        FMT = "%-40s %s"
         print FMT % ("Alias", "Info")
         for alias in aliases:
             klass = dexy.template.Template.aliases[alias]
@@ -619,6 +619,8 @@ def templates_command(
 
         if len(aliases) == 1:
             print "Run '[sudo] pip install dexy-templates' to install some more templates."
+
+        print "Run 'dexy help -on gen' for help on generating projects from templates."
 
 import SimpleHTTPServer
 import SocketServer

@@ -145,7 +145,7 @@ class PygmentsFilter(DexyFilter):
         input_dict = self.input().as_sectioned()
         ext = self.artifact.prior.ext
         if ext in [".css", ".sty"] and self.artifact.ext == ext and len(self.input().as_text()) < 3:
-
+            self.log.debug("creating a style file in %s" % self.artifact.key)
             # Special case if we get a virtual empty file, generate style file
             if ext == '.css':
                 output = self.generate_css(self.arg_value('style', 'default'))
