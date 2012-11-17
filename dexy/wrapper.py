@@ -314,9 +314,7 @@ class Wrapper(object):
             nodexy_file = os.path.join(dirpath, '.nodexy')
             if os.path.exists(nodexy_file):
                 self.log.debug("  skipping directory '%s' and its children because .nodexy file found" % dirpath)
-                # ...remove all child dirs from processing...
-                for i in xrange(len(dirnames)):
-                    dirnames.pop()
+                dirnames[:] = []
             else:
                 # no excludes or .nodexy file, this dir is ok to process
                 for alias in dexy.parser.Parser.aliases.keys():
@@ -331,12 +329,12 @@ class Wrapper(object):
                         self.doc_config[dirpath] = config_text
                         parser.build_ast(dirpath, config_text)
 
-            self.log.debug("Removing any child directories of '%s' that match excludes..." % dirpath)
-            for x in exclude:
-                if x in dirnames:
-                    skipping_dir = os.path.join(dirpath, x)
-                    self.log.debug("  skipping directory '%s' because it matches exclude '%s'" % (skipping_dir, x))
-                    dirnames.remove(x)
+                    self.log.debug("Removing any child directories of '%s' that match excludes..." % dirpath)
+                    for x in exclude:
+                        if x in dirnames:
+                            skipping_dir = os.path.join(dirpath, x)
+                            self.log.debug("  skipping directory '%s' because it matches exclude '%s'" % (skipping_dir, x))
+                            dirnames.remove(x)
 
         self.log.debug("AST completed:")
         self.ast.debug(self.log)
@@ -410,6 +408,8 @@ class Wrapper(object):
                 dirnames[:] = []
 
             nodexy_file = os.path.join(dirpath, '.nodexy')
-            if not os.path.exists(nodexy_file):
+            if os.path.exists(nodexy_file):
+                dirnames[:] = []
+            else:
                 for filename in filenames:
                     yield(dirpath, filename)
