@@ -32,6 +32,9 @@ class Data:
     def storage_class_alias(klass, file_ext):
         return klass.DEFAULT_STORAGE_TYPE
 
+    def __repr__(self):
+        return "Data('%s')" % (self.key)
+
     def __init__(self, key, ext, hashstring, args, wrapper, storage_type=None):
         self.key = key
         self.ext = ext
@@ -203,7 +206,7 @@ class SectionedData(GenericData):
         elif hasattr(self.as_text(), key):
             return getattr(self.as_text(), key)
         else:
-            raise dexy.exceptions.UserFeedback("No method %s defined for %s" % (key, self))
+            raise dexy.exceptions.UserFeedback("No method %s defined for %r" % (key, self))
 
 class KeyValueData(GenericData):
     ALIASES  = ['keyvalue']
