@@ -37,7 +37,7 @@ class InternalDexyProblem(Exception):
         self.message = inspect.cleandoc("""
         Oops! You may have found a bug in Dexy.
         The developer would really appreciate if you copy and paste this entire message
-        and the Traceback above it into a bug report at http://dexy.tenderapp.com.
+        and the Traceback above it into an email and send to info@dexy.it
         Your version of Dexy is %s
         Your platform is %s""" % (DEXY_VERSION, platform.system()))
         self.message += "\n"

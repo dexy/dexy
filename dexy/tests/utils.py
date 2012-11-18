@@ -82,10 +82,7 @@ class runfilter(tempdir):
 
         return wrapper.root_nodes[0]
 
-def assert_output(filter_alias, doc_contents, expected_output, ext=".txt",args=None):
-    if not args:
-        args = {}
-
+def assert_output(filter_alias, doc_contents, expected_output, ext=".txt"):
     if not ext.startswith("."):
         raise Exception("ext arg to assert_in_output must start with dot")
 

@@ -46,6 +46,9 @@ class Reporter(object):
         if not reports_dir:
             reports_dir = self.REPORTS_DIR
 
+        if not reports_dir:
+            return False
+
         safety_filepath = os.path.join(reports_dir, self.SAFETY_FILENAME)
 
         if os.path.exists(reports_dir) and not os.path.exists(safety_filepath):

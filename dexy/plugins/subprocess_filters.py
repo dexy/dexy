@@ -34,6 +34,8 @@ class PandocFilter(SubprocessFilter):
     VERSION_COMMAND = "pandoc --version"
     ALIASES = ['pandoc']
     OUTPUT_EXTENSIONS = ['.html', '.txt', '.tex', '.pdf', '.rtf', '.json', '.docx', '.odt', '.epub']
+    FRAGMENT = False
+    ADD_NEW_FILES = False
 
     # TODO Support all these + test them.
     #Output formats: native, json, html, html5, html+lhs, html5+lhs, s5, slidy,

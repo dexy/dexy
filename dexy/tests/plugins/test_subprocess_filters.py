@@ -7,6 +7,38 @@ from dexy.doc import Doc
 import os
 import shutil
 
+def test_pandoc_filter_odt():
+    with wrap() as wrapper:
+        doc = Doc("hello.md|pandoc",
+                contents = "hello",
+                pandoc = { "ext" : ".odt"},
+                wrapper=wrapper)
+        wrapper.run_docs(doc)
+        wrapper.report()
+        assert os.path.exists("output/hello.odt")
+
+def test_pandoc_filter_pdf():
+    with wrap() as wrapper:
+        doc = Doc("hello.md|pandoc",
+                contents = "hello",
+                pandoc = { "ext" : ".pdf"},
+                wrapper=wrapper)
+        wrapper.run_docs(doc)
+        wrapper.report()
+        assert os.path.exists("output/hello.pdf")
+
+def test_pandoc_filter_txt():
+    with wrap() as wrapper:
+        doc = Doc("hello.md|pandoc",
+                contents = "hello",
+                pandoc = { "ext" : ".txt"},
+                wrapper=wrapper)
+        wrapper.run_docs(doc)
+        wrapper.report()
+        assert os.path.exists("output/hello.txt")
+        print str(doc.output())
+        assert str(doc.output()) == 'hello\n'
+
 R_SECTIONS = """\
 ### @export "assign-vars"
 x <- 6
