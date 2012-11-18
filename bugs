@@ -29,6 +29,7 @@ test every filter for, if error occurs, file is not left in cache | id:64e43af4a
 [feature] figure out how to allow extra config for plugins. maybe don't white list things in dexy.conf files. | id:74a6bc572cf4a7ca00c3af63fdc9824a8be52e04
 [feature] filter which extracts YAML args from top of file + adds to doc metadata | id:7a570c66931609ac33c1a52a4e34c95a8e08f687
 [feature] missing plugins should detect which package they are avaliable in and suggest installing that | id:7e19102f14c4521e4a3d0bef98ba4e630e92594b
+[feature] think about wrapping navigation.directories [Doc, {}] structure in a class, or simplifying it, do we actually need Doc instance? | id:8dd035c546aa33b430378253c12827fd71e142ed
 [docs] make a package which has examples of all the types of plugins | id:92619a4d256480ae116121e1a8e37681abc6883a
 [filter] publish dexy blogging filters | id:96c2017386d980b79c5956a0016c957093c81766
 [feature] rsync reporter | id:99fb1cc6cc57200e26b11851cdb324ebfa1eb131
