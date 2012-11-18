@@ -1,4 +1,5 @@
 from dexy.plugins.output_reporters import OutputReporter
+from dexy.plugins.templating_plugins import PythonBuiltins
 from jinja2 import Environment
 from jinja2 import FileSystemLoader
 import dexy.exceptions
@@ -24,10 +25,41 @@ class WebsiteReporter(OutputReporter):
         return fn.endswith("index.html") or fn.endswith("index.json")
 
     def nav_directories(self):
-        directories = {}
+        """
+        Returns a dict whose keys are top-level directores containing an
+        'index.html' page and whose values are a list with the 'doc' object
+        for the 'index.html' page and a dict of subdirectories in same format.
+
+        Will warn if a parent dir doesn't have index page, parent dir will be
+        included in dict.
+
+        """
+        directories = [None, {}]
+
+        def assign_nest(keys, value):
+            temp = directories
+            for k in keys:
+                if not temp[1]:
+                    temp[1] = {}
+                if not temp[1].has_key(k):
+                    temp[1][k] = [None, {}]
+                temp = temp[1][k]
+            temp[0] = doc
+
         for doc in self.wrapper.registered_docs():
+            doc_dir = doc.output().parent_dir()
             if self.is_index_page(doc):
-                directories[doc.output().parent_dir()] = doc.title()
+                path_elements = os.path.split(doc_dir)
+
+                while path_elements and path_elements[0] in ('', '.'):
+                    path_elements = path_elements[1:]
+
+                if not path_elements:
+                    directories[0] = doc
+                    continue
+
+                assign_nest(path_elements, doc)
+
         return directories
 
     def apply_and_render_template(self, doc):
@@ -52,29 +84,32 @@ class WebsiteReporter(OutputReporter):
         self.log.debug("loading template at %s" % template_path)
         template = env.get_template(template_path)
 
-        env_data = {}
-        env_data['locals'] = locals
-        env_data['dict'] = dict
-        env_data['isinstance'] = isinstance
-        env_data['wrapper'] = self.wrapper
-        env_data['page_title'] = doc.title()
-        env_data['source'] = doc.name
-        env_data['template_source'] = template_path
-
-        env_data['navigation'] = {}
-
         if self.is_index_page(doc):
-            env_data['navigation']['current_index'] = doc.output().parent_dir()
+            nav_current_index = doc.output().parent_dir()
         else:
-            env_data['navigation']['current_index'] = None
-
-        env_data['navigation']['directories'] = self.nav_directories()
-        env_data['navigation']['pages'] = "..."
+            nav_current_index = None
 
         if doc.final_artifact.ext == '.html':
-            env_data['content'] = doc.output().as_text()
+            content = doc.output().as_text()
         else:
-            env_data['content'] = doc.output()
+            content = doc.output()
+
+        navigation = {
+                'current_index' : nav_current_index,
+                'directories' : self.nav_directories()
+                }
+
+        env_data = {
+                'content' : content,
+                'navigation' : navigation,
+                'page_title' : doc.title(),
+                'source' : doc.name,
+                'template_source' : template_path,
+                'wrapper' : self.wrapper
+                }
+
+        for builtin in PythonBuiltins.PYTHON_BUILTINS:
+            env_data[builtin.__name__] = builtin
 
         fp = os.path.join(self.REPORTS_DIR, doc.output().name).replace(".json", ".html")
 

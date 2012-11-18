@@ -1,4 +1,6 @@
 [feature] allow having 'relative canonical name' which preserves the directory but changes document base name | id:019043fb42d86fd02a7ddfe9f5db187ccd594b5c
+[filter] update xxml filter | id:0869b2e7441930e6678100c050b69b6530c5336d
+[feature] have method for getting JSON dict into env for another filter | id:1012845dcb49a8e36f5f1361338835482eacfba4
 [feature] implement is_active method for templates and list dependencies that need to be installed | id:1e5d9d273c8db7d4c38d85b76442f0d2ae7dd637
 [feature] add javascript search widget helper to dexy for searching generated content, e.g. http://www.tipue.com/search/demo/ | id:205430dabd1a07653925609b005c8e3e1a0ee4d0
 [feature] warning or other indication when 'canonical name' is in different directory as original document name | id:20b1be4d8d8b80debc8a66e81c28af2cfe37d0a2
@@ -8,27 +10,43 @@
 [idea] how to cite code in scientific papers | id:36d5729d63e3da51009543f198b31ad26e917657
 [feature] dump dexy env into working dir so easy to troubleshoot | id:3c03b3aadc4b3e799be0b4da8022dc1b56f7bc68
 [feature] make it possible to pass unordered mappings to bundle docs so siblings don't depend on each other | id:425b356f06accb394eb0a84fe6d9ed41ec5cbe17
+[feature] s3 uploader reporter | id:439932c2c272d6b590792d40179c4f75b140e7da
+[todo] update custom search engine | id:460ebbbe3e5ca7011eff6a19365cdcef2430e3bf
 [feature] add sqlite3 filter which takes .sqlite file as main input and scripts as extra inputs | id:48e75022ebcf40eb9ca7716ad3b45bf736705451
 [issue] test jinja filters, e.g. report that indent(4) does not work on *.py|py output | id:4a7939681b6eaec5edf4abc063583a7de654678d
 [feature] generate doc config files based on python document objects | id:4aa1593ac56ff4d31666aeba81b06f07dd6f96d6
+[docs] example of using idiom filter which generates multiple output formats | id:4f8dce912800bc9e441048c71c41cfd8db4c309b
+[feature] give feedback if no doc config files found | id:571ce803b67e3c8ab96d0920583a2115808c0b0f
 [issue] better feedback for named docs not being pattern docs, user should add an asterisk or specify exact path to file | id:58336d8495093b1d9574f02a2314845916bdb713
 [feature] add a dexy plugins command to list pluginnable classes | id:61186f7dd456c9a4f69d9fce88d002640f0ed1ad
 [issue] Make sure keys are unique, must have key + doc's key, issues arise with e.g. *.py and *.py|py in same project. | id:642cf20f163f834395ad847b9107477e76b9f251
 [issue] get UndefinedError: unicode object has no attribute 'blah' when idio is not correctly detected | id:646da510731a292ab94b7ba7f98a6b5f7d3d267d
 [feature] make a PLY-based parsing filter for any filter which needs to parse input text, e.g. parse html to detect images | id:69a2cb1700175885a5d11a1fd1edbaebcffe0c1c
 [feature] detect if files get passed through jinja filter and, if so, pygments/idio should default to using ext+jinja lexer | id:6b1c952501e257aafd9957b260da93473c5162eb
+[feature] make it easier to run filter methods outside of dexy, e.g. to run pydoc to generate a modules.sqlite file | id:703f37dc40c36c71878aae010406e44b6aa7c6da
 [feature] have reporters which run only if errors have occurred to help with debugging | id:7245f038315fc112abf73eac1d82404cca5c5d27
 [feature] figure out how to allow extra config for plugins. maybe don't white list things in dexy.conf files. | id:74a6bc572cf4a7ca00c3af63fdc9824a8be52e04
+[feature] filter which extracts YAML args from top of file + adds to doc metadata | id:7a570c66931609ac33c1a52a4e34c95a8e08f687
 [feature] missing plugins should detect which package they are avaliable in and suggest installing that | id:7e19102f14c4521e4a3d0bef98ba4e630e92594b
+[docs] make a package which has examples of all the types of plugins | id:92619a4d256480ae116121e1a8e37681abc6883a
+[filter] publish dexy blogging filters | id:96c2017386d980b79c5956a0016c957093c81766
+[feature] rsync reporter | id:99fb1cc6cc57200e26b11851cdb324ebfa1eb131
 [todo] add more tests for unicode support | id:9d71bbceb819a41ee352f07381de6b235e3c49bb
 [issue] make sure all exceptions are handled in user-friendly way | id:9f6b58cc32e7d3651dfa86c1cb25abb8db54d048
+[docs] write example/template for cucumber + rspec | id:a05179706a2217ed59e9eb89db9d71b7bd4b9a80
 [feature] add winpexpect support https://bitbucket.org/geertj/winpexpect/wiki/Home | id:b7590f29225431071a22bc72520ebfad0ab6afc6
 [feature] standard way to give feedback on what packages need to be installed to use a filter | id:bce8eeb2b2d39665a51da781b5e4fa0de83a0ba9
 [feature] have auto-tab-completion for dexy gen (and other dexy commands) | id:be551899ac9a205c6a9acd19a4b979c5a4f42bbd
+[docs] example of combining rst-generated latex files into a book | id:c43af78776eb972bcaf6e008ea9144fc0f3067ac
+[feature] think about standard way of documenting plugins | id:c8b5e4e98f05cf928a19c00c319cbf7bcad7622c
 [feature] make decorator to skip tests that require internet if no internet available | id:db01a7088bc471ec8e09480c2941647713d8afd7
 [feature] create a grep interface, use this for dexy viewer app | id:dc66fa59797564452b1ac977988b11c44df7a069
+[docs] figure out how to generate README files in situ | id:dcffbe8090583d908bc81ac26ab205eabe47cb7c
 [feature] make a data url filter which embeds any referenced images as data urls http://stackoverflow.com/questions/6375942/how-do-you-base-64-encode-a-png-image-for-use-in-a-data-uri-in-a-css-file http://bitworking.org/news/Sparklines_in_data_URIs_in_Python | id:e3177b0dfd3d0de73f98cf3c40684d2242db98ba
 [feature] add a workspaces feature to help for GUI apps that need includes in relative locations | id:e39a9deab5765d282a88b976011a574bd186daee
+[filter] http://gael-varoquaux.info/computers/pyreport/ | id:e44dab06b34c89bb22f55b245831b9e608612933
 [issue] key value filters should sync file extension with storage type | id:ea56460ba928c6b9353cc74646592baa968ceffc
+[docs] example of using idio filter which creates output files | id:ee3d830101926488094b5a304cec6b6a37fd3f2e
+[feature] make an AST visualization reporter (or add to run reporter) | id:f03a516414f78d46a1a571f3279681949d2c4d89
 [feature] have filters whitelist the args they accept, use whitelist dict to generate documentation | id:f66ead6328967185158bff019af1c20d32bc03a9
 [docs] document how to have a python file reference other python files | id:fd64954a721661eef3b159035210fa5f922cce97
