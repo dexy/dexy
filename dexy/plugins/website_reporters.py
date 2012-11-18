@@ -30,13 +30,10 @@ class WebsiteReporter(OutputReporter):
         'index.html' page and whose values are a list with the 'doc' object
         for the 'index.html' page and a dict of subdirectories in same format.
 
-        Will warn if a parent dir doesn't have index page, parent dir will be
-        included in dict.
-
         """
         directories = [None, {}]
 
-        def assign_nest(keys, value):
+        def populate(keys, value):
             temp = directories
             for k in keys:
                 if not temp[1]:
@@ -56,9 +53,8 @@ class WebsiteReporter(OutputReporter):
 
                 if not path_elements:
                     directories[0] = doc
-                    continue
-
-                assign_nest(path_elements, doc)
+                else:
+                    populate(path_elements, doc)
 
         return directories
 
