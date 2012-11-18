@@ -101,6 +101,7 @@ class WebsiteReporter(OutputReporter):
 
         env_data = {
                 'content' : content,
+                'locals' : locals,
                 'navigation' : navigation,
                 'page_title' : doc.title(),
                 'source' : doc.name,
