@@ -19,11 +19,6 @@ class WebsiteReporter(OutputReporter):
     REPORTS_DIR = 'output-site'
     ALLREPORTS = False
 
-    def is_index_page(self, doc):
-        fn = doc.output().name
-        # TODO index.json only if htmlsections in doc key..
-        return fn.endswith("index.html") or fn.endswith("index.json")
-
     def nav_directories(self):
         """
         Returns a dict whose keys are top-level directores containing an
@@ -45,7 +40,7 @@ class WebsiteReporter(OutputReporter):
 
         for doc in self.wrapper.registered_docs():
             doc_dir = doc.output().parent_dir()
-            if self.is_index_page(doc):
+            if doc.is_index_page():
                 path_elements = os.path.split(doc_dir)
 
                 while path_elements and path_elements[0] in ('', '.'):
@@ -80,7 +75,7 @@ class WebsiteReporter(OutputReporter):
         self.log.debug("loading template at %s" % template_path)
         template = env.get_template(template_path)
 
-        if self.is_index_page(doc):
+        if doc.is_index_page():
             nav_current_index = doc.output().parent_dir()
         else:
             nav_current_index = None

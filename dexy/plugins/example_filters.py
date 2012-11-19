@@ -133,6 +133,7 @@ class ExampleFilterArgs(DexyFilter):
 
     def process_text(self, input_text):
         result = ["Here are the arguments you passed:"]
-        for k, v in self.args().iteritems():
+        for k in sorted(self.args()):
+            v = self.args()[k]
             result.append("%s: %s" % (k, v))
         return os.linesep.join(result)

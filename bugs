@@ -27,7 +27,6 @@ test every filter for, if error occurs, file is not left in cache | id:64e43af4a
 [feature] make it easier to run filter methods outside of dexy, e.g. to run pydoc to generate a modules.sqlite file | id:703f37dc40c36c71878aae010406e44b6aa7c6da
 [feature] have reporters which run only if errors have occurred to help with debugging | id:7245f038315fc112abf73eac1d82404cca5c5d27
 [feature] figure out how to allow extra config for plugins. maybe don't white list things in dexy.conf files. | id:74a6bc572cf4a7ca00c3af63fdc9824a8be52e04
-[feature] filter which extracts YAML args from top of file + adds to doc metadata | id:7a570c66931609ac33c1a52a4e34c95a8e08f687
 [feature] missing plugins should detect which package they are avaliable in and suggest installing that | id:7e19102f14c4521e4a3d0bef98ba4e630e92594b
 [feature] think about wrapping navigation.directories [Doc, {}] structure in a class, or simplifying it, do we actually need Doc instance? | id:8dd035c546aa33b430378253c12827fd71e142ed
 [docs] make a package which has examples of all the types of plugins | id:92619a4d256480ae116121e1a8e37681abc6883a

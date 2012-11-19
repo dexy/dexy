@@ -28,6 +28,7 @@ import dexy.plugins.templates
 import dexy.plugins.templating_filters
 import dexy.plugins.website_reporters
 import dexy.plugins.wordpress_filters
+import dexy.plugins.yamlargs_filters
 
 import pkg_resources
 # Automatically register plugins in any python package named like dexy_*

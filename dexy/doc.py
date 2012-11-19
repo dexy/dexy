@@ -4,6 +4,7 @@ import dexy.filter
 import dexy.task
 import fnmatch
 import os
+import posixpath
 
 class Doc(dexy.task.Task):
     ALIASES = ['doc']
@@ -32,8 +33,19 @@ class Doc(dexy.task.Task):
     def websafe_key(self):
         return self.key.replace("/", "--")
 
+    def is_index_page(self):
+        fn = self.output().name
+        # TODO index.json only if htmlsections in doc key..
+        return fn.endswith("index.html") or fn.endswith("index.json")
+
     def title(self):
-        return self.args.get('title', self.name)
+        if self.args.get('title'):
+            return self.args.get('title')
+        elif self.is_index_page():
+            # use subdirectory we're in
+            return posixpath.split(posixpath.dirname(self.name))[-1].capitalize()
+        else:
+            return self.name
 
     def output(self):
         """
