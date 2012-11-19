@@ -61,7 +61,11 @@ class Artifact(dexy.task.Task):
                     parent_dir = os.path.dirname(filename)
                     if not os.path.exists(parent_dir):
                         os.makedirs(parent_dir)
-                    doc.output().output_to_file(filename)
+                    try:
+                        doc.output().output_to_file(filename)
+                    except Exception:
+                        print "An error occurred whlie trying to populate wd for %s with %s" % (self.key, filename)
+                        raise
 
         parent_dir = self.working_dir()
         input_filepath = os.path.join(parent_dir, input_filename)
