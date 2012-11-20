@@ -60,8 +60,8 @@ def test_cfussy_filter():
     assert_output('cfussy', C_FUSSY_HELLO_WORLD, "HELLO, world\n", ext=".c")
     try:
         assert_output('cfussy', C_HELLO_WORLD, "HELLO, world\n", ext=".c")
-        assert False, 'should raise NonzeroExit'
-    except dexy.exceptions.NonzeroExit:
+        assert False, 'should raise error'
+    except dexy.exceptions.UserFeedback:
         assert True
 
 def test_c_input():

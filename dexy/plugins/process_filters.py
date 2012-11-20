@@ -120,7 +120,10 @@ class SubprocessFilter(Filter):
                 self.artifact.log.warn("Nonzero exit status %s" % exitcode)
                 self.artifact.log.warn("output from process: %s" % stderr)
             else:
-                raise dexy.exceptions.NonzeroExit(command, exitcode, stderr)
+                err_msg = "The command '%s' for %s exited with nonzero exit status %s." % (command, self.artifact.key, exitcode)
+                if stderr:
+                    err_msg += " Here is stderr:\n%s" % stderr
+                raise dexy.exceptions.UserFeedback(err_msg)
 
     def setup_timeout(self):
         return self.args().get('timeout', self.TIMEOUT)
@@ -224,11 +227,11 @@ class SubprocessFilter(Filter):
 
         self.log.debug("About to run '%s' in '%s'" % (command, wd))
         proc = subprocess.Popen(command, shell=True,
-                                cwd=wd,
-                                stdin=stdin,
-                                stdout=stdout,
-                                stderr=stderr,
-                                env=env)
+                                    cwd=wd,
+                                    stdin=stdin,
+                                    stdout=stdout,
+                                    stderr=stderr,
+                                    env=env)
 
         stdout, stderr = proc.communicate(input_text)
         self.log.debug(u"stdout is '%s'" % stdout.decode('utf-8'))

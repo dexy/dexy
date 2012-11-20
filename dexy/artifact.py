@@ -64,7 +64,7 @@ class Artifact(dexy.task.Task):
                     try:
                         doc.output().output_to_file(filename)
                     except Exception:
-                        self.log.debug("An error occurred whlie trying to populate wd for %s with %s (%s)" % (self.key, doc.key, filename))
+                        self.log.debug("An error occurred whlie trying to populate working directory %s for %s with %s (%s)" % (tmpdir, self.key, doc.key, filename))
 
         parent_dir = self.working_dir()
         input_filepath = os.path.join(parent_dir, input_filename)

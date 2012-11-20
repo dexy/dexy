@@ -42,7 +42,7 @@ setup(
             'pygments',
             'python-modargs>=1.5',
             'requests>=0.10.6',
-            'zapps'
+            'zapps>=0.5.1'
             ],
         name='dexy',
         packages=find_packages(),

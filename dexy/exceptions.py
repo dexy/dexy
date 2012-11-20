@@ -17,9 +17,6 @@ class InactiveFilter(UserFeedback):
         '%s' is being used in '%s'
         """ % (filter_alias, filter_alias, doc_key))
 
-class NonzeroExit(UserFeedback):
-    pass
-
 class CircularDependency(UserFeedback):
     pass
 

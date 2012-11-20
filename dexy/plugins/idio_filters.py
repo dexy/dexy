@@ -1,10 +1,13 @@
 from dexy.common import OrderedDict
 from dexy.plugins.pygments_filters import PygmentsFilter
 from idiopidae.runtime import Composer
+from idiopidae.parser import IdiopidaeParser, IdiopidaeParserScanner
 from pygments.formatters import get_all_formatters
+import dexy.exceptions
 import idiopidae.parser
 import json
 import re
+import zapps.rt
 
 class IdioFilter(PygmentsFilter):
     """
@@ -23,13 +26,23 @@ class IdioFilter(PygmentsFilter):
         return self.ADD_NEW_FILES or self.args().get('add-new-files', False)
 
     def process(self):
-        input_text = self.input().as_text()
-        composer = Composer()
-        builder = idiopidae.parser.parse('Document', input_text + "\n\0")
-
         args = self.args().copy()
         lexer = self.create_lexer_instance(args)
         formatter = self.create_formatter_instance(args)
+
+        input_text = self.input().as_text()
+        composer = Composer()
+
+        try:
+            P = IdiopidaeParser(IdiopidaeParserScanner(input_text + "\n\0"))
+            builder = P.Document()
+        except zapps.rt.SyntaxError as s:
+            zapps_err = zapps.rt.print_error(input_text + "\n\0", s, P._scanner, False)
+            msg = "Idiopidae was unable to parse input for %s\n%s" % (self.artifact.key, zapps_err)
+            raise dexy.exceptions.UserFeedback(msg)
+        except zapps.rt.NoMoreTokens as s:
+            msg = "Could not complete parsing; stopped around here:%s" % P._scanner
+            raise dexy.exceptions.UserFeedback(msg)
 
         output_dict = OrderedDict()
         lineno = 1

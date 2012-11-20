@@ -3,6 +3,7 @@ from dexy.plugins.templating_plugins import TemplatePlugin
 from jinja2 import FileSystemLoader
 from jinja2.exceptions import TemplateSyntaxError
 from jinja2.exceptions import UndefinedError
+from jinja2.exceptions import TemplateNotFound
 import dexy.exceptions
 import jinja2
 import os
@@ -51,6 +52,7 @@ class JinjaFilter(TemplateFilter):
     Runs the Jinja templating engine.
     """
     ALIASES = ['jinja']
+    FRAGMENT = False
 
     def setup_jinja_env(self, loader=None):
         env_attrs = self.args().copy()
@@ -144,7 +146,7 @@ class JinjaFilter(TemplateFilter):
 
     def process(self):
         wd = self.setup_wd()
-        dirs = [wd, self.artifact.tmp_dir()]
+        dirs = ['.', wd, self.artifact.tmp_dir()]
         self.log.debug("setting up jinja FileSystemLoader with dirs %s" % ", ".join(dirs))
         loader = FileSystemLoader(dirs)
 
@@ -166,6 +168,8 @@ class JinjaFilter(TemplateFilter):
             if os.path.exists(self.output_filepath()):
                 self.log.debug("removing %s since jinja had an error" % self.output_filepath())
                 os.remove(self.output_filepath())
+        except TemplateNotFound as e:
+            raise dexy.exceptions.UserFeedback("Jinja couldn't find the template '%s', make sure this file is an input to %s" % (e.message, self.artifact.doc.key))
         except Exception:
             if os.path.exists(self.output_filepath()):
                 self.log.debug("removing %s since jinja had an error" % self.output_filepath())

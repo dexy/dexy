@@ -171,7 +171,8 @@ class Parser:
                 if not os.path.exists(pattern):
                     pattern = "*%s" % pattern
 
-            if os.path.exists(pattern.split("|")[0]):
+            filepath = pattern.split("|")[0]
+            if os.path.exists(filepath) and not os.path.isdir(filepath):
                 alias = 'doc'
             elif (not "." in pattern) and (not "|" in pattern):
                 alias = 'bundle'

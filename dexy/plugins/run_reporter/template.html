@@ -145,11 +145,13 @@ Directory {{ k }}:
 
             <div class="zp-30 sidebar">
                 <h2>List of Documents</h2>
+                <div style="height:400px; overflow:auto;">
                 <ul>
                     {% for doc in sorted(docs) %}
                     <li><a href="#{{ doc.websafe_key() }}">{{ doc }}</a></li>
                     {% endfor %}
                 </ul>
+                </div>
             </div>
         </div>
     </body>

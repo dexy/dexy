@@ -29,7 +29,11 @@ def parse_and_run_command(argv, module, default_command):
         args.parse_and_run_command(argv, module, default_command)
     except dexy.exceptions.UserFeedback as e:
         sys.stderr.write("Oops, there's a problem running your command. Here is the error message:" + os.linesep)
-        sys.stderr.write(e.message)
+        err_msg = str(e)
+        if err_msg:
+            sys.stderr.write("'%s'" % str(e))
+        else:
+            sys.stderr.write("Sorry, can't get text of error message.")
         sys.stderr.write(os.linesep)
         sys.exit(1)
 

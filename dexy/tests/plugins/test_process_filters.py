@@ -91,8 +91,8 @@ def test_nonzero_exit():
                 )
         try:
             wrapper.run_docs(doc)
-            assert False, "should raise NonzeroExit"
-        except dexy.exceptions.NonzeroExit:
+            assert False, "should raise error"
+        except dexy.exceptions.UserFeedback:
             assert True
 
 def test_ignore_nonzero_exit():
