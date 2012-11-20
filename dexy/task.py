@@ -135,7 +135,10 @@ class Task():
         pass
 
     def key_with_class(self):
-        return "%s:%s" % (self.__class__.__name__, self.key)
+        if hasattr(self, 'doc'):
+            return "%s:%s::%s" % (self.__class__.__name__, self.key, self.doc.key_with_class())
+        else:
+            return "%s:%s" % (self.__class__.__name__, self.key)
 
     def key_with_batch_id(self):
         return "%s:%s:%s" % (self.wrapper.batch_id, self.__class__.__name__, self.key)
