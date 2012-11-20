@@ -51,8 +51,6 @@ class WebsiteReporter(OutputReporter):
                 else:
                     populate(path_elements, doc)
 
-#        import pprint
-#        pprint.pprint(directories)
         return directories
 
     def apply_and_render_template(self, doc):
