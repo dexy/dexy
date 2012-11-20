@@ -2,6 +2,7 @@ from dexy.parser import Parser
 from dexy.utils import parse_json
 from dexy.utils import parse_yaml
 import dexy.exceptions
+import os
 import re
 
 class YamlFileParser(Parser):
@@ -10,7 +11,12 @@ class YamlFileParser(Parser):
     def build_ast(self, directory, input_text):
         def parse_key_mapping(mapping):
             for original_task_key, v in mapping.iteritems():
-                task_key = self.join_dir(directory, original_task_key)
+                original_file = original_task_key.split("|")[0]
+                if not os.path.exists(self.join_dir(directory, original_file)) and not "*" in original_task_key and not original_task_key.startswith("."):
+                    self.wrapper.log.debug("treating %s as a bundle name, not prepending directory %s" % (original_task_key, directory))
+                    task_key = original_task_key
+                else:
+                    task_key = self.join_dir(directory, original_task_key)
 
                 # v is a sequence whose members may be children or kwargs
                 if not v:
@@ -19,6 +25,7 @@ class YamlFileParser(Parser):
                 if hasattr(v, 'keys'):
                     raise dexy.exceptions.UserFeedback("You passed a dict to %s, please pass a sequence" % task_key)
 
+                siblings = []
                 for element in v:
                     if hasattr(element, 'keys'):
                         # This is a dict of length 1
@@ -36,9 +43,16 @@ class YamlFileParser(Parser):
                                     self.ast.add_task_info(task_key, **vvv)
 
                             else:
-                                # child task. we note the dependency and
-                                # recurse to process the child.
+                                # child task. we note the dependency, add
+                                # dependencies on prior siblings, and recurse
+                                # to process the child.
                                 self.ast.add_dependency(task_key, self.join_dir(directory, kk))
+
+                                if self.wrapper.siblings:
+                                    for s in siblings:
+                                        self.ast.add_dependency(self.join_dir(directory, kk), s)
+                                    siblings.append(self.join_dir(directory, kk))
+
                                 parse_key_mapping(element)
 
                         else:
@@ -47,8 +61,12 @@ class YamlFileParser(Parser):
 
                     else:
                         # This is a child task with no args, we only have to
-                        # note the dependency.
+                        # note the dependencies
                         self.ast.add_dependency(task_key, self.join_dir(directory, element))
+                        if self.wrapper.siblings:
+                            for s in siblings:
+                                self.ast.add_dependency(self.join_dir(directory, element), s)
+                            siblings.append(self.join_dir(directory, element))
 
         def parse_keys(data):
             if hasattr(data, 'keys'):

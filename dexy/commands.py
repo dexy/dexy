@@ -191,6 +191,7 @@ def dexy_command(
         r=False, # whether to clear cache before running dexy
         reset=False, # whether to clear cache before running dexy
         reports=D['reports'], # reports to be run after dexy runs, enclose in quotes and separate with spaces
+        siblings=D['siblings'], # whether siblings should have prior siblings as inputs (slows dexy down on large projects, siblings should run in order regardless)
         silent=D['silent'], # Whether to not print any output when running dexy
         uselocals=D['uselocals'], # use cached local copies of remote URLs, faster but might not be up to date, 304 from server will override this setting
         target=D['target'], # Which target to run. By default all targets are run, this allows you to run only 1 bundle (and its dependencies).

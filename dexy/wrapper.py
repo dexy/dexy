@@ -36,6 +36,7 @@ class Wrapper(object):
             'profile' : False,
             'recurse' : True,
             'reports' : '',
+            'siblings' : False,
             'silent' : False,
             'target' : False,
             'uselocals' : False
