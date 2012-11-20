@@ -1,5 +1,4 @@
 from dexy.filter import DexyFilter
-from dexy.plugins.process_filters import SubprocessStdoutFilter
 from dexy.plugins.process_filters import SubprocessFilter
 
 try:
@@ -41,7 +40,7 @@ class RestructuredTextFilter(DexyFilter):
         else:
             raise Exception("unsupported extension %s" % self.artifact.ext)
 
-class Rst2HtmlFilter(SubprocessStdoutFilter):
+class Rst2HtmlFilter(SubprocessFilter):
     """
     This uses the command line tool rst2html.
     """
@@ -52,7 +51,7 @@ class Rst2HtmlFilter(SubprocessStdoutFilter):
     OUTPUT_EXTENSIONS = [".html"]
     ALIASES = ['rst2html']
 
-class Rst2LatexFilter(SubprocessStdoutFilter):
+class Rst2LatexFilter(SubprocessFilter):
     """
     This uses the command line tool rst2latex.
     """
@@ -63,7 +62,7 @@ class Rst2LatexFilter(SubprocessStdoutFilter):
     OUTPUT_EXTENSIONS = [".tex"]
     ALIASES = ['rst2latex']
 
-class Rst2XmlFilter(SubprocessStdoutFilter):
+class Rst2XmlFilter(SubprocessFilter):
     """
     This uses the command line tool rst2xml.
     """
@@ -84,7 +83,7 @@ class Rst2OdtFilter(SubprocessFilter):
     OUTPUT_EXTENSIONS = [".odt"]
     ALIASES = ['rst2odt']
 
-class Rst2BeamerFilter(SubprocessStdoutFilter):
+class Rst2BeamerFilter(SubprocessFilter):
     """
     Filter for rst2beamer command line tool, requires docutils plus rst2beamer package.
     """
