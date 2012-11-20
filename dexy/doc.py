@@ -162,28 +162,33 @@ class PatternDoc(dexy.task.Task):
             filepath = os.path.normpath(raw_filepath)
 
             if fnmatch.fnmatch(filepath, self.file_pattern):
-                if len(self.filter_aliases) > 0:
-                    doc_key = "%s|%s" % (filepath, "|".join(self.filter_aliases))
+                except_p = self.args.get('except')
+                import re
+                if except_p and re.search(except_p, filepath):
+                    self.log.debug("skipping file '%s' because it matches except '%s'" % (filepath, except_p))
                 else:
-                    doc_key = filepath
-
-                doc_args = self.args.copy()
-                doc_args['wrapper'] = self.wrapper
-
-                if doc_args.has_key('depends'):
-                    if doc_args.get('depends'):
-                        doc_children = self.wrapper.registered_docs()
+                    if len(self.filter_aliases) > 0:
+                        doc_key = "%s|%s" % (filepath, "|".join(self.filter_aliases))
                     else:
-                        doc_children = []
-                    del doc_args['depends']
-                else:
-                    doc_children = self.children
+                        doc_key = filepath
 
-                self.log.debug("creating child of patterndoc %s: %s" % (self.key, doc_key))
-                doc = Doc(doc_key, *doc_children, **doc_args)
-                self.children.append(doc)
-                doc.populate()
-                doc.transition('populated')
+                    doc_args = self.args.copy()
+                    doc_args['wrapper'] = self.wrapper
+
+                    if doc_args.has_key('depends'):
+                        if doc_args.get('depends'):
+                            doc_children = self.wrapper.registered_docs()
+                        else:
+                            doc_children = []
+                        del doc_args['depends']
+                    else:
+                        doc_children = self.children
+
+                    self.log.debug("creating child of patterndoc %s: %s" % (self.key, doc_key))
+                    doc = Doc(doc_key, *doc_children, **doc_args)
+                    self.children.append(doc)
+                    doc.populate()
+                    doc.transition('populated')
 
 class BundleDoc(dexy.task.Task):
     """

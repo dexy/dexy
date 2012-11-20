@@ -1,5 +1,6 @@
 [feature] allow having 'relative canonical name' which preserves the directory but changes document base name | id:019043fb42d86fd02a7ddfe9f5db187ccd594b5c
 [filter] update xxml filter | id:0869b2e7441930e6678100c050b69b6530c5336d
+[issue] if you forget to add hyphens to make single child doc into a list, yaml parser tries to iterate over string | id:0af99c8a441b5f27a4140d0de91f0d0a6d27ad01
 [feature] have method for getting JSON dict into env for another filter | id:1012845dcb49a8e36f5f1361338835482eacfba4
 [feature] implement is_active method for templates and list dependencies that need to be installed | id:1e5d9d273c8db7d4c38d85b76442f0d2ae7dd637
 [feature] add javascript search widget helper to dexy for searching generated content, e.g. http://www.tipue.com/search/demo/ | id:205430dabd1a07653925609b005c8e3e1a0ee4d0
@@ -7,6 +8,7 @@
 [feature] add template arg to rst2html and other rst handlers | id:241f612602d54ae078579720d74e1f931561528a
 [feature] how to generate class inheritance diagram for pydoc filter? | id:292ef032418f240c1c28be0a0f8bfe4c95fc76d7
 [issue] fix issue if bundle in docs.yaml is given same name as a top level directory in the project | id:2f11a44a222435efdf9612035ae309ef7bade12a
+[feature] add html canvas element to whole page, draw on that for annotation. or add svg elements + position on top. | id:36a3dbd3c6544e7805bff0b8e1dafcad0393c6d2
 [idea] how to cite code in scientific papers | id:36d5729d63e3da51009543f198b31ad26e917657
 [feature] dump dexy env into working dir so easy to troubleshoot | id:3c03b3aadc4b3e799be0b4da8022dc1b56f7bc68
 [feature] make it possible to pass unordered mappings to bundle docs so siblings don't depend on each other | id:425b356f06accb394eb0a84fe6d9ed41ec5cbe17
@@ -18,6 +20,7 @@
 [docs] example of using idiom filter which generates multiple output formats | id:4f8dce912800bc9e441048c71c41cfd8db4c309b
 [feature] give feedback if no doc config files found | id:571ce803b67e3c8ab96d0920583a2115808c0b0f
 [issue] better feedback for named docs not being pattern docs, user should add an asterisk or specify exact path to file | id:58336d8495093b1d9574f02a2314845916bdb713
+[feature] finish implementing 'except' feature and test, clarify regex or fnmatch or both | id:5af09bc445c7790bf478bf7e576c53129daa46a5
 [feature] add a dexy plugins command to list pluginnable classes | id:61186f7dd456c9a4f69d9fce88d002640f0ed1ad
 [issue] Make sure keys are unique, must have key + doc's key, issues arise with e.g. *.py and *.py|py in same project. | id:642cf20f163f834395ad847b9107477e76b9f251
 [issue] get UndefinedError: unicode object has no attribute 'blah' when idio is not correctly detected | id:646da510731a292ab94b7ba7f98a6b5f7d3d267d
@@ -28,6 +31,7 @@ test every filter for, if error occurs, file is not left in cache | id:64e43af4a
 [feature] have reporters which run only if errors have occurred to help with debugging | id:7245f038315fc112abf73eac1d82404cca5c5d27
 [feature] figure out how to allow extra config for plugins. maybe don't white list things in dexy.conf files. | id:74a6bc572cf4a7ca00c3af63fdc9824a8be52e04
 [feature] missing plugins should detect which package they are avaliable in and suggest installing that | id:7e19102f14c4521e4a3d0bef98ba4e630e92594b
+[feature] use casperjs to output location of element want an arrow to, then use image magick to point to that element | id:7f00fd06d8cf8317a2538417d37ae74971f5423f
 [feature] think about wrapping navigation.directories [Doc, {}] structure in a class, or simplifying it, do we actually need Doc instance? | id:8dd035c546aa33b430378253c12827fd71e142ed
 [docs] make a package which has examples of all the types of plugins | id:92619a4d256480ae116121e1a8e37681abc6883a
 [filter] publish dexy blogging filters | id:96c2017386d980b79c5956a0016c957093c81766
@@ -38,6 +42,7 @@ test every filter for, if error occurs, file is not left in cache | id:64e43af4a
 [feature] add winpexpect support https://bitbucket.org/geertj/winpexpect/wiki/Home | id:b7590f29225431071a22bc72520ebfad0ab6afc6
 [feature] standard way to give feedback on what packages need to be installed to use a filter | id:bce8eeb2b2d39665a51da781b5e4fa0de83a0ba9
 [feature] have auto-tab-completion for dexy gen (and other dexy commands) | id:be551899ac9a205c6a9acd19a4b979c5a4f42bbd
+self.ast.add_task_info(self.join_dir(directory, task_key), **task_kwargs) TypeError: add_task_info() keywords must be strings | id:c2a6b03f190dfb2b4aa91f8af8d477a9bc3401dc
 [docs] example of combining rst-generated latex files into a book | id:c43af78776eb972bcaf6e008ea9144fc0f3067ac
 [feature] think about standard way of documenting plugins | id:c8b5e4e98f05cf928a19c00c319cbf7bcad7622c
 [issue] investigate whether jinja doesn't raise an exception when error occurs in macro | id:d3f18c8fbeaee6a1e9b272fc48f6051999e69bc2

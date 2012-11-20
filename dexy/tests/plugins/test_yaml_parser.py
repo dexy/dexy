@@ -1,6 +1,28 @@
 from dexy.plugins.parsers import YamlFileParser
 from dexy.tests.utils import wrap
 
+def test_except_patterndoc():
+    with wrap() as wrapper:
+        with open("exceptme.abc", "w") as f:
+            f.write("hello")
+
+        parser = YamlFileParser(wrapper)
+        parser.parse(""".abc:\n  - except : 'exceptme.abc' """)
+        wrapper.run()
+
+        assert len(wrapper.tasks) == 1
+
+def test_except_patterndoc_pattern():
+    with wrap() as wrapper:
+        with open("exceptme.abc", "w") as f:
+            f.write("hello")
+
+        parser = YamlFileParser(wrapper)
+        parser.parse(""".abc:\n  - except : 'exceptme.*' """)
+        wrapper.run()
+
+        assert len(wrapper.tasks) == 1
+
 def test_children_siblings_order():
     with wrap() as wrapper:
         parser = YamlFileParser(wrapper)

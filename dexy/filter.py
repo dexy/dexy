@@ -108,7 +108,7 @@ class Filter:
     def final_ext(self):
         return self.artifact.doc.final_artifact.ext
 
-    def setup_wd(self):
+    def setup_wd(self, populate=True):
         tmpdir = self.artifact.tmp_dir()
         parent_dir = self.output().parent_dir()
         wd = os.path.join(tmpdir, parent_dir)
@@ -116,7 +116,7 @@ class Filter:
         if not os.path.exists(wd):
             self.artifact.create_working_dir(
                     self.input_filename(),
-                    populate=True
+                    populate=populate
                 )
 
         return wd

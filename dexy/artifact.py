@@ -23,7 +23,7 @@ class Artifact(dexy.task.Task):
         child_hashes = []
         for child in self.doc.deps.values():
             if not hasattr(child, 'hashstring'):
-                raise Exception("Doc %s child %s has no hashstring" % (self.key_with_class(), child.key_with_class()))
+                raise dexy.exceptions.UserFeedback("Doc %s has not been set up yet, and it's needed by %s. This is usually caused by a circular dependency." % (child.key_with_class(), self.key_with_class()))
 
             child_hashes.append("%s: %s" % (child.key_with_class(), child.hashstring))
 
