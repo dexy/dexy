@@ -46,25 +46,31 @@ class Artifact(dexy.task.Task):
         return self.output_data.basename()
 
     def working_dir(self):
-        return os.path.join(self.tmp_dir(), self.input_data.parent_dir())
+        return os.path.join(self.tmp_dir(), self.output_data.parent_dir())
 
-    def create_working_dir(self, input_filename, populate=False):
-        tmpdir = self.tmp_dir()
+    def working_dir_exists(self):
+        return os.path.exists(self.working_dir()) and os.path.isdir(self.working_dir())
 
-        shutil.rmtree(tmpdir, ignore_errors=True)
-        os.mkdir(tmpdir)
+    def setup_wd(self, input_filename):
+        tmp_dir = self.tmp_dir()
 
-        if populate:
-            for doc in self.doc.setup_child_docs():
-                if doc.state == 'complete' or len(doc.filters) == 0:
-                    filename = os.path.join(tmpdir, doc.output().name)
-                    parent_dir = os.path.dirname(filename)
-                    if not os.path.exists(parent_dir):
-                        os.makedirs(parent_dir)
-                    try:
-                        doc.output().output_to_file(filename)
-                    except Exception:
-                        self.log.debug("An error occurred whlie trying to populate working directory %s for %s with %s (%s)" % (tmpdir, self.key, doc.key, filename))
+        # Clear any old working dir.
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+
+        # Create the base working dir.
+        os.mkdir(tmp_dir)
+
+        for doc in self.doc.setup_child_docs():
+            if doc.state == 'complete' or len(doc.filters) == 0:
+                # Figure out path to write this child doc.
+                filename = os.path.join(tmp_dir, doc.output().name)
+                parent_dir = os.path.dirname(filename)
+
+                # Ensure all parent directories exist.
+                if not os.path.exists(parent_dir):
+                    os.makedirs(parent_dir)
+
+                yield(doc, filename)
 
         parent_dir = self.working_dir()
         input_filepath = os.path.join(parent_dir, input_filename)

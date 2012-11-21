@@ -15,11 +15,6 @@ class LatexFilter(SubprocessFilter):
     ALIASES = ['latex']
     FRAGMENT = False
 
-    def setup_wd(self):
-        if not os.path.exists(self.artifact.tmp_dir()):
-            self.artifact.create_working_dir(self.input_filename(), True)
-        return os.path.join(self.artifact.tmp_dir(), self.output().parent_dir())
-
     def command_string(self):
         clargs = self.command_line_args() or ''
 

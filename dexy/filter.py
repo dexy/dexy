@@ -109,15 +109,13 @@ class Filter:
         return self.artifact.doc.final_artifact.ext
 
     def setup_wd(self, populate=True):
-        tmpdir = self.artifact.tmp_dir()
-        parent_dir = self.output().parent_dir()
-        wd = os.path.join(tmpdir, parent_dir)
-
+        wd = self.artifact.working_dir()
         if not os.path.exists(wd):
-            self.artifact.create_working_dir(
-                    self.input_filename(),
-                    populate=populate
-                )
+            for doc, filename in self.artifact.setup_wd(self.input_filename()):
+                try:
+                    doc.output().output_to_file(filename)
+                except Exception:
+                    self.log.debug("An error occurred whlie trying to populate working directory %s for %s with %s (%s)" % (wd, self.key, doc.key, filename))
 
         return wd
 

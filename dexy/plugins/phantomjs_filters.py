@@ -39,13 +39,13 @@ class CasperJsSvg2PdfFilter(SubprocessFilter):
         """ % args
 
     def setup_wd(self):
-        tmpdir = self.artifact.tmp_dir()
-
-        if not os.path.exists(tmpdir):
-            self.artifact.create_working_dir(
-                    self.input_filename(),
-                    populate=True
-                )
+        wd = self.artifact.working_dir()
+        if not os.path.exists(wd):
+            for doc, filename in self.artifact.setup_wd(self.input_filename()):
+                try:
+                    doc.output().output_to_file(filename)
+                except Exception:
+                    self.log.debug("An error occurred whlie trying to populate working directory %s for %s with %s (%s)" % (wd, self.key, doc.key, filename))
 
         width = self.args().get('width', 200)
         height = self.args().get('height', 200)
@@ -111,7 +111,13 @@ class PhantomJsRenderSubprocessFilter(SubprocessFilter):
         return "%(prog)s %(args)s script.js" % args
 
     def setup_wd(self):
-        self.artifact.create_working_dir(self.input_filename())
+        wd = self.artifact.working_dir()
+        if not os.path.exists(wd):
+            for doc, filename in self.artifact.setup_wd(self.input_filename()):
+                try:
+                    doc.output().output_to_file(filename)
+                except Exception:
+                    self.log.debug("An error occurred whlie trying to populate working directory %s for %s with %s (%s)" % (wd, self.key, doc.key, filename))
 
         width = self.arg_value('width', self.DEFAULT_WIDTH)
         height = self.arg_value('height', self.DEFAULT_HEIGHT)
@@ -147,7 +153,6 @@ class PhantomJsRenderSubprocessFilter(SubprocessFilter):
         });
         """ % args
 
-        wd = os.path.join(self.artifact.tmp_dir(), self.input().parent_dir())
         scriptfile = os.path.join(wd, "script.js")
         self.log.debug("scriptfile: %s" % scriptfile)
         with open(scriptfile, "w") as f:

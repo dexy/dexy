@@ -109,7 +109,7 @@ Directory {{ k }}:
                     <br />
                     <h4>Artifacts</h4>
                     <table style="width: 800px; border: thin solid black; border-collapse: collapse;">
-                        <tr><th>Key</th><th>Link</th><th>Elapsed</th><th>Run Type</th><th>Sections</th></tr>
+                        <tr><th>Key</th><th>Link</th><th>Elapsed</th><th>Run Type</th><th>Sections</th><th>wd</th></tr>
                         {% for a in doc.artifacts -%}
                         <tr>
                             <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">{{ a.key }}</td>
@@ -121,6 +121,11 @@ Directory {{ k }}:
                                 {% for k in a.output_data.keys() -%}
                                 {{ k }}<br />
                                 {% endfor -%}
+                                {% endif -%}
+                            </td>
+                            <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">
+                                {% if a.working_dir_exists() -%}
+                                <a href="../../{{ a.working_dir() }}">wd</a>
                                 {% endif -%}
                             </td>
                         </tr>

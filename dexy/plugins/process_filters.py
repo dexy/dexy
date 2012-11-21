@@ -271,11 +271,6 @@ class SubprocessCompileFilter(SubprocessFilter):
     CHECK_RETURN_CODE = False # Whether to check return code when running compiled executable.
     EXECUTABLES = []
 
-    def setup_wd(self):
-        if not os.path.exists(self.artifact.tmp_dir()):
-            self.artifact.create_working_dir(self.input_filename(), True)
-        return os.path.join(self.artifact.tmp_dir(), self.output().parent_dir())
-
     def compile_command_string(self):
         wf = os.path.basename(self.input().name)
         of = self.compiled_filename()

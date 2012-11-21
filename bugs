@@ -35,7 +35,7 @@ test every filter for, if error occurs, file is not left in cache | id:64e43af4a
 [feature] think about wrapping navigation.directories [Doc, {}] structure in a class, or simplifying it, do we actually need Doc instance? | id:8dd035c546aa33b430378253c12827fd71e142ed
 [docs] make a package which has examples of all the types of plugins | id:92619a4d256480ae116121e1a8e37681abc6883a
 [filter] publish dexy blogging filters | id:96c2017386d980b79c5956a0016c957093c81766
-[feature] rsync reporter | id:99fb1cc6cc57200e26b11851cdb324ebfa1eb131
+[feature] rsync reporter, or make output-site and output more rsync-friendly | id:99fb1cc6cc57200e26b11851cdb324ebfa1eb131
 [todo] add more tests for unicode support | id:9d71bbceb819a41ee352f07381de6b235e3c49bb
 [issue] make sure all exceptions are handled in user-friendly way | id:9f6b58cc32e7d3651dfa86c1cb25abb8db54d048
 [docs] write example/template for cucumber + rspec | id:a05179706a2217ed59e9eb89db9d71b7bd4b9a80

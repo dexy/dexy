@@ -57,6 +57,7 @@ class LuaFilter(SubprocessStdoutFilter):
     ALIASES = ['lua']
 
 class CowsaySubprocessStdoutFilter(SubprocessStdoutFilter):
+    ADD_NEW_FILES = False
     ALIASES = ['cowsay']
     EXECUTABLE = 'cowsay'
     INPUT_EXTENSIONS = [".txt"]
