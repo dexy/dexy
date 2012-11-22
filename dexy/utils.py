@@ -4,6 +4,10 @@ import json
 import os
 import yaml
 import posixpath
+import re
+
+def s(text):
+    return re.sub('\s+', ' ', text)
 
 def getdoc(element, firstline=True):
     docstring = inspect.getdoc(element)

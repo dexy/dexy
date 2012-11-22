@@ -68,19 +68,21 @@ class YamlFileParser(Parser):
                                 self.ast.add_dependency(self.join_dir(directory, element), s)
                             siblings.append(self.join_dir(directory, element))
 
-        def parse_keys(data):
+        def parse_keys(data, top=False):
             if hasattr(data, 'keys'):
                 parse_key_mapping(data)
             elif isinstance(data, basestring):
                 self.ast.add_task_info(self.join_dir(directory, data))
             elif isinstance(data, list):
+                if top:
+                    self.ast.root_nodes_ordered = True
                 for element in data:
                     parse_keys(element)
             else:
                 raise Exception("invalid input %s" % data)
 
         config = parse_yaml(input_text)
-        parse_keys(config)
+        parse_keys(config, top=True)
 
 class TextFileParser(Parser):
     ALIASES = ["dexy.txt", "docs.txt"]

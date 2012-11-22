@@ -1,4 +1,5 @@
 from dexy.common import OrderedDict
+from dexy.utils import s
 from dexy.version import DEXY_VERSION
 import dexy.data
 import dexy.doc
@@ -23,7 +24,11 @@ class Artifact(dexy.task.Task):
         child_hashes = []
         for child in self.doc.deps.values():
             if not hasattr(child, 'hashstring'):
-                raise dexy.exceptions.UserFeedback("Doc %s has not been set up yet, and it's needed by %s. This is usually caused by a circular dependency." % (child.key_with_class(), self.key_with_class()))
+                args = (child.key_with_class(), self.key_with_class())
+                msg = s("""Doc %s has not been set up yet, and
+                it's needed by %s.  This is usually caused by a circular
+                dependency or because child doc is excluded from target.""") % args
+                raise dexy.exceptions.UserFeedback(msg)
 
             child_hashes.append("%s: %s" % (child.key_with_class(), child.hashstring))
 

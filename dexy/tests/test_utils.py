@@ -2,6 +2,14 @@ from dexy.filter import Filter
 from dexy.tests.utils import runfilter
 from nose.exc import SkipTest
 from nose.tools import raises
+from dexy.utils import s
+
+def test_s():
+    text = """This is some text
+    which goes onto
+    many lines and has
+    indents at the start."""
+    assert s(text) == 'This is some text which goes onto many lines and has indents at the start.'
 
 class InactiveDexyFilter(Filter):
     ALIASES = ['inactive']

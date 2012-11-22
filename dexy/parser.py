@@ -4,11 +4,13 @@ import dexy.doc
 import dexy.exceptions
 import os
 import posixpath
+import pprint
 
 class AbstractSyntaxTree():
     def __init__(self):
         self.lookup_table = {}
         self.tree = []
+        self.root_nodes_ordered = False
 
     def standardize_key(self, key):
         return Parser.standardize_key(key)
@@ -93,18 +95,29 @@ class AbstractSyntaxTree():
         return self.lookup_table[parent_key]['children']
 
     def debug(self, log=None):
-        def emit(text):
-            if log:
-                log.debug(text)
-            else:
-                print text
-
-        emit("tree:")
+        text = []
+        text.append('tree:')
         for item in self.tree:
-            emit("  %s" % item)
-        emit("lookup table:")
+            text.append("  %s" % item)
+        if self.root_nodes_ordered:
+            text.append("root notes ordered.")
+        text.append('lookup table:')
         for k, v in self.lookup_table.iteritems():
-            emit("  %s: %s" % (k, v))
+            pformat_v = pprint.pformat(v).splitlines()
+            if len(pformat_v) == 0:
+                raise Exception("no lines in pformat_v!")
+            elif len(pformat_v) == 1:
+                text.append("    %s: %s" % (k, pformat_v[0]))
+            else:
+                text.append("    %s:" % k)
+                for line in pformat_v:
+                    text.append("      %s" % line)
+
+        if log:
+            log.debug("\n".join(text))
+        else:
+            for line in text:
+                print line
 
     def walk(self):
         created_tasks = {}

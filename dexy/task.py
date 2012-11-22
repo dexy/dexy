@@ -96,7 +96,11 @@ class Task():
         for child in self.children:
             for s in siblings:
                 child.deps[s.key_with_class()] = s
-            siblings.append(child)
+
+            at_top_level = self in self.wrapper.root_nodes
+            top_level_ordered = not hasattr(self.wrapper, 'ast') or self.wrapper.ast.root_nodes_ordered
+            if top_level_ordered or not at_top_level:
+                siblings.append(child)
 
             for task in child:
                 task(*args, **kw)
