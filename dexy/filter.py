@@ -112,12 +112,40 @@ class Filter:
         wd = self.artifact.working_dir()
         if not os.path.exists(wd):
             for doc, filename in self.artifact.setup_wd(self.input_filename()):
-                try:
-                    doc.output().output_to_file(filename)
-                except Exception:
-                    self.log.debug("An error occurred whlie trying to populate working directory %s for %s with %s (%s)" % (wd, self.key, doc.key, filename))
+                if doc.output().name == self.output().name:
+                    self.log.debug("[setup_wd] skipping input '%s' as it conflicts with main output file" % doc.key)
+                elif doc.output().name in self.artifact.doc.conflicts():
+                    self.log.debug("[setup_wd] input '%s' is in conflicts list" % doc.key)
+
+                    conflict_docs = self.artifact.doc.conflicts()[doc.output().name]
+                    self.log.debug("[setup_wd] docs generating conflicts are %s" % conflict_docs)
+
+                    if self.resolve_conflict(doc, conflict_docs):
+                        self.write_to_wd(wd, doc, filename)
+                    else:
+                        self.log.debug("[setup_wd] skipping %s as other docs with same name take priority" % doc.key)
+                else:
+                    self.write_to_wd(wd, doc, filename)
 
         return wd
+
+    def write_to_wd(self, wd, doc, filename):
+        try:
+            doc.output().output_to_file(filename)
+        except Exception as e:
+            self.log.debug("error occurred whlie trying to populate working directory %s for %s with %s (%s)" % (wd, self.key, doc.key, filename))
+            self.log.debug(e.message)
+
+    def resolve_conflict(self, doc, conflict_docs):
+        """
+        Return true if the doc wins the conflict and should be written to the canonical name, false if not.
+        """
+        conflict_docs = [d for d in conflict_docs if not (('pyg' in d.key) or ('idio' in d.key))]
+        conflict_docs.sort()
+        if len(conflict_docs) == 0:
+            return True
+        else:
+            return doc in conflict_docs and conflict_docs.index(doc) == 0
 
 class DexyFilter(Filter):
     ALIASES = ['dexy']

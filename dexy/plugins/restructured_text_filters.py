@@ -1,6 +1,5 @@
 from dexy.filter import DexyFilter
 from dexy.plugins.process_filters import SubprocessFilter
-import os
 
 try:
     from docutils import core
@@ -62,21 +61,6 @@ class Rst2LatexFilter(SubprocessFilter):
     INPUT_EXTENSIONS = [".rst", ".txt"]
     OUTPUT_EXTENSIONS = [".tex"]
     VERSION_COMMAND = 'rst2latex.py --version'
-
-    def setup_wd(self):
-        wd = self.artifact.working_dir()
-
-        # Only populate if wd doesn't already exist...
-        if not os.path.exists(wd):
-            for doc, filename in self.artifact.setup_wd(self.input_filename()):
-                if (not 'pyg' in doc.key) and (not 'idio' in doc.key):
-                    try:
-                        doc.output().output_to_file(filename)
-                    except Exception:
-                        self.log.debug("An error occurred whlie trying to populate working directory %s for %s with %s (%s)" % (wd, self.key, doc.key, filename))
-
-        # Return wd so command knows where to run
-        return wd
 
 class Rst2XmlFilter(SubprocessFilter):
     """

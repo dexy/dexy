@@ -42,10 +42,7 @@ class CasperJsSvg2PdfFilter(SubprocessFilter):
         wd = self.artifact.working_dir()
         if not os.path.exists(wd):
             for doc, filename in self.artifact.setup_wd(self.input_filename()):
-                try:
-                    doc.output().output_to_file(filename)
-                except Exception:
-                    self.log.debug("An error occurred whlie trying to populate working directory %s for %s with %s (%s)" % (wd, self.key, doc.key, filename))
+                self.write_to_wd(wd, doc, filename)
 
         width = self.args().get('width', 200)
         height = self.args().get('height', 200)
@@ -114,10 +111,7 @@ class PhantomJsRenderSubprocessFilter(SubprocessFilter):
         wd = self.artifact.working_dir()
         if not os.path.exists(wd):
             for doc, filename in self.artifact.setup_wd(self.input_filename()):
-                try:
-                    doc.output().output_to_file(filename)
-                except Exception:
-                    self.log.debug("An error occurred whlie trying to populate working directory %s for %s with %s (%s)" % (wd, self.key, doc.key, filename))
+                self.write_to_wd(wd, doc, filename)
 
         width = self.arg_value('width', self.DEFAULT_WIDTH)
         height = self.arg_value('height', self.DEFAULT_HEIGHT)

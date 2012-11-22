@@ -33,6 +33,31 @@ class Doc(dexy.task.Task):
     def websafe_key(self):
         return self.key.replace("/", "--")
 
+    def names_to_docs(self):
+        """
+        Returns a dict whose keys are canonical names, whose values are lists
+        of the docs that generate that name as their canonical output name.
+        """
+        names_to_docs = {}
+        for doc in self.completed_child_docs():
+            doc_name = doc.output().name
+            if names_to_docs.has_key(doc_name):
+                names_to_docs[doc_name].append(doc)
+            else:
+                names_to_docs[doc_name] = [doc]
+        return names_to_docs
+
+    def conflicts(self):
+        """
+        List of inputs to document where more than 1 doc generates same
+        canonical filename.
+        """
+        conflicts = {}
+        for k, v in self.names_to_docs().iteritems():
+            if len(v) > 1:
+                conflicts[k] = v
+        return conflicts
+
     def is_index_page(self):
         fn = self.output().name
         # TODO index.json only if htmlsections in doc key..
