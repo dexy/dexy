@@ -233,6 +233,9 @@ class SubprocessFilter(Filter):
                                     stderr=stderr,
                                     env=env)
 
+        if input_text:
+            self.log.debug("About to send input_text '%s'" % input_text)
+
         stdout, stderr = proc.communicate(input_text)
         self.log.debug(u"stdout is '%s'" % stdout.decode('utf-8'))
         self.log.debug(u"stderr is '%s'" % stderr.decode('utf-8'))
@@ -307,6 +310,35 @@ class SubprocessCompileFilter(SubprocessFilter):
         if self.do_add_new_files():
             self.log.debug("adding new files found in %s for %s" % (self.artifact.tmp_dir(), self.artifact.key))
             self.add_new_files()
+
+class SubprocessInputFilter(SubprocessFilter):
+    ALIASES = ['subprocessinputfilter']
+    CHECK_RETURN_CODE = False
+    WRITE_STDERR_TO_STDOUT = False
+    OUTPUT_DATA_TYPE = 'sectioned'
+
+    def process(self):
+        command = self.command_string()
+
+        inputs = self.artifact.doc.completed_child_docs()
+
+        output = OrderedDict()
+
+        if len(inputs) == 1:
+            doc = inputs[0]
+            for section_name, section_text in doc.output().as_sectioned().iteritems():
+                proc, stdout = self.run_command(command, self.setup_env(), section_text)
+                if self.CHECK_RETURN_CODE:
+                    self.handle_subprocess_proc_return(command, proc.returncode, stdout)
+                output[section_name] = stdout
+        else:
+            for doc in inputs:
+                proc, stdout = self.run_command(command, self.setup_env(), doc.output().as_text())
+                if self.CHECK_RETURN_CODE:
+                    self.handle_subprocess_proc_return(command, proc.returncode, stdout)
+                output[doc.key] = stdout
+
+        self.output().set_data(output)
 
 class SubprocessCompileInputFilter(SubprocessCompileFilter):
     ALIASES = ['subprocesscompileinputfilter']

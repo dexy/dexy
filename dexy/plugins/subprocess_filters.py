@@ -1,9 +1,16 @@
 from dexy.common import OrderedDict
 from dexy.plugins.process_filters import SubprocessFilter
+from dexy.plugins.process_filters import SubprocessInputFilter
 import dexy.exceptions
 import json
 import os
 import shutil
+
+class PythonInput(SubprocessInputFilter):
+    EXECUTABLE = 'python'
+    ALIASES = ['pyin']
+    VERSION_COMMAND = 'python --version'
+    OUTPUT_EXTENSIONS = ['.txt']
 
 class LyxFilter(SubprocessFilter):
     """

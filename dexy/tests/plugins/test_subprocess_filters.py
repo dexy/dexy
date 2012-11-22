@@ -7,6 +7,32 @@ from dexy.doc import Doc
 import os
 import shutil
 
+PYIN_CONTENTS = """import sys
+i = 0
+while True:
+    i += 1
+    line = sys.stdin.readline()
+    if not line:
+        break
+    print "line %s has %s chars" % (i, len(line))
+"""
+
+def test_python_input():
+    with wrap() as wrapper:
+        doc = Doc("hello.py|pyin",
+                Doc("input.in",
+                    contents="here is some input\nmore",
+                    wrapper=wrapper
+                    ),
+                contents=PYIN_CONTENTS,
+                wrapper=wrapper)
+        wrapper.run_docs(doc)
+
+        assert doc.output().as_text() == """\
+line 1 has 19 chars
+line 2 has 4 chars
+"""
+
 def test_pandoc_filter_odt():
     with wrap() as wrapper:
         doc = Doc("hello.md|pandoc",
