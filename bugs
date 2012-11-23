@@ -1,6 +1,7 @@
 [feature] allow having 'relative canonical name' which preserves the directory but changes document base name | id:019043fb42d86fd02a7ddfe9f5db187ccd594b5c
 [filter] update xxml filter | id:0869b2e7441930e6678100c050b69b6530c5336d
 [issue] if you forget to add hyphens to make single child doc into a list, yaml parser tries to iterate over string | id:0af99c8a441b5f27a4140d0de91f0d0a6d27ad01
+[feature] allow setting parameters somewhere which can be used within documents and for generating canonical filenames and reporter directory names | id:0b0a8189a1428cd6f8269ff8e1649d56e1e2e360
 [feature] have method for getting JSON dict into env for another filter | id:1012845dcb49a8e36f5f1361338835482eacfba4
 [feature] implement is_active method for templates and list dependencies that need to be installed | id:1e5d9d273c8db7d4c38d85b76442f0d2ae7dd637
 [feature] add javascript search widget helper to dexy for searching generated content, e.g. http://www.tipue.com/search/demo/ | id:205430dabd1a07653925609b005c8e3e1a0ee4d0
@@ -13,6 +14,7 @@
 [feature] dump dexy env into working dir so easy to troubleshoot | id:3c03b3aadc4b3e799be0b4da8022dc1b56f7bc68
 [feature] make it possible to pass unordered mappings to bundle docs so siblings don't depend on each other | id:425b356f06accb394eb0a84fe6d9ed41ec5cbe17
 [feature] s3 uploader reporter | id:439932c2c272d6b590792d40179c4f75b140e7da
+[perf] add timing for running reporters | id:45629c726d242ef858eb01bada1f9d1c49b16894
 [todo] update custom search engine | id:460ebbbe3e5ca7011eff6a19365cdcef2430e3bf
 [feature] add sqlite3 filter which takes .sqlite file as main input and scripts as extra inputs | id:48e75022ebcf40eb9ca7716ad3b45bf736705451
 [issue] test jinja filters, e.g. report that indent(4) does not work on *.py|py output | id:4a7939681b6eaec5edf4abc063583a7de654678d
@@ -32,6 +34,8 @@ test every filter for, if error occurs, file is not left in cache | id:64e43af4a
 [feature] figure out how to allow extra config for plugins. maybe don't white list things in dexy.conf files. | id:74a6bc572cf4a7ca00c3af63fdc9824a8be52e04
 [feature] missing plugins should detect which package they are avaliable in and suggest installing that | id:7e19102f14c4521e4a3d0bef98ba4e630e92594b
 [feature] use casperjs to output location of element want an arrow to, then use image magick to point to that element | id:7f00fd06d8cf8317a2538417d37ae74971f5423f
+[perf] jinja should not need to create a working dir | id:86f3f99ccfd4b9f5f26e23c9d543848545f7d3bb
+[feature] implement support for remote files | id:89d523dfcf3604864658e494f0bc367c8f801cfd
 [feature] think about wrapping navigation.directories [Doc, {}] structure in a class, or simplifying it, do we actually need Doc instance? | id:8dd035c546aa33b430378253c12827fd71e142ed
 [docs] make a package which has examples of all the types of plugins | id:92619a4d256480ae116121e1a8e37681abc6883a
 [filter] publish dexy blogging filters | id:96c2017386d980b79c5956a0016c957093c81766
@@ -39,10 +43,12 @@ test every filter for, if error occurs, file is not left in cache | id:64e43af4a
 [todo] add more tests for unicode support | id:9d71bbceb819a41ee352f07381de6b235e3c49bb
 [issue] make sure all exceptions are handled in user-friendly way | id:9f6b58cc32e7d3651dfa86c1cb25abb8db54d048
 [docs] write example/template for cucumber + rspec | id:a05179706a2217ed59e9eb89db9d71b7bd4b9a80
+[feature] write filter where pexpect or a pseudoterminal runs a python script and then additional files are inputs to that script | id:abcec1ed3ce1c949ecdf15943474362597c7c46d
 [feature] add winpexpect support https://bitbucket.org/geertj/winpexpect/wiki/Home | id:b7590f29225431071a22bc72520ebfad0ab6afc6
 [feature] standard way to give feedback on what packages need to be installed to use a filter | id:bce8eeb2b2d39665a51da781b5e4fa0de83a0ba9
 [feature] have auto-tab-completion for dexy gen (and other dexy commands) | id:be551899ac9a205c6a9acd19a4b979c5a4f42bbd
 self.ast.add_task_info(self.join_dir(directory, task_key), **task_kwargs) TypeError: add_task_info() keywords must be strings | id:c2a6b03f190dfb2b4aa91f8af8d477a9bc3401dc
+[feature] run the RunReporter even when an exception has occurred, add a section with exception information | id:c3e3551172f65f62fcf24ca11e8b8e89b97ab984
 [docs] example of combining rst-generated latex files into a book | id:c43af78776eb972bcaf6e008ea9144fc0f3067ac
 [feature] think about standard way of documenting plugins | id:c8b5e4e98f05cf928a19c00c319cbf7bcad7622c
 [issue] investigate whether jinja doesn't raise an exception when error occurs in macro | id:d3f18c8fbeaee6a1e9b272fc48f6051999e69bc2
@@ -50,6 +56,7 @@ self.ast.add_task_info(self.join_dir(directory, task_key), **task_kwargs) TypeEr
 [feature] create a grep interface, use this for dexy viewer app | id:dc66fa59797564452b1ac977988b11c44df7a069
 [docs] figure out how to generate README files in situ | id:dcffbe8090583d908bc81ac26ab205eabe47cb7c
 [feature] make a data url filter which embeds any referenced images as data urls http://stackoverflow.com/questions/6375942/how-do-you-base-64-encode-a-png-image-for-use-in-a-data-uri-in-a-css-file http://bitworking.org/news/Sparklines_in_data_URIs_in_Python | id:e3177b0dfd3d0de73f98cf3c40684d2242db98ba
+[feature] implement the --directory option to run just descendants of a single path | id:e381d2a6fbfede97753cbc4169a19f34b3bc093a
 [feature] add a workspaces feature to help for GUI apps that need includes in relative locations | id:e39a9deab5765d282a88b976011a574bd186daee
 [filter] http://gael-varoquaux.info/computers/pyreport/ | id:e44dab06b34c89bb22f55b245831b9e608612933
 [feature] make WebsiteReporter throw UserFeedback exceptions, add tests for common exceptions | id:e66c78e478570d1bc782003831d87e725ec8733e

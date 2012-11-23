@@ -26,8 +26,8 @@ class Artifact(dexy.task.Task):
             if not hasattr(child, 'hashstring'):
                 args = (child.key_with_class(), self.key_with_class())
                 msg = s("""Doc %s has not been set up yet, and
-                it's needed by %s.  This is usually caused by a circular
-                dependency or because child doc is excluded from target.""") % args
+                it's needed by %s.  This might be caused by a circular
+                dependency.""") % args
                 raise dexy.exceptions.UserFeedback(msg)
 
             child_hashes.append("%s: %s" % (child.key_with_class(), child.hashstring))
@@ -67,15 +67,20 @@ class Artifact(dexy.task.Task):
 
         for doc in self.doc.setup_child_docs():
             if doc.state == 'complete' or len(doc.filters) == 0:
-                # Figure out path to write this child doc.
-                filename = os.path.join(tmp_dir, doc.output().name)
-                parent_dir = os.path.dirname(filename)
+                import re
+                exclude_wd = self.args.get('exclude_wd')
+                if exclude_wd and re.search(exclude_wd, doc.key):
+                    self.log.debug("not saving '%s' to wd for '%s' because matches exclude_wd pattern '%s'" % (doc.key, self.key, exclude_wd))
+                else:
+                    # Figure out path to write this child doc.
+                    filename = os.path.join(tmp_dir, doc.output().name)
+                    parent_dir = os.path.dirname(filename)
 
-                # Ensure all parent directories exist.
-                if not os.path.exists(parent_dir):
-                    os.makedirs(parent_dir)
+                    # Ensure all parent directories exist.
+                    if not os.path.exists(parent_dir):
+                        os.makedirs(parent_dir)
 
-                yield(doc, filename)
+                    yield(doc, filename)
 
         parent_dir = self.working_dir()
         input_filepath = os.path.join(parent_dir, input_filename)
@@ -233,13 +238,13 @@ class FilterArtifact(Artifact):
         self.metadata.dexy_version = DEXY_VERSION
 
         # filter source code
-        sources = []
-        klass = self.filter_class
-        while klass != dexy.filter.Filter:
-            sources.append(dexy.filter.Filter.source[klass.__name__])
-            klass = klass.__base__
-        sources.append(dexy.filter.Filter.source[klass.__name__])
-        self.metadata.filter_source = "\n".join(sources)
+#        sources = []
+#        klass = self.filter_class
+#        while klass != dexy.filter.Filter:
+#            sources.append(dexy.filter.Filter.source[klass.__name__])
+#            klass = klass.__base__
+#        sources.append(dexy.filter.Filter.source[klass.__name__])
+#        self.metadata.filter_source = "\n".join(sources)
 
         if hasattr(self.filter_class, 'version'):
             version = self.filter_class.version()

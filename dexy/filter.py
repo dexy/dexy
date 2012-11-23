@@ -110,22 +110,10 @@ class Filter:
 
     def setup_wd(self, populate=True):
         wd = self.artifact.working_dir()
+        self.log.debug(os.path.exists(wd))
         if not os.path.exists(wd):
             for doc, filename in self.artifact.setup_wd(self.input_filename()):
-                if doc.output().name == self.output().name:
-                    self.log.debug("[setup_wd] skipping input '%s' as it conflicts with main output file" % doc.key)
-                elif doc.output().name in self.artifact.doc.conflicts():
-                    self.log.debug("[setup_wd] input '%s' is in conflicts list" % doc.key)
-
-                    conflict_docs = self.artifact.doc.conflicts()[doc.output().name]
-                    self.log.debug("[setup_wd] docs generating conflicts are %s" % conflict_docs)
-
-                    if self.resolve_conflict(doc, conflict_docs):
-                        self.write_to_wd(wd, doc, filename)
-                    else:
-                        self.log.debug("[setup_wd] skipping %s as other docs with same name take priority" % doc.key)
-                else:
-                    self.write_to_wd(wd, doc, filename)
+                self.write_to_wd(wd, doc, filename)
 
         return wd
 
