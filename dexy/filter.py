@@ -5,6 +5,7 @@ import dexy.plugin
 import dexy.utils
 import os
 import posixpath
+import stat
 
 class FilterException(Exception):
     pass
@@ -111,18 +112,25 @@ class Filter:
     def setup_wd(self, populate=True):
         wd = self.artifact.working_dir()
         self.log.debug(os.path.exists(wd))
+        written_already = set()
         if not os.path.exists(wd):
             for doc, filename in self.artifact.setup_wd(self.input_filename()):
-                self.write_to_wd(wd, doc, filename)
+                wa = filename in written_already
+                self.write_to_wd(wd, doc, filename, wa)
+                written_already.add(filename)
 
         return wd
 
-    def write_to_wd(self, wd, doc, filename):
+    def write_to_wd(self, wd, doc, filename, wa=False):
         try:
-            doc.output().output_to_file(filename)
+            if wa:
+                os.remove(filename)
+            os.link(doc.output().storage.data_file(), filename)
+            os.chmod(filename, stat.S_IREAD)
         except Exception as e:
-            self.log.debug("error occurred whlie trying to populate working directory %s for %s with %s (%s)" % (wd, self.key, doc.key, filename))
-            self.log.debug(e.message)
+            args = (e.__class__.__name, wd, self.artifact.key, doc.key, filename)
+            self.log.debug("%s error occurred whlie trying to populate working directory %s for %s with %s (%s)" % args)
+            self.log.debug(str(e))
 
     def resolve_conflict(self, doc, conflict_docs):
         """
