@@ -232,7 +232,6 @@ class Inputs(TemplatePlugin):
             for ref in task.output_data.relative_refs(self.filter_instance.output().name):
                 self.map_relative_refs[ref] = task.output_data
 
-        self.log.debug("relative refs are %s" % sorted(self.map_relative_refs))
         return {
             'a' : self.a,
             'd' : D(self.filter_instance.artifact, self.map_relative_refs),

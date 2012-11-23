@@ -5,6 +5,7 @@ import dexy.task
 import fnmatch
 import os
 import posixpath
+import re
 
 class Doc(dexy.task.Task):
     ALIASES = ['doc']
@@ -188,7 +189,6 @@ class PatternDoc(dexy.task.Task):
 
             if fnmatch.fnmatch(filepath, self.file_pattern):
                 except_p = self.args.get('except')
-                import re
                 if except_p and re.search(except_p, filepath):
                     self.log.debug("skipping file '%s' because it matches except '%s'" % (filepath, except_p))
                 else:
