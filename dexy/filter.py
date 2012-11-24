@@ -111,9 +111,10 @@ class Filter:
 
     def setup_wd(self, populate=True):
         wd = self.artifact.working_dir()
-        self.log.debug(os.path.exists(wd))
+        wd_exists = os.path.exists(wd)
+        self.log.debug("setting up wd for %s. exists already: %s" % (self.artifact.key, wd))
         written_already = set()
-        if not os.path.exists(wd):
+        if not wd_exists:
             for doc, filename in self.artifact.setup_wd(self.input_filename()):
                 wa = filename in written_already
                 self.write_to_wd(wd, doc, filename, wa)
@@ -123,10 +124,7 @@ class Filter:
 
     def write_to_wd(self, wd, doc, filename, wa=False):
         try:
-            if wa:
-                os.remove(filename)
-            os.link(doc.output().storage.data_file(), filename)
-            os.chmod(filename, stat.S_IREAD)
+            doc.output().output_to_file(filename)
         except Exception as e:
             args = (e.__class__.__name, wd, self.artifact.key, doc.key, filename)
             self.log.debug("%s error occurred whlie trying to populate working directory %s for %s with %s (%s)" % args)

@@ -7,6 +7,7 @@ import dexy.reporter
 import logging
 import logging.handlers
 import os
+import platform
 import shutil
 import time
 
@@ -57,7 +58,16 @@ class Wrapper(object):
         self.tasks = OrderedDict()
         self.state = None
 
+        self.platform_system = platform.system()
+
         self.notifier = Notify(self)
+
+    def is_linux(self):
+        if self.platform_system == 'Linux':
+            return True
+        else:
+            # TODO whitelist possible other values...
+            return False
 
     def tasks_by_elapsed(self, n=10):
         return sorted(self.tasks.values(), key=lambda task: hasattr(task, 'doc') and task.elapsed or None, reverse=True)[0:n]
