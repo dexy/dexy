@@ -70,8 +70,6 @@ class IdioFilter(PygmentsFilter):
                 formatter.linenostart = lineno
             elif hasattr(formatter, 'line_number_start'):
                 formatter.line_number_start = lineno
-            else:
-                raise Exception("Don't know how to set line number start for %s" % formatter.__class__.__name__)
 
             formatted_lines = composer.format(lines, lexer, formatter)
 
