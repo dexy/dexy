@@ -24,7 +24,7 @@ MOD = sys.modules[__name__]
 PROG = 'dexy'
 S = "   "
 
-def parse_and_run_command(argv, module, default_command):
+def parse_and_run_cmd(argv, module, default_command):
     try:
         args.parse_and_run_command(argv, module, default_command)
     except dexy.exceptions.UserFeedback as e:
@@ -47,7 +47,7 @@ def run():
         warnings.filterwarnings("ignore",category=Warning)
 
     if len(sys.argv) == 1 or (sys.argv[1] in args.available_commands(MOD)) or sys.argv[1].startswith("-"):
-        parse_and_run_command(sys.argv[1:], MOD, default_command=DEFAULT_COMMAND)
+        parse_and_run_cmd(sys.argv[1:], MOD, default_command=DEFAULT_COMMAND)
 
     else:
         if ":" in sys.argv[1]:
@@ -69,7 +69,7 @@ def run():
         else:
             default_command = command_class.NAMESPACE
 
-        parse_and_run_command([subcommand] + sys.argv[2:], mod, default_command=default_command)
+        parse_and_run_cmd([subcommand] + sys.argv[2:], mod, default_command=default_command)
 
 def config_args(modargs):
     cliargs = modargs.get("__cli_options", {})
@@ -291,7 +291,7 @@ def cleanup_command(
         __cli_options=False,
         artifactsdir=D['artifacts_dir'], # location of directory in which to store artifacts
         logdir=D['log_dir'], # location of directory in which to store logs
-        reports=False # Also remove report generated dirs
+        reports=True # Also remove report generated dirs
         ):
     """
     Remove the artifacts and logs directories.
@@ -661,3 +661,46 @@ def serve_command(
     httpd = SocketServer.TCPServer(("", port), Handler)
     print "serving contents of %s on http://localhost:%s" % (directory, port)
     httpd.serve_forever()
+
+INFO_ATTRS = [
+        'name',
+        'ext',
+        'key',
+        'hashstring',
+        'storage_type'
+        ]
+INFO_METHODS = [
+        'basename',
+        'filesize',
+        'baserootname',
+        'parent_dir',
+        'long_name',
+        'web_safe_document_key'
+        ]
+STORAGE_METHODS = [
+        'data_file',
+        'data_file_exists'
+        ]
+def info_command(
+        __cli_options=False,
+        k=None, # The doc key to query. Use dexy grep to search doc keys.
+        artifactsdir=D['artifacts_dir'], # location of directory in which to store artifacts
+        logdir=D['log_dir'] # location of directory in which to store logs
+        ):
+    wrapper = init_wrapper(locals())
+    wrapper.setup_read()
+    data = wrapper.db.find_data_by_doc_key(k)
+
+    print k
+
+    print "  attributes:"
+    for fname in sorted(INFO_ATTRS):
+        print "    %s: %s" % (fname, getattr(data, fname))
+
+    print "  methods:"
+    for fname in sorted(INFO_METHODS):
+        print "    %s: %s" % (fname, getattr(data, fname)())
+
+    print "  storage methods:"
+    for fname in sorted(STORAGE_METHODS):
+        print "    %s: %s" % (fname, getattr(data.storage, fname)())

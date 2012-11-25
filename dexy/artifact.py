@@ -22,7 +22,7 @@ class Artifact(dexy.task.Task):
 
     def append_child_hashstrings(self):
         child_hashes = []
-        for child in self.doc.deps.values():
+        for child in self.doc.intersect_children_deps():
             if not hasattr(child, 'hashstring'):
                 args = (child.key_with_class(), self.key_with_class())
                 msg = s("""Doc %s has not been set up yet, and
@@ -36,7 +36,6 @@ class Artifact(dexy.task.Task):
 
     def set_hashstring(self):
         self.hashstring = self.metadata.compute_hash()
-        self.log.debug("Setting hashstring for %s to %s" % (self.key, self.hashstring))
 
     def tmp_dir(self):
         return os.path.join(self.wrapper.artifacts_dir, self.hashstring)
@@ -225,9 +224,6 @@ class FilterArtifact(Artifact):
         self.metadata.next_filter_name = self.next_filter_name
         self.metadata.prior_hash = self.prior.hashstring
 
-        self.metadata.pre_method_source = inspect.getsource(self.pre)
-        self.metadata.post_method_source = inspect.getsource(self.post)
-
         strargs = []
         for k in sorted(self.args):
             if not k in ['wrapper']: # excepted items don't affect outcome
@@ -236,15 +232,6 @@ class FilterArtifact(Artifact):
         self.metadata.argstr = ", ".join(strargs)
 
         self.metadata.dexy_version = DEXY_VERSION
-
-        # filter source code
-        sources = []
-        klass = self.filter_class
-        while klass != dexy.filter.Filter:
-            sources.append(dexy.filter.Filter.source[klass.__name__])
-            klass = klass.__base__
-        sources.append(dexy.filter.Filter.source[klass.__name__])
-        self.metadata.filter_source = "\n".join(sources)
 
         if hasattr(self.filter_class, 'version'):
             version = self.filter_class.version()

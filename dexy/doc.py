@@ -34,6 +34,11 @@ class Doc(dexy.task.Task):
     def websafe_key(self):
         return self.key.replace("/", "--")
 
+    def intersect_children_deps(self):
+        children_deps = list(set(self.children).intersection(self.deps.values()))
+        import operator
+        return sorted(children_deps, key=operator.attrgetter('key_with_class'))
+
     def names_to_docs(self):
         """
         Returns a dict whose keys are canonical names, whose values are lists
@@ -182,6 +187,10 @@ class PatternDoc(dexy.task.Task):
         self.file_pattern = self.key.split("|")[0]
         self.filter_aliases = self.key.split("|")[1:]
 
+        import copy
+        orig_doc_children = copy.copy(self.children)
+        doc_children = None
+
         recurse = self.args.get('recurse', True)
         for dirpath, filename in self.wrapper.walk(".", recurse):
             raw_filepath = os.path.join(dirpath, filename)
@@ -206,10 +215,10 @@ class PatternDoc(dexy.task.Task):
                         else:
                             doc_children = []
                         del doc_args['depends']
-                    else:
-                        doc_children = self.children
 
                     self.log.debug("creating child of patterndoc %s: %s" % (self.key, doc_key))
+                    if not doc_children:
+                        doc_children=orig_doc_children
                     doc = Doc(doc_key, *doc_children, **doc_args)
                     self.children.append(doc)
                     doc.populate()

@@ -112,9 +112,12 @@ class SubprocessFilter(Filter):
     def ignore_nonzero_exit(self):
         return self.artifact.wrapper.ignore_nonzero_exit
 
+    def clear_cache(self):
+        self.output().clear_cache()
+
     def handle_subprocess_proc_return(self, command, exitcode, stderr):
         if exitcode is None:
-            raise Exception("no return code, proc not finished!")
+            raise dexy.exceptions.InternalDexyProblem("no return code, proc not finished!")
         elif exitcode != 0 and self.CHECK_RETURN_CODE:
             if self.ignore_nonzero_exit():
                 self.artifact.log.warn("Nonzero exit status %s" % exitcode)
@@ -123,6 +126,7 @@ class SubprocessFilter(Filter):
                 err_msg = "The command '%s' for %s exited with nonzero exit status %s." % (command, self.artifact.key, exitcode)
                 if stderr:
                     err_msg += " Here is stderr:\n%s" % stderr
+                self.output().clear_cache()
                 raise dexy.exceptions.UserFeedback(err_msg)
 
     def setup_timeout(self):

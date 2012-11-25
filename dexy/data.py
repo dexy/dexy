@@ -18,15 +18,14 @@ class Data:
         return True
 
     @classmethod
-    def retrieve(klass, key, ext, data_type, hashstring, storage_type, **kwargs):
+    def retrieve(klass, data_type, key, ext, hashstring, args, wrapper, storage_type):
         """
         Method to retrieve a Data object based on info stored in database.
 
         Optional kwags are passed to a RunParams instance.
         """
-        wrapper = dexy.wrapper.Wrapper(**kwargs)
         data_class = klass.aliases[data_type]
-        return data_class(key, ext, hashstring, wrapper, storage_type)
+        return data_class(key, ext, hashstring, args, wrapper, storage_type)
 
     @classmethod
     def storage_class_alias(klass, file_ext):
@@ -165,6 +164,10 @@ class GenericData(Data):
 
     def clear_data(self):
         self._data = None
+
+    def clear_cache(self):
+        if os.path.exists(self.storage.data_file()):
+            os.remove(self.storage.data_file())
 
     def output_to_file(self, filepath):
         """

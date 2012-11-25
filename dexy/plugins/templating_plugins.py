@@ -85,9 +85,9 @@ class PythonBuiltins(TemplatePlugin):
     ALIASES = ['builtins']
     # Intended to be all builtins that make sense to run within a document.
     PYTHON_BUILTINS = [abs, all, any, bin, bool, bytearray, callable, chr,
-        cmp, complex, dict, dir, divmod, enumerate, filter, float, format,
-        hex, id, int, isinstance, issubclass, iter, len, list, long, map, hasattr,
-        max, min, oct, ord, pow, range, reduce, repr, reversed, round,
+        cmp, complex, dict, dir, divmod, enumerate, filter, float, format, hex,
+        id, int, isinstance, issubclass, iter, len, list, locals, long, map,
+        hasattr, max, min, oct, ord, pow, range, reduce, repr, reversed, round,
         set, slice, sorted, str, sum, tuple, xrange, unicode, zip]
 
     def run(self):

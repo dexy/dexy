@@ -7,6 +7,7 @@
 [feature] add javascript search widget helper to dexy for searching generated content, e.g. http://www.tipue.com/search/demo/ | id:205430dabd1a07653925609b005c8e3e1a0ee4d0
 [feature] warning or other indication when 'canonical name' is in different directory as original document name | id:20b1be4d8d8b80debc8a66e81c28af2cfe37d0a2
 [feature] add template arg to rst2html and other rst handlers | id:241f612602d54ae078579720d74e1f931561528a
+[feature] WebsiteReporter have way of making collection of docs and navigation between elements (next, prev, up) | id:2928f96220caea5a1d55dc4ad706b84a9895f743
 [feature] how to generate class inheritance diagram for pydoc filter? | id:292ef032418f240c1c28be0a0f8bfe4c95fc76d7
 [issue] fix issue if bundle in docs.yaml is given same name as a top level directory in the project | id:2f11a44a222435efdf9612035ae309ef7bade12a
 [feature] add html canvas element to whole page, draw on that for annotation. or add svg elements + position on top. | id:36a3dbd3c6544e7805bff0b8e1dafcad0393c6d2
@@ -53,6 +54,7 @@ self.ast.add_task_info(self.join_dir(directory, task_key), **task_kwargs) TypeEr
 [feature] think about standard way of documenting plugins | id:c8b5e4e98f05cf928a19c00c319cbf7bcad7622c
 [issue] investigate whether jinja doesn't raise an exception when error occurs in macro | id:d3f18c8fbeaee6a1e9b272fc48f6051999e69bc2
 [feature] make decorator to skip tests that require internet if no internet available | id:db01a7088bc471ec8e09480c2941647713d8afd7
+[feature] have pexpect be able to switch modes to handle scripts which launch interactive shells (e.g. 'sqlite3') | id:dc0f8529d60924d56ac174282206ab7cd74396c4
 [feature] create a grep interface, use this for dexy viewer app | id:dc66fa59797564452b1ac977988b11c44df7a069
 [docs] figure out how to generate README files in situ | id:dcffbe8090583d908bc81ac26ab205eabe47cb7c
 [feature] make a data url filter which embeds any referenced images as data urls http://stackoverflow.com/questions/6375942/how-do-you-base-64-encode-a-png-image-for-use-in-a-data-uri-in-a-css-file http://bitworking.org/news/Sparklines_in_data_URIs_in_Python | id:e3177b0dfd3d0de73f98cf3c40684d2242db98ba

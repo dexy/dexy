@@ -59,7 +59,11 @@ def test_c_filter():
 def test_cfussy_filter():
     assert_output('cfussy', C_FUSSY_HELLO_WORLD, "HELLO, world\n", ext=".c")
     try:
-        assert_output('cfussy', C_HELLO_WORLD, "HELLO, world\n", ext=".c")
+        with wrap() as wrapper:
+            doc = Doc("hello.c|cfussy",
+                    contents=C_HELLO_WORLD,
+                    wrapper=wrapper)
+            wrapper.run_docs(doc)
         assert False, 'should raise error'
     except dexy.exceptions.UserFeedback:
         assert True

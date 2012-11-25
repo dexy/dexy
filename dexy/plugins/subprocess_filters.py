@@ -15,6 +15,8 @@ class PythonInput(SubprocessInputFilter):
 class CalibreFilter(SubprocessFilter):
     """
     Invokes ebook-convert command line tool (part of calibre) to generate various output formats (including .mobi for Kindle)
+
+    http://manual.calibre-ebook.com/cli/ebook-convert.html
     """
     EXECUTABLE = "ebook-convert"
     ALIASES = ['calibre', 'ebook']
