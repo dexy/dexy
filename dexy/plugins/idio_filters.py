@@ -20,7 +20,7 @@ class IdioFilter(PygmentsFilter):
 
     @classmethod
     def data_class_alias(klass, file_ext):
-        if file_ext in PygmentsFilter.MARKUP_OUTPUT_EXTENSIONS:
+        if file_ext in PygmentsFilter.MARKUP_OUTPUT_EXTENSIONS + [".txt"]:
             return 'sectioned'
         else:
             return 'generic'
