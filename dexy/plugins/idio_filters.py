@@ -20,7 +20,10 @@ class IdioFilter(PygmentsFilter):
 
     @classmethod
     def data_class_alias(klass, file_ext):
-        return 'sectioned'
+        if file_ext in PygmentsFilter.MARKUP_OUTPUT_EXTENSIONS:
+            return 'sectioned'
+        else:
+            return 'generic'
 
     def do_add_new_files(self):
         return self.ADD_NEW_FILES or self.args().get('add-new-files', False)
@@ -28,7 +31,6 @@ class IdioFilter(PygmentsFilter):
     def process(self):
         args = self.args().copy()
         lexer = self.create_lexer_instance(args)
-        formatter = self.create_formatter_instance(args)
 
         input_text = self.input().as_text()
         composer = Composer()
@@ -45,6 +47,7 @@ class IdioFilter(PygmentsFilter):
             raise dexy.exceptions.UserFeedback(msg)
 
         output_dict = OrderedDict()
+        all_lines = []
         lineno = 1
 
         add_new_docs = self.do_add_new_files()
@@ -52,6 +55,8 @@ class IdioFilter(PygmentsFilter):
         for i, s in enumerate(builder.sections):
             self.log.debug("In section no. %s name %s" % (i, s))
             lines = builder.statements[i]['lines']
+            all_lines.extend(lines)
+
             if len(lines) == 0:
                 next
             if not re.match("^\d+$", s):
@@ -59,7 +64,15 @@ class IdioFilter(PygmentsFilter):
                 # line, so account for this to keep line nos in sync.
                 lineno += 1
 
-            formatter.linenostart = lineno
+            formatter = self.create_formatter_instance(args)
+
+            if hasattr(formatter, 'linenostart'):
+                formatter.linenostart = lineno
+            elif hasattr(formatter, 'line_number_start'):
+                formatter.line_number_start = lineno
+            else:
+                raise Exception("Don't know how to set line number start for %s" % formatter.__class__.__name__)
+
             formatted_lines = composer.format(lines, lexer, formatter)
 
             if add_new_docs:
@@ -72,7 +85,12 @@ class IdioFilter(PygmentsFilter):
 
             lineno += len(lines)
 
-        self.output().set_data(output_dict)
+        if self.artifact.ext in self.IMAGE_OUTPUT_EXTENSIONS:
+            formatter = self.create_formatter_instance(args)
+            formatted_lines = composer.format(lines, lexer, formatter)
+            self.output().set_data(formatted_lines)
+        else:
+            self.output().set_data(output_dict)
 
 class IdioMultipleFormatsFilter(PygmentsFilter):
     """

@@ -152,7 +152,7 @@ Directory {{ k }}:
                 <h2>List of Documents</h2>
                 <div style="height:400px; overflow:auto;">
                 <ul>
-                    {% for doc in sorted(docs) %}
+                    {% for doc in sorted(docs, key=attrgetter('key')) %}
                     <li><a href="#{{ doc.websafe_key() }}">{{ doc }}</a></li>
                     {% endfor %}
                 </ul>

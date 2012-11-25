@@ -225,7 +225,7 @@ class SubprocessFilter(Filter):
         else:
             stderr = subprocess.PIPE
 
-        self.log.debug("About to run '%s' in '%s'" % (command, wd))
+        self.log.debug("about to run '%s' in '%s'" % (command, wd))
         proc = subprocess.Popen(command, shell=True,
                                     cwd=wd,
                                     stdin=stdin,
@@ -234,7 +234,7 @@ class SubprocessFilter(Filter):
                                     env=env)
 
         if input_text:
-            self.log.debug("About to send input_text '%s'" % input_text)
+            self.log.debug("about to send input_text '%s'" % input_text)
 
         stdout, stderr = proc.communicate(input_text)
         self.log.debug(u"stdout is '%s'" % stdout.decode('utf-8'))

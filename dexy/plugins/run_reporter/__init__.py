@@ -1,7 +1,8 @@
 from dexy.reporter import Reporter
-from jinja2 import FileSystemLoader
 from jinja2 import Environment
+from jinja2 import FileSystemLoader
 import datetime
+import operator
 import os
 import shutil
 
@@ -31,6 +32,7 @@ class RunReporter(Reporter):
         env_data['hasattr'] = hasattr
         env_data['dict'] = dict
         env_data['isinstance'] = isinstance
+        env_data['attrgetter'] = operator.attrgetter
 
         env_data['batch_id'] = wrapper.batch_id
         env_data['batch_info'] = wrapper.batch_info

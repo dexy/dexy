@@ -12,6 +12,26 @@ class PythonInput(SubprocessInputFilter):
     VERSION_COMMAND = 'python --version'
     OUTPUT_EXTENSIONS = ['.txt']
 
+class CalibreFilter(SubprocessFilter):
+    """
+    Invokes ebook-convert command line tool (part of calibre) to generate various output formats (including .mobi for Kindle)
+    """
+    EXECUTABLE = "ebook-convert"
+    ALIASES = ['calibre', 'ebook']
+    VERSION_COMMAND = "ebook-convert --version"
+    INPUT_EXTENSIONS = ['.epub', '.html']
+    OUTPUT_EXTENSIONS = ['.mobi']
+    ADD_NEW_FILES = False
+
+    def command_string(self):
+        args = {
+            'prog' : self.executable(),
+            'args' : self.command_line_args() or "",
+            'input_file' : self.input_filename(),
+            'output_file' : self.output_filename()
+        }
+        return "%(prog)s %(input_file)s %(output_file)s %(args)s" % args
+
 class LyxFilter(SubprocessFilter):
     """
     Invokes lyx on the command line. By default generates a latex file.

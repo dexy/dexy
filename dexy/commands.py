@@ -183,7 +183,7 @@ def dexy_command(
         ignore=D['ignore_nonzero_exit'], # whether to ignore nonzero exit status or raise an error - may not be supported by all filters
         logfile=D['log_file'], # name of log file
         logformat=D['log_format'], # format of log entries
-        loglevel=D['log_level'], # log level
+        loglevel=D['log_level'], # log level, valid options are DEBUG, INFO, WARN
         logdir=D['log_dir'], # location of directory in which to store logs
         nocache=D['dont_use_cache'], # whether to force artifacts to run even if there is a matching file in the cache
         profile=D['profile'], # whether to run with cProfile

@@ -238,13 +238,13 @@ class FilterArtifact(Artifact):
         self.metadata.dexy_version = DEXY_VERSION
 
         # filter source code
-#        sources = []
-#        klass = self.filter_class
-#        while klass != dexy.filter.Filter:
-#            sources.append(dexy.filter.Filter.source[klass.__name__])
-#            klass = klass.__base__
-#        sources.append(dexy.filter.Filter.source[klass.__name__])
-#        self.metadata.filter_source = "\n".join(sources)
+        sources = []
+        klass = self.filter_class
+        while klass != dexy.filter.Filter:
+            sources.append(dexy.filter.Filter.source[klass.__name__])
+            klass = klass.__base__
+        sources.append(dexy.filter.Filter.source[klass.__name__])
+        self.metadata.filter_source = "\n".join(sources)
 
         if hasattr(self.filter_class, 'version'):
             version = self.filter_class.version()
