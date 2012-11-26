@@ -7,6 +7,7 @@ class CasperJsSvg2PdfFilter(SubprocessFilter):
     Converts an SVG file to PDF by running it through casper js.
     # TODO convert this to phantomjs, no benefit to using casper here (js is not user facing) and more restrictive
     """
+    ADD_NEW_FILES = True
     ALIASES = ['svg2pdf']
     EXECUTABLE = 'casperjs'
     INPUT_EXTENSIONS = ['.svg']
@@ -61,6 +62,7 @@ class CasperJsStdoutFilter(SubprocessStdoutFilter):
     Runs scripts using casper js. Saves cookies.
     """
     ALIASES = ['casperjs']
+    ADD_NEW_FILES = True
     EXECUTABLE = 'casperjs'
     INPUT_EXTENSIONS = ['.js', '.txt']
     OUTPUT_EXTENSIONS = ['.txt']
@@ -80,6 +82,7 @@ class PhantomJsStdoutFilter(SubprocessStdoutFilter):
     """
     Runs scripts using phantom js.
     """
+    ADD_NEW_FILES = True
     ALIASES = ['phantomjs']
     EXECUTABLE = 'phantomjs'
     INPUT_EXTENSIONS = ['.js', '.txt']
@@ -92,6 +95,7 @@ class PhantomJsRenderSubprocessFilter(SubprocessFilter):
     Renders HTML to PNG/PDF using phantom.js. If the HTML relies on local
     assets such as CSS or image files, these should be specified as inputs.
     """
+    ADD_NEW_FILES = True
     ALIASES = ['phrender']
     EXECUTABLE = 'phantomjs'
     INPUT_EXTENSIONS = [".html", ".txt"]

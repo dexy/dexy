@@ -7,7 +7,7 @@ import platform
 import subprocess
 
 class SubprocessFilter(Filter):
-    ADD_NEW_FILES = True # whether to add new files by defaut
+    ADD_NEW_FILES = False # whether to add new files by defaut
     ALIASES = []
     CHECK_RETURN_CODE = True
     ENV = None
