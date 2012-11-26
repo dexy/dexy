@@ -186,7 +186,7 @@ def dexy_command(
         loglevel=D['log_level'], # log level, valid options are DEBUG, INFO, WARN
         logdir=D['log_dir'], # location of directory in which to store logs
         nocache=D['dont_use_cache'], # whether to force artifacts to run even if there is a matching file in the cache
-        profile=D['profile'], # whether to run with cProfile
+        profile=D['profile'], # whether to run with cProfile. Arg can be a boolean, in which case profile saved to 'dexy.prof', or a filename to save to.
         recurse=D['recurse'], # whether to recurse into subdirectories when running Dexy
         r=False, # whether to clear cache before running dexy
         reset=False, # whether to clear cache before running dexy
@@ -244,10 +244,16 @@ def dexy_command(
             wrapper.check_dexy_dirs()
             wrapper.setup_config()
             if profile:
+                if isinstance(profile, bool):
+                    profile_filename = 'dexy.prof'
+                else:
+                    profile_filename = profile
+
                 import cProfile
-                cProfile.runctx("wrapper.run()", None, locals(), "dexy.prof")
+                print "running dexy with cProfile, writing profile data to %s" % profile_filename
+                cProfile.runctx("wrapper.run()", None, locals(), profile_filename)
                 import pstats
-                s = pstats.Stats("dexy.prof")
+                s = pstats.Stats(profile_filename)
                 s.sort_stats("cumulative")
                 s.print_stats(25)
             else:
