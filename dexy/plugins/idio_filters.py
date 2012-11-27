@@ -74,7 +74,7 @@ class IdioFilter(PygmentsFilter):
             formatted_lines = composer.format(lines, lexer, formatter)
 
             if add_new_docs:
-                new_doc_name = "%s--%s%s" % (self.artifact.key.replace("|", "--"), k, self.artifact.ext)
+                new_doc_name = "%s--%s%s" % (self.artifact.key.replace("|", "--"), s, self.artifact.ext)
                 doc = self.add_doc(new_doc_name, formatted_lines)
 
             if not self.artifact.ext in self.IMAGE_OUTPUT_EXTENSIONS:
