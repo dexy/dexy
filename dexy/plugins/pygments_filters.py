@@ -166,13 +166,21 @@ class PygmentsFilter(DexyFilter):
             for k, v in args.iteritems():
                 formatter_args[str(k)] = v
 
-            formatter = get_formatter_for_filename(self.output().name, **formatter_args)
-
             if self.artifact.ext in self.IMAGE_OUTPUT_EXTENSIONS:
+                # Place each section into an image.
+                for k, v in input_dict.items():
+                    formatter = get_formatter_for_filename(self.output().name, **formatter_args)
+                    output_for_section = highlight(v.decode("utf-8"), lexer, formatter)
+                    self.add_doc("%s--%s%s" % (self.output().baserootname(), k, self.artifact.ext), output_for_section)
+
+                # Place entire contents into main file.
+                formatter = get_formatter_for_filename(self.output().name, **formatter_args)
+                self.artifact.doc.canon = True
                 with open(self.output_filepath(), 'wb') as f:
-                    f.write(highlight(self.input().data(), lexer, formatter))
+                    f.write(highlight(self.input().as_text(), lexer, formatter))
 
             else:
+                formatter = get_formatter_for_filename(self.output().name, **formatter_args)
                 output_dict = OrderedDict()
                 for k, v in input_dict.items():
                     output_dict[k] = highlight(v.decode("utf-8"), lexer, formatter)
