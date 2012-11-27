@@ -216,7 +216,11 @@ class FilterArtifact(Artifact):
                 doc_args = json.loads(row['args'])
                 doc = dexy.doc.Doc(row['doc_key'], **doc_args)
                 self.add_doc(doc)
-                assert doc.artifacts[0].hashstring == row['hashstring'], "Unexpected hashstring for %s" % doc.artifacts[0].key
+
+                new_calc_hashstring = doc.artifacts[0].hashstring
+                db_hashstring = row['hashstring']
+                msg = "unexpected calculated hashstring '%s' for %s, expected '%s'" % (new_calc_hashstring, db_hashstring, doc.artifacts[0].key)
+                assert new_calc_hashstring == db_hashstring, msg
 
     def set_metadata_hash(self):
         self.metadata.ext = self.ext
