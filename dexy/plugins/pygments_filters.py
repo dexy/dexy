@@ -171,7 +171,7 @@ class PygmentsFilter(DexyFilter):
                 for k, v in input_dict.items():
                     formatter = get_formatter_for_filename(self.output().name, **formatter_args)
                     output_for_section = highlight(v.decode("utf-8"), lexer, formatter)
-                    self.add_doc("%s--%s%s" % (self.output().baserootname(), k, self.artifact.ext), output_for_section)
+                    self.add_doc("%s--%s%s" % (self.output().basename(), k, self.artifact.ext), output_for_section)
 
                 # Place entire contents into main file.
                 formatter = get_formatter_for_filename(self.output().name, **formatter_args)
