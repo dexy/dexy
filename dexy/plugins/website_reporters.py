@@ -38,7 +38,7 @@ class WebsiteReporter(OutputReporter):
                 temp = temp[1][k]
             temp[0] = doc
 
-        for doc in self.wrapper.registered_docs():
+        for doc in self.wrapper.batch.docs():
             doc_dir = doc.output().parent_dir()
             if doc.is_index_page():
                 path_elements = os.path.split(doc_dir)
@@ -118,7 +118,7 @@ class WebsiteReporter(OutputReporter):
 
         self.create_reports_dir()
 
-        for doc in wrapper.registered_docs():
+        for doc in wrapper.batch.docs():
             self.log.debug("Processing doc %s" % doc.key)
             if doc.canon:
                 if doc.final_artifact.ext == ".html":
