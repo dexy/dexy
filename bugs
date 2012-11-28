@@ -9,7 +9,6 @@
 [feature] add template arg to rst2html and other rst handlers | id:241f612602d54ae078579720d74e1f931561528a
 [feature] WebsiteReporter have way of making collection of docs and navigation between elements (next, prev, up) | id:2928f96220caea5a1d55dc4ad706b84a9895f743
 [feature] how to generate class inheritance diagram for pydoc filter? | id:292ef032418f240c1c28be0a0f8bfe4c95fc76d7
-[issue] fix issue if bundle in docs.yaml is given same name as a top level directory in the project | id:2f11a44a222435efdf9612035ae309ef7bade12a
 [feature] add html canvas element to whole page, draw on that for annotation. or add svg elements + position on top. | id:36a3dbd3c6544e7805bff0b8e1dafcad0393c6d2
 [idea] how to cite code in scientific papers | id:36d5729d63e3da51009543f198b31ad26e917657
 [feature] dump dexy env into working dir so easy to troubleshoot | id:3c03b3aadc4b3e799be0b4da8022dc1b56f7bc68
@@ -25,6 +24,7 @@
 [issue] better feedback for named docs not being pattern docs, user should add an asterisk or specify exact path to file | id:58336d8495093b1d9574f02a2314845916bdb713
 [feature] finish implementing 'except' feature and test, clarify regex or fnmatch or both | id:5af09bc445c7790bf478bf7e576c53129daa46a5
 [feature] add a dexy plugins command to list pluginnable classes | id:61186f7dd456c9a4f69d9fce88d002640f0ed1ad
+[issue] raise exception if refer to a bundle doc which doesn't exist | id:62ff0c554848a23637c539a0d25b07960ef6abc3
 [issue] Make sure keys are unique, must have key + doc's key, issues arise with e.g. *.py and *.py|py in same project. | id:642cf20f163f834395ad847b9107477e76b9f251
 [issue] get UndefinedError: unicode object has no attribute 'blah' when idio is not correctly detected | id:646da510731a292ab94b7ba7f98a6b5f7d3d267d
 test every filter for, if error occurs, file is not left in cache | id:64e43af4a67e3b0a8ae2c3e16f921b50c5de2e21

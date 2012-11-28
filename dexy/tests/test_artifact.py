@@ -129,10 +129,13 @@ def test_parent_doc_hash():
         wrapper.setup_dexy_dirs()
         wrapper.run()
 
-        doc = wrapper.registered_docs()[0]
+        doc = wrapper.batch.tree[0]
         hashstring = doc.final_artifact.hashstring
 
-        wrapper.setup_run()
+        wrapper = Wrapper(*args)
+        wrapper.setup_db()
+        wrapper.setup_log()
+        wrapper.setup_batch()
         rows = wrapper.get_child_hashes_in_previous_batch(hashstring)
         assert len(rows) == 3
 
@@ -143,16 +146,16 @@ def test_parent_doc_hash_2():
         wrapper.setup_dexy_dirs()
         wrapper.run()
 
-        for doc in wrapper.registered_docs():
-            if doc.__class__.__name__ == 'FilterArtifact':
-                assert doc.source == 'generated'
+        for task in wrapper.batch.lookup_table.values():
+            if task.__class__.__name__ == 'FilterArtifact':
+                assert task.content_source == 'generated'
 
         wrapper = Wrapper(*args)
         wrapper.run()
 
-        for doc in wrapper.registered_docs():
-            if doc.__class__.__name__ == 'FilterArtifact':
-                assert doc.source == 'cached'
+        for task in wrapper.batch.lookup_table.values():
+            if task.__class__.__name__ == 'FilterArtifact':
+                assert task.content_source == 'cached'
 
 def test_bad_file_extension_exception():
     with wrap() as wrapper:

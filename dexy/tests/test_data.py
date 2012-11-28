@@ -23,13 +23,12 @@ def test_attempt_write_outside_project_root():
                 contents = "hello",
                 wrapper=wrapper)
 
-        wrapper.run_docs(doc)
-
         try:
+            wrapper.run_docs(doc)
             wrapper.report()
             assert False, 'should raise UserFeedback'
         except dexy.exceptions.UserFeedback as e:
-            assert 'Trying to write' in str(e)
+            assert 'trying to write' in str(e)
 
 def test_key_value_data():
     with wrap() as wrapper:

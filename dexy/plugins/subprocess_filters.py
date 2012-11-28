@@ -18,12 +18,13 @@ class CalibreFilter(SubprocessFilter):
 
     http://manual.calibre-ebook.com/cli/ebook-convert.html
     """
-    EXECUTABLE = "ebook-convert"
+    ADD_NEW_FILES = False
     ALIASES = ['calibre', 'ebook']
-    VERSION_COMMAND = "ebook-convert --version"
+    EXECUTABLE = "ebook-convert"
     INPUT_EXTENSIONS = ['.epub', '.html']
     OUTPUT_EXTENSIONS = ['.mobi']
-    ADD_NEW_FILES = False
+    PATH_EXTENSIONS = ['/Applications/calibre.app/Contents/MacOS']
+    VERSION_COMMAND = "ebook-convert --version"
 
     def command_string(self):
         args = {
@@ -275,6 +276,7 @@ class Rd2PdfFilter(SubprocessFilter):
 
 class RBatchFilter(SubprocessFilter):
     """Runs R code in batch mode."""
+    ADD_NEW_FILES = True
     ALIASES = ['rintbatch']
     EXECUTABLE = 'R CMD BATCH --quiet --no-timing'
     INPUT_EXTENSIONS = ['.txt', '.r', '.R']
@@ -282,6 +284,7 @@ class RBatchFilter(SubprocessFilter):
     VERSION_COMMAND = "R --version"
 
 class RIntBatchSectionsFilter(SubprocessFilter):
+    ADD_NEW_FILES = True
     ALIASES = ['rintmock']
     EXECUTABLE = 'R CMD BATCH --quiet --no-timing'
     INPUT_EXTENSIONS = ['.txt', '.r', '.R']
@@ -334,6 +337,7 @@ class RIntBatchSectionsFilter(SubprocessFilter):
 
 class ROutputBatchFilter(SubprocessFilter):
     """Runs R code in batch mode. Uses the --slave flag so doesn't echo commands, just returns output."""
+    ADD_NEW_FILES = True
     ALIASES = ['rout', 'routbatch']
     EXECUTABLE = 'R CMD BATCH --vanilla --quiet --slave --no-timing'
     INPUT_EXTENSIONS = ['.R', '.r', '.txt']

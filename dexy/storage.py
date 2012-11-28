@@ -17,7 +17,7 @@ class Storage:
     def check_location_is_in_project_dir(self, filepath):
         project_root = os.path.abspath(os.getcwd())
         if not project_root in os.path.abspath(filepath):
-            raise dexy.exceptions.UserFeedback("Trying to write '%s' outside of '%s'" % (filepath, project_root))
+            raise dexy.exceptions.UserFeedback("trying to write '%s' outside of '%s'" % (filepath, project_root))
 
     def __init__(self, hashstring, ext, wrapper):
         self.hashstring = hashstring
@@ -58,6 +58,17 @@ class GenericStorage(Storage):
     def read_data(self):
         with open(self.data_file(), "rb") as f:
             return f.read()
+
+    def copy_file(self, filepath):
+        """
+        If data file exists, copy file and return true. Otherwise return false.
+        """
+        if self.data_file_exists():
+            self.check_location_is_in_project_dir(filepath)
+            shutil.copyfile(self.data_file(), filepath)
+            return True
+        else:
+            return False
 
 # Sectioned Data
 import json

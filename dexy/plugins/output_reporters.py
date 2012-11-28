@@ -32,7 +32,7 @@ class OutputReporter(Reporter):
         self.keys_to_outfiles = []
 
         self.create_reports_dir()
-        for doc in wrapper.registered_docs():
+        for doc in wrapper.batch.docs():
             if doc.canon:
                 self.write_canonical_doc(doc)
 
@@ -47,7 +47,7 @@ class LongOutputReporter(Reporter):
         self.wrapper=wrapper
         self.set_log()
         self.create_reports_dir()
-        for doc in wrapper.registered_docs():
+        for doc in wrapper.batch.docs():
             fp = os.path.join(self.REPORTS_DIR, doc.output().long_name())
 
             parent_dir = os.path.dirname(fp)

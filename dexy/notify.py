@@ -1,11 +1,11 @@
 class Notify(object):
-    def __init__(self, wrapper):
-        self.wrapper = wrapper
+    def __init__(self, batch):
+        self.batch = batch
         self.channels = {}
 
     def subscribe(self, channel, callback):
         if not channel in self.channels:
-            self.wrapper.log.debug("Creating new notification channel '%s'" % channel)
+            self.batch.wrapper.log.debug("creating new notification channel '%s'" % channel)
             self.channels[channel] = []
 
         if not callback in self.channels[channel]:
@@ -13,7 +13,7 @@ class Notify(object):
 
     def notify(self, channel, arg):
         if not self.channels.get(channel):
-            self.wrapper.log.warn("Trying to pass message '%s' to nonexistent channel %s" % (arg, channel))
+            self.batch.wrapper.log.warn("trying to pass message '%s' to nonexistent channel %s" % (arg, channel))
         else:
             for callback in self.channels[channel]:
                 callback(arg)

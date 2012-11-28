@@ -66,7 +66,7 @@ class Task():
                 self.transition('setup')
 
             elif self.state == 'setup':
-                if self.wrapper.state == 'running':
+                if self.wrapper.batch.state == 'running':
                     self.transition('running')
                     yield self.pre
                     yield self
@@ -97,7 +97,7 @@ class Task():
             for s in siblings:
                 child.deps[s.key_with_class()] = s
 
-            at_top_level = self in self.wrapper.root_nodes
+            at_top_level = self in self.wrapper.batch.tree
             top_level_ordered = not hasattr(self.wrapper, 'ast') or self.wrapper.ast.root_nodes_ordered
             if top_level_ordered or not at_top_level:
                 siblings.append(child)
@@ -113,7 +113,7 @@ class Task():
 
         elif self.state == 'settingup':
             self.setup()
-            self.wrapper.register(self)
+            self.wrapper.batch.add_doc(self)
 
         elif self.state == 'running':
             self.wrapper.db.add_task_before_running(self)
@@ -145,7 +145,7 @@ class Task():
             return "%s:%s" % (self.__class__.__name__, self.key)
 
     def key_with_batch_id(self):
-        return "%s:%s:%s" % (self.wrapper.batch_id, self.__class__.__name__, self.key)
+        return "%s:%s:%s" % (self.wrapper.batch.batch_id, self.__class__.__name__, self.key)
 
     def completed_child_docs(self):
         return [c for c in self.deps.values() if isinstance(c, dexy.doc.Doc) and c.state == 'complete']

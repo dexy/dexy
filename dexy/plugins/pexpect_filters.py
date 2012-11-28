@@ -279,6 +279,7 @@ class IpythonPexpectReplFilter(PythonPexpectReplFilter):
         return klass.executable() and IPYTHON_AVAILABLE
 
 class RPexpectReplFilter(PexpectReplFilter):
+    ADD_NEW_FILES = True
     ALIASES = ['r', 'rint']
     CHECK_RETURN_CODE = False
     EXECUTABLE = "R --quiet --vanilla"

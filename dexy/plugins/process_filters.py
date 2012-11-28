@@ -12,6 +12,7 @@ class SubprocessFilter(Filter):
     CHECK_RETURN_CODE = True
     ENV = None
     INITIAL_TIMEOUT = None
+    PATH_EXTENSIONS = []
     REQUIRED_EXECUTABLES = []
     TIMEOUT = None
     VERSION_COMMAND = None
@@ -152,6 +153,11 @@ class SubprocessFilter(Filter):
                     if env_item.startswith("DEXY_"):
                         env[env_item] = env_value
 
+        # Add any path extensions to PATH
+        if self.PATH_EXTENSIONS:
+            paths = [env['PATH']] + self.PATH_EXTENSIONS
+            env['PATH'] = ":".join(paths)
+
         return env
 
     def do_add_new_files(self):
@@ -166,7 +172,7 @@ class SubprocessFilter(Filter):
                 relpath = os.path.relpath(filepath, wd)
                 ext = os.path.splitext(filepath)[1]
 
-                already_have_file = (relpath in self.artifact.wrapper.registered_doc_names())
+                already_have_file = (relpath in self.artifact.wrapper.batch.doc_names())
                 empty_file = (filesize == 0)
 
                 if hasattr(self.ADD_NEW_FILES, 'len'):

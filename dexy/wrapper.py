@@ -1,5 +1,6 @@
 from dexy.common import OrderedDict
-from dexy.notify import Notify
+from dexy.batch import Batch
+import dexy.batch
 import dexy.database
 import dexy.doc
 import dexy.parser
@@ -9,7 +10,6 @@ import logging.handlers
 import os
 import platform
 import shutil
-import time
 
 class Wrapper(object):
     """
@@ -50,17 +50,12 @@ class Wrapper(object):
             }
 
     def __init__(self, *args, **kwargs):
+        self.args = args
+
         self.initialize_attribute_defaults()
         self.update_attributes_from_kwargs(kwargs)
 
-        self.args = args
-        self.root_nodes = []
-        self.tasks = OrderedDict()
-        self.state = None
-
         self.platform_system = platform.system()
-
-        self.notifier = Notify(self)
 
     def is_linux(self):
         if self.platform_system == 'Linux':
@@ -68,9 +63,6 @@ class Wrapper(object):
         else:
             # TODO whitelist possible other values...
             return False
-
-    def tasks_by_elapsed(self, n=10):
-        return sorted(self.tasks.values(), key=lambda task: hasattr(task, 'doc') and task.elapsed or None, reverse=True)[0:n]
 
     def initialize_attribute_defaults(self):
         for name, value in self.DEFAULTS.iteritems():
@@ -88,80 +80,34 @@ class Wrapper(object):
     def log_path(self):
         return os.path.join(self.log_dir, self.log_file)
 
-    def ete_tree(self):
-        try:
-            from ete2 import Tree
-            t = Tree()
-        except ImportError:
-            return None
+    def setup_batch(self):
+        self.batch = Batch(self)
 
-        t.name = "%s" % self.batch_id
-
-        def add_children(doc, doc_node):
-            for child in doc.children:
-                child_node = doc_node.add_child(name=child.key_with_class())
-                add_children(child, child_node)
-
-        for doc in self.root_nodes:
-            doc_node = t.add_child(name=doc.key_with_class())
-            add_children(doc, doc_node)
-
-        return t
-
-    def run(self):
-        self.batch_info = {}
-        self.batch_info['start_time'] = time.time()
-
-        self.setup_run()
-        self.log.debug("batch id is %s" % self.batch_id)
+        if len(self.args) > 0:
+            self.batch.tree = self.docs_from_args()
+            self.batch.load_lookup_table()
+        else:
+            ast = self.load_doc_config()
+            self.batch.load_ast(ast)
 
         self.log.debug("running dexy with config:")
         for k in sorted(self.__dict__):
-            if not k in ('ast', 'args', 'db', 'log', 'root_nodes', 'tasks', 'notifier'):
+            if not k in ('ast', 'args', 'db', 'log', 'tasks', 'notifier'):
                 self.log.debug("  %s: %s" % (k, self.__dict__[k]))
 
-        if self.target:
-            self.log.debug("Limiting root nodes to %s" % self.target)
-            docs = [doc for doc in self.root_nodes if doc.key.startswith(self.target)]
-            self.log.debug("Processing nodes %s" % ", ".join(doc.key_with_class() for doc in docs))
-        else:
-            docs = self.root_nodes
+    def run_docs(self, *docs):
+        self.args = docs
+        self.run()
 
-        self.state = 'populating'
-
-        for doc in docs:
-            for task in doc:
-                task()
-
-        self.state = 'settingup'
-
-        for doc in docs:
-            for task in doc:
-                task()
-
-        self.state = 'running'
-
-        for doc in docs:
-            for task in doc:
-                task()
-
-        self.state = 'complete'
-
-        self.save_db()
-        self.setup_graph()
-
-        self.batch_info['end_time'] = time.time()
-        self.batch_info['elapsed'] = self.batch_info['end_time'] - self.batch_info['start_time']
-
-    def setup_run(self):
+    def run(self):
         self.check_dexy_dirs()
         self.setup_log()
         self.setup_db()
 
-        self.batch_id = self.db.next_batch_id()
+        self.setup_batch()
+        self.batch.run(self.target)
 
-        if not self.root_nodes:
-            self.setup_docs()
+        self.save_db()
 
     def setup_read(self, batch_id=None):
         self.check_dexy_dirs()
@@ -221,14 +167,16 @@ class Wrapper(object):
         db_class = dexy.database.Database.aliases[self.db_alias]
         self.db = db_class(self)
 
-    def setup_docs(self):
+    def docs_from_args(self):
+        docs = []
         for arg in self.args:
             self.log.debug("Processing arg %s" % arg)
             doc = self.create_doc_from_arg(arg)
             if not doc:
                 raise Exception("no doc created for %s" % arg)
             doc.wrapper = self
-            self.root_nodes.append(doc)
+            docs.append(doc)
+        return docs
 
     def create_doc_from_arg(self, arg, *children, **kwargs):
         if isinstance(arg, dexy.task.Task):
@@ -262,27 +210,6 @@ class Wrapper(object):
     def save_db(self):
         self.db.save()
 
-    def run_docs(self, *docs):
-        """
-        Convenience method for testing to add docs and then run them.
-        """
-        self.setup_dexy_dirs()
-        self.root_nodes = docs
-        self.run()
-
-    def register(self, task):
-        """
-        Register a task with the wrapper
-        """
-        self.tasks[task.key_with_class()] = task
-        self.notifier.subscribe("newchild", task.handle_newchild)
-
-    def registered_docs(self):
-        return [d for d in self.tasks.values() if isinstance(d, dexy.doc.Doc)]
-
-    def registered_doc_names(self):
-        return [d.name for d in self.registered_docs()]
-
     def reports_dirs(self):
         return [c.REPORTS_DIR for c in dexy.reporter.Reporter.plugins]
 
@@ -308,15 +235,15 @@ class Wrapper(object):
             reporter.run(self)
 
     def get_child_hashes_in_previous_batch(self, parent_hashstring):
-        return self.db.get_child_hashes_in_previous_batch(self.batch_id, parent_hashstring)
+        return self.db.get_child_hashes_in_previous_batch(parent_hashstring)
 
     def load_doc_config(self):
         """
         Look for document config files in current working tree and load them.
         """
         exclude = self.exclude_dirs()
-        self.ast = dexy.parser.AbstractSyntaxTree()
-        self.ast.wrapper = self
+        ast = dexy.parser.AbstractSyntaxTree()
+        ast.wrapper = self
         self.doc_config = OrderedDict()
 
         for dirpath, dirnames, filenames in os.walk("."):
@@ -332,7 +259,7 @@ class Wrapper(object):
                     config_file_in_directory = os.path.join(dirpath, alias)
                     if os.path.exists(config_file_in_directory):
                         parser = dexy.parser.Parser.aliases[alias](self)
-                        parser.ast = self.ast
+                        parser.ast = ast
                         with open(config_file_in_directory, "r") as f:
                             config_text = f.read()
 
@@ -348,9 +275,8 @@ class Wrapper(object):
                             dirnames.remove(x)
 
         self.log.debug("AST completed:")
-        self.ast.debug(self.log)
-        self.log.debug("walking AST:")
-        self.root_nodes = self.ast.walk()
+        ast.debug(self.log)
+        return ast
 
     def setup_config(self):
         self.setup_dexy_dirs()
@@ -361,39 +287,6 @@ class Wrapper(object):
         if hasattr(self, 'db'):
             # TODO remove any entries which don't have
             self.db.save()
-
-    def setup_graph(self):
-        """
-        Creates a dot representation of the tree.
-        """
-#        graph = self.ete_tree()
-        graph = ["digraph G {"]
-
-        for task in self.tasks.values():
-            if hasattr(task, 'artifacts'):
-                task_label = task.key_with_class().replace("|", "\|")
-                label = """   "%s" [shape=record, label="%s\\n\\n""" % (task.key_with_class(), task_label)
-                for child in task.artifacts:
-                    label += "%s\l" % child.key_with_class().replace("|", "\|")
-
-                label += "\"];"
-                graph.append(label)
-
-                for child in task.children:
-                    if not child in task.artifacts:
-                        graph.append("""   "%s" -> "%s";""" % (task.key_with_class(), child.key_with_class()))
-
-            elif "Artifact" in task.__class__.__name__:
-                pass
-            else:
-                graph.append("""   "%s" [shape=record];""" % task.key_with_class())
-                for child in task.children:
-                    graph.append("""   "%s" -> "%s";""" % (task.key_with_class(), child.key_with_class()))
-
-
-        graph.append("}")
-
-        self.graph = "\n".join(graph)
 
     def exclude_dirs(self):
         exclude_str = self.exclude

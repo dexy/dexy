@@ -150,7 +150,7 @@ class AbstractSyntaxTree():
             task = parse_item(key)
             root_nodes.append(task)
 
-        return root_nodes
+        return root_nodes, created_tasks
 
 class Parser:
     """
@@ -214,10 +214,15 @@ class Parser:
         self.wrapper = wrapper
 
     def parse(self, input_text, directory="."):
+        """
+        Method for testing, after this can call batch.run()
+        """
         self.ast = AbstractSyntaxTree()
         self.ast.wrapper = self.wrapper
         self.build_ast(directory, input_text)
-        self.wrapper.root_nodes = self.ast.walk()
+
+        self.wrapper.batch = dexy.batch.Batch(self.wrapper)
+        self.wrapper.batch.load_ast(self.ast)
 
     def build_ast(self, directory, input_text):
         raise Exception("Implement in subclass.")

@@ -263,7 +263,7 @@ class FilterArtifact(Artifact):
             for t in task:
                 t()
 
-        self.wrapper.notifier.notify('newchild', doc)
+        self.wrapper.batch.notifier.notify('newchild', doc)
         self.doc.children.append(doc)
 
     def set_extension(self):

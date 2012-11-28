@@ -49,7 +49,7 @@
                     <br />
                     <br />
                     <h3>Timing</h3>
-                    <p>The total elapsed time for batch {{ batch_id }} was {{ "%0.2f" % batch_info.elapsed }} ({{ "%0.2f" % (float(batch_info.elapsed)/60)}} minutes).</p>
+                    <p>The total elapsed time for batch {{ batch.batch_id }} was {{ "%0.2f" % batch.elapsed() }} ({{ "%0.2f" % (float(batch.elapsed())/60)}} minutes).</p>
 
 </pre>
 {% if hasattr(wrapper, 'doc_config') -%}
@@ -67,7 +67,7 @@ Directory {{ k }}:
 <h1>10 Slowest Tasks</h1>
 <hr />
 <ul>
-    {% for task in wrapper.tasks_by_elapsed() -%}
+    {% for task in batch.tasks_by_elapsed() -%}
     {% if task and task.elapsed -%}
     <li>{{ "%0.3f" % task.elapsed }} - <a href="#{{ task.doc.websafe_key() }}">{{ task.key }}</a> ({{ task.content_source }})</li>
     {% endif -%}

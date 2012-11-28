@@ -37,10 +37,10 @@ def test_config_for_directory():
         wrapper.setup_config()
         wrapper.run()
 
-        assert len(wrapper.tasks) == 8
+        assert len(wrapper.batch.tasks()) == 8
 
-        p = wrapper.tasks["PatternDoc:*.abc"]
-        c = wrapper.tasks["Doc:s2/s2.abc"]
+        p = wrapper.batch.task("PatternDoc:*.abc")
+        c = wrapper.batch.task("Doc:s2/s2.abc")
         assert c in p.children
 
 def test_config_file():
@@ -91,6 +91,8 @@ def test_wrapper_register():
         doc = Doc("abc.txt")
         wrapper = init_wrapper({'conf' : 'dexy.conf'})
         wrapper.setup_dexy_dirs()
-        wrapper.setup_run()
-        wrapper.register(doc)
-        assert doc in wrapper.registered_docs()
+        wrapper.setup_log()
+        wrapper.setup_db()
+        wrapper.setup_batch()
+        wrapper.batch.add_doc(doc)
+        assert doc in wrapper.batch.tasks()

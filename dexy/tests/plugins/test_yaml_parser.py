@@ -8,9 +8,9 @@ def test_except_patterndoc():
 
         parser = YamlFileParser(wrapper)
         parser.parse(""".abc:\n  - except : 'exceptme.abc' """)
-        wrapper.run()
+        wrapper.batch.run()
 
-        assert len(wrapper.tasks) == 1
+        assert len(wrapper.batch.lookup_table) == 1
 
 def test_except_patterndoc_pattern():
     with wrap() as wrapper:
@@ -19,9 +19,9 @@ def test_except_patterndoc_pattern():
 
         parser = YamlFileParser(wrapper)
         parser.parse(""".abc:\n  - except : 'exceptme.*' """)
-        wrapper.run()
+        wrapper.batch.run()
 
-        assert len(wrapper.tasks) == 1
+        assert len(wrapper.batch.lookup_table) == 1
 
 def test_children_siblings_order():
     with wrap() as wrapper:
@@ -36,9 +36,9 @@ def test_children_siblings_order():
             - c3
         """)
 
-        wrapper.run()
+        wrapper.batch.run()
 
-        p1 = wrapper.tasks['BundleDoc:p1']
+        p1 = wrapper.batch.lookup_table['BundleDoc:p1']
         assert p1.deps.keys() == [
                 'BundleDoc:c1',
                 'BundleDoc:c2',
@@ -48,10 +48,10 @@ def test_children_siblings_order():
                 'BundleDoc:c3'
                 ]
 
-        c1 = wrapper.tasks['BundleDoc:c1']
+        c1 = wrapper.batch.lookup_table['BundleDoc:c1']
         assert c1.deps.keys() == []
 
-        c2 = wrapper.tasks['BundleDoc:c2']
+        c2 = wrapper.batch.lookup_table['BundleDoc:c2']
         assert c2.deps.keys() == [
                 'BundleDoc:c1',
                 'BundleDoc:g1',
@@ -59,26 +59,16 @@ def test_children_siblings_order():
                 'BundleDoc:g3'
                 ]
 
-        c3 = wrapper.tasks['BundleDoc:c3']
+        c3 = wrapper.batch.lookup_table['BundleDoc:c3']
         assert c3.deps.keys() == [
                 'BundleDoc:c1',
                 'BundleDoc:c2'
                 ]
 
-        g3 = wrapper.tasks['BundleDoc:g3']
+        g3 = wrapper.batch.lookup_table['BundleDoc:g3']
         assert g3.deps.keys() == [
                 'BundleDoc:g1',
                 'BundleDoc:g2'
-                ]
-
-        assert wrapper.tasks.keys() == [
-                'BundleDoc:c1',
-                'BundleDoc:g1',
-                'BundleDoc:g2',
-                'BundleDoc:g3',
-                'BundleDoc:c2',
-                'BundleDoc:c3',
-                'BundleDoc:p1'
                 ]
 
 def test_single_file_doc():
@@ -89,16 +79,16 @@ def test_single_file_doc():
         parser = YamlFileParser(wrapper)
         parser.parse("hello.txt")
 
-        wrapper.run()
-        assert "Doc:hello.txt" in wrapper.tasks
+        wrapper.batch.run()
+        assert "Doc:hello.txt" in wrapper.batch.lookup_table
 
 def test_single_bundle_doc():
     with wrap() as wrapper:
         parser = YamlFileParser(wrapper)
         parser.parse("hello")
 
-        wrapper.run()
-        assert "BundleDoc:hello" in wrapper.tasks
+        wrapper.batch.run()
+        assert "BundleDoc:hello" in wrapper.batch.lookup_table
 
 def test_single_bundle_doc_with_args():
     with wrap() as wrapper:
@@ -121,10 +111,10 @@ def test_single_bundle_doc_with_args():
             - one-more-task
         """)
 
-        wrapper.run()
+        wrapper.batch.run()
 
-        assert wrapper.root_nodes[0].key_with_class() == "BundleDoc:more"
-        assert len(wrapper.tasks) == 5
+        assert wrapper.batch.tree[0].key_with_class() == "BundleDoc:more"
+        assert len(wrapper.batch.lookup_table) == 5
 
 def test_single_bundle_doc_with_args_2():
     with wrap() as wrapper:
@@ -149,7 +139,7 @@ def test_single_bundle_doc_with_args_2():
 
         """)
 
-        wrapper.run()
+        wrapper.batch.run()
 
-        assert wrapper.root_nodes[0].key_with_class() == "BundleDoc:more"
-        assert len(wrapper.tasks) == 5
+        assert wrapper.batch.tree[0].key_with_class() == "BundleDoc:more"
+        assert len(wrapper.batch.lookup_table) == 5

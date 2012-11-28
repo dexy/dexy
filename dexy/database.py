@@ -74,14 +74,15 @@ class Sqlite3(Database):
         doc_key = web_safe_key.replace("--", "/")
         return self.find_data_by_doc_key(doc_key)
 
-    def get_child_hashes_in_previous_batch(self, current_batch_id, parent_hashstring):
+    def calculate_previous_batch_id(self, current_batch_id):
         sql = "select max(batch_id) as previous_batch_id from tasks where batch_id < ?"
         self.cursor.execute(sql, (current_batch_id,))
         row = self.cursor.fetchone()
-        previous_batch_id = row['previous_batch_id']
+        return row['previous_batch_id']
 
+    def get_child_hashes_in_previous_batch(self, parent_hashstring):
         sql = "select * from tasks where batch_id = ? and created_by_doc = ? order by doc_key, started_at"
-        self.cursor.execute(sql, (previous_batch_id, parent_hashstring))
+        self.cursor.execute(sql, (self.wrapper.batch.previous_batch_id, parent_hashstring))
         return self.cursor.fetchall()
 
     def max_batch_id(self):
@@ -121,7 +122,7 @@ class Sqlite3(Database):
         attrs = {
                 'args' : serialized_args,
                 'doc_key' : doc_key,
-                'batch_id' : task.wrapper.batch_id,
+                'batch_id' : task.wrapper.batch.batch_id,
                 'class_name' : task.__class__.__name__,
                 'created_by_doc' : task.created_by_doc,
                 'key' : task.key,

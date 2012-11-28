@@ -242,7 +242,7 @@ def dexy_command(
 
         try:
             wrapper.check_dexy_dirs()
-            wrapper.setup_config()
+
             if profile:
                 if isinstance(profile, bool):
                     profile_filename = 'dexy.prof'
@@ -260,7 +260,7 @@ def dexy_command(
                 wrapper.run()
 
             wrapper.report()
-            print "finished in %0.4f" % wrapper.batch_info['elapsed']
+            print "finished in %0.4f" % wrapper.batch.elapsed()
 
         except dexy.exceptions.UserFeedback as e:
             if hasattr(wrapper, 'log'):

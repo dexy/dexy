@@ -4,11 +4,12 @@ from dexy.tests.utils import wrap
 
 def test_add_task():
     with wrap() as wrapper:
+        wrapper.setup_db()
         attrs = {
                 "args" : {},
                 "doc.key" : "abc23456",
                 "key_with_batch_id.return_value" : "def1234556",
-                "wrapper.batch_id" : 1001,
+                "wrapper.batch.batch_id" : 1001,
                 "state" : "running",
                 "created_by_doc" : None,
                 "key" : "file.txt"
@@ -31,11 +32,12 @@ def test_add_task():
 
 def test_update_task():
     with wrap() as wrapper:
+        wrapper.setup_db()
         attrs = {
                 "args" : {},
                 "doc.key" : "abc23456",
                 "key_with_batch_id.return_value" : "def1234556",
-                "wrapper.batch_id" : 1001,
+                "wrapper.batch.batch_id" : 1001,
                 "hashstring" : "abc123001",
                 "created_by_doc" : None,
                 "output_data_type" : "generic",

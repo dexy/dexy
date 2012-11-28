@@ -7,7 +7,8 @@ class Subscriber(object):
 
 def test_notify():
     with wrap() as wrapper:
-        notifier = Notify(wrapper)
+        wrapper.setup_batch()
+        notifier = Notify(wrapper.batch)
         obj = Subscriber()
         notifier.subscribe("foo", obj.call_me)
         notifier.notify("foo", "bar")

@@ -15,7 +15,7 @@ def test_walk_working_dir():
 
         wrapper.run_docs(doc)
 
-        for doc in wrapper.registered_docs():
+        for doc in wrapper.batch.tasks():
             if doc.key_with_class() == "Doc:example.sh-sh.txt-files":
                 assert doc.output().as_sectioned()['newfile.txt'] == "hello" + os.linesep
 
@@ -31,11 +31,8 @@ def test_add_new_files():
 
         wrapper.run_docs(doc)
 
-        assert wrapper.registered_docs()[1].key == 'newfile.txt'
-        assert wrapper.registered_docs()[1].output().data() == "hello" + os.linesep
-
-        assert wrapper.registered_docs()[2].key == 'newfile.txt|markdown'
-        assert wrapper.registered_docs()[2].output().data() == "<p>hello</p>"
+        assert wrapper.batch.lookup_table['Doc:newfile.txt'].output().data() == "hello" + os.linesep
+        assert wrapper.batch.lookup_table['Doc:newfile.txt|markdown'].output().data() == "<p>hello</p>"
 
 def test_not_present_executable():
     assert 'notreal' in NotPresentExecutable.executables()

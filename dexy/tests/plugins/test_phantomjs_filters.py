@@ -15,6 +15,7 @@ def test_phantomjs_stdout_filter():
     assert_output('phantomjs', PHANTOM_JS, "Hello, world!\n")
 
 def test_casperjs_svg2pdf_filter():
+    # TODO find smaller file - make test go faster?
     with wrap() as wrapper:
         orig = os.path.join(TEST_DATA_DIR, 'butterfly.svg')
         shutil.copyfile(orig, 'butterfly.svg')
@@ -33,10 +34,10 @@ def test_casperjs_stdout_filter():
 
         wrapper.run_docs(doc)
 
-        assert 'google.pdf' in wrapper.registered_doc_names()
+        assert 'google.pdf' in wrapper.batch.doc_names()
 
         try:
-            assert 'cookies.txt' in wrapper.registered_doc_names()
+            assert 'cookies.txt' in wrapper.batch.doc_names()
         except AssertionError as e:
             import urllib
             try:

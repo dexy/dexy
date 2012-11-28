@@ -16,7 +16,7 @@ def test_python_filter_record_vars():
 
         wrapper.run_docs(doc)
 
-        assert "Doc:example.py-vars.json" in wrapper.tasks
+        assert "Doc:example.py-vars.json" in wrapper.batch.lookup_table
 
 def test_matlab_filter():
     assert_in_output('matlabint', "fprintf (1, 'Hello, world\\n')\n", "< M A T L A B (R) >")

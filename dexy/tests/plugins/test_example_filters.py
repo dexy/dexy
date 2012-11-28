@@ -29,8 +29,8 @@ def test_add_new_document():
         assert isinstance(doc.children[-1], Doc)
         assert doc.children[-1].output().data() == "Dexy processed the text 'newfile'"
 
-        assert doc.wrapper.registered_docs()[0].key == "subdir/example.txt|newdoc"
-        assert doc.wrapper.registered_docs()[1].key == "subdir/newfile.txt|processtext"
+        assert "Doc:subdir/example.txt|newdoc" in doc.wrapper.batch.lookup_table
+        assert "Doc:subdir/newfile.txt|processtext" in doc.wrapper.batch.lookup_table
 
 def test_key_value_example():
     with wrap() as wrapper:
@@ -94,8 +94,7 @@ def test_doc_children_artifacts():
         doc = Doc("hello.txt|newdoc", contents="hello", wrapper=wrapper)
         parent = Doc("parent.txt|process", doc, contents="hello", wrapper=wrapper)
 
-        wrapper.root_nodes = [parent]
-        wrapper.run()
+        wrapper.run_docs(parent)
 
         assert len(doc.children) == 3
         assert isinstance(doc.children[0], InitialVirtualArtifact)
@@ -107,6 +106,6 @@ def test_doc_children_artifacts():
         assert len(parent.children) == 3
         assert len(parent.artifacts) == 2
 
-        assert wrapper.registered_docs()[0].key == "hello.txt|newdoc"
-        assert wrapper.registered_docs()[1].key == "parent.txt|process"
-        assert wrapper.registered_docs()[2].key == "newfile.txt|processtext"
+        assert "Doc:hello.txt|newdoc" in wrapper.batch.lookup_table
+        assert "Doc:parent.txt|process" in wrapper.batch.lookup_table
+        assert "Doc:newfile.txt|processtext" in wrapper.batch.lookup_table

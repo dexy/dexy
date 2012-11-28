@@ -44,7 +44,8 @@ class wrap(tempdir):
         os.chdir(self.tempdir)
         wrapper = Wrapper()
         wrapper.setup_dexy_dirs()
-        wrapper.setup_run()
+        wrapper.setup_log()
+        wrapper.setup_db()
         return wrapper
 
     def __exit__(self, type, value, traceback):
@@ -75,12 +76,13 @@ class runfilter(tempdir):
             doc_spec = [doc_key, {"contents" : self.doc_contents}]
             wrapper = Wrapper(doc_spec)
             wrapper.setup_dexy_dirs()
+            wrapper.setup_db()
             wrapper.run()
         except InactiveFilter:
             print "Skipping tests for inactive filter", self.filter_alias
             raise SkipTest
 
-        return wrapper.root_nodes[0]
+        return wrapper.batch.tree[0]
 
 def assert_output(filter_alias, doc_contents, expected_output, ext=".txt"):
     if not ext.startswith("."):

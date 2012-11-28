@@ -46,6 +46,7 @@ class Data:
         self.storage_type = storage_type or self.storage_class_alias(ext)
         storage_class = dexy.storage.Storage.aliases[self.storage_type]
         self.storage = storage_class(hashstring, ext, self.wrapper)
+        self.storage.check_location_is_in_project_dir(self.name)
 
         self._data = None
 
@@ -173,7 +174,8 @@ class GenericData(Data):
         """
         Write canonical output to a file. Parent directory must exist already.
         """
-        self.storage.write_data(self.data(), filepath)
+        if not self.storage.copy_file(filepath):
+            self.storage.write_data(self.data(), filepath)
 
 class SectionedData(GenericData):
     ALIASES = ['sectioned']

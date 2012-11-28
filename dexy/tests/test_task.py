@@ -43,6 +43,8 @@ def test_set_log():
 
 def test_circular():
     with wrap() as wrapper:
+        wrapper.setup_batch()
+
         d1 = dexy.task.Task("1",wrapper=wrapper)
         d2 = dexy.task.Task("2",wrapper=wrapper)
 
@@ -59,6 +61,8 @@ def test_circular():
 @raises(CircularDependency)
 def test_circular_4_docs():
     with wrap() as wrapper:
+        wrapper.setup_batch()
+
         d1 = dexy.task.Task("1", wrapper=wrapper)
         d2 = dexy.task.Task("2", wrapper=wrapper)
         d3 = dexy.task.Task("3", wrapper=wrapper)

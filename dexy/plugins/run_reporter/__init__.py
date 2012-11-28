@@ -34,10 +34,9 @@ class RunReporter(Reporter):
         env_data['isinstance'] = isinstance
         env_data['attrgetter'] = operator.attrgetter
 
-        env_data['batch_id'] = wrapper.batch_id
-        env_data['batch_info'] = wrapper.batch_info
+        env_data['batch'] = wrapper.batch
 
-        env_data['docs'] = wrapper.registered_docs()
+        env_data['docs'] = wrapper.batch.docs()
         env_data['wrapper'] = wrapper
 
         env = Environment()
