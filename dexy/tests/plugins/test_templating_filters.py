@@ -6,6 +6,15 @@ from nose.tools import raises
 import dexy.exceptions
 
 @raises(dexy.exceptions.UserFeedback)
+def test_jinja_undefined():
+    with wrap() as wrapper:
+        doc = Doc("template.txt|jinja",
+                contents = """{{ foo }}""",
+                wrapper=wrapper)
+
+        wrapper.run_docs(doc)
+
+@raises(dexy.exceptions.UserFeedback)
 def test_jinja_syntax_error():
     with wrap() as wrapper:
         doc = Doc("template.txt|jinja",

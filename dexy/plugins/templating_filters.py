@@ -86,7 +86,7 @@ class JinjaFilter(TemplateFilter):
             env_attrs['loader'] = loader
 
         debug_attr_string = ", ".join("%s: %r" % (k, v) for k, v in env_attrs.iteritems())
-        self.log.debug("Creating jinja2 environment with: %s" % debug_attr_string)
+        self.log.debug("creating jinja2 environment with: %s" % debug_attr_string)
         return jinja2.Environment(**env_attrs)
 
     def handle_jinja_exception(self, e, input_text, template_data):
@@ -100,7 +100,8 @@ class JinjaFilter(TemplateFilter):
             if m:
                 e.lineno = int(m.groups()[0])
             else:
-                raise dexy.exceptions.InternalDexyProblem("Unable to parse line number from %s" % traceback.format_exc())
+                e.lineno = None
+                self.log.warn("unable to parse line number from traceback")
 
         args = {
                 'error_type' : e.__class__.__name__,
@@ -111,12 +112,7 @@ class JinjaFilter(TemplateFilter):
                 'workfile' : self.input().storage.data_file()
                 }
 
-        result.append("A %(error_type)s problem was detected: %(message)s" % args)
-
-#        if hasattr(self.artifact, 'doc') and self.artifact.doc.step > 1:
-#            result.append("Your file has been processed through other filters before going through jinja.")
-#            result.append("The working file sent to jinja is at %(workfile)s" % args)
-#            result.append("Line numbers refer to the working file, not your original file.")
+        result.append("a %(error_type)s problem was detected: %(message)s" % args)
 
         if isinstance(e, UndefinedError):
             match_has_no_attribute = re.match("^'[\w\s\.]+' has no attribute '(.+)'$", e.message)
