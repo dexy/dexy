@@ -77,6 +77,9 @@ def test_circular_4_docs():
             t()
 
 class SubclassTask(dexy.task.Task):
+    """
+    for testing
+    """
     def pre(self, *args, **kw):
         print "pre '%s'" % self.key,
 

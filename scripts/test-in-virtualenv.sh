@@ -17,20 +17,26 @@ nosetests
 git remote add github git@github.com:ananelson/dexy.git
 cd ..
 
-pip install dexy-templates
+git clone ~/dev/dexy-templates $TEST_DIR/dexy-templates
+cd dexy-templates
+pip install .
+cd ..
 
 dexy filters
 dexy reporters
-dexy templates
+dexy templates --validate
 
-for template in `dexy templates --simple` ; do
-  dexy gen -d template-gen --template $template
-  cd template-gen
-  dexy
-  dexy
-  dexy -r
-  cd ..
-  rm -rf template-gen
+for template in `dexy templates --simple`
+do
+    echo ""
+    echo "running template $template"
+    dexy gen -d template-gen --template $template
+    cd template-gen
+    dexy
+    dexy
+    dexy -r
+    cd ..
+    rm -rf template-gen
 done
 
 cd dexy

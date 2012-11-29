@@ -16,6 +16,9 @@ import stat
 import time
 
 class Artifact(dexy.task.Task):
+    """
+    Task classes representing steps in dexy processing.
+    """
     def set_and_save_hash(self):
         self.append_child_hashstrings()
         self.set_hashstring()
@@ -99,6 +102,9 @@ class Artifact(dexy.task.Task):
         self.output_data = data_class(self.key, self.ext, self.hashstring, self.args, self.wrapper)
 
 class InitialArtifact(Artifact):
+    """
+    The artifact class representing an initial artifact, pretty much just a copy of the original file being processed.
+    """
     def append_child_hashstrings(self):
         pass
 
@@ -130,6 +136,9 @@ class InitialArtifact(Artifact):
         self.elapsed = time.time() - start_time
 
 class InitialVirtualArtifact(InitialArtifact):
+    """
+    The artifact class representing an initial virtual artifact, basically just holds the contents specified in config.
+    """
     def get_contents(self):
         contents = self.args.get('contents')
         if not contents and not isinstance(contents, dict):
@@ -173,6 +182,9 @@ class InitialVirtualArtifact(InitialArtifact):
         self.output_data.set_data(self.get_contents())
 
 class FilterArtifact(Artifact):
+    """
+    Artifact class which applies filter processing to input from previous step.
+    """
     def data_class_alias(self):
         if self.filter_class.PRESERVE_PRIOR_DATA_CLASS:
             return self.input_data.__class__.ALIASES[0]

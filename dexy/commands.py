@@ -2,13 +2,13 @@ from dexy.utils import getdoc
 from dexy.utils import parse_json
 from dexy.utils import parse_yaml
 from dexy.version import DEXY_VERSION
-from dexy.wrapper import Wrapper
 from modargs import args
 from pygments import highlight
 from pygments.formatters import TerminalFormatter
 from pygments.lexers import PythonLexer
 import dexy.exceptions
 import dexy.plugins # so all built-in plugins are registered
+import dexy.wrapper
 import inspect
 import json
 import logging
@@ -17,7 +17,7 @@ import sys
 import warnings
 import yaml
 
-D = Wrapper.DEFAULTS
+D = dexy.wrapper.Wrapper.DEFAULTS
 
 DEFAULT_COMMAND = 'dexy'
 MOD = sys.modules[__name__]
@@ -75,7 +75,7 @@ def config_args(modargs):
     cliargs = modargs.get("__cli_options", {})
     kwargs = modargs.copy()
 
-    config_file = modargs.get('conf', Wrapper.DEFAULTS['config_file'])
+    config_file = modargs.get('conf', dexy.wrapper.Wrapper.DEFAULTS['config_file'])
 
     # Update from config file
     if os.path.exists(config_file):
@@ -146,10 +146,10 @@ def init_wrapper(modargs):
     kwargs = config_args(modargs)
     kwargs = rename_params(kwargs)
     kwargs = skip_params(kwargs)
-    return Wrapper(**kwargs)
+    return dexy.wrapper.Wrapper(**kwargs)
 
 def default_config():
-    wrapper = Wrapper()
+    wrapper = dexy.wrapper.Wrapper()
     conf = wrapper.__dict__.copy()
 
     for k in conf.keys():
@@ -356,6 +356,20 @@ def conf_command(
 
     print "Config file has been written to '%s'" % conf
 
+def filter_command(
+        alias="", # If a filter alias is specified, more detailed help for that filter is printed.
+        nocolor=False, # When source = True, whether to omit syntax highlighting
+        showall=False, # Whether to show all filters, including those which need missing software, implies versions=True
+        showmissing=False, # Whether to just show filters missing external software, implies versions=True
+        space=False, # Whether to add extra spacing to the output for extra readability
+        source=False, # Whether to include syntax-highlighted source code when displaying an indvidual filter
+        versions=False # Whether to check the installed version of external software required by filters, slower
+        ):
+    """
+    Information about available dexy filters.
+    """
+    print filters_text(**locals())
+
 def filters_command(
         alias="", # If a filter alias is specified, more detailed help for that filter is printed.
         nocolor=False, # When source = True, whether to omit syntax highlighting
@@ -365,9 +379,10 @@ def filters_command(
         source=False, # Whether to include syntax-highlighted source code when displaying an indvidual filter
         versions=False # Whether to check the installed version of external software required by filters, slower
         ):
+    """
+    Information about available dexy filters.
+    """
     print filters_text(**locals())
-
-NODOC_FILTERS = []
 
 def filters_text(
         alias="", # If a filter alias is specified, more detailed help for that filter is printed.
@@ -383,13 +398,21 @@ def filters_text(
         # We want help on a particular filter
         klass = dexy.filter.Filter.aliases[alias]
         text = []
-        text.append(klass.__name__)
-        text.append("")
-        text.append("Aliases: %s" % ", ".join(klass.ALIASES))
+        text.append("aliases: %s" % ", ".join(klass.ALIASES))
         text.append("")
         text.append(inspect.getdoc(klass))
+
+        templates = klass.templates()
+        if len(templates) > 0:
+            text.append("")
+            text.append("Templates which use this filter:")
+            for t in templates:
+                aliases = [k for k, v in dexy.template.Template.aliases.iteritems() if v == t]
+                text.append("")
+                text.append("  %s" % aliases[0])
+                text.append("            %s" % dexy.utils.getdoc(t))
         text.append("")
-        text.append("http://dexy.it/docs/filters/%s" % alias)
+        text.append("For online docs see http://dexy.it/docs/filters/%s" % alias)
         if source:
             text.append("")
             source_code = inspect.getsource(klass)
@@ -403,14 +426,19 @@ def filters_text(
 
     else:
         def sort_key(k):
-            return k.__name__
+            if len(k.ALIASES) == 0:
+                return None
+            else:
+                return k.ALIASES[0]
 
         filter_classes = sorted(set(f for f in dexy.filter.Filter.plugins), key=sort_key)
 
         text = []
+
+        text.append("Available filters:")
         for klass in filter_classes:
             if not showall:
-                skip = klass.__name__ in NODOC_FILTERS
+                skip = (len(klass.ALIASES) == 0) or klass.NODOC
             else:
                 skip = False
 
@@ -434,12 +462,13 @@ def filters_text(
                     version_message = "'%s' failed, filter may not be available." % klass.version_command()
 
             if not skip:
-                name_and_aliases = "%s (%s) " % (klass.__name__, ", ".join(klass.ALIASES))
-                filter_help = name_and_aliases + getdoc(klass)
+                aliases = ", ".join(klass.ALIASES)
+                filter_help = "  " + aliases + " : " + getdoc(klass)
                 if (versions or showmissing or (showall and not version)):
                     filter_help += " %s" % version_message
                 text.append(filter_help)
 
+        text.append("\nFor more information about a particular filter, use the -alias flag and specify the filter alias.")
         if space:
             sep = "\n\n"
         else:
@@ -612,7 +641,8 @@ def gen_command(
         print "\nThis information is in the 'README' file for future reference."
 
 def templates_command(
-        simple=False # Only print template names, without docstring or headers.
+        simple=False, # Only print template names, without docstring or headers.
+        validate=False # For developer use only, validate templates (runs and checks each template).
         ):
     """
     List templates that can be used to generate new projects.
@@ -626,6 +656,8 @@ def templates_command(
         print FMT % ("Alias", "Info")
         for alias in aliases:
             klass = dexy.template.Template.aliases[alias]
+            if validate:
+                klass.validate()
             print FMT % (alias, getdoc(klass))
 
         if len(aliases) == 1:

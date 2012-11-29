@@ -1,10 +1,16 @@
 from dexy.filter import DexyFilter
 
 class PreserveDataClassFilter(DexyFilter):
+    """
+    Sets PRESERVE_PRIOR_DATA_CLASS to True.
+    """
     ALIASES = []
     PRESERVE_PRIOR_DATA_CLASS = True
 
 class ChangeExtensionManuallyFilter(PreserveDataClassFilter):
+    """
+    Dummy filter for allowing changing a file extension.
+    """
     ALIASES = ['chext']
 
 class ForceCPickleExtensionFilter(PreserveDataClassFilter):

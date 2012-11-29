@@ -7,6 +7,9 @@ import os
 import shutil
 
 class RunReporter(Reporter):
+    """
+    Returns info about a dexy run.
+    """
     ALLREPORTS = True
     ALIASES = ['run']
 

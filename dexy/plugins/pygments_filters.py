@@ -19,6 +19,9 @@ import pygments.lexers.web
 import re
 
 class SyntaxHighlightRstFilter(DexyFilter):
+    """
+    Surrounds code with highlighting instructions for ReST
+    """
     ALIASES = ['pyg4rst']
 
     def process_dict(self, input_dict):
@@ -171,7 +174,7 @@ class PygmentsFilter(DexyFilter):
                 for k, v in input_dict.items():
                     formatter = get_formatter_for_filename(self.output().name, **formatter_args)
                     output_for_section = highlight(v.decode("utf-8"), lexer, formatter)
-                    new_doc_name = "%s--%s%s" % (self.artifact.key.replace("|", "--"), k, self.artifact.ext)
+                    new_doc_name = "%s--%s%s" % (self.artifact.doc.key.replace("|", "--"), k, self.artifact.ext)
                     self.add_doc(new_doc_name, output_for_section)
 
                 # Place entire contents into main file.

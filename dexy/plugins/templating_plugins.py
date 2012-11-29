@@ -32,6 +32,9 @@ class TemplatePlugin():
         return {}
 
 class PrettyPrintJson(TemplatePlugin):
+    """
+    Exposes ppjson command.
+    """
     ALIASES = ['ppjson']
 
     def ppjson(self, json_string):
@@ -43,6 +46,9 @@ class PrettyPrintJson(TemplatePlugin):
          }
 
 class PythonDatetime(TemplatePlugin):
+    """
+    Exposes python datetime and calendar functions.
+    """
     ALIASES = ['datetime', 'calendar']
     def run(self):
         today = datetime.today()
@@ -62,26 +68,41 @@ class PythonDatetime(TemplatePlugin):
             }
 
 class DexyVersion(TemplatePlugin):
+    """
+    Exposes the current dexy version
+    """
     ALIASES = ['dexyversion']
     def run(self):
         return { "DEXY_VERSION" : DEXY_VERSION }
 
 class SimpleJson(TemplatePlugin):
+    """
+    Exposes the json module.
+    """
     ALIASES = ['json']
     def run(self):
         return { 'json' : json }
 
 class PrettyPrinter(TemplatePlugin):
+    """
+    Exposes the pprint module.
+    """
     ALIASES = ['pprint']
     def run(self):
         return { 'pformat' : pprint.pformat}
 
 class RegularExpressions(TemplatePlugin):
+    """
+    Exposes re_match and re_search.
+    """
     ALIASES = ['regex']
     def run(self):
         return { 're_match' : re.match, 're_search' : re.search}
 
 class PythonBuiltins(TemplatePlugin):
+    """
+    Exposes python builtins.
+    """
     ALIASES = ['builtins']
     # Intended to be all builtins that make sense to run within a document.
     PYTHON_BUILTINS = [abs, all, any, bin, bool, bytearray, callable, chr,
@@ -94,6 +115,9 @@ class PythonBuiltins(TemplatePlugin):
         return dict((f.__name__, f) for f in self.PYTHON_BUILTINS)
 
 class PygmentsStylesheet(TemplatePlugin):
+    """
+    Generates pygments stylesheets.
+    """
     ALIASES = ['pygments']
 
     # TODO figure out default fmt based on document ext
@@ -128,6 +152,9 @@ class PygmentsStylesheet(TemplatePlugin):
         return {'pygments' : pygments_stylesheets, 'highlight' : self.highlight }
 
 class Subdirectories(TemplatePlugin):
+    """
+    Show subdirectories under this document.
+    """
     ALIASES = ['subdirectories']
     def run(self):
         # The directory containing the document to be processed.
@@ -164,6 +191,9 @@ class Globals(TemplatePlugin):
         return env
 
 class Inputs(TemplatePlugin):
+    """
+    Populates the 'd' object.
+    """
     ALIASES = ['inputs']
 
     @classmethod

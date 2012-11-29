@@ -11,6 +11,9 @@ import pkgutil
 import sys
 
 class PythonDocumentationFilter(DexyFilter):
+    """
+    Returns doc info for named python modules.
+    """
     ALIASES = ["pydoc"]
     INPUT_EXTENSIONS = [".txt"]
     OUTPUT_EXTENSIONS = ['.sqlite3', '.json']

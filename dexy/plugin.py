@@ -1,4 +1,5 @@
 import inspect
+import dexy.exceptions
 
 class PluginMeta(type):
     """
@@ -20,6 +21,10 @@ class PluginMeta(type):
             # track of it later.
             cls.plugins.append(cls)
             cls.source[cls.__name__] = inspect.getsource(cls)
+
+            if not inspect.getdoc(cls):
+                breadcrumbs = " -> ".join(t.__name__ for t in inspect.getmro(cls)[:-1][::-1])
+                raise dexy.exceptions.InternalDexyProblem("no docstring found for dexy plugin '%s' (%s, defined in %s), docstrings are required" % (cls.__name__, breadcrumbs, cls.__module__))
 
             basenames = [k.__name__ for k in cls.__bases__]
 

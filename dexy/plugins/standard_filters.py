@@ -6,6 +6,9 @@ import json
 import os
 
 class KeyValueStoreFilter(DexyFilter):
+    """
+    Filter for creating a new key value store on the fly
+    """
     ALIASES = ['kv']
     OUTPUT_DATA_TYPE = 'keyvalue'
 
@@ -16,6 +19,9 @@ class KeyValueStoreFilter(DexyFilter):
         self.output().storage.setup()
 
 class HeaderFilter(DexyFilter):
+    """
+    Apply another file to top of file.
+    """
     ALIASES = ['hd']
     KEY_NAME = 'header'
 
@@ -46,6 +52,9 @@ class HeaderFilter(DexyFilter):
         return "%s\n%s" % (header_data.as_text(), input_text)
 
 class FooterFilter(HeaderFilter):
+    """
+    Apply another file to bottom of file.
+    """
     ALIASES = ['ft']
     KEY_NAME = 'footer'
 
@@ -88,6 +97,9 @@ class StartSpaceFilter(DexyFilter):
         return result
 
 class SectionsByLineFilter(DexyFilter):
+    """
+    Returns each line in its own section.
+    """
     ALIASES = ['lines']
     OUTPUT_DATA_TYPE = 'sectioned'
 
@@ -98,6 +110,9 @@ class SectionsByLineFilter(DexyFilter):
         return data_dict
 
 class PrettyPrintJsonFilter(DexyFilter):
+    """
+    Pretty prints JSON input.
+    """
     ALIASES = ['ppjson']
     OUTPUT_EXTENSIONS = ['.json']
 

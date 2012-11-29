@@ -39,6 +39,9 @@ def test_not_present_executable():
     assert not NotPresentExecutable.executable()
 
 class NotPresentExecutable(SubprocessFilter):
+    """
+    notreal
+    """
     EXECUTABLE = 'notreal'
 
 def test_command_line_args():

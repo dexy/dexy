@@ -69,6 +69,9 @@ class LatexFilter(SubprocessFilter):
         self.copy_canonical_file()
 
 class XelatexFilter(LatexFilter):
+    """
+    Runs .tex files using xelatex.
+    """
     ALIASES = ['xetex', 'xelatex']
     EXECUTABLE = 'xelatex'
 

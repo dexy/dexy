@@ -39,6 +39,9 @@ def test_pygments():
         assert hasattr(env['highlight'], '__call__')
 
 class TestSubdirectory(TemplateFilter):
+    """
+    test subdir
+    """
     ALIASES = ['testsubdir']
     TEMPLATE_PLUGINS = [plugin.Subdirectories]
 
@@ -58,6 +61,9 @@ def test_subdirectories():
         assert 's2' in env['subdirectories']
 
 class TestVariables(TemplateFilter):
+    """
+    test variables
+    """
     ALIASES = ['testvars']
     TEMPLATE_PLUGINS = [plugin.Variables]
 
@@ -75,6 +81,9 @@ def test_variables():
         assert env['x'] == 123.4
 
 class TestGlobals(TemplateFilter):
+    """
+    test globals
+    """
     ALIASES = ['testglobals']
     TEMPLATE_PLUGINS = [plugin.Globals]
 

@@ -17,7 +17,6 @@ class PexpectReplFilter(SubprocessFilter):
     """
     Base class for filters which use pexpect to retrieve output line-by-line based on detecting prompts.
     """
-    ALIASES = ['pexpectreplfilter']
     ALLOW_MATCH_PROMPT_WITHOUT_NEWLINE = False
     INITIAL_PROMPT = None
     INITIAL_PROMPT_TIMEOUT = 5
@@ -229,6 +228,9 @@ class PexpectReplFilter(SubprocessFilter):
         self.output().set_data(output)
 
 class RubyPexpectReplFilter(PexpectReplFilter):
+    """
+    Runs ruby code in irb.
+    """
     ALIASES = ['irb', 'rbrepl']
     EXECUTABLE = 'irb --simple-prompt'
     CHECK_RETURN_CODE = False
@@ -241,6 +243,10 @@ class RubyPexpectReplFilter(PexpectReplFilter):
     VERSION_COMMAND = 'irb --version'
 
 class PythonPexpectReplFilter(PexpectReplFilter):
+    """
+    Runs python code in python's REPL.
+    """
+    ADD_NEW_FILES = True
     ALIASES = ['pycon', 'pyrepl']
     CHECK_RETURN_CODE = False
     EXECUTABLE = 'python'
@@ -266,6 +272,9 @@ except ImportError:
     IPYTHON_AVAILABLE = False
 
 class IpythonPexpectReplFilter(PythonPexpectReplFilter):
+    """
+    Runs python code in ipython.
+    """
     # TODO test for version of ipython that supports --classic
     ALIASES = ['ipython']
     EXECUTABLE = 'ipython --classic'
@@ -279,6 +288,9 @@ class IpythonPexpectReplFilter(PythonPexpectReplFilter):
         return klass.executable() and IPYTHON_AVAILABLE
 
 class RPexpectReplFilter(PexpectReplFilter):
+    """
+    Runs R in REPL.
+    """
     ADD_NEW_FILES = True
     ALIASES = ['r', 'rint']
     CHECK_RETURN_CODE = False
@@ -354,6 +366,9 @@ class KshInteractiveFilter(PexpectReplFilter):
     PS1 = "$ "
 
 class MatlabInteractiveFilter(PexpectReplFilter):
+    """
+    Runs matlab in REPL.
+    """
     ALIASES = ['matlabint']
     EXECUTABLE = 'matlab -nodesktop -nosplash -nodisplay'
     INPUT_EXTENSIONS = ['.m', '.txt']

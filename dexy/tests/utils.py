@@ -2,10 +2,10 @@ from StringIO import StringIO
 from dexy.common import OrderedDict
 from dexy.exceptions import InactiveFilter
 from dexy.utils import char_diff
-from dexy.wrapper import Wrapper
 from mock import MagicMock
 from nose.exc import SkipTest
 import dexy.plugins # make sure plugins are loaded
+import dexy.wrapper
 import os
 import re
 import shutil
@@ -42,7 +42,7 @@ class wrap(tempdir):
         self.tempdir = tempfile.mkdtemp()
         self.location = os.path.abspath(os.curdir)
         os.chdir(self.tempdir)
-        wrapper = Wrapper()
+        wrapper = dexy.wrapper.Wrapper()
         wrapper.setup_dexy_dirs()
         wrapper.setup_log()
         wrapper.setup_db()
@@ -74,7 +74,7 @@ class runfilter(tempdir):
         try:
             doc_key = "subdir/example%s|%s" % (self.ext, self.filter_alias)
             doc_spec = [doc_key, {"contents" : self.doc_contents}]
-            wrapper = Wrapper(doc_spec)
+            wrapper = dexy.wrapper.Wrapper(doc_spec)
             wrapper.setup_dexy_dirs()
             wrapper.setup_db()
             wrapper.run()

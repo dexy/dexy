@@ -12,6 +12,10 @@ def test_s():
     assert s(text) == 'This is some text which goes onto many lines and has indents at the start.'
 
 class InactiveDexyFilter(Filter):
+    """
+    filter which is always inactive, for testing
+    """
+    NODOC = True
     ALIASES = ['inactive']
     @classmethod
     def is_active(klass):

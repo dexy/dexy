@@ -5,6 +5,9 @@ import os
 import platform
 
 class JrubyFilter(SubprocessStdoutFilter):
+    """
+    Run jruby code and return stdout.
+    """
     ALIASES = ['jruby']
     EXECUTABLE = "jruby"
     INPUT_EXTENSIONS = [".rb", ".txt"]
@@ -12,6 +15,9 @@ class JrubyFilter(SubprocessStdoutFilter):
     VERSION_COMMAND = "jruby --version"
 
 class JirbFilter(PexpectReplFilter):
+    """
+    Run jruby code in jirb.
+    """
     ALIASES = ['jirb']
     ALLOW_MATCH_PROMPT_WITHOUT_NEWLINE = True
     CHECK_RETURN_CODE = False
@@ -23,6 +29,9 @@ class JirbFilter(PexpectReplFilter):
     VERSION_COMMAND = "jirb --version"
 
 class JythonFilter(SubprocessStdoutFilter):
+    """
+    jython
+    """
     ALIASES = ['jython']
     EXECUTABLE = "jython"
     INPUT_EXTENSIONS = [".py", ".txt"]
@@ -43,6 +52,9 @@ class JythonFilter(SubprocessStdoutFilter):
             return klass.executable() and True or False
 
 class JythonInteractiveFilter(PexpectReplFilter):
+    """
+    jython in REPL
+    """
     ALIASES = ['jythoni']
     CHECK_RETURN_CODE = False
     EXECUTABLE = "jython -i"
@@ -63,6 +75,9 @@ class JythonInteractiveFilter(PexpectReplFilter):
             return klass.executable() and True or False
 
 class JavaFilter(SubprocessCompileFilter):
+    """
+    Compiles java code and runs main method.
+    """
     ALIASES = ['java']
     CHECK_RETURN_CODE = True # Whether to check return code when running compiled executable.
     COMPILED_EXTENSION = ".class"
@@ -125,6 +140,9 @@ class JavaFilter(SubprocessCompileFilter):
         return self.args().get('main', default_main)
 
 class JavacFilter(JavaFilter):
+    """
+    Compiles java code and returns the .class object
+    """
     ALIASES = ['javac']
     EXECUTABLE = "javac"
     INPUT_EXTENSIONS = [".java"]

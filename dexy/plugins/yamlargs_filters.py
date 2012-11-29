@@ -3,6 +3,9 @@ from dexy.utils import parse_yaml
 import re
 
 class YamlargsFilter(DexyFilter):
+    """
+    Strips YAML metadata from top of file and adds this to args for every artifact in current doc.
+    """
     ALIASES = ['yamlargs']
 
     def process_text(self, input_text):

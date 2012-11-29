@@ -37,11 +37,17 @@ def test_jinja_filter_inputs():
         assert doc.output().as_text() == "The input is 'I am the input.'"
 
 class TestSimple(TemplatePlugin):
+    """
+    test plugin
+    """
     ALIASES = ['testtemplate']
     def run(self):
         return {'aaa' : 1}
 
 class TestTemplateFilter(TemplateFilter):
+    """
+    test template
+    """
     ALIASES = ['testtemplatefilter']
 
 def test_template_filter_with_custom_filter_only():

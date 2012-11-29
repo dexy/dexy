@@ -27,6 +27,9 @@ class Storage:
             raise Exception("wrapper is a %s" % wrapper.__class__.__name__)
 
 class GenericStorage(Storage):
+    """
+    Default type of storage where content is stored in files.
+    """
     ALIASES = ['generic']
 
     def data_file(self):
@@ -73,6 +76,9 @@ class GenericStorage(Storage):
 # Sectioned Data
 import json
 class JsonOrderedStorage(GenericStorage):
+    """
+    Storage for ordered sectional data using JSON.
+    """
     ALIASES = ['jsonordered']
     MAX_DATA_DICT_DECIMALS = 5
     MAX_DATA_DICT_LENGTH = 10 ** MAX_DATA_DICT_DECIMALS
@@ -129,6 +135,9 @@ You can increase this limit by changing MAX_DATA_DICT_DECIMALS."""
 
 # Key Value Data
 class JsonStorage(GenericStorage):
+    """
+    Storage for key value data using JSON.
+    """
     ALIASES = ['json']
 
     def setup(self):
@@ -179,6 +188,9 @@ class JsonStorage(GenericStorage):
             json.dump(self._data, f)
 
 class Sqlite3Storage(GenericStorage):
+    """
+    Storage of key value storage in sqlite3 database files.
+    """
     ALIASES = ['sqlite3']
 
     def working_file(self):

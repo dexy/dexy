@@ -10,6 +10,12 @@ class Batch(object):
         else:
             self.new()
 
+    def filters_used(self):
+        filters = set()
+        for doc in self.docs():
+            filters = filters.union(doc.filters)
+        return filters
+
     def load(self, batch_id):
         """
         Loads a previously run batch into memory.

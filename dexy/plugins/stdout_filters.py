@@ -10,6 +10,7 @@ class PythonSubprocessStdoutFilter(SubprocessStdoutFilter):
     INPUT_EXTENSIONS = [".py", ".txt"]
     OUTPUT_EXTENSIONS = [".txt"]
     VERSION_COMMAND = 'python --version'
+    TAGS = ['python']
 
 class BashSubprocessStdoutFilter(SubprocessStdoutFilter):
     """
@@ -22,6 +23,9 @@ class BashSubprocessStdoutFilter(SubprocessStdoutFilter):
     VERSION_COMMAND = 'bash --version'
 
 class RubySubprocessStdoutFilter(SubprocessStdoutFilter):
+    """
+    Runs ruby scripts and return stdout.
+    """
     EXECUTABLE = 'ruby'
     VERSION_COMMAND = 'ruby --version'
     INPUT_EXTENSIONS = [".txt", ".rb"]
@@ -29,6 +33,9 @@ class RubySubprocessStdoutFilter(SubprocessStdoutFilter):
     ALIASES = ['rb']
 
 class IrbSubprocessStdoutFilter(SubprocessStdoutFilter):
+    """
+    Runs ruby scripts in irb.
+    """
     ALIASES = ['irbout']
     CHECK_RETURN_CODE = False
     EXECUTABLE = 'irb --simple-prompt --noreadline'
@@ -37,6 +44,9 @@ class IrbSubprocessStdoutFilter(SubprocessStdoutFilter):
     VERSION_COMMAND = 'irb --version'
 
 class SloccountFilter(SubprocessStdoutFilter):
+    """
+    Runs code through sloccount.
+    """
     EXECUTABLE = 'sloccount'
     VERSION_COMMAND = 'sloccount --version'
     INPUT_EXTENSIONS = [".*"]
@@ -44,12 +54,18 @@ class SloccountFilter(SubprocessStdoutFilter):
     ALIASES = ['sloc', 'sloccount']
 
 class RhinoSubprocessStdoutFilter(SubprocessStdoutFilter):
+    """
+    Runs code through rhino js interpreter.
+    """
     EXECUTABLE = "rhino -f"
     INPUT_EXTENSIONS = [".js", ".txt"]
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['js', 'rhino']
 
 class LuaFilter(SubprocessStdoutFilter):
+    """
+    Runs code through lua interpreter.
+    """
     EXECUTABLE = 'lua'
     VERSION_COMMAND = 'lua -v'
     INPUT_EXTENSIONS = ['.lua', '.txt']
@@ -57,6 +73,9 @@ class LuaFilter(SubprocessStdoutFilter):
     ALIASES = ['lua']
 
 class CowsaySubprocessStdoutFilter(SubprocessStdoutFilter):
+    """
+    Runs input through 'cowsay'.
+    """
     ADD_NEW_FILES = False
     ALIASES = ['cowsay']
     EXECUTABLE = 'cowsay'
@@ -69,14 +88,23 @@ class CowsaySubprocessStdoutFilter(SubprocessStdoutFilter):
         return "%s %s \"%s\"" % (self.executable(), args, text)
 
 class CowthinkSubprocessStdoutFilter(CowsaySubprocessStdoutFilter):
+    """
+    Runs input through 'cowthink'.
+    """
     ALIASES = ['cowthink']
     EXECUTABLE = 'cowthink'
 
 class FigletSubprocessStdoutFilter(CowsaySubprocessStdoutFilter):
+    """
+    Runs input through 'figlet'.
+    """
     ALIASES = ['figlet']
     EXECUTABLE = 'figlet'
 
 class Wiki2BeamerFilter(SubprocessStdoutFilter):
+    """
+    Converts wiki content to beamer.
+    """
     ALIASES = ['wiki2beamer']
     EXECUTABLES = ['wiki2beamer']
     INPUT_EXTENSIONS = [".wiki", ".txt"]

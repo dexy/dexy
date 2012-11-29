@@ -5,7 +5,6 @@ import dexy.plugin
 import dexy.utils
 import os
 import posixpath
-import stat
 
 class FilterException(Exception):
     pass
@@ -14,13 +13,22 @@ class Filter:
     __metaclass__ = dexy.plugin.PluginMeta
 
     ALIASES = ['dexy']
+    FRAGMENT = True
     INPUT_EXTENSIONS = [".*"]
+    NODOC = False
     OUTPUT_DATA_TYPE = 'generic'
     OUTPUT_EXTENSIONS = [".*"]
-    TAGS = []
-    FRAGMENT = True
     PRESERVE_PRIOR_DATA_CLASS = False
     REQUIRE_OUTPUT = True
+    TAGS = []
+
+    @classmethod
+    def templates(klass):
+        """
+        List of dexy templates which refer to this filter.
+        """
+        import dexy.template
+        return [p for p in dexy.template.Template.plugins if any(a for a in klass.ALIASES if a in p.FILTERS_USED)]
 
     @classmethod
     def is_active(klass):
@@ -142,6 +150,9 @@ class Filter:
             return doc in conflict_docs and conflict_docs.index(doc) == 0
 
 class DexyFilter(Filter):
+    """
+    Filter which implements some default behaviors.
+    """
     ALIASES = ['dexy']
 
     @classmethod

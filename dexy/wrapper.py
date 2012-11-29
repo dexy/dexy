@@ -250,10 +250,13 @@ class Wrapper(object):
             self.log.debug("looking for doc config files in '%s'" % dirpath)
 
             nodexy_file = os.path.join(dirpath, '.nodexy')
+            pip_delete_this_dir_file = os.path.join(dirpath, "pip-delete-this-directory.txt")
             if os.path.exists(nodexy_file):
                 self.log.debug("  skipping directory '%s' and its children because .nodexy file found" % dirpath)
                 dirnames[:] = []
             else:
+                if os.path.exists(pip_delete_this_dir_file):
+                    print "WARNING pip left an old build/ file lying around! You probably want to cancel this dexy run! and remove this directory first!"
                 # no excludes or .nodexy file, this dir is ok to process
                 for alias in dexy.parser.Parser.aliases.keys():
                     config_file_in_directory = os.path.join(dirpath, alias)

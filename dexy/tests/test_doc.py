@@ -42,7 +42,7 @@ def test_create_virtual_initial_artifact():
         doc = Doc("abc.txt", contents="these are the contents", wrapper=wrapper)
         wrapper.run_docs(doc)
         assert doc.children[0].__class__.__name__ == "InitialVirtualArtifact"
-        assert doc.children[0].output_data.__class__.__name__ == "GenericData"
+        assert doc.children[0].output_data.__class__.__name__ == "Generic"
 
 def test_create_virtual_initial_artifact_with_dict():
     with wrap() as wrapper:
@@ -50,7 +50,7 @@ def test_create_virtual_initial_artifact_with_dict():
         od_contents['1'] = "these are the contents"
         doc = Doc("abc.txt", contents = od_contents, wrapper=wrapper)
         wrapper.run_docs(doc)
-        assert doc.children[0].output_data.__class__.__name__ == "SectionedData"
+        assert doc.children[0].output_data.__class__.__name__ == "Sectioned"
 
 def test_create_doc_with_filters():
     with wrap() as wrapper:

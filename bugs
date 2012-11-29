@@ -3,6 +3,8 @@
 [issue] if you forget to add hyphens to make single child doc into a list, yaml parser tries to iterate over string | id:0af99c8a441b5f27a4140d0de91f0d0a6d27ad01
 [feature] allow setting parameters somewhere which can be used within documents and for generating canonical filenames and reporter directory names | id:0b0a8189a1428cd6f8269ff8e1649d56e1e2e360
 [feature] have method for getting JSON dict into env for another filter | id:1012845dcb49a8e36f5f1361338835482eacfba4
+[feature] use hashing algorithm to generate shortcodes instead of aliases for templates | id:116677833dda3e515126071d250fa92644123751
+make sure modargs and/or dexy always exits with nonzero exit code on an error | id:15fa1ebe0ee0f25654172cf20a90ba37e2fc25f8
 [feature] implement is_active method for templates and list dependencies that need to be installed | id:1e5d9d273c8db7d4c38d85b76442f0d2ae7dd637
 [feature] add javascript search widget helper to dexy for searching generated content, e.g. http://www.tipue.com/search/demo/ | id:205430dabd1a07653925609b005c8e3e1a0ee4d0
 [feature] warning or other indication when 'canonical name' is in different directory as original document name | id:20b1be4d8d8b80debc8a66e81c28af2cfe37d0a2
@@ -22,6 +24,7 @@
 [docs] example of using idiom filter which generates multiple output formats | id:4f8dce912800bc9e441048c71c41cfd8db4c309b
 [feature] give feedback if no doc config files found | id:571ce803b67e3c8ab96d0920583a2115808c0b0f
 [issue] better feedback for named docs not being pattern docs, user should add an asterisk or specify exact path to file | id:58336d8495093b1d9574f02a2314845916bdb713
+[feature] automatically generate TOC and next/prev/up links for collections of pages (in jinja filter and WebsiteReporter) | id:5a074d7da0254559bcaa3e5ec65c284827525a1f
 [feature] finish implementing 'except' feature and test, clarify regex or fnmatch or both | id:5af09bc445c7790bf478bf7e576c53129daa46a5
 [feature] add a dexy plugins command to list pluginnable classes | id:61186f7dd456c9a4f69d9fce88d002640f0ed1ad
 [issue] raise exception if refer to a bundle doc which doesn't exist | id:62ff0c554848a23637c539a0d25b07960ef6abc3

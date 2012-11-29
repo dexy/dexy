@@ -6,6 +6,9 @@ import os
 import re
 
 class YamlFileParser(Parser):
+    """
+    Parses YAML configs.
+    """
     ALIASES = ["dexy.yaml", "docs.yaml"]
 
     def build_ast(self, directory, input_text):
@@ -85,6 +88,9 @@ class YamlFileParser(Parser):
         parse_keys(config, top=True)
 
 class TextFileParser(Parser):
+    """
+    parses plain text configs
+    """
     ALIASES = ["dexy.txt", "docs.txt"]
 
     def build_ast(self, directory, input_text):
@@ -114,6 +120,9 @@ class TextFileParser(Parser):
                     self.ast.add_dependency(self.join_dir(directory, key), self.join_dir(directory, child_key))
 
 class OriginalDexyParser(Parser):
+    """
+    parses JSON config files like .dexy
+    """
     ALIASES = ["dexy.json", "docs.json", ".dexy"]
 
     def build_ast(self, directory, input_text):

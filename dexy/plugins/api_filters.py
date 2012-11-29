@@ -1,9 +1,8 @@
-from dexy.filter import DexyFilter
 import dexy.filter
 import json
 import os
 
-class ApiFilter(DexyFilter):
+class ApiFilter(dexy.filter.DexyFilter):
     """
     Base class for filters which post content to a remote API, such as a blog, CMS
     or helpdesk app. Provides standard formats and locations for storing

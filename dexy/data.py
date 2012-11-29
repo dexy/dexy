@@ -57,12 +57,12 @@ class Data:
         pass
 
     def calculate_name(self):
+        name_without_ext = posixpath.splitext(self.key)[0]
         if self.args.get('canonical-name'):
             self.name = self.args.get('canonical-name')
         elif self.args.get('canonical_name'):
             self.name = self.args.get('canonical_name')
         else:
-            name_without_ext = posixpath.splitext(self.key)[0]
             self.name = "%s%s" % (name_without_ext, self.ext)
 
     def parent_dir(self):
@@ -98,13 +98,13 @@ class Data:
                 "/%s" % self.long_name()
         ]
 
-class GenericData(Data):
+class Generic(Data):
+    """
+    Data type representing generic binary or text-based data.
+    """
     ALIASES = ['generic']
     DEFAULT_STORAGE_TYPE = 'generic'
 
-    """
-    Data in a single lump, which may be binary or text-based.
-    """
     def save(self):
         self.storage.write_data(self._data)
 
@@ -177,7 +177,10 @@ class GenericData(Data):
         if not self.storage.copy_file(filepath):
             self.storage.write_data(self.data(), filepath)
 
-class SectionedData(GenericData):
+class Sectioned(Generic):
+    """
+    Data in sections which must be kept in order.
+    """
     ALIASES = ['sectioned']
     DEFAULT_STORAGE_TYPE = 'jsonordered'
 
@@ -213,7 +216,10 @@ class SectionedData(GenericData):
         else:
             raise dexy.exceptions.UserFeedback("No method %s defined for %r" % (key, self))
 
-class KeyValueData(GenericData):
+class KeyValue(Generic):
+    """
+    Data class for key-value data.
+    """
     ALIASES  = ['keyvalue']
     DEFAULT_STORAGE_TYPE = 'sqlite3'
 

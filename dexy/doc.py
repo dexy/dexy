@@ -8,6 +8,9 @@ import posixpath
 import re
 
 class Doc(dexy.task.Task):
+    """
+    Task subclass representing Documents.
+    """
     ALIASES = ['doc']
 
     @classmethod

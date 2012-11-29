@@ -16,6 +16,9 @@ class Database:
 
 import sqlite3
 class Sqlite3(Database):
+    """
+    Implementation of dexy database using sqlite3.
+    """
     START_BATCH_ID = 1001
     ALIASES = ['sqlite3', 'sqlite']
     FIELDS = [
