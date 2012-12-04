@@ -66,6 +66,10 @@ class LatexFilter(SubprocessFilter):
             msg = "Latex file not generated. Look for information in latex log in %s directory." % wd
             raise dexy.exceptions.UserFeedback(msg)
 
+        if self.do_add_new_files():
+            self.log.debug("adding new files found in %s for %s" % (self.artifact.tmp_dir(), self.artifact.key))
+            self.add_new_files()
+
         self.copy_canonical_file()
 
 class XelatexFilter(LatexFilter):

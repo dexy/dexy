@@ -168,6 +168,9 @@ class SubprocessFilter(Filter):
 
     def add_new_files(self):
         wd = self.artifact.tmp_dir()
+
+        do_add_new = self.do_add_new_files()
+
         for dirpath, dirnames, filenames in os.walk(wd):
             for filename in filenames:
                 filepath = os.path.join(dirpath, filename)
@@ -178,8 +181,8 @@ class SubprocessFilter(Filter):
                 already_have_file = (relpath in self.artifact.wrapper.batch.doc_names())
                 empty_file = (filesize == 0)
 
-                if hasattr(self.ADD_NEW_FILES, 'len'):
-                    is_valid_file_extension = ext in self.ADD_NEW_FILES
+                if not isinstance(do_add_new, bool):
+                    is_valid_file_extension = (ext in do_add_new) or (ext == do_add_new)
                 else:
                     is_valid_file_extension = True
 

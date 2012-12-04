@@ -62,7 +62,8 @@ class Filter:
         if not posixpath.sep in doc_name:
             doc_name = posixpath.join(self.input().parent_dir(), doc_name)
 
-        additional_doc_filters = self.args().get("additional-doc-filters", {})
+        additional_doc_filters = self.args().get("additional-doc-filters", {}) or self.args().get('additional_doc_filters', {})
+        self.log.debug("additional_doc_filters are %s" % additional_doc_filters)
 
         doc_ext = os.path.splitext(doc_name)[1]
 

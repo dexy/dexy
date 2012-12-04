@@ -11,6 +11,7 @@ make sure modargs and/or dexy always exits with nonzero exit code on an error | 
 [feature] add template arg to rst2html and other rst handlers | id:241f612602d54ae078579720d74e1f931561528a
 [feature] WebsiteReporter have way of making collection of docs and navigation between elements (next, prev, up) | id:2928f96220caea5a1d55dc4ad706b84a9895f743
 [feature] how to generate class inheritance diagram for pydoc filter? | id:292ef032418f240c1c28be0a0f8bfe4c95fc76d7
+[issue] should add-new-files be capable of adding a file that duplicates main doc final output name | id:293572651e364c80fc27c4046497bab5a05191a2
 [feature] add html canvas element to whole page, draw on that for annotation. or add svg elements + position on top. | id:36a3dbd3c6544e7805bff0b8e1dafcad0393c6d2
 [idea] how to cite code in scientific papers | id:36d5729d63e3da51009543f198b31ad26e917657
 [feature] dump dexy env into working dir so easy to troubleshoot | id:3c03b3aadc4b3e799be0b4da8022dc1b56f7bc68
@@ -52,6 +53,7 @@ test every filter for, if error occurs, file is not left in cache | id:64e43af4a
 [feature] add winpexpect support https://bitbucket.org/geertj/winpexpect/wiki/Home | id:b7590f29225431071a22bc72520ebfad0ab6afc6
 [feature] standard way to give feedback on what packages need to be installed to use a filter | id:bce8eeb2b2d39665a51da781b5e4fa0de83a0ba9
 [feature] have auto-tab-completion for dexy gen (and other dexy commands) | id:be551899ac9a205c6a9acd19a4b979c5a4f42bbd
+[issue] should be able to pass keep_originals as well as keep-originals | id:c1e23a8bb7736b47e99f9f9323c66fe7e50c1c81
 self.ast.add_task_info(self.join_dir(directory, task_key), **task_kwargs) TypeError: add_task_info() keywords must be strings | id:c2a6b03f190dfb2b4aa91f8af8d477a9bc3401dc
 [feature] run the RunReporter even when an exception has occurred, add a section with exception information | id:c3e3551172f65f62fcf24ca11e8b8e89b97ab984
 [docs] example of combining rst-generated latex files into a book | id:c43af78776eb972bcaf6e008ea9144fc0f3067ac

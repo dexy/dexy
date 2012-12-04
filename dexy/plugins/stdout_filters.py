@@ -1,7 +1,15 @@
 from dexy.plugins.process_filters import SubprocessStdoutFilter
 import json
 
-class PythonSubprocessStdoutFilter(SubprocessStdoutFilter):
+class Wordcount(SubprocessStdoutFilter):
+    """
+    Runs input through wc command line tool.
+    """
+    ALIASES = ['wc']
+    EXECUTABLE = 'wc'
+    OUTPUT_EXTENSIONS = ['.txt']
+
+class Python(SubprocessStdoutFilter):
     """
     Runs Python code and returns stdout.
     """
@@ -12,7 +20,7 @@ class PythonSubprocessStdoutFilter(SubprocessStdoutFilter):
     VERSION_COMMAND = 'python --version'
     TAGS = ['python']
 
-class BashSubprocessStdoutFilter(SubprocessStdoutFilter):
+class Bash(SubprocessStdoutFilter):
     """
     Runs bash scripts and returns stdout.
     """
@@ -22,7 +30,7 @@ class BashSubprocessStdoutFilter(SubprocessStdoutFilter):
     OUTPUT_EXTENSIONS = [".txt"]
     VERSION_COMMAND = 'bash --version'
 
-class RubySubprocessStdoutFilter(SubprocessStdoutFilter):
+class Ruby(SubprocessStdoutFilter):
     """
     Runs ruby scripts and return stdout.
     """
@@ -32,7 +40,7 @@ class RubySubprocessStdoutFilter(SubprocessStdoutFilter):
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['rb']
 
-class IrbSubprocessStdoutFilter(SubprocessStdoutFilter):
+class Irb(SubprocessStdoutFilter):
     """
     Runs ruby scripts in irb.
     """
@@ -43,7 +51,7 @@ class IrbSubprocessStdoutFilter(SubprocessStdoutFilter):
     OUTPUT_EXTENSIONS = [".rbcon"]
     VERSION_COMMAND = 'irb --version'
 
-class SloccountFilter(SubprocessStdoutFilter):
+class Sloccount(SubprocessStdoutFilter):
     """
     Runs code through sloccount.
     """
@@ -53,7 +61,7 @@ class SloccountFilter(SubprocessStdoutFilter):
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['sloc', 'sloccount']
 
-class RhinoSubprocessStdoutFilter(SubprocessStdoutFilter):
+class Rhino(SubprocessStdoutFilter):
     """
     Runs code through rhino js interpreter.
     """
@@ -62,7 +70,7 @@ class RhinoSubprocessStdoutFilter(SubprocessStdoutFilter):
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['js', 'rhino']
 
-class LuaFilter(SubprocessStdoutFilter):
+class Lua(SubprocessStdoutFilter):
     """
     Runs code through lua interpreter.
     """
@@ -72,7 +80,7 @@ class LuaFilter(SubprocessStdoutFilter):
     OUTPUT_EXTENSIONS = ['.txt']
     ALIASES = ['lua']
 
-class CowsaySubprocessStdoutFilter(SubprocessStdoutFilter):
+class Cowsay(SubprocessStdoutFilter):
     """
     Runs input through 'cowsay'.
     """
@@ -87,21 +95,21 @@ class CowsaySubprocessStdoutFilter(SubprocessStdoutFilter):
         text = self.input().as_text()
         return "%s %s \"%s\"" % (self.executable(), args, text)
 
-class CowthinkSubprocessStdoutFilter(CowsaySubprocessStdoutFilter):
+class Cowthink(Cowsay):
     """
     Runs input through 'cowthink'.
     """
     ALIASES = ['cowthink']
     EXECUTABLE = 'cowthink'
 
-class FigletSubprocessStdoutFilter(CowsaySubprocessStdoutFilter):
+class Figlet(Cowsay):
     """
     Runs input through 'figlet'.
     """
     ALIASES = ['figlet']
     EXECUTABLE = 'figlet'
 
-class Wiki2BeamerFilter(SubprocessStdoutFilter):
+class Wiki2Beamer(SubprocessStdoutFilter):
     """
     Converts wiki content to beamer.
     """
@@ -111,14 +119,14 @@ class Wiki2BeamerFilter(SubprocessStdoutFilter):
     OUTPUT_EXTENSIONS = [".tex"]
     VERSION_COMMAND = "wiki2beamer --version"
 
-class StringsSubprocessStdoutFilter(SubprocessStdoutFilter):
+class Strings(SubprocessStdoutFilter):
     """
     Clean non-printing characters from text using the 'strings' tool.
     """
     ALIASES = ['strings']
     EXECUTABLE = 'strings'
 
-class PhpFilter(SubprocessStdoutFilter):
+class Php(SubprocessStdoutFilter):
     """
     Runs php file, note that php code must be included in <?php ... ?> tags.
     """
@@ -129,7 +137,7 @@ class PhpFilter(SubprocessStdoutFilter):
     OUTPUT_EXTENSIONS = [".html", ".txt"]
     ALIASES = ['php']
 
-class RagelRubyDotFilter(SubprocessStdoutFilter):
+class RagelRubyDot(SubprocessStdoutFilter):
     """
     Generates state chart in .dot format of ragel state machine for ruby.
     """
@@ -139,7 +147,7 @@ class RagelRubyDotFilter(SubprocessStdoutFilter):
     VERSION_COMMAND = 'ragel --version'
     EXECUTABLE = 'ragel -R -V'
 
-class ManPageSubprocessStdoutFilter(SubprocessStdoutFilter):
+class ManPage(SubprocessStdoutFilter):
     """
     Read command names from a file and fetch man pages for each.
 
@@ -167,7 +175,7 @@ class ManPageSubprocessStdoutFilter(SubprocessStdoutFilter):
 
         self.output().set_data(json.dumps(man_info))
 
-class LynxDumpFilter(SubprocessStdoutFilter):
+class Lynxdump(SubprocessStdoutFilter):
     """
     Converts HTML to plain text by using lynx -dump.
     """
@@ -177,7 +185,7 @@ class LynxDumpFilter(SubprocessStdoutFilter):
     VERSION_COMMAND = 'lynx --version'
     EXECUTABLE = 'lynx -dump'
 
-class EscriptSubprocessStdoutFilter(SubprocessStdoutFilter):
+class Escript(SubprocessStdoutFilter):
     """
     Runs Erlang scripts using the escript command.
     """
@@ -186,7 +194,7 @@ class EscriptSubprocessStdoutFilter(SubprocessStdoutFilter):
     OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['escript']
 
-class RedclothFilter(SubprocessStdoutFilter):
+class Redcloth(SubprocessStdoutFilter):
     """
     Runs redcloth, converts textile markup to HTML.
     """
@@ -196,7 +204,7 @@ class RedclothFilter(SubprocessStdoutFilter):
     OUTPUT_EXTENSIONS = [".html"]
     ALIASES = ['redcloth', 'textile']
 
-class RedclothLatexFilter(SubprocessStdoutFilter):
+class RedclothLatex(SubprocessStdoutFilter):
     """
     Runs redcloth, converts textile markup to LaTeX.
     """
@@ -206,7 +214,7 @@ class RedclothLatexFilter(SubprocessStdoutFilter):
     OUTPUT_EXTENSIONS = [".tex"]
     ALIASES = ['redclothl', 'latextile']
 
-class RdConvFilter(SubprocessStdoutFilter):
+class RdConv(SubprocessStdoutFilter):
     """Convert R documentation to other formats."""
     EXECUTABLE = "R CMD Rdconv"
     VERSION_COMMAND = "R CMD Rdconv -v"
