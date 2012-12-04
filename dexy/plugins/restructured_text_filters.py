@@ -93,3 +93,14 @@ class Rst2BeamerFilter(SubprocessFilter):
     INPUT_EXTENSIONS = [".rst", ".txt"]
     OUTPUT_EXTENSIONS = [".tex"]
     VERSION_COMMAND = "rst2beamer --version"
+
+class Rst2Man(SubprocessFilter):
+    """
+    Filter for rst2man command line tool, requires docutils.
+    """
+    ADD_NEW_FILES = False
+    ALIASES = ['rst2man']
+    EXECUTABLES = ['rst2man', 'rst2man.py']
+    INPUT_EXTENSIONS = [".rst", ".txt"]
+    OUTPUT_EXTENSIONS = [".man"]
+    VERSION_COMMAND = "rst2man.py --version"

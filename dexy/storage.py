@@ -23,8 +23,6 @@ class Storage:
         self.hashstring = hashstring
         self.ext = ext
         self.wrapper = wrapper
-        if not wrapper.__class__.__name__ == "Wrapper":
-            raise Exception("wrapper is a %s" % wrapper.__class__.__name__)
 
 class GenericStorage(Storage):
     """
@@ -206,9 +204,15 @@ class Sqlite3Storage(GenericStorage):
             self._storage = sqlite3.connect(self.working_file())
             self._cursor = self._storage.cursor()
             self._cursor.execute("CREATE TABLE kvstore (key TEXT, value TEXT)")
+            self._append_counter = 0
 
     def append(self, key, value):
         self._cursor.execute("INSERT INTO kvstore VALUES (?, ?)", (str(key), str(value)))
+        self._append_counter += 1
+        if self._append_counter > 1000:
+            self.wrapper.log.debug("intermediate commit to sqlite db, resetting append counter to 0")
+            self._storage.commit()
+            self._append_counter = 0
 
     def keys(self):
         self._cursor.execute("SELECT key from kvstore")

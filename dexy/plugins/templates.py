@@ -1,6 +1,6 @@
-from dexy.template import Template
+import dexy.template
 
-class DefaultTemplate(Template):
+class DefaultTemplate(dexy.template.Template):
     """
     A very boring default template that ships with dexy.
     """

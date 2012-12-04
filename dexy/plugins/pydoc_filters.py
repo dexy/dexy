@@ -1,10 +1,4 @@
 from dexy.filter import DexyFilter
-from idiopidae.runtime import Composer
-from pygments import highlight
-from pygments.formatters.html import HtmlFormatter
-from pygments.formatters.latex import LatexFormatter
-from pygments.lexers.agile import PythonLexer
-import idiopidae.parser
 import inspect
 import json
 import pkgutil
@@ -16,12 +10,8 @@ class PythonDocumentationFilter(DexyFilter):
     """
     ALIASES = ["pydoc"]
     INPUT_EXTENSIONS = [".txt"]
-    OUTPUT_EXTENSIONS = ['.sqlite3', '.json']
-    COMPOSER = Composer()
     OUTPUT_DATA_TYPE = 'keyvalue'
-    LEXER = PythonLexer()
-    LATEX_FORMATTER = LatexFormatter()
-    HTML_FORMATTER = HtmlFormatter(lineanchors="pydoc")
+    OUTPUT_EXTENSIONS = ['.sqlite3', '.json']
 
     def fetch_item_content(self, key, item):
         is_method = inspect.ismethod(item)
@@ -32,21 +22,8 @@ class PythonDocumentationFilter(DexyFilter):
                 source = inspect.getsource(item)
             except IOError:
                 source = ""
-            # Process any idiopidae tags
-            builder = idiopidae.parser.parse('Document', source + "\n\0")
 
-            sections = {}
-            for i, s in enumerate(builder.sections):
-                sections[s] = "\n".join(l[1] for l in builder.statements[i]['lines'])
-
-            if isinstance(sections, dict):
-                if len(sections.keys()) > 1 or sections.keys()[0] != '1':
-                    for section_name, section_content in sections.iteritems():
-                        self.add_source_for_key("%s:%s" % (key, section_name), section_content)
-                else:
-                    self.add_source_for_key(key, sections['1'])
-            else:
-                self.add_source_for_key(key, sections)
+            self.add_source_for_key(key, source)
 
             self.output().append("%s:doc" % key, inspect.getdoc(item))
             self.output().append("%s:comments" % key, inspect.getcomments(item))
@@ -60,12 +37,6 @@ class PythonDocumentationFilter(DexyFilter):
                 # ... if it can't, convert it to a string to avoid problems.
                 self.add_source_for_key(key, str(item))
 
-    def highlight_html(self, source):
-        return highlight(source, self.LEXER, self.HTML_FORMATTER)
-
-    def highlight_latex(self, source):
-        return highlight(source, self.LEXER, self.LATEX_FORMATTER)
-
     def add_source_for_key(self, key, source):
         """
         Appends source code + syntax highlighted source code to persistent store.
@@ -74,8 +45,6 @@ class PythonDocumentationFilter(DexyFilter):
         if not (type(source) == str or type(source) == unicode):
             source = inspect.getsource(source)
         self.output().append("%s:source" % key, source)
-        self.output().append("%s:html-source" % key, self.highlight_html(source))
-        self.output().append("%s:latex-source" % key, self.highlight_latex(source))
 
     def process_members(self, package_name, mod):
         """

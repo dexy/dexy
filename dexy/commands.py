@@ -1,4 +1,5 @@
 from dexy.utils import getdoc
+from dexy.utils import s
 from dexy.utils import parse_json
 from dexy.utils import parse_yaml
 from dexy.version import DEXY_VERSION
@@ -165,6 +166,40 @@ def default_config():
 
     return conf
 
+def run_dexy_in_profiler(wrapper, profile):
+    if isinstance(profile, bool):
+        profile_filename = 'dexy.prof'
+    else:
+        profile_filename = profile
+
+    import cProfile
+    print "running dexy with cProfile, writing profile data to %s" % profile_filename
+    cProfile.runctx("wrapper.run()", None, locals(), profile_filename)
+    import pstats
+    stat = pstats.Stats(profile_filename)
+    stat.sort_stats("cumulative")
+    stat.print_stats(25)
+
+def handle_user_feedback_exception(wrapper, e):
+    if hasattr(wrapper, 'log'):
+        wrapper.log.error("A problem has occurred with one of your documents:")
+        wrapper.log.error(e.message)
+    wrapper.cleanup_partial_run()
+    sys.stderr.write("Oops, there's a problem processing one of your documents. Here is the error message:" + os.linesep)
+    sys.stderr.write(e.message)
+    if not e.message.endswith(os.linesep) or e.message.endswith("\n"):
+        sys.stderr.write(os.linesep)
+    sys.stderr.write("Dexy is stopping. There might be more information at the end of the dexy log." + os.linesep)
+    sys.exit(1)
+
+def log_and_print_exception(wrapper, e):
+    if hasattr(wrapper, 'log'):
+        wrapper.log.error("An error has occurred.")
+        wrapper.log.error(e)
+        wrapper.log.error(e.message)
+    import traceback
+    traceback.print_exc()
+
 def dexy_command(
         __cli_options=False,
         artifactsdir=D['artifacts_dir'], # location of directory in which to store artifacts
@@ -198,88 +233,33 @@ def dexy_command(
         version=False # For people who type -version out of habit
     ):
     """
-    Runs Dexy, by processing your .dexy configuration file and running content
-    through the filters you have specified. Results are cached in the
-    artifacts/ directory but are presented in a more usable format by
-    reporters. Basic reports are run automatically but you can specify
-    additional reports. Type 'dexy reporters' for a list of available reporters.
-
-    If your project is large, then running reports will start to take up a lot
-    of time, so you should specify only the reports you really need. You can
-    always run more reports after a batch has finished running (you can run
-    historical reports as far back as the last time you cleared out your
-    artifacts cache with a 'dexy reset' or similar).
-
-    After running Dexy, the output/ directory will hold what dexy thinks are
-    the most important generated files (with pretty filenames), the output-long
-    directory will hold all of your generated files (with ugly filenames), and
-    the logs/ directory will hold the basic dexy.log logfile and also a more
-    colorful and descriptive HTML log file in logs/run-latest/. Please look at
-    these logfiles to learn more about how dexy works, and if you run into
-    problems the dexy.log file might provide clues as to what has gone wrong.
-
-    Your original files will be copied to logs/source-batch-00001/ by the
-    SourceReporter (enabled by default). Each time you run dexy, your source
-    code files will be copied so you have a mini-version history. (You can also
-    use the 'dexy history' command to get a history for a given file, and you
-    can run the SourceReporter again at any time to restore a given batch's
-    source files.)
-
-    If you run into trouble, visit http://dexy.it/help
+    Runs Dexy.
     """
     if h or help:
-        help_command()
-    elif version:
-        version_command()
-    else:
-        wrapper_args = locals()
+        return help_command()
 
-        if r or reset:
-            print "Resetting dexy cache..."
-            reset_command(artifactsdir=artifactsdir, logdir=logdir)
+    if version:
+        return version_command()
 
-        wrapper = init_wrapper(wrapper_args)
+    if r or reset:
+        print "Resetting dexy cache..."
+        reset_command(artifactsdir=artifactsdir, logdir=logdir)
 
-        try:
-            wrapper.check_dexy_dirs()
+    try:
+        wrapper = init_wrapper(locals())
 
-            if profile:
-                if isinstance(profile, bool):
-                    profile_filename = 'dexy.prof'
-                else:
-                    profile_filename = profile
+        if profile:
+            run_dexy_in_profiler(wrapper, profile)
+        else:
+            wrapper.run()
 
-                import cProfile
-                print "running dexy with cProfile, writing profile data to %s" % profile_filename
-                cProfile.runctx("wrapper.run()", None, locals(), profile_filename)
-                import pstats
-                s = pstats.Stats(profile_filename)
-                s.sort_stats("cumulative")
-                s.print_stats(25)
-            else:
-                wrapper.run()
+        wrapper.report()
+        print "finished in %0.4f" % wrapper.batch.elapsed()
 
-            wrapper.report()
-            print "finished in %0.4f" % wrapper.batch.elapsed()
-
-        except dexy.exceptions.UserFeedback as e:
-            if hasattr(wrapper, 'log'):
-                wrapper.log.error("A problem has occurred with one of your documents:")
-                wrapper.log.error(e.message)
-            wrapper.cleanup_partial_run()
-            sys.stderr.write("Oops, there's a problem processing one of your documents. Here is the error message:" + os.linesep)
-            sys.stderr.write(e.message)
-            if not e.message.endswith(os.linesep) or e.message.endswith("\n"):
-                sys.stderr.write(os.linesep)
-            sys.stderr.write("Dexy is stopping. There might be more information at the end of the dexy log." + os.linesep)
-            sys.exit(1)
-        except Exception as e:
-            if hasattr(wrapper, 'log'):
-                wrapper.log.error("An error has occurred.")
-                wrapper.log.error(e)
-                wrapper.log.error(e.message)
-            import traceback
-            traceback.print_exc()
+    except dexy.exceptions.UserFeedback as e:
+        handle_user_feedback_exception(wrapper, e)
+    except Exception as e:
+        log_and_print_exception(wrapper, e)
 
 def reset_command(
         __cli_options=False,
@@ -358,6 +338,7 @@ def conf_command(
 
 def filter_command(
         alias="", # If a filter alias is specified, more detailed help for that filter is printed.
+        example=False, # Whether to run examples
         nocolor=False, # When source = True, whether to omit syntax highlighting
         showall=False, # Whether to show all filters, including those which need missing software, implies versions=True
         showmissing=False, # Whether to just show filters missing external software, implies versions=True
@@ -372,6 +353,7 @@ def filter_command(
 
 def filters_command(
         alias="", # If a filter alias is specified, more detailed help for that filter is printed.
+        example=False, # Whether to run examples
         nocolor=False, # When source = True, whether to omit syntax highlighting
         showall=False, # Whether to show all filters, including those which need missing software, implies versions=True
         showmissing=False, # Whether to just show filters missing external software, implies versions=True
@@ -386,6 +368,7 @@ def filters_command(
 
 def filters_text(
         alias="", # If a filter alias is specified, more detailed help for that filter is printed.
+        example=False, # Whether to run examples
         nocolor=False, # When source = True, whether to omit syntax highlighting
         showall=False, # Whether to show all filters, including those which need missing software, implies versions=True
         showmissing=False, # Whether to just show filters missing external software, implies versions=True
@@ -411,6 +394,17 @@ def filters_text(
                 text.append("")
                 text.append("  %s" % aliases[0])
                 text.append("            %s" % dexy.utils.getdoc(t))
+
+            if example:
+                for t in templates:
+                    aliases = [k for k, v in dexy.template.Template.aliases.iteritems() if v == t]
+                    if t.__module__ == "dexy_filter_examples":
+                        text.append('')
+                        text.append("Running example: %s" % s(t.__doc__))
+                        text.append('')
+                        text.append('')
+                        text.append(template_text(alias=aliases[0]))
+                        text.append('')
         text.append("")
         text.append("For online docs see http://dexy.it/docs/filters/%s" % alias)
         if source:
@@ -639,6 +633,33 @@ def gen_command(
         with open("README", "r") as f:
             print f.read()
         print "\nThis information is in the 'README' file for future reference."
+
+def template_command(
+        alias=None
+        ):
+    print template_text(alias)
+
+def template_text(
+        alias=None
+    ):
+    template = dexy.template.Template.aliases[alias]
+    for batch in template.dexy():
+        man_doc_key = 'Doc:dexy.rst|jinja|rst2man'
+        if man_doc_key in batch.lookup_table:
+            man_doc = batch.lookup_table[man_doc_key].output().storage.data_file()
+
+            command = "man %s" % man_doc
+            import subprocess
+            proc = subprocess.Popen(
+                       command,
+                       shell=True,
+                       stdout=subprocess.PIPE,
+                       stderr=subprocess.STDOUT
+                   )
+            stdout, stderr = proc.communicate()
+            return stdout
+        else:
+            return "no example found"
 
 def templates_command(
         simple=False, # Only print template names, without docstring or headers.

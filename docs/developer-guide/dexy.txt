@@ -1,6 +1,0 @@
-*.py
-*.py|idio
-*/*.py|py
-modules.txt|pydoc {"contents" : "dexy", "version" : 14}
-#*.md|jinja|markdown|easyhtml
-*.md|jinja|pandoc|easyhtml

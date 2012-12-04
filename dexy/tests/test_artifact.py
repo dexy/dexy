@@ -126,7 +126,7 @@ def test_parent_doc_hash():
     with tempdir():
         args = [["hello.txt|newdoc", { "contents" : "hello" }]]
         wrapper = Wrapper(*args)
-        wrapper.setup_dexy_dirs()
+        wrapper.setup(True)
         wrapper.run()
 
         doc = wrapper.batch.tree[0]
@@ -222,6 +222,7 @@ def test_virtual_artifact_data_class_sectioned():
 
 def test_create_working_dir():
     with wrap() as wrapper:
+        wrapper.setup(True)
         c1 = Doc("data.txt", contents="12345.67", wrapper=wrapper)
         c2 = Doc("mymod.py", contents="FOO='bar'", wrapper=wrapper)
         doc = Doc("example.py|py",

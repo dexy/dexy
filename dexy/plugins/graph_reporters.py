@@ -3,12 +3,16 @@ import subprocess
 import os
 
 class GraphReporter(Reporter):
+    """
+    Reporter which prints a graph representation of tree.
+    """
     ALIASES = ['graph', 'dot']
+    ALLREPORTS = False
 
     @classmethod
     def write_graph_to_dotfile(klass, wrapper, dotfile):
         with open(dotfile, "w") as f:
-            f.write(wrapper.graph)
+            f.write(wrapper.batch.graph)
 
     @classmethod
     def render_dotfile_to_png(klass, dotfile, pngfile):

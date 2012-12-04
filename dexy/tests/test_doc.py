@@ -27,7 +27,6 @@ def test_output_is_data():
         wrapper.run_docs(doc)
         assert isinstance(doc.output(), Data)
 
-### @export "test-create-doc-with-child"
 def test_create_doc_with_child():
     with wrap() as wrapper:
         doc = Doc("parent.txt", Doc("child.txt", wrapper=wrapper), wrapper=wrapper)
@@ -35,7 +34,6 @@ def test_create_doc_with_child():
         assert doc.key == "parent.txt"
         assert doc.children[0].key == "child.txt"
         assert doc.children[1].key == "parent.txt"
-### @end
 
 def test_create_virtual_initial_artifact():
     with wrap() as wrapper:

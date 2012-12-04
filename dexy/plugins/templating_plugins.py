@@ -12,7 +12,6 @@ import dexy.data
 import dexy.exceptions
 import json
 import os
-import pprint
 import pygments
 import pygments.formatters
 import re
@@ -44,6 +43,18 @@ class PrettyPrintJson(TemplatePlugin):
         return {
             'ppjson' : self.ppjson
          }
+
+class RstCode(TemplatePlugin):
+    """
+    Indents code 4 spaces and wraps in .. code:: directive.
+    """
+    @classmethod
+    def rstcode(klass, text, language='python'):
+        output = [".. code:: %s" % language, '']
+        for line in text.splitlines():
+            output.append("    %s" % line)
+        output.append('')
+        return os.linesep.join(output)
 
 class PythonDatetime(TemplatePlugin):
     """
@@ -82,14 +93,6 @@ class SimpleJson(TemplatePlugin):
     ALIASES = ['json']
     def run(self):
         return { 'json' : json }
-
-class PrettyPrinter(TemplatePlugin):
-    """
-    Exposes the pprint module.
-    """
-    ALIASES = ['pprint']
-    def run(self):
-        return { 'pformat' : pprint.pformat}
 
 class RegularExpressions(TemplatePlugin):
     """

@@ -1,6 +1,5 @@
 from StringIO import StringIO
 from dexy.common import OrderedDict
-from dexy.exceptions import InactiveFilter
 from dexy.utils import char_diff
 from mock import MagicMock
 from nose.exc import SkipTest
@@ -20,44 +19,46 @@ def create_ordered_dict_from_dict(d):
         od[k] = v
     return od
 
-class tempdir():
-    def __enter__(self):
+class tempdir(object):
+    def make_temp_dir(self):
         self.tempdir = tempfile.mkdtemp()
         self.location = os.path.abspath(os.curdir)
         os.chdir(self.tempdir)
 
-    def __exit__(self, type, value, traceback):
+    def remove_temp_dir(self):
         os.chdir(self.location)
         try:
             shutil.rmtree(self.tempdir)
-        except Exception:
-            print "Was not able to remove tempdir '%s'" % self.tempdir
-            pass
+        except Exception as e:
+            print e
+            print "was not able to remove tempdir '%s'" % self.tempdir
+
+    def __enter__(self):
+        self.make_temp_dir()
+
+    def __exit__(self, type, value, traceback):
+        if not isinstance(value, Exception):
+            self.remove_temp_dir()
 
 class wrap(tempdir):
     """
     Create a temporary directory and initialize a dexy wrapper.
     """
     def __enter__(self):
-        self.tempdir = tempfile.mkdtemp()
-        self.location = os.path.abspath(os.curdir)
-        os.chdir(self.tempdir)
+        self.make_temp_dir()
         wrapper = dexy.wrapper.Wrapper()
-        wrapper.setup_dexy_dirs()
-        wrapper.setup_log()
-        wrapper.setup_db()
+        wrapper.setup(setup_dirs=True)
         return wrapper
 
     def __exit__(self, type, value, traceback):
+        self.remove_temp_dir()
         if isinstance(value, dexy.exceptions.InactiveFilter):
             raise SkipTest
-            return True
+            return True # swallow InactiveFilter error
 
-class runfilter(tempdir):
+class runfilter(wrap):
     """
-    Create a temporary directory, initialize a doc and a wrapper, run the doc.
-
-    Raises SkipTest on inactive filters.
+    Create a temporary directory, initialize a doc and a wrapper, and run the doc.
     """
     def __init__(self, filter_alias, doc_contents, ext=".txt"):
         self.filter_alias = filter_alias
@@ -65,21 +66,16 @@ class runfilter(tempdir):
         self.ext = ext
 
     def __enter__(self):
-        # Create a temporary working dir and move to it
-        self.tempdir = tempfile.mkdtemp()
-        self.location = os.path.abspath(os.curdir)
-        os.chdir(self.tempdir)
+        self.make_temp_dir()
 
-        # Create a document. Skip testing documents with inactive filters.
+        doc_key = "subdir/example%s|%s" % (self.ext, self.filter_alias)
+        doc_spec = [doc_key, {"contents" : self.doc_contents}]
+
         try:
-            doc_key = "subdir/example%s|%s" % (self.ext, self.filter_alias)
-            doc_spec = [doc_key, {"contents" : self.doc_contents}]
             wrapper = dexy.wrapper.Wrapper(doc_spec)
-            wrapper.setup_dexy_dirs()
-            wrapper.setup_db()
+            wrapper.setup(setup_dirs=True)
             wrapper.run()
-        except InactiveFilter:
-            print "Skipping tests for inactive filter", self.filter_alias
+        except dexy.exceptions.InactiveFilter:
             raise SkipTest
 
         return wrapper.batch.tree[0]
@@ -136,10 +132,6 @@ def assert_in_output(filter_alias, doc_contents, expected_output, ext=".txt"):
             assert expected_output in doc.output().as_text()
         else:
             raise Exception(doc.output().as_text())
-
-def assert_not_in_output(filter_alias, doc_contents, expected_output):
-    with runfilter(filter_alias, doc_contents) as doc:
-        assert not expected_output in doc.output().as_text()
 
 class divert_stdout():
     def __enter__(self):

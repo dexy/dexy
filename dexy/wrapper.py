@@ -1,5 +1,4 @@
 from dexy.common import OrderedDict
-from dexy.batch import Batch
 import dexy.batch
 import dexy.database
 import dexy.doc
@@ -8,61 +7,48 @@ import dexy.reporter
 import logging
 import logging.handlers
 import os
-import platform
 import shutil
 
 class Wrapper(object):
     """
-    Class that assists in interacting with Dexy, including running Dexy.
+    Class that assists in interacting with dexy, including running dexy.
     """
-
     DEFAULTS = {
-            'artifacts_dir' : 'artifacts',
-            'config_file' : 'dexy.conf',
-            'danger' : False,
-            'db_alias' : 'sqlite3',
-            'db_file' : 'dexy.sqlite3',
-            'disable_tests' : False,
-            'dont_use_cache' : False,
-            'dry_run' : False,
-            'exclude' : '.git, .svn, tmp, cache',
-            'exclude_also' : '',
-            'globals' : '',
-            'hashfunction' : 'md5',
-            'ignore_nonzero_exit' : False,
-            'log_dir' : 'logs',
-            'log_file' : 'dexy.log',
-            'log_format' : "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-            'log_level' : "DEBUG",
-            'profile' : False,
-            'recurse' : True,
-            'reports' : '',
-            'siblings' : False,
-            'silent' : False,
-            'target' : False,
-            'uselocals' : False
-        }
-
+        'artifacts_dir' : 'artifacts',
+        'config_file' : 'dexy.conf',
+        'danger' : False,
+        'db_alias' : 'sqlite3',
+        'db_file' : 'dexy.sqlite3',
+        'disable_tests' : False,
+        'dont_use_cache' : False,
+        'dry_run' : False,
+        'exclude' : '.git, .svn, tmp, cache',
+        'exclude_also' : '',
+        'globals' : '',
+        'hashfunction' : 'md5',
+        'ignore_nonzero_exit' : False,
+        'log_dir' : 'logs',
+        'log_file' : 'dexy.log',
+        'log_format' : "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        'log_level' : "DEBUG",
+        'profile' : False,
+        'recurse' : True,
+        'reports' : '',
+        'siblings' : False,
+        'silent' : False,
+        'target' : False,
+        'uselocals' : False
+    }
     LOG_LEVELS = {
-            'DEBUG' : logging.DEBUG,
-            'INFO' : logging.INFO,
-            'WARN' : logging.WARN
-            }
+        'DEBUG' : logging.DEBUG,
+        'INFO' : logging.INFO,
+        'WARN' : logging.WARN
+    }
 
     def __init__(self, *args, **kwargs):
         self.args = args
-
         self.initialize_attribute_defaults()
         self.update_attributes_from_kwargs(kwargs)
-
-        self.platform_system = platform.system()
-
-    def is_linux(self):
-        if self.platform_system == 'Linux':
-            return True
-        else:
-            # TODO whitelist possible other values...
-            return False
 
     def initialize_attribute_defaults(self):
         for name, value in self.DEFAULTS.iteritems():
@@ -74,6 +60,28 @@ class Wrapper(object):
                 raise Exception("invalid kwargs %s" % key)
             setattr(self, key, value)
 
+    def setup(self, setup_dirs=False):
+        if setup_dirs:
+            self.setup_dexy_dirs()
+        self.check_dexy_dirs()
+        self.setup_log()
+        self.setup_db()
+        self.log_dexy_config()
+
+    def run(self):
+        self.setup()
+
+        self.batch = self.init_batch()
+        self.batch.run(self.target)
+
+        self.save_db()
+
+    def log_dexy_config(self):
+        self.log.debug("dexy has config:")
+        for k in sorted(self.__dict__):
+            if not k in ('ast', 'args', 'db', 'log', 'tasks', 'notifier'):
+                self.log.debug("  %s: %s" % (k, self.__dict__[k]))
+
     def db_path(self):
         return os.path.join(self.artifacts_dir, self.db_file)
 
@@ -81,38 +89,29 @@ class Wrapper(object):
         return os.path.join(self.log_dir, self.log_file)
 
     def setup_batch(self):
-        self.batch = Batch(self)
+        """
+        Shortcut method for calling init_batch and assigning to batch instance variable.
+        """
+        self.batch = self.init_batch()
+
+    def init_batch(self):
+        batch = dexy.batch.Batch(self)
 
         if len(self.args) > 0:
-            self.batch.tree = self.docs_from_args()
-            self.batch.load_lookup_table()
+            batch.tree = self.docs_from_args()
+            batch.create_lookup_table()
         else:
             ast = self.load_doc_config()
-            self.batch.load_ast(ast)
+            batch.load_ast(ast)
 
-        self.log.debug("running dexy with config:")
-        for k in sorted(self.__dict__):
-            if not k in ('ast', 'args', 'db', 'log', 'tasks', 'notifier'):
-                self.log.debug("  %s: %s" % (k, self.__dict__[k]))
+        return batch
 
     def run_docs(self, *docs):
         self.args = docs
         self.run()
 
-    def run(self):
-        self.check_dexy_dirs()
-        self.setup_log()
-        self.setup_db()
-
-        self.setup_batch()
-        self.batch.run(self.target)
-
-        self.save_db()
-
     def setup_read(self, batch_id=None):
-        self.check_dexy_dirs()
-        self.setup_log()
-        self.setup_db()
+        self.setup()
 
         if batch_id:
             self.batch_id = batch_id
@@ -168,6 +167,9 @@ class Wrapper(object):
         self.db = db_class(self)
 
     def docs_from_args(self):
+        """
+        Creates document objects from argument strings, returns array of newly created docs.
+        """
         docs = []
         for arg in self.args:
             self.log.debug("Processing arg %s" % arg)
@@ -214,11 +216,6 @@ class Wrapper(object):
         return [c.REPORTS_DIR for c in dexy.reporter.Reporter.plugins]
 
     def report(self):
-        """
-        Runs reporters. Either runs reporters which have been passed in or, if
-        none, then runs all available reporters which have ALLREPORTS set to
-        true.
-        """
         if self.reports:
             self.log.debug("generating user-specified reports '%s'" % self.reports)
             reporters = []
@@ -227,7 +224,7 @@ class Wrapper(object):
                 self.log.debug("initializing reporter %s for alias %s" % (reporter_class.__name__, alias))
                 reporters.append(reporter_class())
         else:
-            self.log.debug("initializing all reporters where ALLREPORTS is True")
+            self.log.debug("no reports specified, generating all reports for which ALLREPORTS is True")
             reporters = [c() for c in dexy.reporter.Reporter.plugins if c.ALLREPORTS]
 
         for reporter in reporters:
@@ -256,7 +253,7 @@ class Wrapper(object):
                 dirnames[:] = []
             else:
                 if os.path.exists(pip_delete_this_dir_file):
-                    print "WARNING pip left an old build/ file lying around! You probably want to cancel this dexy run! and remove this directory first!"
+                    print "WARNING pip left an old build/ file lying around! You probably want to cancel this dexy run (ctrl+c) and remove this directory first! Dexy will continue running unless you stop it..."
                 # no excludes or .nodexy file, this dir is ok to process
                 for alias in dexy.parser.Parser.aliases.keys():
                     config_file_in_directory = os.path.join(dirpath, alias)

@@ -100,7 +100,7 @@ class JinjaFilter(TemplateFilter):
             if m:
                 e.lineno = int(m.groups()[0])
             else:
-                e.lineno = None
+                e.lineno = 0
                 self.log.warn("unable to parse line number from traceback")
 
         args = {
@@ -148,6 +148,9 @@ class JinjaFilter(TemplateFilter):
 
         self.log.debug("setting up jinja environment")
         env = self.setup_jinja_env(loader=loader)
+
+        env.filters['pygmentize'] = dexy.plugins.templating_plugins.PygmentsStylesheet.highlight
+        env.filters['rstcode'] = dexy.plugins.templating_plugins.RstCode.rstcode
 
         self.log.debug("initializing template")
 

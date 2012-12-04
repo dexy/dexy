@@ -13,7 +13,7 @@ class Batch(object):
     def filters_used(self):
         filters = set()
         for doc in self.docs():
-            filters = filters.union(doc.filters)
+            filters = filters.union([f for f in doc.filters if not f.startswith("-")])
         return filters
 
     def load(self, batch_id):
@@ -41,7 +41,10 @@ class Batch(object):
         self.batch_id = self.wrapper.db.next_batch_id()
         self.previous_batch_id = self.wrapper.db.calculate_previous_batch_id(self.batch_id)
 
-    def load_lookup_table(self):
+    def create_lookup_table(self):
+        """
+        Creates a lookup table assuming the tree has already been populated.
+        """
         self.lookup_table = dict((t.key_with_class(), t) for t in self.tree)
 
     def load_ast(self, ast):

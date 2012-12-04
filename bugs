@@ -36,6 +36,7 @@ test every filter for, if error occurs, file is not left in cache | id:64e43af4a
 [feature] make it easier to run filter methods outside of dexy, e.g. to run pydoc to generate a modules.sqlite file | id:703f37dc40c36c71878aae010406e44b6aa7c6da
 [feature] have reporters which run only if errors have occurred to help with debugging | id:7245f038315fc112abf73eac1d82404cca5c5d27
 [feature] figure out how to allow extra config for plugins. maybe don't white list things in dexy.conf files. | id:74a6bc572cf4a7ca00c3af63fdc9824a8be52e04
+[feature] handle retrieving class attributes such as dicts so they can be worked with in doc templates (pydoc filter) | id:7c6fe66a74585b5c044395935d69585deb12ed82
 [feature] missing plugins should detect which package they are avaliable in and suggest installing that | id:7e19102f14c4521e4a3d0bef98ba4e630e92594b
 [feature] use casperjs to output location of element want an arrow to, then use image magick to point to that element | id:7f00fd06d8cf8317a2538417d37ae74971f5423f
 [perf] jinja should not need to create a working dir | id:86f3f99ccfd4b9f5f26e23c9d543848545f7d3bb
@@ -70,3 +71,4 @@ self.ast.add_task_info(self.join_dir(directory, task_key), **task_kwargs) TypeEr
 [feature] make an AST visualization reporter (or add to run reporter) | id:f03a516414f78d46a1a571f3279681949d2c4d89
 [feature] have filters whitelist the args they accept, use whitelist dict to generate documentation | id:f66ead6328967185158bff019af1c20d32bc03a9
 [docs] document how to have a python file reference other python files | id:fd64954a721661eef3b159035210fa5f922cce97
+[issue] change name of globals param. also decide what it actually does now. | id:fdb5339ace291149a46abfb51a67ea4912e70b3f
