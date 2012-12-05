@@ -27,6 +27,9 @@ class Task():
         task_class = klass.aliases[alias]
         return task_class(pattern, *children, **kwargs)
 
+    def key_for_log(self):
+        return self.key
+
     def to_arg(self):
         alias = self.ALIASES[0]
         return "%s:%s" % (alias, self.key)
@@ -41,6 +44,7 @@ class Task():
 
         self.created_by_doc = None
         self.deps = OrderedDict()
+        self.remaining_doc_filters = []
         self.state = 'new'
         self.elapsed = None
 
@@ -155,7 +159,7 @@ class Task():
 
     def set_log(self):
         if not hasattr(self, 'log'):
-            self.log = logging.getLogger(self.key)
+            self.log = logging.getLogger(self.key_for_log())
             self.logstream = StringIO.StringIO()
             handler = logging.StreamHandler(self.logstream)
             if hasattr(self, 'wrapper'):

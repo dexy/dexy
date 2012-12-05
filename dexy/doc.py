@@ -102,6 +102,7 @@ class Doc(dexy.task.Task):
         initial.name = self.name
         initial.prior = None
         initial.doc = self
+        initial.remaining_doc_filters = self.filters
         initial.created_by_doc = self.created_by_doc
         initial.transition('populated')
 
@@ -121,6 +122,7 @@ class Doc(dexy.task.Task):
         artifact.args = filter_artifact_args
 
         artifact.doc = self
+        artifact.remaining_doc_filters = self.filters[len(filters):len(self.filters)]
         artifact.filter_alias = filters[-1]
         artifact.doc_filepath = self.name
         artifact.prior = self.artifacts[-1]
