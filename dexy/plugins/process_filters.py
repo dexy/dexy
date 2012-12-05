@@ -1,6 +1,7 @@
 from dexy.common import OrderedDict
 from dexy.filter import Filter
 import dexy.exceptions
+import fnmatch
 import json
 import os
 import platform
@@ -176,15 +177,38 @@ class SubprocessFilter(Filter):
                 filepath = os.path.join(dirpath, filename)
                 filesize = os.path.getsize(filepath)
                 relpath = os.path.relpath(filepath, wd)
-                ext = os.path.splitext(filepath)[1]
 
                 already_have_file = (relpath in self.artifact.wrapper.batch.doc_names())
                 empty_file = (filesize == 0)
 
-                if not isinstance(do_add_new, bool):
-                    is_valid_file_extension = (ext in do_add_new) or (ext == do_add_new)
-                else:
+                if isinstance(do_add_new, list):
+                    is_valid_file_extension = False
+                    for pattern in do_add_new:
+                        if "*" in pattern:
+                            if fnmatch.fnmatch(relpath, pattern):
+                                is_valid_file_extension = True
+                                continue
+                        else:
+                            if filename.endswith(pattern):
+                                is_valid_file_extension = True
+                                continue
+                elif isinstance(do_add_new, basestring):
+                    is_valid_file_extension = False
+                    for pattern in [do_add_new]:
+                        if "*" in pattern:
+                            if fnmatch.fnmatch(relpath, pattern):
+                                is_valid_file_extension = True
+                                continue
+                        else:
+                            if filename.endswith(pattern):
+                                is_valid_file_extension = True
+                                continue
+                elif isinstance(do_add_new, bool):
+                    if not do_add_new:
+                        raise dexy.exceptions.InternalDexyProblem("should not get here")
                     is_valid_file_extension = True
+                else:
+                    raise dexy.exceptions.InternalDexyProblem("type is %s value is %s" % (do_add_new.__class__, do_add_new))
 
                 if (not already_have_file) and is_valid_file_extension and (not empty_file):
                     with open(filepath, 'rb') as f:

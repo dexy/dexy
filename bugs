@@ -4,7 +4,7 @@
 [feature] allow setting parameters somewhere which can be used within documents and for generating canonical filenames and reporter directory names | id:0b0a8189a1428cd6f8269ff8e1649d56e1e2e360
 [feature] have method for getting JSON dict into env for another filter | id:1012845dcb49a8e36f5f1361338835482eacfba4
 [feature] use hashing algorithm to generate shortcodes instead of aliases for templates | id:116677833dda3e515126071d250fa92644123751
-make sure modargs and/or dexy always exits with nonzero exit code on an error | id:15fa1ebe0ee0f25654172cf20a90ba37e2fc25f8
+[issue] make sure modargs and/or dexy always exits with nonzero exit code on an error | id:15fa1ebe0ee0f25654172cf20a90ba37e2fc25f8
 [feature] implement is_active method for templates and list dependencies that need to be installed | id:1e5d9d273c8db7d4c38d85b76442f0d2ae7dd637
 [feature] add javascript search widget helper to dexy for searching generated content, e.g. http://www.tipue.com/search/demo/ | id:205430dabd1a07653925609b005c8e3e1a0ee4d0
 [feature] warning or other indication when 'canonical name' is in different directory as original document name | id:20b1be4d8d8b80debc8a66e81c28af2cfe37d0a2
@@ -28,6 +28,7 @@ make sure modargs and/or dexy always exits with nonzero exit code on an error | 
 [feature] automatically generate TOC and next/prev/up links for collections of pages (in jinja filter and WebsiteReporter) | id:5a074d7da0254559bcaa3e5ec65c284827525a1f
 [feature] finish implementing 'except' feature and test, clarify regex or fnmatch or both | id:5af09bc445c7790bf478bf7e576c53129daa46a5
 [feature] add a dexy plugins command to list pluginnable classes | id:61186f7dd456c9a4f69d9fce88d002640f0ed1ad
+[feature] add user-guide and developer-guide to website docs | id:62b22cee4b5b9e40f3c78b11e481d11819422622
 [issue] raise exception if refer to a bundle doc which doesn't exist | id:62ff0c554848a23637c539a0d25b07960ef6abc3
 [issue] Make sure keys are unique, must have key + doc's key, issues arise with e.g. *.py and *.py|py in same project. | id:642cf20f163f834395ad847b9107477e76b9f251
 [issue] get UndefinedError: unicode object has no attribute 'blah' when idio is not correctly detected | id:646da510731a292ab94b7ba7f98a6b5f7d3d267d
