@@ -13,13 +13,21 @@ source testenv/bin/activate
 git clone ~/dev/dexy $TEST_DIR/dexy
 cd dexy
 pip install .
-nosetests
 git remote add github git@github.com:ananelson/dexy.git
 cd ..
 
 git clone ~/dev/dexy-templates $TEST_DIR/dexy-templates
 cd dexy-templates
 pip install .
+cd ..
+
+git clone ~/dev/dexy-filter-examples $TEST_DIR/dexy-filter-examples
+cd dexy-filter-examples
+pip install .
+cd ..
+
+cd dexy
+nosetests
 cd ..
 
 dexy filters
