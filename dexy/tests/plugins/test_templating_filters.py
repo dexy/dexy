@@ -5,6 +5,61 @@ from dexy.tests.utils import wrap
 from nose.tools import raises
 import dexy.exceptions
 
+def test_jinja_kv():
+    with wrap() as wrapper:
+        doc = Doc("hello.txt|jinja",
+                Doc("blank.txt|keyvalueexample",
+                    contents = " ",
+                    wrapper=wrapper),
+                contents = """value of foo is '{{ d['blank.txt|keyvalueexample']['foo'] }}'""",
+                wrapper=wrapper)
+        wrapper.run_docs(doc)
+        assert str(doc.output()) == "value of foo is 'bar'"
+
+@raises(dexy.exceptions.UserFeedback)
+def test_jinja_sectioned_invalid_section():
+    with wrap() as wrapper:
+        doc = Doc("hello.txt|jinja",
+                Doc("lines.txt|lines",
+                    contents = "line one\nline two",
+                    wrapper=wrapper),
+                contents = """first line is '{{ d['lines.txt|lines']['3'] }}'""",
+                wrapper=wrapper)
+        wrapper.run_docs(doc)
+
+def test_jinja_sectioned():
+    with wrap() as wrapper:
+        doc = Doc("hello.txt|jinja",
+                Doc("lines.txt|lines",
+                    contents = "line one\nline two",
+                    wrapper=wrapper),
+                contents = """first line is '{{ d['lines.txt|lines']['1'] }}'""",
+                wrapper=wrapper)
+        wrapper.run_docs(doc)
+        assert str(doc.output()) == "first line is 'line one'"
+
+def test_jinja_json_convert_to_dict():
+    with wrap() as wrapper:
+        doc = Doc("hello.txt|jinja",
+                Doc("input.json",
+                    contents = """{"foo":123}""",
+                    wrapper=wrapper),
+                contents = """foo is {{ d['input.json'].json_as_dict()['foo'] }}""",
+                wrapper=wrapper)
+        wrapper.run_docs(doc)
+        assert str(doc.output()) == "foo is 123"
+
+@raises(dexy.exceptions.UserFeedback)
+def test_jinja_json():
+    with wrap() as wrapper:
+        doc = Doc("hello.txt|jinja",
+                Doc("input.json",
+                    contents = """{"foo":123}""",
+                    wrapper=wrapper),
+                contents = """foo is {{ d['input.json']['foo'] }}""",
+                wrapper=wrapper)
+        wrapper.run_docs(doc)
+
 @raises(dexy.exceptions.UserFeedback)
 def test_jinja_undefined():
     with wrap() as wrapper:

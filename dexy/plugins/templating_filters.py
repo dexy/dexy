@@ -70,8 +70,6 @@ class JinjaFilter(TemplateFilter):
         else:
             changetags = True
 
-        # TODO load other Undefined classes from a string.
-        # Currently it's not possible to pass subclasses of Undefined since params must be json serializable.
         env_attrs['undefined'] = jinja2.StrictUndefined
 
         if self.artifact.ext in (".tex", ".wiki") and changetags:
@@ -151,6 +149,7 @@ class JinjaFilter(TemplateFilter):
 
         env.filters['pygmentize'] = dexy.plugins.templating_plugins.PygmentsStylesheet.highlight
         env.filters['rstcode'] = dexy.plugins.templating_plugins.RstCode.rstcode
+        env.filters['indent'] = dexy.plugins.templating_plugins.Indent.indent
 
         self.log.debug("initializing template")
 

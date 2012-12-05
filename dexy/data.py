@@ -132,15 +132,6 @@ class Generic(Data):
     def __str__(self):
         return str(self.as_text())
 
-    def __getattr__(self, key):
-        if self.__dict__.has_key(key):
-            return self.__dict__[key]
-        else:
-            if self.ext == '.json':
-                return json.loads(self.data())[key]
-            else:
-                raise Exception("item of type %s has no method %s" % (self.__class__.__name__, key))
-
     def filesize(self):
         if self.is_cached():
             return os.path.getsize(self.storage.data_file())
@@ -206,16 +197,6 @@ class Sectioned(Generic):
     def __getitem__(self, key):
         return self.value(key)
 
-    def __getattr__(self, key):
-        if self.__dict__.has_key(key):
-            return self.__dict__[key]
-        elif self.data().has_key(key):
-            return self.data()[key]
-        elif hasattr(self.as_text(), key):
-            return getattr(self.as_text(), key)
-        else:
-            raise dexy.exceptions.UserFeedback("No method %s defined for %r" % (key, self))
-
 class KeyValue(Generic):
     """
     Data class for key-value data.
@@ -255,12 +236,6 @@ class KeyValue(Generic):
 
     def __getitem__(self, key):
         return self.value(key)
-
-    def __getattr__(self, key):
-        if self.__dict__.has_item(key):
-            return self.__dict__[key]
-        else:
-            return self.value(key)
 
     def append(self, key, value):
         self.storage.append(key, value)

@@ -44,6 +44,20 @@ class PrettyPrintJson(TemplatePlugin):
             'ppjson' : self.ppjson
          }
 
+class Indent(TemplatePlugin):
+    """
+    Replacement for jinja's indent method to ensure unicode() is called prior to splitlines().
+    """
+    @classmethod
+    def indent(klass, s, width=4, indentfirst=False):
+        output = []
+        for i, line in enumerate(unicode(s).splitlines()):
+            if indentfirst or i > 0:
+                output.append("%s%s" % (' ' * width, line))
+            else:
+                output.append(line)
+        return "\n".join(output)
+
 class RstCode(TemplatePlugin):
     """
     Indents code 4 spaces and wraps in .. code:: directive.
@@ -51,7 +65,7 @@ class RstCode(TemplatePlugin):
     @classmethod
     def rstcode(klass, text, language='python'):
         output = [".. code:: %s" % language, '']
-        for line in text.splitlines():
+        for line in unicode(text).splitlines():
             output.append("    %s" % line)
         output.append('')
         return os.linesep.join(output)
