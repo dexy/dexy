@@ -164,9 +164,6 @@ class SubprocessFilter(Filter):
 
         return env
 
-    def do_add_new_files(self):
-        return self.ADD_NEW_FILES or self.args().get('add-new-files', False) or self.args().get("add_new_files", False)
-
     def add_new_files(self):
         wd = self.artifact.tmp_dir()
 

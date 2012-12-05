@@ -90,7 +90,7 @@ class PygmentsFilter(DexyFilter):
             if m:
                 option_name = m.groups()[0]
                 option_value = args[k]
-                self.log.debug("Using custom lexer option for %s with value %s" % (option_name, option_value))
+                self.log.debug("using custom lexer option for %s with value %s" % (option_name, option_value))
                 del args[k]
                 lexer_args[option_name] = option_value
 
@@ -125,7 +125,7 @@ class PygmentsFilter(DexyFilter):
             if not lexer:
                 lexer = lexer_class(**lexer_args)
 
-        self.log.debug("Using lexer %s" % lexer.__class__.__name__)
+        self.log.debug("using lexer %s" % lexer.__class__.__name__)
         return lexer
 
     def create_formatter_instance(self, args):
@@ -135,6 +135,7 @@ class PygmentsFilter(DexyFilter):
         for k, v in args.iteritems():
             formatter_args[str(k)] = v
 
+        self.log.debug("creating pygments formatter with args %s" % (formatter_args))
         return get_formatter_for_filename(self.output().name, **formatter_args)
 
     def process(self):

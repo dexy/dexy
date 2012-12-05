@@ -54,6 +54,9 @@ class Filter:
     def data_class_alias(klass, file_ext):
         return klass.OUTPUT_DATA_TYPE
 
+    def do_add_new_files(self):
+        return self.ADD_NEW_FILES or self.args().get('add-new-files', False) or self.args().get("add_new_files", False)
+
     def process(self):
         pass
 

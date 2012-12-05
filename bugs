@@ -14,6 +14,7 @@
 [issue] should add-new-files be capable of adding a file that duplicates main doc final output name | id:293572651e364c80fc27c4046497bab5a05191a2
 [feature] add html canvas element to whole page, draw on that for annotation. or add svg elements + position on top. | id:36a3dbd3c6544e7805bff0b8e1dafcad0393c6d2
 [idea] how to cite code in scientific papers | id:36d5729d63e3da51009543f198b31ad26e917657
+[issue] detect when two additional docs have same key - hashstrings will clash when reconstitutedw | id:39b6cc8940b782c6593c1992d807ea5c373ed93e
 [feature] dump dexy env into working dir so easy to troubleshoot | id:3c03b3aadc4b3e799be0b4da8022dc1b56f7bc68
 [feature] make it possible to pass unordered mappings to bundle docs so siblings don't depend on each other | id:425b356f06accb394eb0a84fe6d9ed41ec5cbe17
 [feature] s3 uploader reporter | id:439932c2c272d6b590792d40179c4f75b140e7da
@@ -59,6 +60,7 @@ self.ast.add_task_info(self.join_dir(directory, task_key), **task_kwargs) TypeEr
 [feature] run the RunReporter even when an exception has occurred, add a section with exception information | id:c3e3551172f65f62fcf24ca11e8b8e89b97ab984
 [docs] example of combining rst-generated latex files into a book | id:c43af78776eb972bcaf6e008ea9144fc0f3067ac
 [feature] think about standard way of documenting plugins | id:c8b5e4e98f05cf928a19c00c319cbf7bcad7622c
+[issue] standardize options for fnmatch/regex arrays/strings everywhere that we exclude or include based on a pattern | id:d1181bec83e804f1c77eff244aa23c00f7ae2fec
 [issue] investigate whether jinja doesn't raise an exception when error occurs in macro | id:d3f18c8fbeaee6a1e9b272fc48f6051999e69bc2
 [feature] make decorator to skip tests that require internet if no internet available | id:db01a7088bc471ec8e09480c2941647713d8afd7
 [feature] have pexpect be able to switch modes to handle scripts which launch interactive shells (e.g. 'sqlite3') | id:dc0f8529d60924d56ac174282206ab7cd74396c4

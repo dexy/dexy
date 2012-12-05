@@ -15,7 +15,6 @@ class IdioFilter(PygmentsFilter):
     "section-name" comments.
     """
     ALIASES = ['idio', 'idiopidae']
-    ADD_NEW_FILES = False
     OUTPUT_EXTENSIONS = PygmentsFilter.MARKUP_OUTPUT_EXTENSIONS + PygmentsFilter.IMAGE_OUTPUT_EXTENSIONS + [".txt"]
 
     @classmethod
@@ -26,7 +25,12 @@ class IdioFilter(PygmentsFilter):
             return 'generic'
 
     def do_add_new_files(self):
-        return self.ADD_NEW_FILES or self.args().get('add-new-files', False)
+        if self.args().get('add-new-files', False) or self.args().get("add_new_files", False):
+            return True
+        elif self.artifact.ext in self.IMAGE_OUTPUT_EXTENSIONS:
+            return True
+        else:
+            return False
 
     def process(self):
         args = self.args().copy()
@@ -107,6 +111,7 @@ class IdioMultipleFormatsFilter(PygmentsFilter):
         for k, v in args.iteritems():
             formatter_args[str(k)] = v
 
+        self.log.debug("creating formatter of type %s with args %s" % (formatter_class.__name__, args))
         return formatter_class(**formatter_args)
 
     def process(self):
