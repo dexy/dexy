@@ -23,6 +23,12 @@ class Artifact(dexy.task.Task):
         self.append_child_hashstrings()
         self.set_hashstring()
 
+    def key_for_log(self):
+        if len(self.remaining_doc_filters) > 0:
+            return "%s(|%s)" % (self.key, "|".join(self.remaining_doc_filters))
+        else:
+            return self.key
+
     def append_child_hashstrings(self):
         child_hashes = []
         for child in self.doc.intersect_children_deps():
@@ -231,7 +237,7 @@ class FilterArtifact(Artifact):
 
                 new_calc_hashstring = doc.artifacts[0].hashstring
                 db_hashstring = row['hashstring']
-                msg = "unexpected calculated hashstring '%s' for %s, expected '%s'" % (new_calc_hashstring, db_hashstring, doc.artifacts[0].key)
+                msg = "unexpected calculated hashstring '%s' for %s, expected '%s'" % (new_calc_hashstring, doc.artifacts[0].key, db_hashstring)
                 assert new_calc_hashstring == db_hashstring, msg
 
     def set_metadata_hash(self):
