@@ -110,12 +110,6 @@ You can increase this limit by changing MAX_DATA_DICT_DECIMALS."""
     def __getitem__(self, key):
         return self.value(key)
 
-    def __getattr__(self, key):
-        if self.__dict__.has_item(key):
-            return self.__dict__[key]
-        else:
-            return self.value(key)
-
     def read_data(self):
         with open(self.data_file(), "rb") as f:
             numbered_dict = json.load(f)
@@ -152,12 +146,6 @@ class JsonStorage(GenericStorage):
 
     def __getitem__(self, key):
         return self.value(key)
-
-    def __getattr__(self, key):
-        if self.__dict__.has_key(key):
-            return self.__dict__[key]
-        else:
-            return self.value(key)
 
     def __iter__(self):
         for k, v in self.data().iteritems():
@@ -230,14 +218,6 @@ class Sqlite3Storage(GenericStorage):
 
     def __getitem__(self, key):
         return self.value(key)
-
-    def __getattr__(self, key):
-        if self.__dict__.has_key(key):
-            return self.__dict__[key]
-        elif key == "_cursor":
-            return self._cursor
-        else:
-            return self.value(key)
 
     def __iter__(self):
         self._cursor = self._storage.cursor()

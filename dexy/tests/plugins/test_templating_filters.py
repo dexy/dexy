@@ -5,6 +5,19 @@ from dexy.tests.utils import wrap
 from nose.tools import raises
 import dexy.exceptions
 
+def test_jinja_indent_function():
+    with wrap() as wrapper:
+        doc = Doc("hello.txt|jinja",
+                Doc("lines.txt",
+                    contents = "line one\nline two",
+                    wrapper=wrapper),
+                contents = """lines are:\n{{ d['lines.txt'] | indent(3) }}""",
+                wrapper=wrapper)
+        wrapper.run_docs(doc)
+        assert str(doc.output()) == """lines are:
+line one
+   line two"""
+
 def test_jinja_kv():
     with wrap() as wrapper:
         doc = Doc("hello.txt|jinja",
