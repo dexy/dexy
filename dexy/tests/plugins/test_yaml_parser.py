@@ -1,5 +1,31 @@
 from dexy.plugins.parsers import YamlFileParser
 from dexy.tests.utils import wrap
+from dexy.tests.utils import tempdir
+import os
+import dexy.wrapper
+
+def test_subdir_config_with_bundle():
+    with tempdir():
+
+        with open("dexy.yaml", "w") as f:
+            f.write("""
+            foo:
+                - .txt
+            """)
+
+        os.makedirs("abc/def")
+        with open("abc/def/dexy.yaml", "w") as f:
+            f.write("""
+            bar:
+                - .py
+            """)
+
+        with open("abc/def/hello.py", "w") as f:
+            f.write("print 'hello'")
+
+        wrapper = dexy.wrapper.Wrapper()
+        wrapper.setup(setup_dirs=True)
+        wrapper.run()
 
 def test_except_patterndoc():
     with wrap() as wrapper:

@@ -1,6 +1,5 @@
 from datetime import datetime
 from dexy.artifact import Artifact
-from dexy.common import OrderedDict
 from dexy.doc import Doc, PatternDoc
 from dexy.plugin import PluginMeta
 from dexy.version import DEXY_VERSION
@@ -213,43 +212,10 @@ class Inputs(TemplatePlugin):
     """
     ALIASES = ['inputs']
 
-    @classmethod
-    def load_sort_json_data(klass, a):
-        try:
-            unsorted_json = json.loads(a.output_text())
-        except ValueError as e:
-            print "unable to load JSON for", a.key
-            print a.filename()
-            print len(a.output_text())
-            raise e
-
-        def sort_dict(d):
-            od = OrderedDict()
-            for k in sorted(d.keys()):
-                v = d[k]
-                if isinstance(v, dict) or isinstance(v, OrderedDict):
-                    od[k] = sort_dict(v)
-                else:
-                    od[k] = v
-            return od
-
-        if type(unsorted_json) == dict:
-            return sort_dict(unsorted_json)
-        else:
-            return unsorted_json
-
-    @classmethod
-    def d_data_for_artifact(klass, a):
-        data = a.output_data.data()
-        if hasattr(data, 'keys') and data.keys() == ['1']:
-            data = data['1']
-
-        return data
-
     def input_tasks(self):
         for task in self.filter_instance.processed():
             if task.state != 'complete':
-                raise Exception("All tasks should be complete! Task %s in state %s" % (task.key, task.state))
+                raise dexy.exceptions.InternalDexyProblem("All tasks should be complete! Task %s in state %s" % (task.key, task.state))
 
             if isinstance(task, Artifact):
                 yield task
@@ -258,19 +224,10 @@ class Inputs(TemplatePlugin):
             elif isinstance(task, PatternDoc):
                 next
             else:
-                raise Exception("task is a %s" % task.__class__.__name__)
+                raise dexy.exceptions.InternalDexyProblem("unexpected task class '%s'" % task.__class__.__name__)
 
     def a(self, relative_ref):
         return self.map_relative_refs[relative_ref]
-
-    def tc(self, input_text, id=None, title="show code"):
-        return """<p class="heading" id="%(id)s">%(title)s</p>
-<div class="toggle-code">
-<div class="toggle-code-sidebar"></div>
-<div class="toggle-code-content">
-%(input_text)s
-</div>
-</div>""" % locals()
 
     def run(self):
         self.map_relative_refs = {}
@@ -282,7 +239,6 @@ class Inputs(TemplatePlugin):
         return {
             'a' : self.a,
             'd' : D(self.filter_instance.artifact, self.map_relative_refs),
-            'tc' : self.tc,
             'f' : self.filter_instance,
             's' : self.filter_instance.output(),
             'w' : self.filter_instance.artifact.wrapper

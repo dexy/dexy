@@ -3,6 +3,7 @@ import dexy.exceptions
 import dexy.filter
 import dexy.task
 import fnmatch
+import operator
 import os
 import posixpath
 import re
@@ -13,15 +14,15 @@ class Doc(dexy.task.Task):
     """
     ALIASES = ['doc']
 
-    @classmethod
-    def filter_class_for_alias(klass, alias):
+    def filter_class_for_alias(self, alias):
         if alias == '':
-            raise dexy.exceptions.BlankAlias
+            blank_alias_msg = "You have a trailing | or you have 2 | symbols together in your specification for %s"
+            raise dexy.exceptions.UserFeedback(blank_alias_msg % self.key)
         elif alias.startswith("-"):
-            return dexy.filter.DexyFilter
+            filter_class = dexy.filter.DexyFilter
         else:
             try:
-                return dexy.filter.Filter.aliases[alias]
+                filter_class = dexy.filter.Filter.aliases[alias]
             except KeyError:
                 msg = "Dexy doesn't have a filter '%s' available." % alias
 
@@ -34,12 +35,16 @@ class Doc(dexy.task.Task):
 
                 raise dexy.exceptions.UserFeedback(msg)
 
+        if not filter_class.is_active():
+            raise dexy.exceptions.InactiveFilter(alias, self.key)
+
+        return filter_class
+
     def websafe_key(self):
         return self.key.replace("/", "--")
 
     def intersect_children_deps(self):
         children_deps = list(set(self.children).intersection(self.deps.values()))
-        import operator
         return sorted(children_deps, key=operator.attrgetter('key_with_class'))
 
     def names_to_docs(self):
@@ -92,6 +97,11 @@ class Doc(dexy.task.Task):
 
         return self.final_artifact.output_data
 
+    def add_artifact(self, artifact):
+        self.children.append(artifact)
+        self.artifacts.append(artifact)
+        self.final_artifact = artifact
+
     def setup_initial_artifact(self):
         if os.path.exists(self.name):
             initial = dexy.artifact.InitialArtifact(self.name, wrapper=self.wrapper)
@@ -102,60 +112,48 @@ class Doc(dexy.task.Task):
         initial.name = self.name
         initial.prior = None
         initial.doc = self
-        initial.remaining_doc_filters = self.filters
         initial.created_by_doc = self.created_by_doc
-        initial.transition('populated')
+        initial.remaining_doc_filters = self.filters
 
-        self.children.append(initial)
-        self.artifacts.append(initial)
-        self.final_artifact = initial
+        initial.transition('populated')
+        self.add_artifact(initial)
 
     def setup_filter_artifact(self, key, filters):
+        filter_alias = filters[-1]
+
+        remaining_filters = self.filters[len(filters):len(self.filters)]
+        is_last_filter = len(remaining_filters) == 0
+
         artifact = dexy.artifact.FilterArtifact(key, wrapper=self.wrapper)
 
-        # Remove args that are only relevant to the doc or to the initial artifact.
-        filter_artifact_args = self.args.copy()
-        for k in ['contents', 'contentshash', 'data-class-alias', 'depends']:
-            if filter_artifact_args.has_key(k):
-                del filter_artifact_args[k]
-
-        artifact.args = filter_artifact_args
-
-        artifact.doc = self
-        artifact.remaining_doc_filters = self.filters[len(filters):len(self.filters)]
-        artifact.filter_alias = filters[-1]
-        artifact.doc_filepath = self.name
-        artifact.prior = self.artifacts[-1]
-        artifact.created_by_doc = self.created_by_doc
-        artifact.transition('populated')
-
-        try:
-            artifact.filter_class = self.filter_class_for_alias(filters[-1])
-        except dexy.exceptions.BlankAlias:
-            raise dexy.exceptions.UserFeedback("You have a trailing | or you have 2 | symbols together in your specification for %s" % self.key)
-
-        if not artifact.filter_class.is_active():
-            raise dexy.exceptions.InactiveFilter(artifact.filter_alias, artifact.doc.key)
-
-        artifact.filter_instance = artifact.filter_class()
-        artifact.filter_instance.artifact = artifact
+        artifact.remaining_doc_filters = remaining_filters
         artifact.set_log()
         artifact.log.addHandler(self.log.handlers[0])
-        artifact.filter_instance.log = artifact.log
 
-        artifact.next_filter_alias = None
-        artifact.next_filter_class = None
-        artifact.next_filter_name = None
+        # skip args that are only relevant to the doc or to the initial artifact
+        skip_args = ['contents', 'contentshash', 'data-class-alias', 'depends']
+        artifact.args = dict((k, v) for k, v in self.args.iteritems() if not k in skip_args)
 
-        if len(filters) < len(self.filters):
+        artifact.doc = self
+        artifact.prior = self.artifacts[-1]
+        artifact.created_by_doc = self.created_by_doc
+
+        artifact.filter_alias = filter_alias
+        artifact.filter_class = self.filter_class_for_alias(filter_alias)
+        artifact.setup_filter_instance()
+
+        if not is_last_filter:
             next_filter_alias = self.filters[len(filters)]
             artifact.next_filter_alias = next_filter_alias
             artifact.next_filter_class = self.filter_class_for_alias(next_filter_alias)
             artifact.next_filter_name = artifact.next_filter_class.__name__
+        else:
+            artifact.next_filter_alias = None
+            artifact.next_filter_class = None
+            artifact.next_filter_name = None
 
-        self.children.append(artifact)
-        self.artifacts.append(artifact)
-        self.final_artifact = artifact
+        artifact.transition('populated')
+        self.add_artifact(artifact)
 
     def setup(self):
         self.hashstring = self.final_artifact.hashstring

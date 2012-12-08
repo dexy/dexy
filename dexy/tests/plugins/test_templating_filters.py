@@ -11,11 +11,11 @@ def test_jinja_indent_function():
                 Doc("lines.txt",
                     contents = "line one\nline two",
                     wrapper=wrapper),
-                contents = """lines are:\n{{ d['lines.txt'] | indent(3) }}""",
+                contents = """lines are:\n   {{ d['lines.txt'] | indent(3) }}""",
                 wrapper=wrapper)
         wrapper.run_docs(doc)
         assert str(doc.output()) == """lines are:
-line one
+   line one
    line two"""
 
 def test_jinja_kv():

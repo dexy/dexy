@@ -115,7 +115,7 @@ class ExampleProcessMethod(Example):
     ALIASES = ['process']
 
     def process(self):
-        output = "Dexy processed the text '%s'" % self.input_data()
+        output = "Dexy processed the text '%s'" % self.input().data()
         self.output().set_data(output)
 
 class ExampleProcessMethodManualWrite(Example):
@@ -125,7 +125,7 @@ class ExampleProcessMethodManualWrite(Example):
     ALIASES = ['processmanual']
 
     def process(self):
-        input_data = self.input_data()
+        input_data = self.input().data()
         output = "Dexy processed the text '%s'" % input_data
         with open(self.output_filepath(), "wb") as f:
             f.write(output)
@@ -138,7 +138,7 @@ class ExampleProcessWithDictMethod(Example):
     OUTPUT_DATA_TYPE = 'sectioned'
 
     def process(self):
-        input_data = self.input_data()
+        input_data = self.input().data()
         output_dict = OrderedDict()
         output_dict['1'] = "Dexy processed the text '%s'" % input_data
         self.output().set_data(output_dict)

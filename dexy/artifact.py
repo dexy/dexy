@@ -107,6 +107,20 @@ class Artifact(dexy.task.Task):
         self.output_data_type = data_class.ALIASES[0]
         self.output_data = data_class(self.key, self.ext, self.hashstring, self.args, self.wrapper)
 
+    def setup(self):
+        self.set_log()
+        self.log.debug("setting up %s" % self.key_with_class())
+
+        self.set_extension()
+
+        self.metadata = dexy.metadata.Md5()
+        self.set_metadata_attrs()
+        self.set_and_save_hash()
+
+        if hasattr(self, 'prior') and self.prior:
+            self.input_data = self.prior.output_data
+        self.setup_output_data()
+
 class InitialArtifact(Artifact):
     """
     The artifact class representing an initial artifact, pretty much just a copy of the original file being processed.
@@ -124,16 +138,8 @@ class InitialArtifact(Artifact):
     def set_output_data(self):
         self.output_data.copy_from_file(self.name)
 
-    def setup(self):
-        self.set_log()
-        self.log.debug("Setting up %s" % self.key_with_class())
-        self.metadata = dexy.metadata.Md5()
+    def set_extension(self):
         self.ext = os.path.splitext(self.name)[1]
-
-        self.set_metadata_attrs()
-        self.set_and_save_hash()
-        self.setup_output_data()
-        self.run()
 
     def run(self, *args, **kw):
         start_time = time.time()
@@ -197,14 +203,10 @@ class FilterArtifact(Artifact):
         else:
             return self.filter_class.data_class_alias(self.ext)
 
-    def setup(self):
-        self.set_log()
-        self.log.debug("Setting up %s" % self.key_with_class())
-        self.metadata = dexy.metadata.Md5()
-        self.input_data = self.prior.output_data
-        self.set_extension()
-        self.set_metadata_hash()
-        self.setup_output_data()
+    def setup_filter_instance(self):
+        self.filter_instance = self.filter_class()
+        self.filter_instance.artifact = self
+        self.filter_instance.log = self.log
 
     def run(self, *args, **kw):
         start_time = time.time()
@@ -240,26 +242,28 @@ class FilterArtifact(Artifact):
                 msg = "unexpected calculated hashstring '%s' for %s, expected '%s'" % (new_calc_hashstring, doc.artifacts[0].key, db_hashstring)
                 assert new_calc_hashstring == db_hashstring, msg
 
-    def set_metadata_hash(self):
+    def set_metadata_attrs(self):
+        self.metadata.dexy_version = DEXY_VERSION
         self.metadata.ext = self.ext
         self.metadata.key = self.key
         self.metadata.next_filter_name = self.next_filter_name
+
+        # hash of the artifact supplying input to this
         self.metadata.prior_hash = self.prior.hashstring
 
+        # args passed to this document by user
         strargs = []
+        skip_arg_keys = ['wrapper']
         for k in sorted(self.args):
-            if not k in ['wrapper']: # excepted items don't affect outcome
+            if not k in skip_arg_keys:
                 v = str(self.args[k])
                 strargs.append("%s: %s" % (k, v))
         self.metadata.argstr = ", ".join(strargs)
 
-        self.metadata.dexy_version = DEXY_VERSION
-
+        # version of external software being run, if any
         if hasattr(self.filter_class, 'version'):
             version = self.filter_class.version()
             self.metadata.software_version = version
-
-        self.set_and_save_hash()
 
     def add_doc(self, doc):
         if doc.state == 'complete':

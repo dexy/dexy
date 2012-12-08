@@ -5,6 +5,7 @@
 [feature] have method for getting JSON dict into env for another filter | id:1012845dcb49a8e36f5f1361338835482eacfba4
 [feature] use hashing algorithm to generate shortcodes instead of aliases for templates | id:116677833dda3e515126071d250fa92644123751
 [issue] make sure modargs and/or dexy always exits with nonzero exit code on an error | id:15fa1ebe0ee0f25654172cf20a90ba37e2fc25f8
+[issue] yamlargs args do not get cached | id:16091b307bb0fe31ba92be127a321a142347f9dc
 [feature] implement is_active method for templates and list dependencies that need to be installed | id:1e5d9d273c8db7d4c38d85b76442f0d2ae7dd637
 [feature] add javascript search widget helper to dexy for searching generated content, e.g. http://www.tipue.com/search/demo/ | id:205430dabd1a07653925609b005c8e3e1a0ee4d0
 [feature] warning or other indication when 'canonical name' is in different directory as original document name | id:20b1be4d8d8b80debc8a66e81c28af2cfe37d0a2
@@ -12,6 +13,7 @@
 [feature] WebsiteReporter have way of making collection of docs and navigation between elements (next, prev, up) | id:2928f96220caea5a1d55dc4ad706b84a9895f743
 [feature] how to generate class inheritance diagram for pydoc filter? | id:292ef032418f240c1c28be0a0f8bfe4c95fc76d7
 [issue] should add-new-files be capable of adding a file that duplicates main doc final output name | id:293572651e364c80fc27c4046497bab5a05191a2
+[feature] helper function that generates image files where needed for .mobi format | id:2f243a532981402f7968913eeba710ba8d682a52
 [feature] add html canvas element to whole page, draw on that for annotation. or add svg elements + position on top. | id:36a3dbd3c6544e7805bff0b8e1dafcad0393c6d2
 [idea] how to cite code in scientific papers | id:36d5729d63e3da51009543f198b31ad26e917657
 [issue] detect when two additional docs have same key - hashstrings will clash when reconstitutedw | id:39b6cc8940b782c6593c1992d807ea5c373ed93e
@@ -42,15 +44,18 @@ test every filter for, if error occurs, file is not left in cache | id:64e43af4a
 [feature] handle retrieving class attributes such as dicts so they can be worked with in doc templates (pydoc filter) | id:7c6fe66a74585b5c044395935d69585deb12ed82
 [feature] missing plugins should detect which package they are avaliable in and suggest installing that | id:7e19102f14c4521e4a3d0bef98ba4e630e92594b
 [feature] use casperjs to output location of element want an arrow to, then use image magick to point to that element | id:7f00fd06d8cf8317a2538417d37ae74971f5423f
+[feature] have a script mode where if any siblings have changed, all siblings are re-run | id:7f29557ddfba92d9b72bfdb72a8cd3c119fe6622
 [perf] jinja should not need to create a working dir | id:86f3f99ccfd4b9f5f26e23c9d543848545f7d3bb
 [feature] implement support for remote files | id:89d523dfcf3604864658e494f0bc367c8f801cfd
 [feature] think about wrapping navigation.directories [Doc, {}] structure in a class, or simplifying it, do we actually need Doc instance? | id:8dd035c546aa33b430378253c12827fd71e142ed
+[issue] additional children fail after dexy run has stopped with an error but cache is not refreshed | id:8fbb676dfe2d6d8bb9874a40ed5b2c6f8b29343b
 [docs] make a package which has examples of all the types of plugins | id:92619a4d256480ae116121e1a8e37681abc6883a
 [filter] publish dexy blogging filters | id:96c2017386d980b79c5956a0016c957093c81766
 [feature] rsync reporter, or make output-site and output more rsync-friendly | id:99fb1cc6cc57200e26b11851cdb324ebfa1eb131
 [todo] add more tests for unicode support | id:9d71bbceb819a41ee352f07381de6b235e3c49bb
 [issue] make sure all exceptions are handled in user-friendly way | id:9f6b58cc32e7d3651dfa86c1cb25abb8db54d048
 [docs] write example/template for cucumber + rspec | id:a05179706a2217ed59e9eb89db9d71b7bd4b9a80
+[feature] make dexy helper functions behave like jinja filters | id:a1b9dfb698ca910a9caad48f9597cb06fba67b4b
 [feature] write filter where pexpect or a pseudoterminal runs a python script and then additional files are inputs to that script | id:abcec1ed3ce1c949ecdf15943474362597c7c46d
 [feature] add winpexpect support https://bitbucket.org/geertj/winpexpect/wiki/Home | id:b7590f29225431071a22bc72520ebfad0ab6afc6
 [feature] standard way to give feedback on what packages need to be installed to use a filter | id:bce8eeb2b2d39665a51da781b5e4fa0de83a0ba9

@@ -167,7 +167,7 @@ class ManPage(SubprocessStdoutFilter):
 
     def process(self):
         man_info = {}
-        for prog_name in self.input_data().split():
+        for prog_name in self.input().data().split():
             command = self.command_string(prog_name)
             proc, stdout = self.run_command(command, self.setup_env())
             self.handle_subprocess_proc_return(command, proc.returncode, stdout)

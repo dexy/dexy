@@ -99,9 +99,6 @@ class Filter:
     def input(self):
         return self.artifact.input_data
 
-    def input_data(self):
-        return self.input().data()
-
     def input_filename(self):
         return self.artifact.input_filename()
 

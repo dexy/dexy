@@ -60,8 +60,23 @@ class Batch(object):
         self.start_time = time.time()
 
         if target:
-            # create list of nodes which get run based on target
-            raise Exception("not implemented")
+            # Look for identical target in root-level nodes
+            nodes = [n for n in self.tree if n.key == target]
+            
+            if not nodes:
+                # Look for similar target in root-level nodes
+                nodes = [n for n in self.tree if n.key.startswith(target)]
+
+            if not nodes:
+                # Look for identical target anywhere in tree
+                nodes = [n for n in self.lookup_table.values() if n.key == target]
+                # TODO sort nodes..
+
+            if not nodes:
+                # Look for similar target anywhere in tree
+                nodes = [n for n in self.lookup_table.values() if n.key.startswith(target)]
+                # TODO sort nodes..
+
         else:
             nodes = self.tree
 
