@@ -238,6 +238,7 @@ class Inputs(TemplatePlugin):
 
         return {
             'a' : self.a,
+            'args' : self.filter_instance.artifact.args,
             'd' : D(self.filter_instance.artifact, self.map_relative_refs),
             'f' : self.filter_instance,
             's' : self.filter_instance.output(),

@@ -3,7 +3,20 @@ from dexy.plugins.parsers import TextFileParser
 from dexy.plugins.parsers import YamlFileParser
 from dexy.tests.utils import wrap
 import dexy.exceptions
+import os
 
+def test_yaml_with_defaults():
+    with wrap() as wrapper:
+        os.makedirs("s1/s2")
+
+        with open("s1/s2/hello.txt", "w") as f:
+            f.write("hello")
+        parser = YamlFileParser()
+        parser.wrapper = wrapper
+        parser.parse(YAML_WITH_DEFAULTS)
+
+        assert wrapper.batch.tree[0].args['foo'] == 'bar'
+    
 def test_invalid_yaml():
     with wrap() as wrapper:
         parser = YamlFileParser()
@@ -135,13 +148,13 @@ def test_original_parser_allinputs():
         assert len(wrapper.batch.tree) == 1
         assert wrapper.batch.tree[0].key_with_class() == "PatternDoc:*.md|jinja"
 
-INVALID_YAML = """\
+INVALID_YAML = """
 code:
     - abc
     def
 """
 
-YAML = """\
+YAML = """
 code:
     - .R|pyg:
          "pyg" : { "foo" : "bar" }
@@ -151,4 +164,16 @@ wordpress:
     - code
     - test.txt|jinja
     - .md|jinja|markdown|wp
+"""
+
+YAML_WITH_DEFAULTS = """
+defaults:
+    pyg: { lexer : moin }
+    foo: bar
+
+code:
+    - .R|pyg
+
+s1/s2/hello.txt|jinja:
+    code
 """

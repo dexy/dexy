@@ -7,10 +7,24 @@ import posixpath
 import pprint
 
 class AbstractSyntaxTree():
-    def __init__(self):
+    def __init__(self, wrapper=None):
         self.lookup_table = {}
         self.tree = []
         self.root_nodes_ordered = False
+        self.wrapper = wrapper
+        self.default_args = []
+
+    def default_args_for_directory(self, path):
+        default_kwargs = {}
+        dir_path = posixpath.dirname(posixpath.abspath(path))
+
+        for d, args in self.default_args:
+            if posixpath.abspath(d) in dir_path:
+                self.wrapper.log.debug("applying default args for dir %s of %s" % (d, args))
+                default_kwargs.update(args)
+                self.wrapper.log.debug("after updating: %s" % default_kwargs)
+
+        return default_kwargs
 
     def standardize_key(self, key):
         return Parser.standardize_key(key)
@@ -125,10 +139,15 @@ class AbstractSyntaxTree():
 
         def create_dexy_task(key, *child_tasks, **kwargs):
             if not key in created_tasks:
-                msg = "Creating task '%s' with children '%s' with args '%s'"
+                msg = "creating task '%s' with children '%s' with original kwargs '%s'"
                 self.wrapper.log.debug(msg % (key, child_tasks, kwargs))
                 alias, pattern = Parser.qualify_key(key)
-                task = dexy.task.Task.create(alias, pattern, *child_tasks, **kwargs)
+                
+                kwargs_with_defaults = self.default_args_for_directory(pattern)
+                kwargs_with_defaults.update(kwargs)
+
+                task = dexy.task.Task.create(alias, pattern, *child_tasks, **kwargs_with_defaults)
+                task.args_before_defaults = kwargs
                 created_tasks[key] = task
             return created_tasks[key]
 
@@ -210,8 +229,9 @@ class Parser:
         alias, pattern = klass.qualify_key(key)
         return "%s:%s" % (alias, pattern)
 
-    def __init__(self, wrapper=None):
+    def __init__(self, wrapper=None, ast=None):
         self.wrapper = wrapper
+        self.ast = ast
 
     def parse(self, input_text, directory="."):
         """

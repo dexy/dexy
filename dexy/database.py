@@ -101,12 +101,7 @@ class Sqlite3(Database):
         else:
             return self.START_BATCH_ID
 
-    def add_task_before_running(self, task):
-        if hasattr(task, 'doc'):
-            doc_key = task.doc.key
-        else:
-            doc_key = task.key
-
+    def serialize_task_args(self, task):
         args_to_serialize = task.args.copy()
         if args_to_serialize.has_key('wrapper'):
             del args_to_serialize['wrapper']
@@ -122,8 +117,15 @@ class Sqlite3(Database):
             msg = "Unable to serialize args. Keys are %s" % args_to_serialize.keys()
             raise dexy.exceptions.InternalDexyProblem(msg)
 
+        return serialized_args
+
+    def add_task_before_running(self, task):
+        if hasattr(task, 'doc'):
+            doc_key = task.doc.key
+        else:
+            doc_key = task.key
+
         attrs = {
-                'args' : serialized_args,
                 'doc_key' : doc_key,
                 'batch_id' : task.wrapper.batch.batch_id,
                 'class_name' : task.__class__.__name__,
@@ -150,6 +152,7 @@ class Sqlite3(Database):
             storage_type = None
 
         attrs = {
+                'args' : self.serialize_task_args(task),
                 'completed_at' : datetime.now(),
                 'ext' : ext,
                 'data_type' : data_type,

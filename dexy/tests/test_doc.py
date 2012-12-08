@@ -124,6 +124,8 @@ def test_pattern_doc_args():
         with open("hello.txt", "w") as f:
             f.write("hello!")
 
+        wrapper.setup_batch()
+
         doc = PatternDoc("*.txt", foo="bar", wrapper=wrapper)
         doc.populate()
         doc.setup()

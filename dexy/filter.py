@@ -60,6 +60,10 @@ class Filter:
     def process(self):
         pass
 
+    def calculate_canonical_name(self):
+        name_without_ext = posixpath.splitext(self.artifact.key)[0]
+        return "%s%s" % (name_without_ext, self.artifact.ext)
+
     def add_doc(self, doc_name, doc_contents=None):
         doc_name = os_to_posix(doc_name)
         if not posixpath.sep in doc_name:

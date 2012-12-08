@@ -11,6 +11,7 @@ import hashlib
 import inspect
 import json
 import os
+import posixpath
 import shutil
 import stat
 import time
@@ -57,6 +58,27 @@ class Artifact(dexy.task.Task):
 
     def output_filename(self):
         return self.output_data.basename()
+
+    def canonical_name_from_args(self):
+        raw_arg_name = None
+        if self.args.get('canonical-name'):
+            raw_arg_name = self.args.get('canonical-name')
+        elif self.args.get('canonical_name'):
+            raw_arg_name = self.args.get('canonical_name')
+
+        if raw_arg_name:
+            if "/" in raw_arg_name:
+                return raw_arg_name
+            else:
+                return posixpath.join(posixpath.dirname(self.key), raw_arg_name)
+
+    def calculate_canonical_name(self):
+        from_args = self.canonical_name_from_args()
+        if from_args:
+            return from_args % self.args
+        else:
+            name_without_ext = posixpath.splitext(self.key)[0]
+            return "%s%s" % (name_without_ext, self.ext)
 
     def working_dir(self):
         return os.path.join(self.tmp_dir(), self.output_data.parent_dir())
@@ -105,7 +127,7 @@ class Artifact(dexy.task.Task):
         data_class = dexy.data.Data.aliases[self.data_class_alias()]
         self.log.debug("setting up output data of class %s" % data_class.__name__)
         self.output_data_type = data_class.ALIASES[0]
-        self.output_data = data_class(self.key, self.ext, self.hashstring, self.args, self.wrapper)
+        self.output_data = data_class(self.key, self.ext, self.calculate_canonical_name(), self.hashstring, self.args, self.wrapper)
 
     def setup(self):
         self.set_log()
@@ -203,6 +225,13 @@ class FilterArtifact(Artifact):
         else:
             return self.filter_class.data_class_alias(self.ext)
 
+    def calculate_canonical_name(self):
+        from_args = self.canonical_name_from_args()
+        if from_args:
+            return from_args % self.args
+        else:
+            return self.filter_instance.calculate_canonical_name()
+
     def setup_filter_instance(self):
         self.filter_instance = self.filter_class()
         self.filter_instance.artifact = self
@@ -229,7 +258,7 @@ class FilterArtifact(Artifact):
         Look for artifacts which were created as side effects of this filter
         running, re-run these docs (which should be present in cache).
         """
-        rows = self.wrapper.get_child_hashes_in_previous_batch(self.hashstring)
+        rows = self.wrapper.db.get_child_hashes_in_previous_batch(self.hashstring)
         for row in rows:
             self.log.debug("Reconstituting %s from database and cache" % row['doc_key'])
             if 'Initial' in row['class_name']:

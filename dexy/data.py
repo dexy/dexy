@@ -34,36 +34,29 @@ class Data:
     def __repr__(self):
         return "Data('%s')" % (self.key)
 
-    def __init__(self, key, ext, hashstring, args, wrapper, storage_type=None):
+    def __init__(self, key, ext, canonical_name, hashstring, args, wrapper, storage_type=None):
         self.key = key
         self.ext = ext
+        self.name = canonical_name
         self.hashstring = hashstring
         self.args = args
         self.wrapper = wrapper
 
-        self.calculate_name()
-
-        self.storage_type = storage_type or self.storage_class_alias(ext)
-        storage_class = dexy.storage.Storage.aliases[self.storage_type]
-        self.storage = storage_class(hashstring, ext, self.wrapper)
-        self.storage.check_location_is_in_project_dir(self.name)
+        self.setup_storage(storage_type)
 
         self._data = None
 
-        # Allow doing custom setup stuff in subclasses.
+        # allow doing custom setup in subclasses
         self.setup()
 
     def setup(self):
         pass
 
-    def calculate_name(self):
-        name_without_ext = posixpath.splitext(self.key)[0]
-        if self.args.get('canonical-name'):
-            self.name = self.args.get('canonical-name')
-        elif self.args.get('canonical_name'):
-            self.name = self.args.get('canonical_name')
-        else:
-            self.name = "%s%s" % (name_without_ext, self.ext)
+    def setup_storage(self, storage_type):
+        self.storage_type = storage_type or self.storage_class_alias(self.ext)
+        storage_class = dexy.storage.Storage.aliases[self.storage_type]
+        self.storage = storage_class(self.hashstring, self.ext, self.wrapper)
+        self.storage.check_location_is_in_project_dir(self.name)
 
     def parent_dir(self):
         return posixpath.dirname(self.name)

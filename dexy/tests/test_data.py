@@ -32,7 +32,7 @@ def test_attempt_write_outside_project_root():
 
 def test_key_value_data():
     with wrap() as wrapper:
-        data = dexy.data.KeyValue("doc.json", ".json", "hash1", {}, wrapper, storage_type='json')
+        data = dexy.data.KeyValue("doc.json", ".json", "doc.json", "hash1", {}, wrapper, storage_type='json')
 
         assert not data._data
         assert data.storage._data == {}
@@ -48,7 +48,7 @@ def test_key_value_data():
 
 def test_key_value_data_sqlite():
     with wrap() as wrapper:
-        data = dexy.data.KeyValue("doc.sqlite3", ".sqlite3", "hash1", {}, wrapper)
+        data = dexy.data.KeyValue("doc.sqlite3", ".sqlite3", "doc.sqlite3", "hash1", {}, wrapper)
 
         data.append('foo', 'bar')
         assert len(data.keys()) == 1
@@ -63,7 +63,7 @@ def test_generic_data():
         CONTENTS = "contents go here"
 
         # Create a GenericData object
-        data = dexy.data.Generic("doc.txt", ".txt", "hash1", {}, wrapper)
+        data = dexy.data.Generic("doc.txt", ".txt", "doc.txt", "hash1", {}, wrapper)
 
         # Assign some text contents
         data._data = CONTENTS
@@ -94,7 +94,7 @@ def test_generic_data():
 
 def test_init_data():
     wrapper = Wrapper()
-    data = dexy.data.Generic("doc.txt", ".abc", "def123", {}, wrapper)
+    data = dexy.data.Generic("doc.txt", ".abc", "doc.abc", "def123", {}, wrapper)
 
     assert data.key == "doc.txt"
     assert data.name == "doc.abc"
@@ -103,15 +103,3 @@ def test_init_data():
 
     assert not data.has_data()
     assert not data.is_cached()
-
-def test_calculate_name():
-    values = (
-            ("doc.txt|abc|def", ".xyz", "doc.xyz"),
-            ("doc.txt|abc|def", ".pdq", "doc.pdq"),
-            ("doc.txt-abc-def.txt", ".pdq", "doc.txt-abc-def.pdq")
-            )
-
-    wrapper = Wrapper()
-    for key, ext, name in values:
-        data = dexy.data.Data(key, ext, "abc123", {}, wrapper)
-        assert data.name == name

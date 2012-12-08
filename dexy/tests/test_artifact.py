@@ -136,7 +136,7 @@ def test_parent_doc_hash():
         wrapper.setup_db()
         wrapper.setup_log()
         wrapper.setup_batch()
-        rows = wrapper.get_child_hashes_in_previous_batch(hashstring)
+        rows = wrapper.db.get_child_hashes_in_previous_batch(hashstring)
         assert len(rows) == 3
 
 def test_parent_doc_hash_2():

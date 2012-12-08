@@ -41,6 +41,7 @@ class Task():
         self.key = os_to_posix(key)
         self.children = list(children)
         self.args = args
+        self.args_before_defaults = args
 
         self.created_by_doc = None
         self.deps = OrderedDict()

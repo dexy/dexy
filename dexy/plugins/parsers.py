@@ -14,6 +14,10 @@ class YamlFileParser(Parser):
     def build_ast(self, directory, input_text):
         def parse_key_mapping(mapping):
             for original_task_key, v in mapping.iteritems():
+                if original_task_key == 'defaults':
+                    self.ast.default_args.append((directory, v,))
+                    continue
+
                 original_file = original_task_key.split("|")[0]
                 if not os.path.exists(self.join_dir(directory, original_file)) and not "*" in original_task_key and not "." in original_task_key and not "|" in original_task_key:
                     self.wrapper.log.debug("treating %s as a bundle name, not prepending directory %s" % (original_task_key, directory))

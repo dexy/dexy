@@ -209,7 +209,12 @@ class PatternDoc(dexy.task.Task):
                     else:
                         doc_key = filepath
 
-                    doc_args = self.args.copy()
+                    if hasattr(self.wrapper.batch, 'ast'):
+                        doc_args = self.wrapper.batch.ast.default_args_for_directory(filepath)
+                    else:
+                        doc_args = {}
+
+                    doc_args.update(self.args_before_defaults)
                     doc_args['wrapper'] = self.wrapper
 
                     if doc_args.has_key('depends'):
@@ -220,6 +225,7 @@ class PatternDoc(dexy.task.Task):
                         del doc_args['depends']
 
                     self.log.debug("creating child of patterndoc %s: %s" % (self.key, doc_key))
+                    self.log.debug("with args %s" % doc_args)
                     if not doc_children:
                         doc_children=orig_doc_children
                     doc = Doc(doc_key, *doc_children, **doc_args)

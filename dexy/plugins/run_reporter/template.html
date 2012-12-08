@@ -52,17 +52,6 @@
                     <p>The total elapsed time for batch {{ batch.batch_id }} was {{ "%0.2f" % batch.elapsed() }} ({{ "%0.2f" % (float(batch.elapsed())/60)}} minutes).</p>
 
 </pre>
-{% if hasattr(wrapper, 'doc_config') -%}
-                    <h3>Config</h3>
-                    <p>This is the configuration which was used for this run:</p>
-<pre>
-{% for k, v in wrapper.doc_config.iteritems() -%}
-Directory {{ k }}:
-{{ v }}
-
-{% endfor -%}
-</pre>
-{% endif -%}
 
 <h1>10 Slowest Tasks</h1>
 <hr />

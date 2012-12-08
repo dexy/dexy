@@ -1,4 +1,4 @@
-from dexy.common import OrderedDict
+from dexy.utils import s
 import dexy.batch
 import dexy.database
 import dexy.doc
@@ -231,51 +231,49 @@ class Wrapper(object):
             self.log.debug("running reporter %s" % reporter.ALIASES[0])
             reporter.run(self)
 
-    def get_child_hashes_in_previous_batch(self, parent_hashstring):
-        return self.db.get_child_hashes_in_previous_batch(parent_hashstring)
+    def is_valid_dexy_dir(self, dirpath, dirnames):
+        nodexy_file = os.path.join(dirpath, '.nodexy')
+        pip_delete_this_dir_file = os.path.join(dirpath, "pip-delete-this-directory.txt")
+        if os.path.exists(nodexy_file):
+            self.log.debug("  skipping directory '%s' and its children because .nodexy file found" % dirpath)
+            dirnames[:] = []
+            return False
+        else:
+            if os.path.exists(pip_delete_this_dir_file):
+                print s("""WARNING pip left an old build/ file lying around!
+                You probably want to cancel this dexy run (ctrl+c) and remove this directory first!
+                Dexy will continue running unless you stop it...""")
+
+            for x in self.exclude_dirs():
+                if x in dirnames:
+                    skipping_dir = os.path.join(dirpath, x)
+                    self.log.debug("  skipping directory '%s' because it matches exclude '%s'" % (skipping_dir, x))
+                    dirnames.remove(x)
+
+            return True
 
     def load_doc_config(self):
         """
         Look for document config files in current working tree and load them.
         """
-        exclude = self.exclude_dirs()
-        ast = dexy.parser.AbstractSyntaxTree()
-        ast.wrapper = self
-        self.doc_config = OrderedDict()
+        ast = dexy.parser.AbstractSyntaxTree(self)
 
         for dirpath, dirnames, filenames in os.walk("."):
-            self.log.debug("looking for doc config files in '%s'" % dirpath)
-
-            nodexy_file = os.path.join(dirpath, '.nodexy')
-            pip_delete_this_dir_file = os.path.join(dirpath, "pip-delete-this-directory.txt")
-            if os.path.exists(nodexy_file):
-                self.log.debug("  skipping directory '%s' and its children because .nodexy file found" % dirpath)
-                dirnames[:] = []
-            else:
-                if os.path.exists(pip_delete_this_dir_file):
-                    print "WARNING pip left an old build/ file lying around! You probably want to cancel this dexy run (ctrl+c) and remove this directory first! Dexy will continue running unless you stop it..."
-                # no excludes or .nodexy file, this dir is ok to process
+            if self.is_valid_dexy_dir(dirpath, dirnames):
                 for alias in dexy.parser.Parser.aliases.keys():
-                    config_file_in_directory = os.path.join(dirpath, alias)
-                    if os.path.exists(config_file_in_directory):
-                        parser = dexy.parser.Parser.aliases[alias](self)
-                        parser.ast = ast
-                        with open(config_file_in_directory, "r") as f:
+                    path_to_config = os.path.join(dirpath, alias)
+
+                    if os.path.exists(path_to_config):
+                        self.log.debug("loading config from '%s'" % path_to_config)
+                        with open(path_to_config, "r") as f:
                             config_text = f.read()
 
-                        self.log.debug("found doc config file '%s':\n%s" % (config_file_in_directory, config_text))
-                        self.doc_config[dirpath] = config_text
+                        parser = dexy.parser.Parser.aliases[alias](self, ast)
                         parser.build_ast(dirpath, config_text)
-
-                    self.log.debug("Removing any child directories of '%s' that match excludes..." % dirpath)
-                    for x in exclude:
-                        if x in dirnames:
-                            skipping_dir = os.path.join(dirpath, x)
-                            self.log.debug("  skipping directory '%s' because it matches exclude '%s'" % (skipping_dir, x))
-                            dirnames.remove(x)
 
         self.log.debug("AST completed:")
         ast.debug(self.log)
+
         return ast
 
     def setup_config(self):
