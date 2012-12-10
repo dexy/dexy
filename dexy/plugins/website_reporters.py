@@ -54,8 +54,9 @@ class WebsiteReporter(OutputReporter):
         return directories
 
     def apply_and_render_template(self, doc):
-        if doc.args.get('ws_template'):
-            template_file = doc.args.get('ws_template')
+        ws_template = doc.args.get('ws_template')
+        if ws_template and not isinstance(ws_template, bool):
+            template_file = ws_template
         else:
             template_file = "_template.html"
         template_path = None
@@ -64,15 +65,15 @@ class WebsiteReporter(OutputReporter):
         for i in range(len(path_elements), -1, -1):
             template_path = os.path.join(*(path_elements[0:i] + [template_file]))
             if os.path.exists(template_path):
-                self.log.debug("using template %s for %s" % (template_path, doc.key))
+                self.log.debug("  using template %s for %s" % (template_path, doc.key))
                 break
 
         if not template_path:
-            raise dexy.exceptions.UserFeedback("no template path for %s" % doc.key)
+            raise dexy.exceptions.UserFeedback("  no template path for %s" % doc.key)
 
         env = Environment(undefined=jinja2.StrictUndefined)
         env.loader = FileSystemLoader([".", os.path.dirname(template_path)])
-        self.log.debug("loading template at %s" % template_path)
+        self.log.debug("  loading template at %s" % template_path)
         template = env.get_template(template_path)
 
         if doc.is_index_page():
@@ -119,13 +120,14 @@ class WebsiteReporter(OutputReporter):
         self.create_reports_dir()
 
         for doc in wrapper.batch.docs():
-            self.log.debug("Processing doc %s" % doc.key)
+            self.log.debug("processing doc %s" % doc.key_with_class())
             if doc.canon:
                 if doc.final_artifact.ext == ".html":
-                    has_html_header = any(html_fragment in doc.output().as_text() for html_fragment in ('<html', '<body', '<head'))
+                    fragments = ('<html', '<body', '<head')
+                    has_html_header = any(html_fragment in doc.output().as_text() for html_fragment in fragments)
 
-                    if has_html_header or not doc.args.get('ws_template', True):
-                        self.log.debug("found html tag in output of %s" % doc.key)
+                    if has_html_header and not doc.args.get('ws_template'):
+                        self.log.debug("  found html tag in output of %s" % doc.key)
                         self.write_canonical_doc(doc)
                     else:
                         self.apply_and_render_template(doc)

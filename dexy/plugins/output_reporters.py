@@ -15,13 +15,13 @@ class OutputReporter(Reporter):
         if not os.path.exists(parent_dir):
             os.makedirs(os.path.dirname(fp))
 
-        self.log.debug("writing %s to %s" % (doc.key, fp))
+        self.log.debug("  writing %s to %s" % (doc.key, fp))
         if os.path.exists(fp):
             print "WARNING %s is overwriting file %s. Already written to by:" % (doc.key, fp)
             for tup in self.keys_to_outfiles:
                 k, v = tup
                 if v == fp:
-                    print "  %s" % k
+                    print "    %s" % k
         self.keys_to_outfiles.append((doc.key, fp))
 
         doc.output().output_to_file(fp)
@@ -54,5 +54,5 @@ class LongOutputReporter(Reporter):
             if not os.path.exists(parent_dir):
                 os.makedirs(os.path.dirname(fp))
 
-            self.log.debug("writing %s to %s" % (doc.key, fp))
+            self.log.debug("  writing %s to %s" % (doc.key, fp))
             doc.output().output_to_file(fp)
