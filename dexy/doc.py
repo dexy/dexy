@@ -19,7 +19,7 @@ class Doc(dexy.task.Task):
             blank_alias_msg = "You have a trailing | or you have 2 | symbols together in your specification for %s"
             raise dexy.exceptions.UserFeedback(blank_alias_msg % self.key)
         elif alias.startswith("-"):
-            filter_class = dexy.filter.DexyFilter
+            filter_class = dexy.filter.AliasFilter
         else:
             try:
                 filter_class = dexy.filter.Filter.aliases[alias]
@@ -183,7 +183,9 @@ class PatternDoc(dexy.task.Task):
     ALIASES = ['pattern']
 
     def setup(self):
-        self.hashstring = ''
+        self.metadata = dexy.metadata.Md5()
+        self.metadata.child_hashes = ",".join([child.hashstring for child in self.children])
+        self.hashstring = self.metadata.compute_hash()
 
     def populate(self):
         self.set_log()
@@ -243,4 +245,6 @@ class BundleDoc(dexy.task.Task):
         self.set_log()
 
     def setup(self):
-        self.hashstring = ''
+        self.metadata = dexy.metadata.Md5()
+        self.metadata.child_hashes = ",".join([child.hashstring for child in self.children])
+        self.hashstring = self.metadata.compute_hash()

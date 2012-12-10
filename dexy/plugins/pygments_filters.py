@@ -79,6 +79,9 @@ class PygmentsFilter(DexyFilter):
         formatter = LatexFormatter(style=style)
         return formatter.get_style_defs()
 
+    def calculate_canonical_name(self):
+        return "%s%s" % (self.artifact.doc.name, self.artifact.ext)
+
     def create_lexer_instance(self, args):
         ext = self.artifact.prior.ext
         lexer = None

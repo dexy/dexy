@@ -184,3 +184,13 @@ class DexyFilter(Filter):
 
         else:
             self.output().copy_from_file(self.input().storage.data_file())
+
+class AliasFilter(DexyFilter):
+    """
+    Filter to be used when an Alias is specified. Should not change input.
+    """
+    PRESERVE_PRIOR_DATA_CLASS = True
+    ALIASES = []
+
+    def calculate_canonical_name(self):
+        return self.artifact.prior.filter_instance.calculate_canonical_name()

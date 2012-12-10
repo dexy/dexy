@@ -7,6 +7,9 @@ class PreserveDataClassFilter(DexyFilter):
     ALIASES = []
     PRESERVE_PRIOR_DATA_CLASS = True
 
+    def calculate_canonical_name(self):
+        return self.artifact.prior.filter_instance.calculate_canonical_name()
+
 class ChangeExtensionManuallyFilter(PreserveDataClassFilter):
     """
     Dummy filter for allowing changing a file extension.

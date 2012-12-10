@@ -59,6 +59,7 @@ class SplitHtmlFilter(DexyFilter):
                     pages[section_name] = filename
 
                     new_page = self.add_doc(filepath, header + sections[i+1] + footer)
+                    new_page.args['title'] = section_name
 
                     self.artifact.log.debug("added key %s to artifact %s ; links to file %s" %
                               (filepath, self.artifact.key, new_page.name))

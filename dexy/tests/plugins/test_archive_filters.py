@@ -85,7 +85,8 @@ def test_archive_filter_with_short_names():
         names = tar.getnames()
         assert "archive/hello.py" in names
         assert "archive/hello.rb" in names
-        assert "archive/hello.html" in names
+        assert "archive/hello.py.html" in names
+        assert "archive/hello.rb.html" in names
         tar.close()
 
 def test_unprocessed_directory_archive_filter():

@@ -48,6 +48,7 @@ class Template(object):
         """
         DOC_KEYS = [
                 "dexy.yaml|idio|t",
+                "dexy.rst|idio|t",
                 "dexy.rst|jinja|rst2html",
                 "dexy.rst|jinja|rst2man"
                 ]

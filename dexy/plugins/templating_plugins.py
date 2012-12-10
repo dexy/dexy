@@ -29,6 +29,26 @@ class TemplatePlugin():
     def run(self):
         return {}
 
+
+try:
+    from bs4 import BeautifulSoup
+    BS4_AVAILABLE = True
+except ImportError:
+    BS4_AVAILABLE = False
+
+class PrettyPrintHtml(TemplatePlugin):
+    """
+    Uses BeautifulSoup 4 to prettify HTML.
+    """
+    @classmethod
+    def is_active(klass):
+        return BS4_AVAILABLE
+
+    @classmethod
+    def prettify_html(klass, html):
+        soup = BeautifulSoup(unicode(html))
+        return soup.prettify()
+
 class PrettyPrintJson(TemplatePlugin):
     """
     Exposes ppjson command.
@@ -43,12 +63,15 @@ class PrettyPrintJson(TemplatePlugin):
             'ppjson' : self.ppjson
          }
 
-class Indent(TemplatePlugin):
+class JinjaFilters(TemplatePlugin):
     """
-    Replacement for jinja's indent method to ensure unicode() is called prior to splitlines().
+    Custom jinja filters which can be accessed using the | fn() syntax in jinja templates.
     """
     @classmethod
     def indent(klass, s, width=4, indentfirst=False):
+        """
+        Replacement for jinja's indent method to ensure unicode() is called prior to splitlines().
+        """
         output = []
         for i, line in enumerate(unicode(s).splitlines()):
             if indentfirst or i > 0:
@@ -56,6 +79,14 @@ class Indent(TemplatePlugin):
             else:
                 output.append(line)
         return "\n".join(output)
+
+    @classmethod
+    def head(klass, s, n=15):
+        """
+        Returns the first n lines of input string.
+        """
+        lines = unicode(s).splitlines()[0:n]
+        return "\n".join(lines)
 
 class RstCode(TemplatePlugin):
     """

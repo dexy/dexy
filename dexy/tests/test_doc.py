@@ -128,7 +128,6 @@ def test_pattern_doc_args():
 
         doc = PatternDoc("*.txt", foo="bar", wrapper=wrapper)
         doc.populate()
-        doc.setup()
         assert doc.args['foo'] == 'bar'
         assert isinstance(doc.children[0], Doc)
         assert doc.children[0].key == "hello.txt"

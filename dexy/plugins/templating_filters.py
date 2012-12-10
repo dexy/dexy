@@ -149,7 +149,10 @@ class JinjaFilter(TemplateFilter):
 
         env.filters['pygmentize'] = dexy.plugins.templating_plugins.PygmentsStylesheet.highlight
         env.filters['rstcode'] = dexy.plugins.templating_plugins.RstCode.rstcode
-        env.filters['indent'] = dexy.plugins.templating_plugins.Indent.indent
+        env.filters['indent'] = dexy.plugins.templating_plugins.JinjaFilters.indent
+        env.filters['head'] = dexy.plugins.templating_plugins.JinjaFilters.head
+        if dexy.plugins.templating_plugins.PrettyPrintHtml.is_active():
+            env.filters['prettify_html'] = dexy.plugins.templating_plugins.PrettyPrintHtml.prettify_html
 
         self.log.debug("initializing template")
 
