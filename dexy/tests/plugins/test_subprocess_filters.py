@@ -143,6 +143,16 @@ def test_bw_filter():
         wrapper.run_docs(doc)
         assert doc.output().is_cached()
 
+def test_pdfcrop_filter():
+    with wrap() as wrapper:
+        orig = os.path.join(TEST_DATA_DIR, 'color-graph.pdf')
+        shutil.copyfile(orig, 'example.pdf')
+        doc = Doc("example.pdf|pdfcrop|pdfinfo",
+                wrapper=wrapper)
+
+        wrapper.run_docs(doc)
+        assert doc.output().is_cached()
+
 def test_asciidoc_filter():
     assert_in_output("asciidoc", "hello", """<div class="paragraph"><p>hello</p></div>""")
 

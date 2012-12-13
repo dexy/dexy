@@ -1,6 +1,15 @@
 from dexy.plugins.process_filters import SubprocessStdoutFilter
 import json
 
+class Pdfinfo(SubprocessStdoutFilter):
+    """
+    Uses the pdfinfo script to retrieve metadata about a PDF.
+    """
+    ALIASES = ['pdfinfo']
+    EXECUTABLE = 'pdfinfo'
+    INPUT_EXTENSIONS = ['.pdf']
+    OUTPUT_EXTENSIONS = ['.txt']
+
 class Wordcount(SubprocessStdoutFilter):
     """
     Runs input through wc command line tool.

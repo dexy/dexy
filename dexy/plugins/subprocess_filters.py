@@ -15,6 +15,15 @@ class PythonInput(SubprocessInputFilter):
     VERSION_COMMAND = 'python --version'
     OUTPUT_EXTENSIONS = ['.txt']
 
+class Pdfcrop(SubprocessFilter):
+    """
+    Runs the PDFcrop script http://pdfcrop.sourceforge.net/
+    """
+    ALIASES = ['pdfcrop']
+    EXECUTABLE = 'pdfcrop'
+    INPUT_EXTENSIONS = ['.pdf']
+    OUTPUT_EXTENSIONS = ['.pdf']
+
 class CalibreFilter(SubprocessFilter):
     """
     Invokes ebook-convert command line tool (part of calibre) to generate various output formats (including .mobi for Kindle)

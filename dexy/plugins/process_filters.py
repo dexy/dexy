@@ -30,6 +30,10 @@ class SubprocessFilter(Filter):
             return [self.WINDOWS_EXECUTABLE]
         else:
             if hasattr(self, 'EXECUTABLE'):
+                if not isinstance(self.EXECUTABLE, basestring):
+                    msg = "Executable must be a string, not a %s. '%s'"
+                    args = (self.EXECUTABLE.__class__.__name__, self.EXECUTABLE)
+                    raise dexy.exceptions.InternalDexyProblem(msg%args)
                 return [self.EXECUTABLE]
             elif hasattr(self, 'EXECUTABLES'):
                 return self.EXECUTABLES
