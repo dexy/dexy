@@ -126,7 +126,10 @@ class Generic(Data):
     DEFAULT_STORAGE_TYPE = 'generic'
 
     def save(self):
-        self.storage.write_data(self._data)
+        if isinstance(self._data, unicode):
+            self.storage.write_data(self._data.encode("utf-8"))
+        else:
+            self.storage.write_data(self._data)
 
     def set_data(self, data):
         """

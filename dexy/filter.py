@@ -171,7 +171,7 @@ class DexyFilter(Filter):
 
     def process(self):
         if hasattr(self, "process_text_to_dict"):
-            output = self.process_text_to_dict(self.input().as_text())
+            output = self.process_text_to_dict(unicode(self.input()))
             self.output().set_data(output)
 
         elif hasattr(self, "process_dict"):
@@ -179,7 +179,7 @@ class DexyFilter(Filter):
             self.output().set_data(output)
 
         elif hasattr(self, "process_text"):
-            output = self.process_text(self.input().as_text())
+            output = self.process_text(unicode(self.input()))
             self.output().set_data(output)
 
         else:
