@@ -95,7 +95,7 @@ def assert_output(filter_alias, doc_contents, expected_output, ext=".txt"):
                 assert doc.output().data() == expected_output
             except AssertionError as e:
                 if not isinstance(expected_output, OrderedDict):
-                    print char_diff(doc.output().as_text(), expected_output)
+                    print char_diff(unicode(doc.output()), expected_output)
                 else:
                     print "Output: %s" % doc.output().data()
                     print "Expected: %s" % expected_output
@@ -110,9 +110,9 @@ def assert_output_matches(filter_alias, doc_contents, expected_regex, ext=".txt"
 
     with runfilter(filter_alias, doc_contents, ext=ext) as doc:
         if expected_regex:
-            assert re.match(expected_regex, doc.output().as_text())
+            assert re.match(expected_regex, unicode(doc.output()))
         else:
-            raise Exception(doc.output().as_text())
+            raise Exception(unicode(doc.output()))
 
 def assert_output_cached(filter_alias, doc_contents, ext=".txt", min_filesize=None):
     if not ext.startswith("."):
@@ -129,9 +129,9 @@ def assert_in_output(filter_alias, doc_contents, expected_output, ext=".txt"):
 
     with runfilter(filter_alias, doc_contents, ext=ext) as doc:
         if expected_output:
-            assert expected_output in doc.output().as_text()
+            assert expected_output in unicode(doc.output())
         else:
-            raise Exception(doc.output().as_text())
+            raise Exception(unicode(doc.output()))
 
 class divert_stdout():
     def __enter__(self):

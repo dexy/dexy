@@ -28,7 +28,7 @@ def test_python_input():
                 wrapper=wrapper)
         wrapper.run_docs(doc)
 
-        assert doc.output().as_text() == """\
+        assert str(doc.output()) == """\
 line 1 has 19 chars
 line 2 has 4 chars
 """

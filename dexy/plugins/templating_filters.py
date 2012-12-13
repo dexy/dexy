@@ -171,8 +171,9 @@ class JinjaFilter(TemplateFilter):
             self.handle_jinja_exception(e, self.input().as_text(), template_data)
         except TemplateNotFound as e:
             raise dexy.exceptions.UserFeedback("Jinja couldn't find the template '%s', make sure this file is an input to %s" % (e.message, self.artifact.doc.key))
-        except Exception:
+        except Exception as e:
             if os.path.exists(self.output_filepath()):
                 self.log.debug("removing %s since jinja had an error" % self.output_filepath())
                 os.remove(self.output_filepath())
+            self.log.debug(str(e))
             raise

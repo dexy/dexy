@@ -119,7 +119,7 @@ def test_text_parser_virtual_file():
         docs = wrapper.batch.tree
 
         assert docs[0].key == "virtual.txt"
-        assert docs[0].output().as_text() == "hello"
+        assert str(docs[0].output()) == "hello"
 
 def test_original_parser():
     with wrap() as wrapper:

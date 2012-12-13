@@ -213,24 +213,3 @@ class RedclothLatex(SubprocessStdoutFilter):
     INPUT_EXTENSIONS = [".txt", ".textile"]
     OUTPUT_EXTENSIONS = [".tex"]
     ALIASES = ['redclothl', 'latextile']
-
-class RdConv(SubprocessStdoutFilter):
-    """Convert R documentation to other formats."""
-    EXECUTABLE = "R CMD Rdconv"
-    VERSION_COMMAND = "R CMD Rdconv -v"
-    INPUT_EXTENSIONS = ['.Rd']
-    OUTPUT_EXTENSIONS = ['.txt', '.html', '.tex', '.R']
-    ALIASES = ['rdconv']
-    EXTENSION_TO_FORMAT = {
-        '.txt' : 'txt',
-        '.html' : 'html',
-        '.tex' : 'latex',
-        '.R' : 'example'
-    }
-
-    def command_string_stdout(self):
-        exe = self.executable()
-        args = self.command_line_args() or ""
-        fmt = self.EXTENSION_TO_FORMAT[self.artifact.ext]
-        script_file = self.input().basename()
-        return "%s %s --type=%s %s" % (exe, args, fmt, script_file)

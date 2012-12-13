@@ -538,3 +538,27 @@ class AbcMultipleFormatsFilter(SubprocessFilter):
                 output[ext] = f.read()
 
         self.output().set_data(json.dumps(output))
+
+class RdConv(SubprocessFilter):
+    """Convert R documentation to other formats."""
+    EXECUTABLE = "R CMD Rdconv"
+    VERSION_COMMAND = "R CMD Rdconv -v"
+    INPUT_EXTENSIONS = ['.Rd']
+    OUTPUT_EXTENSIONS = ['.txt', '.html', '.tex', '.R']
+    ALIASES = ['rdconv']
+    EXTENSION_TO_FORMAT = {
+        '.txt' : 'txt',
+        '.html' : 'html',
+        '.tex' : 'latex',
+        '.R' : 'example'
+    }
+
+    def command_string(self):
+        args = {
+                'exe' : self.executable(),
+                'clargs' : self.command_line_args() or "",
+                'fmt' : self.EXTENSION_TO_FORMAT[self.artifact.ext],
+                'input' : self.input_filename(),
+                'output' : self.output_filename()
+                }
+        return "%(exe)s %(clargs)s --type=%(fmt)s --output=%(output)s %(input)s" % args

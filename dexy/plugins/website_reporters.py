@@ -82,7 +82,7 @@ class WebsiteReporter(OutputReporter):
             nav_current_index = None
 
         if doc.final_artifact.ext == '.html':
-            content = doc.output().as_text()
+            content = unicode(doc.output())
         else:
             content = doc.output()
 
@@ -124,7 +124,7 @@ class WebsiteReporter(OutputReporter):
             if doc.canon:
                 if doc.final_artifact.ext == ".html":
                     fragments = ('<html', '<body', '<head')
-                    has_html_header = any(html_fragment in doc.output().as_text() for html_fragment in fragments)
+                    has_html_header = any(html_fragment in unicode(doc.output()) for html_fragment in fragments)
 
                     if has_html_header and not doc.args.get('ws_template'):
                         self.log.debug("  found html tag in output of %s" % doc.key)

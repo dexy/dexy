@@ -42,7 +42,7 @@ def test_force_text():
 
         wrapper.run_docs(doc)
 
-        assert doc.output().as_text() == "print 'hello'\n"
+        assert str(doc.output()) == "print 'hello'\n"
 
 def test_force_latex():
     with wrap() as wrapper:
@@ -52,4 +52,4 @@ def test_force_latex():
 
         wrapper.run_docs(doc)
 
-        assert "begin{Verbatim}" in doc.output().as_text()
+        assert "begin{Verbatim}" in str(doc.output())

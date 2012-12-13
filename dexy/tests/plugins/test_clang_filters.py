@@ -79,7 +79,7 @@ def test_c_input():
                 wrapper=wrapper)
 
         wrapper.run_docs(doc)
-        assert doc.output().as_text() == "hello, c"
+        assert str(doc.output()) == "hello, c"
 
 def test_clang_input():
     with wrap() as wrapper:
@@ -92,7 +92,7 @@ def test_clang_input():
                 wrapper=wrapper)
 
         wrapper.run_docs(doc)
-        assert doc.output().as_text() == "hello, c"
+        assert str(doc.output()) == "hello, c"
 
 def test_clang_multiple_inputs():
     with wrap() as wrapper:
@@ -108,5 +108,5 @@ def test_clang_multiple_inputs():
                 wrapper=wrapper)
 
         wrapper.run_docs(doc)
-        assert doc.output().as_sectioned()['input1.txt'] == 'hello, c'
-        assert doc.output().as_sectioned()['input2.txt'] == 'more data'
+        assert doc.output().data()['input1.txt'] == 'hello, c'
+        assert doc.output().data()['input2.txt'] == 'more data'

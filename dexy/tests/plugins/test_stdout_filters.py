@@ -14,7 +14,7 @@ def test_rd():
        \code{save}.
      }
     """
-    expected = u'Reload the datasets written to a file with the function \u2018save\u2019.'
+    expected = u"Reload the datasets written to a file with the function \u2018save\u2019."
     assert_in_output('rdconv', rd, expected, ext=".Rd")
 
 def test_redcloth():

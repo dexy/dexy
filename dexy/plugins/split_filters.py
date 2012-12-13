@@ -50,16 +50,15 @@ class SplitHtmlFilter(DexyFilter):
                 if sections[i] == 'index':
                     index_content = sections[i+1]
                 else:
-                    section_name = sections[i]
-                    # TODO proper url/filename escaping
-                    section_url = section_name.replace(" ","-")
+                    section_label = sections[i]
+                    section_url = section_label.split(" ")[0]
 
                     filename = "%s.html" % section_url
                     filepath = os.path.join(self.output().parent_dir(), filename)
-                    pages[section_name] = filename
+                    pages[section_label] = filename
 
                     new_page = self.add_doc(filepath, header + sections[i+1] + footer)
-                    new_page.args['title'] = section_name
+                    new_page.args['title'] = section_label
 
                     self.artifact.log.debug("added key %s to artifact %s ; links to file %s" %
                               (filepath, self.artifact.key, new_page.name))

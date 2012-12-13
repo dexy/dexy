@@ -209,6 +209,7 @@ def dexy_command(
         dbfile=D['db_file'], # name of the database file (it lives in the logs dir)
         disabletests=D['disable_tests'], # Whether to disable the dexy 'test' filter
         dryrun=D['dry_run'], # if True, just parse config and print batch info, don't run dexy
+        encoding=D['encoding'], # Default encoding. Set to 'chardet' to use chardet auto detection.
         exclude=D['exclude'], # comma-separated list of directory names to exclude from dexy processing
         excludealso=D['exclude_also'], # comma-separated list of directory names to exclude from dexy processing
         globals=D['globals'], # global values to make available within dexy documents, should be KEY=VALUE pairs separated by spaces
@@ -384,6 +385,9 @@ def filters_text(
         text.append("aliases: %s" % ", ".join(klass.ALIASES))
         text.append("")
         text.append(inspect.getdoc(klass))
+        text.append("")
+        text.append("input formats: %s" % ", ".join(klass.INPUT_EXTENSIONS))
+        text.append("output formats: %s" % ", ".join(klass.OUTPUT_EXTENSIONS))
 
         templates = klass.templates()
         if len(templates) > 0:

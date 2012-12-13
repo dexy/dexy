@@ -1,8 +1,9 @@
 from dexy.common import OrderedDict
 from dexy.plugin import PluginMeta
+import chardet
 import dexy.storage
+import dexy.utils
 import dexy.wrapper
-import json
 import os
 import posixpath
 import shutil
@@ -33,6 +34,24 @@ class Data:
 
     def __repr__(self):
         return "Data('%s')" % (self.key)
+
+    def __unicode__(self):
+        if isinstance(self.data(), unicode):
+            return self.data()
+        elif not self.data():
+            return unicode(None)
+        else:
+            if self.wrapper.encoding == 'chardet':
+                encoding = chardet.detect(self.data())['encoding']
+                if not encoding:
+                    return self.data().decode("utf-8")
+                else:
+                    return self.data().decode(encoding)
+            else:
+                return self.data().decode(self.wrapper.encoding)
+
+    def __str__(self):
+        return str(unicode(self))
 
     def __init__(self, key, ext, canonical_name, hashstring, args, wrapper, storage_type=None):
         self.key = key
@@ -91,6 +110,14 @@ class Data:
                 "/%s" % self.long_name()
         ]
 
+    # Define functions that might get called on expectation of a string...
+
+    def strip(self):
+        return unicode(self).strip()
+    
+    def splitlines(self, arg=None):
+        return unicode(self).splitlines(arg)
+
 class Generic(Data):
     """
     Data type representing generic binary or text-based data.
@@ -119,12 +146,6 @@ class Generic(Data):
             self.wrapper.log.debug("Data file for %s (%s) has size 0" % (self.key, self.storage.data_file()))
         return self.storage.data_file_exists()
 
-    def __unicode__(self):
-        return self.as_text()
-
-    def __str__(self):
-        return str(self.as_text())
-
     def filesize(self):
         if self.is_cached():
             return os.path.getsize(self.storage.data_file())
@@ -135,14 +156,23 @@ class Generic(Data):
         return self._data
 
     def as_text(self):
-        return self.data().decode("utf-8")
+        return unicode(self)
 
     def as_sectioned(self):
         return {'1' : self.data()}
 
     def json_as_dict(self):
-        # todo error checking, load from file not string, make sure ext is json
-        return json.loads(self.data())
+        return self.from_json()
+
+    def from_json(self):
+        """
+        Attempts to load data using a JSON parser, returning whatever objects are defined in the JSON.
+        """
+        if self._data:
+            return dexy.utils.parse_json(self._data)
+        else:
+            with open(self.storage.data_file(), "r") as f:
+                return dexy.utils.parse_json_from_file(f)
 
     def copy_from_file(self, filename):
         shutil.copyfile(filename, self.storage.data_file())
@@ -168,8 +198,12 @@ class Sectioned(Generic):
     ALIASES = ['sectioned']
     DEFAULT_STORAGE_TYPE = 'jsonordered'
 
-    def as_text(self):
-        return u"\n".join(v for v in self.data().values())
+
+    def __unicode__(self):
+        return u"\n".join(unicode(v) for v in self.data().values())
+
+    def __str__(self):
+        return "\n".join(str(v) for v in self.data().values())
 
     def as_sectioned(self):
         return self.data()
@@ -182,7 +216,7 @@ class Sectioned(Generic):
         Write canonical output to a file.
         """
         with open(filepath, "wb") as f:
-            f.write(self.as_text())
+            f.write(unicode(self).encode("utf-8"))
 
     def value(self, key):
         return self.data()[key]
@@ -212,8 +246,8 @@ class KeyValue(Generic):
     def as_text(self):
         text = []
         for k, v in self.storage:
-            text.append("%s: %s" % (k, v))
-        return "\n".join(text)
+            text.append(u"%s: %s" % (k, v))
+        return u"\n".join(text)
 
     def as_sectioned(self):
         od = OrderedDict()

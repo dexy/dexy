@@ -32,6 +32,16 @@ def parse_json(input_text):
         msg += str(e)
         raise dexy.exceptions.UserFeedback(msg)
 
+def parse_json_from_file(f):
+    try:
+        return json.load(f)
+    except ValueError as e:
+        msg = inspect.cleandoc("""Was unable to parse the JSON you supplied.
+        Here is information from the JSON parser:""")
+        msg += "\n"
+        msg += str(e)
+        raise dexy.exceptions.UserFeedback(msg)
+
 def parse_yaml(input_text):
     """
     Parse a single YAML document.

@@ -176,7 +176,7 @@ def test_custom_file_extension():
                 pyg = { "ext" : ".tex" },
                 wrapper=wrapper)
         wrapper.run_docs(doc)
-        assert "begin{Verbatim}" in doc.output().as_text()
+        assert "begin{Verbatim}" in str(doc.output())
 
 def test_choose_extension_from_overlap():
     with wrap() as wrapper:
@@ -184,7 +184,7 @@ def test_choose_extension_from_overlap():
                 contents="""print "hello, world" """,
                 wrapper=wrapper)
         wrapper.run_docs(doc)
-        assert "begin{Verbatim}" in doc.output().as_text()
+        assert "begin{Verbatim}" in str(doc.output())
 
 def test_no_file_extension_overlap():
     with wrap() as wrapper:
@@ -241,7 +241,7 @@ print sorted(os.listdir(os.getcwd()))
 
         wrapper.run_docs(doc)
 
-        output = doc.output().as_text()
+        output = str(doc.output())
         assert "12345.67" in output
         assert 'bar' in output
         assert "['data.txt', 'example.py', 'mymod.py', 'mymod.pyc']" in output

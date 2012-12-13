@@ -22,6 +22,7 @@ class Wrapper(object):
         'disable_tests' : False,
         'dont_use_cache' : False,
         'dry_run' : False,
+        'encoding' : 'utf-8',
         'exclude' : '.git, .svn, tmp, cache',
         'exclude_also' : '',
         'globals' : '',
