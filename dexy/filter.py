@@ -139,7 +139,7 @@ class Filter:
         try:
             doc.output().output_to_file(filename)
         except Exception as e:
-            args = (e.__class__.__name, wd, self.artifact.key, doc.key, filename)
+            args = (e.__class__.__name__, wd, self.artifact.key, doc.key, filename)
             self.log.debug("%s error occurred whlie trying to populate working directory %s for %s with %s (%s)" % args)
             self.log.debug(str(e))
 
