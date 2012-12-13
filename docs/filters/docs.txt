@@ -1,3 +1,0 @@
-modules.txt|pydoc {"contents" : "dexy", "version" : 30 }
-filters.py|py
-*.md|jinja|markdown|easyhtml
