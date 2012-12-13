@@ -33,6 +33,7 @@ setup(
         include_package_data = True,
         install_requires = [
             'PyYAML',
+            'chardet',
             'idiopidae>=0.5.4',
             'jinja2',
             'mock',
