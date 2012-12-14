@@ -11,6 +11,7 @@ from pygments.lexers.agile import PythonConsoleLexer
 from pygments.lexers.agile import RubyConsoleLexer
 from pygments.lexers.templates import DjangoLexer
 from pygments.lexers.text import TexLexer
+from pygments.lexers.text import MakefileLexer
 from pygments.lexers.web import JavascriptLexer
 from pygments.lexers.web import XmlLexer
 import dexy.commands
@@ -118,6 +119,8 @@ class PygmentsFilter(DexyFilter):
                 lexer_class = XmlLexer
             elif ext == '.jinja':
                 lexer_class = DjangoLexer
+            elif ext == '.Makefile' or (ext == '' and 'Makefile' in self.input().name):
+                lexer_class = MakefileLexer
             else:
                 fake_file_name = "input_text%s" % ext
                 try:

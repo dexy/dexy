@@ -110,6 +110,7 @@ class WebsiteReporter(OutputReporter):
         if not os.path.exists(parent_dir):
             os.makedirs(os.path.dirname(fp))
 
+        self.log.debug("  writing to %s" % (fp))
         template.stream(env_data).dump(fp, encoding="utf-8")
 
     def run(self, wrapper):
