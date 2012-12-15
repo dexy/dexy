@@ -10,8 +10,8 @@ from pygments.lexers import get_lexer_for_filename
 from pygments.lexers.agile import PythonConsoleLexer
 from pygments.lexers.agile import RubyConsoleLexer
 from pygments.lexers.templates import DjangoLexer
-from pygments.lexers.text import TexLexer
 from pygments.lexers.text import MakefileLexer
+from pygments.lexers.text import TexLexer
 from pygments.lexers.web import JavascriptLexer
 from pygments.lexers.web import XmlLexer
 import dexy.commands

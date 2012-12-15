@@ -30,9 +30,12 @@ class Artifact(dexy.task.Task):
         else:
             return self.key
 
+    def key_with_class(self):
+        return "%s:%s" % (self.__class__.__name__, self.key_for_log())
+
     def append_child_hashstrings(self):
         child_hashes = []
-        for child in self.doc.intersect_children_deps():
+        for child in self.doc.hashstring_deps():
             if not hasattr(child, 'hashstring'):
                 args = (child.key_with_class(), self.key_with_class())
                 msg = s("""Doc %s has not been set up yet, and

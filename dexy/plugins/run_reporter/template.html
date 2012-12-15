@@ -1,78 +1,76 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+
+<!DOCTYPE html>
+<html lang="en">
     <head>
-        <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
-        <title>Report</title>
-        <link href="./zp-compressed.css" type="text/css" media="screen, print" rel="stylesheet" />
-        <link href="./zp-print.css" type="text/css" media="print" rel="stylesheet" />
-        <!--[if IE]>
-        <link href="./zp-ie.css" type="text/css" media="screen" rel="stylesheet" />
-        <![endif]-->
-        <link href="./pastie.css" type="text/css" media="all" rel="stylesheet" />
-        <style type="text/css">
-            .sidebar {
-                font-size: 11px;
-            }
+        <meta charset="utf-8">
+        <title>Run Report</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="">
+        <meta name="author" content="">
 
-            p.intro {
-                font-style: bold;
+        <!-- Le styles -->
+        <link href="css/bootstrap.css" rel="stylesheet">
+        <link href="css/pygments.css" rel="stylesheet">
+        <style>
+            body {
+                padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
             }
-
-            .content .padding {
-                padding: 0 36px 0 0;
-            }
-
-            .item .padding {
-                padding: 0 12px 0 0;
-            }
-
-            .list-item h2 {
-                margin: 0;
-                line-height: 27px;
-            }
-
         </style>
+        <link href="css/bootstrap-responsive.css" rel="stylesheet">
+
+        <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+        <!--[if lt IE 9]>
+        <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
     </head>
+
     <body>
 
-        <div class="skip">
-            <a href="#content" title="Go directly to page content">Go to page content</a>
+        <div class="navbar navbar-inverse navbar-fixed-top">
+            <div class="navbar-inner">
+                <div class="container">
+                    <a class="brand" href="#">Dexy Run Report</a>
+                    <div class="nav-collapse collapse">
+                        <ul class="nav">
+                            <li><a href="http://dexy.it">Dexy Website</a></li>
+                        </ul>
+                    </div><!--/.nav-collapse -->
+                </div>
+            </div>
         </div>
 
-        <div class="zp-wrapper">
-            <div class="zp-70 content">
-                <div class="padding">
-                    <h1 id="top">Dexy Run Report</h1>
-                    <h2>Results of your Run</h2>
-                    <br />
-                    <p>This is a logfile to help you understand how dexy has processed your files and to assist with troubleshooting.</p>
-                    <br />
-                    <br />
-                    <h3>Timing</h3>
-                    <p>The total elapsed time for batch {{ batch.batch_id }} was {{ "%0.2f" % batch.elapsed() }} ({{ "%0.2f" % (float(batch.elapsed())/60)}} minutes).</p>
+        <div class="container">
 
-</pre>
+            <h1>Dexy Run Report</h1>
 
-<h1>10 Slowest Tasks</h1>
-<hr />
-<ul>
-    {% for task in batch.tasks_by_elapsed() -%}
-    {% if task and task.elapsed -%}
-    <li>{{ "%0.3f" % task.elapsed }} - <a href="#{{ task.doc.websafe_key() }}">{{ task.key }}</a> ({{ task.content_source }})</li>
-    {% endif -%}
-    {% endfor -%}
-</ul>
+            <h2>Tree</h2>
+            <p>Click to Expand</p>
+            {% for node in batch.tree -%}
+            {% for line in print_children(node) -%}
+            {{ line }}
+            {% endfor -%}
+            {% endfor -%}
 
-                    <h1>Documents</h1>
+            <h2>Timing</h2>
+            <p>The total elapsed time for batch {{ batch.batch_id }} was {{ "%0.2f" % batch.elapsed() }} ({{ "%0.2f" % (float(batch.elapsed())/60)}} minutes).</p>
 
-                    {% for doc in docs -%}
-                    <hr />
-                    <h2 id="{{ doc.websafe_key() }}">{{ doc.key }} &nbsp;&nbsp;&nbsp; <a href="#top">&uarr;</a></h2>
-                    <br />
-                    <h4>Arguments</h4>
-<pre><code>
-{% for k, v in doc.args.iteritems() -%}
-{% if not k in ('wrapper', 'contents') -%}
+            <h3>Slowest Tasks</h3>
+            <ul>
+                {% for task in batch.tasks_by_elapsed() -%}
+                {% if task and task.elapsed -%}
+                <li>{{ "%0.3f" % task.elapsed }} - <a href="#{{ task.doc.websafe_key() }}">{{ task.key }}</a> ({{ task.content_source }})</li>
+                {% endif -%}
+                {% endfor -%}
+            </ul>
+
+            <h2>Documents</h2>
+            {% for doc in docs -%}
+            <hr />
+            <h3 style="padding-top: 60px;" id="{{ doc.websafe_key() }}">{{ doc.key }} &nbsp;&nbsp;&nbsp; <a href="#top">&uarr;</a></h3>
+            {% set args = printable_args(doc.args) -%}
+            {% if len(args) > 0 -%}
+            <h4>Arguments</h4>
+<pre><code>{% for k, v in args.iteritems() -%}
 {% if isinstance(v, dict) -%}
 {{ k }}:
 {% for kk, vv in v.iteritems() -%}
@@ -81,72 +79,65 @@
 {% else -%}
 {{ k }}: {{ v }}
 {% endif -%}
-{% endif -%}
 {% endfor -%}
 </code></pre>
+{% endif -%}
 
-                    {% if len(doc.inputs) > 0 %}
-                    <br />
-                    <h4>Inputs</h4>
-                    <ul>
-                        {% for d in doc.children %}
-                        <li><a href="#{{ d.websafe_key() }}">{{ d.key }}</a></li>
-                        {% endfor %}
-                    </ul>
-                    {% endif %}
+            {% if len(doc.inputs) > 0 %}
+            <br />
+            <h4>Inputs</h4>
+            <ul>
+                {% for d in doc.children %}
+                <li><a href="#{{ d.websafe_key() }}">{{ d.key }}</a></li>
+                {% endfor %}
+            </ul>
+            {% endif %}
 
-                    <br />
-                    <h4>Artifacts</h4>
-                    <table style="width: 800px; border: thin solid black; border-collapse: collapse;">
-                        <tr><th>Key</th><th>Link</th><th>Elapsed</th><th>Run Type</th><th>Sections</th><th>wd</th></tr>
-                        {% for a in doc.artifacts -%}
-                        <tr>
-                            <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">{{ a.key }}</td>
-                            <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;"><a href="../../{{ a.output_data.storage.data_file() }}">{{ a.output_data.storage.data_file() }}</a></td>
-                            <td style="padding-left: 10px; padding-right: 10px; border:thin solid black; text-align:center;">{{ "%0.4f" % a.elapsed }}</td>
-                            <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">{{ a.content_source }}</td>
-                            <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">
-                                {% if hasattr(a.output_data, 'keys') -%}
-                                {% for k in a.output_data.keys() -%}
-                                {{ k }}<br />
-                                {% endfor -%}
-                                {% endif -%}
-                            </td>
-                            <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">
-                                {% if a.working_dir_exists() -%}
-                                <a href="../../{{ a.working_dir() }}">wd</a>
-                                {% endif -%}
-                            </td>
-                        </tr>
+            <br />
+            <h4>Artifacts</h4>
+            <table style="width: 800px; border: thin solid black; border-collapse: collapse;">
+                <tr><th>Key</th><th>Link</th><th>Elapsed</th><th>Run Type</th><th>Sections</th><th>wd</th></tr>
+                {% for a in doc.artifacts -%}
+                <tr>
+                    <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">{{ a.key }}</td>
+                    <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;"><a href="../../{{ a.output_data.storage.data_file() }}">{{ a.output_data.storage.data_file() }}</a></td>
+                    <td style="padding-left: 10px; padding-right: 10px; border:thin solid black; text-align:center;">{{ "%0.4f" % a.elapsed }}</td>
+                    <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">{{ a.content_source }}</td>
+                    <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">
+                        {% if hasattr(a.output_data, 'keys') -%}
+                        {% for k in a.output_data.keys() -%}
+                        {{ k }}<br />
                         {% endfor -%}
-                    </table>
-                    <br />
-                    {% for a in doc.artifacts -%}
-                    {% if a.stdout -%}
-                    <p><b>{{ a.key }} stdout</b></p>
-                    {{ a.stdout }}
-                    {% endif -%}
-                    {% endfor -%}
-                    <br />
-                    <h4>Document Log</h4>
-<pre>
-{{ doc.logstream.getvalue() }}
-</pre>
-                    <br />
-                    {% endfor %}
-                </div>
-            </div>
+                        {% endif -%}
+                    </td>
+                    <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">
+                        {% if a.working_dir_exists() -%}
+                        <a href="../../{{ a.working_dir() }}">wd</a>
+                        {% endif -%}
+                    </td>
+                </tr>
+                {% endfor -%}
+            </table>
+            <br />
+            {% for a in doc.artifacts -%}
+            {% if a.stdout -%}
+            <p><b>{{ a.key }} stdout</b></p>
+            {{ a.stdout }}
+            {% endif -%}
+            {% endfor -%}
+            <br />
+            <h4>Document Log</h4>
+<pre>{{ doc.logstream.getvalue() }}</pre>
+            <br />
+            {% endfor %}
 
-            <div class="zp-30 sidebar">
-                <h2>List of Documents</h2>
-                <div style="height:400px; overflow:auto;">
-                <ul>
-                    {% for doc in sorted(docs, key=attrgetter('key')) %}
-                    <li><a href="#{{ doc.websafe_key() }}">{{ doc }}</a></li>
-                    {% endfor %}
-                </ul>
-                </div>
-            </div>
-        </div>
+        </div> <!-- /container -->
+
+        <!-- Le javascript
+        ================================================== -->
+        <!-- Placed at the end of the document so the pages load faster -->
+        <script src="http://code.jquery.com/jquery-latest.js"></script>
+        <script src="js/bootstrap.min.js"></script>
+
     </body>
 </html>

@@ -143,11 +143,11 @@ class Task():
     def post(self, *args, **kw):
         pass
 
+    def websafe_key(self):
+        return self.key.replace("/", "--").replace("|", "--").replace("*","")
+
     def key_with_class(self):
-        if hasattr(self, 'doc'):
-            return "%s:%s::%s" % (self.__class__.__name__, self.key, self.doc.key_with_class())
-        else:
-            return "%s:%s" % (self.__class__.__name__, self.key)
+        return "%s:%s" % (self.__class__.__name__, self.key)
 
     def key_with_batch_id(self):
         return "%s:%s:%s" % (self.wrapper.batch.batch_id, self.__class__.__name__, self.key)

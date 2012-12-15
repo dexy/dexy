@@ -40,12 +40,18 @@ class Doc(dexy.task.Task):
 
         return filter_class
 
-    def websafe_key(self):
-        return self.key.replace("/", "--")
-
-    def intersect_children_deps(self):
-        children_deps = list(set(self.children).intersection(self.deps.values()))
-        return sorted(children_deps, key=operator.attrgetter('key_with_class'))
+    def hashstring_deps(self):
+        """
+        List of dependencies where changes mean this doc must be re-run.
+        """
+        deps = []
+        if hasattr(self, 'bundle') and self.bundle.args.get('script-mode'):
+            for child in self.bundle.children:
+                if child == self:
+                    break
+                deps.append(child)
+        deps.extend(list(set(self.children).intersection(self.deps.values())))
+        return sorted(deps, key=operator.attrgetter('key_with_class'))
 
     def names_to_docs(self):
         """
@@ -243,6 +249,8 @@ class BundleDoc(dexy.task.Task):
 
     def populate(self):
         self.set_log()
+        for child in self.children:
+            child.bundle = self
 
     def setup(self):
         self.metadata = dexy.metadata.Md5()
