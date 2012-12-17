@@ -46,6 +46,7 @@ class Sqlite3(Database):
         self.conn.row_factory = sqlite3.Row
         self.cursor = self.conn.cursor()
         self.create_table()
+        self._pending_transaction_counter = 0
 
     def all_in_batch(self, n=10):
         sql = "select unique_key from tasks where batch_id = ? LIMIT ?"
@@ -140,6 +141,7 @@ class Sqlite3(Database):
                 'batch_id' : task.wrapper.batch.batch_id,
                 'class_name' : task.__class__.__name__,
                 'created_by_doc' : task.created_by_doc,
+                'hashstring' : task.hashstring,
                 'key' : task.key,
                 'started_at' : datetime.now(),
                 'unique_key' : task.key_with_batch_id()
@@ -147,11 +149,6 @@ class Sqlite3(Database):
         self.create_record(attrs)
 
     def update_task_after_running(self, task):
-        if hasattr(task, 'hashstring'):
-            hashstring = task.hashstring
-        else:
-            hashstring = None
-
         if hasattr(task, 'ext'):
             ext = task.ext
             data_type = task.output_data_type
@@ -166,13 +163,13 @@ class Sqlite3(Database):
                 'completed_at' : datetime.now(),
                 'ext' : ext,
                 'data_type' : data_type,
-                'storage_type' : storage_type,
-                'hashstring' : hashstring
+                'storage_type' : storage_type
                 }
         unique_key = task.key_with_batch_id()
         self.update_record(unique_key, attrs)
 
     def save(self):
+        self.wrapper.log.debug("committing db changes")
         self.conn.commit()
         self.conn.close()
 
@@ -206,3 +203,15 @@ class Sqlite3(Database):
         values.append(unique_key)
 
         self.conn.execute(sql, values)
+
+        # make sure we don't go too long before committing changes to sqlite
+        self._pending_transaction_counter += 1
+        if self._pending_transaction_counter > 200:
+            self.save()
+            self._pending_transaction_counter = 0
+
+    def fetch_record(self, unique_key):
+        sql = "select * from tasks where unique_key=?"
+        self.cursor.execute(sql, (unique_key,))
+        rows = self.cursor.fetchall()
+        return rows

@@ -258,14 +258,21 @@ class FilterArtifact(Artifact):
         self.elapsed = time.time() - start_time
 
     def load_cached_args(self):
-        rows = self.wrapper.db.task_from_current_batch(self.hashstring)
+        rows = self.wrapper.db.task_from_previous_batch(self.hashstring)
+
         if len(rows) == 0:
-            rows = self.wrapper.db.task_from_previous_batch(self.hashstring)
+            rows = self.wrapper.db.task_from_current_batch(self.hashstring)
 
         if len(rows) == 0:
             raise dexy.exceptions.InternalDexyProblem("No rows found for %s in current or previous batch." % self.hashstring)
 
-        for k, v in json.loads(rows[0]['args']).iteritems():
+        raw_args = rows[0]['args']
+
+        if not raw_args:
+            msg = "Row for %s is incomplete, this shouldn't happen"
+            raise dexy.exceptions.InternalDexyProblem(msg % self.hashstring)
+
+        for k, v in json.loads(raw_args).iteritems():
             self.log.debug("updating arg %s of %s with stored value %s" % (k, self.key, v))
             self.args[k] = v
 

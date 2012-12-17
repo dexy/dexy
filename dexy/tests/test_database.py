@@ -8,6 +8,7 @@ def test_add_task():
         attrs = {
                 "args" : {},
                 "doc.key" : "abc23456",
+                'hashstring' : '12345',
                 "key_with_batch_id.return_value" : "def1234556",
                 "wrapper.batch.batch_id" : 1001,
                 "state" : "running",

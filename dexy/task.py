@@ -150,7 +150,7 @@ class Task():
         return "%s:%s" % (self.__class__.__name__, self.key)
 
     def key_with_batch_id(self):
-        return "%s:%s:%s" % (self.wrapper.batch.batch_id, self.__class__.__name__, self.key)
+        return "%s:%s" % (self.wrapper.batch.batch_id, self.key_with_class())
 
     def completed_child_docs(self):
         return [c for c in self.deps.values() if isinstance(c, dexy.doc.Doc) and c.state == 'complete']

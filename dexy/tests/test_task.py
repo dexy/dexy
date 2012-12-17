@@ -81,6 +81,7 @@ class SubclassTask(dexy.task.Task):
     for testing
     """
     def pre(self, *args, **kw):
+        self.hashstring = ''
         print "pre '%s'" % self.key,
 
     def run(self, *args, **kw):
