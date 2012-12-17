@@ -23,7 +23,6 @@
 [feature] add sqlite3 filter which takes .sqlite file as main input and scripts as extra inputs | id:48e75022ebcf40eb9ca7716ad3b45bf736705451
 [issue] test all jinja filters, e.g. report that indent(4) does not work on *.py|py output | id:4a7939681b6eaec5edf4abc063583a7de654678d
 [feature] generate doc config files based on python document objects | id:4aa1593ac56ff4d31666aeba81b06f07dd6f96d6
-[docs] example of using idiom filter which generates multiple output formats | id:4f8dce912800bc9e441048c71c41cfd8db4c309b
 [issue] better feedback for named docs not being pattern docs, user should add an asterisk or specify exact path to file | id:58336d8495093b1d9574f02a2314845916bdb713
 [feature] automatically generate TOC and next/prev/up links for collections of pages (in jinja filter and WebsiteReporter) | id:5a074d7da0254559bcaa3e5ec65c284827525a1f
 [feature] finish implementing 'except' feature and test, clarify regex or fnmatch or both | id:5af09bc445c7790bf478bf7e576c53129daa46a5
@@ -51,7 +50,6 @@
 [feature] rsync reporter, or make output-site and output more rsync-friendly | id:99fb1cc6cc57200e26b11851cdb324ebfa1eb131
 [todo] add more tests for unicode support | id:9d71bbceb819a41ee352f07381de6b235e3c49bb
 [issue] make sure all exceptions are handled in user-friendly way | id:9f6b58cc32e7d3651dfa86c1cb25abb8db54d048
-[docs] write example/template for cucumber + rspec | id:a05179706a2217ed59e9eb89db9d71b7bd4b9a80
 [feature] make dexy helper functions behave like jinja filters | id:a1b9dfb698ca910a9caad48f9597cb06fba67b4b
 [feature] write filter where pexpect or a pseudoterminal runs a python script and then additional files are inputs to that script | id:abcec1ed3ce1c949ecdf15943474362597c7c46d
 [feature] add winpexpect support https://bitbucket.org/geertj/winpexpect/wiki/Home | id:b7590f29225431071a22bc72520ebfad0ab6afc6
@@ -60,7 +58,6 @@
 [issue] should be able to pass keep_originals as well as keep-originals | id:c1e23a8bb7736b47e99f9f9323c66fe7e50c1c81
 [issue] self.ast.add_task_info(self.join_dir(directory, task_key), **task_kwargs) TypeError: add_task_info() keywords must be strings | id:c2a6b03f190dfb2b4aa91f8af8d477a9bc3401dc
 [feature] run the RunReporter even when an exception has occurred, add a section with exception information | id:c3e3551172f65f62fcf24ca11e8b8e89b97ab984
-[docs] example of combining rst-generated latex files into a book | id:c43af78776eb972bcaf6e008ea9144fc0f3067ac
 [feature] think about standard way of documenting plugins | id:c8b5e4e98f05cf928a19c00c319cbf7bcad7622c
 [issue] standardize options for fnmatch/regex arrays/strings everywhere that we exclude or include based on a pattern | id:d1181bec83e804f1c77eff244aa23c00f7ae2fec
 [issue] investigate whether jinja doesn't raise an exception when error occurs in macro | id:d3f18c8fbeaee6a1e9b272fc48f6051999e69bc2
@@ -75,8 +72,6 @@
 [filter] http://gael-varoquaux.info/computers/pyreport/ | id:e44dab06b34c89bb22f55b245831b9e608612933
 [feature] make WebsiteReporter throw UserFeedback exceptions, add tests for common exceptions | id:e66c78e478570d1bc782003831d87e725ec8733e
 [issue] key value filters should sync file extension with storage type | id:ea56460ba928c6b9353cc74646592baa968ceffc
-[docs] example of using idio filter which creates output files | id:ee3d830101926488094b5a304cec6b6a37fd3f2e
 [feature] make an AST visualization reporter (or add to run reporter) | id:f03a516414f78d46a1a571f3279681949d2c4d89
 [feature] have filters whitelist the args they accept, use whitelist dict to generate documentation | id:f66ead6328967185158bff019af1c20d32bc03a9
-[docs] document how to have a python file reference other python files | id:fd64954a721661eef3b159035210fa5f922cce97
 [issue] change name of globals param. also decide what it actually does now. | id:fdb5339ace291149a46abfb51a67ea4912e70b3f
