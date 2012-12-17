@@ -155,19 +155,27 @@ class AbstractSyntaxTree():
             children = self.task_children(key)
             kwargs = self.task_kwargs(key)
             kwargs['wrapper'] = self.wrapper
-            if kwargs.get('inactive'):
+            if kwargs.get('inactive') or kwargs.get('disabled'):
                 return
+            if not kwargs.get('default', True):
+                if self.wrapper.full:
+                    pass
+                elif self.wrapper.target and key.startswith(self.wrapper.target):
+                    pass
+                else:
+                    return
 
             child_tasks = [parse_item(child) for child in children if child]
 
             # filter out inactive children
             child_tasks = [child for child in child_tasks if child]
-
+    
             return create_dexy_task(key, *child_tasks, **kwargs)
 
         for key in self.tree:
             task = parse_item(key)
-            root_nodes.append(task)
+            if task:
+                root_nodes.append(task)
 
         return root_nodes, created_tasks
 

@@ -5,6 +5,43 @@ from dexy.tests.utils import wrap
 import dexy.exceptions
 import os
 
+YAML_WITH_INACTIVE = """
+foo:
+    - inactive: True
+"""
+
+def test_parse_inactive():
+    with wrap() as wrapper:
+        parser = YamlFileParser()
+        parser.wrapper = wrapper
+        parser.parse(YAML_WITH_INACTIVE)
+
+        wrapper.batch.run()
+        assert len(wrapper.batch.tasks()) == 0
+
+YAML_WITH_DEFAULT_OFF = """
+foo:
+    - default: False
+"""
+
+def test_parse_default():
+    with wrap() as wrapper:
+        parser = YamlFileParser()
+        parser.wrapper = wrapper
+        parser.parse(YAML_WITH_DEFAULT_OFF)
+
+        wrapper.batch.run()
+        assert len(wrapper.batch.tasks()) == 0
+
+    with wrap() as wrapper:
+        wrapper.full = True
+        parser = YamlFileParser()
+        parser.wrapper = wrapper
+        parser.parse(YAML_WITH_DEFAULT_OFF)
+
+        wrapper.batch.run()
+        assert len(wrapper.batch.tasks()) == 1
+
 def test_yaml_with_defaults():
     with wrap() as wrapper:
         os.makedirs("s1/s2")

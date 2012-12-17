@@ -25,6 +25,7 @@ class Wrapper(object):
         'encoding' : 'utf-8',
         'exclude' : '.git, .svn, tmp, cache',
         'exclude_also' : '',
+        'full' : False,
         'globals' : '',
         'hashfunction' : 'md5',
         'ignore_nonzero_exit' : False,

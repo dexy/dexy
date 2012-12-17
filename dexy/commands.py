@@ -212,6 +212,7 @@ def dexy_command(
         encoding=D['encoding'], # Default encoding. Set to 'chardet' to use chardet auto detection.
         exclude=D['exclude'], # comma-separated list of directory names to exclude from dexy processing
         excludealso=D['exclude_also'], # comma-separated list of directory names to exclude from dexy processing
+        full=D['full'], # Whether to do a full run including tasks marked default: False
         globals=D['globals'], # global values to make available within dexy documents, should be KEY=VALUE pairs separated by spaces
         help=False, # for people who type -help out of habit
         h=False, # for people who type -h out of habit
