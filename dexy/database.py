@@ -168,9 +168,12 @@ class Sqlite3(Database):
         unique_key = task.key_with_batch_id()
         self.update_record(unique_key, attrs)
 
-    def save(self):
+    def commit(self):
         self.wrapper.log.debug("committing db changes")
         self.conn.commit()
+
+    def save(self):
+        self.commit()
         self.conn.close()
 
     def create_table_sql(self):
@@ -207,7 +210,7 @@ class Sqlite3(Database):
         # make sure we don't go too long before committing changes to sqlite
         self._pending_transaction_counter += 1
         if self._pending_transaction_counter > 200:
-            self.save()
+            self.commit()
             self._pending_transaction_counter = 0
 
     def fetch_record(self, unique_key):
