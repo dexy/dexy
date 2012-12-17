@@ -1,8 +1,10 @@
-from dexy.doc import Doc
-from dexy.wrapper import Wrapper
 from dexy.commands import init_wrapper
+from dexy.doc import Doc
+from dexy.exceptions import UserFeedback
 from dexy.tests.utils import tempdir
 from dexy.tests.utils import wrap
+from dexy.wrapper import Wrapper
+from nose.tools import raises
 import os
 
 def test_config_for_directory():
@@ -96,3 +98,17 @@ def test_wrapper_register():
         wrapper.setup_batch()
         wrapper.batch.add_doc(doc)
         assert doc in wrapper.batch.tasks()
+
+@raises(UserFeedback)
+def test_double_config_raises_error():
+    with wrap() as wrapper:
+        with open("dexy.txt", "w") as f:
+            f.write("hello.txt")
+        with open("dexy.yaml", "w") as f:
+            f.write("hello.txt")
+
+        wrapper.load_doc_config()
+
+def test_no_config_raises_error():
+    with wrap() as wrapper:
+        wrapper.load_doc_config()

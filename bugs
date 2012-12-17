@@ -5,7 +5,6 @@
 [feature] have method for getting JSON dict into env for another filter | id:1012845dcb49a8e36f5f1361338835482eacfba4
 [feature] use hashing algorithm to generate shortcodes instead of aliases for templates | id:116677833dda3e515126071d250fa92644123751
 [issue] make sure modargs and/or dexy always exits with nonzero exit code on an error | id:15fa1ebe0ee0f25654172cf20a90ba37e2fc25f8
-[issue] yamlargs args do not get cached | id:16091b307bb0fe31ba92be127a321a142347f9dc
 [feature] implement is_active method for templates and list dependencies that need to be installed | id:1e5d9d273c8db7d4c38d85b76442f0d2ae7dd637
 [feature] add javascript search widget helper to dexy for searching generated content, e.g. http://www.tipue.com/search/demo/ | id:205430dabd1a07653925609b005c8e3e1a0ee4d0
 [feature] warning or other indication when 'canonical name' is in different directory as original document name | id:20b1be4d8d8b80debc8a66e81c28af2cfe37d0a2
@@ -18,24 +17,21 @@
 [idea] how to cite code in scientific papers | id:36d5729d63e3da51009543f198b31ad26e917657
 [issue] detect when two additional docs have same key - hashstrings will clash when reconstitutedw | id:39b6cc8940b782c6593c1992d807ea5c373ed93e
 [feature] dump dexy env into working dir so easy to troubleshoot | id:3c03b3aadc4b3e799be0b4da8022dc1b56f7bc68
-[feature] make it possible to pass unordered mappings to bundle docs so siblings don't depend on each other | id:425b356f06accb394eb0a84fe6d9ed41ec5cbe17
 [feature] s3 uploader reporter | id:439932c2c272d6b590792d40179c4f75b140e7da
 [perf] add timing for running reporters | id:45629c726d242ef858eb01bada1f9d1c49b16894
 [todo] update custom search engine | id:460ebbbe3e5ca7011eff6a19365cdcef2430e3bf
 [feature] add sqlite3 filter which takes .sqlite file as main input and scripts as extra inputs | id:48e75022ebcf40eb9ca7716ad3b45bf736705451
-[issue] test jinja filters, e.g. report that indent(4) does not work on *.py|py output | id:4a7939681b6eaec5edf4abc063583a7de654678d
+[issue] test all jinja filters, e.g. report that indent(4) does not work on *.py|py output | id:4a7939681b6eaec5edf4abc063583a7de654678d
 [feature] generate doc config files based on python document objects | id:4aa1593ac56ff4d31666aeba81b06f07dd6f96d6
 [docs] example of using idiom filter which generates multiple output formats | id:4f8dce912800bc9e441048c71c41cfd8db4c309b
-[feature] give feedback if no doc config files found | id:571ce803b67e3c8ab96d0920583a2115808c0b0f
 [issue] better feedback for named docs not being pattern docs, user should add an asterisk or specify exact path to file | id:58336d8495093b1d9574f02a2314845916bdb713
 [feature] automatically generate TOC and next/prev/up links for collections of pages (in jinja filter and WebsiteReporter) | id:5a074d7da0254559bcaa3e5ec65c284827525a1f
 [feature] finish implementing 'except' feature and test, clarify regex or fnmatch or both | id:5af09bc445c7790bf478bf7e576c53129daa46a5
 [feature] add a dexy plugins command to list pluginnable classes | id:61186f7dd456c9a4f69d9fce88d002640f0ed1ad
-[feature] add user-guide and developer-guide to website docs | id:62b22cee4b5b9e40f3c78b11e481d11819422622
 [issue] raise exception if refer to a bundle doc which doesn't exist | id:62ff0c554848a23637c539a0d25b07960ef6abc3
 [issue] Make sure keys are unique, must have key + doc's key, issues arise with e.g. *.py and *.py|py in same project. | id:642cf20f163f834395ad847b9107477e76b9f251
 [issue] get UndefinedError: unicode object has no attribute 'blah' when idio is not correctly detected | id:646da510731a292ab94b7ba7f98a6b5f7d3d267d
-test every filter for, if error occurs, file is not left in cache | id:64e43af4a67e3b0a8ae2c3e16f921b50c5de2e21
+[issue] test every filter for, if error occurs, file is not left in cache | id:64e43af4a67e3b0a8ae2c3e16f921b50c5de2e21
 [feature] make a PLY-based parsing filter for any filter which needs to parse input text, e.g. parse html to detect images | id:69a2cb1700175885a5d11a1fd1edbaebcffe0c1c
 [feature] detect if files get passed through jinja filter and, if so, pygments/idio should default to using ext+jinja lexer | id:6b1c952501e257aafd9957b260da93473c5162eb
 [feature] make it easier to run filter methods outside of dexy, e.g. to run pydoc to generate a modules.sqlite file | id:703f37dc40c36c71878aae010406e44b6aa7c6da
@@ -51,6 +47,7 @@ test every filter for, if error occurs, file is not left in cache | id:64e43af4a
 [issue] additional children fail after dexy run has stopped with an error but cache is not refreshed | id:8fbb676dfe2d6d8bb9874a40ed5b2c6f8b29343b
 [docs] make a package which has examples of all the types of plugins | id:92619a4d256480ae116121e1a8e37681abc6883a
 [filter] publish dexy blogging filters | id:96c2017386d980b79c5956a0016c957093c81766
+[feature] implement tree and node classes, nodes to replace PatternDoc, BundleDoc etc. | id:99ca5a939eab2828166272c752db6a068b12944e
 [feature] rsync reporter, or make output-site and output more rsync-friendly | id:99fb1cc6cc57200e26b11851cdb324ebfa1eb131
 [todo] add more tests for unicode support | id:9d71bbceb819a41ee352f07381de6b235e3c49bb
 [issue] make sure all exceptions are handled in user-friendly way | id:9f6b58cc32e7d3651dfa86c1cb25abb8db54d048
@@ -61,7 +58,7 @@ test every filter for, if error occurs, file is not left in cache | id:64e43af4a
 [feature] standard way to give feedback on what packages need to be installed to use a filter | id:bce8eeb2b2d39665a51da781b5e4fa0de83a0ba9
 [feature] have auto-tab-completion for dexy gen (and other dexy commands) | id:be551899ac9a205c6a9acd19a4b979c5a4f42bbd
 [issue] should be able to pass keep_originals as well as keep-originals | id:c1e23a8bb7736b47e99f9f9323c66fe7e50c1c81
-self.ast.add_task_info(self.join_dir(directory, task_key), **task_kwargs) TypeError: add_task_info() keywords must be strings | id:c2a6b03f190dfb2b4aa91f8af8d477a9bc3401dc
+[issue] self.ast.add_task_info(self.join_dir(directory, task_key), **task_kwargs) TypeError: add_task_info() keywords must be strings | id:c2a6b03f190dfb2b4aa91f8af8d477a9bc3401dc
 [feature] run the RunReporter even when an exception has occurred, add a section with exception information | id:c3e3551172f65f62fcf24ca11e8b8e89b97ab984
 [docs] example of combining rst-generated latex files into a book | id:c43af78776eb972bcaf6e008ea9144fc0f3067ac
 [feature] think about standard way of documenting plugins | id:c8b5e4e98f05cf928a19c00c319cbf7bcad7622c
@@ -71,6 +68,7 @@ self.ast.add_task_info(self.join_dir(directory, task_key), **task_kwargs) TypeEr
 [feature] have pexpect be able to switch modes to handle scripts which launch interactive shells (e.g. 'sqlite3') | id:dc0f8529d60924d56ac174282206ab7cd74396c4
 [feature] create a grep interface, use this for dexy viewer app | id:dc66fa59797564452b1ac977988b11c44df7a069
 [docs] figure out how to generate README files in situ | id:dcffbe8090583d908bc81ac26ab205eabe47cb7c
+[feature] use spacetree for js visualization of node tree on run report page | id:e095371f7df5720edeafdd270b540cd6cade2f4f
 [feature] make a data url filter which embeds any referenced images as data urls http://stackoverflow.com/questions/6375942/how-do-you-base-64-encode-a-png-image-for-use-in-a-data-uri-in-a-css-file http://bitworking.org/news/Sparklines_in_data_URIs_in_Python | id:e3177b0dfd3d0de73f98cf3c40684d2242db98ba
 [feature] implement the --directory option to run just descendants of a single path | id:e381d2a6fbfede97753cbc4169a19f34b3bc093a
 [feature] add a workspaces feature to help for GUI apps that need includes in relative locations | id:e39a9deab5765d282a88b976011a574bd186daee

@@ -259,8 +259,10 @@ class Wrapper(object):
         """
         ast = dexy.parser.AbstractSyntaxTree(self)
 
+        config_files_used = []
         for dirpath, dirnames, filenames in os.walk("."):
             if self.is_valid_dexy_dir(dirpath, dirnames):
+                check_for_double_config = []
                 for alias in dexy.parser.Parser.aliases.keys():
                     path_to_config = os.path.join(dirpath, alias)
 
@@ -269,9 +271,20 @@ class Wrapper(object):
                         with open(path_to_config, "r") as f:
                             config_text = f.read()
 
+                        check_for_double_config.append(path_to_config)
+                        config_files_used.append(path_to_config)
+
                         parser = dexy.parser.Parser.aliases[alias](self, ast)
                         parser.build_ast(dirpath, config_text)
 
+                if len(check_for_double_config) > 1:
+                    msg = "more than one config file found in dir %s: %s"
+                    msg_args = (dirpath, ", ".join(check_for_double_config))
+                    raise dexy.exceptions.UserFeedback(msg % msg_args)
+
+        if len(config_files_used) == 0:
+            msg = "WARNING: Didn't find any document config files (like %s)"
+            print msg % (", ".join(dexy.parser.Parser.aliases.keys()))
         self.log.debug("AST completed:")
         ast.debug(self.log)
 
