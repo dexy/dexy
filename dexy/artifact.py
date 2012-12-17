@@ -252,9 +252,16 @@ class FilterArtifact(Artifact):
             self.content_source = 'generated'
         else:
             self.log.debug("Output is cached under %s, reconstituting..." % self.hashstring)
+            self.load_cached_args()
             self.reconstitute_cached_children()
             self.content_source = 'cached'
         self.elapsed = time.time() - start_time
+
+    def load_cached_args(self):
+        rows = self.wrapper.db.task_from_previous_batch(self.hashstring)
+        for k, v in json.loads(rows[0]['args']).iteritems():
+            self.log.debug("updating arg %s of %s with stored value %s" % (k, self.key, v))
+            self.args[k] = v
 
     def reconstitute_cached_children(self):
         """

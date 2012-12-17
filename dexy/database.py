@@ -88,6 +88,11 @@ class Sqlite3(Database):
         self.cursor.execute(sql, (self.wrapper.batch.previous_batch_id, parent_hashstring))
         return self.cursor.fetchall()
 
+    def task_from_previous_batch(self, hashstring):
+        sql = "select * from tasks where class_name = 'FilterArtifact' and batch_id = ? and hashstring = ?"
+        self.cursor.execute(sql, (self.wrapper.batch.previous_batch_id, hashstring))
+        return self.cursor.fetchall()
+
     def max_batch_id(self):
         sql = "select max(batch_id) as max_batch_id from tasks"
         self.cursor.execute(sql)
