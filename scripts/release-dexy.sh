@@ -24,5 +24,6 @@ cd test
 virtualenv testenv
 source testenv/bin/activate
 pip install dexy
+pip install dexy-templates
 dexy version
 dexy templates
