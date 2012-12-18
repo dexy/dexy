@@ -81,7 +81,11 @@ class PygmentsFilter(DexyFilter):
         return formatter.get_style_defs()
 
     def calculate_canonical_name(self):
-        return "%s%s" % (self.artifact.doc.name, self.artifact.ext)
+        ext = self.artifact.prior.ext
+        if ext in [".css", ".sty"] and self.artifact.ext == ext:
+            return self.artifact.doc.name
+        else:
+            return "%s%s" % (self.artifact.doc.name, self.artifact.ext)
 
     def create_lexer_instance(self, args):
         ext = self.artifact.prior.ext
@@ -154,7 +158,7 @@ class PygmentsFilter(DexyFilter):
 
         input_dict = self.input().as_sectioned()
         ext = self.artifact.prior.ext
-        if ext in [".css", ".sty"] and self.artifact.ext == ext and len(self.input().as_text()) < 3:
+        if ext in [".css", ".sty"] and self.artifact.ext == ext:
             self.log.debug("creating a style file in %s" % self.artifact.key)
             # Special case if we get a virtual empty file, generate style file
             if ext == '.css':

@@ -243,21 +243,31 @@ class FilterArtifact(Artifact):
     def run(self, *args, **kw):
         start_time = time.time()
         self.log.debug("Running %s" % self.key_with_class())
-        if not self.output_data.is_cached():
+
+        is_cached = self.output_data.is_cached()
+        cache_ok = False
+
+        if is_cached:
+            self.log.debug("Output is cached under %s, reconstituting..." % self.hashstring)
+            cache_ok = self.load_cached_args()
+            if cache_ok:
+                self.reconstitute_cached_children()
+                self.content_source = 'cached'
+
+        if (not is_cached) or (not cache_ok):
             self.log.debug("Output is not cached under %s, running..." % self.hashstring)
             self.filter_instance.process()
             if not self.output_data.is_cached():
                 if self.filter_instance.REQUIRE_OUTPUT:
                     raise dexy.exceptions.NoFilterOutput("No output file after filter ran: %s" % self.key)
             self.content_source = 'generated'
-        else:
-            self.log.debug("Output is cached under %s, reconstituting..." % self.hashstring)
-            self.load_cached_args()
-            self.reconstitute_cached_children()
-            self.content_source = 'cached'
+
         self.elapsed = time.time() - start_time
 
     def load_cached_args(self):
+        """
+        Loads args from cache in case they have changed, returns False if cache is corrupt.
+        """
         rows = self.wrapper.db.task_from_previous_batch(self.hashstring)
 
         if len(rows) == 0:
@@ -269,12 +279,12 @@ class FilterArtifact(Artifact):
         raw_args = rows[0]['args']
 
         if not raw_args:
-            msg = "Row for %s is incomplete, this shouldn't happen"
-            raise dexy.exceptions.InternalDexyProblem(msg % self.hashstring)
-
-        for k, v in json.loads(raw_args).iteritems():
-            self.log.debug("updating arg %s of %s with stored value %s" % (k, self.key, v))
-            self.args[k] = v
+            return False
+        else:
+            for k, v in json.loads(raw_args).iteritems():
+                self.log.debug("updating arg %s of %s with stored value %s" % (k, self.key, v))
+                self.args[k] = v
+            return True
 
     def reconstitute_cached_children(self):
         """
