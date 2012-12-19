@@ -23,6 +23,7 @@ import dexy.plugins.split_filters
 import dexy.plugins.standard_filters
 import dexy.plugins.stationery
 import dexy.plugins.stdout_filters
+import dexy.plugins.stdout_input_filters
 import dexy.plugins.subprocess_filters
 import dexy.plugins.templates
 import dexy.plugins.templating_filters

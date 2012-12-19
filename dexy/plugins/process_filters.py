@@ -378,10 +378,35 @@ class SubprocessInputFilter(SubprocessFilter):
                 output[section_name] = stdout
         else:
             for doc in inputs:
-                proc, stdout = self.run_command(command, self.setup_env(), doc.output().as_text())
+                proc, stdout = self.run_command(command, self.setup_env(), unicode(doc.output()))
                 if self.CHECK_RETURN_CODE:
                     self.handle_subprocess_proc_return(command, proc.returncode, stdout)
                 output[doc.key] = stdout
+
+        self.output().set_data(output)
+
+class SubprocessInputFileFilter(SubprocessFilter):
+    """
+    Filters which run one or more input files through the script via filenames.
+    """
+    CHECK_RETURN_CODE = False
+    WRITE_STDERR_TO_STDOUT = False
+    OUTPUT_DATA_TYPE = 'sectioned'
+
+    def command_string_for_input(self, input_doc):
+        return "%s %s %s" % (self.executable(), self.input_filename(), input_doc.output().name)
+
+    def process(self):
+        inputs = self.artifact.doc.completed_child_docs()
+
+        output = OrderedDict()
+
+        for doc in inputs:
+            command = self.command_string_for_input(doc)
+            proc, stdout = self.run_command(command, self.setup_env())
+            if self.CHECK_RETURN_CODE:
+                self.handle_subprocess_proc_return(command, proc.returncode, stdout)
+            output[doc.key] = stdout
 
         self.output().set_data(output)
 

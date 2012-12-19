@@ -1,5 +1,20 @@
 from dexy.plugins.process_filters import SubprocessStdoutFilter
+from dexy.plugins.process_filters import SubprocessInputFileFilter
 import json
+
+class Regetron(SubprocessInputFileFilter):
+    """
+    Filter which loads .regex file into regetron and runs any input text against it.
+    """
+    ALIASES = ['regetron']
+    EXECUTABLE = 'regetron'
+    INPUT_EXTENSIONS = [".regex"]
+    OUTPUT_EXTENSIONS = [".txt"]
+
+    def command_string_for_input(self, input_doc):
+        text = input_doc.output().name
+        regex = self.input_filename()
+        return "%s %s %s" % (self.executable(), text, regex)
 
 class Pdfinfo(SubprocessStdoutFilter):
     """
