@@ -19,14 +19,14 @@ class Data:
         return True
 
     @classmethod
-    def retrieve(klass, data_type, key, ext, hashstring, args, wrapper, storage_type):
+    def retrieve(klass, data_type, key, ext, name, hashstring, args, wrapper, storage_type):
         """
         Method to retrieve a Data object based on info stored in database.
 
         Optional kwags are passed to a RunParams instance.
         """
         data_class = klass.aliases[data_type]
-        return data_class(key, ext, hashstring, args, wrapper, storage_type)
+        return data_class(key, ext, name, hashstring, args, wrapper, storage_type)
 
     @classmethod
     def storage_class_alias(klass, file_ext):
@@ -67,6 +67,9 @@ class Data:
 
         # allow doing custom setup in subclasses
         self.setup()
+
+    def keys(self):
+        return []
 
     def setup(self):
         pass

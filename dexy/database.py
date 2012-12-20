@@ -27,6 +27,7 @@ class Sqlite3(Database):
             ("key" , "text"),
             ("args" , "text"),
             ("doc_key" , "text"),
+            ("canonical_name", "text"),
             ("class_name" , "text"),
             ("hashstring" , "text"),
             ("ext" , "text"),
@@ -48,27 +49,46 @@ class Sqlite3(Database):
         self.create_table()
         self._pending_transaction_counter = 0
 
-    def all_in_batch(self, n=10):
-        sql = "select unique_key from tasks where batch_id = ? LIMIT ?"
+    def docs(self, n=10):
+        """
+        Returns the first n tasks of type Doc in the batch.
+        """
+        sql = "select unique_key, key from tasks where batch_id = ? and class_name = 'Doc' LIMIT ?"
         values = (self.wrapper.batch_id, n,)
         self.cursor.execute(sql, values)
         rows = self.cursor.fetchall()
         return rows
 
-    def query_like(self, query):
-        sql = "select * from tasks where batch_id = ? and key like ?"
+    def query_docs(self, query):
+        sql = "select * from tasks where batch_id = ? and key like ? and class_name='Doc'"
         self.cursor.execute(sql, (self.max_batch_id(), "%%%s%%" % query))
         return self.cursor.fetchall()
 
-    def find_data_by_doc_key(self, doc_key):
-        sql = "select data_type, key, ext, hashstring, args, storage_type from tasks where key = ? AND class_name = 'FilterArtifact'"
-        self.cursor.execute(sql, (doc_key,))
+    def find_filter_artifact_for_doc_key(self, doc_key):
+        sql = "select data_type, key, ext, canonical_name, hashstring, args, storage_type from tasks where key=? and batch_id=? AND class_name like '%Artifact'"
+        self.cursor.execute(sql, (doc_key, self.wrapper.batch_id,))
         row = self.cursor.fetchone()
 
         return dexy.data.Data.retrieve(
                 row['data_type'],
                 row['key'],
                 row['ext'],
+                row['canonical_name'],
+                row['hashstring'],
+                json.loads(row['args']),
+                self.wrapper,
+                row['storage_type'])
+
+    def find_filter_artifact_for_hashstring(self, hashstring):
+        sql = "select data_type, key, ext, canonical_name, hashstring, args, storage_type from tasks where hashstring=? and batch_id=? AND class_name like '%Artifact'"
+        self.cursor.execute(sql, (hashstring, self.wrapper.batch_id,))
+        row = self.cursor.fetchone()
+
+        return dexy.data.Data.retrieve(
+                row['data_type'],
+                row['key'],
+                row['ext'],
+                row['canonical_name'],
                 row['hashstring'],
                 json.loads(row['args']),
                 self.wrapper,
@@ -153,13 +173,16 @@ class Sqlite3(Database):
             ext = task.ext
             data_type = task.output_data_type
             storage_type = task.output_data.storage_type
+            name = task.output_data.name
         else:
             ext = None
             data_type = None
             storage_type = None
+            name = None
 
         attrs = {
                 'args' : self.serialize_task_args(task),
+                'canonical_name' : name,
                 'completed_at' : datetime.now(),
                 'ext' : ext,
                 'data_type' : data_type,

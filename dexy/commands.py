@@ -1,7 +1,7 @@
 from dexy.utils import getdoc
-from dexy.utils import s
 from dexy.utils import parse_json
 from dexy.utils import parse_yaml
+from dexy.utils import s
 from dexy.version import DEXY_VERSION
 from modargs import args
 from pygments import highlight
@@ -297,8 +297,19 @@ def setup_command(__cli_options=False, **kwargs):
     wrapper = init_wrapper(locals())
     wrapper.setup_dexy_dirs()
 
-def help_command(on=False):
-    args.help_command(PROG, MOD, DEFAULT_COMMAND, on)
+def help_command(
+        example=False, # Whether to run any live examples, if available.
+        filters=False, # Whether to print the list of available dexy filters.
+        f=False, # If a filter alias is specified, help for that filter is printed.
+        on=False # The dexy command to get help on.
+        ):
+
+    if f:
+        filter_command(f, example)
+    elif filters:
+        filters_command()
+    else:
+        args.help_command(PROG, MOD, DEFAULT_COMMAND, on)
 
 def help_text(on=False):
     return args.help_text(PROG, MOD, DEFAULT_COMMAND, on)

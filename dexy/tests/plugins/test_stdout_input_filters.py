@@ -1,12 +1,12 @@
-from dexy.tests.utils import wrap
-from dexy.doc import Doc
 from dexy.common import OrderedDict
+from dexy.doc import Doc
+from dexy.tests.utils import wrap
 
 def test_regetron_filter():
     with wrap() as wrapper:
         doc = Doc("example.regex|regetron",
                     Doc("input1.txt",
-                        contents="hello",
+                        contents="hello\n",
                         wrapper=wrapper),
                     Doc("input2.txt",
                         contents="""\
@@ -23,7 +23,8 @@ this is 100 mixed text and numbers
 
         assert doc.output()['input1.txt'] == """\
 > ^[a-z\s]+$
-0000: hello > 
+0000: hello
+> 
 
 """
         assert doc.output()['input2.txt'] == """\

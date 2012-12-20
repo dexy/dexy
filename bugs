@@ -45,6 +45,7 @@
 [feature] think about wrapping navigation.directories [Doc, {}] structure in a class, or simplifying it, do we actually need Doc instance? | id:8dd035c546aa33b430378253c12827fd71e142ed
 [issue] additional children fail after dexy run has stopped with an error but cache is not refreshed | id:8fbb676dfe2d6d8bb9874a40ed5b2c6f8b29343b
 [docs] make a package which has examples of all the types of plugins | id:92619a4d256480ae116121e1a8e37681abc6883a
+[issue] 'dexy help' does not list extra plugin commands | id:96a9d80907ef8975cb693229933e45e257b64e4d
 [filter] publish dexy blogging filters | id:96c2017386d980b79c5956a0016c957093c81766
 [feature] implement tree and node classes, nodes to replace PatternDoc, BundleDoc etc. | id:99ca5a939eab2828166272c752db6a068b12944e
 [feature] rsync reporter, or make output-site and output more rsync-friendly | id:99fb1cc6cc57200e26b11851cdb324ebfa1eb131
