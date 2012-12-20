@@ -97,3 +97,5 @@ class Template(object):
             if not f in klass.FILTERS_USED:
                 print "filter %s used by %s but not listed in klass.FILTERS_USED, adjust list to:" % (f, klass.__name__)
                 print "   FILTERS_USED = [%s]" % ", ".join("'%s'" % f for f in filters_used)
+
+        return True

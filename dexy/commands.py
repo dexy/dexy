@@ -693,9 +693,12 @@ def templates_command(
         print FMT % ("Alias", "Info")
         for alias in aliases:
             klass = dexy.template.Template.aliases[alias]
+            print FMT % (alias, getdoc(klass)),
             if validate:
-                klass.validate()
-            print FMT % (alias, getdoc(klass))
+                print " validating...",
+                print klass.validate() and "OK" or "ERROR"
+            else:
+                print ''
 
         if len(aliases) == 1:
             print "Run '[sudo] pip install dexy-templates' to install some more templates."
