@@ -490,7 +490,7 @@ def it_command(**kwargs):
     dexy_command(kwargs)
 
 def grep_command(
-        __cli_options=False,
+        __cli_options=False, # nodoc
         expr=None, # The expression to search for
         keyexpr="", # Only search for keys matching this expression, implies keys=True
         keys=False, # if True, try to list the keys in any found files
@@ -506,7 +506,7 @@ def grep_command(
     wrapper = init_wrapper(locals())
     wrapper.setup_read()
 
-    for row in wrapper.db.query_like("%%%s%%" % expr):
+    for row in wrapper.db.query_docs("%%%s%%" % expr):
         print row['key']
 #        if keys or len(keyexpr) > 0 or recurse:
 #            artifact_classes = dexy.introspect.artifact_classes()
