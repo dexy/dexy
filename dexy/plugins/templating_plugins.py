@@ -168,14 +168,13 @@ class PygmentsStylesheet(TemplatePlugin):
     ALIASES = ['pygments']
 
     # TODO figure out default fmt based on document ext
-    def highlight(self, text, lexer_name, fmt = 'html', noclasses = False, lineanchors = 'l'):
+    @classmethod
+    def highlight(klass, text, lexer_name, fmt = 'html', noclasses = False, lineanchors = 'l'):
         if text:
             formatter_options = { "lineanchors" : lineanchors, "noclasses" : noclasses }
             lexer = pygments.lexers.get_lexer_by_name(lexer_name)
             formatter = pygments.formatters.get_formatter_by_name(fmt, **formatter_options)
             return pygments.highlight(text, lexer, formatter)
-        else:
-            raise dexy.commands.UserFeedback("calling 'highlight' command on blank text in %s" % self.filter_instance.artifact.key)
 
     def run(self):
         pygments_stylesheets = {}

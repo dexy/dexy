@@ -147,7 +147,7 @@ class JinjaFilter(TemplateFilter):
         self.log.debug("setting up jinja environment")
         env = self.setup_jinja_env(loader=loader)
 
-        env.filters['pygmentize'] = dexy.plugins.templating_plugins.PygmentsStylesheet.highlight
+        env.filters['highlight'] = dexy.plugins.templating_plugins.PygmentsStylesheet.highlight
         env.filters['rstcode'] = dexy.plugins.templating_plugins.RstCode.rstcode
         env.filters['indent'] = dexy.plugins.templating_plugins.JinjaFilters.indent
         env.filters['head'] = dexy.plugins.templating_plugins.JinjaFilters.head

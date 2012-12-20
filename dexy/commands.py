@@ -693,6 +693,9 @@ def templates_command(
         print FMT % ("Alias", "Info")
         for alias in aliases:
             klass = dexy.template.Template.aliases[alias]
+            if not klass.is_active():
+                continue
+
             print FMT % (alias, getdoc(klass)),
             if validate:
                 print " validating...",
