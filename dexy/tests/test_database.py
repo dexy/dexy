@@ -40,6 +40,7 @@ def test_update_task():
                 "key_with_batch_id.return_value" : "def1234556",
                 "wrapper.batch.batch_id" : 1001,
                 "hashstring" : "abc123001",
+                "output_data.name" : "abc23456",
                 "created_by_doc" : None,
                 "output_data_type" : "generic",
                 "ext" : ".txt",

@@ -62,13 +62,14 @@ class Wrapper(object):
                 raise Exception("invalid kwargs %s" % key)
             setattr(self, key, value)
 
-    def setup(self, setup_dirs=False):
+    def setup(self, setup_dirs=False, log_config=True):
         if setup_dirs:
             self.setup_dexy_dirs()
         self.check_dexy_dirs()
         self.setup_log()
         self.setup_db()
-        self.log_dexy_config()
+        if log_config:
+            self.log_dexy_config()
 
     def run(self):
         self.setup()
@@ -113,7 +114,7 @@ class Wrapper(object):
         self.run()
 
     def setup_read(self, batch_id=None):
-        self.setup()
+        self.setup(log_config=False)
 
         if batch_id:
             self.batch_id = batch_id
