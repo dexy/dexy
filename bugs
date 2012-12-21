@@ -36,23 +36,28 @@
 [feature] make it easier to run filter methods outside of dexy, e.g. to run pydoc to generate a modules.sqlite file | id:703f37dc40c36c71878aae010406e44b6aa7c6da
 [feature] have reporters which run only if errors have occurred to help with debugging | id:7245f038315fc112abf73eac1d82404cca5c5d27
 [feature] figure out how to allow extra config for plugins. maybe don't white list things in dexy.conf files. | id:74a6bc572cf4a7ca00c3af63fdc9824a8be52e04
+[feature] create function for making image of syntax highlighted code in jinja (for mobi/epub) | id:7b9a23af9a6758ffceebe326f595020cba5d86de
 [feature] handle retrieving class attributes such as dicts so they can be worked with in doc templates (pydoc filter) | id:7c6fe66a74585b5c044395935d69585deb12ed82
 [feature] missing plugins should detect which package they are avaliable in and suggest installing that | id:7e19102f14c4521e4a3d0bef98ba4e630e92594b
 [feature] use casperjs to output location of element want an arrow to, then use image magick to point to that element | id:7f00fd06d8cf8317a2538417d37ae74971f5423f
 [feature] have a script mode where if any siblings have changed, all siblings are re-run | id:7f29557ddfba92d9b72bfdb72a8cd3c119fe6622
+[issue] if default is False, should still run if required by something else that runs | id:814825938d2596847b568688c6f8cca185a7ddfb
 [perf] jinja should not need to create a working dir | id:86f3f99ccfd4b9f5f26e23c9d543848545f7d3bb
+[feature] progress indicator when running dexy to give an idea of how many items are cached vs. generated | id:8898eb7430f810f735a3bc09a43d9d7bc483673c
 [feature] implement support for remote files | id:89d523dfcf3604864658e494f0bc367c8f801cfd
 [feature] think about wrapping navigation.directories [Doc, {}] structure in a class, or simplifying it, do we actually need Doc instance? | id:8dd035c546aa33b430378253c12827fd71e142ed
 [issue] additional children fail after dexy run has stopped with an error but cache is not refreshed | id:8fbb676dfe2d6d8bb9874a40ed5b2c6f8b29343b
 [docs] make a package which has examples of all the types of plugins | id:92619a4d256480ae116121e1a8e37681abc6883a
 [issue] 'dexy help' does not list extra plugin commands | id:96a9d80907ef8975cb693229933e45e257b64e4d
 [filter] publish dexy blogging filters | id:96c2017386d980b79c5956a0016c957093c81766
+[feature] filter to strip HTML tags from javadoc comments | id:9753a4cecd77a598464f50b27d2d4544be55931e
 [feature] implement tree and node classes, nodes to replace PatternDoc, BundleDoc etc. | id:99ca5a939eab2828166272c752db6a068b12944e
 [feature] rsync reporter, or make output-site and output more rsync-friendly | id:99fb1cc6cc57200e26b11851cdb324ebfa1eb131
 [todo] add more tests for unicode support | id:9d71bbceb819a41ee352f07381de6b235e3c49bb
 [issue] make sure all exceptions are handled in user-friendly way | id:9f6b58cc32e7d3651dfa86c1cb25abb8db54d048
 [feature] make dexy helper functions behave like jinja filters | id:a1b9dfb698ca910a9caad48f9597cb06fba67b4b
 [feature] write filter where pexpect or a pseudoterminal runs a python script and then additional files are inputs to that script | id:abcec1ed3ce1c949ecdf15943474362597c7c46d
+[feature] make a filter base class for running several separate bash steps in a row (e.g. image conversions taking many steps) | id:b34d055fd935840991370acaf65c438546df8832
 [feature] add winpexpect support https://bitbucket.org/geertj/winpexpect/wiki/Home | id:b7590f29225431071a22bc72520ebfad0ab6afc6
 [feature] standard way to give feedback on what packages need to be installed to use a filter | id:bce8eeb2b2d39665a51da781b5e4fa0de83a0ba9
 [feature] have auto-tab-completion for dexy gen (and other dexy commands) | id:be551899ac9a205c6a9acd19a4b979c5a4f42bbd
@@ -74,5 +79,6 @@
 [feature] make WebsiteReporter throw UserFeedback exceptions, add tests for common exceptions | id:e66c78e478570d1bc782003831d87e725ec8733e
 [issue] key value filters should sync file extension with storage type | id:ea56460ba928c6b9353cc74646592baa968ceffc
 [feature] make an AST visualization reporter (or add to run reporter) | id:f03a516414f78d46a1a571f3279681949d2c4d89
+[feature] create function for making image of latex output in jinja (for mobi/epub) | id:f654e13a8138d689be89b7eab408620f6feaf0b2
 [feature] have filters whitelist the args they accept, use whitelist dict to generate documentation | id:f66ead6328967185158bff019af1c20d32bc03a9
 [issue] change name of globals param. also decide what it actually does now. | id:fdb5339ace291149a46abfb51a67ea4912e70b3f

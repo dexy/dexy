@@ -123,6 +123,25 @@ def test_conf_command(stdout):
         assert os.path.exists("dexy.conf")
         assert "has been written" in stdout.getvalue()
 
+@patch.object(sys, 'argv', ['dexy', 'conf'])
+@patch('sys.stdout', new_callable=StringIO)
+def test_conf_command_if_path_exists(stdout):
+    with tempdir():
+        with open("dexy.conf", "w") as f:
+            f.write("foo")
+        assert os.path.exists("dexy.conf")
+        dexy.commands.run()
+        assert "dexy.conf already exists" in stdout.getvalue()
+        assert "artifactsdir" in stdout.getvalue()
+
+@patch.object(sys, 'argv', ['dexy', 'conf', '-p'])
+@patch('sys.stdout', new_callable=StringIO)
+def test_conf_command_with_print_option(stdout):
+    with tempdir():
+        dexy.commands.run()
+        assert not os.path.exists("dexy.conf")
+        assert "artifactsdir" in stdout.getvalue()
+
 def test_filters_text():
     text = dexy.commands.filters_text()
     assert "pyg, pygments : Apply Pygments syntax highlighting." in text
