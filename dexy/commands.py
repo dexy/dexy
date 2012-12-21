@@ -684,7 +684,11 @@ def templates_command(
     """
     List templates that can be used to generate new projects.
     """
-    aliases = sorted(dexy.template.Template.aliases)
+    aliases = []
+    for alias in sorted(dexy.template.Template.aliases):
+        klass = dexy.template.Template.aliases[alias]
+        if klass.is_active():
+            aliases.append(alias)
 
     if simple:
         print "\n".join(aliases)
@@ -693,9 +697,6 @@ def templates_command(
         print FMT % ("Alias", "Info")
         for alias in aliases:
             klass = dexy.template.Template.aliases[alias]
-            if not klass.is_active():
-                continue
-
             print FMT % (alias, getdoc(klass)),
             if validate:
                 print " validating...",
