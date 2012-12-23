@@ -1,5 +1,5 @@
 from dexy.common import OrderedDict
-from dexy.doc import Doc
+from dexy.node import DocNode
 from dexy.tests.utils import assert_output
 from dexy.tests.utils import wrap
 import os
@@ -7,16 +7,18 @@ import os
 def test_header_footer_filters():
     with wrap() as wrapper:
         os.makedirs('subdir/subsubdir')
-        doc = Doc("subdir/file.txt|hd|ft",
-                Doc("_header.txt", wrapper=wrapper, contents="This is a header in parent dir."),
-                Doc("subdir/_header.txt|jinja", wrapper=wrapper, contents="This is a header."),
-                Doc("subdir/_footer.txt|jinja", wrapper=wrapper, contents="This is a footer."),
-                Doc("subdir/subsubdir/_header.txt", wrapper=wrapper, contents="This is a header in a subdirectory."),
+        node = DocNode("subdir/file.txt|hd|ft",
                 contents="These are main contents.",
+                inputs = [
+                    DocNode("_header.txt", wrapper=wrapper, contents="This is a header in parent dir."),
+                    DocNode("subdir/_header.txt|jinja", wrapper=wrapper, contents="This is a header."),
+                    DocNode("subdir/_footer.txt|jinja", wrapper=wrapper, contents="This is a footer."),
+                    DocNode("subdir/subsubdir/_header.txt", wrapper=wrapper, contents="This is a header in a subdirectory.")
+                    ],
                 wrapper=wrapper)
 
-        wrapper.run_docs(doc)
-
+        wrapper.run_docs(node)
+        doc = node.children[0]
         assert doc.output().data() == "This is a header.\nThese are main contents.\nThis is a footer."
 
 def test_join_filter():
@@ -31,8 +33,9 @@ def test_head_filter():
 
 def test_word_wrap_filter():
     with wrap() as wrapper:
-        doc = Doc("example.txt|wrap", contents="this is a line of text", wrap={"width" : 5}, wrapper=wrapper)
-        wrapper.run_docs(doc)
+        node = DocNode("example.txt|wrap", contents="this is a line of text", wrap={"width" : 5}, wrapper=wrapper)
+        wrapper.run_docs(node)
+        doc = node.children[0]
         assert doc.output().data() == "this\nis a\nline\nof\ntext"
 
 def test_lines_filter():
@@ -56,7 +59,8 @@ def test_start_space_filter():
 
 def test_tags_filter():
     with wrap() as wrapper:
-        doc = Doc("example.txt|tags", contents="<p>the text</p>", tags={"tags" : ["html", "body"]}, wrapper=wrapper)
-        wrapper.run_docs(doc)
+        node = DocNode("example.txt|tags", contents="<p>the text</p>", tags={"tags" : ["html", "body"]}, wrapper=wrapper)
+        wrapper.run_docs(node)
+        doc = node.children[0]
         assert doc.output().data() == "<html><body>\n<p>the text</p>\n</body></html>"
 

@@ -96,7 +96,7 @@
             <h4>Artifacts</h4>
             <table style="width: 800px; border: thin solid black; border-collapse: collapse;">
                 <tr><th>Key</th><th>Link</th><th>Elapsed</th><th>Run Type</th><th>Sections</th><th>wd</th></tr>
-                {% for a in doc.artifacts -%}
+                {% for a in doc.children -%}
                 <tr>
                     <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">{{ a.key }}</td>
                     <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;"><a href="../../{{ a.output_data.storage.data_file() }}">{{ a.output_data.storage.data_file() }}</a></td>
@@ -118,7 +118,7 @@
                 {% endfor -%}
             </table>
             <br />
-            {% for a in doc.artifacts -%}
+            {% for a in doc.children -%}
             {% if a.stdout -%}
             <p><b>{{ a.key }} stdout</b></p>
             {{ a.stdout }}

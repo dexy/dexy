@@ -2,17 +2,14 @@ import dexy.artifact
 import dexy.exceptions
 import dexy.filter
 import dexy.task
-import fnmatch
-import operator
 import os
 import posixpath
-import re
 
 class Doc(dexy.task.Task):
     """
     Task subclass representing Documents.
     """
-    ALIASES = ['doc']
+    ALIASES = ['document']
 
     def filter_class_for_alias(self, alias):
         if alias == '':
@@ -40,26 +37,13 @@ class Doc(dexy.task.Task):
 
         return filter_class
 
-    def hashstring_deps(self):
-        """
-        List of dependencies where changes mean this doc must be re-run.
-        """
-        deps = []
-        if hasattr(self, 'bundle') and self.bundle.args.get('script-mode'):
-            for child in self.bundle.children:
-                if child == self:
-                    break
-                deps.append(child)
-        deps.extend(list(set(self.children).intersection(self.deps.values())))
-        return sorted(deps, key=operator.attrgetter('key_with_class'))
-
     def names_to_docs(self):
         """
         Returns a dict whose keys are canonical names, whose values are lists
         of the docs that generate that name as their canonical output name.
         """
         names_to_docs = {}
-        for doc in self.completed_child_docs():
+        for doc in self.node.walk_input_docs():
             doc_name = doc.output().name
             if names_to_docs.has_key(doc_name):
                 names_to_docs[doc_name].append(doc)
@@ -105,7 +89,6 @@ class Doc(dexy.task.Task):
 
     def add_artifact(self, artifact):
         self.children.append(artifact)
-        self.artifacts.append(artifact)
         self.final_artifact = artifact
 
     def setup_initial_artifact(self):
@@ -141,7 +124,7 @@ class Doc(dexy.task.Task):
         artifact.args = dict((k, v) for k, v in self.args.iteritems() if not k in skip_args)
 
         artifact.doc = self
-        artifact.prior = self.artifacts[-1]
+        artifact.prior = self.children[-1]
         artifact.created_by_doc = self.created_by_doc
 
         artifact.filter_alias = filter_alias
@@ -164,14 +147,10 @@ class Doc(dexy.task.Task):
     def setup(self):
         self.hashstring = self.final_artifact.hashstring
 
-    def metadata(self):
-        return self.final_artifact.metadata
-
     def populate(self):
         self.set_log()
         self.name = self.key.split("|")[0]
         self.filters = self.key.split("|")[1:]
-        self.artifacts = []
         self.canon = self.args.get('canon', len(self.filters) == 0)
 
         self.setup_initial_artifact()
@@ -182,77 +161,3 @@ class Doc(dexy.task.Task):
             self.setup_filter_artifact(key, filters)
             self.canon = self.canon or (not self.final_artifact.filter_class.FRAGMENT)
 
-class PatternDoc(dexy.task.Task):
-    """
-    A doc which takes a file matching pattern and creates individual Doc objects for all files that match the pattern.
-    """
-    ALIASES = ['pattern']
-
-    def setup(self):
-        self.metadata = dexy.metadata.Md5()
-        self.metadata.child_hashes = ",".join([child.hashstring for child in self.children])
-        self.hashstring = self.metadata.compute_hash()
-
-    def populate(self):
-        self.set_log()
-        self.file_pattern = self.key.split("|")[0]
-        self.filter_aliases = self.key.split("|")[1:]
-
-        import copy
-        orig_doc_children = copy.copy(self.children)
-        doc_children = None
-
-        recurse = self.args.get('recurse', True)
-        for dirpath, filename in self.wrapper.walk(".", recurse):
-            raw_filepath = os.path.join(dirpath, filename)
-            filepath = os.path.normpath(raw_filepath)
-
-            if fnmatch.fnmatch(filepath, self.file_pattern):
-                except_p = self.args.get('except')
-                if except_p and re.search(except_p, filepath):
-                    self.log.debug("skipping file '%s' because it matches except '%s'" % (filepath, except_p))
-                else:
-                    if len(self.filter_aliases) > 0:
-                        doc_key = "%s|%s" % (filepath, "|".join(self.filter_aliases))
-                    else:
-                        doc_key = filepath
-
-                    if hasattr(self.wrapper.batch, 'ast'):
-                        doc_args = self.wrapper.batch.ast.default_args_for_directory(filepath)
-                    else:
-                        doc_args = {}
-
-                    doc_args.update(self.args_before_defaults)
-                    doc_args['wrapper'] = self.wrapper
-
-                    if doc_args.has_key('depends'):
-                        if doc_args.get('depends'):
-                            doc_children = self.wrapper.registered_docs()
-                        else:
-                            doc_children = []
-                        del doc_args['depends']
-
-                    self.log.debug("creating child of patterndoc %s: %s" % (self.key, doc_key))
-                    self.log.debug("with args %s" % doc_args)
-                    if not doc_children:
-                        doc_children=orig_doc_children
-                    doc = Doc(doc_key, *doc_children, **doc_args)
-                    self.children.append(doc)
-                    doc.populate()
-                    doc.transition('populated')
-
-class BundleDoc(dexy.task.Task):
-    """
-    A doc which represents a collection of docs.
-    """
-    ALIASES = ['bundle']
-
-    def populate(self):
-        self.set_log()
-        for child in self.children:
-            child.bundle = self
-
-    def setup(self):
-        self.metadata = dexy.metadata.Md5()
-        self.metadata.child_hashes = ",".join([child.hashstring for child in self.children])
-        self.hashstring = self.metadata.compute_hash()

@@ -3,7 +3,7 @@ from dexy.tests.utils import assert_in_output
 from dexy.tests.utils import assert_output_cached
 from dexy.tests.utils import wrap
 from dexy.tests.utils import TEST_DATA_DIR
-from dexy.doc import Doc
+from dexy.node import DocNode
 import os
 import shutil
 
@@ -19,15 +19,16 @@ while True:
 
 def test_python_input():
     with wrap() as wrapper:
-        doc = Doc("hello.py|pyin",
-                Doc("input.in",
-                    contents="here is some input\nmore",
-                    wrapper=wrapper
-                    ),
+        node = DocNode("hello.py|pyin",
                 contents=PYIN_CONTENTS,
+                inputs = [
+                    DocNode("input.in",
+                        contents="here is some input\nmore",
+                        wrapper=wrapper)
+                    ],
                 wrapper=wrapper)
-        wrapper.run_docs(doc)
-
+        wrapper.run_docs(node)
+        doc = node.children[0]
         assert str(doc.output()) == """\
 line 1 has 19 chars
 line 2 has 4 chars
@@ -35,34 +36,34 @@ line 2 has 4 chars
 
 def test_pandoc_filter_odt():
     with wrap() as wrapper:
-        doc = Doc("hello.md|pandoc",
+        node = DocNode("hello.md|pandoc",
                 contents = "hello",
                 pandoc = { "ext" : ".odt"},
                 wrapper=wrapper)
-        wrapper.run_docs(doc)
+        wrapper.run_docs(node)
         wrapper.report()
         assert os.path.exists("output/hello.odt")
 
 def test_pandoc_filter_pdf():
     with wrap() as wrapper:
-        doc = Doc("hello.md|pandoc",
+        node = DocNode("hello.md|pandoc",
                 contents = "hello",
                 pandoc = { "ext" : ".pdf"},
                 wrapper=wrapper)
-        wrapper.run_docs(doc)
+        wrapper.run_docs(node)
         wrapper.report()
         assert os.path.exists("output/hello.pdf")
 
 def test_pandoc_filter_txt():
     with wrap() as wrapper:
-        doc = Doc("hello.md|pandoc",
+        node = DocNode("hello.md|pandoc",
                 contents = "hello",
                 pandoc = { "ext" : ".txt"},
                 wrapper=wrapper)
-        wrapper.run_docs(doc)
+        wrapper.run_docs(node)
         wrapper.report()
+        doc = node.children[0]
         assert os.path.exists("output/hello.txt")
-        print str(doc.output())
         assert str(doc.output()) == 'hello\n'
 
 R_SECTIONS = """\
@@ -76,11 +77,12 @@ x * y
 
 def test_rint_mock():
     with wrap() as wrapper:
-        doc = Doc("example.R|idio|rintmock",
+        node = DocNode("example.R|idio|rintmock",
                 contents=R_SECTIONS,
                 wrapper=wrapper)
 
-        wrapper.run_docs(doc)
+        wrapper.run_docs(node)
+        doc = node.children[0]
         assert doc.output().is_cached()
         assert doc.output().as_sectioned()['assign-vars'] == "> x <- 6\n> y <- 7\n> \n"
         assert doc.output().as_sectioned()['multiply'] == "> x * y\n[1] 42\n> \n"
@@ -99,10 +101,11 @@ def test_ragel_ruby_filter():
 
 def test_ps2pdf_filter():
     with wrap() as wrapper:
-        doc = Doc("hello.ps|ps2pdf",
+        node = DocNode("hello.ps|ps2pdf",
                 contents = PS,
                 wrapper=wrapper)
-        wrapper.run_docs(doc)
+        wrapper.run_docs(node)
+        doc = node.children[0]
         assert doc.output().is_cached()
         assert doc.output().filesize() > 1000
 
@@ -116,10 +119,11 @@ def test_pdf2img_filter():
     with wrap() as wrapper:
         orig = os.path.join(TEST_DATA_DIR, 'color-graph.pdf')
         shutil.copyfile(orig, 'example.pdf')
-        doc = Doc("example.pdf|pdf2img",
+        node = DocNode("example.pdf|pdf2img",
                 wrapper=wrapper)
 
-        wrapper.run_docs(doc)
+        wrapper.run_docs(node)
+        doc = node.children[0]
         assert doc.output().is_cached()
         assert doc.output().filesize() > 1000
 
@@ -127,30 +131,33 @@ def test_pdf2jpg_filter():
     with wrap() as wrapper:
         orig = os.path.join(TEST_DATA_DIR, 'color-graph.pdf')
         shutil.copyfile(orig, 'example.pdf')
-        doc = Doc("example.pdf|pdf2jpg",
+        node = DocNode("example.pdf|pdf2jpg",
                 wrapper=wrapper)
 
-        wrapper.run_docs(doc)
+        wrapper.run_docs(node)
+        doc = node.children[0]
         assert doc.output().is_cached()
 
 def test_bw_filter():
     with wrap() as wrapper:
         orig = os.path.join(TEST_DATA_DIR, 'color-graph.pdf')
         shutil.copyfile(orig, 'example.pdf')
-        doc = Doc("example.pdf|bw",
+        node = DocNode("example.pdf|bw",
                 wrapper=wrapper)
 
-        wrapper.run_docs(doc)
+        wrapper.run_docs(node)
+        doc = node.children[0]
         assert doc.output().is_cached()
 
 def test_pdfcrop_filter():
     with wrap() as wrapper:
         orig = os.path.join(TEST_DATA_DIR, 'color-graph.pdf')
         shutil.copyfile(orig, 'example.pdf')
-        doc = Doc("example.pdf|pdfcrop|pdfinfo",
+        node = DocNode("example.pdf|pdfcrop|pdfinfo",
                 wrapper=wrapper)
 
-        wrapper.run_docs(doc)
+        wrapper.run_docs(node)
+        doc = node.children[0]
         assert doc.output().is_cached()
 
 def test_asciidoc_filter():

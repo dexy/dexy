@@ -71,7 +71,7 @@ def test_yaml_parser():
         parser.parse(YAML)
         docs = wrapper.batch.tree
         for doc in docs:
-            assert doc.__class__.__name__ == 'BundleDoc'
+            assert doc.__class__.__name__ == 'BundleNode'
             assert doc.key in ['code', 'wordpress']
 
 def test_text_parser_blank_lines():
@@ -156,7 +156,7 @@ def test_text_parser_virtual_file():
         docs = wrapper.batch.tree
 
         assert docs[0].key == "virtual.txt"
-        assert str(docs[0].output()) == "hello"
+        assert str(docs[0].children[0].output()) == "hello"
 
 def test_original_parser():
     with wrap() as wrapper:
@@ -168,7 +168,7 @@ def test_original_parser():
         parser.wrapper = wrapper
         parser.parse(conf)
 
-        assert wrapper.batch.tree[0].key_with_class() == "PatternDoc:*.txt"
+        assert wrapper.batch.tree[0].key_with_class() == "PatternNode:*.txt"
 
 def test_original_parser_allinputs():
     with wrap() as wrapper:
@@ -183,7 +183,7 @@ def test_original_parser_allinputs():
         parser.parse(conf)
 
         assert len(wrapper.batch.tree) == 1
-        assert wrapper.batch.tree[0].key_with_class() == "PatternDoc:*.md|jinja"
+        assert wrapper.batch.tree[0].key_with_class() == "PatternNode:*.md|jinja"
 
 INVALID_YAML = """
 code:

@@ -64,38 +64,31 @@ def test_children_siblings_order():
 
         wrapper.batch.run()
 
-        p1 = wrapper.batch.lookup_table['BundleDoc:p1']
-        assert p1.deps.keys() == [
-                'BundleDoc:c1',
-                'BundleDoc:c2',
-                'BundleDoc:g1',
-                'BundleDoc:g2',
-                'BundleDoc:g3',
-                'BundleDoc:c3'
+        p1 = wrapper.batch.lookup_table['BundleNode:p1']
+        assert [i.key_with_class() for i in p1.walk_inputs()] == [
+                'BundleNode:c1',
+                'BundleNode:g1',
+                'BundleNode:g2',
+                'BundleNode:g3',
+                'BundleNode:c2',
+                'BundleNode:c3'
                 ]
 
-        c1 = wrapper.batch.lookup_table['BundleDoc:c1']
-        assert c1.deps.keys() == []
+        c1 = wrapper.batch.lookup_table['BundleNode:c1']
+        assert len(c1.inputs) == 0
 
-        c2 = wrapper.batch.lookup_table['BundleDoc:c2']
-        assert c2.deps.keys() == [
-                'BundleDoc:c1',
-                'BundleDoc:g1',
-                'BundleDoc:g2',
-                'BundleDoc:g3'
+        c2 = wrapper.batch.lookup_table['BundleNode:c2']
+        assert [i.key_with_class() for i in c2.walk_inputs()] == [
+                'BundleNode:g1',
+                'BundleNode:g2',
+                'BundleNode:g3'
                 ]
 
-        c3 = wrapper.batch.lookup_table['BundleDoc:c3']
-        assert c3.deps.keys() == [
-                'BundleDoc:c1',
-                'BundleDoc:c2'
-                ]
+        c3 = wrapper.batch.lookup_table['BundleNode:c3']
+        assert len(c3.inputs) == 0
 
-        g3 = wrapper.batch.lookup_table['BundleDoc:g3']
-        assert g3.deps.keys() == [
-                'BundleDoc:g1',
-                'BundleDoc:g2'
-                ]
+        g3 = wrapper.batch.lookup_table['BundleNode:g3']
+        assert len(g3.inputs) == 0
 
 def test_single_file_doc():
     with wrap() as wrapper:
@@ -114,7 +107,7 @@ def test_single_bundle_doc():
         parser.parse("hello")
 
         wrapper.batch.run()
-        assert "BundleDoc:hello" in wrapper.batch.lookup_table
+        assert "BundleNode:hello" in wrapper.batch.lookup_table
 
 def test_single_bundle_doc_with_args():
     with wrap() as wrapper:
@@ -139,7 +132,7 @@ def test_single_bundle_doc_with_args():
 
         wrapper.batch.run()
 
-        assert wrapper.batch.tree[0].key_with_class() == "BundleDoc:more"
+        assert wrapper.batch.tree[0].key_with_class() == "BundleNode:more"
         assert len(wrapper.batch.lookup_table) == 5
 
 def test_single_bundle_doc_with_args_2():
@@ -167,5 +160,5 @@ def test_single_bundle_doc_with_args_2():
 
         wrapper.batch.run()
 
-        assert wrapper.batch.tree[0].key_with_class() == "BundleDoc:more"
+        assert wrapper.batch.tree[0].key_with_class() == "BundleNode:more"
         assert len(wrapper.batch.lookup_table) == 5

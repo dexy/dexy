@@ -54,7 +54,7 @@ class IdioFilter(PygmentsFilter):
         all_lines = []
         lineno = 1
 
-        add_new_docs = self.do_add_new_files()
+        add_new_files = self.do_add_new_files()
 
         for i, s in enumerate(builder.sections):
             self.log.debug("In section no. %s name %s" % (i, s))
@@ -77,12 +77,12 @@ class IdioFilter(PygmentsFilter):
 
             formatted_lines = composer.format(lines, lexer, formatter)
 
-            if add_new_docs:
+            if add_new_files:
                 new_doc_name = "%s--%s%s" % (self.artifact.doc.key.replace("|", "--"), s, self.artifact.ext)
                 doc = self.add_doc(new_doc_name, formatted_lines)
 
             if not self.artifact.ext in self.IMAGE_OUTPUT_EXTENSIONS:
-                if add_new_docs:
+                if add_new_files:
                     doc.canon = False
                 output_dict[s] = formatted_lines
 

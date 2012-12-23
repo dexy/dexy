@@ -1,7 +1,7 @@
 from dexy.tests.utils import assert_output
 from dexy.tests.utils import assert_in_output
 from dexy.tests.utils import wrap
-from dexy.doc import Doc
+from dexy.node import DocNode
 
 RST = """
 * a bullet point using "*"
@@ -15,10 +15,11 @@ RST = """
 
 def test_rst2odt():
     with wrap() as wrapper:
-        doc = Doc("example.txt|rst2odt",
+        node = DocNode("example.txt|rst2odt",
                 contents=RST,
                 wrapper=wrapper)
-        wrapper.run_docs(doc)
+        wrapper.run_docs(node)
+        doc = node.children[0]
         assert doc.output().filesize() > 8000
 
 def test_rst2xml():
@@ -34,12 +35,13 @@ def test_rst2html():
 
 def test_rest_to_tex():
     with wrap() as wrapper:
-        doc = Doc("example.txt|rst",
+        node = DocNode("example.txt|rst",
                 contents=RST,
                 rst={"ext" : ".tex"},
                 wrapper=wrapper)
 
-        wrapper.run_docs(doc)
+        wrapper.run_docs(node)
+        doc = node.children[0]
         assert doc.output().as_text() == """\
 %
 \\begin{itemize}

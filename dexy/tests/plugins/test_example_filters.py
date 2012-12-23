@@ -1,5 +1,6 @@
 from dexy.artifact import InitialVirtualArtifact, FilterArtifact
 from dexy.doc import Doc
+from dexy.node import DocNode
 from dexy.tests.utils import assert_output
 from dexy.tests.utils import runfilter
 from dexy.tests.utils import wrap
@@ -46,65 +47,69 @@ def test_key_value_example():
 
 def test_access_other_documents():
     with wrap() as wrapper:
-        doc = Doc("hello.txt|newdoc", contents="hello", wrapper=wrapper)
-        parent = Doc("test.txt|others", doc, contents="hello", wrapper=wrapper)
+        node = DocNode("hello.txt|newdoc", contents="hello", wrapper=wrapper)
+        parent = DocNode("test.txt|others",
+                    inputs=[node],
+                    contents="hello",
+                    wrapper=wrapper)
         wrapper.run_docs(parent)
 
         expected_items = [
             "Here is a list of previous docs in this tree (not including test.txt|others).",
-            "hello.txt|newdoc (3 children, 2 artifacts, length 19)",
-            "newfile.txt|processtext (2 children, 2 artifacts, length 33)"
+            "hello.txt|newdoc (3 children, 0 inputs, length 19)",
             ]
 
-        output = parent.output().as_text()
+        output = parent.children[0].output().as_text()
 
         for item in expected_items:
             assert item in output
 
 def test_doc_children_artifacts():
     with wrap() as wrapper:
-        doc = Doc("hello.txt|newdoc", contents="hello", wrapper=wrapper)
-        parent = Doc("parent.txt|process", doc, contents="hello", wrapper=wrapper)
+        node = DocNode("hello.txt|newdoc", contents="hello", wrapper=wrapper)
+
+        parent = DocNode("parent.txt|process",
+                inputs=[node],
+                contents="hello",
+                wrapper=wrapper)
 
         wrapper.root_nodes = [parent]
 
-        doc.populate()
+        node.populate()
         parent.populate()
 
+        doc = node.children[0]
+
+        # Doc's children are artifacts
         assert len(doc.children) == 2
         assert isinstance(doc.children[0], InitialVirtualArtifact)
         assert isinstance(doc.children[1], FilterArtifact)
 
-        assert len(doc.artifacts) == 2
-        assert isinstance(doc.artifacts[0], InitialVirtualArtifact)
-        assert isinstance(doc.artifacts[1], FilterArtifact)
-
-        assert len(parent.children) == 3
+        # Parent's children and inputs are other nodes
+        assert len(parent.children) == 1
+        assert len(parent.inputs) == 1
 
         assert isinstance(parent.children[0], Doc)
-        assert parent.children[0] == doc
+        assert isinstance(parent.inputs[0], DocNode)
 
-        assert isinstance(parent.children[1], InitialVirtualArtifact)
-        assert isinstance(parent.children[2], FilterArtifact)
+        node = DocNode("hello.txt|newdoc", contents="hello", wrapper=wrapper)
 
-        assert len(parent.artifacts) == 2
-        assert isinstance(parent.artifacts[0], InitialVirtualArtifact)
-        assert isinstance(parent.artifacts[1], FilterArtifact)
-
-        doc = Doc("hello.txt|newdoc", contents="hello", wrapper=wrapper)
-        parent = Doc("parent.txt|process", doc, contents="hello", wrapper=wrapper)
+        parent = DocNode("parent.txt|process",
+                inputs=[node],
+                contents="hello",
+                wrapper=wrapper)
 
         wrapper.run_docs(parent)
+
+        doc = node.children[0]
 
         assert len(doc.children) == 3
         assert isinstance(doc.children[0], InitialVirtualArtifact)
         assert isinstance(doc.children[1], FilterArtifact)
         assert isinstance(doc.children[2], Doc)
 
-        assert len(doc.artifacts) == 2
-
-        assert len(parent.children) == 3
-        assert len(parent.artifacts) == 2
+        assert len(parent.inputs) == 1
+        assert len(parent.children) == 1
 
         assert "Doc:hello.txt|newdoc" in wrapper.batch.lookup_table
         assert "Doc:parent.txt|process" in wrapper.batch.lookup_table

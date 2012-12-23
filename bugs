@@ -56,6 +56,7 @@
 [todo] add more tests for unicode support | id:9d71bbceb819a41ee352f07381de6b235e3c49bb
 [issue] make sure all exceptions are handled in user-friendly way | id:9f6b58cc32e7d3651dfa86c1cb25abb8db54d048
 [feature] make dexy helper functions behave like jinja filters | id:a1b9dfb698ca910a9caad48f9597cb06fba67b4b
+[feature] escape latex custom jinja filter | id:a89d206894c4bb642bc60bc6ca8cb4bf3cd4ac3f
 [feature] write filter where pexpect or a pseudoterminal runs a python script and then additional files are inputs to that script | id:abcec1ed3ce1c949ecdf15943474362597c7c46d
 [feature] make a filter base class for running several separate bash steps in a row (e.g. image conversions taking many steps) | id:b34d055fd935840991370acaf65c438546df8832
 [feature] add winpexpect support https://bitbucket.org/geertj/winpexpect/wiki/Home | id:b7590f29225431071a22bc72520ebfad0ab6afc6

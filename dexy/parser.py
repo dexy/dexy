@@ -137,16 +137,17 @@ class AbstractSyntaxTree():
         created_tasks = {}
         root_nodes = []
 
-        def create_dexy_task(key, *child_tasks, **kwargs):
+        def create_dexy_task(key, *inputs, **kwargs):
             if not key in created_tasks:
-                msg = "creating task '%s' with children '%s' with original kwargs '%s'"
-                self.wrapper.log.debug(msg % (key, child_tasks, kwargs))
+                msg = "creating task '%s' with inputs '%s' with original kwargs '%s'"
+                self.wrapper.log.debug(msg % (key, inputs, kwargs))
                 alias, pattern = Parser.qualify_key(key)
                 
                 kwargs_with_defaults = self.default_args_for_directory(pattern)
                 kwargs_with_defaults.update(kwargs)
+                kwargs_with_defaults['inputs'] = inputs
 
-                task = dexy.task.Task.create(alias, pattern, *child_tasks, **kwargs_with_defaults)
+                task = dexy.task.Task.create(alias, pattern, **kwargs_with_defaults)
                 task.args_before_defaults = kwargs
                 created_tasks[key] = task
             return created_tasks[key]

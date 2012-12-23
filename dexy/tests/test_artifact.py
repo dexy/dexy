@@ -3,17 +3,45 @@ from dexy.artifact import InitialArtifact
 from dexy.artifact import InitialVirtualArtifact
 from dexy.common import OrderedDict
 from dexy.doc import Doc
+from dexy.node import DocNode
 from dexy.tests.utils import tempdir
 from dexy.tests.utils import wrap
 from dexy.wrapper import Wrapper
 import dexy.exceptions
 import time
 
+def test_create_working_dir():
+    with wrap() as wrapper:
+        wrapper.setup(True)
+        c1 = DocNode("data.txt", contents="12345.67", wrapper=wrapper)
+        c2 = DocNode("mymod.py", contents="FOO='bar'", wrapper=wrapper)
+        node = DocNode("example.py|py",
+                inputs = [c1, c2],
+                wrapper=wrapper,
+                contents="""\
+with open("data.txt", "r") as f:
+    print f.read()
+
+import mymod
+print mymod.FOO
+
+import os
+print sorted(os.listdir(os.getcwd()))
+""")
+
+        wrapper.run_docs(node)
+        doc = node.children[0]
+
+        output = str(doc.output())
+        assert "12345.67" in output
+        assert 'bar' in output
+        assert "['data.txt', 'example.py', 'mymod.py', 'mymod.pyc']" in output
+
 def test_no_data():
     with wrap() as wrapper:
-        doc = Doc("hello.txt", wrapper=wrapper)
+        node = DocNode("hello.txt", wrapper=wrapper)
         try:
-            wrapper.run_docs(doc)
+            wrapper.run_docs(node)
             assert False, 'should raise UserFeedback'
         except dexy.exceptions.UserFeedback as e:
             assert "No contents found" in e.message
@@ -26,24 +54,28 @@ def test_caching():
         with open("abc.txt", "w") as f:
             f.write("these are the contents")
 
-        doc1 = Doc("abc.txt|dexy", wrapper=wrapper1)
-        wrapper1.run_docs(doc1)
+        node1 = DocNode("abc.txt|dexy", wrapper=wrapper1)
+        wrapper1.run_docs(node1)
 
-        assert isinstance(doc1.artifacts[0], InitialArtifact)
-        hashstring_0_1 = doc1.artifacts[0].hashstring
+        doc1 = node1.children[0]
 
-        assert isinstance(doc1.artifacts[1], FilterArtifact)
-        hashstring_1_1 = doc1.artifacts[1].hashstring
+        assert isinstance(doc1.children[0], InitialArtifact)
+        hashstring_0_1 = doc1.children[0].hashstring
+
+        assert isinstance(doc1.children[1], FilterArtifact)
+        hashstring_1_1 = doc1.children[1].hashstring
 
         wrapper2 = Wrapper()
-        doc2 = Doc("abc.txt|dexy", wrapper=wrapper2)
-        wrapper2.run_docs(doc2)
+        node2 = DocNode("abc.txt|dexy", wrapper=wrapper2)
+        wrapper2.run_docs(node2)
 
-        assert isinstance(doc2.artifacts[0], InitialArtifact)
-        hashstring_0_2 = doc2.artifacts[0].hashstring
+        doc2 = node2.children[0]
 
-        assert isinstance(doc2.artifacts[1], FilterArtifact)
-        hashstring_1_2 = doc2.artifacts[1].hashstring
+        assert isinstance(doc2.children[0], InitialArtifact)
+        hashstring_0_2 = doc2.children[0].hashstring
+
+        assert isinstance(doc2.children[1], FilterArtifact)
+        hashstring_1_2 = doc2.children[1].hashstring
 
         assert hashstring_0_1 == hashstring_0_2
         assert hashstring_1_1 == hashstring_1_2
@@ -53,29 +85,33 @@ def test_caching_virtual_file():
         wrapper1 = Wrapper()
         wrapper1.setup_dexy_dirs()
 
-        doc1 = Doc("abc.txt|dexy",
+        node1 = DocNode("abc.txt|dexy",
                 contents = "these are the contents",
                 wrapper=wrapper1)
-        wrapper1.run_docs(doc1)
+        wrapper1.run_docs(node1)
 
-        assert isinstance(doc1.artifacts[0], InitialVirtualArtifact)
-        hashstring_0_1 = doc1.artifacts[0].hashstring
+        doc1 = node1.children[0]
 
-        assert isinstance(doc1.artifacts[1], FilterArtifact)
-        hashstring_1_1 = doc1.artifacts[1].hashstring
+        assert isinstance(doc1.children[0], InitialVirtualArtifact)
+        hashstring_0_1 = doc1.children[0].hashstring
+
+        assert isinstance(doc1.children[1], FilterArtifact)
+        hashstring_1_1 = doc1.children[1].hashstring
 
         wrapper2 = Wrapper()
-        doc2 = Doc(
+        node2 = DocNode(
                 "abc.txt|dexy",
                 contents = "these are the contents",
                 wrapper=wrapper2)
-        wrapper2.run_docs(doc2)
+        wrapper2.run_docs(node2)
 
-        assert isinstance(doc2.artifacts[0], InitialVirtualArtifact)
-        hashstring_0_2 = doc2.artifacts[0].hashstring
+        doc2 = node2.children[0]
 
-        assert isinstance(doc2.artifacts[1], FilterArtifact)
-        hashstring_1_2 = doc2.artifacts[1].hashstring
+        assert isinstance(doc2.children[0], InitialVirtualArtifact)
+        hashstring_0_2 = doc2.children[0].hashstring
+
+        assert isinstance(doc2.children[1], FilterArtifact)
+        hashstring_1_2 = doc2.children[1].hashstring
 
         assert hashstring_0_1 == hashstring_0_2
         assert hashstring_1_1 == hashstring_1_2
@@ -129,7 +165,8 @@ def test_parent_doc_hash():
         wrapper.setup(True)
         wrapper.run()
 
-        doc = wrapper.batch.tree[0]
+        node = wrapper.batch.tree[0]
+        doc = node.children[0]
         hashstring = doc.final_artifact.hashstring
 
         wrapper = Wrapper(*args)
@@ -159,7 +196,7 @@ def test_parent_doc_hash_2():
 
 def test_bad_file_extension_exception():
     with wrap() as wrapper:
-        doc = Doc("hello.abc|py",
+        doc = DocNode("hello.abc|py",
                 contents="hello",
                 wrapper=wrapper)
 
@@ -171,11 +208,12 @@ def test_bad_file_extension_exception():
 
 def test_custom_file_extension():
     with wrap() as wrapper:
-        doc = Doc("hello.py|pyg",
+        node = DocNode("hello.py|pyg",
                 contents="""print "hello, world" """,
                 pyg = { "ext" : ".tex" },
                 wrapper=wrapper)
-        wrapper.run_docs(doc)
+        wrapper.run_docs(node)
+        doc = node.children[0]
         assert "begin{Verbatim}" in str(doc.output())
 
 def test_choose_extension_from_overlap():
@@ -204,7 +242,7 @@ def test_virtual_artifact_data_class_generic():
                 contents = "virtual",
                 wrapper=wrapper)
         doc.populate()
-        artifact = doc.artifacts[0]
+        artifact = doc.children[0]
         assert artifact.__class__.__name__ == "InitialVirtualArtifact"
         assert artifact.data_class_alias() == 'generic'
 
@@ -216,32 +254,6 @@ def test_virtual_artifact_data_class_sectioned():
                 contents=contents,
                 wrapper=wrapper)
         doc.populate()
-        artifact = doc.artifacts[0]
+        artifact = doc.children[0]
         assert artifact.__class__.__name__ == "InitialVirtualArtifact"
         assert artifact.data_class_alias() == 'sectioned'
-
-def test_create_working_dir():
-    with wrap() as wrapper:
-        wrapper.setup(True)
-        c1 = Doc("data.txt", contents="12345.67", wrapper=wrapper)
-        c2 = Doc("mymod.py", contents="FOO='bar'", wrapper=wrapper)
-        doc = Doc("example.py|py",
-                c1, c2,
-                wrapper=wrapper,
-                contents="""\
-with open("data.txt", "r") as f:
-    print f.read()
-
-import mymod
-print mymod.FOO
-
-import os
-print sorted(os.listdir(os.getcwd()))
-""")
-
-        wrapper.run_docs(doc)
-
-        output = str(doc.output())
-        assert "12345.67" in output
-        assert 'bar' in output
-        assert "['data.txt', 'example.py', 'mymod.py', 'mymod.pyc']" in output

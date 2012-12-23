@@ -156,7 +156,7 @@ class PygmentsFilter(DexyFilter):
                 print "python imaging library is required by pygments to create image output"
                 raise dexy.exceptions.InactiveFilter('pyg', self.artifact.key)
 
-        input_dict = self.input().as_sectioned()
+
         ext = self.artifact.prior.ext
         if ext in [".css", ".sty"] and self.artifact.ext == ext:
             self.log.debug("creating a style file in %s" % self.artifact.key)
@@ -182,7 +182,7 @@ class PygmentsFilter(DexyFilter):
 
             if self.artifact.ext in self.IMAGE_OUTPUT_EXTENSIONS:
                 # Place each section into an image.
-                for k, v in input_dict.items():
+                for k, v in self.input().as_sectioned().iteritems():
                     formatter = get_formatter_for_filename(self.output().name, **formatter_args)
                     output_for_section = highlight(v.decode("utf-8"), lexer, formatter)
                     new_doc_name = "%s--%s%s" % (self.artifact.doc.key.replace("|", "--"), k, self.artifact.ext)
@@ -197,6 +197,6 @@ class PygmentsFilter(DexyFilter):
             else:
                 formatter = get_formatter_for_filename(self.output().name, **formatter_args)
                 output_dict = OrderedDict()
-                for k, v in input_dict.items():
+                for k, v in self.input().as_sectioned().iteritems():
                     output_dict[k] = highlight(v.decode("utf-8"), lexer, formatter)
                 self.output().set_data(output_dict)

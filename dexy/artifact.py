@@ -1,5 +1,4 @@
 from dexy.common import OrderedDict
-from dexy.utils import s
 from dexy.version import DEXY_VERSION
 import dexy.data
 import dexy.doc
@@ -20,8 +19,12 @@ class Artifact(dexy.task.Task):
     """
     Task classes representing steps in dexy processing.
     """
+    def __init__(self, key, **kwargs):
+        super(Artifact, self).__init__(key, **kwargs)
+        self.created_by_doc = None
+        self.remaining_doc_filters = []
+
     def set_and_save_hash(self):
-        self.append_child_hashstrings()
         self.set_hashstring()
 
     def key_for_log(self):
@@ -32,20 +35,6 @@ class Artifact(dexy.task.Task):
 
     def key_with_class(self):
         return "%s:%s" % (self.__class__.__name__, self.key_for_log())
-
-    def append_child_hashstrings(self):
-        child_hashes = []
-        for child in self.doc.hashstring_deps():
-            if not hasattr(child, 'hashstring'):
-                args = (child.key_with_class(), self.key_with_class())
-                msg = s("""Doc %s has not been set up yet, and
-                it's needed by %s.  This might be caused by a circular
-                dependency.""") % args
-                raise dexy.exceptions.UserFeedback(msg)
-
-            child_hashes.append("%s: %s" % (child.key_with_class(), child.hashstring))
-
-        self.metadata.child_hashes = ", ".join(child_hashes)
 
     def set_hashstring(self):
         self.hashstring = self.metadata.compute_hash()
@@ -98,7 +87,7 @@ class Artifact(dexy.task.Task):
         # Create the base working dir.
         os.mkdir(tmp_dir)
 
-        for doc in self.doc.setup_child_docs():
+        for doc in self.doc.node.walk_input_docs():
             if doc.state == 'complete' or len(doc.filters) == 0:
                 import re
                 exclude_wd = self.args.get('exclude_wd')
@@ -299,9 +288,9 @@ class FilterArtifact(Artifact):
                 doc = dexy.doc.Doc(row['doc_key'], **doc_args)
                 self.add_doc(doc)
 
-                new_calc_hashstring = doc.artifacts[0].hashstring
+                new_calc_hashstring = doc.children[0].hashstring
                 db_hashstring = row['hashstring']
-                msg = "unexpected calculated hashstring '%s' for %s, expected '%s'" % (new_calc_hashstring, doc.artifacts[0].key, db_hashstring)
+                msg = "unexpected calculated hashstring '%s' for %s, expected '%s'" % (new_calc_hashstring, doc.children[0].key, db_hashstring)
                 assert new_calc_hashstring == db_hashstring, msg
 
     def set_metadata_attrs(self):
@@ -347,7 +336,6 @@ class FilterArtifact(Artifact):
             for t in task:
                 t()
 
-        self.wrapper.batch.notifier.notify('newchild', doc)
         self.doc.children.append(doc)
 
     def set_extension(self):

@@ -1,4 +1,3 @@
-from dexy.notify import Notify
 import time
 
 class Batch(object):
@@ -30,14 +29,12 @@ class Batch(object):
 
     def add_doc(self, new_doc):
         self.lookup_table[new_doc.key_with_class()] = new_doc
-        self.notifier.subscribe("newchild", new_doc.handle_newchild)
 
     def new(self):
         """
         Sets up defaults for a new batch.
         """
         self.state = 'new'
-        self.notifier = Notify(self)
         self.batch_id = self.wrapper.db.next_batch_id()
         self.previous_batch_id = self.wrapper.db.calculate_previous_batch_id(self.batch_id)
 
@@ -54,7 +51,6 @@ class Batch(object):
         self.lookup_table = {}
         for task in created_tasks.values():
             self.lookup_table[task.key_with_class()] = task
-            self.notifier.subscribe("newchild", task.handle_newchild)
 
     def run(self, target=None):
         self.start_time = time.time()

@@ -320,7 +320,8 @@ class SubprocessCompileFilter(SubprocessFilter):
     def compile_command_string(self):
         wf = os.path.basename(self.input().name)
         of = self.compiled_filename()
-        return "%s %s -o %s" % (self.executable(), wf, of)
+        compiler_args = self.args().get("compiler-args", "")
+        return "%s %s %s -o %s" % (self.executable(), compiler_args, wf, of)
 
     def compiled_filename(self):
         basename = os.path.basename(self.input().name)
@@ -365,7 +366,7 @@ class SubprocessInputFilter(SubprocessFilter):
     def process(self):
         command = self.command_string()
 
-        inputs = self.artifact.doc.completed_child_docs()
+        inputs = list(self.artifact.doc.node.walk_input_docs())
 
         output = OrderedDict()
 
@@ -397,7 +398,7 @@ class SubprocessInputFileFilter(SubprocessFilter):
         return "%s %s %s" % (self.executable(), self.input_filename(), input_doc.output().name)
 
     def process(self):
-        inputs = self.artifact.doc.completed_child_docs()
+        inputs = list(self.artifact.doc.node.walk_input_docs())
 
         output = OrderedDict()
 
@@ -426,7 +427,7 @@ class SubprocessCompileInputFilter(SubprocessCompileFilter):
 
         command = self.run_command_string()
 
-        inputs = self.artifact.doc.completed_child_docs()
+        inputs = list(self.artifact.doc.node.walk_input_docs())
 
         output = OrderedDict()
 

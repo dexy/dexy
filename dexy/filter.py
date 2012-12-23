@@ -47,9 +47,6 @@ class Filter:
     def arg_value(self, key, default=None):
         return self.args().get(key, default)
 
-    def deps(self):
-        return self.artifact.doc.deps
-
     @classmethod
     def data_class_alias(klass, file_ext):
         return klass.OUTPUT_DATA_TYPE
@@ -103,6 +100,9 @@ class Filter:
     def input(self):
         return self.artifact.input_data
 
+    def inputs(self):
+        return self.artifact.doc.node.walk_inputs()
+
     def input_filename(self):
         return self.artifact.input_filename()
 
@@ -116,8 +116,7 @@ class Filter:
         return self.output().storage.data_file()
 
     def processed(self):
-        for doc in self.artifact.doc.completed_child_docs():
-            yield doc
+        return self.artifact.doc.node.walk_input_docs()
 
     def final_ext(self):
         return self.artifact.doc.final_artifact.ext

@@ -82,7 +82,7 @@ class Wrapper(object):
     def log_dexy_config(self):
         self.log.debug("dexy has config:")
         for k in sorted(self.__dict__):
-            if not k in ('ast', 'args', 'db', 'log', 'tasks', 'notifier'):
+            if not k in ('ast', 'args', 'db', 'log', 'tasks'):
                 self.log.debug("  %s: %s" % (k, self.__dict__[k]))
 
     def db_path(self):
@@ -183,7 +183,7 @@ class Wrapper(object):
             docs.append(doc)
         return docs
 
-    def create_doc_from_arg(self, arg, *children, **kwargs):
+    def create_doc_from_arg(self, arg, **kwargs):
         if isinstance(arg, dexy.task.Task):
             return arg
 
@@ -199,15 +199,12 @@ class Wrapper(object):
             if kwargs:
                 raise Exception("Shouldn't have kwargs if arg is a list")
 
-            if children:
-                raise Exception("Shouldn't have children if arg is a list")
-
             alias, pattern = dexy.parser.Parser.qualify_key(arg[0])
             return dexy.task.Task.create(alias, pattern, **arg[1])
 
         elif isinstance(arg, basestring):
             alias, pattern = dexy.parser.Parser.qualify_key(arg[0])
-            return dexy.task.Task.create(alias, pattern, *children, **kwargs)
+            return dexy.task.Task.create(alias, pattern, **kwargs)
 
         else:
             raise Exception("unknown arg type %s for arg %s" % (arg.__class__.__name__, arg))

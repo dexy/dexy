@@ -1,6 +1,7 @@
 from datetime import datetime
 from dexy.artifact import Artifact
-from dexy.doc import Doc, PatternDoc
+from dexy.doc import Doc
+from dexy.node import PatternNode
 from dexy.plugin import PluginMeta
 from dexy.version import DEXY_VERSION
 from pygments.styles import get_all_styles
@@ -251,7 +252,7 @@ class Inputs(TemplatePlugin):
                 yield task
             elif isinstance(task, Doc):
                 yield task.final_artifact
-            elif isinstance(task, PatternDoc):
+            elif isinstance(task, PatternNode):
                 next
             else:
                 raise dexy.exceptions.InternalDexyProblem("unexpected task class '%s'" % task.__class__.__name__)

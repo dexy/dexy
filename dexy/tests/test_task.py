@@ -102,45 +102,22 @@ def test_run_demo_single():
 def test_run_demo_parent_child():
     with divert_stdout() as stdout:
         with wrap() as wrapper:
-            doc = SubclassTask(
-                        "parent",
-                        SubclassTask("child", wrapper=wrapper),
-                        wrapper=wrapper
-                    )
-
+            doc = SubclassTask("parent", wrapper=wrapper)
+            doc.children = [SubclassTask("child", wrapper=wrapper)]
             wrapper.run_docs(doc)
-
+        
         assert "pre 'parent' pre 'child' run 'child' post 'child' run 'parent' post 'parent'" == stdout.getvalue()
-
-def test_dependencies_only_run_once():
-    with divert_stdout() as stdout:
-        with wrap() as wrapper:
-            t1 = SubclassTask("1", wrapper=wrapper)
-            t2 = SubclassTask("2", t1, wrapper=wrapper)
-            t3 = SubclassTask("3", t1, wrapper=wrapper)
-
-            wrapper.run_docs(t1, t2, t3)
-
-            assert stdout.getvalue() == "pre '1' run '1' post '1' pre '2' run '2' post '2' pre '3' run '3' post '3'"
-
-            assert len(t1.deps) == 0
-            assert t1 in t2.deps.values()
-            assert t1 in t3.deps.values()
 
 def test_completed_children():
     with wrap() as wrapper:
         with divert_stdout() as stdout:
             grandchild_task = SubclassTask("grandchild", wrapper=wrapper)
-            child_task = SubclassTask("child", grandchild_task, wrapper=wrapper)
-            parent_task = SubclassTask("parent", child_task, wrapper=wrapper)
+            child_task = SubclassTask("child", wrapper=wrapper)
+            parent_task = SubclassTask("parent", wrapper=wrapper)
+
+            parent_task.children = [child_task]
+            child_task.children = [grandchild_task]
 
             wrapper.run_docs(parent_task)
 
             assert stdout.getvalue() == "pre 'parent' pre 'child' pre 'grandchild' run 'grandchild' post 'grandchild' run 'child' post 'child' run 'parent' post 'parent'"
-
-    assert "SubclassTask:grandchild" in parent_task.deps.keys()
-    assert "SubclassTask:child" in parent_task.deps.keys()
-
-    assert "SubclassTask:grandchild" in child_task.deps.keys()
-
-    assert len(grandchild_task.deps) == 0

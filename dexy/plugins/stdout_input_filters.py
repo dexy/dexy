@@ -11,8 +11,7 @@ class ApplySed(SubprocessInputFilter):
     OUTPUT_DATA_TYPE = 'generic'
 
     def process(self):
-        inputs = self.artifact.doc.completed_child_docs()
-        for doc in inputs:
+        for doc in self.artifact.doc.node.walk_input_docs():
             if doc.output().ext == ".sed":
                 command = "%s -f %s" % (self.executable(), doc.output().name)
 

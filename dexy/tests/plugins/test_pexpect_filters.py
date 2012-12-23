@@ -1,4 +1,4 @@
-from dexy.doc import Doc
+from dexy.node import DocNode
 from dexy.tests.utils import assert_in_output
 from dexy.tests.utils import wrap
 
@@ -8,7 +8,7 @@ y = 7
 """
 def test_python_filter_record_vars():
     with wrap() as wrapper:
-        doc = Doc("example.py|pycon",
+        doc = DocNode("example.py|pycon",
                 wrapper = wrapper,
                 pycon = { 'record_vars' :  True},
                 contents = PYTHON_CONTENT
@@ -54,12 +54,12 @@ touch newfile.txt
 ### @export "ls"
 ls
 """
-        doc = Doc("example.sh|idio|shint|pyg",
+        doc = DocNode("example.sh|idio|shint|pyg",
                 contents = src,
                 wrapper=wrapper)
         wrapper.run_docs(doc)
 
-        assert doc.output().keys() == ['1', 'touch', 'ls']
+        assert doc.children[0].output().keys() == ['1', 'touch', 'ls']
 
 def test_pycon_filter():
     with wrap() as wrapper:
@@ -72,11 +72,13 @@ y = 7
 x*y
 
 """
-        doc = Doc("example.py|idio|pycon",
+        node = DocNode("example.py|idio|pycon",
                 contents=src,
                 wrapper=wrapper)
 
-        wrapper.run_docs(doc)
+        wrapper.run_docs(node)
+
+        doc = node.children[0]
 
         assert doc.output().keys() == ['1', 'vars', 'multiply']
         assert doc.output().as_sectioned()['vars'] == """

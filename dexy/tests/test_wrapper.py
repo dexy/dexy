@@ -41,7 +41,7 @@ def test_config_for_directory():
 
         assert len(wrapper.batch.tasks()) == 8
 
-        p = wrapper.batch.task("PatternDoc:*.abc")
+        p = wrapper.batch.task("PatternNode:*.abc")
         c = wrapper.batch.task("Doc:s2/s2.abc")
         assert c in p.children
 

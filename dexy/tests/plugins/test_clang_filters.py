@@ -1,6 +1,6 @@
 from dexy.tests.utils import assert_output
 from dexy.tests.utils import wrap
-from dexy.doc import Doc
+from dexy.node import DocNode
 import dexy.exceptions
 
 CPP_HELLO_WORLD = """#include <iostream>
@@ -60,7 +60,7 @@ def test_cfussy_filter():
     assert_output('cfussy', C_FUSSY_HELLO_WORLD, "HELLO, world\n", ext=".c")
     try:
         with wrap() as wrapper:
-            doc = Doc("hello.c|cfussy",
+            doc = DocNode("hello.c|cfussy",
                     contents=C_HELLO_WORLD,
                     wrapper=wrapper)
             wrapper.run_docs(doc)
@@ -70,43 +70,49 @@ def test_cfussy_filter():
 
 def test_c_input():
     with wrap() as wrapper:
-        doc = Doc("copy.c|cinput",
-                Doc("input.txt",
+        node = DocNode("copy.c|cinput",
+                inputs = [
+                DocNode("input.txt",
                     contents = "hello, c",
-                    wrapper=wrapper),
-
+                    wrapper=wrapper)
+                ],
                 contents = C_WITH_INPUT,
                 wrapper=wrapper)
 
-        wrapper.run_docs(doc)
+        wrapper.run_docs(node)
+        doc = node.children[0]
         assert str(doc.output()) == "hello, c"
 
 def test_clang_input():
     with wrap() as wrapper:
-        doc = Doc("copy.c|clanginput",
-                Doc("input.txt",
+        node = DocNode("copy.c|clanginput",
+                inputs = [
+                DocNode("input.txt",
                     contents = "hello, c",
-                    wrapper=wrapper),
-
+                    wrapper=wrapper)
+                ],
                 contents = C_WITH_INPUT,
                 wrapper=wrapper)
 
-        wrapper.run_docs(doc)
+        wrapper.run_docs(node)
+        doc = node.children[0]
         assert str(doc.output()) == "hello, c"
 
 def test_clang_multiple_inputs():
     with wrap() as wrapper:
-        doc = Doc("copy.c|clanginput",
-                Doc("input1.txt",
-                    contents = "hello, c",
-                    wrapper=wrapper),
-                Doc("input2.txt",
-                    contents = "more data",
-                    wrapper=wrapper),
-
+        node = DocNode("copy.c|clanginput",
+                inputs = [
+                    DocNode("input1.txt",
+                        contents = "hello, c",
+                        wrapper=wrapper),
+                    DocNode("input2.txt",
+                        contents = "more data",
+                        wrapper=wrapper)
+                ],
                 contents = C_WITH_INPUT,
                 wrapper=wrapper)
 
-        wrapper.run_docs(doc)
+        wrapper.run_docs(node)
+        doc = node.children[0]
         assert doc.output().data()['input1.txt'] == 'hello, c'
         assert doc.output().data()['input2.txt'] == 'more data'

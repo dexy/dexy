@@ -136,6 +136,8 @@ class Sqlite3(Database):
         args_to_serialize = task.args.copy()
         if args_to_serialize.has_key('wrapper'):
             del args_to_serialize['wrapper']
+        if args_to_serialize.has_key('inputs'):
+            del args_to_serialize['inputs']
         if args_to_serialize.has_key('contents'):
             del args_to_serialize['contents']
             if hasattr(task, 'get_contents_hash'):

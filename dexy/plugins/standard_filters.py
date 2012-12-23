@@ -26,7 +26,7 @@ class HeaderFilter(DexyFilter):
     KEY_NAME = 'header'
 
     def find_input_in_parent_dir(self, matches):
-        docs = self.artifact.doc.completed_child_docs()
+        docs = list(self.artifact.doc.node.walk_input_docs())
         docs_d = dict((task.output().long_name(), task) for task in docs)
 
         if self.artifact.args.has_key(self.KEY_NAME):

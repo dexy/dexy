@@ -1,8 +1,8 @@
-from dexy.doc import Doc
+from dexy.node import DocNode
 from dexy.plugins.templating_filters import TemplateFilter
 from dexy.plugins.templating_plugins import TemplatePlugin
-from dexy.tests.utils import wrap
 from dexy.tests.utils import run_templating_plugin as run
+from dexy.tests.utils import wrap
 import dexy.plugins.templating_plugins as plugin
 import inspect
 import os
@@ -50,11 +50,12 @@ def test_subdirectories():
         os.makedirs("s1")
         os.makedirs("s2")
 
-        doc = Doc("file.txt|testsubdir",
+        node = DocNode("file.txt|testsubdir",
                 contents="hello",
                 wrapper=wrapper)
 
-        wrapper.run_docs(doc)
+        wrapper.run_docs(node)
+        doc = node.children[0]
 
         env = doc.final_artifact.filter_instance.run_plugins()
         assert 's1' in env['subdirectories']
@@ -69,12 +70,13 @@ class TestVariables(TemplateFilter):
 
 def test_variables():
     with wrap() as wrapper:
-        doc = Doc("hello.txt|testvars",
+        node = DocNode("hello.txt|testvars",
                 contents = "hello",
                 testvars = { "variables" : {"foo" : "bar", "x" : 123.4 } },
                 wrapper=wrapper)
 
-        wrapper.run_docs(doc)
+        wrapper.run_docs(node)
+        doc = node.children[0]
 
         env = doc.final_artifact.filter_instance.run_plugins()
         assert env['foo'] == 'bar'
@@ -90,11 +92,11 @@ class TestGlobals(TemplateFilter):
 def test_globals():
     with wrap() as wrapper:
         wrapper.globals = "foo=bar"
-        doc = Doc("hello.txt|testglobals",
+        node = DocNode("hello.txt|testglobals",
                 contents = "hello",
                 wrapper=wrapper)
 
-        wrapper.run_docs(doc)
-
+        wrapper.run_docs(node)
+        doc = node.children[0]
         env = doc.final_artifact.filter_instance.run_plugins()
         assert env['foo'] == 'bar'

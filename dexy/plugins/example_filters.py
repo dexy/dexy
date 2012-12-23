@@ -41,7 +41,7 @@ class AccessOtherDocuments(Example):
 
             ### @export "access-other-docs-lens"
             n_children = len(doc.children)
-            n_artifacts = len(doc.artifacts)
+            n_inputs = len(doc.inputs)
 
             ### @export "access-other-docs-output-length"
             if doc.output().has_data():
@@ -50,7 +50,7 @@ class AccessOtherDocuments(Example):
                 length = len(doc.output().ordered_dict())
 
             ### @export "access-other-docs-finish"
-            info.append("%s (%s children, %s artifacts, length %s)" % (doc.key, n_children, n_artifacts, length))
+            info.append("%s (%s children, %s inputs, length %s)" % (doc.key, n_children, n_inputs, length))
         s = "%s        " % os.linesep
         return s.join(info)
         ### @end

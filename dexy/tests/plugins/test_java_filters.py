@@ -1,4 +1,4 @@
-from dexy.doc import Doc
+from dexy.node import DocNode
 from dexy.tests.utils import assert_in_output
 from dexy.tests.utils import assert_output
 from dexy.tests.utils import wrap
@@ -10,19 +10,22 @@ JAVA_SRC = """public class hello {
 }"""
 
 def test_javac_filter():
+    # not using runfilter() because file has to be named 'hello.java'
     with wrap() as wrapper:
-        doc = Doc("hello.java|javac",
+        doc = DocNode("hello.java|javac",
                 contents=JAVA_SRC,
                 wrapper=wrapper)
         wrapper.run_docs(doc)
+        assert doc.children[0].output().is_cached()
 
 def test_java_filter():
+    # not using runfilter() because file has to be named 'hello.java'
     with wrap() as wrapper:
-        doc = Doc("hello.java|java",
+        doc = DocNode("hello.java|java",
                 contents=JAVA_SRC,
                 wrapper=wrapper)
         wrapper.run_docs(doc)
-        assert doc.output().data() == "Java Hello World!\n"
+        assert doc.children[0].output().data() == "Java Hello World!\n"
 
 def test_jruby_filter():
     assert_output('jruby', "puts 1+1", "2\n")

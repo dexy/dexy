@@ -1,7 +1,6 @@
 from dexy.common import OrderedDict
 from dexy.data import Data
 from dexy.doc import Doc
-from dexy.doc import PatternDoc
 from dexy.exceptions import UserFeedback
 from dexy.filter import DexyFilter
 from dexy.tests.utils import wrap
@@ -29,14 +28,6 @@ def test_output_is_data():
         wrapper.run_docs(doc)
         assert isinstance(doc.output(), Data)
 
-def test_create_doc_with_child():
-    with wrap() as wrapper:
-        doc = Doc("parent.txt", Doc("child.txt", wrapper=wrapper), wrapper=wrapper)
-        doc.populate()
-        assert doc.key == "parent.txt"
-        assert doc.children[0].key == "child.txt"
-        assert doc.children[1].key == "parent.txt"
-
 def test_create_virtual_initial_artifact():
     with wrap() as wrapper:
         doc = Doc("abc.txt", contents="these are the contents", wrapper=wrapper)
@@ -51,11 +42,6 @@ def test_create_virtual_initial_artifact_with_dict():
         doc = Doc("abc.txt", contents = od_contents, wrapper=wrapper)
         wrapper.run_docs(doc)
         assert doc.children[0].output_data.__class__.__name__ == "Sectioned"
-
-def test_create_doc_with_filters():
-    with wrap() as wrapper:
-        doc = Doc("abc.txt|outputabc", contents="these are the contents", wrapper=wrapper)
-        wrapper.run_docs(doc)
 
 def test_doc_setup():
     with wrap() as wrapper:
@@ -95,40 +81,3 @@ def test_doc_setup():
         assert doc.children[1].prior.key == "abc.txt"
         assert doc.children[2].prior.key == "abc.txt|dexy"
 
-def test_setup_pattern_doc_no_filters():
-    with wrap() as wrapper:
-        doc = PatternDoc("*.txt", wrapper=wrapper)
-        doc.populate()
-        doc.setup()
-        assert doc.file_pattern == "*.txt"
-        assert doc.filter_aliases == []
-
-def test_setup_pattern_doc_one_filter():
-    with wrap() as wrapper:
-        doc = PatternDoc("*.txt|dexy", wrapper=wrapper)
-        doc.populate()
-        doc.setup()
-        assert doc.file_pattern == "*.txt"
-        assert doc.filter_aliases == ['dexy']
-
-def test_setup_pattern_doc_many_filters():
-    with wrap() as wrapper:
-        doc = PatternDoc("*.txt|dexy|dexy|dexy", wrapper=wrapper)
-        doc.populate()
-        doc.setup()
-        assert doc.file_pattern == "*.txt"
-        assert doc.filter_aliases == ['dexy', 'dexy', 'dexy']
-
-def test_pattern_doc_args():
-    with wrap() as wrapper:
-        with open("hello.txt", "w") as f:
-            f.write("hello!")
-
-        wrapper.setup_batch()
-
-        doc = PatternDoc("*.txt", foo="bar", wrapper=wrapper)
-        doc.populate()
-        assert doc.args['foo'] == 'bar'
-        assert isinstance(doc.children[0], Doc)
-        assert doc.children[0].key == "hello.txt"
-        assert doc.children[0].args['foo'] == 'bar'

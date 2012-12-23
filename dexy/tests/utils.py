@@ -78,7 +78,7 @@ class runfilter(wrap):
         except dexy.exceptions.InactiveFilter:
             raise SkipTest
 
-        return wrapper.batch.tree[0]
+        return wrapper.batch.tree[0].children[0]
 
 def assert_output(filter_alias, doc_contents, expected_output, ext=".txt"):
     if not ext.startswith("."):
