@@ -25,10 +25,10 @@ def test_process_method_with_dict():
 
 def test_add_new_document():
     with runfilter("newdoc", "hello") as doc:
-        assert doc.children[-1].key == "subdir/newfile.txt|processtext"
+        assert doc.node.inputs[-1].key == "subdir/newfile.txt|processtext"
         assert doc.output().data() == "we added a new file"
-        assert isinstance(doc.children[-1], Doc)
-        assert doc.children[-1].output().data() == "Dexy processed the text 'newfile'"
+        assert isinstance(doc.node.inputs[-1].children[0], Doc)
+        assert doc.node.inputs[-1].children[0].output().data() == "Dexy processed the text 'newfile'"
 
         assert "Doc:subdir/example.txt|newdoc" in doc.wrapper.batch.lookup_table
         assert "Doc:subdir/newfile.txt|processtext" in doc.wrapper.batch.lookup_table
@@ -56,10 +56,11 @@ def test_access_other_documents():
 
         expected_items = [
             "Here is a list of previous docs in this tree (not including test.txt|others).",
-            "hello.txt|newdoc (3 children, 0 inputs, length 19)",
+            "newfile.txt|processtext (2 children, 0 inputs, length 33)",
+            "hello.txt|newdoc (2 children, 0 inputs, length 19)"
             ]
 
-        output = parent.children[0].output().as_text()
+        output = unicode(parent.children[-1].output())
 
         for item in expected_items:
             assert item in output
@@ -103,10 +104,9 @@ def test_doc_children_artifacts():
 
         doc = node.children[0]
 
-        assert len(doc.children) == 3
+        assert len(doc.children) == 2
         assert isinstance(doc.children[0], InitialVirtualArtifact)
         assert isinstance(doc.children[1], FilterArtifact)
-        assert isinstance(doc.children[2], Doc)
 
         assert len(parent.inputs) == 1
         assert len(parent.children) == 1

@@ -1,4 +1,4 @@
-from dexy.doc import Doc
+import dexy.doc
 import dexy.task
 import fnmatch
 import os
@@ -12,7 +12,7 @@ class Node(dexy.task.Task):
 
     def __init__(self, key, **kwargs):
         super(Node, self).__init__(key, **kwargs)
-        self.inputs = kwargs.get('inputs', {})
+        self.inputs = kwargs.get('inputs', [])
 
     def walk_inputs(self):
         """
@@ -51,7 +51,7 @@ class DocNode(Node):
     ALIASES = ['doc']
 
     def populate(self):
-        doc = Doc(self.key, **self.args)
+        doc = dexy.doc.Doc(self.key, **self.args)
         if not hasattr(doc, 'wrapper') or not doc.wrapper:
             doc.wrapper = self.wrapper
         doc.node = self
@@ -114,7 +114,7 @@ class PatternNode(Node):
 
                     self.log.debug("creating child of patterndoc %s: %s" % (self.key, doc_key))
                     self.log.debug("with args %s" % doc_args)
-                    doc = Doc(doc_key, **doc_args)
+                    doc = dexy.doc.Doc(doc_key, **doc_args)
                     doc.node = self
                     self.children.append(doc)
                     doc.populate()

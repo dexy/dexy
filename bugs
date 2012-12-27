@@ -7,6 +7,7 @@
 [issue] make sure modargs and/or dexy always exits with nonzero exit code on an error | id:15fa1ebe0ee0f25654172cf20a90ba37e2fc25f8
 [feature] implement is_active method for templates and list dependencies that need to be installed | id:1e5d9d273c8db7d4c38d85b76442f0d2ae7dd637
 [feature] add javascript search widget helper to dexy for searching generated content, e.g. http://www.tipue.com/search/demo/ | id:205430dabd1a07653925609b005c8e3e1a0ee4d0
+[feature] standardize foo-bar and foo_bar alternatives for all node-level arguments, document them | id:20780662db220129d86be33b7a11d631246ae50b
 [feature] warning or other indication when 'canonical name' is in different directory as original document name | id:20b1be4d8d8b80debc8a66e81c28af2cfe37d0a2
 [feature] add template arg to rst2html and other rst handlers | id:241f612602d54ae078579720d74e1f931561528a
 [feature] WebsiteReporter have way of making collection of docs and navigation between elements (next, prev, up) | id:2928f96220caea5a1d55dc4ad706b84a9895f743
@@ -20,6 +21,7 @@
 [feature] s3 uploader reporter | id:439932c2c272d6b590792d40179c4f75b140e7da
 [perf] add timing for running reporters | id:45629c726d242ef858eb01bada1f9d1c49b16894
 [todo] update custom search engine | id:460ebbbe3e5ca7011eff6a19365cdcef2430e3bf
+[feature] make standard way of generating new doc names that should be based on original doc key (e.g. multiple pygments image files for sectioned input, record vars) | id:4729142eade686eefe2d37486aa89b08c6807157
 [feature] add sqlite3 filter which takes .sqlite file as main input and scripts as extra inputs | id:48e75022ebcf40eb9ca7716ad3b45bf736705451
 [issue] test all jinja filters, e.g. report that indent(4) does not work on *.py|py output | id:4a7939681b6eaec5edf4abc063583a7de654678d
 [feature] generate doc config files based on python document objects | id:4aa1593ac56ff4d31666aeba81b06f07dd6f96d6

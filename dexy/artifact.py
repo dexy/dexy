@@ -5,6 +5,7 @@ import dexy.doc
 import dexy.exceptions
 import dexy.filter
 import dexy.metadata
+import dexy.node
 import dexy.task
 import hashlib
 import inspect
@@ -336,7 +337,9 @@ class FilterArtifact(Artifact):
             for t in task:
                 t()
 
-        self.doc.children.append(doc)
+        node = dexy.node.Node(doc.key)
+        node.children = [doc]
+        self.doc.node.inputs.append(node)
 
     def set_extension(self):
         this_filter_outputs = self.filter_class.OUTPUT_EXTENSIONS
