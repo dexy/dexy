@@ -11,6 +11,9 @@ class Doc(dexy.task.Task):
     """
     ALIASES = ['document']
 
+    def arg_value(self, arg_name_hyphen, default=None):
+        return dexy.utils.value_for_hyphenated_or_underscored_arg(self.args, arg_name_hyphen, default)
+
     def filter_class_for_alias(self, alias):
         if alias == '':
             blank_alias_msg = "You have a trailing | or you have 2 | symbols together in your specification for %s"

@@ -44,15 +44,15 @@ class Filter:
     def args(self):
         return self.artifact.filter_args()
 
-    def arg_value(self, key, default=None):
-        return self.args().get(key, default)
+    def arg_value(self, arg_name_hyphen, default=None):
+        return dexy.utils.value_for_hyphenated_or_underscored_arg(self.args(), arg_name_hyphen, default)
 
     @classmethod
     def data_class_alias(klass, file_ext):
         return klass.OUTPUT_DATA_TYPE
 
     def do_add_new_files(self):
-        return self.ADD_NEW_FILES or self.args().get('add-new-files', False) or self.args().get("add_new_files", False)
+        return self.ADD_NEW_FILES or self.arg_value("add-new-files", False)
 
     def process(self):
         pass
@@ -61,13 +61,16 @@ class Filter:
         name_without_ext = posixpath.splitext(self.artifact.key)[0]
         return "%s%s" % (name_without_ext, self.artifact.ext)
 
+    def doc_arg(self, arg_name_hyphen, default=None):
+        return self.artifact.doc.arg_value(arg_name_hyphen, default)
+
     def add_doc(self, doc_name, doc_contents=None):
         doc_name = os_to_posix(doc_name)
         if not posixpath.sep in doc_name:
             doc_name = posixpath.join(self.input().parent_dir(), doc_name)
 
-        additional_doc_filters = self.args().get("additional-doc-filters", {}) or self.args().get('additional_doc_filters', {})
-        self.log.debug("additional_doc_filters are %s" % additional_doc_filters)
+        additional_doc_filters = self.arg_value('additional-doc-filters', {}) 
+        self.log.debug("additional-doc-filters are %s" % additional_doc_filters)
 
         doc_ext = os.path.splitext(doc_name)[1]
 

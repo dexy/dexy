@@ -53,11 +53,7 @@ class Artifact(dexy.task.Task):
         return self.output_data.basename()
 
     def canonical_name_from_args(self):
-        raw_arg_name = None
-        if self.args.get('canonical-name'):
-            raw_arg_name = self.args.get('canonical-name')
-        elif self.args.get('canonical_name'):
-            raw_arg_name = self.args.get('canonical_name')
+        raw_arg_name = self.doc.arg_value('canonical-name')
 
         if raw_arg_name:
             if "/" in raw_arg_name:

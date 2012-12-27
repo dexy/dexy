@@ -123,7 +123,7 @@ def test_virtual_artifact():
                 wrapper=wrapper)
 
         a.name = "abc.txt"
-
+        a.doc = Doc("abc.txt")
         a.setup()
         a.run()
 
@@ -139,6 +139,7 @@ def test_initial_artifact_hash():
 
         artifact = InitialArtifact(filename, wrapper=wrapper)
         artifact.name = filename
+        artifact.doc = Doc(filename)
         artifact.setup()
         artifact.run()
 
@@ -151,6 +152,7 @@ def test_initial_artifact_hash():
 
         artifact = InitialArtifact(filename, wrapper=wrapper)
         artifact.name = filename
+        artifact.doc = Doc(filename)
         artifact.setup()
         artifact.run()
 

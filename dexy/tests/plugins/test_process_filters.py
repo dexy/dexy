@@ -4,6 +4,21 @@ from dexy.tests.utils import wrap
 import dexy.exceptions
 import os
 
+def test_add_new_files():
+    with wrap() as wrapper:
+        node = DocNode("example.sh|sh",
+                contents = "echo 'hello' > newfile.txt",
+                sh = {
+                    "add-new-files" : True,
+                    "additional-doc-filters" : { '.txt' : 'markdown' }
+                    },
+                wrapper=wrapper)
+
+        wrapper.run_docs(node)
+
+        assert wrapper.batch.lookup_table['Doc:newfile.txt'].output().data() == "hello" + os.linesep
+        assert wrapper.batch.lookup_table['Doc:newfile.txt|markdown'].output().data() == "<p>hello</p>"
+
 def test_walk_working_dir():
     with wrap() as wrapper:
         node = DocNode("example.sh|sh",
@@ -20,20 +35,6 @@ def test_walk_working_dir():
             if doc.key_with_class() == "Doc:example.sh-sh.txt-files":
                 assert doc.output().as_sectioned()['newfile.txt'] == "hello" + os.linesep
 
-def test_add_new_files():
-    with wrap() as wrapper:
-        node = DocNode("example.sh|sh",
-                contents = "echo 'hello' > newfile.txt",
-                sh = {
-                    "add-new-files" : True,
-                    "additional-doc-filters" : { '.txt' : 'markdown' }
-                    },
-                wrapper=wrapper)
-
-        wrapper.run_docs(node)
-
-        assert wrapper.batch.lookup_table['Doc:newfile.txt'].output().data() == "hello" + os.linesep
-        assert wrapper.batch.lookup_table['Doc:newfile.txt|markdown'].output().data() == "<p>hello</p>"
 
 def test_not_present_executable():
     assert 'notreal' in NotPresentExecutable.executables()

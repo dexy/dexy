@@ -6,6 +6,22 @@ import yaml
 import posixpath
 import re
 
+def value_for_hyphenated_or_underscored_arg(arg_dict, arg_name_hyphen, default=None):
+        if not "-" in arg_name_hyphen and "_" in arg_name_hyphen:
+            raise dexy.exceptions.InternalDexyProblem("arg_name_hyphen %s has underscores!" % arg_name_hyphen)
+
+        arg_name_underscore = arg_name_hyphen.replace("-", "_")
+
+        arg_value = arg_dict.get(arg_name_hyphen)
+
+        if not arg_value:
+            arg_value = arg_dict.get(arg_name_underscore)
+
+        if not arg_value:
+            return default
+        else:
+            return arg_value
+
 def s(text):
     return re.sub('\s+', ' ', text)
 
