@@ -12,7 +12,7 @@ class Node(dexy.task.Task):
 
     def __init__(self, key, **kwargs):
         super(Node, self).__init__(key, **kwargs)
-        self.inputs = kwargs.get('inputs', [])
+        self.inputs = list(kwargs.get('inputs', []))
 
     def walk_inputs(self):
         """
