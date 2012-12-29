@@ -29,12 +29,17 @@ class CalibreFilter(SubprocessFilter):
     Invokes ebook-convert command line tool (part of calibre) to generate various output formats (including .mobi for Kindle)
 
     http://manual.calibre-ebook.com/cli/ebook-convert.html
+
+    TODO: output oeb (outputs a directory)
+    TODO: test with html, pml plugins
     """
     ADD_NEW_FILES = False
     ALIASES = ['calibre', 'ebook']
     EXECUTABLE = "ebook-convert"
-    INPUT_EXTENSIONS = ['.epub', '.html']
-    OUTPUT_EXTENSIONS = ['.mobi']
+    INPUT_EXTENSIONS = ['.html', '.epub', '.azw4', '.chm', '.comic', '.djvu']
+    OUTPUT_EXTENSIONS = ['.mobi', '.epub', '.azw3', '.fb2', '.htmlz', '.lit',
+            '.lrf', '.pdf', '.rtf', '.snb', '.tcr', '.txt', '.txtz', '.html',
+            '.pml']
     PATH_EXTENSIONS = ['/Applications/calibre.app/Contents/MacOS']
     VERSION_COMMAND = "ebook-convert --version"
 
