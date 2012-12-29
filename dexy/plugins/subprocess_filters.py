@@ -29,9 +29,6 @@ class CalibreFilter(SubprocessFilter):
     Invokes ebook-convert command line tool (part of calibre) to generate various output formats (including .mobi for Kindle)
 
     http://manual.calibre-ebook.com/cli/ebook-convert.html
-
-    TODO: output oeb (outputs a directory)
-    TODO: test with html, pml plugins
     """
     ADD_NEW_FILES = False
     ALIASES = ['calibre', 'ebook']
@@ -42,6 +39,9 @@ class CalibreFilter(SubprocessFilter):
             '.pml']
     PATH_EXTENSIONS = ['/Applications/calibre.app/Contents/MacOS']
     VERSION_COMMAND = "ebook-convert --version"
+
+#    TODO: output oeb (outputs a directory)
+#    TODO: test with html, pml plugins
 
     def command_string(self):
         args = {
