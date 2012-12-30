@@ -33,8 +33,10 @@ class CalibreFilter(SubprocessFilter):
     ADD_NEW_FILES = False
     ALIASES = ['calibre', 'ebook']
     EXECUTABLE = "ebook-convert"
-    INPUT_EXTENSIONS = ['.html', '.epub', '.azw4', '.chm', '.comic', '.djvu']
-    OUTPUT_EXTENSIONS = ['.mobi', '.epub', '.azw3', '.fb2', '.htmlz', '.lit',
+    FRAGMENT = False
+    INPUT_EXTENSIONS = ['.html', '.epub', '.azw', '.chm', '.comic', '.djvu',
+            '.pdf', '.mobi', '.lit', '.fb2']
+    OUTPUT_EXTENSIONS = ['.mobi', '.epub', '.azw', '.fb2', '.htmlz', '.lit',
             '.lrf', '.pdf', '.rtf', '.snb', '.tcr', '.txt', '.txtz', '.html',
             '.pml']
     PATH_EXTENSIONS = ['/Applications/calibre.app/Contents/MacOS']
@@ -50,7 +52,7 @@ class CalibreFilter(SubprocessFilter):
             'input_file' : self.input_filename(),
             'output_file' : self.output_filename()
         }
-        return "%(prog)s %(input_file)s %(output_file)s %(args)s" % args
+        return """%(prog)s "%(input_file)s" "%(output_file)s" %(args)s""" % args
 
 class LyxFilter(SubprocessFilter):
     """

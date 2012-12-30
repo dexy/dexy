@@ -106,7 +106,7 @@ class SubprocessFilter(Filter):
             'scriptargs' : self.command_line_scriptargs() or "",
             'script_file' : self.input_filename()
         }
-        return "%(prog)s %(args)s %(script_file)s %(scriptargs)s" % args
+        return """%(prog)s %(args)s "%(script_file)s" %(scriptargs)s""" % args
 
     def command_string(self):
         args = {
@@ -116,7 +116,7 @@ class SubprocessFilter(Filter):
             'scriptargs' : self.command_line_scriptargs() or "",
             'output_file' : self.output_filename()
         }
-        return "%(prog)s %(args)s %(script_file)s %(scriptargs)s %(output_file)s" % args
+        return """%(prog)s %(args)s "%(script_file)s" %(scriptargs)s "%(output_file)s" """ % args
 
     def ignore_nonzero_exit(self):
         return self.artifact.wrapper.ignore_nonzero_exit
