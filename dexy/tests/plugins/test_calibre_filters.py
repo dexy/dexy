@@ -22,9 +22,6 @@ def test_calibre_mobi():
 def test_calibre_epub():
     run_calibre('.epub')
 
-def test_calibre_azw3():
-    run_calibre('.azw3')
-
 def test_calibre_fb2():
     run_calibre('.fb2')
 

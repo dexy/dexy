@@ -36,13 +36,13 @@ class CalibreFilter(SubprocessFilter):
     FRAGMENT = False
     INPUT_EXTENSIONS = ['.html', '.epub', '.azw', '.chm', '.comic', '.djvu',
             '.pdf', '.mobi', '.lit', '.fb2']
-    OUTPUT_EXTENSIONS = ['.mobi', '.epub', '.azw', '.fb2', '.htmlz', '.lit',
-            '.lrf', '.pdf', '.rtf', '.snb', '.tcr', '.txt', '.txtz', '.html',
-            '.pml']
+    OUTPUT_EXTENSIONS = ['.mobi', '.epub', '.fb2', '.htmlz', '.lit', '.lrf',
+            '.pdf', '.rtf', '.snb', '.tcr', '.txt', '.txtz', '.html', '.pml']
     PATH_EXTENSIONS = ['/Applications/calibre.app/Contents/MacOS']
     VERSION_COMMAND = "ebook-convert --version"
 
 #    TODO: output oeb (outputs a directory)
+#    TODO: output azw
 #    TODO: test with html, pml plugins
 
     def command_string(self):

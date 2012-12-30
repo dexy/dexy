@@ -59,7 +59,7 @@ def test_command_line_args():
         assert doc.output().data() == "hello" + os.linesep
 
         command_used = doc.children[-1].filter_instance.command_string()
-        assert command_used == "python -B example.py  example.txt"
+        assert command_used == """python -B "example.py"  "example.txt" """
 
 def test_scriptargs():
     with wrap() as wrapper:
@@ -74,7 +74,7 @@ def test_scriptargs():
         assert doc.output().data() == "--foo" + os.linesep
 
         command_used = doc.children[-1].filter_instance.command_string()
-        assert command_used == "python  example.py --foo example.txt"
+        assert command_used == """python  "example.py" --foo "example.txt" """
 
 def test_custom_env_in_args():
     with wrap() as wrapper:
