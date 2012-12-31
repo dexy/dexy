@@ -84,7 +84,7 @@ class Filter:
             raise Exception("not implemented")
 
         if len(filters) > 0:
-            if self.args().get('keep-originals', True):
+            if self.arg_value('keep-originals', True):
                 doc_key = doc_name
                 doc = dexy.doc.Doc(doc_key, contents=doc_contents)
                 self.artifact.add_doc(doc)
