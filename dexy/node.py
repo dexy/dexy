@@ -33,7 +33,6 @@ class Node(dexy.task.Task):
     def walk_input_docs(self):
         for node in self.walk_inputs():
             for child in node.children:
-                assert child.__class__.__name__ == "Doc"
                 yield child
 
     def setup(self):
@@ -43,7 +42,6 @@ class Node(dexy.task.Task):
         # Now update child hashstrings for inputs.
         for doc in self.children:
             for artifact in doc.children[1:]:
-                assert artifact.__class__.__name__ == "FilterArtifact"
                 artifact.metadata.node_hashstring = self.hashstring
                 artifact.set_hashstring()
 
@@ -75,6 +73,24 @@ class BundleNode(Node):
 
     def populate(self):
         pass
+
+class ScriptNode(BundleNode):
+    """
+    Node representing a bundle of other nodes which must always run in a set
+    order, so if any of the bundle siblings change, the whole bundle should be
+    re-run.
+    """
+    ALIASES = ['script']
+
+    def setup(self):
+        self.metadata.input_hashstrings = ",".join(i.hashstring for i in self.inputs)
+        self.metadata.child_hashstrings = ",".join(c.hashstring for c in self.children)
+        self.set_hashstring()
+
+        for doc in self.children:
+            for artifact in doc.children[1:]:
+                artifact.metadata.node_hashstring = self.hashstring
+                artifact.set_hashstring()
 
 class PatternNode(Node):
     """
