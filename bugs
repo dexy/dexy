@@ -15,6 +15,8 @@
 [feature] helper function that generates image files where needed for .mobi format | id:2f243a532981402f7968913eeba710ba8d682a52
 [feature] add html canvas element to whole page, draw on that for annotation. or add svg elements + position on top. | id:36a3dbd3c6544e7805bff0b8e1dafcad0393c6d2
 [idea] how to cite code in scientific papers | id:36d5729d63e3da51009543f198b31ad26e917657
+[feature] have EXCLUDE_WD at class level as well as exclude_wd at doc level for blacklisting file extensions that working dir should not be populated with | id:37018110ecdf9b34b6fe8763eb76f6af6d343afb
+[feature] implement include_wd and INCLUDE_WD to whitelist file extensions that working dir should be populated with | id:38a5df561a68cd3fdad9a6fadef2a9c00079237b
 [issue] detect when two additional docs have same key - hashstrings will clash when reconstitutedw | id:39b6cc8940b782c6593c1992d807ea5c373ed93e
 [feature] dump dexy env into working dir so easy to troubleshoot | id:3c03b3aadc4b3e799be0b4da8022dc1b56f7bc68
 [feature] s3 uploader reporter | id:439932c2c272d6b590792d40179c4f75b140e7da

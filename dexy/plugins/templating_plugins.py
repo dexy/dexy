@@ -1,7 +1,4 @@
 from datetime import datetime
-from dexy.artifact import Artifact
-from dexy.doc import Doc
-from dexy.node import PatternNode
 from dexy.plugin import PluginMeta
 from dexy.version import DEXY_VERSION
 from pygments.styles import get_all_styles
@@ -12,7 +9,6 @@ import dexy.data
 import dexy.exceptions
 import json
 import os
-import pprint
 import pygments
 import pygments.formatters
 import re
@@ -30,7 +26,6 @@ class TemplatePlugin():
 
     def run(self):
         return {}
-
 
 try:
     from bs4 import BeautifulSoup
@@ -245,18 +240,8 @@ class Inputs(TemplatePlugin):
     ALIASES = ['inputs']
 
     def input_tasks(self):
-        for task in self.filter_instance.processed():
-            if task.state != 'complete':
-                raise dexy.exceptions.InternalDexyProblem("All tasks should be complete! Task %s in state %s" % (task.key, task.state))
-
-            if isinstance(task, Artifact):
-                yield task
-            elif isinstance(task, Doc):
-                yield task.final_artifact
-            elif isinstance(task, PatternNode):
-                next
-            else:
-                raise dexy.exceptions.InternalDexyProblem("unexpected task class '%s'" % task.__class__.__name__)
+        for doc in self.filter_instance.processed():
+            yield doc.final_artifact
 
     def a(self, relative_ref):
         return self.map_relative_refs[relative_ref]
