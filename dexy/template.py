@@ -39,7 +39,7 @@ class Template(object):
                 os.remove(dexy_rst)
 
     @classmethod
-    def dexy(klass, meta=True):
+    def dexy(klass, meta=True, additional_doc_keys=None):
         """
         Run dexy on this template's files in a temporary directory.
 
@@ -64,6 +64,10 @@ class Template(object):
             wrapper.batch = dexy.batch.Batch(wrapper)
 
             ast = wrapper.load_doc_config()
+
+            if additional_doc_keys:
+                for doc_key in additional_doc_keys:
+                    ast.add_task_info(doc_key)
 
             if meta and os.path.exists('dexy.rst'):
                 for doc_key in DOC_KEYS:

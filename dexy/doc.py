@@ -148,7 +148,8 @@ class Doc(dexy.task.Task):
         self.add_artifact(artifact)
 
     def setup(self):
-        self.hashstring = self.final_artifact.hashstring
+        self.metadata.final_artifact_hashstring = self.final_artifact.hashstring
+        self.set_hashstring()
 
     def populate(self):
         self.set_log()

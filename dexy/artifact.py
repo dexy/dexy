@@ -25,9 +25,6 @@ class Artifact(dexy.task.Task):
         self.created_by_doc = None
         self.remaining_doc_filters = []
 
-    def set_and_save_hash(self):
-        self.set_hashstring()
-
     def key_for_log(self):
         if len(self.remaining_doc_filters) > 0:
             return "%s(|%s)" % (self.key, "|".join(self.remaining_doc_filters))
@@ -36,9 +33,6 @@ class Artifact(dexy.task.Task):
 
     def key_with_class(self):
         return "%s:%s" % (self.__class__.__name__, self.key_for_log())
-
-    def set_hashstring(self):
-        self.hashstring = self.metadata.compute_hash()
 
     def tmp_dir(self):
         return os.path.join(self.wrapper.artifacts_dir, self.hashstring)
@@ -126,7 +120,9 @@ class Artifact(dexy.task.Task):
 
         self.metadata = dexy.metadata.Md5()
         self.set_metadata_attrs()
-        self.set_and_save_hash()
+
+        # sets hashstring w/o node data, will be set again by node.
+        self.set_hashstring()
 
         if hasattr(self, 'prior') and self.prior:
             self.input_data = self.prior.output_data
@@ -323,6 +319,10 @@ class FilterArtifact(Artifact):
         doc.wrapper = self.wrapper
         doc.canon = True
 
+        node = dexy.node.Node(doc.key)
+        node.children = [doc]
+        doc.node = node
+
         for task in (doc,):
             for t in task:
                 t()
@@ -333,8 +333,6 @@ class FilterArtifact(Artifact):
             for t in task:
                 t()
 
-        node = dexy.node.Node(doc.key)
-        node.children = [doc]
         self.doc.node.inputs.append(node)
 
     def set_extension(self):

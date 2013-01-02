@@ -43,70 +43,70 @@ class AbstractSyntaxTree():
             self.lookup_table[task_key].update(kwargs)
         else:
             self.lookup_table[task_key] = kwargs
-            if not kwargs.has_key('children'):
-                self.lookup_table[task_key]['children'] = []
+            if not kwargs.has_key('children') or kwargs.has_key('inputs'):
+                self.lookup_table[task_key]['inputs'] = []
 
         self.clean_tree()
 
-    def add_dependency(self, task_key, child_task_key):
+    def add_dependency(self, task_key, input_task_key):
         """
-        Adds child to list of children in lookup table dict for this task.
+        Adds input to list of inputs in lookup table dict for this task.
         """
         task_key = self.standardize_key(task_key)
-        child_task_key = self.standardize_key(child_task_key)
-        self.wrapper.log.debug("adding dependency of '%s' on '%s'" % (child_task_key, task_key))
+        input_task_key = self.standardize_key(input_task_key)
+        self.wrapper.log.debug("adding dependency of '%s' on '%s'" % (input_task_key, task_key))
 
-        if task_key == child_task_key:
+        if task_key == input_task_key:
             return
 
         if not task_key in self.tree:
             self.tree.append(task_key)
 
         if self.lookup_table.has_key(task_key):
-            self.lookup_table[task_key]['children'].append(child_task_key)
+            self.lookup_table[task_key]['inputs'].append(input_task_key)
         else:
-            self.lookup_table[task_key] = { 'children' : [child_task_key] }
+            self.lookup_table[task_key] = { 'inputs' : [input_task_key] }
 
-        if not self.lookup_table.has_key(child_task_key):
-            self.lookup_table[child_task_key] = { 'children' : [] }
+        if not self.lookup_table.has_key(input_task_key):
+            self.lookup_table[input_task_key] = { 'inputs' : [] }
 
         self.clean_tree()
 
     def clean_tree(self):
         """
-        Removes tasks which are already represented as children.
+        Removes tasks which are already represented as inputs.
         """
-        all_children = self.all_children()
+        all_inputs = self.all_inputs()
 
         # make copy since can't iterate and remove from same tree
         treecopy = copy.deepcopy(self.tree)
 
         for task in treecopy:
-            if task in all_children:
+            if task in all_inputs:
                 self.tree.remove(task)
 
-    def all_children(self):
+    def all_inputs(self):
         """
-        Returns a set of all task keys identified as children of some other element.
+        Returns a set of all task keys identified as inputs of some other element.
         """
-        all_children = set()
+        all_inputs = set()
         for kwargs in self.lookup_table.values():
-            all_children.update(kwargs['children'])
-        return all_children
+            all_inputs.update(kwargs['inputs'])
+        return all_inputs
 
     def task_kwargs(self, task_key):
         """
         Returns the dict of kw args for a task
         """
         args = self.lookup_table[task_key].copy()
-        del args['children']
+        del args['inputs']
         return args
 
-    def task_children(self, parent_key):
+    def task_inputs(self, parent_key):
         """
-        Returns the list of children for a atsk
+        Returns the list of inputs for a atsk
         """
-        return self.lookup_table[parent_key]['children']
+        return self.lookup_table[parent_key]['inputs']
 
     def debug(self, log=None):
         text = []
@@ -153,7 +153,7 @@ class AbstractSyntaxTree():
             return created_tasks[key]
 
         def parse_item(key):
-            children = self.task_children(key)
+            inputs = self.task_inputs(key)
             kwargs = self.task_kwargs(key)
             kwargs['wrapper'] = self.wrapper
             if kwargs.get('inactive') or kwargs.get('disabled'):
@@ -166,12 +166,12 @@ class AbstractSyntaxTree():
                 else:
                     return
 
-            child_tasks = [parse_item(child) for child in children if child]
+            input_tasks = [parse_item(i) for i in inputs if i]
 
-            # filter out inactive children
-            child_tasks = [child for child in child_tasks if child]
+            # filter out inactive inputs
+            input_tasks = [i for i in input_tasks if i]
     
-            return create_dexy_task(key, *child_tasks, **kwargs)
+            return create_dexy_task(key, *input_tasks, **kwargs)
 
         for key in self.tree:
             task = parse_item(key)

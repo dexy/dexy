@@ -14,6 +14,9 @@ class Node(dexy.task.Task):
         super(Node, self).__init__(key, **kwargs)
         self.inputs = list(kwargs.get('inputs', []))
 
+    def hashstring(self):
+        return self.metadata.compute_hash()
+
     def walk_inputs(self):
         """
         Returns a generator which recursively yields all inputs and their inputs.
@@ -34,15 +37,20 @@ class Node(dexy.task.Task):
                 yield child
 
     def setup(self):
-        """
-        Setup method for bsae Node class. All nodes should generate a
-        hashstring based on their inputs and their children so that doc
-        children only need to look at the node's hash.
-        """
-        self.metadata = dexy.metadata.Md5()
-        self.metadata.input_hashes = ",".join([inpt.hashstring for inpt in self.inputs])
-        self.metadata.child_hashes = ",".join([chld.hashstring for chld in self.children])
-        self.hashstring = self.metadata.compute_hash()
+        self.metadata.input_hashstrings = ",".join(i.hashstring for i in self.inputs)
+        self.set_hashstring()
+
+        # Now update child hashstrings for inputs.
+        for doc in self.children:
+            for artifact in doc.children[1:]:
+                assert artifact.__class__.__name__ == "FilterArtifact"
+                artifact.metadata.node_hashstring = self.hashstring
+                artifact.set_hashstring()
+
+        # Now update node's hashstring for children, won't affect children but
+        # will affect other docs using this node as an input.
+        self.metadata.child_hashstrings = ",".join(c.hashstring for c in self.children)
+        self.set_hashstring()
 
 class DocNode(Node):
     """

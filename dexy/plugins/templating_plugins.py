@@ -12,6 +12,7 @@ import dexy.data
 import dexy.exceptions
 import json
 import os
+import pprint
 import pygments
 import pygments.formatters
 import re

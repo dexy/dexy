@@ -45,9 +45,13 @@ class Task():
         self.children = []
         self.inputs = []
         self.created_by_doc = None
+        self.metadata = dexy.metadata.Md5()
 
         if args.has_key('wrapper') and args['wrapper']:
             self.wrapper = args['wrapper']
+
+    def set_hashstring(self):
+        self.hashstring = self.metadata.compute_hash()
 
     def transition(self, to_state):
         if (self.state, to_state) in self.STATE_TRANSITIONS:

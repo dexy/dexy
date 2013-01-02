@@ -1,7 +1,91 @@
 from dexy.node import Node
+from dexy.node import DocNode
 from dexy.node import PatternNode
 from dexy.task import Task
 from dexy.tests.utils import wrap
+from dexy.wrapper import Wrapper
+import time
+
+def test_node_caching():
+    with wrap() as wrapper:
+        with open("hello.py", "w") as f:
+            f.write("print 1+2\n")
+
+        with open("doc.txt", "w") as f:
+            f.write("1 + 1 = {{ d['hello.py|py'] }}")
+
+        hello_py = DocNode("hello.py|py", wrapper=wrapper)
+
+        doc_txt = DocNode("doc.txt|jinja",
+                inputs = [hello_py],
+                wrapper=wrapper)
+
+        wrapper.run_docs(doc_txt)
+
+        hello_py_doc = hello_py.children[0]
+        doc_txt_doc = doc_txt.children[0]
+
+        assert str(doc_txt_doc.output()) == "1 + 1 = 3\n"
+        assert str(hello_py_doc.output()) == "3\n"
+
+        assert hello_py_doc.final_artifact.content_source == 'generated'
+        assert doc_txt_doc.final_artifact.content_source == 'generated'
+
+        wrapper = Wrapper()
+
+        hello_py = DocNode("hello.py|py", wrapper=wrapper)
+
+        doc_txt = DocNode("doc.txt|jinja",
+                inputs = [hello_py],
+                wrapper=wrapper)
+
+        wrapper.run_docs(doc_txt)
+
+        hello_py_doc = hello_py.children[0]
+        doc_txt_doc = doc_txt.children[0]
+
+        assert hello_py_doc.final_artifact.content_source == 'cached'
+        assert doc_txt_doc.final_artifact.content_source == 'cached'
+
+        with open("doc.txt", "w") as f:
+            f.write("1 + 1 = {{ d['hello.py|py'] }}\n")
+
+        wrapper = Wrapper()
+
+        hello_py = DocNode("hello.py|py", wrapper=wrapper)
+
+        doc_txt = DocNode("doc.txt|jinja",
+                inputs = [hello_py],
+                wrapper=wrapper)
+
+        wrapper.run_docs(doc_txt)
+
+        hello_py_doc = hello_py.children[0]
+        doc_txt_doc = doc_txt.children[0]
+
+        assert hello_py_doc.final_artifact.content_source == 'cached'
+        assert doc_txt_doc.final_artifact.content_source == 'generated'
+
+        time.sleep(2)
+
+        with open("hello.py", "w") as f:
+            f.write("print 1+1\n")
+
+        wrapper = Wrapper()
+
+        hello_py = DocNode("hello.py|py", wrapper=wrapper)
+
+        doc_txt = DocNode("doc.txt|jinja",
+                inputs = [hello_py],
+                wrapper=wrapper)
+
+        wrapper.run_docs(doc_txt)
+
+        hello_py_doc = hello_py.children[0]
+        doc_txt_doc = doc_txt.children[0]
+
+        assert hello_py_doc.final_artifact.content_source == 'generated'
+        assert doc_txt_doc.final_artifact.content_source == 'generated'
 
 def test_node_init():
     node = Node("foo.txt")

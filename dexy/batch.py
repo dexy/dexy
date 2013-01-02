@@ -46,15 +46,13 @@ class Batch(object):
 
     def load_ast(self, ast):
         self.ast = ast
-        self.tree, created_tasks = self.ast.walk()
+        self.tree, self.nodes = self.ast.walk()
 
         self.lookup_table = {}
-        for task in created_tasks.values():
+        for task in self.nodes.values():
             self.lookup_table[task.key_with_class()] = task
 
-    def run(self, target=None):
-        self.start_time = time.time()
-
+    def nodes_for_target(self, target=None):
         if target:
             # Look for identical target in root-level nodes
             nodes = [n for n in self.tree if n.key == target]
@@ -65,16 +63,23 @@ class Batch(object):
 
             if not nodes:
                 # Look for identical target anywhere in tree
-                nodes = [n for n in self.lookup_table.values() if n.key == target]
+                nodes = [n for n in self.nodes.values() if n.key == target]
                 # TODO sort nodes..
 
             if not nodes:
                 # Look for similar target anywhere in tree
-                nodes = [n for n in self.lookup_table.values() if n.key.startswith(target)]
+                nodes = [n for n in self.nodes.values() if n.key.startswith(target)]
                 # TODO sort nodes..
 
         else:
             nodes = self.tree
+
+        return nodes
+
+    def run(self, target=None):
+        self.start_time = time.time()
+
+        nodes = self.nodes_for_target(target)
 
         self.state = 'populating'
 
