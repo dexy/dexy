@@ -44,6 +44,8 @@ class Node(dexy.task.Task):
             for artifact in doc.children[1:]:
                 artifact.metadata.node_hashstring = self.hashstring
                 artifact.set_hashstring()
+                artifact.setup_output_data()
+                artifact.input_data = artifact.prior.output_data
 
         # Now update node's hashstring for children, won't affect children but
         # will affect other docs using this node as an input.

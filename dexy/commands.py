@@ -37,6 +37,11 @@ def parse_and_run_cmd(argv, module, default_command):
             sys.stderr.write("Sorry, can't get text of error message.")
         sys.stderr.write(os.linesep)
         sys.exit(1)
+    except KeyboardInterrupt:
+        sys.stderr.write("""
+        ok, stopping your dexy run
+        you might want to 'dexy reset' before running again\n""")
+        sys.exit(1)
 
 def run():
     """
@@ -287,9 +292,6 @@ def cleanup_command(
     wrapper = init_wrapper(locals())
     wrapper.remove_dexy_dirs(reports)
 
-def reports_command(args):
-    pass
-
 def setup_command(__cli_options=False, **kwargs):
     """
     Create the directories dexy needs to run. This helps make sure you mean to run dexy in this directory.
@@ -297,9 +299,18 @@ def setup_command(__cli_options=False, **kwargs):
     wrapper = init_wrapper(locals())
     wrapper.setup_dexy_dirs()
 
+def reports_command():
+    def sort_key(k):
+        return k.__name__
+
+    report_classes = sorted(dexy.reporter.Reporter.plugins, key=sort_key)
+    for klass in report_classes:
+        print "%s: %s" % (klass.__name__, ", ".join(klass.ALIASES))
+
 def help_command(
         example=False, # Whether to run any live examples, if available.
         filters=False, # Whether to print the list of available dexy filters.
+        reports=False, # Whether to print the list of available dexy reports.
         f=False, # If a filter alias is specified, help for that filter is printed.
         on=False # The dexy command to get help on.
         ):
@@ -308,6 +319,8 @@ def help_command(
         filter_command(f, example)
     elif filters:
         filters_command()
+    elif reports:
+        reports_command()
     else:
         args.help_command(PROG, MOD, DEFAULT_COMMAND, on)
 
