@@ -151,6 +151,7 @@ class JinjaFilter(TemplateFilter):
         env.filters['rstcode'] = dexy.plugins.templating_plugins.RstCode.rstcode
         env.filters['indent'] = dexy.plugins.templating_plugins.JinjaFilters.indent
         env.filters['head'] = dexy.plugins.templating_plugins.JinjaFilters.head
+        env.filters['javadoc2rst'] = dexy.plugins.templating_plugins.JavadocToRst.javadoc2rst
         if dexy.plugins.templating_plugins.PrettyPrintHtml.is_active():
             env.filters['prettify_html'] = dexy.plugins.templating_plugins.PrettyPrintHtml.prettify_html
 

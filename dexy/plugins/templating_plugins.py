@@ -46,6 +46,22 @@ class PrettyPrintHtml(TemplatePlugin):
         soup = BeautifulSoup(unicode(html))
         return soup.prettify()
 
+class JavadocToRst(TemplatePlugin):
+    """
+    Exposes javadoc2rst command which strips HTML tags from javadoc comments.
+    """
+
+    ESCAPE = ['\\']
+    REMOVE = ['<p>', '<P>']
+
+    @classmethod
+    def javadoc2rst(klass, javadoc):
+        for x in klass.REMOVE:
+            javadoc = javadoc.replace(x, '\n')
+        for x in klass.ESCAPE:
+            javadoc = javadoc.replace(x, "\\%s" % x)
+        return javadoc
+
 class PrettyPrintJson(TemplatePlugin):
     """
     Exposes ppjson command.
@@ -91,7 +107,10 @@ class RstCode(TemplatePlugin):
     """
     @classmethod
     def rstcode(klass, text, language='python'):
-        output = [".. code:: %s" % language, '']
+        output = [
+            ".. code:: %s" % language,
+            '   :class: highlight',
+            '']
         for line in unicode(text).splitlines():
             output.append("    %s" % line)
         output.append('')
