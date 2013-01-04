@@ -759,7 +759,11 @@ def serve_command(
     Handler = SimpleHTTPServer.SimpleHTTPRequestHandler
     httpd = SocketServer.TCPServer(("", port), Handler)
     print "serving contents of %s on http://localhost:%s" % (directory, port)
-    httpd.serve_forever()
+    print "type ctrl+c to stop"
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        sys.exit(1)
 
 INFO_ATTRS = [
         'name',
