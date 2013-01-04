@@ -1,3 +1,4 @@
+from datetime import datetime
 from dexy.plugins.output_reporters import OutputReporter
 from dexy.plugins.templating_plugins import PythonBuiltins
 from jinja2 import Environment
@@ -28,6 +29,8 @@ class WebsiteReporter(OutputReporter):
         """
         directories = [None, {}]
 
+        self.log.debug("In nav_directories")
+
         def populate(keys, value):
             temp = directories
             for k in keys:
@@ -49,7 +52,10 @@ class WebsiteReporter(OutputReporter):
                 if not path_elements:
                     directories[0] = doc
                 else:
+                    self.log.debug("adding doc %s" % doc.key)
                     populate(path_elements, doc)
+            else:
+                self.log.debug("doc %s is not index page, skipping" % doc.key)
 
         return directories
 
@@ -88,7 +94,7 @@ class WebsiteReporter(OutputReporter):
 
         navigation = {
                 'current_index' : nav_current_index,
-                'directories' : self.nav_directories()
+                'directories' : self._nav_directories
                 }
 
         env_data = {
@@ -98,11 +104,14 @@ class WebsiteReporter(OutputReporter):
                 'page_title' : doc.title(),
                 'source' : doc.name,
                 'template_source' : template_path,
-                'wrapper' : self.wrapper
+                'wrapper' : self.wrapper,
+                'year' : datetime.now().year
                 }
 
         for builtin in PythonBuiltins.PYTHON_BUILTINS:
             env_data[builtin.__name__] = builtin
+
+        env_data.update(self.wrapper.parse_globals())
 
         fp = os.path.join(self.REPORTS_DIR, doc.output().name).replace(".json", ".html")
 
@@ -117,6 +126,7 @@ class WebsiteReporter(OutputReporter):
         self.wrapper=wrapper
         self.set_log()
         self.keys_to_outfiles = []
+        self._nav_directories = self.nav_directories()
 
         self.create_reports_dir()
 
