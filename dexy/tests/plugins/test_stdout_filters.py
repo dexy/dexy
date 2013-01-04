@@ -4,6 +4,9 @@ from dexy.tests.utils import assert_output_matches
 import inspect
 import os
 
+def test_node():
+    assert_output("nodejs", "console.log('hello');", "hello\n")
+
 def test_rd():
     rd = """
      \\name{load}
