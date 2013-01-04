@@ -2,6 +2,17 @@ from dexy.plugins.process_filters import SubprocessStdoutFilter
 from dexy.plugins.process_filters import SubprocessInputFileFilter
 import json
 
+class NodeJsStdoutFilter(SubprocessStdoutFilter):
+    """
+    Runs scripts using node js.
+    """
+    ADD_NEW_FILES = True
+    ALIASES = ['nodejs', 'node']
+    EXECUTABLE = 'node'
+    INPUT_EXTENSIONS = ['.js', '.txt']
+    OUTPUT_EXTENSIONS = ['.txt']
+    VERSION_COMMAND = 'node --version'
+
 class Regetron(SubprocessInputFileFilter):
     """
     Filter which loads .regex file into regetron and runs any input text against it.
