@@ -148,8 +148,15 @@ def skip_params(kwargs):
             ok_params[k] = v
     return ok_params
 
+def import_extra_plugins(kwargs):
+    if kwargs.get('plugins'):
+        for imp in kwargs.get('plugins').split():
+            print "loading", imp
+            __import__(imp)
+
 def init_wrapper(modargs):
     kwargs = config_args(modargs)
+    import_extra_plugins(kwargs)
     kwargs = rename_params(kwargs)
     kwargs = skip_params(kwargs)
     return dexy.wrapper.Wrapper(**kwargs)
@@ -223,16 +230,17 @@ def dexy_command(
         h=False, # for people who type -h out of habit
         hashfunction=D['hashfunction'], # What hash function to use, set to crc32 or adler32 for more speed but less reliability
         ignore=D['ignore_nonzero_exit'], # whether to ignore nonzero exit status or raise an error - may not be supported by all filters
+        logdir=D['log_dir'], # location of directory in which to store logs
         logfile=D['log_file'], # name of log file
         logformat=D['log_format'], # format of log entries
         loglevel=D['log_level'], # log level, valid options are DEBUG, INFO, WARN
-        logdir=D['log_dir'], # location of directory in which to store logs
         nocache=D['dont_use_cache'], # whether to force artifacts to run even if there is a matching file in the cache
+        plugins=D['plugins'], # additional python packages containing dexy plugins
         profile=D['profile'], # whether to run with cProfile. Arg can be a boolean, in which case profile saved to 'dexy.prof', or a filename to save to.
-        recurse=D['recurse'], # whether to recurse into subdirectories when running Dexy
         r=False, # whether to clear cache before running dexy
-        reset=False, # whether to clear cache before running dexy
+        recurse=D['recurse'], # whether to recurse into subdirectories when running Dexy
         reports=D['reports'], # reports to be run after dexy runs, enclose in quotes and separate with spaces
+        reset=False, # whether to clear cache before running dexy
         siblings=D['siblings'], # whether siblings should have prior siblings as inputs (slows dexy down on large projects, siblings should run in order regardless)
         silent=D['silent'], # Whether to not print any output when running dexy
         uselocals=D['uselocals'], # use cached local copies of remote URLs, faster but might not be up to date, 304 from server will override this setting
@@ -252,9 +260,10 @@ def dexy_command(
         print "Resetting dexy cache..."
         reset_command(artifactsdir=artifactsdir, logdir=logdir)
 
-    try:
-        wrapper = init_wrapper(locals())
+    # Don't trap errors yet because error handling uses wrapper instance.
+    wrapper = init_wrapper(locals())
 
+    try:
         if profile:
             run_dexy_in_profiler(wrapper, profile)
         else:

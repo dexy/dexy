@@ -33,6 +33,7 @@ class Wrapper(object):
         'log_file' : 'dexy.log',
         'log_format' : "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         'log_level' : "DEBUG",
+        'plugins': '',
         'profile' : False,
         'recurse' : True,
         'reports' : '',
