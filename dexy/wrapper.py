@@ -313,9 +313,11 @@ class Wrapper(object):
 
     def parse_globals(self):
         globals_dict = {}
-        for pair in self.globals.split(","):
-            x, y = pair.split("=")
-            globals_dict[x] = y
+        if len(self.globals) > 0:
+            for pair in self.globals.split(","):
+                x, y = pair.split("=")
+                globals_dict[x] = y
+
         return globals_dict
 
     def walk(self, start, recurse=True):
