@@ -98,7 +98,7 @@ class PhantomJsRenderSubprocessFilter(SubprocessFilter):
     ADD_NEW_FILES = True
     ALIASES = ['phrender']
     EXECUTABLE = 'phantomjs'
-    INPUT_EXTENSIONS = [".html", ".txt"]
+    INPUT_EXTENSIONS = [".html", ".htm", ".txt"]
     OUTPUT_EXTENSIONS = [".png", ".pdf"]
     VERSION_COMMAND = 'phantomjs --version'
     DEFAULT_WIDTH = 1024
