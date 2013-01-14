@@ -174,7 +174,7 @@ class Generic(Data):
         """
         Attempts to load data using a JSON parser, returning whatever objects are defined in the JSON.
         """
-        if self._data:
+        if self._data and isinstance(self._data, basestring):
             return dexy.utils.parse_json(self._data)
         else:
             with open(self.storage.data_file(), "r") as f:
