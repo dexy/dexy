@@ -156,6 +156,15 @@ class Filter:
         else:
             return doc in conflict_docs and conflict_docs.index(doc) == 0
 
+    def is_part_of_script_bundle(self):
+        if hasattr(self.artifact.doc.node, 'parent'):
+            return hasattr(self.artifact.doc.node.parent, 'script_storage')
+
+    def script_storage(self):
+        if not self.is_part_of_script_bundle():
+            raise dexy.exceptions.UserFeedback("%s must be part of script bundle to access script storage" % self.key)
+        return self.artifact.doc.node.parent.script_storage
+
 class DexyFilter(Filter):
     """
     Filter which implements some default behaviors.
@@ -196,3 +205,4 @@ class AliasFilter(DexyFilter):
 
     def calculate_canonical_name(self):
         return self.artifact.prior.filter_instance.calculate_canonical_name()
+

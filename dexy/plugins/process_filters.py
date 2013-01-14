@@ -155,11 +155,11 @@ class SubprocessFilter(Filter):
         env.update(self.args().get('env', {}))
 
         # Add parameters in wrapper's env dict
-        for doc in self.processed():
-            if doc.final_artifact.ext == '.json':
-                for env_item, env_value in doc.output().json_as_dict().iteritems():
-                    if env_item.startswith("DEXY_"):
-                        env[env_item] = env_value
+        if self.is_part_of_script_bundle():
+            for key, value in self.script_storage().iteritems():
+                if key.startswith("DEXY_"):
+                    self.log.debug("Adding %s to env value is %s" % (key, value))
+                    env[key] = value
 
         # Add any path extensions to PATH
         if self.PATH_EXTENSIONS:
