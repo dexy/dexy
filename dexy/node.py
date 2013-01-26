@@ -73,9 +73,6 @@ class BundleNode(Node):
     """
     ALIASES = ['bundle']
 
-    def populate(self):
-        pass
-
 class ScriptNode(BundleNode):
     """
     Node representing a bundle of other nodes which must always run in a set
@@ -89,10 +86,18 @@ class ScriptNode(BundleNode):
         self.metadata.child_hashstrings = ",".join(c.hashstring for c in self.children)
         self.set_hashstring()
 
-        for doc in self.children:
+        for node in self.inputs:
+            doc = node.children[0]
             for artifact in doc.children[1:]:
                 artifact.metadata.node_hashstring = self.hashstring
                 artifact.set_hashstring()
+
+        # Create a shared key-value store that children can access.
+        self.script_storage = {}
+
+    def populate(self):
+        for inpt in self.inputs:
+            inpt.parent = self
 
 class PatternNode(Node):
     """

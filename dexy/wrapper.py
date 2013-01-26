@@ -42,6 +42,7 @@ class Wrapper(object):
         'target' : False,
         'uselocals' : False
     }
+
     LOG_LEVELS = {
         'DEBUG' : logging.DEBUG,
         'INFO' : logging.INFO,
@@ -264,7 +265,7 @@ class Wrapper(object):
             if self.is_valid_dexy_dir(dirpath, dirnames):
                 check_for_double_config = []
                 for alias in dexy.parser.Parser.aliases.keys():
-                    path_to_config = os.path.join(dirpath, alias)
+                    path_to_config = os.path.normpath(os.path.join(dirpath, alias))
 
                     if os.path.exists(path_to_config):
                         self.log.debug("loading config from '%s'" % path_to_config)
@@ -275,7 +276,7 @@ class Wrapper(object):
                         config_files_used.append(path_to_config)
 
                         parser = dexy.parser.Parser.aliases[alias](self, ast)
-                        parser.build_ast(dirpath, config_text)
+                        parser.build_ast(os.path.normpath(dirpath), config_text)
 
                 if len(check_for_double_config) > 1:
                     msg = "more than one config file found in dir %s: %s"

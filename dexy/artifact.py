@@ -149,6 +149,7 @@ class InitialArtifact(Artifact):
         self.ext = os.path.splitext(self.name)[1]
 
     def run(self, *args, **kw):
+        self.log.debug("hashstring is %s" % self.hashstring)
         start_time = time.time()
         if not self.output_data.is_cached():
             self.set_output_data()
@@ -174,7 +175,10 @@ class InitialVirtualArtifact(InitialArtifact):
             return self.args['contentshash']
         else:
             contents = self.get_contents()
-            return hashlib.md5(str(contents)).hexdigest()
+            if isinstance(contents, basestring):
+                return hashlib.md5(contents).hexdigest()
+            else:
+                return hashlib.md5(unicode(contents)).hexdigest()
 
     def data_class_alias(self):
         data_class_alias = self.args.get('data-class-alias')

@@ -39,7 +39,7 @@ def test_config_for_directory():
         wrapper.setup_config()
         wrapper.run()
 
-        assert len(wrapper.batch.tasks()) == 8
+        assert len(wrapper.batch.tasks()) == 11
 
         p = wrapper.batch.task("PatternNode:*.abc")
         c = wrapper.batch.task("Doc:s2/s2.abc")

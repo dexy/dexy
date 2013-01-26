@@ -6,6 +6,55 @@ from dexy.tests.utils import wrap
 from dexy.wrapper import Wrapper
 import time
 
+SCRIPT_YAML = """
+script:scriptnode:
+    - start.sh|shint
+    - middle.sh|shint
+    - end.sh|shint
+"""
+def test_script_node_caching():
+    with wrap() as wrapper:
+        with open("start.sh", "w") as f:
+            f.write("pwd")
+
+        with open("middle.sh", "w") as f:
+            f.write("echo `time`")
+
+        with open("end.sh", "w") as f:
+            f.write("echo 'done'")
+
+        with open("dexy.yaml", "w") as f:
+            f.write(SCRIPT_YAML)
+
+        wrapper.setup_batch()
+        wrapper.run()
+
+        tasks = [
+            "FilterArtifact:start.sh|shint",
+            "FilterArtifact:middle.sh|shint",
+            "FilterArtifact:end.sh|shint"
+            ]
+
+        for t in tasks:
+            assert wrapper.batch.task(t).content_source == 'generated', "%s should be generated" % t
+
+        wrapper2 = Wrapper()
+        wrapper2.setup()
+        wrapper2.run()
+
+        for t in tasks:
+            assert wrapper2.batch.task(t).content_source == 'cached', "%s should be cached" % t
+
+        with open("middle.sh", "w") as f:
+            f.write("echo 'new'")
+
+        wrapper3 = Wrapper()
+        wrapper3.setup()
+        wrapper3.run()
+
+        for t in tasks:
+            assert wrapper3.batch.task(t).content_source == 'generated', "%s should be generated" % t
+
 def test_node_caching():
     with wrap() as wrapper:
         with open("hello.py", "w") as f:

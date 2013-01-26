@@ -20,7 +20,8 @@ class HtmlSectionsFilter(DexyFilter):
         for i in range(1, len(sections), 2):
             section_name = sections[i]
             section_content = sections[i+1]
-            output[section_name] = section_content
+            if not section_name == 'end':
+                output[section_name] = section_content
 
         self.output().set_data(output)
 
