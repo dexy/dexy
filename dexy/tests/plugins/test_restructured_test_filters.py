@@ -35,14 +35,14 @@ def test_rst2html():
 
 def test_rest_to_tex():
     with wrap() as wrapper:
-        node = DocNode("example.txt|rst",
+        node = DocNode("example.txt|rstbody",
                 contents=RST,
-                rst={"ext" : ".tex"},
+                rstbody={"ext" : ".tex"},
                 wrapper=wrapper)
 
         wrapper.run_docs(node)
         doc = node.children[0]
-        assert doc.output().as_text() == """\
+        assert str(doc.output()) == """\
 %
 \\begin{itemize}
 
@@ -79,4 +79,4 @@ def test_rest_to_html():
 </ul>
 """
 
-    assert_output('rst', RST, expected)
+    assert_output('rstbody', RST, expected)

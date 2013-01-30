@@ -7,11 +7,11 @@ try:
 except ImportError:
     AVAILABLE = False
 
-class RestructuredTextFilter(DexyFilter):
+class RestructuredTextBase(DexyFilter):
     """
-    A 'native' ReST filter which uses the docutils library.
+    Base class for ReST filters using the docutils library.
     """
-    ALIASES = ['rst']
+    ALIASES = []
     INPUT_EXTENSIONS = [".rst", ".txt"]
     OUTPUT_EXTENSIONS = [".html", ".tex", ".xml"]
 
@@ -19,26 +19,67 @@ class RestructuredTextFilter(DexyFilter):
     def is_active(klass):
         return AVAILABLE
 
-    def process_text(self, input_text):
-        if self.artifact.ext == ".html":
-            parts = core.publish_parts(
-                    input_text,
-                    writer_name = "html"
-                    )
-            return parts['body']
+    def docutils_writer_name(self):
+        if self.arg_value('writer'):
+            return self.arg_value('writer')
+        elif self.artifact.ext == ".html":
+            return 'html'
         elif self.artifact.ext == ".tex":
-            parts = core.publish_parts(
-                    input_text,
-                    writer_name = "latex"
-                    )
-
-            # Note any latex requirements in logfile
-            self.log.debug("Requirements for ReST:")
-            for l in parts['requirements'].splitlines():
-                self.log.debug(l)
-            return parts['body']
+            return 'latex2e'
+        elif self.artifact.ext == ".xml":
+            return 'docutils_xml'
         else:
             raise Exception("unsupported extension %s" % self.artifact.ext)
+
+class RestructuredText(RestructuredTextBase):
+    """
+    A 'native' ReST filter which uses the docutils library.
+    """
+    ALIASES = ['rst']
+    FRAGMENT = False
+
+    def process(self):
+        core.publish_file(
+                source_path = self.input().storage.data_file(),
+                destination_path = self.output().storage.data_file(),
+                writer_name=self.docutils_writer_name(),
+                settings_overrides=self.args()
+                )
+
+class RstBody(RestructuredTextBase):
+    """
+    Returns just the body part of an ReST document.
+    """
+    ALIASES = ['rstbody']
+
+    def process_text(self, input_text):
+        parts = core.publish_parts(
+                input_text,
+                writer_name=self.docutils_writer_name(),
+                )
+        return parts['body']
+
+class RstDocParts(DexyFilter):
+    """
+    Returns key-value storage of document parts.
+    """
+    ALIASES = ['rstdocparts']
+    INPUT_EXTENSIONS = [".rst", ".txt"]
+    OUTPUT_DATA_TYPE = 'keyvalue'
+    OUTPUT_EXTENSIONS = ['.sqlite3', '.json']
+
+    def process(self):
+        input_text = unicode(self.input())
+        writer = self.arg_value('writer', 'html')
+
+        parts = core.publish_parts(
+                input_text,
+                writer_name = writer
+                )
+
+        for k, v in parts.iteritems():
+            self.output().append(k, v)
+        self.output().save()
 
 class Rst2HtmlFilter(SubprocessFilter):
     """

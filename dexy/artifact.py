@@ -176,7 +176,10 @@ class InitialVirtualArtifact(InitialArtifact):
         else:
             contents = self.get_contents()
             if isinstance(contents, basestring):
-                return hashlib.md5(contents).hexdigest()
+                try:
+                    return hashlib.md5(contents).hexdigest()
+                except UnicodeEncodeError:
+                    return hashlib.md5(contents.encode("utf-8")).hexdigest()
             else:
                 return hashlib.md5(unicode(contents)).hexdigest()
 
