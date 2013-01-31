@@ -324,7 +324,7 @@ class FilterArtifact(Artifact):
         doc.created_by_doc = self.hashstring
         doc.created_by_doc_key = self.doc.key_with_class()
         doc.wrapper = self.wrapper
-        doc.canon = True
+        doc.args['canon'] = True
 
         node = dexy.node.Node(doc.key)
         node.children = [doc]
