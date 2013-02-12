@@ -179,6 +179,30 @@ class BlackWhitePdfFilter(SubprocessFilter):
         s = "%(prog)s -dSAFER -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sColorConversionStrategy=Gray -dProcessColorModel=/DeviceGray -sOutputFile=%(out)s %(in)s"
         return s % args
 
+class Pdf2SvgSubprocessFilter(SubprocessFilter):
+    """
+    Converts a PDF file to a SVG image using pdftocairo
+    from the poppler library
+    """
+    ALIASES = ['pdf2svg']
+    EXECUTABLE = "pdftocairo"
+    FORMAT = '-svg'
+    INPUT_EXTENSIONS = ['.pdf']
+    OUTPUT_EXTENSIONS = ['.svg']
+    VERSION_COMMAND = "pdftocairo -v"
+
+    def command_string(self):
+        args = {
+            'prog' : self.executable(),
+            'format' : self.FORMAT,
+            'in' : self.input_filename(),
+            'out' : self.output_filename()
+        }
+        s = "%(prog)s %(format)s %(in)s %(out)s"
+        return s % args
+
+
+
 class Pdf2ImgSubprocessFilter(SubprocessFilter):
     """
     Converts a PDF file to a PNG image using ghostscript.
