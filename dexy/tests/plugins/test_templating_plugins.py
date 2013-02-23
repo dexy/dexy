@@ -1,9 +1,9 @@
 from dexy.node import DocNode
-from dexy.plugins.templating_filters import TemplateFilter
-from dexy.plugins.templating_plugins import TemplatePlugin
+from dexy.filters.templating import TemplateFilter
+from dexy.filters.templating_plugins import TemplatePlugin
 from dexy.tests.utils import run_templating_plugin as run
 from dexy.tests.utils import wrap
-import dexy.plugins.templating_plugins as plugin
+import dexy.filters.templating_plugins as plugin
 import inspect
 import os
 

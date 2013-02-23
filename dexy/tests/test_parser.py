@@ -1,6 +1,6 @@
-from dexy.plugins.parsers import OriginalDexyParser
-from dexy.plugins.parsers import TextFileParser
-from dexy.plugins.parsers import YamlFileParser
+from dexy.parsers.standard import OriginalDexyParser
+from dexy.parsers.standard import TextFileParser
+from dexy.parsers.standard import YamlFileParser
 from dexy.tests.utils import wrap
 import dexy.exceptions
 import os

@@ -24,7 +24,7 @@ setup(
         description='Document Automation',
         entry_points = {
             'pygments.lexers' : [
-                'rst+django = dexy.plugins.pygments_plugins:RstDjangoLexer'
+                'rst+django = dexy.filters.utils:RstDjangoLexer'
                 ],
             'console_scripts' : [
                 'dexy = dexy.commands:run'

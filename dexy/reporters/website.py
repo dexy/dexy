@@ -1,6 +1,6 @@
 from datetime import datetime
-from dexy.plugins.output_reporters import OutputReporter
-from dexy.plugins.templating_plugins import TemplatePlugin
+from dexy.reporters.output import OutputReporter
+from dexy.filters.templating_plugins import TemplatePlugin
 from jinja2 import Environment
 from jinja2 import FileSystemLoader
 import dexy.exceptions

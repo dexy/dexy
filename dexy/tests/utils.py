@@ -3,12 +3,15 @@ from dexy.common import OrderedDict
 from dexy.utils import char_diff
 from mock import MagicMock
 from nose.exc import SkipTest
-import dexy.plugins # make sure plugins are loaded
 import dexy.wrapper
 import os
 import re
 import sys
 from dexy.utils import tempdir
+
+# make sure plugins are loaded
+import dexy.filters
+import dexy.reporters
 
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 

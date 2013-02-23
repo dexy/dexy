@@ -1,9 +1,9 @@
 from dexy.common import OrderedDict
-from dexy.plugins.process_filters import SubprocessInputFilter
-from dexy.plugins.process_filters import SubprocessExtToFormatFilter
-from dexy.plugins.process_filters import SubprocessFilter
-from dexy.plugins.process_filters import SubprocessFormatFlagFilter
-from dexy.plugins.process_filters import SubprocessStdoutFilter
+from dexy.filters.process import SubprocessInputFilter
+from dexy.filters.process import SubprocessExtToFormatFilter
+from dexy.filters.process import SubprocessFilter
+from dexy.filters.process import SubprocessFormatFlagFilter
+from dexy.filters.process import SubprocessStdoutFilter
 import dexy.exceptions
 import json
 import os

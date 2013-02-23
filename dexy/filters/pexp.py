@@ -1,7 +1,7 @@
 from dexy.common import OrderedDict
 from dexy.exceptions import InternalDexyProblem
 from dexy.exceptions import UserFeedback
-from dexy.plugins.process_filters import SubprocessFilter
+from dexy.filters.process import SubprocessFilter
 import re
 
 try:

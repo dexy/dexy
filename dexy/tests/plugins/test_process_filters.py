@@ -1,5 +1,5 @@
 from dexy.node import DocNode
-from dexy.plugins.process_filters import SubprocessFilter
+from dexy.filters.process import SubprocessFilter
 from dexy.tests.utils import wrap
 import dexy.exceptions
 import os

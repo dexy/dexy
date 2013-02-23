@@ -1,5 +1,5 @@
 from datetime import datetime
-from dexy.plugins.api_filters import ApiFilter
+from dexy.filters.api import ApiFilter
 import dexy.exceptions
 import getpass
 import os

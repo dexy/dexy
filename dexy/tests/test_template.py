@@ -1,4 +1,4 @@
-from dexy.plugins.templates import DefaultTemplate
+from dexy.templates.standard import DefaultTemplate
 from dexy.tests.utils import tempdir
 import os
 

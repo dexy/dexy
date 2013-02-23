@@ -11,9 +11,11 @@ import yaml
 def split_path(path):
     tail = True
     path_elements = []
+    body = path
     while tail:
-        tail = os.path.split(path)
-        path_elements.append(tail)
+        body, tail = os.path.split(body)
+        if tail:
+            path_elements.append(tail)
     path_elements.reverse()
     return path_elements
 

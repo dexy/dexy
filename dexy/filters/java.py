@@ -1,6 +1,6 @@
-from dexy.plugins.pexpect_filters import PexpectReplFilter
-from dexy.plugins.process_filters import SubprocessCompileFilter
-from dexy.plugins.process_filters import SubprocessStdoutFilter
+from dexy.filters.pexp import PexpectReplFilter
+from dexy.filters.process import SubprocessCompileFilter
+from dexy.filters.process import SubprocessStdoutFilter
 import os
 import platform
 

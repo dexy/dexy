@@ -1,6 +1,6 @@
 from dexy.node import DocNode
-from dexy.plugins.templating_filters import TemplateFilter
-from dexy.plugins.templating_plugins import TemplatePlugin
+from dexy.filters.templating import TemplateFilter
+from dexy.filters.templating_plugins import TemplatePlugin
 from dexy.tests.utils import wrap
 from nose.tools import raises
 import dexy.exceptions

@@ -1,5 +1,5 @@
 from dexy.filter import DexyFilter
-from dexy.plugins.templating_plugins import TemplatePlugin
+from dexy.filters.templating_plugins import TemplatePlugin
 from jinja2 import FileSystemLoader
 from jinja2.exceptions import TemplateSyntaxError
 from jinja2.exceptions import UndefinedError
@@ -160,13 +160,13 @@ class JinjaFilter(TemplateFilter):
         self.log.debug("setting up jinja environment")
         env = self.setup_jinja_env(loader=loader)
 
-        env.filters['pygmentize'] = dexy.plugins.templating_plugins.PygmentsStylesheet.highlight
-        env.filters['rstcode'] = dexy.plugins.templating_plugins.RstCode.rstcode
-        env.filters['indent'] = dexy.plugins.templating_plugins.JinjaFilters.indent
-        env.filters['head'] = dexy.plugins.templating_plugins.JinjaFilters.head
-        env.filters['javadoc2rst'] = dexy.plugins.templating_plugins.JavadocToRst.javadoc2rst
-        if dexy.plugins.templating_plugins.PrettyPrintHtml.is_active():
-            env.filters['prettify_html'] = dexy.plugins.templating_plugins.PrettyPrintHtml.prettify_html
+        env.filters['pygmentize'] = dexy.filters.templating_plugins.PygmentsStylesheet.highlight
+        env.filters['rstcode'] = dexy.filters.templating_plugins.RstCode.rstcode
+        env.filters['indent'] = dexy.filters.templating_plugins.JinjaFilters.indent
+        env.filters['head'] = dexy.filters.templating_plugins.JinjaFilters.head
+        env.filters['javadoc2rst'] = dexy.filters.templating_plugins.JavadocToRst.javadoc2rst
+        if dexy.filters.templating_plugins.PrettyPrintHtml.is_active():
+            env.filters['prettify_html'] = dexy.filters.templating_plugins.PrettyPrintHtml.prettify_html
 
         self.log.debug("initializing template")
 

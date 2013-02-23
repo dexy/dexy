@@ -1,4 +1,4 @@
-from dexy.plugins.process_filters import SubprocessFilter
+from dexy.filters.process import SubprocessFilter
 import codecs
 import dexy.exceptions
 import dexy.utils

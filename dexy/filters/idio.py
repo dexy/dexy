@@ -1,5 +1,5 @@
 from dexy.common import OrderedDict
-from dexy.plugins.pygments_filters import PygmentsFilter
+from dexy.filters.pyg import PygmentsFilter
 from idiopidae.runtime import Composer
 from idiopidae.parser import IdiopidaeParser, IdiopidaeParserScanner
 from pygments.formatters import get_all_formatters

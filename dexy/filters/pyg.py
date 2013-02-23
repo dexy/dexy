@@ -1,6 +1,6 @@
 from dexy.common import OrderedDict
 from dexy.filter import DexyFilter
-from dexy.plugins.standard_filters import StartSpaceFilter
+from dexy.filters.standard import StartSpaceFilter
 from pygments import highlight
 from pygments.formatters import HtmlFormatter
 from pygments.formatters import LatexFormatter

@@ -8,7 +8,6 @@ from pygments import highlight
 from pygments.formatters import TerminalFormatter
 from pygments.lexers import PythonLexer
 import dexy.exceptions
-import dexy.plugins # so all built-in plugins are registered
 import dexy.wrapper
 import inspect
 import json
@@ -17,6 +16,10 @@ import os
 import sys
 import warnings
 import yaml
+
+# so all built-in plugins are registered
+import dexy.filters
+import dexy.reporters
 
 D = dexy.wrapper.Wrapper.DEFAULTS
 

@@ -1,4 +1,4 @@
-from dexy.plugins.parsers import YamlFileParser
+from dexy.parsers.standard import YamlFileParser
 from dexy.tests.utils import wrap
 from dexy.tests.utils import tempdir
 import os

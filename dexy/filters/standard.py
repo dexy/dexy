@@ -5,6 +5,24 @@ import dexy.exceptions
 import json
 import os
 
+class PreserveDataClassFilter(DexyFilter):
+    """
+    Sets PRESERVE_PRIOR_DATA_CLASS to True.
+    """
+    ALIASES = []
+    _SETTINGS = {
+            'preserve-prior-data-class' : True
+            }
+
+    def calculate_canonical_name(self):
+        return self.artifact.prior.filter_instance.calculate_canonical_name()
+
+class ChangeExtensionManuallyFilter(PreserveDataClassFilter):
+    """
+    Dummy filter for allowing changing a file extension.
+    """
+    ALIASES = ['chext']
+
 class KeyValueStoreFilter(DexyFilter):
     """
     Filter for creating a new key value store on the fly

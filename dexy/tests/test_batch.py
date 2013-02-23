@@ -1,5 +1,5 @@
 from dexy.tests.utils import wrap
-from dexy.plugins.parsers import YamlFileParser
+from dexy.parsers.standard import YamlFileParser
 
 YAML = """foo:
     - bar

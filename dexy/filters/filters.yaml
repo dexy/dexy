@@ -67,7 +67,7 @@ rst2odt:
     output-extensions: ['.odt']
 
 xelatex|xetex:
-    class: dexy.plugins.latex_filters:LatexFilter
+    class: dexy.filters.latex:LatexFilter
     help: Runs .tex files using xelatex.
     executable: xelatex
 
@@ -259,7 +259,7 @@ pdftocairo|pdf2cairo|pdf2svg|pdftosvg:
     command-string: '%(prog)s %(format)s "%(script_file)s" "%(output_file)s"'
 
 pdf2jpg:
-    class: dexy.plugins.subprocess_filters:Pdf2ImgSubprocessFilter
+    class: dexy.filters.sub:Pdf2ImgSubprocessFilter
     help: Converts a PDF file to a jpg image using ghostscript.
     output-extensions: [.jpg]
 
@@ -609,7 +609,7 @@ phantomjs:
     version-command: phantomjs --version
 
 latexdvi|dvilatex:
-    class: dexy.plugins.latex_filters:LatexFilter
+    class: dexy.filters.latex:LatexFilter
     help: Run Latex outputting a .dvi file.
     output-extensions: [.dvi]
     executable: latex
@@ -668,3 +668,111 @@ casperjs:
     executable: casperjs
     version-command: casperjs --version
     command-string: "%(prog)s --cookies-file=cookies.txt %(args)s %(script_file)s %(scriptargs)s"
+
+cpickle:
+    class: PreserveDataClassFilter
+    help: Forces previous filter to output .cpickle extension.
+    input-extensions: [.cpickle]
+    output-extensions: [.cpickle]
+
+pickle:
+    class: PreserveDataClassFilter
+    help: Forces previous filter to output .pickle extension.
+    input-extensions : [.pickle]
+    output-extensions : [.pickle]
+
+h|forcehtml:
+    class: PreserveDataClassFilter
+    help: Forces previous filter to output .html extension.
+    input-extensions : [.html]
+    output-extensions : [.html]
+
+j|forcejson:
+    class: PreserveDataClassFilter
+    help: Forces previous filter to output .json extension.
+    input-extensions : [.json]
+    output-extensions : [.json]
+
+svg|forcesvg:
+    class: PreserveDataClassFilter
+    help: Forces previous filter to output .svg extension.
+    input-extensions : [.svg]
+    output-extensions : [.svg]
+
+x|forcexml:
+    class: PreserveDataClassFilter
+    help: Forces previous filter to output .xml extension.
+    input-extensions : [.xml]
+    output-extensions : [.xml]
+
+l|forcelatex:
+    class: PreserveDataClassFilter
+    help: Forces previous filter to output .tex extension.
+    input-extensions : [.tex]
+    output-extensions : [.tex]
+
+t|forcetext:
+    class: PreserveDataClassFilter
+    help: Forces previous filter to output .txt extension.
+    input-extensions : [.txt]
+    output-extensions : [.txt]
+
+forcer:
+    class: PreserveDataClassFilter
+    help: Forces previous filter to output .R extension.
+    input-extensions : [.R]
+    output-extensions : [.R]
+
+p|forcepdf:
+    class: PreserveDataClassFilter
+    help: Forces previous filter to output .pdf extension.
+    input-extensions : [.pdf]
+    output-extensions : [.pdf]
+
+jn|forcejpg:
+    class: PreserveDataClassFilter
+    help: Forces previous filter to output .jpg extension.
+    input-extensions : [.jpg]
+    output-extensions : [.jpg]
+
+pn|forcepng:
+    class: PreserveDataClassFilter
+    help: Forces previous filter to output .png extension.
+    input-extensions : [.png]
+    output-extensions : [.png]
+
+gn|forcegif:
+    class: PreserveDataClassFilter
+    help: Forces previous filter to output .gif extension.
+    input-extensions : [.gif]
+    output-extensions : [.gif]
+
+bn|forcebmp:
+    class: PreserveDataClassFilter
+    help: Forces previous filter to output .bmp extension.
+    input-extensions : [.bmp]
+    output-extensions : [.bmp]
+
+cb:
+    class: PreserveDataClassFilter
+    help: Changes file extension to .sh
+    input-extensions : ['.*', '*']
+    output-extensions : [.sh]
+
+ct:
+    class: PreserveDataClassFilter
+    help: Changes file extension to .txt
+    input-extensions : [.*]
+    output-extensions : [.txt]
+
+ch:
+    class: PreserveDataClassFilter
+    help: Changes file extension to .html
+    input-extensions : [.*]
+    output-extensions : [.html]
+
+cj:
+    class: PreserveDataClassFilter
+    help: Changes file extension to .json
+    input-extensions : [.*]
+    output-extensions : [.json]

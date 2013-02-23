@@ -142,16 +142,17 @@ class PluginMeta(type):
 
                 return mod.__dict__[class_name]
             else:
-                from dexy.plugins.process_filters import SubprocessFilter
-                from dexy.plugins.process_filters import SubprocessCompileFilter
-                from dexy.plugins.process_filters import SubprocessCompileInputFilter
-                from dexy.plugins.process_filters import SubprocessStdoutFilter
-                from dexy.plugins.process_filters import SubprocessExtToFormatFilter
-                from dexy.plugins.process_filters import SubprocessStdoutTextFilter
-                from dexy.plugins.process_filters import SubprocessFormatFlagFilter
-                from dexy.plugins.process_filters import SubprocessInputFilter
-                from dexy.plugins.process_filters import SubprocessInputFileFilter
-                from dexy.plugins.pexpect_filters import PexpectReplFilter
+                from dexy.filters.process import SubprocessFilter
+                from dexy.filters.process import SubprocessCompileFilter
+                from dexy.filters.process import SubprocessCompileInputFilter
+                from dexy.filters.process import SubprocessStdoutFilter
+                from dexy.filters.process import SubprocessExtToFormatFilter
+                from dexy.filters.process import SubprocessStdoutTextFilter
+                from dexy.filters.process import SubprocessFormatFlagFilter
+                from dexy.filters.process import SubprocessInputFilter
+                from dexy.filters.process import SubprocessInputFileFilter
+                from dexy.filters.pexp import PexpectReplFilter
+                from dexy.filters.standard import PreserveDataClassFilter
                 return locals()[class_or_class_name]
         else:
             raise Exception("Unexpected type %s" % type(class_or_class_name))

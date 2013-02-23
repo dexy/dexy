@@ -1,4 +1,4 @@
-from dexy.plugins.process_filters import SubprocessFilter
+from dexy.filters.process import SubprocessFilter
 import os
 
 class CasperJsSvg2PdfFilter(SubprocessFilter):
