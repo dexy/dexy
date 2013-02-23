@@ -9,9 +9,11 @@ class PythonDocumentationFilter(DexyFilter):
     Returns doc info for named python modules.
     """
     ALIASES = ["pydoc"]
-    INPUT_EXTENSIONS = [".txt"]
-    OUTPUT_DATA_TYPE = 'keyvalue'
-    OUTPUT_EXTENSIONS = ['.sqlite3', '.json']
+    _SETTINGS = {
+            'input-extensions' : ['.txt'],
+            'output-data-type' : 'keyvalue',
+            'output-extensions' : ['.sqlite3', '.json']
+            }
 
     def fetch_item_content(self, key, item):
         is_method = inspect.ismethod(item)

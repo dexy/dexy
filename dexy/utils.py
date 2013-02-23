@@ -2,9 +2,42 @@ import dexy.exceptions
 import inspect
 import json
 import os
-import yaml
 import posixpath
 import re
+import shutil
+import tempfile
+import yaml
+
+def split_path(path):
+    tail = True
+    path_elements = []
+    while tail:
+        tail = os.path.split(path)
+        path_elements.append(tail)
+    path_elements.reverse()
+    return path_elements
+
+class tempdir(object):
+    def make_temp_dir(self):
+        self.tempdir = tempfile.mkdtemp()
+        self.location = os.path.abspath(os.curdir)
+        os.chdir(self.tempdir)
+
+    def remove_temp_dir(self):
+        os.chdir(self.location)
+        try:
+            shutil.rmtree(self.tempdir)
+        except Exception as e:
+            print e
+            print "was not able to remove tempdir '%s'" % self.tempdir
+
+    def __enter__(self):
+        self.make_temp_dir()
+
+    def __exit__(self, type, value, traceback):
+        if not isinstance(value, Exception):
+            self.remove_temp_dir()
+
 
 def value_for_hyphenated_or_underscored_arg(arg_dict, arg_name_hyphen, default=None):
     if not "-" in arg_name_hyphen and "_" in arg_name_hyphen:
@@ -63,7 +96,7 @@ def parse_yaml(input_text):
     Parse a single YAML document.
     """
     try:
-        return yaml.load(input_text)
+        return yaml.safe_load(input_text)
     except (yaml.scanner.ScannerError, yaml.parser.ParserError) as e:
         msg = inspect.cleandoc("""Was unable to parse the YAML you supplied.
         Here is information from the YAML parser:""")
@@ -76,7 +109,7 @@ def parse_yamls(input_text):
     Parse YAML content that may include more than 1 document.
     """
     try:
-        return yaml.load_all(input_text)
+        return yaml.safe_load_all(input_text)
     except (yaml.scanner.ScannerError, yaml.parser.ParserError) as e:
         msg = inspect.cleandoc("""Was unable to parse the YAML you supplied.
         Here is information from the YAML parser:""")

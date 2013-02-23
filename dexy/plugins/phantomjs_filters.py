@@ -1,5 +1,4 @@
 from dexy.plugins.process_filters import SubprocessFilter
-from dexy.plugins.process_filters import SubprocessStdoutFilter
 import os
 
 class CasperJsSvg2PdfFilter(SubprocessFilter):
@@ -7,19 +6,17 @@ class CasperJsSvg2PdfFilter(SubprocessFilter):
     Converts an SVG file to PDF by running it through casper js.
     # TODO convert this to phantomjs, no benefit to using casper here (js is not user facing) and more restrictive
     """
-    ADD_NEW_FILES = True
     ALIASES = ['svg2pdf']
-    EXECUTABLE = 'casperjs'
-    INPUT_EXTENSIONS = ['.svg']
-    OUTPUT_EXTENSIONS = ['.pdf']
-    VERSION_COMMAND = 'casperjs --version'
-
-    def command_string(self):
-        args = {
-            'prog' : self.executable(),
-            'args' : self.command_line_args() or ""
-        }
-        return "%(prog)s %(args)s script.js" % args
+    _SETTINGS = {
+            'add-new-files' : True,
+            'executable' : 'casperjs',
+            'version-command' : 'casperjs --version',
+            "input-extensions" : ['.svg'],
+            "output-extensions" : ['.pdf'],
+            "width" : ("Width of page to capture.", 200),
+            "height" : ("Height of page to capture.", 200),
+            "command-string" : "%(prog)s %(args)s script.js"
+            }
 
     def script_js(self, width, height):
         args = {
@@ -45,8 +42,8 @@ class CasperJsSvg2PdfFilter(SubprocessFilter):
             for doc, filename in self.artifact.setup_wd(self.input_filename()):
                 self.write_to_wd(wd, doc, filename)
 
-        width = self.args().get('width', 200)
-        height = self.args().get('height', 200)
+        width = self.setting('width')
+        height = self.setting('height')
         js = self.script_js(width, height)
 
         wd = os.path.join(self.artifact.tmp_dir(), self.input().parent_dir())
@@ -57,59 +54,22 @@ class CasperJsSvg2PdfFilter(SubprocessFilter):
 
         return wd
 
-class CasperJsStdoutFilter(SubprocessStdoutFilter):
-    """
-    Runs scripts using casper js. Saves cookies.
-    """
-    ALIASES = ['casperjs']
-    ADD_NEW_FILES = True
-    EXECUTABLE = 'casperjs'
-    INPUT_EXTENSIONS = ['.js', '.txt']
-    OUTPUT_EXTENSIONS = ['.txt']
-    VERSION_COMMAND = 'casperjs --version'
-
-    def command_string_stdout(self):
-        args = {
-            'cookie_file' : 'cookies.txt',
-            'prog' : self.executable(),
-            'args' : self.command_line_args() or "",
-            'scriptargs' : self.command_line_scriptargs() or "",
-            'script_file' : self.input_filename()
-        }
-        return "%(prog)s --cookies-file=%(cookie_file)s %(args)s %(script_file)s %(scriptargs)s" % args
-
-class PhantomJsStdoutFilter(SubprocessStdoutFilter):
-    """
-    Runs scripts using phantom js.
-    """
-    ADD_NEW_FILES = True
-    ALIASES = ['phantomjs']
-    EXECUTABLE = 'phantomjs'
-    INPUT_EXTENSIONS = ['.js', '.txt']
-    OUTPUT_EXTENSIONS = ['.txt']
-    VERSION_COMMAND = 'phantomjs --version'
-    # TODO ensure phantom.exit() is called in script?
-
 class PhantomJsRenderSubprocessFilter(SubprocessFilter):
     """
     Renders HTML to PNG/PDF using phantom.js. If the HTML relies on local
     assets such as CSS or image files, these should be specified as inputs.
     """
-    ADD_NEW_FILES = True
     ALIASES = ['phrender']
-    EXECUTABLE = 'phantomjs'
-    INPUT_EXTENSIONS = [".html", ".htm", ".txt"]
-    OUTPUT_EXTENSIONS = [".png", ".pdf"]
-    VERSION_COMMAND = 'phantomjs --version'
-    DEFAULT_WIDTH = 1024
-    DEFAULT_HEIGHT = 768
-
-    def command_string(self):
-        args = {
-            'prog' : self.executable(),
-            'args' : self.command_line_args() or ""
-        }
-        return "%(prog)s %(args)s script.js" % args
+    _SETTINGS = {
+            'add-new-files' : True,
+            'executable' :  'phantomjs',
+            "width" : ("Width of page to capture.", 1024),
+            "height" : ("Height of page to capture.", 768),
+            'version-command' : 'phantomjs --version',
+            'command-string' : "%(prog)s %(args)s script.js",
+            'input-extensions' : [".html", ".htm", ".txt"],
+            'output-extensions' : [".png", ".pdf"]
+            }
 
     def setup_wd(self):
         wd = self.artifact.working_dir()
@@ -117,12 +77,12 @@ class PhantomJsRenderSubprocessFilter(SubprocessFilter):
             for doc, filename in self.artifact.setup_wd(self.input_filename()):
                 self.write_to_wd(wd, doc, filename)
 
-        width = self.arg_value('width', self.DEFAULT_WIDTH)
-        height = self.arg_value('height', self.DEFAULT_HEIGHT)
+        width = self.setting('width')
+        height = self.setting('height')
 
         timeout = self.setup_timeout()
         if not timeout:
-            timeout = 200
+            raise Exception("must have timeout")
 
         args = {
                 'address' : self.input_filename(),

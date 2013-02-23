@@ -24,9 +24,12 @@ class SyntaxHighlightRstFilter(DexyFilter):
     Surrounds code with highlighting instructions for ReST
     """
     ALIASES = ['pyg4rst']
+    _SETTINGS = {
+            'n' : ("Number of chars to indent.", 2)
+            }
 
     def process_dict(self, input_dict):
-        n = self.args().get('n', 2)
+        n = self.setting('n')
         result = OrderedDict()
 
         try:
@@ -47,35 +50,46 @@ class PygmentsFilter(DexyFilter):
     """
     Apply Pygments syntax highlighting. Image formats require PIL.
     """
-    INPUT_EXTENSIONS = [".*"]
-    IMAGE_OUTPUT_EXTENSIONS = ['.png', '.bmp', '.gif', '.jpg']
-    MARKUP_OUTPUT_EXTENSIONS = [".html", ".tex", ".svg"] # make sure .html is first!
-    OUTPUT_EXTENSIONS = MARKUP_OUTPUT_EXTENSIONS + IMAGE_OUTPUT_EXTENSIONS + ['.css', '.sty']
     ALIASES = ['pyg', 'pygments']
-    FRAGMENT = True
-    LEXER_ERR_MSG = "Pygments doesn't know how to syntax highlight files like '%s' (for '%s'). Either it can't be done or you need to specify the lexer manually."
+    IMAGE_OUTPUT_EXTENSIONS = ['.png', '.bmp', '.gif', '.jpg']
+    MARKUP_OUTPUT_EXTENSIONS = [".html", ".tex", ".svg"] # make sure .html is first so it is default output format
+    LEXER_ERR_MSG = """Pygments doesn't know how to syntax highlight files like '%s' (for '%s').\
+    You might need to specify the lexer manually."""
 
-    @classmethod
+    _SETTINGS = {
+            'lexer' : ("""The name of the pygments lexer to use (will normally be determined automatically,
+            only use this if you need to override the default setting
+            or your filename isn't mapped to the lexer you want to use.""", None),
+            'input-extensions' : [".*"],
+            'output-extensions' : MARKUP_OUTPUT_EXTENSIONS + IMAGE_OUTPUT_EXTENSIONS + ['.css', '.sty'],
+            'formatter-settings' : (
+                "List of all settings which will be passed to the formatter constructor.",
+                ['style', 'full']
+            ),
+            'style' : ( "Formatter style to output.", 'default'),
+            'full' : ("Pygments formatter option: output a 'full' document including header/footer tags.", None),
+            'lexer-settings' : (
+                "List of all settings which will be passed to the lexer constructor.",
+                []
+            ),
+            }
+
     def data_class_alias(klass, file_ext):
         if file_ext in klass.MARKUP_OUTPUT_EXTENSIONS:
             return 'sectioned'
         else:
             return 'generic'
 
-    @classmethod
     def docmd_css(klass, style='default'):
         print klass.generate_css(style)
 
-    @classmethod
     def docmd_sty(klass, style='default'):
         print klass.generate_sty(style)
 
-    @classmethod
     def generate_css(self, style='default'):
         formatter = HtmlFormatter(style=style)
         return formatter.get_style_defs()
 
-    @classmethod
     def generate_sty(self, style='default'):
         formatter = LatexFormatter(style=style)
         return formatter.get_style_defs()
@@ -87,26 +101,26 @@ class PygmentsFilter(DexyFilter):
         else:
             return "%s%s" % (self.artifact.doc.name, self.artifact.ext)
 
-    def create_lexer_instance(self, args):
-        ext = self.artifact.prior.ext
-        lexer = None
-        lexer_args = {}
+    def constructor_args(self, constructor_type, custom_args=None):
+        if custom_args:
+            args = custom_args
+        else:
+            args = {}
 
-        # Pick out any options which are prefixed with "lexer-"
-        for k in args.keys():
-            m = re.match("^lexer-(.+)$", k)
-            if m:
-                option_name = m.groups()[0]
-                option_value = args[k]
-                self.log.debug("using custom lexer option for %s with value %s" % (option_name, option_value))
-                del args[k]
-                lexer_args[option_name] = option_value
+        for argname in self.setting("%s-settings" % constructor_type):
+            if self.setting(argname):
+                args[argname] = self.setting(argname)
+        return args
+
+    def create_lexer_instance(self):
+        ext = self.artifact.prior.ext
+        lexer_args = self.constructor_args('lexer')
+        lexer = None
 
         # Create a lexer instance.
-        if args.has_key('lexer'):
-            self.log.debug("custom lexer alias %s specified" % args['lexer'])
-            lexer = get_lexer_by_name(args['lexer'], **lexer_args)
-            del args['lexer']
+        if self.setting('lexer'):
+            self.log.debug("custom lexer %s specified" % self.setting('lexer'))
+            lexer = get_lexer_by_name(self.setting('lexer'), **lexer_args)
         else:
             is_json_file = ext in ('.json', '.dexy') or self.output().name.endswith(".dexy")
             if ext == '.pycon':
@@ -135,16 +149,12 @@ class PygmentsFilter(DexyFilter):
             if not lexer:
                 lexer = lexer_class(**lexer_args)
 
-        self.log.debug("using lexer %s" % lexer.__class__.__name__)
+        self.log.debug("using pygments lexer %s with args %s" % (lexer.__class__.__name__, lexer_args))
         return lexer
 
-    def create_formatter_instance(self, args):
-        formatter_args = {'lineanchors' : self.output().web_safe_document_key() }
-
-        # Python 2.6 doesn't like unicode keys as kwargs
-        for k, v in args.iteritems():
-            formatter_args[str(k)] = v
-
+    def create_formatter_instance(self):
+        formatter_args = self.constructor_args('formatter', {
+            'lineanchors' : self.output().web_safe_document_key() })
         self.log.debug("creating pygments formatter with args %s" % (formatter_args))
         return get_formatter_for_filename(self.output().name, **formatter_args)
 
@@ -154,48 +164,41 @@ class PygmentsFilter(DexyFilter):
                 import PIL
             except ImportError:
                 print "python imaging library is required by pygments to create image output"
-                raise dexy.exceptions.InactiveFilter('pyg', self.artifact.key)
-
+                raise dexy.exceptions.InactiveFilter('pyg')
 
         ext = self.artifact.prior.ext
         if ext in [".css", ".sty"] and self.artifact.ext == ext:
-            self.log.debug("creating a style file in %s" % self.artifact.key)
             # Special case if we get a virtual empty file, generate style file
+
+            self.log.debug("creating a style file in %s" % self.artifact.key)
             if ext == '.css':
-                output = self.generate_css(self.arg_value('style', 'default'))
+                output = self.generate_css(self.setting('style'))
             elif ext == '.sty':
-                output = self.generate_sty(self.arg_value('style', 'default'))
+                output = self.generate_sty(self.setting('style'))
             else:
                 raise dexy.commands.UserFeedback("pyg filter doesn't know how to generate a stylesheet for %s extension" % ext)
 
             self.output().set_data(output)
 
         else:
-            args = self.args().copy()
-            lexer = self.create_lexer_instance(args)
-
-            formatter_args = {'lineanchors' : self.output().web_safe_document_key() }
-
-            # Python 2.6 hates unicode keys
-            for k, v in args.iteritems():
-                formatter_args[str(k)] = v
+            lexer = self.create_lexer_instance()
 
             if self.artifact.ext in self.IMAGE_OUTPUT_EXTENSIONS:
                 # Place each section into an image.
                 for k, v in self.input().as_sectioned().iteritems():
-                    formatter = get_formatter_for_filename(self.output().name, **formatter_args)
+                    formatter = self.create_formatter_instance()
                     output_for_section = highlight(v.decode("utf-8"), lexer, formatter)
                     new_doc_name = "%s--%s%s" % (self.artifact.doc.key.replace("|", "--"), k, self.artifact.ext)
                     self.add_doc(new_doc_name, output_for_section)
 
                 # Place entire contents into main file.
-                formatter = get_formatter_for_filename(self.output().name, **formatter_args)
-                self.artifact.doc.canon = True
+                formatter = self.create_formatter_instance()
+                self.update_all_args({'output' : False })
                 with open(self.output_filepath(), 'wb') as f:
                     f.write(highlight(self.input().as_text(), lexer, formatter))
 
             else:
-                formatter = get_formatter_for_filename(self.output().name, **formatter_args)
+                formatter = self.create_formatter_instance()
                 output_dict = OrderedDict()
                 for k, v in self.input().as_sectioned().iteritems():
                     output_dict[k] = highlight(v.decode("utf-8"), lexer, formatter)

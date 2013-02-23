@@ -9,13 +9,11 @@ class NoFilterOutput(UserFeedback):
     pass
 
 class InactiveFilter(UserFeedback):
-    def __init__(self, filter_alias, doc_key):
+    def __init__(self, filter_alias):
         self.message = inspect.cleandoc("""
         You are trying to use a filter '%s' which isn't active.
         Some additional software may need to be installed first.
-        Either stop using this filter or install the software to continue your dexy run.
-        '%s' is being used in '%s'
-        """ % (filter_alias, filter_alias, doc_key))
+        """ % filter_alias)
 
 class CircularDependency(UserFeedback):
     pass

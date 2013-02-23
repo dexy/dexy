@@ -1,5 +1,5 @@
 from dexy.common import OrderedDict
-from dexy.plugin import PluginMeta
+import dexy.plugin
 import dexy.exceptions
 import os
 import shutil
@@ -7,8 +7,12 @@ import sqlite3
 
 # Generic Data
 
-class Storage:
-    __metaclass__ = PluginMeta
+class Storage(dexy.plugin.Plugin):
+    """
+    Base class for types of Storage.
+    """
+    __metaclass__ = dexy.plugin.PluginMeta
+    _SETTINGS = {}
 
     @classmethod
     def is_active(klass):
@@ -208,7 +212,19 @@ class Sqlite3Storage(GenericStorage):
 
     def value(self, key):
         self._cursor.execute("SELECT value from kvstore where key = ?", (key,))
-        return self._cursor.fetchone()[0]
+        row = self._cursor.fetchone()
+        if not row:
+            raise Exception("No value found for key '%s'" % key)
+        else:
+            return row[0]
+
+    def like(self, key):
+        self._cursor.execute("SELECT value from kvstore where key LIKE ?", (key,))
+        row = self._cursor.fetchone()
+        if not row:
+            raise Exception("No value found for key '%s'" % key)
+        else:
+            return row[0]
 
     def query(self, query):
         if not '%' in query:

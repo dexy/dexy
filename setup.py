@@ -35,6 +35,7 @@ setup(
             'PyYAML',
             'chardet',
             'idiopidae>=0.5.4',
+            'inflection>=0.0.2',
             'jinja2',
             'mock',
             'nose',

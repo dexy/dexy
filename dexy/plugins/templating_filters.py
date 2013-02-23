@@ -18,28 +18,33 @@ class TemplateFilter(DexyFilter):
     Plugins are used to prepare content.
     """
     ALIASES = ['template']
-    FRAGMENT = False
+
+    _SETTINGS = {
+            'output' : True,
+            'variables' : ("Variables to be made available to document.", {}),
+            'vars' : ("Variables to be made available to document.", {}),
+            'plugins' : ("List of plugins for run_plugins to use.", [])
+            }
 
     def template_plugins(self):
         """
         Returns a list of plugin classes for run_plugins to use.
         """
-        if self.args().get('plugins'):
-            return [TemplatePlugin.aliases[alias] for alias in self.args()['plugins']]
+        if self.setting('plugins'):
+            return [TemplatePlugin.create_instance(alias, self) for alias in self.setting('plugins')]
         else:
-            return TemplatePlugin.plugins
+            return TemplatePlugin.__iter__(self)
 
     def run_plugins(self):
         env = {}
-        for plugin_class in self.template_plugins():
-            self.log.debug("Running template plugin %s" % plugin_class.__name__)
-            plugin = plugin_class(self)
+        for plugin in self.template_plugins():
+            self.log.debug("Running template plugin %s" % plugin.__class__.__name__)
             new_env_vars = plugin.run()
             if any(v in env.keys() for v in new_env_vars):
                 new_keys = ", ".join(sorted(new_env_vars))
                 existing_keys = ", ".join(sorted(env))
                 msg = "plugin class '%s' is trying to add new keys '%s', already have '%s'"
-                raise dexy.exceptions.InternalDexyProblem(msg % (plugin_class.__name__, new_keys, existing_keys))
+                raise dexy.exceptions.InternalDexyProblem(msg % (plugin.__class__.__name__, new_keys, existing_keys))
             env.update(new_env_vars)
         return env
 
@@ -52,33 +57,41 @@ class JinjaFilter(TemplateFilter):
     Runs the Jinja templating engine.
     """
     ALIASES = ['jinja']
-    FRAGMENT = False
+
+    _SETTINGS = {
+            'block-start-string' : ("Tag to indicate the start of a block.", "{%"),
+            'block-end-string' : ("Tag to indicate the start of a block.", "%}"),
+            'variable-start-string' : ("Tag to indicate the start of a variable.", "{{"),
+            'variable-end-string' : ("Tag to indicate the start of a variable.", "}}"),
+            'comment-start-string' : ("Tag to indicate the start of a comment.", "{#"),
+            'comment-end-string' : ("Tag to indicate the start of a comment.", "#}"),
+            'changetags' : ("Automatically change from { to < based tags for .tex and .wiki files.", True)
+            }
+    TEX_TAGS = {
+            'block_start_string': '<%',
+            'block_end_string': '%>',
+            'variable_start_string': '<<',
+            'variable_end_string': '>>',
+            'comment_start_string': '<#',
+            'comment_end_string': '#>'
+            }
 
     def setup_jinja_env(self, loader=None):
-        env_attrs = self.args().copy()
-
-        # Remove jinja attrs not intended for env
-        if env_attrs.has_key('vars'):
-            del env_attrs['vars']
-        if env_attrs.has_key('variables'):
-            del env_attrs['variables']
-        if env_attrs.has_key('ext'):
-            del env_attrs['ext']
-        if env_attrs.has_key('changetags'):
-            changetags = env_attrs['changetags']
-            del env_attrs['changetags']
-        else:
-            changetags = True
+        env_attrs = {}
+        for k, v in self.setting_values().iteritems():
+            underscore_k = k.replace("-", "_")
+            if k in self._SETTINGS and not k in ('changetags'):
+                env_attrs[underscore_k] = v
 
         env_attrs['undefined'] = jinja2.StrictUndefined
 
-        if self.artifact.ext in (".tex", ".wiki") and changetags:
-            env_attrs.setdefault('block_start_string', '<%')
-            env_attrs.setdefault('block_end_string', '%>')
-            env_attrs.setdefault('variable_start_string', '<<')
-            env_attrs.setdefault('variable_end_string', '>>')
-            env_attrs.setdefault('comment_start_string', '<#')
-            env_attrs.setdefault('comment_end_string', '#>')
+        if self.artifact.ext in (".tex", ".wiki") and self.setting('changetags'):
+            self.log.debug("Changing tags to latex/wiki format.")
+            for k, v in self.TEX_TAGS.iteritems():
+                hyphen_k = k.replace("_", "-")
+                if env_attrs[k] == self._SETTINGS[hyphen_k][1]:
+                    self.log.debug("Setting %s to %s" % (k, v))
+                    env_attrs[k] = v
 
         if loader:
             env_attrs['loader'] = loader

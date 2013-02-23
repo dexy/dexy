@@ -12,9 +12,7 @@ class YamlargsFilter(DexyFilter):
         regex = "\r?\n---\r?\n"
         if re.search(regex, input_text):
             yamlargs, content = re.split(regex, input_text)
-            args = parse_yaml(yamlargs)
-            for a in [self.artifact.doc] + self.artifact.doc.children:
-                a.args.update(args)
+            self.update_all_args(parse_yaml(yamlargs))
             return content
         else:
             return input_text

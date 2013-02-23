@@ -1,6 +1,6 @@
 from datetime import datetime
 from dexy.plugins.output_reporters import OutputReporter
-from dexy.plugins.templating_plugins import PythonBuiltins
+from dexy.plugins.templating_plugins import TemplatePlugin
 from jinja2 import Environment
 from jinja2 import FileSystemLoader
 import dexy.exceptions
@@ -17,8 +17,14 @@ class WebsiteReporter(OutputReporter):
     Templates must be named _template.html with no dexy filters applied (TODO relax this)
     """
     ALIASES = ['ws']
-    REPORTS_DIR = 'output-site'
-    ALLREPORTS = False
+    _SETTINGS = {
+            "dir" : "output-site",
+            "plugins" : (
+                    "List of TemplatingPlugins to make available in environment.",
+                    ["inflection", "builtins"]
+                ),
+            "default" : False
+            }
 
     def nav_directories(self):
         """
@@ -27,40 +33,43 @@ class WebsiteReporter(OutputReporter):
         for the 'index.html' page and a dict of subdirectories in same format.
 
         """
-        directories = [None, {}]
+        nav = [None, {}]
 
         self.log.debug("In nav_directories")
 
-        def populate(keys, value):
-            temp = directories
+        def populate(nav, keys, value):
+            pointer = nav
             for k in keys:
-                if not temp[1]:
-                    temp[1] = {}
-                if not temp[1].has_key(k):
-                    temp[1][k] = [None, {}]
-                temp = temp[1][k]
-            temp[0] = doc
+                if not pointer[1]:
+                    pointer[1] = {}
+                if not pointer[1].has_key(k):
+                    pointer[1][k] = [None, {}]
+                pointer = pointer[1][k]
+            pointer[0] = doc
 
         for doc in self.wrapper.batch.docs():
             doc_dir = doc.output().parent_dir()
             if doc.is_index_page():
-                path_elements = os.path.split(doc_dir)
+                path_elements = doc_dir.split(os.path.sep)
 
+                # Trim off empty leading path elements.
                 while path_elements and path_elements[0] in ('', '.'):
                     path_elements = path_elements[1:]
 
                 if not path_elements:
-                    directories[0] = doc
+                    self.log.debug("  adding doc %s to nav at root level" % doc.key)
+                    nav[0] = doc
                 else:
-                    self.log.debug("adding doc %s" % doc.key)
-                    populate(path_elements, doc)
+                    self.log.debug("  adding doc %s to nav" % doc.key)
+                    populate(nav, path_elements, doc)
             else:
-                self.log.debug("doc %s is not index page, skipping" % doc.key)
+                self.log.debug("  doc %s is not index page, skipping" % doc.key)
 
-        return directories
+        return nav
 
     def apply_and_render_template(self, doc):
-        ws_template = doc.args.get('ws_template')
+        ws_template = doc.arg_value('ws-template')
+        self.log.debug("  ws template for doc %s is %s" % (doc.key_with_class(), ws_template))
         if ws_template and not isinstance(ws_template, bool):
             template_file = ws_template
         else:
@@ -73,6 +82,20 @@ class WebsiteReporter(OutputReporter):
             if os.path.exists(template_path):
                 self.log.debug("  using template %s for %s" % (template_path, doc.key))
                 break
+
+        nav_children = self._nav_directories
+        for p_elem in path_elements:
+            if nav_children[1].has_key(p_elem):
+                nav_children = nav_children[1][p_elem]
+
+        nav_siblings = self._nav_directories
+        for p_elem in path_elements[0:-1]:
+            if nav_siblings[1].has_key(p_elem):
+                nav_siblings = nav_siblings[1][p_elem]
+
+        breadcrumbs = []
+        for i in range(1, len(path_elements)+1):
+            breadcrumbs.append(os.sep.join(path_elements[0:i]))
 
         if not template_path:
             raise dexy.exceptions.UserFeedback("  no template path for %s" % doc.key)
@@ -94,10 +117,21 @@ class WebsiteReporter(OutputReporter):
 
         navigation = {
                 'current_index' : nav_current_index,
-                'directories' : self._nav_directories
+                'directories' : self._nav_directories,
+                'children' : nav_children,
+                'siblings' : nav_siblings,
+                'breadcrumbs' : breadcrumbs,
+                'parent_dir' : "/".join(path_elements[0:-1]),
+                'current_dir' : "/".join(path_elements)
                 }
 
-        env_data = {
+        env_data = {}
+
+        for alias in self.setting('plugins'):
+            plugin = TemplatePlugin.create_instance(alias)
+            env_data.update(plugin.run())
+
+        env_data.update({
                 'content' : content,
                 'locals' : locals,
                 'navigation' : navigation,
@@ -106,14 +140,11 @@ class WebsiteReporter(OutputReporter):
                 'template_source' : template_path,
                 'wrapper' : self.wrapper,
                 'year' : datetime.now().year
-                }
-
-        for builtin in PythonBuiltins.PYTHON_BUILTINS:
-            env_data[builtin.__name__] = builtin
+                })
 
         env_data.update(self.wrapper.parse_globals())
 
-        fp = os.path.join(self.REPORTS_DIR, doc.output().name).replace(".json", ".html")
+        fp = os.path.join(self.setting('dir'), doc.output().name).replace(".json", ".html")
 
         parent_dir = os.path.dirname(fp)
         if not os.path.exists(parent_dir):
@@ -132,7 +163,7 @@ class WebsiteReporter(OutputReporter):
 
         for doc in wrapper.batch.docs():
             self.log.debug("processing doc %s" % doc.key_with_class())
-            if doc.canon:
+            if doc.is_canonical_output():
                 if doc.final_artifact.ext == ".html":
                     fragments = ('<html', '<body', '<head')
                     has_html_header = any(html_fragment in unicode(doc.output()) for html_fragment in fragments)
@@ -146,3 +177,5 @@ class WebsiteReporter(OutputReporter):
                     self.apply_and_render_template(doc)
                 else:
                     self.write_canonical_doc(doc)
+
+        self.log.debug("finished")

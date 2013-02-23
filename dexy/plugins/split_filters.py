@@ -8,9 +8,11 @@ class HtmlSectionsFilter(DexyFilter):
     Split content according to HTML comments.
     """
     ALIASES = ['htmlsections']
-    OUTPUT_EXTENSIONS = ['.json']
-    OUTPUT_DATA_TYPE = 'sectioned'
-    FRAGMENT = False
+    _SETTINGS = {
+            'output' : True,
+            'output-data-type' : 'sectioned',
+            'output-extensions' : ['.json']
+            }
 
     def process(self):
         output = OrderedDict()
@@ -33,9 +35,11 @@ class SplitHtmlFilter(DexyFilter):
     document and splits your HTML into separate pages at each split comment.
     """
     ALIASES = ['split', 'splithtml']
-    INPUT_EXTENSIONS = [".html"]
-    OUTPUT_EXTENSIONS = [".html"]
-    FRAGMENT = False
+    _SETTINGS = {
+            'output' : True,
+            'input-extensions' : ['.html'],
+            'output-extensions' : ['.html']
+            }
 
     def process(self):
         input_text = self.input().data()

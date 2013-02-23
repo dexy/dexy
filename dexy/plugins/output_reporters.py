@@ -6,14 +6,16 @@ class OutputReporter(Reporter):
     Creates canonical dexy output with files given short filenames.
     """
     ALIASES = ['output']
-    REPORTS_DIR = 'output'
+    _SETTINGS = {
+            'dir' : 'output'
+            }
 
     def write_canonical_doc(self, doc):
-        fp = os.path.join(self.REPORTS_DIR, doc.output().name)
+        fp = os.path.join(self.setting('dir'), doc.output().name)
 
         parent_dir = os.path.dirname(fp)
         if not os.path.exists(parent_dir):
-            os.makedirs(os.path.dirname(fp))
+            os.makedirs(parent_dir)
 
         self.log.debug("  writing %s to %s" % (doc.key, fp))
         if os.path.exists(fp):
@@ -22,7 +24,7 @@ class OutputReporter(Reporter):
                 k, v = tup
                 if v == fp:
                     print "    %s" % k
-        self.keys_to_outfiles.append((doc.key, fp))
+        self.keys_to_outfiles.append((doc.key, fp,))
 
         doc.output().output_to_file(fp)
 
@@ -33,7 +35,7 @@ class OutputReporter(Reporter):
 
         self.create_reports_dir()
         for doc in wrapper.batch.docs():
-            if doc.canon:
+            if doc.is_canonical_output():
                 self.write_canonical_doc(doc)
 
 class LongOutputReporter(Reporter):
@@ -41,14 +43,16 @@ class LongOutputReporter(Reporter):
     Creates complete dexy output with files given long, unique filenames.
     """
     ALIASES = ['long']
-    REPORTS_DIR = 'output-long'
+    _SETTINGS = {
+            'dir' : 'output-long'
+            }
 
     def run(self, wrapper):
         self.wrapper=wrapper
         self.set_log()
         self.create_reports_dir()
         for doc in wrapper.batch.docs():
-            fp = os.path.join(self.REPORTS_DIR, doc.output().long_name())
+            fp = os.path.join(self.setting('dir'), doc.output().long_name())
 
             parent_dir = os.path.dirname(fp)
             if not os.path.exists(parent_dir):

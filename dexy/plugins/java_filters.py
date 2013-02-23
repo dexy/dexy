@@ -4,41 +4,18 @@ from dexy.plugins.process_filters import SubprocessStdoutFilter
 import os
 import platform
 
-class JrubyFilter(SubprocessStdoutFilter):
-    """
-    Run jruby code and return stdout.
-    """
-    ALIASES = ['jruby']
-    EXECUTABLE = "jruby"
-    INPUT_EXTENSIONS = [".rb", ".txt"]
-    OUTPUT_EXTENSIONS = [".txt"]
-    VERSION_COMMAND = "jruby --version"
-
-class JirbFilter(PexpectReplFilter):
-    """
-    Run jruby code in jirb.
-    """
-    ALIASES = ['jirb']
-    ALLOW_MATCH_PROMPT_WITHOUT_NEWLINE = True
-    CHECK_RETURN_CODE = False
-    EXECUTABLE = "jirb --prompt-mode simple"
-    INITIAL_PROMPT_TIMEOUT = 30
-    INPUT_EXTENSIONS = [".rb", ".txt"]
-    OUTPUT_EXTENSIONS = [".rbcon"]
-    PROMPTS = ['>>', '?>']
-    VERSION_COMMAND = "jirb --version"
-
 class JythonFilter(SubprocessStdoutFilter):
     """
     jython
     """
     ALIASES = ['jython']
-    EXECUTABLE = "jython"
-    INPUT_EXTENSIONS = [".py", ".txt"]
-    OUTPUT_EXTENSIONS = [".txt"]
-    VERSION_COMMAND = "jython --version"
+    _SETTINGS = {
+            'executable' : 'jython',
+            'input-extensions' : [".py", ".txt"],
+            'output-extensions' : [".txt"],
+            'version-command' : "jython --version"
+            }
 
-    @classmethod
     def is_active(klass):
         if platform.system() in ('Linux', 'Windows'):
             return klass.executable() and True or False
@@ -56,14 +33,15 @@ class JythonInteractiveFilter(PexpectReplFilter):
     jython in REPL
     """
     ALIASES = ['jythoni']
-    CHECK_RETURN_CODE = False
-    EXECUTABLE = "jython -i"
-    INITIAL_PROMPT_TIMEOUT = 30
-    INPUT_EXTENSIONS = [".py", ".txt"]
-    OUTPUT_EXTENSIONS = [".pycon"]
-    VERSION_COMMAND = "jython --version"
+    _SETTINGS = {
+            'check-return-code' : False,
+            'executable' : 'jython -i',
+            'initial-timeout' : 30,
+            'input-extensions' : [".py", ".txt"],
+            'output-extensions' : [".pycon"],
+            'version-command' : "jython --version"
+            }
 
-    @classmethod
     def is_active(klass):
         if platform.system() in ('Linux', 'Windows'):
             return klass.executable() and True or False
@@ -79,12 +57,17 @@ class JavaFilter(SubprocessCompileFilter):
     Compiles java code and runs main method.
     """
     ALIASES = ['java']
-    CHECK_RETURN_CODE = True # Whether to check return code when running compiled executable.
-    COMPILED_EXTENSION = ".class"
-    EXECUTABLE = "javac"
-    INPUT_EXTENSIONS = [".java"]
-    OUTPUT_EXTENSIONS = [".txt"]
-    VERSION_COMMAND = "java -version"
+    _SETTINGS = {
+            'check-return-code' : True,
+            'classpath' : ("Custom entries in classpath.", []),
+            'executable' : 'javac',
+            'input-extensions' : ['.java'],
+            'output-extensions' : ['.txt'],
+            'main' : ("Main method.", None),
+            'version-command' : 'java -version',
+            'compiled-extension' : ".class",
+            'compiler-command-string' : "%(prog)s %(compiler_args)s %(classpath)s %(script_file)s"
+            }
 
     def setup_cp(self):
         """
@@ -107,7 +90,7 @@ class JavaFilter(SubprocessCompileFilter):
             if (doc.output().ext == ".class") and ("javac" in doc.key):
                 classpath_elements.append(doc.output().parent_dir())
 
-        for item in self.args().get('classpath', []):
+        for item in self.setting('classpath'):
             for x in item.split(":"):
                 classpath_elements.append(x)
 
@@ -121,33 +104,51 @@ class JavaFilter(SubprocessCompileFilter):
         return cp
 
     def compile_command_string(self):
+        args = self.default_command_string_args()
+        args['compiler_args'] = self.setting('compiler-args')
+
+        # classpath
         cp = self.setup_cp()
-        basename = os.path.basename(self.input().name)
         if len(cp) == 0:
-            return "javac %s" % basename
+            args['classpath'] = ''
         else:
-            return "javac -classpath %s %s" % (cp, basename)
+            args['classpath'] = "-classpath %s" % cp
+
+        return self.setting('compiler-command-string') % args
 
     def run_command_string(self):
+        args = self.default_command_string_args()
+        args['main_method'] = self.setup_main_method()
+
+        # classpath
         cp = self.setup_cp()
-        main_method = self.setup_main_method()
-        args = self.command_line_args() or ""
-        return "java %s -cp %s %s" % (args, cp, main_method)
+        if len(cp) == 0:
+            args['classpath'] = ''
+        else:
+            args['classpath'] = "-cp %s" % cp
+
+        return "java %(args)s %(classpath)s %(main_method)s" % args
 
     def setup_main_method(self):
         basename = os.path.basename(self.input().name)
         default_main = os.path.splitext(basename)[0]
-        return self.args().get('main', default_main)
+        if self.setting('main'):
+            return self.setting('main')
+        else:
+            return default_main
 
 class JavacFilter(JavaFilter):
     """
     Compiles java code and returns the .class object
     """
     ALIASES = ['javac']
-    EXECUTABLE = "javac"
-    INPUT_EXTENSIONS = [".java"]
-    OUTPUT_EXTENSIONS = [".class"]
-    VERSION_COMMAND = "java -version"
+
+    _SETTINGS = {
+            'executable' : 'javac',
+            'input-extensions' : ['.java'],
+            'output-extensions' : ['.class'],
+            'version-command' : 'java -version'
+            }
 
     def process(self):
         # Compile the code

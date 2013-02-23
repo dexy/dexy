@@ -1,10 +1,10 @@
 from dexy.common import OrderedDict
-from dexy.plugin import PluginMeta
+import dexy.plugin
 import hashlib
 
-class Metadata:
+class Metadata(dexy.plugin.Plugin):
     ALIASES = []
-    __metaclass__ = PluginMeta
+    __metaclass__ = dexy.plugin.PluginMeta
 
     @classmethod
     def is_active(klass):

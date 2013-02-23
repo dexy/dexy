@@ -9,29 +9,13 @@ class LatexFilter(SubprocessFilter):
     """
     Generates a PDF file from LaTeX source.
     """
-    INPUT_EXTENSIONS = [".tex", ".txt"]
-    OUTPUT_EXTENSIONS = [".pdf", ".png"]
-    EXECUTABLES = ['pdflatex', 'latex']
-    ALIASES = ['latex']
-    FRAGMENT = False
-
-    def command_string(self):
-        clargs = self.command_line_args() or ''
-
-        self.log.debug("Command line args specified by user '%s'" % clargs)
-
-        if "-interaction=" in clargs:
-            interaction_args = ''
-        else:
-            interaction_args = '-interaction=batchmode'
-
-        args = {
-            'prog' : self.executable(),
-            'inter' : interaction_args,
-            'args' : clargs,
-            'input_file' : self.input().basename()
-        }
-        return "%(prog)s %(inter)s %(args)s %(input_file)s" % args
+    ALIASES = ['latex', 'pdflatex']
+    _SETTINGS = {
+            'executable' : 'pdflatex',
+            'input-extensions' : ['.tex', '.txt'],
+            'output-extensions' : ['.pdf'],
+            'command-string' : "%(prog)s -interaction=batchmode %(args)s %(script_file)s"
+            }
 
     def process(self):
         wd = self.setup_wd()
@@ -63,7 +47,7 @@ class LatexFilter(SubprocessFilter):
         run_cmd(latex_command) # third run - just to be sure
 
         if not os.path.exists(os.path.join(wd, self.output().basename())):
-            msg = "Latex file not generated. Look for information in latex log in %s directory." % wd
+            msg = "Latex file not generated. Look for information in latex log in %s directory." % os.path.abspath(wd)
             raise dexy.exceptions.UserFeedback(msg)
 
         if self.do_add_new_files():
@@ -71,13 +55,6 @@ class LatexFilter(SubprocessFilter):
             self.add_new_files()
 
         self.copy_canonical_file()
-
-class XelatexFilter(LatexFilter):
-    """
-    Runs .tex files using xelatex.
-    """
-    ALIASES = ['xetex', 'xelatex']
-    EXECUTABLE = 'xelatex'
 
 class TikzPgfFilter(LatexFilter):
     """

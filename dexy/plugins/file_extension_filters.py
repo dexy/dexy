@@ -5,7 +5,9 @@ class PreserveDataClassFilter(DexyFilter):
     Sets PRESERVE_PRIOR_DATA_CLASS to True.
     """
     ALIASES = []
-    PRESERVE_PRIOR_DATA_CLASS = True
+    _SETTINGS = {
+            'preserve-prior-data-class' : True
+            }
 
     def calculate_canonical_name(self):
         return self.artifact.prior.filter_instance.calculate_canonical_name()
@@ -20,142 +22,178 @@ class ForceCPickleExtensionFilter(PreserveDataClassFilter):
     """
     Forces previous filter to output .cpickle extension.
     """
-    INPUT_EXTENSIONS = [".cpickle"]
-    OUTPUT_EXTENSIONS = [".cpickle"]
     ALIASES = ['cpickle']
+    _SETTINGS = {
+            'input-extensions' : ['cpickle'],
+            'output-extensions' : ['cpickle']
+            }
 
 class ForcePickleExtensionFilter(PreserveDataClassFilter):
     """
     Forces previous filter to output .pickle extension.
     """
-    INPUT_EXTENSIONS = [".pickle"]
-    OUTPUT_EXTENSIONS = [".pickle"]
     ALIASES = ['pickle']
+    _SETTINGS = {
+            'input-extensions' : ['pickle'],
+            'output-extensions' : ['pickle']
+            }
 
 class ForceHtmlExtensionFilter(PreserveDataClassFilter):
     """
     Forces previous filter to output .html extension.
     """
-    INPUT_EXTENSIONS = [".html"]
-    OUTPUT_EXTENSIONS = [".html"]
     ALIASES = ['h', 'forcehtml']
+    _SETTINGS = {
+            'input-extensions' : ['.html'],
+            'output-extensions' : ['.html'],
+            }
 
 class ForceJsonExtensionFilter(PreserveDataClassFilter):
     """
     Forces previous filter to output .json extension.
     """
-    INPUT_EXTENSIONS = [".json"]
-    OUTPUT_EXTENSIONS = [".json"]
     ALIASES = ['j', 'forcejson']
+    _SETTINGS = {
+            'input-extensions' : ['.json'],
+            'output-extensions' : ['.json'],
+            }
 
 class ForceSvgExtensionFilter(PreserveDataClassFilter):
     """
     Forces previous filter to output .svg extension.
     """
-    INPUT_EXTENSIONS = [".svg"]
-    OUTPUT_EXTENSIONS = [".svg"]
     ALIASES = ['svg', 'forcesvg']
+    _SETTINGS = {
+            'input-extensions' : ['.svg'],
+            'output-extensions' : ['.svg'],
+            }
 
 class ForceXmlExtensionFilter(PreserveDataClassFilter):
     """
     Forces previous filter to output .xml extension.
     """
-    INPUT_EXTENSIONS = [".xml"]
-    OUTPUT_EXTENSIONS = [".xml"]
     ALIASES = ['x', 'forcexml']
+    _SETTINGS = {
+            'input-extensions' : ['.xml'],
+            'output-extensions' : ['.xml'],
+            }
 
 class ForceLatexExtensionFilter(PreserveDataClassFilter):
     """
     Forces previous filter to output .tex extension.
     """
-    INPUT_EXTENSIONS = [".tex"]
-    OUTPUT_EXTENSIONS = [".tex"]
     ALIASES = ['l', 'forcelatex']
+    _SETTINGS = {
+            'input-extensions' : ['.tex'],
+            'output-extensions' : ['.tex'],
+            }
 
 class ForceTextExtensionFilter(PreserveDataClassFilter):
     """
     Forces previous filter to output .txt extension.
     """
-    INPUT_EXTENSIONS = [".txt"]
-    OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['t', 'forcetext']
+    _SETTINGS = {
+            'input-extensions' : ['.txt'],
+            'output-extensions' : ['.txt'],
+            }
 
 class ForceRExtensionFilter(PreserveDataClassFilter):
     """
     Forces previous filter to output .R extension.
     """
-    INPUT_EXTENSIONS = [".R"]
-    OUTPUT_EXTENSIONS = [".R"]
     ALIASES = ['forcer']
+    _SETTINGS = {
+            'input-extensions' : ['.R'],
+            'output-extensions' : ['.R'],
+            }
 
 class ForcePdfExtensionFilter(PreserveDataClassFilter):
     """
     Forces previous filter to output .pdf extension.
     """
-    INPUT_EXTENSIONS = [".pdf"]
-    OUTPUT_EXTENSIONS = [".pdf"]
     ALIASES = ['p', 'forcepdf']
+    _SETTINGS = {
+            'input-extensions' : ['.pdf'],
+            'output-extensions' : ['.pdf'],
+            }
 
 class ForceJpgExtensionFilter(PreserveDataClassFilter):
     """
     Forces previous filter to output .jpg extension.
     """
-    INPUT_EXTENSIONS = [".jpg"]
-    OUTPUT_EXTENSIONS = [".jpg"]
     ALIASES = ['jn', 'forcejpg']
+    _SETTINGS = {
+            'input-extensions' : ['.jpg'],
+            'output-extensions' : ['.jpg'],
+            }
 
 class ForcePngExtensionFilter(PreserveDataClassFilter):
     """
     Forces previous filter to output .png extension.
     """
-    INPUT_EXTENSIONS = [".png"]
-    OUTPUT_EXTENSIONS = [".png"]
     ALIASES = ['pn', 'forcepng']
+    _SETTINGS = {
+            'input-extensions' : ['.png'],
+            'output-extensions' : ['.png'],
+            }
 
 class ForceGifExtensionFilter(PreserveDataClassFilter):
     """
     Forces previous filter to output .gif extension.
     """
-    INPUT_EXTENSIONS = [".gif"]
-    OUTPUT_EXTENSIONS = [".gif"]
     ALIASES = ['gn', 'forcegif']
+    _SETTINGS = {
+            'input-extensions' : ['.gif'],
+            'output-extensions' : ['.gif'],
+            }
 
 class ForceBmpExtensionFilter(PreserveDataClassFilter):
     """
     Forces previous filter to output .bmp extension.
     """
-    INPUT_EXTENSIONS = [".bmp"]
-    OUTPUT_EXTENSIONS = [".bmp"]
     ALIASES = ['bn', 'forcebmp']
+    _SETTINGS = {
+            'input-extensions' : ['.bmp'],
+            'output-extensions' : ['.bmp'],
+            }
 
 class ConvertBashExtensionFilter(PreserveDataClassFilter):
     """
     Changes file extension to .sh
     """
-    INPUT_EXTENSIONS = [".*", "*"]
-    OUTPUT_EXTENSIONS = [".sh"]
     ALIASES = ['cb']
+    _SETTINGS = {
+            'input-extensions' : ['.*', '*'],
+            'output-extensions' : ['.sh'],
+            }
 
 class ConvertTextExtensionFilter(PreserveDataClassFilter):
     """
     Changes file extension to .txt
     """
-    INPUT_EXTENSIONS = [".*"]
-    OUTPUT_EXTENSIONS = [".txt"]
     ALIASES = ['ct']
+    _SETTINGS = {
+            'input-extensions' : ['.*'],
+            'output-extensions' : ['.txt'],
+            }
 
 class ConvertHTMLExtensionFilter(PreserveDataClassFilter):
     """
     Changes file extension to .html
     """
-    INPUT_EXTENSIONS = [".*"]
-    OUTPUT_EXTENSIONS = [".html"]
     ALIASES = ['ch']
+    _SETTINGS = {
+            'input-extensions' : ['.*'],
+            'output-extensions' : ['.html'],
+            }
 
 class ConvertJsonExtensionFilter(PreserveDataClassFilter):
     """
     Changes file extension to .json
     """
-    INPUT_EXTENSIONS = [".*"]
-    OUTPUT_EXTENSIONS = [".json"]
     ALIASES = ['cj']
+    _SETTINGS = {
+            'input-extensions' : ['.*'],
+            'output-extensions' : ['.json'],
+            }

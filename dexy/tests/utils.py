@@ -7,9 +7,8 @@ import dexy.plugins # make sure plugins are loaded
 import dexy.wrapper
 import os
 import re
-import shutil
 import sys
-import tempfile
+from dexy.utils import tempdir
 
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
@@ -18,27 +17,6 @@ def create_ordered_dict_from_dict(d):
     for k, v in d.iteritems():
         od[k] = v
     return od
-
-class tempdir(object):
-    def make_temp_dir(self):
-        self.tempdir = tempfile.mkdtemp()
-        self.location = os.path.abspath(os.curdir)
-        os.chdir(self.tempdir)
-
-    def remove_temp_dir(self):
-        os.chdir(self.location)
-        try:
-            shutil.rmtree(self.tempdir)
-        except Exception as e:
-            print e
-            print "was not able to remove tempdir '%s'" % self.tempdir
-
-    def __enter__(self):
-        self.make_temp_dir()
-
-    def __exit__(self, type, value, traceback):
-        if not isinstance(value, Exception):
-            self.remove_temp_dir()
 
 class wrap(tempdir):
     """
@@ -53,6 +31,7 @@ class wrap(tempdir):
     def __exit__(self, type, value, traceback):
         self.remove_temp_dir()
         if isinstance(value, dexy.exceptions.InactiveFilter):
+            print value.message
             raise SkipTest
             return True # swallow InactiveFilter error
 

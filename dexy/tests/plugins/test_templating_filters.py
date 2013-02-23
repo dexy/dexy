@@ -147,7 +147,7 @@ def test_template_filter_with_custom_filter_only():
         assert doc.output().as_text() == "aaa equals 1"
         plugins_used = doc.final_artifact.filter_instance.template_plugins()
         assert len(plugins_used) == 1
-        assert plugins_used[0] == TestSimple
+        assert isinstance(plugins_used[0], TestSimple)
 
 def test_jinja_filter():
     with wrap() as wrapper:
@@ -192,3 +192,13 @@ def test_jinja_filter_set_vars():
         wrapper.run_docs(node)
         doc = node.children[0]
         assert doc.output().as_text() == "foo is bar"
+
+def test_jinja_filter_using_inflection():
+    with wrap() as wrapper:
+        node = DocNode("template.txt|jinja",
+                contents = """{{ humanize("abc_def") }}""",
+                wrapper=wrapper)
+
+        wrapper.run_docs(node)
+        doc = node.children[0]
+        assert doc.output().as_text() == "Abc def"

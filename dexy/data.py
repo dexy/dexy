@@ -1,5 +1,5 @@
 from dexy.common import OrderedDict
-from dexy.plugin import PluginMeta
+import dexy.plugin
 import chardet
 import dexy.storage
 import dexy.utils
@@ -8,8 +8,12 @@ import os
 import posixpath
 import shutil
 
-class Data:
-    __metaclass__ = PluginMeta
+class Data(dexy.plugin.Plugin):
+    """
+    Base class for types of Data.
+    """
+    __metaclass__ = dexy.plugin.PluginMeta
+    _SETTINGS = {}
 
     ALIASES = []
     DEFAULT_STORAGE_TYPE = 'generic'
@@ -76,8 +80,8 @@ class Data:
 
     def setup_storage(self, storage_type):
         self.storage_type = storage_type or self.storage_class_alias(self.ext)
-        storage_class = dexy.storage.Storage.aliases[self.storage_type]
-        self.storage = storage_class(self.hashstring, self.ext, self.wrapper)
+        instanceargs = (self.hashstring, self.ext, self.wrapper,)
+        self.storage = dexy.storage.Storage.create_instance(self.storage_type, *instanceargs)
         self.storage.check_location_is_in_project_dir(self.name)
 
     def parent_dir(self):
@@ -249,6 +253,9 @@ class KeyValue(Generic):
     def setup(self):
         self.storage.setup()
 
+    def __unicode__(self):
+        return self.as_text()
+
     def as_text(self):
         text = []
         for k, v in self.storage:
@@ -266,6 +273,9 @@ class KeyValue(Generic):
 
     def value(self, key):
         return self.storage[key]
+
+    def like(self, key):
+        return self.storage.like(key)
 
     def __getitem__(self, key):
         return self.value(key)

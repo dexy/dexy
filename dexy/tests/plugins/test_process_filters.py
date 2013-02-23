@@ -10,6 +10,7 @@ def test_add_new_files():
                 contents = "echo 'hello' > newfile.txt",
                 sh = {
                     "add-new-files" : True,
+                    "keep-originals" : True,
                     "additional-doc-filters" : { '.txt' : 'markdown' }
                     },
                 wrapper=wrapper)
@@ -37,14 +38,18 @@ def test_walk_working_dir():
 
 
 def test_not_present_executable():
-    assert 'notreal' in NotPresentExecutable.executables()
-    assert not NotPresentExecutable.executable()
+    try:
+        dexy.filter.Filter.create_instance('notreal')
+        assert False, "should raise InactiveFilter"
+    except dexy.exceptions.InactiveFilter:
+        assert True
 
 class NotPresentExecutable(SubprocessFilter):
     """
     notreal
     """
     EXECUTABLE = 'notreal'
+    ALIASES = ['notreal']
 
 def test_command_line_args():
     with wrap() as wrapper:
@@ -59,22 +64,22 @@ def test_command_line_args():
         assert doc.output().data() == "hello" + os.linesep
 
         command_used = doc.children[-1].filter_instance.command_string()
-        assert command_used == """python -B "example.py"  "example.txt" """
+        assert command_used == "python -B  \"example.py\" "
 
 def test_scriptargs():
     with wrap() as wrapper:
         node = DocNode("example.py|py",
                 py={"scriptargs" : "--foo"},
                 wrapper=wrapper,
-                contents="import sys\nprint sys.argv[1]"
+                contents="""import sys\nprint "args are: '%s'" % sys.argv[1]"""
                 )
         wrapper.run_docs(node)
         doc = node.children[0]
 
-        assert doc.output().data() == "--foo" + os.linesep
+        assert "args are: '--foo'" in doc.output().data()
 
         command_used = doc.children[-1].filter_instance.command_string()
-        assert command_used == """python  "example.py" --foo "example.txt" """
+        assert command_used == "python   \"example.py\" --foo"
 
 def test_custom_env_in_args():
     with wrap() as wrapper:

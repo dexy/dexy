@@ -1,13 +1,18 @@
 from dexy.tests.utils import runfilter
 import dexy.exceptions
 
-def test_tikz():
-    with runfilter('tikz', TIKZ) as doc:
+def test_latex():
+    with runfilter('latex', LATEX) as doc:
         assert ".pdf" in doc.output().name
         assert doc.output().is_cached()
 
-def test_latex():
-    with runfilter('latex', LATEX) as doc:
+def test_latex_dvi():
+    with runfilter('latexdvi', LATEX) as doc:
+        assert ".dvi" in doc.output().name
+        assert doc.output().is_cached()
+
+def test_tikz():
+    with runfilter('tikz', TIKZ) as doc:
         assert ".pdf" in doc.output().name
         assert doc.output().is_cached()
 

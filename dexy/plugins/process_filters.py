@@ -11,34 +11,46 @@ class SubprocessFilter(Filter):
     """
     Parent class for all filters which use the subprocess module to run external programs.
     """
-    ADD_NEW_FILES = False # whether to add new files by defaut
     ALIASES = []
-    CHECK_RETURN_CODE = True
-    ENV = None
-    INITIAL_TIMEOUT = None
-    PATH_EXTENSIONS = []
-    REQUIRED_EXECUTABLES = []
-    TIMEOUT = None
-    VERSION_COMMAND = None
     WALK_WORKING_DIRECTORY = False
-    WINDOWS_VERSION_COMMAND = None
-    WRITE_STDERR_TO_STDOUT = True
 
-    @classmethod
+    _SETTINGS = {
+            'path-extensions' : ("strings to extend path with", []),
+            'write-stderr-to-stdout' : ("Should stderr be piped to stdout?", True),
+            'check-return-code' : ("Whether to look for nonzero return code.", True),
+            'record-vars' : ("Whether to add code that will automatically record values of variables.", False),
+            'env' : ("Dictionary of key-value pairs to be added to environment for runs.", {}),
+            'args' : ("Arguments to be passed to the executable.", ''),
+            'clargs' : ("Arguments to be passed to the executable (same as 'args').", ''),
+            'command-string' : ("The full command string.",
+                """%(prog)s %(args)s "%(script_file)s" %(scriptargs)s "%(output_file)s" """),
+            'executable' : ('The executable to be run', None),
+            'executables' : ('The executables to be run', None),
+            'initial-timeout' : ('', 10),
+            'scriptargs' : ("Arguments to be passed to the executable.", ''),
+            'timeout' : ('', 10),
+            'version-command': ( "Command to call to return version of installed software.", None),
+            'windows-version-command': ( "Command to call on windows to return version of installed software.", None),
+            'walk-working-dir' : ("Automatically register extra files that are found in working dir.", False),
+            'required-executables' : ("Other executables that must be present on system.", [])
+            }
+
     def executables(self):
-        if platform.system() == 'Windows' and hasattr(self, 'WINDOWS_EXECUTABLE'):
-            return [self.WINDOWS_EXECUTABLE]
+        if platform.system() == 'Windows' and self._settings.has_key('windows-executable'):
+            return [self.setting('windows-executable')]
         else:
-            if hasattr(self, 'EXECUTABLE'):
-                if not isinstance(self.EXECUTABLE, basestring):
-                    msg = "Executable must be a string, not a %s. '%s'"
-                    args = (self.EXECUTABLE.__class__.__name__, self.EXECUTABLE)
+            if self.setting('executable'):
+                executable = self.setting('executable')
+                if not isinstance(executable, basestring):
+                    msg = "Executable for %s must be a string, not a %s. '%s'"
+                    args = (self.__class__.__name__, executable.__class__.__name__, executable)
                     raise dexy.exceptions.InternalDexyProblem(msg%args)
-                return [self.EXECUTABLE]
-            elif hasattr(self, 'EXECUTABLES'):
-                return self.EXECUTABLES
+                return [executable]
+            elif self.setting('executables'):
+                return self.setting('executables')
+            else:
+                return []
 
-    @classmethod
     def executable(self):
         """
         Returns the executable to use, or None if no executable found on the system.
@@ -49,22 +61,18 @@ class SubprocessFilter(Filter):
                 if dexy.utils.command_exists(cmd):
                     return exe
 
-    @classmethod
-    def required_executables_present(klass):
-        return all(dexy.utils.command_exists(exe) for exe in klass.REQUIRED_EXECUTABLES)
+    def required_executables_present(self):
+        return all(dexy.utils.command_exists(exe) for exe in self.setting('required-executables'))
 
-    @classmethod
     def is_active(klass):
         return klass.executable() and klass.required_executables_present()
 
-    @classmethod
     def version_command(klass):
         if platform.system() == 'Windows':
-            return klass.WINDOWS_VERSION_COMMAND or klass.VERSION_COMMAND
+            return klass.setting('windows-version-command') or klass.setting('version-command')
         else:
-            return klass.VERSION_COMMAND
+            return klass.setting('version-command')
 
-    @classmethod
     def version(klass):
         command = klass.version_command()
         if command:
@@ -91,32 +99,22 @@ class SubprocessFilter(Filter):
             self.log.debug("adding new files found in %s for %s" % (self.artifact.tmp_dir(), self.artifact.key))
             self.add_new_files()
 
-    def command_line_args(self):
-        return self.args().get('args') or self.args().get('clargs')
+    def command_string_args(self):
+        return self.default_command_string_args()
 
-    def command_line_scriptargs(self):
-        return self.args().get('scriptargs')
-
-    def command_string_stdout(self):
-        clargs = self.command_line_args() or ''
-        self.log.debug("command line args specified by user are '%s'" % clargs)
+    def default_command_string_args(self):
         args = {
-            'prog' : self.executable(),
-            'args' : clargs,
-            'scriptargs' : self.command_line_scriptargs() or "",
-            'script_file' : self.input_filename()
-        }
-        return """%(prog)s %(args)s "%(script_file)s" %(scriptargs)s""" % args
+                'args' : " ".join([self.setting('args'), self.setting('clargs')]),
+                'prog' : self.executable(),
+                'script_file' : self.input_filename(),
+                'output_file' : self.output_filename()
+                }
+        skip = ['args', 'clargs']
+        args.update(self.setting_values(skip))
+        return args
 
     def command_string(self):
-        args = {
-            'prog' : self.executable(),
-            'args' : self.command_line_args() or "",
-            'script_file' : self.input_filename(),
-            'scriptargs' : self.command_line_scriptargs() or "",
-            'output_file' : self.output_filename()
-        }
-        return """%(prog)s %(args)s "%(script_file)s" %(scriptargs)s "%(output_file)s" """ % args
+        return self.setting('command-string') % self.command_string_args()
 
     def ignore_nonzero_exit(self):
         return self.artifact.wrapper.ignore_nonzero_exit
@@ -127,7 +125,7 @@ class SubprocessFilter(Filter):
     def handle_subprocess_proc_return(self, command, exitcode, stderr):
         if exitcode is None:
             raise dexy.exceptions.InternalDexyProblem("no return code, proc not finished!")
-        elif exitcode != 0 and self.CHECK_RETURN_CODE:
+        elif exitcode != 0 and self.setting('check-return-code'):
             if self.ignore_nonzero_exit():
                 self.artifact.log.warn("Nonzero exit status %s" % exitcode)
                 self.artifact.log.warn("output from process: %s" % stderr)
@@ -139,20 +137,15 @@ class SubprocessFilter(Filter):
                 raise dexy.exceptions.UserFeedback(err_msg)
 
     def setup_timeout(self):
-        return self.args().get('timeout', self.TIMEOUT)
+        return self.setting('timeout')
 
     def setup_initial_timeout(self):
-        return self.args().get('initial_timeout', self.INITIAL_TIMEOUT)
+        return self.setting('initial-timeout')
 
     def setup_env(self):
         env = os.environ
 
-        # Add parameters set in class's ENV variable.
-        if self.ENV:
-            env.update(self.ENV)
-
-        # Add parameters set in filter arguments.
-        env.update(self.args().get('env', {}))
+        env.update(self.setting('env'))
 
         # Add parameters in wrapper's env dict
         if self.is_part_of_script_bundle():
@@ -162,8 +155,8 @@ class SubprocessFilter(Filter):
                     env[key] = value
 
         # Add any path extensions to PATH
-        if self.PATH_EXTENSIONS:
-            paths = [env['PATH']] + self.PATH_EXTENSIONS
+        if self.setting('path-extensions'):
+            paths = [env['PATH']] + self.setting('path-extensions')
             env['PATH'] = ":".join(paths)
 
         return env
@@ -217,10 +210,7 @@ class SubprocessFilter(Filter):
                     self.add_doc(relpath, contents)
 
     def do_walk_working_directory(self):
-        if self.args().has_key('walk-working-dir'):
-            return self.args()['walk-working-dir']
-        else:
-            return self.WALK_WORKING_DIRECTORY
+        return self.setting('walk-working-dir')
 
     def walk_working_directory(self, doc=None, section_name=None):
         if not doc:
@@ -247,10 +237,6 @@ class SubprocessFilter(Filter):
 
         return doc
 
-    def write_stderr_to_stdout(self):
-        # TODO allow customizing this in args
-        return self.WRITE_STDERR_TO_STDOUT
-
     def run_command(self, command, env, input_text=None):
         wd = self.setup_wd()
 
@@ -261,12 +247,12 @@ class SubprocessFilter(Filter):
         else:
             stdin = None
 
-        if self.write_stderr_to_stdout():
+        if self.setting('write-stderr-to-stdout'):
             stderr = stdout
         else:
             stderr = subprocess.PIPE
 
-        self.log.debug("about to run '%s' in '%s'" % (command, wd))
+        self.log.debug("about to run '%s' in '%s'" % (command, os.path.abspath(wd)))
         proc = subprocess.Popen(command, shell=True,
                                     cwd=wd,
                                     stdin=stdin,
@@ -292,11 +278,14 @@ class SubprocessStdoutFilter(SubprocessFilter):
     """
     Subclass of SubprocessFilter which runs a command and returns the stdout generated by that command as its output.
     """
-    WRITE_STDERR_TO_STDOUT = False
-    REQUIRE_OUTPUT = False
+    _SETTINGS = {
+            'write-stderr-to-stdout' : False,
+            'require-output' : False,
+            'command-string' : '%(prog)s %(args)s "%(script_file)s" %(scriptargs)s'
+            }
 
     def process(self):
-        command = self.command_string_stdout()
+        command = self.command_string()
         proc, stdout = self.run_command(command, self.setup_env())
         self.handle_subprocess_proc_return(command, proc.returncode, stdout)
         self.output().set_data(stdout)
@@ -312,24 +301,32 @@ class SubprocessCompileFilter(SubprocessFilter):
     """
     Base class for filters which need to compile code, then run the compiled executable.
     """
-    ADD_NEW_FILES = True
-    COMPILED_EXTENSION = ".o"
-    CHECK_RETURN_CODE = False # Whether to check return code when running compiled executable.
-    EXECUTABLES = []
+    _SETTINGS = {
+            'add-new-files' : True,
+            'check-return-code' : False,
+            'compiled-extension' : ("Extension which compiled files end with.", ".o"),
+            'compiler-command-string' : (
+                "Command string to call compiler.",
+                "%(prog)s %(compiler_args)s %(script_file)s -o %(compiled_filename)s"
+                ),
+            'compiler-args' : ("Args to pass to compiler.", '')
+            }
 
     def compile_command_string(self):
-        wf = os.path.basename(self.input().name)
-        of = self.compiled_filename()
-        compiler_args = self.args().get("compiler-args", "")
-        return "%s %s %s -o %s" % (self.executable(), compiler_args, wf, of)
+        args = self.default_command_string_args()
+        args['compiler_args'] = self.setting('compiler-args')
+        args['compiled_filename'] = self.compiled_filename()
+        return self.setting('compiler-command-string') % args
 
     def compiled_filename(self):
         basename = os.path.basename(self.input().name)
         nameroot = os.path.splitext(basename)[0]
-        return "%s%s" % (nameroot, self.COMPILED_EXTENSION)
+        return "%s%s" % (nameroot, self.setting('compiled-extension'))
 
     def run_command_string(self):
-        return "./%s" % self.compiled_filename()
+        args = self.default_command_string_args()
+        args['compiled_filename'] = self.compiled_filename()
+        return "./%(compiled_filename)s %(args)s" % args
 
     def process(self):
         env = self.setup_env()
@@ -346,7 +343,7 @@ class SubprocessCompileFilter(SubprocessFilter):
         proc, stdout = self.run_command(command, env)
 
         # This tests exitcode from the compiled script.
-        if self.CHECK_RETURN_CODE:
+        if self.setting('check-return-code'):
             self.handle_subprocess_proc_return(command, proc.returncode, stdout)
 
         self.output().set_data(stdout)
@@ -359,9 +356,11 @@ class SubprocessInputFilter(SubprocessFilter):
     """
     Filters which run a task in subprocess while also writing content to stdin for that process.
     """
-    CHECK_RETURN_CODE = False
-    WRITE_STDERR_TO_STDOUT = False
-    OUTPUT_DATA_TYPE = 'sectioned'
+    _SETTINGS = {
+            'output-data-type' : 'sectioned',
+            'check-return-code' : False,
+            'write-stderr-to-stdout' : False
+            }
 
     def process(self):
         command = self.command_string()
@@ -374,13 +373,13 @@ class SubprocessInputFilter(SubprocessFilter):
             doc = inputs[0]
             for section_name, section_text in doc.output().as_sectioned().iteritems():
                 proc, stdout = self.run_command(command, self.setup_env(), section_text)
-                if self.CHECK_RETURN_CODE:
+                if self.setting('check-return-code'):
                     self.handle_subprocess_proc_return(command, proc.returncode, stdout)
                 output[section_name] = stdout
         else:
             for doc in inputs:
                 proc, stdout = self.run_command(command, self.setup_env(), unicode(doc.output()))
-                if self.CHECK_RETURN_CODE:
+                if self.setting('check-return-code'):
                     self.handle_subprocess_proc_return(command, proc.returncode, stdout)
                 output[doc.key] = stdout
 
@@ -390,12 +389,20 @@ class SubprocessInputFileFilter(SubprocessFilter):
     """
     Filters which run one or more input files through the script via filenames.
     """
-    CHECK_RETURN_CODE = False
-    WRITE_STDERR_TO_STDOUT = False
-    OUTPUT_DATA_TYPE = 'sectioned'
+    _SETTINGS = {
+            'output-data-type' : 'sectioned',
+            'check-return-code' : False,
+            'write-stderr-to-stdout' : False,
+            'command-string' : """%(prog)s %(args)s %(input_text)s "%(script_file)s" """
+            }
 
+    def command_string_args(self, input_doc):
+        args = self.default_command_string_args()
+        args['input_text'] = input_doc.output().name
+        return args
+    
     def command_string_for_input(self, input_doc):
-        return "%s %s %s" % (self.executable(), self.input_filename(), input_doc.output().name)
+        return self.setting('command-string') % self.command_string_args(input_doc)
 
     def process(self):
         inputs = list(self.artifact.doc.node.walk_input_docs())
@@ -405,7 +412,7 @@ class SubprocessInputFileFilter(SubprocessFilter):
         for doc in inputs:
             command = self.command_string_for_input(doc)
             proc, stdout = self.run_command(command, self.setup_env())
-            if self.CHECK_RETURN_CODE:
+            if self.setting('check-return-code'):
                 self.handle_subprocess_proc_return(command, proc.returncode, stdout)
             output[doc.key] = stdout
 
@@ -415,9 +422,11 @@ class SubprocessCompileInputFilter(SubprocessCompileFilter):
     """
     Filters which compile code, then run it with input.
     """
-    CHECK_RETURN_CODE = False
-    WRITE_STDERR_TO_STDOUT = False
-    OUTPUT_DATA_TYPE = 'sectioned'
+    _SETTINGS = {
+            'output-data-type' : 'sectioned',
+            'check-return-code' : False,
+            'write-stderr-to-stdout' : False
+            }
 
     def process(self):
         # Compile the code
@@ -435,14 +444,74 @@ class SubprocessCompileInputFilter(SubprocessCompileFilter):
             doc = inputs[0]
             for section_name, section_text in doc.output().as_sectioned().iteritems():
                 proc, stdout = self.run_command(command, self.setup_env(), section_text)
-                if self.CHECK_RETURN_CODE:
+                if self.setting('check-return-code'):
                     self.handle_subprocess_proc_return(command, proc.returncode, stdout)
                 output[section_name] = stdout
         else:
             for doc in inputs:
                 proc, stdout = self.run_command(command, self.setup_env(), doc.output().as_text())
-                if self.CHECK_RETURN_CODE:
+                if self.setting('check-return-code'):
                     self.handle_subprocess_proc_return(command, proc.returncode, stdout)
                 output[doc.key] = stdout
 
         self.output().set_data(output)
+
+class SubprocessFormatFlagFilter(SubprocessFilter):
+    """
+    Subprocess filters which have to pass a format flag (like ragel -R for ruby).
+    """
+    _SETTINGS = {
+            'ext-to-format' : ("A dict of mappings from file extensions to format flags that need to be passed on the command line, e.g. for ragel with ruby host language .rb => -R", {})
+            }
+
+    def command_string_args(self):
+        args = self.default_command_string_args()
+
+        flags = self.setting('ext-to-format')
+
+        if any(f in args['args'] for f in flags):
+            # Already have specified the format manually.
+            fmt = ''
+        else:
+            fmt = flags[self.artifact.ext]
+
+        args['format'] = fmt
+        return args
+
+class SubprocessExtToFormatFilter(SubprocessFilter):
+    """
+    Subprocess filters which have ext-to-format param.
+    """
+    _SETTINGS = {
+            'format-specifier' : ("The string used to specify the format switch, include trailing space if needed.", None),
+            'ext-to-format' : ("A dict of mappings from file extensions to format parameters that need to be passed on the command line, e.g. for ghostscript .png => png16m", {})
+            }
+
+    def command_string_args(self):
+        args = self.default_command_string_args()
+
+        fmt_specifier = self.setting('format-specifier')
+        if fmt_specifier and (fmt_specifier in args['args']):
+            # Already have specified the format manually.
+            fmt = ''
+        else:
+            fmt_setting = self.setting('ext-to-format')[self.artifact.ext]
+            if fmt_setting:
+                fmt = "%s%s" % (fmt_specifier, fmt_setting)
+            else:
+                fmt = ''
+
+        args['format'] = fmt
+        return args
+
+class SubprocessStdoutTextFilter(SubprocessStdoutFilter):
+    _SETTINGS = {
+            'command-string' : "%(prog)s %(args)s \"%(text)s\"",
+            'input-extensions' : ['.txt'],
+            'output-extensions' : ['.txt']
+            }
+
+    def command_string_args(self):
+        args = self.default_command_string_args()
+        args['text'] = self.input().as_text()
+        return args

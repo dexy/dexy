@@ -1,7 +1,7 @@
-from dexy.plugin import PluginMeta
 import copy
 import dexy.doc
 import dexy.exceptions
+import dexy.plugin
 import os
 import posixpath
 import pprint
@@ -180,13 +180,14 @@ class AbstractSyntaxTree():
 
         return root_nodes, created_tasks
 
-class Parser:
+class Parser(dexy.plugin.Plugin):
     """
     Parse various types of config file.
     """
     ALIASES = []
+    _SETTINGS = {}
 
-    __metaclass__ = PluginMeta
+    __metaclass__ = dexy.plugin.PluginMeta
 
     @classmethod
     def is_active(klass):
@@ -227,7 +228,8 @@ class Parser:
 
     @classmethod
     def standardize_alias(klass, alias):
-        return dexy.task.Task.aliases[alias].ALIASES[0]
+        task_class, settings = dexy.task.Task.plugins[alias]
+        return task_class.ALIASES[0]
 
     @classmethod
     def standardize_key(klass, key):

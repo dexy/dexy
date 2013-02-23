@@ -9,50 +9,57 @@ import posixpath
 class FilterException(Exception):
     pass
 
-class Filter:
+class Filter(dexy.plugin.Plugin):
+    """
+    Base class for types of filter.
+    """
     __metaclass__ = dexy.plugin.PluginMeta
 
     ALIASES = ['dexy']
-    FRAGMENT = True
-    INPUT_EXTENSIONS = [".*"]
-    NODOC = False
-    OUTPUT_DATA_TYPE = 'generic'
-    OUTPUT_EXTENSIONS = [".*"]
-    PRESERVE_PRIOR_DATA_CLASS = False
-    REQUIRE_OUTPUT = True
     TAGS = []
+    _SETTINGS = {
+            'help' : ('Help string for filter, if not already specified as a class docstring.', None),
+            'add-new-files' : ('', False),
+            'require-output' : ("Should dexy raise an exception if no output is produced by this filter?", True),
+            'additional-doc-filters' : ('', {}),
+            'ext' : ('Extension to output.', None),
+            'input-extensions' : ("List of extensions which this filter can accept as input.", [".*"]),
+            'output-extensions' : ("List of extensions which this filter can produce as output.", [".*"]),
+            'output-data-type' : ("Alias of data type to use to store filter output.", "generic"),
+            'keep-originals' : ('', False),
+            'output' : ("Whether to output results of this filter by default.", False),
+            'variables' : ('', {}),
+            'vars' : ('', {}),
+            'preserve-prior-data-class' : ('', False),
+            'nodoc' : ("Whether filter should be excluded from documentation.", False)
+            }
 
-    @classmethod
-    def templates(klass):
+    def templates(self):
         """
         List of dexy templates which refer to this filter.
         """
         import dexy.template
-        return [p for p in dexy.template.Template.plugins if any(a for a in klass.ALIASES if a in p.FILTERS_USED)]
+        return [t for t in dexy.template.Template if any(a for a in self.ALIASES if a in t.FILTERS_USED)]
 
-    @classmethod
-    def is_active(klass):
+    def is_active(self):
         return True
 
-    @classmethod
     def inactive_because_missing(klass):
         if hasattr(klass, 'executables'):
             return klass.executables()
         elif hasattr(klass, 'IMPORTS'):
             return klass.IMPORTS
 
-    def args(self):
-        return self.artifact.filter_args()
+    def update_all_args(self, new_args):
+        self.artifact.doc.args.update(new_args)
+        for a in self.artifact.doc.children[1:]:
+            a.update_args(new_args)
 
-    def arg_value(self, arg_name_hyphen, default=None):
-        return dexy.utils.value_for_hyphenated_or_underscored_arg(self.args(), arg_name_hyphen, default)
-
-    @classmethod
-    def data_class_alias(klass, file_ext):
-        return klass.OUTPUT_DATA_TYPE
+    def data_class_alias(self, file_ext):
+        return self.setting('output-data-type')
 
     def do_add_new_files(self):
-        return self.ADD_NEW_FILES or self.arg_value("add-new-files", False)
+        return self.setting('add-new-files')
 
     def process(self):
         pass
@@ -64,12 +71,12 @@ class Filter:
     def doc_arg(self, arg_name_hyphen, default=None):
         return self.artifact.doc.arg_value(arg_name_hyphen, default)
 
-    def add_doc(self, doc_name, doc_contents=None):
+    def add_doc(self, doc_name, doc_contents=None, run=True):
         doc_name = os_to_posix(doc_name)
         if not posixpath.sep in doc_name:
             doc_name = posixpath.join(self.input().parent_dir(), doc_name)
 
-        additional_doc_filters = self.arg_value('additional-doc-filters', {}) 
+        additional_doc_filters = self.setting('additional-doc-filters')
         self.log.debug("additional-doc-filters are %s" % additional_doc_filters)
 
         doc_ext = os.path.splitext(doc_name)[1]
@@ -84,19 +91,19 @@ class Filter:
             raise Exception("not implemented")
 
         if len(filters) > 0:
-            if self.arg_value('keep-originals', True):
+            if self.setting('keep-originals'):
                 doc_key = doc_name
                 doc = dexy.doc.Doc(doc_key, contents=doc_contents)
                 self.artifact.add_doc(doc)
 
             doc_key = "%s|%s" % (doc_name, filters)
             doc = dexy.doc.Doc(doc_key, contents=doc_contents)
-            self.artifact.add_doc(doc)
+            self.artifact.add_doc(doc, run=run)
 
         else:
             doc_key = doc_name
             doc = dexy.doc.Doc(doc_key, contents=doc_contents)
-            self.artifact.add_doc(doc)
+            self.artifact.add_doc(doc, run=run)
 
         return doc
 
@@ -171,14 +178,13 @@ class DexyFilter(Filter):
     """
     ALIASES = ['dexy']
 
-    @classmethod
     def data_class_alias(klass, file_ext):
         if hasattr(klass, 'process_dict'):
             return 'sectioned'
         elif hasattr(klass, 'process_text_to_dict'):
             return 'sectioned'
         else:
-            return klass.OUTPUT_DATA_TYPE
+            return klass.setting('output-data-type')
 
     def process(self):
         if hasattr(self, "process_text_to_dict"):
@@ -200,9 +206,10 @@ class AliasFilter(DexyFilter):
     """
     Filter to be used when an Alias is specified. Should not change input.
     """
-    PRESERVE_PRIOR_DATA_CLASS = True
-    ALIASES = []
+    ALIASES = ['-']
+    _SETTINGS = {
+            'preserve-prior-data-class' : True
+            }
 
     def calculate_canonical_name(self):
         return self.artifact.prior.filter_instance.calculate_canonical_name()
-

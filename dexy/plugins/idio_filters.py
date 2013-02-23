@@ -15,9 +15,10 @@ class IdioFilter(PygmentsFilter):
     "section-name" comments.
     """
     ALIASES = ['idio', 'idiopidae']
-    OUTPUT_EXTENSIONS = PygmentsFilter.MARKUP_OUTPUT_EXTENSIONS + PygmentsFilter.IMAGE_OUTPUT_EXTENSIONS + [".txt"]
+    _SETTINGS = {
+            'output-extensions' : PygmentsFilter.MARKUP_OUTPUT_EXTENSIONS + PygmentsFilter.IMAGE_OUTPUT_EXTENSIONS + [".txt"]
+            }
 
-    @classmethod
     def data_class_alias(klass, file_ext):
         if file_ext in PygmentsFilter.MARKUP_OUTPUT_EXTENSIONS + [".txt"]:
             return 'sectioned'
@@ -25,7 +26,7 @@ class IdioFilter(PygmentsFilter):
             return 'generic'
 
     def do_add_new_files(self):
-        if self.args().get('add-new-files', False) or self.args().get("add_new_files", False):
+        if self.setting('add-new-files'):
             return True
         elif self.artifact.ext in self.IMAGE_OUTPUT_EXTENSIONS:
             return True
@@ -33,8 +34,7 @@ class IdioFilter(PygmentsFilter):
             return False
 
     def process(self):
-        args = self.args().copy()
-        lexer = self.create_lexer_instance(args)
+        lexer = self.create_lexer_instance()
 
         input_text = self.input().as_text()
         composer = Composer()
@@ -68,7 +68,7 @@ class IdioFilter(PygmentsFilter):
                 # line, so account for this to keep line nos in sync.
                 lineno += 1
 
-            formatter = self.create_formatter_instance(args)
+            formatter = self.create_formatter_instance()
 
             if hasattr(formatter, 'linenostart'):
                 formatter.linenostart = lineno
@@ -83,13 +83,13 @@ class IdioFilter(PygmentsFilter):
 
             if not self.artifact.ext in self.IMAGE_OUTPUT_EXTENSIONS:
                 if add_new_files:
-                    doc.canon = False
+                    self.update_all_args({'output' : False })
                 output_dict[s] = formatted_lines
 
             lineno += len(lines)
 
         if self.artifact.ext in self.IMAGE_OUTPUT_EXTENSIONS:
-            formatter = self.create_formatter_instance(args)
+            formatter = self.create_formatter_instance()
             formatted_lines = composer.format(lines, lexer, formatter)
             self.output().set_data(formatted_lines)
         else:
@@ -102,29 +102,22 @@ class IdioMultipleFormatsFilter(PygmentsFilter):
     text-based formats.
     """
     ALIASES = ['idiom']
-    OUTPUT_EXTENSIONS = ['.json']
-
-    def create_formatter_instance(self, args, formatter_class):
-        formatter_args = {'lineanchors' : self.output().web_safe_document_key() }
-
-        # Python 2.6 doesn't like unicode keys as kwargs
-        for k, v in args.iteritems():
-            formatter_args[str(k)] = v
-
-        self.log.debug("creating formatter of type %s with args %s" % (formatter_class.__name__, args))
-        return formatter_class(**formatter_args)
+    _SETTINGS = {
+            'output-extensions' : ['.json']
+            }
 
     def process(self):
         input_text = self.input().as_text()
         composer = Composer()
         builder = idiopidae.parser.parse('Document', input_text + "\n\0")
 
-        args = self.args().copy()
-        lexer = self.create_lexer_instance(args)
+        lexer = self.create_lexer_instance()
 
         formatters = []
         for formatter_class in get_all_formatters():
-            formatters.append(self.create_formatter_instance(args, formatter_class))
+            formatter_args = self.constructor_args('formatter')
+            formatter_instance = formatter_class(**formatter_args)
+            formatters.append(formatter_instance)
 
         output_dict = OrderedDict()
         lineno = 1

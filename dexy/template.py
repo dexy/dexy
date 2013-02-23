@@ -2,13 +2,14 @@ import dexy.plugin
 import os
 import sys
 import shutil
-import dexy.tests.utils
+import dexy.utils
 import dexy.wrapper
 
-class Template(object):
+class Template(dexy.plugin.Plugin):
     ALIASES = []
     FILTERS_USED = []
     __metaclass__ = dexy.plugin.PluginMeta
+    _SETTINGS = {}
 
     @classmethod
     def is_active(klass):
@@ -53,7 +54,7 @@ class Template(object):
                 "dexy.rst|jinja|rst2man"
                 ]
 
-        with dexy.tests.utils.tempdir():
+        with dexy.utils.tempdir():
             # Copy files to directory 'ex'
             klass.run("ex", meta=meta)
 

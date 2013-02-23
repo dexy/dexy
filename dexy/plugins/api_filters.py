@@ -25,48 +25,59 @@ class ApiFilter(dexy.filter.DexyFilter):
     overwriting some unrelated information.
     """
     ALIASES = ['apis']
-    MASTER_API_KEY_FILE = "~/.dexyapis"
-    PROJECT_API_KEY_FILE = ".dexyapis"
-    PAGE_CONTENT_EXTENSIONS = ['.md', '.txt', '.html']
-    API_KEY_NAME = None
-    API_KEY_KEYS = ['username', 'password', 'url']
 
-    DOCUMENT_API_CONFIG_FILE = None
-    DOCUMENT_API_CONFIG_FILE_KEY = "api-config-file"
-    DOCUMENT_API_CONFIG_POSTFIX = "-config.json"
+    _SETTINGS = {
+            # Files to hold collections of API keys
+            'master-api-key-file' : ("Master API key file for user.", "~/.dexyapis"),
+            'project-api-key-file' : ("API key file for project.", ".dexyapis"),
 
-    # Put API key locations in this array, earlier entries have priority.
-    API_KEY_LOCATIONS = [PROJECT_API_KEY_FILE, MASTER_API_KEY_FILE]
+            # Parameters to be stored in collection files
+            'api-username' : ("The username to sign into the API with.", None),
+            'api-password' : ("The password to sign into the API with.", None),
+            'api-url' : ("The url of the API endpoint.", None),
 
-    @classmethod
-    def docmd_create_keyfile(klass):
+            # Files to hold info about a single document
+            'document-api-config-file' : ('Filename to store config for a file (can only have 1 per directory, dexy looks for suffix format first.', None),
+            'document-api-config-postfix' : ('Suffix to attach to content filename to indicate this is the config for that file.', '-config.json'),
+
+            'api-key-name' : ("The name of this API", None),
+            }
+
+    def api_key_locations(self):
+        return [self.setting('project-api-key-file'), self.setting('master-api-key-file')]
+
+    def docmd_create_keyfile(self):
+        return self.create_keyfile('master-api-key-file')
+
+    def create_keyfile(self, keyfilekey):
         """
-        Creates a key file in location specified by MASTER_API_KEY_FILE.
+        Creates a key file.
         """
-        key_filename = os.path.expanduser(klass.MASTER_API_KEY_FILE)
+        key_filename = os.path.expanduser(self.setting(keyfilekey))
         if os.path.exists(key_filename):
-            raise Exception("File %s already exists!" % key_filename)
+            raise dexy.exceptions.UserFeedback("File %s already exists!" % key_filename)
 
         keyfile_content = {}
-        for filter_class in dexy.filter.Filter.aliases.values():
-            if issubclass(filter_class, klass) and not filter_class == klass:
-                print filter_class.__name__
-                if not filter_class.API_KEY_NAME:
-                    raise Exception("filter class %s should set API_KEY_NAME" % filter_class.__name__)
-                keyfile_content[filter_class.API_KEY_NAME] = dict((k, "TODO") for k in filter_class.API_KEY_KEYS)
+        for filter_instance in dexy.filter.Filter:
+            if isinstance(filter_instance, ApiFilter) and not filter_instance.__class__ == ApiFilter:
+                api_key_name = filter_instance.setting('api-key-name')
+                # We want to create a keyfile for this filter instance.
+                keyfile_content[api_key_name] = {}
+
+                # Get all the entries we want in the keyfile.
+                for k, v in filter_instance.setting_values().iteritems():
+                    if k.startswith("api_"):
+                        keyfile_content[api_key_name][k.replace("api_", "")] = "TODO"
 
         with open(key_filename, "wb") as f:
             json.dump(keyfile_content, f, sort_keys = True, indent=4)
 
-    def document_api_config_file(self):
-        return self.args().get(self.DOCUMENT_API_CONFIG_FILE_KEY, self.DOCUMENT_API_CONFIG_FILE)
-
     def document_config_file(self):
-        postfix_config_filename = "%s%s" % (os.path.splitext(self.output().name)[0], self.DOCUMENT_API_CONFIG_POSTFIX)
+        postfix_config_filename = "%s%s" % (os.path.splitext(self.output().name)[0], self.setting('document-api-config-postfix'))
         if os.path.exists(postfix_config_filename):
             return postfix_config_filename
         else:
-            return os.path.join(self.output().parent_dir(), self.document_api_config_file())
+            return os.path.join(self.output().parent_dir(), self.setting('document-api-config-file'))
 
     def read_document_config(self):
         document_config = self.document_config_file()
@@ -82,21 +93,18 @@ class ApiFilter(dexy.filter.DexyFilter):
         with open(document_config, "w") as f:
             json.dump(config, f, sort_keys=True, indent=4)
 
-    @classmethod
-    def read_param_class(klass, param_name):
+    def read_param(self, param_name):
         param_value = None
-        if not param_name in klass.API_KEY_KEYS:
-            raise Exception("Param %s not specified in API_KEY_KEYS for %s" % (param_name, klass.__name__))
 
-        for filename in klass.API_KEY_LOCATIONS:
+        for filename in self.api_key_locations():
             if "~" in filename:
                 filename = os.path.expanduser(filename)
 
             if os.path.exists(filename):
                 with open(filename, "r") as f:
                     params = json.load(f)
-                    if params.has_key(klass.API_KEY_NAME):
-                        param_value = params[klass.API_KEY_NAME].get(param_name)
+                    if params.has_key(self.setting('api-key-name')):
+                        param_value = params[self.setting('api-key-name')].get(param_name)
 
             if param_value:
                 break
@@ -111,12 +119,5 @@ class ApiFilter(dexy.filter.DexyFilter):
         if param_value:
             return param_value
         else:
-            msg = "Could not find %s for %s in: %s" % (param_name, klass.API_KEY_NAME, ", ".join(klass.API_KEY_LOCATIONS))
+            msg = "Could not find %s for %s in: %s" % (param_name, self.setting('api-key-name'), ", ".join(self.api_key_locations()))
             raise Exception(msg)
-
-    def read_param(self, param_name):
-        param_value = self.arg_value(param_name)
-        if not param_value:
-            param_value = self.__class__.read_param_class(param_name)
-
-        return param_value

@@ -16,10 +16,12 @@ class MarkdownFilter(DexyFilter):
     Markdown extensions can be enabled in your config:
     http://packages.python.org/Markdown/extensions/index.html
     """
-    INPUT_EXTENSIONS = ['.*']
-    OUTPUT_EXTENSIONS = ['.html']
     ALIASES = ['markdown']
-    DEFAULT_EXTENSIONS = {'toc' : {}}
+    _SETTINGS = {
+            'input-extensions' : ['.*'],
+            'output-extensions' : ['.html'],
+            'extensions' : ("Which Markdown extensions to enable.", { 'toc' : {} }),
+            }
 
     @classmethod
     def is_active(klass):
@@ -29,12 +31,8 @@ class MarkdownFilter(DexyFilter):
         markdown_logger = logging.getLogger('MARKDOWN')
         markdown_logger.addHandler(self.log.handlers[-1])
 
-        if len(self.args()) > 0:
-            extensions = self.args().keys()
-            extension_configs = self.args()
-        else:
-            extensions = self.DEFAULT_EXTENSIONS.keys()
-            extension_configs = self.DEFAULT_EXTENSIONS
+        extension_configs = self.setting('extensions')
+        extensions = extension_configs.keys()
 
         dbg = "Initializing Markdown with extensions: %s and extension configs: %s"
         self.log.debug(dbg % (json.dumps(extensions), json.dumps(extension_configs)))

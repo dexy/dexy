@@ -1,14 +1,15 @@
 from datetime import datetime
-from dexy.plugin import PluginMeta
+import dexy.plugin
 import dexy.data
 import json
 
-class Database:
+class Database(dexy.plugin.Plugin):
     """
     Class that persists run data to a database.
     """
     ALIASES = []
-    __metaclass__ = PluginMeta
+    _SETTINGS = {}
+    __metaclass__ = dexy.plugin.PluginMeta
 
     @classmethod
     def is_active(klass):

@@ -39,8 +39,10 @@ class BotoUploadFilter(ApiFilter):
     a new bucket will be created if your bucket does not already exist.
     """
     ALIASES = ['s3', 'botoup']
-    OUTPUT_EXTENSIONS = [".txt"]
-    API_KEY_NAME = 'AWS'
+    _SETTINGS = {
+            'api-key-name' : 'AWS',
+            'output-extensions' : ['.txt'],
+            }
     API_KEY_KEYS = ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_BUCKET_NAME']
 
     @classmethod

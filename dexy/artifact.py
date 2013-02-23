@@ -107,10 +107,10 @@ class Artifact(dexy.task.Task):
         return 'generic'
 
     def setup_output_data(self):
-        data_class = dexy.data.Data.aliases[self.data_class_alias()]
-        self.log.debug("setting up output data of class %s" % data_class.__name__)
-        self.output_data_type = data_class.ALIASES[0]
-        self.output_data = data_class(self.key, self.ext, self.calculate_canonical_name(), self.hashstring, self.args, self.wrapper)
+        alias = self.data_class_alias()
+        instanceargs = (self.key, self.ext, self.calculate_canonical_name(), self.hashstring, self.args, self.wrapper,)
+        self.output_data = dexy.data.Data.create_instance(alias, *instanceargs)
+        self.output_data_type = self.output_data.ALIASES[0]
 
     def setup(self):
         self.set_log()
@@ -181,7 +181,10 @@ class InitialVirtualArtifact(InitialArtifact):
                 except UnicodeEncodeError:
                     return hashlib.md5(contents.encode("utf-8")).hexdigest()
             else:
-                return hashlib.md5(unicode(contents)).hexdigest()
+                try:
+                    return hashlib.md5(unicode(contents)).hexdigest()
+                except UnicodeDecodeError:
+                    return hashlib.md5(str(contents)).hexdigest()
 
     def data_class_alias(self):
         data_class_alias = self.args.get('data-class-alias')
@@ -212,10 +215,10 @@ class FilterArtifact(Artifact):
     Artifact class which applies filter processing to input from previous step.
     """
     def data_class_alias(self):
-        if self.filter_class.PRESERVE_PRIOR_DATA_CLASS:
+        if self.filter_instance.setting('preserve-prior-data-class'):
             return self.input_data.__class__.ALIASES[0]
         else:
-            return self.filter_class.data_class_alias(self.ext)
+            return self.filter_instance.data_class_alias(self.ext)
 
     def calculate_canonical_name(self):
         from_args = self.canonical_name_from_args()
@@ -224,10 +227,18 @@ class FilterArtifact(Artifact):
         else:
             return self.filter_instance.calculate_canonical_name()
 
+    def update_args(self, new_args):
+        """
+        Update the 'args' for this artifact.
+        """
+        self.args.update(new_args)
+        self.filter_instance.update_settings(new_args.get(self.filter_alias, {}))
+
     def setup_filter_instance(self):
-        self.filter_instance = self.filter_class()
+        self.filter_instance = dexy.filter.Filter.create_instance(self.filter_alias)
         self.filter_instance.artifact = self
         self.filter_instance.log = self.log
+        self.filter_instance.update_settings(self.args.get(self.filter_alias, {}))
 
     def run(self, *args, **kw):
         start_time = time.time()
@@ -242,12 +253,15 @@ class FilterArtifact(Artifact):
             if cache_ok:
                 self.reconstitute_cached_children()
                 self.content_source = 'cached'
+            else:
+                self.output_data.clear_cache()
+                self.output_data.setup()
 
         if (not is_cached) or (not cache_ok):
             self.log.debug("Output is not cached under %s, running..." % self.hashstring)
             self.filter_instance.process()
             if not self.output_data.is_cached():
-                if self.filter_instance.REQUIRE_OUTPUT:
+                if self.filter_instance.setting('require-output'):
                     raise dexy.exceptions.NoFilterOutput("No output file after filter ran: %s" % self.key)
             self.content_source = 'generated'
 
@@ -268,6 +282,8 @@ class FilterArtifact(Artifact):
         raw_args = rows[0]['args']
 
         if not raw_args:
+            self.log.debug("args not found in DB, cache may be corrupt")
+            self.log.debug(rows[0])
             return False
         else:
             for k, v in json.loads(raw_args).iteritems():
@@ -312,11 +328,11 @@ class FilterArtifact(Artifact):
         self.metadata.argstr = ", ".join(strargs)
 
         # version of external software being run, if any
-        if hasattr(self.filter_class, 'version'):
-            version = self.filter_class.version()
+        if hasattr(self.filter_instance, 'version'):
+            version = self.filter_instance.version()
             self.metadata.software_version = version
 
-    def add_doc(self, doc):
+    def add_doc(self, doc, run=True):
         if doc.state == 'complete':
             raise Exception("Already complete!")
 
@@ -326,25 +342,23 @@ class FilterArtifact(Artifact):
         doc.wrapper = self.wrapper
         doc.args['canon'] = True
 
-        node = dexy.node.Node(doc.key)
-        node.children = [doc]
-        doc.node = node
+        doc.node = self.doc.node
+        self.doc.node.children.append(doc)
 
-        for task in (doc,):
-            for t in task:
-                t()
-        for task in (doc,):
-            for t in task:
-                t()
-        for task in (doc,):
-            for t in task:
-                t()
-
-        self.doc.node.inputs.append(node)
+        if run:
+            for task in (doc,):
+                for t in task:
+                    t()
+            for task in (doc,):
+                for t in task:
+                    t()
+            for task in (doc,):
+                for t in task:
+                    t()
 
     def set_extension(self):
-        this_filter_outputs = self.filter_class.OUTPUT_EXTENSIONS
-        this_filter_accepts = self.filter_class.INPUT_EXTENSIONS
+        this_filter_outputs = self.filter_instance.setting('output-extensions')
+        this_filter_accepts = self.filter_instance.setting('input-extensions')
 
         # Check that we can handle input extension
         if set([self.prior.ext, ".*"]).isdisjoint(set(this_filter_accepts)):
@@ -353,7 +367,7 @@ class FilterArtifact(Artifact):
             raise dexy.exceptions.UserFeedback(msg % params)
 
         # Figure out output extension
-        ext = self.filter_args().get('ext')
+        ext = self.filter_instance.setting('ext')
         if ext:
             # User has specified desired extension
             if not ext.startswith('.'):
@@ -373,7 +387,7 @@ class FilterArtifact(Artifact):
             # User has not specified desired extension, and we don't output wildcards,
             # figure out extension based on next filter in sequence, if any.
             if self.next_filter_class:
-                next_filter_accepts = self.next_filter_class.INPUT_EXTENSIONS
+                next_filter_accepts = self.next_filter_class.setting('input-extensions')
 
                 if ".*" in next_filter_accepts:
                     self.ext = this_filter_outputs[0]
@@ -392,9 +406,9 @@ class FilterArtifact(Artifact):
             else:
                 self.ext = this_filter_outputs[0]
 
-    def filter_args(self):
-        """
-        Arguments that are passed by the user which are specifically for the
-        filter that will be run by this artifact.
-        """
-        return self.args.get(self.filter_alias, {})
+#    def filter_args(self):
+#        """
+#        Arguments that are passed by the user which are specifically for the
+#        filter that will be run by this artifact.
+#        """
+#        return self.args.get(self.filter_alias, {})

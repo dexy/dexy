@@ -1,5 +1,4 @@
 from dexy.doc import Doc
-from dexy.plugins.wordpress_filters import WordPressFilter
 from dexy.tests.utils import TEST_DATA_DIR
 from dexy.tests.utils import wrap
 from dexy.tests.utils import divert_stdout
@@ -8,11 +7,12 @@ import dexy.exceptions
 import json
 import os
 import shutil
+import dexy.filter
 
 def test_docmd_create_keyfile():
     with wrap():
         assert not os.path.exists(".dexyapis")
-        WordPressFilter.docmd_create_keyfile()
+        dexy.filter.Filter.create_instance("wp").docmd_create_keyfile()
         assert os.path.exists(".dexyapis")
 
 def test_docmd_create_keyfile_if_exists():
@@ -21,7 +21,7 @@ def test_docmd_create_keyfile_if_exists():
             f.write("{}")
         assert os.path.exists(".dexyapis")
         try:
-            WordPressFilter.docmd_create_keyfile()
+            dexy.filter.Filter.create_instance("wp").docmd_create_keyfile()
             assert False, ' should raise exception'
         except dexy.exceptions.UserFeedback as e:
             assert ".dexyapis already exists" in e.message
@@ -33,7 +33,7 @@ def test_api_url_with_php_ending():
                     "wordpress" : {"url" : "http://example.com/api/xmlrpc.php"}
                     }, f)
 
-        url = WordPressFilter.api_url()
+        url = dexy.filter.Filter.create_instance("wp").api_url()
         assert url == "http://example.com/api/xmlrpc.php"
 
 def test_api_url_without_php_ending():
@@ -41,7 +41,7 @@ def test_api_url_without_php_ending():
         with open(".dexyapis", "wb") as f:
             json.dump({ "wordpress" : {"url" : "http://example.com/api"} }, f)
 
-        url = WordPressFilter.api_url()
+        url = dexy.filter.Filter.create_instance("wp").api_url()
         assert url == "http://example.com/api/xmlrpc.php"
 
 def test_api_url_without_php_ending_with_trailing_slash():
@@ -49,7 +49,7 @@ def test_api_url_without_php_ending_with_trailing_slash():
         with open(".dexyapis", "wb") as f:
             json.dump({ "wordpress" : {"url" : "http://example.com/api/"} }, f)
 
-        url = WordPressFilter.api_url()
+        url = dexy.filter.Filter.create_instance("wp").api_url()
         assert url == "http://example.com/api/xmlrpc.php"
 
 def test_wordpress_without_doc_config_file():
@@ -144,5 +144,5 @@ def test_wordpress(MockXmlrpclib):
 
         # test list categories
         with divert_stdout() as stdout:
-            WordPressFilter.docmd_list_categories()
+            dexy.filter.Filter.create_instance("wp").docmd_list_categories()
             assert stdout.getvalue() == "categoryName\nfoo\nbar\n"

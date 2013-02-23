@@ -6,18 +6,22 @@ class FluidHtml(DexyFilter):
     Easy way to add styles (includes Python syntax highlighting).
     """
     ALIASES = ['easyhtml']
-    INPUT_EXTENSIONS = ['.html']
-    OUTPUT_EXTENSIONS = ['.html']
+
+    _SETTINGS = {
+            'input-extensions' : ['.html'],
+            'output-extensions' : ['.html'],
+            "css" : ("Custom CSS to include in header.", ""),
+            "js" : ("Custom JS to include (please wrap in script tags).", ""),
+            }
 
     def process_text(self, input_text):
         args = {
                 'pygments_css' : self.PYGMENTS_CSS,
                 'css_framework' : self.CSS_FRAMEWORK,
-                'custom_css' : self.arg_value("css", ""),
-                'custom_js' : self.arg_value("js", ""),
+                'custom_css' : self.setting("css"),
+                'custom_js' : self.setting("js"),
                 'content' : input_text
                 }
-
         return """
 <html>
     <head>

@@ -10,7 +10,7 @@ def test_python_filter_record_vars():
     with wrap() as wrapper:
         doc = DocNode("example.py|pycon",
                 wrapper = wrapper,
-                pycon = { 'record_vars' :  True},
+                pycon = { 'record-vars' :  True},
                 contents = PYTHON_CONTENT
                 )
 

@@ -1,5 +1,4 @@
 from datetime import datetime
-from dexy.plugin import PluginMeta
 from dexy.version import DEXY_VERSION
 from pygments.styles import get_all_styles
 import calendar
@@ -7,22 +6,25 @@ import dexy.artifact
 import dexy.commands
 import dexy.data
 import dexy.exceptions
+import dexy.plugin
 import json
 import os
 import pygments
 import pygments.formatters
 import re
 
-class TemplatePlugin():
-    __metaclass__ = PluginMeta
+class TemplatePlugin(dexy.plugin.Plugin):
+    __metaclass__ = dexy.plugin.PluginMeta
+    ALIASES = []
+    _SETTINGS = {}
 
-    @classmethod
     def is_active(klass):
         return True
 
-    def __init__(self, filter_instance):
-        self.filter_instance = filter_instance
-        self.log = self.filter_instance.artifact.log
+    def __init__(self, filter_instance=None):
+        if filter_instance:
+            self.filter_instance = filter_instance
+            self.log = self.filter_instance.artifact.log
 
     def run(self):
         return {}
@@ -45,6 +47,34 @@ class PrettyPrintHtml(TemplatePlugin):
     def prettify_html(klass, html):
         soup = BeautifulSoup(unicode(html))
         return soup.prettify()
+
+try:
+    import inflection
+    INFLECTION_AVAILABLE = True
+except ImportError:
+    INFLECTION_AVAILABLE = False
+
+class Inflection(TemplatePlugin):
+    """
+    Exposes the inflection package for doing nice things with strings 
+    """
+    ALIASES = ['inflection']
+    _SETTINGS = {
+            'methods' : ("Methods of the inflection module to expose.",
+                ['camelize', 'dasherize', 'humanize', 'ordinal',
+                'ordinalize', 'parameterize', 'pluralize', 'singularize',
+                'titleize', 'transliterate', 'underscore'])
+            }
+
+    @classmethod
+    def is_active(klass):
+        return INFLECTION_AVAILABLE
+    
+    def run(self):
+        args = {}
+        for method in self.setting('methods'):
+            args[method] = getattr(inflection, method)
+        return args
 
 class JavadocToRst(TemplatePlugin):
     """
@@ -233,8 +263,8 @@ class Variables(TemplatePlugin):
     ALIASES = ['variables']
     def run(self):
         variables = {}
-        variables.update(self.filter_instance.arg_value('variables', {}))
-        variables.update(self.filter_instance.arg_value('vars', {}))
+        variables.update(self.filter_instance.setting('variables'))
+        variables.update(self.filter_instance.setting('vars'))
         return variables
 
 class Globals(TemplatePlugin):

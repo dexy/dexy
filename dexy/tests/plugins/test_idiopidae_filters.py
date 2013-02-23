@@ -36,13 +36,12 @@ x*y
 
 def test_force_text():
     with wrap() as wrapper:
-        doc = Doc("example.py|idio|t",
+        node = Doc("example.py|idio|t",
                 contents="print 'hello'\n",
                 wrapper=wrapper)
 
-        wrapper.run_docs(doc)
-
-        assert str(doc.output()) == "print 'hello'\n"
+        wrapper.run_docs(node)
+        assert str(node.output()) == "print 'hello'\n"
 
 def test_force_latex():
     with wrap() as wrapper:

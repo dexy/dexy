@@ -80,6 +80,7 @@ class Wrapper(object):
         self.batch.run(self.target)
 
         self.save_db()
+        self.log.debug("batch %s complete" % self.batch.batch_id)
 
     def log_dexy_config(self):
         self.log.debug("dexy has config:")
@@ -141,7 +142,7 @@ class Wrapper(object):
 
         if reports:
             if isinstance(reports, bool):
-                reports=dexy.reporter.Reporter.plugins
+                reports=dexy.reporter.Reporter
 
             for report in reports:
                 report.remove_reports_dir()
@@ -168,8 +169,7 @@ class Wrapper(object):
             self.log.addHandler(handler)
 
     def setup_db(self):
-        db_class = dexy.database.Database.aliases[self.db_alias]
-        self.db = db_class(self)
+        self.db = dexy.database.Database.create_instance(self.db_alias, self)
 
     def docs_from_args(self):
         """
@@ -215,19 +215,18 @@ class Wrapper(object):
         self.db.save()
 
     def reports_dirs(self):
-        return [c.REPORTS_DIR for c in dexy.reporter.Reporter.plugins]
+        return [i.setting('dir') for i in dexy.reporter.Reporter]
 
     def report(self):
         if self.reports:
             self.log.debug("generating user-specified reports '%s'" % self.reports)
             reporters = []
             for alias in self.reports.split():
-                reporter_class = dexy.reporter.Reporter.aliases[alias]
-                self.log.debug("initializing reporter %s for alias %s" % (reporter_class.__name__, alias))
-                reporters.append(reporter_class())
+                reporter = dexy.reporter.Reporter.create_instance(alias)
+                reporters.append(reporter)
         else:
-            self.log.debug("no reports specified, generating all reports for which ALLREPORTS is True")
-            reporters = [c() for c in dexy.reporter.Reporter.plugins if c.ALLREPORTS]
+            self.log.debug("no reports specified, generating all reports for which 'default' setting is True")
+            reporters = [i for i in dexy.reporter.Reporter if i.setting('default')]
 
         for reporter in reporters:
             self.log.debug("running reporter %s" % reporter.ALIASES[0])
@@ -264,7 +263,7 @@ class Wrapper(object):
         for dirpath, dirnames, filenames in os.walk("."):
             if self.is_valid_dexy_dir(dirpath, dirnames):
                 check_for_double_config = []
-                for alias in dexy.parser.Parser.aliases.keys():
+                for alias in dexy.parser.Parser.plugins.keys():
                     path_to_config = os.path.normpath(os.path.join(dirpath, alias))
 
                     if os.path.exists(path_to_config):
@@ -275,7 +274,7 @@ class Wrapper(object):
                         check_for_double_config.append(path_to_config)
                         config_files_used.append(path_to_config)
 
-                        parser = dexy.parser.Parser.aliases[alias](self, ast)
+                        parser = dexy.parser.Parser.create_instance(alias, self, ast)
                         parser.build_ast(os.path.normpath(dirpath), config_text)
 
                 if len(check_for_double_config) > 1:
@@ -285,7 +284,7 @@ class Wrapper(object):
 
         if len(config_files_used) == 0:
             msg = "WARNING: Didn't find any document config files (like %s)"
-            print msg % (", ".join(dexy.parser.Parser.aliases.keys()))
+            print msg % (", ".join(dexy.parser.Parser.plugins.keys()))
         self.log.debug("AST completed:")
         ast.debug(self.log)
 

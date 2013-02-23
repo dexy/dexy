@@ -3,6 +3,11 @@ from dexy.tests.utils import runfilter
 from nose.exc import SkipTest
 from nose.tools import raises
 from dexy.utils import s
+from dexy.utils import split_path
+
+def test_split_path():
+    path = "foo/bar/baz"
+    assert split_path(path) == ['foo', 'bar', 'baz']
 
 def test_s():
     text = """This is some text

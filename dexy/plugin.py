@@ -1,52 +1,228 @@
-import inspect
 import dexy.exceptions
+import inspect
+import sys
+import yaml
+
+class Plugin(object):
+    """
+    Base class for plugins. Define *instance* methods shared by plugins here.
+    """
+    def setting(self, name_hyphen):
+        if name_hyphen in self._settings:
+            return self._settings[name_hyphen][1]
+        else:
+            name_underscore = name_hyphen.replace("-", "_")
+            if name_underscore in self._settings:
+                return self._settings[name_underscore][1]
+            else:
+                if name_underscore == name_hyphen:
+                    msg = "no setting named %s" % name_hyphen
+                else:
+                    msg = "no setting named '%s' or '%s'"
+                    msg = msg % (name_hyphen, name_underscore)
+                raise Exception(msg)
+
+    def has_setting(self, name):
+        return self._settings.has_key(name)
+
+    def setting_values(self, skip=None):
+        """
+        Returns dict of all setting values (removes the helpstrings)
+        """
+        if not skip:
+            skip = []
+        return dict((k, v[1]) for k, v in self._settings.iteritems() if not k in skip)
+
+    def update_settings(self, new_settings):
+        for k, v in new_settings.iteritems():
+            if "-" in k:
+                hyphen_k = k
+                underscore_k = k.replace("-", "_")
+            elif "_" in k:
+                underscore_k = k
+                hyphen_k = k.replace("_", "-")
+            else:
+                hyphen_k = k
+                underscore_k = k
+
+            if (not hyphen_k in self._settings) and (not underscore_k in self._settings):
+                raise Exception("'%s' is not a valid setting for %s" % (k, self.__class__.__name__))
+
+        self.__class__.class_update_settings(self, new_settings)
 
 class PluginMeta(type):
     """
-    Based on http://martyalchin.com/2008/jan/10/simple-plugin-framework/
+    Base meta class for anything plugin-able.
     """
     def __init__(cls, name, bases, attrs):
-        if not hasattr(cls, 'plugins'):
-            # This branch only executes when processing the mount point itself.
-            # So, since this is a new plugin type, not an implementation, this
-            # class shouldn't be registered as a plugin. Instead, it sets up a
-            # list where plugins can be registered later.
-            cls.plugins = []
-            cls.aliases = {}
-            cls.source = {}
-            cls.source[cls.__name__] = inspect.getsource(cls)
+        assert issubclass(cls, Plugin), "%s should inherit from class Plugin" % name
+        if '__metaclass__' in attrs:
+            cls.plugins = {}
         else:
-            # This must be a plugin implementation, which should be registered.
-            # Simply appending it to the list is all that's needed to keep
-            # track of it later.
-            cls.plugins.append(cls)
-            cls.source[cls.__name__] = inspect.getsource(cls)
+            assert hasattr(cls, 'plugins')
+            cls.register_plugin(cls.ALIASES, cls, {})
 
-            if not inspect.getdoc(cls):
-                breadcrumbs = " -> ".join(t.__name__ for t in inspect.getmro(cls)[:-1][::-1])
-                raise dexy.exceptions.InternalDexyProblem("no docstring found for dexy plugin '%s' (%s, defined in %s), docstrings are required" % (cls.__name__, breadcrumbs, cls.__module__))
+    def __iter__(cls, *instanceargs):
+        processed = []
+        for alias in sorted(cls.plugins):
+            value = cls.plugins[alias]
+            if not value in processed:
+                try:
+                    instance = cls.create_instance(alias, *instanceargs)
+                    yield(instance)
+                except dexy.exceptions.InactiveFilter:
+                    pass
+                processed.append(value)
 
-            basenames = [k.__name__ for k in cls.__bases__]
+    def standardize_alias(cls, alias):
+        obj = cls.plugins[alias]
+        keys = []
+        for k, v in cls.plugins.iteritems():
+            if v == obj:
+                keys.append(k)
+        assert alias in keys
+        return sorted(keys)[0]
 
-            if hasattr(cls, 'ALIASES'):
-                for alias in cls.ALIASES:
+    def check_docstring(cls):
+        if not inspect.getdoc(cls):
+            breadcrumbs = " -> ".join(t.__name__ for t in inspect.getmro(cls)[:-1][::-1])
+            msg = "docstring required for dexy plugin '%s' (%s, defined in %s)"
+            args = (cls.__name__, breadcrumbs, cls.__module__)
+            raise dexy.exceptions.InternalDexyProblem(msg % args)
 
-                    # Namespace templates by their plugin name (after dexy_)
-                    if 'Template' in basenames:
-                        if cls.__module__ == 'dexy.plugins.templates':
-                            prefix = 'dexy'
-                        else:
-                            prefix = cls.__module__.replace("dexy_", "")
-                        alias = "%s:%s" % (prefix, alias)
+    def register_plugins(cls, plugin_info):
+        for k, v in plugin_info.iteritems():
+            cls.register_plugin(k.split("|"), v[0], v[1])
 
-                    if alias in cls.aliases:
-                        raise Exception("duplicate alias %s found in %s, already present in %s" % (alias, cls.__name__, cls.aliases[alias].__name__))
-                    cls.aliases[alias] = cls
-            elif hasattr(cls, 'NAMESPACE'):
-                cls.aliases[cls.NAMESPACE] = cls
+    def register_plugins_from_yaml(cls, yaml_file):
+        with open(yaml_file, "rb") as f:
+            plugin_info = yaml.safe_load(f.read())
 
-class Command:
+        for alias, info_dict in plugin_info.iteritems():
+            if ":" in alias:
+                _, alias = alias.split(":")
+
+            class_name = info_dict['class']
+            del info_dict['class']
+            cls.register_plugin(alias.split("|"), class_name, info_dict)
+
+    def register_plugin(cls, alias_or_aliases, class_or_class_name, settings):
+        if isinstance(alias_or_aliases, basestring):
+            aliases = [alias_or_aliases]
+        else:
+            aliases = alias_or_aliases
+
+        if not settings.has_key('help'):
+            klass = cls.get_reference_to_class(class_or_class_name)
+            settings['help'] = ("Helpstring for filter.", inspect.getdoc(klass))
+
+        class_info = (class_or_class_name, settings)
+        for alias in aliases:
+            if cls.plugins.has_key(alias):
+                raise Exception("Already have alias %s" % alias)
+            cls.plugins[alias] = class_info
+
+    def imro(cls):
+        """
+        Returns MRO in reverse order, skipping 'object/type' class.
+        """
+        return reversed(inspect.getmro(cls)[0:-2])
+
+    def get_reference_to_class(cls, class_or_class_name):
+        if isinstance(class_or_class_name, type):
+            return class_or_class_name
+        elif isinstance(class_or_class_name, basestring):
+            if ":" in class_or_class_name:
+                mod_name, class_name = class_or_class_name.split(":")
+
+                # load the module
+                if not mod_name in sys.modules:
+                    __import__(mod_name)
+                mod = sys.modules[mod_name]
+
+                return mod.__dict__[class_name]
+            else:
+                from dexy.plugins.process_filters import SubprocessFilter
+                from dexy.plugins.process_filters import SubprocessCompileFilter
+                from dexy.plugins.process_filters import SubprocessCompileInputFilter
+                from dexy.plugins.process_filters import SubprocessStdoutFilter
+                from dexy.plugins.process_filters import SubprocessExtToFormatFilter
+                from dexy.plugins.process_filters import SubprocessStdoutTextFilter
+                from dexy.plugins.process_filters import SubprocessFormatFlagFilter
+                from dexy.plugins.process_filters import SubprocessInputFilter
+                from dexy.plugins.process_filters import SubprocessInputFileFilter
+                from dexy.plugins.pexpect_filters import PexpectReplFilter
+                return locals()[class_or_class_name]
+        else:
+            raise Exception("Unexpected type %s" % type(class_or_class_name))
+
+    def class_update_settings(cls, instance, new_settings):
+        for raw_key, value in new_settings.iteritems():
+            key = raw_key.replace("_", "-")
+            key_in_settings = instance._settings.has_key(key)
+            value_is_list_len_2 = isinstance(value, list) and len(value) == 2
+            if isinstance(value, tuple) or (not key_in_settings and value_is_list_len_2):
+                instance._settings[key] = value
+            else:
+                if not instance._settings.has_key(key):
+                    raise Exception("You must specify param '%s' as a tuple of (helpstring, value)" % key)
+                else:
+                    orig = instance._settings[key]
+                    instance._settings[key] = (orig[0], value,)
+
+    def create_instance(cls, alias, *instanceargs, **instancekwargs):
+        if not alias in cls.plugins:
+            raise dexy.exceptions.UserFeedback("No alias %s available." % alias)
+        class_or_class_name, settings = cls.plugins[alias]
+
+        klass = cls.get_reference_to_class(class_or_class_name)
+
+
+        instance = klass(*instanceargs, **instancekwargs)
+        instance._settings = {}
+        instance.alias = alias
+
+        for parent_class in klass.imro():
+            klass.class_update_settings(instance, parent_class._SETTINGS)
+            if hasattr(parent_class, 'UNSET'):
+                for unset in parent_class.UNSET:
+                    print "Removing setting '%s' from %s" % (unset, parent_class.__name__)
+                    del instance._settings[unset]
+
+        # Update with any settings defined at time plugin was registered.
+        klass.class_update_settings(instance, settings)
+
+        # TODO update settings from environment, dexy config
+
+        if not instance.is_active():
+            raise dexy.exceptions.InactiveFilter(alias)
+
+        return instance
+
+#            basenames = [k.__name__ for k in cls.__bases__]
+#            if hasattr(cls, 'ALIASES'):
+#                for alias in cls.ALIASES:
+#
+#                    # Namespace templates by their plugin name (after dexy_)
+#                    if 'Template' in basenames:
+#                        if cls.__module__ == 'dexy.plugins.templates':
+#                            prefix = 'dexy'
+#                        else:
+#                            prefix = cls.__module__.replace("dexy_", "")
+#                        alias = "%s:%s" % (prefix, alias)
+#
+#                    if alias in cls.aliases:
+#                        raise Exception("duplicate alias %s found in %s, already present in %s" % (alias, cls.__name__, cls.aliases[alias].__name__))
+#                    cls.aliases[alias] = cls
+#            elif hasattr(cls, 'NAMESPACE'):
+#                cls.aliases[cls.NAMESPACE] = cls
+
+class Command(Plugin):
+    """
+    Parent class for custom dexy commands.
+    """
     NAMESPACE = None
+    ALIASES = []
     DEFAULT_COMMAND = None
     __metaclass__ = PluginMeta
 

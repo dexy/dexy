@@ -18,8 +18,11 @@ class KeyValueExample(Example):
     Example of storing key value data.
     """
     ALIASES = ['keyvalueexample']
-    OUTPUT_DATA_TYPE = 'keyvalue'
-    OUTPUT_EXTENSIONS = ['.sqlite3', '.json']
+
+    _SETTINGS = {
+            'output-data-type' : 'keyvalue',
+            'output-extensions' : ['.sqlite3', '.json']
+            }
 
     def process(self):
         self.output().append("foo", "bar")
@@ -135,7 +138,9 @@ class ExampleProcessWithDictMethod(Example):
     A filter implementing a process method which uses OrderedDict to store sectional data.
     """
     ALIASES = ['processwithdict']
-    OUTPUT_DATA_TYPE = 'sectioned'
+    _SETTINGS = {
+            'output-data-type' : 'sectioned'
+            }
 
     def process(self):
         input_data = self.input().data()
@@ -147,8 +152,11 @@ class AbcExtension(Example):
     """
     Only outputs extension .abc
     """
-    OUTPUT_EXTENSIONS = [".abc"]
     ALIASES = ['outputabc']
+
+    _SETTINGS = {
+            'output-extensions' : ['.abc']
+            }
 
     def process_text(self, input_text):
         return "Dexy processed the text '%s'" % input_text
@@ -159,9 +167,22 @@ class ExampleFilterArgs(Example):
     """
     ALIASES = ['filterargs']
 
+    _SETTINGS = {
+            "abc" : ("The abc setting.", None),
+            "foo" : ("The foo setting.", None),
+            }
+
     def process_text(self, input_text):
-        result = ["Here are the arguments you passed:"]
-        for k in sorted(self.args()):
-            v = self.args()[k]
-            result.append("%s: %s" % (k, v))
+        # Filter Settings
+        result = ["Here are the filter settings:"]
+        for k in sorted(self._settings):
+            v = self._settings[k][1]
+            result.append("  %s: %s" % (k, v))
+
+        # Doc args
+        result.append("Here are the document args:")
+        for k in sorted(self.artifact.args):
+            v = self.artifact.args[k]
+            result.append("  %s: %s" % (k, v))
+
         return os.linesep.join(result)

@@ -1,0 +1,670 @@
+php:
+    class: SubprocessStdoutFilter
+    help: Runs php file, note that php code must be included in <?php ... ?> tags.
+    executable: php
+    check-return-code: False
+    version-command: php --version
+    input-extensions: [.php, .txt]
+    output-extensions: [.html, .txt]
+
+nodejs|node:
+    class: SubprocessStdoutFilter
+    add-new-files: True
+    help: Runs scripts using node js
+    input-extensions: [.js, .txt]
+    output-extensions: [.txt]
+    executable: node
+    version-command: node --version
+
+lynxdump:
+    class: SubprocessStdoutFilter
+    help: Converts HTML to plain text by using lynx -dump.
+    input-extensions: [.html]
+    output-extensions: [.txt]
+    version-command: lynx --version
+    executable: lynx -dump
+
+jruby:
+    class: SubprocessStdoutFilter
+    help: Run jruby code and return stdout.
+    input-extensions: [.rb, .txt]
+    output-extensions: [.txt]
+    executable: jruby
+    version-command: jruby --version
+
+jirb:
+    class: PexpectReplFilter
+    allow-match-prompt-without-newline : True
+    check-return-code : False
+    executable: jirb --prompt-mode simple
+    help: Run jruby code in jirb.
+    initial-timeout: 30
+    input-extensions : [.rb, .txt]
+    output-extensions : [.rbcon]
+    prompts : ['>>' ,'?>']
+    version-command : jirb --version
+
+redcloth|textile: 
+    class: SubprocessStdoutFilter
+    executable: redcloth
+    input-extensions: ['.txt', '.textile']
+    output-extensions: ['.html']
+    version-command: redcloth --version
+
+redclothl|latextile: 
+    class: SubprocessStdoutFilter
+    executable: redcloth -o latex
+    input-extensions: ['.txt', '.textile']
+    output-extensions: ['.tex']
+    version-command: 'redcloth --version'
+
+rst2odt:
+    class: SubprocessFilter
+    help: This uses the command line tool rst2odt.
+    version-command: 'rst2pdf.py --version'
+    executables: [rst2odt, rst2odt.py]
+    input-extensions: ['.rst', '.txt']
+    output-extensions: ['.odt']
+
+xelatex|xetex:
+    class: dexy.plugins.latex_filters:LatexFilter
+    help: Runs .tex files using xelatex.
+    executable: xelatex
+
+cowsay:
+    class: SubprocessStdoutTextFilter
+    help: Runs input through 'cowsay'.
+    executable: cowsay
+
+cowthink:
+    class: SubprocessStdoutTextFilter
+    help: Runs input through 'cowthink'.
+    executable: cowthink
+
+figlet:
+    class: SubprocessStdoutTextFilter
+    help: Runs input through 'figlet'.
+    executable: figlet
+
+pyin:
+    class: SubprocessInputFilter
+    help: Runs python code and passes input
+    executable: python
+    version-command: python --version
+
+pdfinfo:
+    class: SubprocessStdoutFilter
+    help: Uses the pdfinfo script to retrieve metadata about a PDF.
+    executable: pdfinfo
+    input-extensions: [.pdf]
+    output-extensions: [.txt]
+
+pdfcrop:
+    class: SubprocessFilter
+    help: Runs the PDFcrop script http://pdfcrop.sourceforge.net/
+    executable: pdfcrop
+    input-extensions: [.pdf]
+    output-extensions: [.pdf]
+
+#  TODO: output oeb (outputs a directory)
+#  TODO: output azw
+#  TODO: test with html, pml plugins
+calibre|ebook:
+    class: SubprocessFilter
+    output: True
+    add-new-files: False
+    executable: ebook-convert
+    command-string: '%(prog)s "%(script_file)s" "%(output_file)s" %(args)s'
+    version-command: ebook-convert --version
+    path-extensions: [/Applications/calibre.app/Contents/MacOS]
+    input-extensions:
+           - .html
+           - .epub
+           - .azw
+           - .chm
+           - .comic
+           - .djvu
+           - .pdf
+           - .mobi
+           - .lit
+           - .fb2
+    output-extensions:
+           - .mobi
+           - .epub
+           - .fb2
+           - .htmlz
+           - .lit
+           - .lrf
+           - .pdf
+           - .rtf
+           - .snb
+           - .tcr
+           - .txt
+           - .txtz
+           - .html
+           - .pml
+    help: >
+       Invokes ebook-convert command line tool (part of calibre) to generate
+       various output formats (including .mobi for Kindle)
+
+       http://manual.calibre-ebook.com/cli/ebook-convert.html
+
+
+# TODO Support all these + test them.
+#Output formats: native, json, html, html5, html+lhs, html5+lhs, s5, slidy,
+#                dzslides, docbook, opendocument, latex, latex+lhs, beamer,
+#                context, texinfo, man, markdown, markdown+lhs, plain, rst,
+#                rst+lhs, mediawiki, textile, rtf, org, asciidoc, odt, docx,
+#                epub
+pandoc:
+    class: SubprocessFilter
+    output: True
+    add-new-files: False
+    executable: pandoc
+    command-string: '%(prog)s %(args)s "%(script_file)s" -o "%(output_file)s"'
+    help: convert documents using pandoc
+    version-command: pandoc --version
+    output-extensions: ['.html', '.txt', '.tex', '.pdf', '.rtf', '.json', '.docx', '.odt', '.epub']
+
+espeak:
+    class: SubprocessFilter
+    output: True
+    executable: espeak
+    command-string: '%(prog)s %(args)s -w "%(output_file)s" "%(script_file)s"'
+    input-extensions: [.txt]
+    output-extensions: [.wav]
+    help: Runs espeak text to speech.
+
+rd2pdf|Rd2pdf:
+    class: SubprocessFilter
+    help: Generates a pdf from R documentation file.
+    input-extensions: [.Rd]
+    output-extensions: [.pdf, .dvi]
+    executable: R CMD Rd2pdf
+    version-command: R CMD Rd2pdf -v
+    command-string: '%(prog)s %(args)s --output=%(output_file)s %(script_file)s'
+
+rdconv:
+    class: SubprocessExtToFormatFilter
+    executable: R CMD Rdconv
+    version-command: R CMD Rdconv -v
+    help: Convert R documentation to other formats.
+    input-extensions: [.Rd]
+    output-extensions: ['.txt', '.html', '.tex', '.R']
+    ext-to-format:
+        .txt: txt
+        .html: html
+        .tex: latex
+        .R: example
+    format-specifier: '--type='
+    command-string: '%(prog)s %(format)s %(args)s --output="%(output_file)s" "%(script_file)s"'
+
+lyx:
+    class: SubprocessExtToFormatFilter
+    executable: lyx
+    version-command: lyx -version
+    output-extensions: [.tex, .pdf, .lyx]
+    ext-to-format:
+        .tex: latex
+    format-specifier: '-e '
+    command-string: '%(prog)s %(format)s %(args)s "%(script_file)s"'
+
+asciidoc:
+    class: SubprocessExtToFormatFilter
+    help: converts ASCIIDOC input
+    version-command: asciidoc --version
+    executable: asciidoc
+    input-extensions: [.*]
+    output-extensions: [.html, .xml, .tex]
+    format-specifier: '-b '
+    ext-to-format:
+        .html: html5
+        .xml: docbook45
+        .tex: latex
+    command-string: '%(prog)s %(format)s %(args)s -o %(output_file)s %(script_file)s'
+
+bw|bwconv:
+    class: SubprocessFilter
+    executable: gs
+    help: Converts color pdf to black and white
+    input-extensions: [.pdf]
+    output-extensions: [.pdf]
+    command-string: '%(prog)s -dSAFER -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sColorConversionStrategy=Gray -dProcessColorModel=/DeviceGray -sOutputFile=%(output_file)s %(script_file)s'
+
+dot|graphviz:
+    class: SubprocessExtToFormatFilter
+    help: Renders .dot files to either PNG or PDF images.
+    input-extensions: [.dot]
+    output-extensions: [.png, .pdf]
+    executable: dot
+    version-command: dot -V
+    format-specifier: '-T'
+    ext-to-format:
+           .png: png
+           .pdf: pdf
+    command-string: '%(prog)s %(format)s -o"%(output_file)s" "%(script_file)s"'
+
+pdftocairo|pdf2cairo|pdf2svg|pdftosvg:
+    class: SubprocessFormatFlagFilter
+    help: Converts a PDF file to a SVG image (or other format) using pdftocairo from the poppler library
+    input-extensions: [.pdf]
+    output-extensions: [.svg, .png, .jpg, .ps, .eps, .pdf]
+    ext-to-format:
+           .png : -png
+           .jpg : -jpeg
+           .ps : -ps
+           .eps : -eps
+           .pdf : -pdf
+           .svg : -svg
+    command-string: '%(prog)s %(format)s "%(script_file)s" "%(output_file)s"'
+
+pdf2jpg:
+    class: dexy.plugins.subprocess_filters:Pdf2ImgSubprocessFilter
+    help: Converts a PDF file to a jpg image using ghostscript.
+    output-extensions: [.jpg]
+
+html2pdf|wkhtmltopdf:
+    class: SubprocessFilter
+    executable: wkhtmltopdf
+    version-command: wkhtmltopdf --version
+    input-extensions: [.html, .txt]
+    output-extensions: [.pdf]
+    help: >
+           Renders HTML to PDF using wkhtmltopdf. If the HTML relies on assets
+           such as CSS or image files, these should be specified as inputs.
+
+            If you have an older version of wkhtmltopdf, and are running on a
+            server, you may get XServer errors. You can install xvfb and run
+            Dexy as "xvfb-run dexy". Or upgrade to the most recent wkhtmltopdf
+            which only needs X11 client libs.
+
+ps2pdf|pstopdf:
+    class: SubprocessFilter
+    help: Converts a postscript file to PDF format. 
+    executable: ps2pdf
+    input-extensions: [.ps, .txt]
+    output-extensions: [.pdf]
+
+ragel|rlrb|ragelruby:
+    class: SubprocessFormatFlagFilter
+    help: Generates ruby source code from a ragel file.
+    executable: ragel
+    version-command: ragel --version
+    input-extensions: [.rl]
+    output-extensions: [.rb, .c, .java] # TODO add other formats
+    ext-to-format:
+           .rb : -R
+           .java : -J
+           .c : -C
+    command-string: '%(prog)s %(format)s %(args)s "%(script_file)s" -o "%(output_file)s"'
+
+rlrbd|ragelrubydot:
+    class: SubprocessFilter
+    help: Generates state chart in .dot format of ragel state machine for ruby.
+    executable: ragel
+    version-command: ragel --version
+    input-extensions: [.rl]
+    output-extensions: [.dot]
+    command-string: '%(prog)s %(args)s -R -V "%(script_file)s" -o "%(output_file)s"'
+
+rageldot:
+    class: SubprocessFilter
+    help: Generates state chart in .dot format of ragel state machine. Pass language flag in args.
+    executable: ragel
+    version-command: ragel --version
+    input-extensions: [.rl]
+    output-extensions: [.dot]
+    command-string: '%(prog)s %(args)s -V "%(script_file)s" -o "%(output_file)s"'
+
+rintbatch:
+    class: SubprocessFilter
+    help: Runs R files in batch mode, returning an R console transcript.
+    add-new-files: True
+    executable: R CMD BATCH --quiet --no-timing
+    version-command : R --version
+    input-extensions : ['.txt', '.r', '.R']
+    output-extensions : [".Rout", '.txt']
+
+rout|routbatch:
+    class: SubprocessFilter
+    help: Runs R files in batch mode, returning just the output.
+    add-new-files: True
+    executable: 'R CMD BATCH --vanilla --quiet --slave --no-timing'
+    version-command: R --version
+    input-extensions: ['.R', '.r', '.txt']
+    output-extensions: [.txt]
+
+htlatex:
+    class: SubprocessFilter
+    help: Generates HTML from Latex source using htlatex
+    input-extensions: [.tex, .txt]
+    output-extensions: [.html]
+    executables: ['htlatex']
+    add-new-files: [".html", ".png", ".css"]
+    latexargs: ["Arguments to be passed to the latex command.", '']
+    tex4htargs: ["Arguments to be passed to tex4ht", '']
+    t4htargs: [Arguments to be passed to t4ht, '']
+    command-string: '%(prog)s %(script_file)s "%(args)s" "%(tex4htargs)s" "%(t4htargs)s" "%(latexargs)s"'
+
+strings:
+    class: SubprocessStdoutFilter
+    help: Clean non-printing characters from text using the 'strings' tool.
+    executable: strings
+
+regetron:
+    class: SubprocessInputFileFilter
+    help: Filter which loads .regex file into regetron and runs any input text against it.
+    executable: regetron
+    input-extensions: [.regex]
+    output-extensions: [.txt]
+
+py|pyout:
+    class: SubprocessStdoutFilter
+    help: Runs Python code and returns stdout.
+    executable: python
+    input-extensions: [.py, .txt]
+    output-extensions: [.txt]
+    version-command: python --version
+
+sh|bash:
+    class: SubprocessStdoutFilter
+    help: Runs bash scripts and returns stdout.
+    executable: 'bash -e'
+    input-extensions: [".sh", ".bash", ".txt", ""]
+    output-extensions: [".txt"]
+    version-command: 'bash --version'
+
+rb:
+    class: SubprocessStdoutFilter
+    help: Runs ruby scripts and return stdout.
+    executable: ruby
+    version-command: ruby --version
+    input-extensions: [.txt, .rb]
+    output-extensions: [.rb]
+
+irbout:
+    class: SubprocessStdoutFilter
+    help: Runs ruby scripts in irb.
+    check-return-code: False
+    executable: 'irb --simple-prompt --noreadline'
+    input-extensions: [".txt", ".rb"]
+    output-extensions: [".rbcon"]
+    version-command: 'irb --version'
+
+
+sloc|sloccount:
+    class: SubprocessStdoutFilter
+    help: Runs code through sloccount.
+    executable: 'sloccount'
+    version-command: 'sloccount --version'
+    input-extensions: [".*"]
+    output-extensions: [".txt"]
+
+wc:
+    class: SubprocessStdoutFilter
+    help: Runs input through wc command line tool.
+    executable: wc
+    output-extensions: [".txt"]
+
+js|rhino:
+    class: SubprocessStdoutFilter
+    help: Runs code through rhino js interpreter.
+    executable: "rhino -f"
+    input-extensions: [".js", ".txt"]
+    output-extensions: [".txt"]
+
+lua:
+    class: SubprocessStdoutFilter
+    help: Runs code through lua interpreter.
+    executable: 'lua'
+    version-command: 'lua -v'
+    input-extensions: ['.lua', '.txt']
+    output-extensions: ['.txt']
+
+wiki2beamer:
+    class: SubprocessStdoutFilter
+    help: Converts wiki content to beamer.
+    executables: ['wiki2beamer']
+    input-extensions: [".wiki", ".txt"]
+    output-extensions: [".tex"]
+    version-command: "wiki2beamer --version"
+
+escript:
+    class: SubprocessStdoutFilter
+    help: Runs Erlang scripts using the escript command.
+    executable: 'escript'
+    input-extensions: [".erl"]
+    output-extensions: [".txt"]
+
+clang:
+    class: SubprocessCompileFilter
+    help: Compile code using clang and run.
+    executable: "clang"
+    input-extensions: [".c"]
+    output-extensions: [".txt"]
+    version-command: "clang --version"
+
+clanginput:
+    class: SubprocessCompileInputFilter
+    help: compile code using clang and run with input.
+    executable: "clang"
+    input-extensions: [".c"]
+    output-extensions: [".txt"]
+    version-command: "clang --version"
+
+c|gcc:
+    class: SubprocessCompileFilter
+    help: Compile code using gcc and run.
+    executable: "gcc"
+    input-extensions: [".c"]
+    output-extensions: [".txt"]
+    version-command: "gcc --version"
+
+cfussy:
+    class: SubprocessCompileFilter
+    help: Compile code using gcc and run, raising an error if compiled code returns nonzero exit.
+    executable: "gcc"
+    input-extensions: [".c"]
+    output-extensions: [".txt"]
+    version-command: "gcc --version"
+    check-return-code: true
+
+cinput:
+    class: SubprocessCompileInputFilter
+    help: Compile code using gcc and run with input.
+    executable: "gcc"
+    input-extensions: [".c"]
+    output-extensions: [".txt"]
+    version-command: "gcc --version"
+
+cpp:
+    class: SubprocessCompileFilter
+    help: Compile c++ code using cpp and run.
+    executable: "c++"
+    input-extensions: [".cpp"]
+    output-extensions: [".txt"]
+    version-command: "c++ --version"
+
+cppinput:
+    class: SubprocessCompileInputFilter
+    help: Compile c++ code using cpp and run with input.
+    executable: "c++"
+    input-extensions: [".cpp"]
+    output-extensions: [".txt"]
+    version-command: "c++ --version"
+
+# TODO handle EOF errors if people have 'quit' in their script
+matlabint:
+    class: PexpectReplFilter
+    help: Runs matlab in REPL.
+    initial-timeout: 30
+    executable: 'matlab -nodesktop -nosplash -nodisplay'
+    input-extensions: ['.m', '.txt']
+    output-extensions: ['.mout']
+    line-ending: "\r\n"
+    prompt: ">>"
+
+jsint|rhinoint:
+    class: PexpectReplFilter
+    help: Runs rhino JavaScript interpeter.
+    executable: "rhino"
+    input-extensions: [".js", ".txt"]
+    output-extensions: [".jscon"]
+    prompts: ['js>', '  >']
+    trim-prompt: "js>"
+    initial-timeout: 60
+
+irb|rbrepl:
+    class: PexpectReplFilter
+    help: Runs ruby code in irb.
+    executable: irb --simple-prompt
+    check-return-code: False
+    initial-prompt: "^>>"
+    input-extensions: [".txt", ".rb"]
+    output-extensions: [".rbcon"]
+    prompts: [">>", "?>"]
+    trim-prompt: '>>'
+    version-command: 'irb --version'
+
+kshint:
+    class: PexpectReplFilter
+    help: Runs ksh. Use to run bash scripts.
+    executable: ksh -i
+    input-extensions: [.txt, .sh]
+    output-extensions: [.sh-session]
+    initial-prompt: "^\\s*\\d*(#|\\$)\\s+"
+    prompt-regex: "\\d*(#|\\$)"
+    trim-prompt: "\\d*(\\$|#)"
+    ps1: "$ "
+
+pycon|pyrepl:
+    class: PexpectReplFilter
+    help: Runs python code in python's REPL.
+    add-new-files: True
+    check-return-code: False
+    executable: 'python'
+    input-extensions: [".txt", ".py"]
+    output-extensions: [".pycon"]
+    version-command: 'python --version'
+    save-vars-to-json-cmd: |
+        import json
+        with open("%s-vars.json", "w") as dexy__vars_file:
+            dexy__x = {}
+            for dexy__k, dexy__v in locals().items():
+                dexy__x[dexy__k] = str(dexy__v)
+            json.dump(dexy__x, dexy__vars_file)
+
+phpint:
+    class: PexpectReplFilter
+    help: Runs PHP in interpeter mode.
+    check-return-code: false
+    executable: "php -a"
+    input-extensions: [".php", ".txt"]
+    output-extensions: [".txt"]
+    prompts: ['php > ']
+    trim-prompt: "php > "
+
+shint|bashint:
+    class: PexpectReplFilter
+    help: Runs bash. use to run bash scripts.
+    executable: bash --norc -i
+    input-extensions: [.txt, .sh]
+    output-extensions: [.sh-session]
+    prompt-regex: "\\d*[#$]"
+    initial-prompt: "\\d*[#$]"
+    trim-prompt: "\\d*[#$]"
+    ps1: "$ "
+
+r|rint:
+    class: PexpectReplFilter
+    help: Runs R in REPL.
+    add-new-files: True
+    check-return-code: False
+    executable: "R --quiet --vanilla"
+    input-extensions: ['.txt', '.R', '.r']
+    output-extensions: ['.Rout']
+    prompt-regex: "(\x1b[^m]*m)?(>|\\+)\\s*"
+    initial-prompt: "(\x1b[^>])?>\\s*"
+    trim-prompt: ">"
+    strip-regex: "(\x1b[^h]+h)" # strip weird initial prompt on osx
+    version-command: "R --version"
+    save-vars-to-json-cmd: |
+        if ("rjson" %%in%% installed.packages()) {
+            library(rjson)
+            dexy__json_file <- file("%s", "w")
+            writeLines(toJSON(as.list(environment())), dexy__json_file)
+            close(dexy__json_file)
+        } else {
+           cat("Can't automatically save environment to JSON since rjson package not installed.")
+        }
+
+# TODO ensure phantom.exit() is called in script?
+phantomjs:
+    class: SubprocessStdoutFilter
+    help: Runs scripts using phantom js.
+    add-new-files: True
+    executable: phantomjs
+    input-extensions: ['.js', '.txt']
+    output-extensions: ['.txt']
+    version-command: phantomjs --version
+
+latexdvi|dvilatex:
+    class: dexy.plugins.latex_filters:LatexFilter
+    help: Run Latex outputting a .dvi file.
+    output-extensions: [.dvi]
+    executable: latex
+
+rst2html:
+    class: SubprocessFilter
+    help: Convert rst to HTML
+    add-new-files: False
+    executables: ['rst2html', 'rst2html.py']
+    version-command: rst2html.py --version
+    input-extensions: [.rst, .txt]
+    output-extensions: [.html]
+
+rst2latex:
+    class: SubprocessFilter
+    help: This uses the command line tool rst2latex.
+    add-new-files: False
+    executables: ['rst2latex', 'rst2latex.py']
+    input-extensions: [".rst", ".txt"]
+    output-extensions: [".tex"]
+    version-command: 'rst2latex.py --version'
+
+rst2xml:
+    class: SubprocessFilter
+    help: This uses the command line tool rst2xml.
+    add-new-files: False
+    executables: ['rst2xml', 'rst2xml.py']
+    version-command: 'rst2xml.py --version'
+    input-extensions: [".rst", ".txt"]
+    output-extensions: [".tex"]
+
+rst2beamer:
+    class: SubprocessFilter
+    help: Filter for rst2beamer command line tool, requires docutils plus rst2beamer package.
+    add-new-files: false
+    executables: ['rst2beamer', 'rst2beamer.py']
+    input-extensions: [".rst", ".txt"]
+    output-extensions: [".tex"]
+    version-command: "rst2beamer --version"
+
+rst2man:
+    class: SubprocessFilter
+    help: Filter for rst2man command line tool, requires docutils.
+    add-new-files: false
+    executables: ['rst2man', 'rst2man.py']
+    input-extensions: [".rst", ".txt"]
+    output-extensions: [".man"]
+    version-command: "rst2man.py --version"
+
+casperjs:
+    class: SubprocessStdoutFilter
+    help: Runs scripts using casper js. Saves cookies.
+    add-new-files: True
+    input-extensions: [.js, .txt]
+    output-extensions: [.txt]
+    executable: casperjs
+    version-command: casperjs --version
+    command-string: "%(prog)s --cookies-file=cookies.txt %(args)s %(script_file)s %(scriptargs)s"

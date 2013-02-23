@@ -2,7 +2,6 @@ from dexy.common import OrderedDict
 from dexy.data import Data
 from dexy.doc import Doc
 from dexy.exceptions import UserFeedback
-from dexy.filter import DexyFilter
 from dexy.tests.utils import wrap
 from nose.tools import raises
 
@@ -11,16 +10,6 @@ def test_blank_alias():
     with wrap() as wrapper:
         doc = Doc("abc.txt|", wrapper=wrapper)
         doc.populate()
-
-@raises(UserFeedback)
-def test_blank_alias_exception():
-    doc = Doc("foo")
-    doc.filter_class_for_alias("")
-
-def test_filter_class_for_alias():
-    doc = Doc("foo")
-    filter_class = doc.filter_class_for_alias("dexy")
-    assert filter_class == DexyFilter
 
 def test_output_is_data():
     with wrap() as wrapper:

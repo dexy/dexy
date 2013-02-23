@@ -1,13 +1,13 @@
-from dexy.plugin import PluginMeta
+import dexy.plugin
 from dexy.utils import os_to_posix
 import StringIO
 import dexy.doc
 import dexy.exceptions
 import logging
 
-class Task():
+class Task(dexy.plugin.Plugin):
     ALIASES = []
-    __metaclass__ = PluginMeta
+    __metaclass__ = dexy.plugin.PluginMeta
 
     STATE_TRANSITIONS = [
             ('new', 'populating'),
@@ -23,7 +23,7 @@ class Task():
 
     @classmethod
     def create(klass, alias, pattern, **kwargs):
-        task_class = klass.aliases[alias]
+        task_class = klass.plugins[alias][0]
         return task_class(pattern, **kwargs)
 
     def key_for_log(self):

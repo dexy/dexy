@@ -4,6 +4,7 @@ import dexy.filter
 import dexy.task
 import os
 import posixpath
+import inflection
 
 class Doc(dexy.task.Task):
     """
@@ -14,31 +15,18 @@ class Doc(dexy.task.Task):
     def arg_value(self, arg_name_hyphen, default=None):
         return dexy.utils.value_for_hyphenated_or_underscored_arg(self.args, arg_name_hyphen, default)
 
-    def filter_class_for_alias(self, alias):
+    def filter_instance_for_alias(self, alias):
+        if alias.startswith("-"):
+            alias = '-'
+
         if alias == '':
             blank_alias_msg = "You have a trailing | or you have 2 | symbols together in your specification for %s"
             raise dexy.exceptions.UserFeedback(blank_alias_msg % self.key)
-        elif alias.startswith("-"):
-            filter_class = dexy.filter.AliasFilter
-        else:
-            try:
-                filter_class = dexy.filter.Filter.aliases[alias]
-            except KeyError:
-                msg = "Dexy doesn't have a filter '%s' available." % alias
+        elif not alias in dexy.filter.Filter.plugins:
+            msg = "Dexy doesn't have a filter '%s' available." % alias
+            raise dexy.exceptions.UserFeedback(msg)
 
-                all_plugins = dexy.filter.Filter.aliases.values()
-                num_plugins = len(all_plugins)
-                if num_plugins < 10:
-                    plugin_list = ", ".join(p.__name__ for p in all_plugins)
-                    msg += " Note that only %s plugins are available: %s" % (num_plugins, plugin_list)
-                    msg += " There may be a problem loading plugins, adding 'import dexy.plugins' might help."
-
-                raise dexy.exceptions.UserFeedback(msg)
-
-        if not filter_class.is_active():
-            raise dexy.exceptions.InactiveFilter(alias, self.key)
-
-        return filter_class
+        return dexy.filter.Filter.create_instance(alias)
 
     def names_to_docs(self):
         """
@@ -75,9 +63,18 @@ class Doc(dexy.task.Task):
             return self.args.get('title')
         elif self.is_index_page():
             # use subdirectory we're in
-            return posixpath.split(posixpath.dirname(self.name))[-1].capitalize()
+            subdir = posixpath.split(posixpath.dirname(self.name))[-1]
+            return inflection.titleize(subdir)
         else:
             return self.name
+
+    def is_canonical_output(self):
+        if self.args.has_key("output"):
+            return self.args['output']
+        elif hasattr(self.final_artifact, 'filter_instance'):
+            return self.final_artifact.filter_instance.setting('output')
+        else:
+            return True
 
     def output(self):
         """
@@ -131,14 +128,13 @@ class Doc(dexy.task.Task):
         artifact.created_by_doc = self.created_by_doc
 
         artifact.filter_alias = filter_alias
-        artifact.filter_class = self.filter_class_for_alias(filter_alias)
         artifact.setup_filter_instance()
 
         if not is_last_filter:
             next_filter_alias = self.filters[len(filters)]
             artifact.next_filter_alias = next_filter_alias
-            artifact.next_filter_class = self.filter_class_for_alias(next_filter_alias)
-            artifact.next_filter_name = artifact.next_filter_class.__name__
+            artifact.next_filter_class = self.filter_instance_for_alias(next_filter_alias)
+            artifact.next_filter_name = artifact.next_filter_class.__class__.__name__
         else:
             artifact.next_filter_alias = None
             artifact.next_filter_class = None
@@ -163,5 +159,3 @@ class Doc(dexy.task.Task):
             filters = self.filters[0:i+1]
             key = "%s|%s" % (self.name, "|".join(filters))
             self.setup_filter_artifact(key, filters)
-            self.canon = self.canon or (not self.final_artifact.filter_class.FRAGMENT)
-

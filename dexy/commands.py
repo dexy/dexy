@@ -62,7 +62,7 @@ def run():
             command = sys.argv[1]
             subcommand = ""
 
-        command_class = dexy.plugin.Command.aliases.get(command)
+        command_class = dexy.plugin.Command.plugins.get(command)
 
         if not command_class:
             args.parse_and_run_command(subcommand, dexy.commands)
@@ -416,30 +416,45 @@ def filters_text(
         versions=False # Whether to check the installed version of external software required by filters, slower
         ):
 
+    # List settings that don't need to be listed
+    NODOC_SETTINGS = [
+            'help', 'nodoc'
+            ]
+
+    SETTING_STRING = "  %s: %s (default value: %s)"
     if len(alias) > 0:
         # We want help on a particular filter
-        klass = dexy.filter.Filter.aliases[alias]
+        instance = dexy.filter.Filter.create_instance(alias)
         text = []
-        text.append("aliases: %s" % ", ".join(klass.ALIASES))
+        text.append("aliases: %s" % ", ".join(instance.ALIASES))
         text.append("")
-        text.append(inspect.getdoc(klass))
+        text.append(inspect.getdoc(instance.__class__))
         text.append("")
-        text.append("input formats: %s" % ", ".join(klass.INPUT_EXTENSIONS))
-        text.append("output formats: %s" % ", ".join(klass.OUTPUT_EXTENSIONS))
+        text.append("dexy-level settings:")
+        for k in sorted(instance._settings):
+            if not k in NODOC_SETTINGS and k in dexy.filter.Filter._SETTINGS:
+                tup = instance._settings[k]
+                text.append(SETTING_STRING % (k, tup[0], tup[1]))
 
-        templates = klass.templates()
+        text.append("")
+        text.append("filter-specific settings:")
+        for k in sorted(instance._settings):
+            if not k in NODOC_SETTINGS and not k in dexy.filter.Filter._SETTINGS:
+                tup = instance._settings[k]
+                text.append(SETTING_STRING % (k, tup[0], tup[1]))
+
+        templates = instance.templates()
         if len(templates) > 0:
             text.append("")
             text.append("Templates which use this filter:")
             for t in templates:
-                aliases = [k for k, v in dexy.template.Template.aliases.iteritems() if v == t]
                 text.append("")
-                text.append("  %s" % aliases[0])
-                text.append("            %s" % dexy.utils.getdoc(t))
+                text.append("  %s" % t.ALIASES[0])
+                text.append("            %s" % dexy.utils.getdoc(t.__class__))
 
             if example:
                 for t in templates:
-                    aliases = [k for k, v in dexy.template.Template.aliases.iteritems() if v == t]
+                    aliases = [k for k, v in dexy.template.Template.plugins.iteritems() if v == t]
                     if t.__module__ == "dexy_filter_examples":
                         text.append('')
                         text.append("Running example: %s" % s(t.__doc__))
@@ -451,7 +466,7 @@ def filters_text(
         text.append("For online docs see http://dexy.it/docs/filters/%s" % alias)
         if source:
             text.append("")
-            source_code = inspect.getsource(klass)
+            source_code = inspect.getsource(instance.__class__)
             if nocolor:
                 text.append(source_code)
             else:
@@ -461,26 +476,20 @@ def filters_text(
         return "\n".join(text)
 
     else:
-        def sort_key(k):
-            if len(k.ALIASES) == 0:
-                return None
-            else:
-                return k.ALIASES[0]
-
-        filter_classes = sorted(set(f for f in dexy.filter.Filter.plugins), key=sort_key)
+        filter_classes = [f for f in dexy.filter.Filter]
 
         text = []
 
         text.append("Available filters:")
-        for klass in filter_classes:
-            if not showall:
-                skip = (len(klass.ALIASES) == 0) or klass.NODOC
-            else:
+        for instance in filter_classes:
+            if showall:
                 skip = False
+            else:
+                skip = instance.setting('nodoc')
 
             if (versions or showmissing or showall) and not skip:
-                if hasattr(klass, 'version'):
-                    version = klass.version()
+                if hasattr(instance, 'version'):
+                    version = instance.version()
                 else:
                     version = None
                 no_version_info_available = (version is None)
@@ -495,11 +504,11 @@ def filters_text(
                 else:
                     if not (showmissing or showall):
                         skip = True
-                    version_message = "'%s' failed, filter may not be available." % klass.version_command()
+                    version_message = "'%s' failed, filter may not be available." % instance.version_command()
 
             if not skip:
-                aliases = ", ".join(klass.ALIASES)
-                filter_help = "  " + aliases + " : " + getdoc(klass)
+                aliases = ", ".join(instance.ALIASES)
+                filter_help = "  " + aliases + " : " + getdoc(instance.__class__)
                 if (versions or showmissing or (showall and not version)):
                     filter_help += " %s" % version_message
                 text.append(filter_help)
@@ -645,6 +654,7 @@ def reporters_command(
 import dexy.template
 DEFAULT_TEMPLATE = 'dexy:default'
 def gen_command(
+        plugins='', # extra python packages to load so plugins will register with dexy
         d=None,  # The directory to place generated files in, must not exist.
         t=False, # Shorter alternative to --template.
         template=DEFAULT_TEMPLATE, # The alias of the template to use.
@@ -653,6 +663,8 @@ def gen_command(
     """
     Generate a new dexy project in the specified directory, using the template.
     """
+    import_extra_plugins({'plugins' : plugins})
+
     if t and (template == DEFAULT_TEMPLATE):
         template = t
     elif t and template != DEFAULT_TEMPLATE:
@@ -704,12 +716,15 @@ def template_text(
             return "no example found"
 
 def templates_command(
+        plugins='', # extra python packages to load so plugins will register with dexy
         simple=False, # Only print template names, without docstring or headers.
         validate=False # For developer use only, validate templates (runs and checks each template).
         ):
     """
     List templates that can be used to generate new projects.
     """
+    import_extra_plugins({'plugins' : plugins})
+
     aliases = []
     for alias in sorted(dexy.template.Template.aliases):
         klass = dexy.template.Template.aliases[alias]
@@ -737,13 +752,12 @@ def templates_command(
 
 import SimpleHTTPServer
 import SocketServer
-from dexy.plugins.website_reporters import WebsiteReporter
-from dexy.plugins.output_reporters import OutputReporter
+import socket
 NO_OUTPUT_MSG = """Please run dexy first, or specify a directory to serve. \
 For help run 'dexy help -on serve'"""
 
 def serve_command(
-        port=8085,
+        port=-1,
         directory=False
         ):
     """
@@ -754,20 +768,36 @@ def serve_command(
     customized.
 
     """
+    website_reporter = dexy.reporter.Reporter.create_instance('ws')
+    output_reporter = dexy.reporter.Reporter.create_instance('output')
+
     if not directory:
-        if os.path.exists(WebsiteReporter.REPORTS_DIR):
-            directory = WebsiteReporter.REPORTS_DIR
-        elif os.path.exists(OutputReporter.REPORTS_DIR):
-            directory = OutputReporter.REPORTS_DIR
+        if os.path.exists(website_reporter.setting('dir')):
+            directory = website_reporter.setting('dir')
+        elif os.path.exists(output_reporter.setting('dir')):
+            directory = output_reporter.setting('dir')
         else:
             print NO_OUTPUT_MSG
             sys.exit(1)
 
     os.chdir(directory)
 
-    Handler = SimpleHTTPServer.SimpleHTTPRequestHandler
-    httpd = SocketServer.TCPServer(("", port), Handler)
-    print "serving contents of %s on http://localhost:%s" % (directory, port)
+    if port < 0:
+        ports = range(8085, 8100)
+    else:
+        ports = [port]
+
+    p = None
+    for p in ports:
+        try:
+            Handler = SimpleHTTPServer.SimpleHTTPRequestHandler
+            httpd = SocketServer.TCPServer(("", p), Handler)
+        except socket.error:
+            print "port %s already in use" % p
+        else:
+            break
+
+    print "serving contents of %s on http://localhost:%s" % (directory, p)
     print "type ctrl+c to stop"
     try:
         httpd.serve_forever()

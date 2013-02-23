@@ -25,10 +25,10 @@ def test_process_method_with_dict():
 
 def test_add_new_document():
     with runfilter("newdoc", "hello") as doc:
-        assert doc.node.inputs[-1].key == "subdir/newfile.txt|processtext"
+        assert doc.node.children[-1].key == "subdir/newfile.txt|processtext"
         assert doc.output().data() == "we added a new file"
-        assert isinstance(doc.node.inputs[-1].children[0], Doc)
-        assert doc.node.inputs[-1].children[0].output().data() == "Dexy processed the text 'newfile'"
+        assert doc.node.children[0].output().data() == "we added a new file"
+        assert doc.node.children[1].output().data() == "Dexy processed the text 'newfile'"
 
         assert "Doc:subdir/example.txt|newdoc" in doc.wrapper.batch.lookup_table
         assert "Doc:subdir/newfile.txt|processtext" in doc.wrapper.batch.lookup_table

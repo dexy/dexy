@@ -7,13 +7,16 @@ class UnprocessedDirectoryArchiveFilter(DexyFilter):
     """
     Create a tgz archive containing the original (unprocessed) files in a directory.
     """
-    OUTPUT_EXTENSIONS = [".tgz"]
     ALIASES = ['tgzdir']
-    FRAGMENT = False
+    _SETTINGS = {
+            'output' : True,
+            'output-extensions' : ['.tgz'],
+            'dir' : ("Directory in which to output the archive.", '')
+            }
 
     def process(self):
         parent_dir = self.output().parent_dir()
-        subdir = self.args()['dir']
+        subdir = self.setting('dir')
         dir_to_archive = os.path.join(parent_dir, subdir)
         af = self.output_filepath()
         tar = tarfile.open(af, mode="w:gz")
@@ -30,9 +33,12 @@ class ArchiveFilter(DexyFilter):
     The use-short-names option will store documents under their short
     (canonical) filenames.
     """
-    OUTPUT_EXTENSIONS = [".tgz"]
     ALIASES = ['archive', 'tgz']
-    FRAGMENT = False
+    _SETTINGS = {
+            'output' : True,
+            'output-extensions' : ['.tgz'],
+            'use-short-names' : ("Whether to use short, potentially non-unique names within the archive.", False),
+            }
 
     def open_archive(self):
         self.archive = tarfile.open(self.output_filepath(), mode="w:gz")
@@ -47,7 +53,7 @@ class ArchiveFilter(DexyFilter):
         dirname = self.output().baserootname()
 
         # Figure out whether to use short names or longer, unambiguous names.
-        use_short_names = self.args().get('use-short-names', False)
+        use_short_names = self.setting("use-short-names")
 
         for doc in self.processed():
             if not doc.output().is_cached():
@@ -74,8 +80,10 @@ class ZipArchiveFilter(ArchiveFilter):
     The use-short-names option will store documents under their short
     (canonical) filenames.
     """
-    OUTPUT_EXTENSIONS = [".zip"]
     ALIASES = ['zip']
+    _SETTINGS = {
+            'output-extensions' : ['.zip']
+            }
 
     def open_archive(self):
         self.archive = zipfile.ZipFile(self.output_filepath(), mode="w")

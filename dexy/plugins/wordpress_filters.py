@@ -41,30 +41,23 @@ class WordPressFilter(ApiFilter):
     assets, such as Amazon S3.
     """
     ALIASES = ['wp', 'wordpress']
-    API_KEY_NAME = 'wordpress'
-    BLOG_ID = 0
-    DOCUMENT_API_CONFIG_FILE = "wordpress.json"
-    DOCUMENT_API_CONFIG_FILE_KEY = "wordpress-config-file"
-    OUTPUT_EXTENSIONS = ['.txt']
 
-    @classmethod
-    def docmd_create_keyfile(klass):
+    _SETTINGS = {
+            'blog-id' : ("The wordpress blog id.", 0),
+            'page-content-extensions' : ('', ['.md', '.txt', '.html']),
+            'document-api-config-file' : 'wordpress.json',
+            'api-key-name' : 'wordpress',
+            'output-extensions' : ['.txt']
+            }
+
+    def docmd_create_keyfile(self):
         """
         Creates a key file for WordPress in the local directory.
         """
-        if os.path.exists(klass.PROJECT_API_KEY_FILE):
-            msg = "File %s already exists!" % klass.PROJECT_API_KEY_FILE
-            raise dexy.exceptions.UserFeedback(msg)
+        self.create_keyfile("project-api-key-file")
 
-        keyfile_content = {}
-        keyfile_content[klass.API_KEY_NAME] = dict((k, "TODO") for k in klass.API_KEY_KEYS)
-
-        with open(klass.PROJECT_API_KEY_FILE, "wb") as f:
-            json.dump(keyfile_content, f, sort_keys = True, indent=4)
-
-    @classmethod
-    def api_url(klass):
-        base_url = klass.read_param_class('url')
+    def api_url(self):
+        base_url = self.read_param('url')
         if base_url.endswith("xmlrpc.php"):
             return base_url
         else:
@@ -72,13 +65,11 @@ class WordPressFilter(ApiFilter):
                 base_url = "%s/" % base_url
             return "%sxmlrpc.php" % base_url
 
-    @classmethod
     def api(klass):
         if not hasattr(klass, "_api"):
             klass._api = xmlrpclib.ServerProxy(klass.api_url())
         return klass._api
 
-    @classmethod
     def docmd_list_methods(klass):
         """
         List API methods exposed by WordPress API.
@@ -86,16 +77,15 @@ class WordPressFilter(ApiFilter):
         for method in sorted(klass.api().system.listMethods()):
             print method
 
-    @classmethod
-    def docmd_list_categories(klass):
+    def docmd_list_categories(self):
         """
         List available blog post categories.
         """
-        username = klass.read_param_class('username')
-        password = klass.read_param_class('password')
+        username = self.read_param('username')
+        password = self.read_param('password')
         headers = ['categoryName']
         print "\t".join(headers)
-        for category_info in klass.api().wp.getCategories(klass.BLOG_ID, username, password):
+        for category_info in self.api().wp.getCategories(self.setting('blog-id'), username, password):
             print "\t".join(category_info[h] for h in headers)
 
     def upload_page_content(self):
@@ -120,7 +110,7 @@ class WordPressFilter(ApiFilter):
                     )
         else:
             post_id = self.api().metaWeblog.newPost(
-                    self.BLOG_ID,
+                    self.setting('blog-id'),
                     self.read_param('username'),
                     self.read_param('password'),
                     document_config,
@@ -159,7 +149,7 @@ class WordPressFilter(ApiFilter):
                      }
 
             upload_result = self.api().wp.uploadFile(
-                     self.BLOG_ID,
+                     self.setting('blog-id'),
                      self.read_param('username'),
                      self.read_param('password'),
                      upload_file
@@ -173,7 +163,7 @@ class WordPressFilter(ApiFilter):
 
     def process(self):
         try:
-            if self.input().ext in self.PAGE_CONTENT_EXTENSIONS:
+            if self.input().ext in self.setting('page-content-extensions'):
                 self.upload_page_content()
             else:
                 self.upload_image_content()
