@@ -1,2 +1,0 @@
-*.txt
-index.md|jinja|markdown|easyhtml
