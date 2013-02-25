@@ -8,7 +8,33 @@ import shutil
 import tempfile
 import yaml
 
+def iter_paths(path):
+    """
+    Iterate over all subpaths of path starting with root path.
+    """
+    path_elements = split_path(path)
+
+    if path.startswith(os.sep):
+        start = os.sep
+    else:
+        start = None
+
+    for i in range(1, len(path_elements)+1):
+        if start:
+            yield os.path.join(start, *path_elements[0:i])
+        else:
+            yield os.path.join(*path_elements[0:i])
+
+def reverse_iter_paths(path):
+    """
+    Iterate over all subpaths of path starting with path, ending with root path.
+    """
+    path_elements = split_path(path)
+    for i in range(len(path_elements), -1, -1):
+        yield os.path.join(*path_elements[0:i])
+
 def split_path(path):
+    # TODO test that paths are normed and don't include empty or '.' components.
     tail = True
     path_elements = []
     body = path
@@ -16,6 +42,9 @@ def split_path(path):
         body, tail = os.path.split(body)
         if tail:
             path_elements.append(tail)
+        elif path.startswith("/"):
+            path_elements.append(tail)
+            
     path_elements.reverse()
     return path_elements
 

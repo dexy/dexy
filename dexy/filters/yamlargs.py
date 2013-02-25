@@ -11,8 +11,10 @@ class YamlargsFilter(DexyFilter):
     def process_text(self, input_text):
         regex = "\r?\n---\r?\n"
         if re.search(regex, input_text):
-            yamlargs, content = re.split(regex, input_text)
-            self.update_all_args(parse_yaml(yamlargs))
+            raw_yamlargs, content = re.split(regex, input_text)
+            yamlargs = parse_yaml(raw_yamlargs)
+            print "yamlargs are", yamlargs
+            self.update_all_args(yamlargs)
             return content
         else:
             return input_text

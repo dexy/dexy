@@ -71,8 +71,8 @@ class Doc(dexy.task.Task):
     def is_canonical_output(self):
         if self.args.has_key("output"):
             return self.args['output']
-        elif hasattr(self.final_artifact, 'filter_instance'):
-            return self.final_artifact.filter_instance.setting('output')
+        elif len(self.children) > 1:
+            return any(child.filter_instance.setting('output') for child in self.children[1:])
         else:
             return True
 

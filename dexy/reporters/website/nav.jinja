@@ -1,0 +1,17 @@
+{% macro children() -%}
+<h2>Children</h2>
+<ul>
+{% for dirname in sorted(navigation.children[1]) -%}
+<li><a href="/{{ navigation.current_dir }}/{{ dirname }}">{{ titleize(dirname) }}</a></li>
+{% endfor -%}
+</ul>
+{% endmacro -%}
+
+{% macro pagetree() -%}
+<h2>Pagetree</h2>
+<ul>
+{% for dirname in sorted(navigation.children[1]) -%}
+<li><a href="/{{ navigation.current_dir }}/{{ dirname }}">{{ titleize(dirname) }}</a></li>
+{% endfor -%}
+</ul>
+{% endmacro -%}

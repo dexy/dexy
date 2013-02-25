@@ -20,6 +20,7 @@ import yaml
 # so all built-in plugins are registered
 import dexy.filters
 import dexy.reporters
+import dexy.parsers
 
 D = dexy.wrapper.Wrapper.DEFAULTS
 
@@ -646,13 +647,13 @@ def reporters_command(
     """
     FMT = "%-10s %-20s %s"
 
-    if dexy.reporter.Reporter.aliases:
+    if dexy.reporter.Reporter:
         print FMT % ('ALIAS', 'DIRECTORY', 'INFO')
 
-    for k in sorted(dexy.reporter.Reporter.aliases):
-        reporter_class = dexy.reporter.Reporter.aliases[k]
-        reports_dir = reporter_class.REPORTS_DIR or ''
-        print FMT % (k, reports_dir, getdoc(reporter_class))
+#    for k in sorted(dexy.reporter.Reporter.aliases):
+#        reporter_class = dexy.reporter.Reporter.aliases[k]
+#        reports_dir = reporter_class.REPORTS_DIR or ''
+#        print FMT % (k, reports_dir, getdoc(reporter_class))
 
 import dexy.template
 DEFAULT_TEMPLATE = 'dexy:default'

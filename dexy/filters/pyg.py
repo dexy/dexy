@@ -62,12 +62,15 @@ class PygmentsFilter(DexyFilter):
             or your filename isn't mapped to the lexer you want to use.""", None),
             'input-extensions' : [".*"],
             'output-extensions' : MARKUP_OUTPUT_EXTENSIONS + IMAGE_OUTPUT_EXTENSIONS + ['.css', '.sty'],
+
             'formatter-settings' : (
                 "List of all settings which will be passed to the formatter constructor.",
-                ['style', 'full']
+                ['style', 'full', 'linenos']
             ),
             'style' : ( "Formatter style to output.", 'default'),
             'full' : ("Pygments formatter option: output a 'full' document including header/footer tags.", None),
+            'linenos' : ("Whether to include line numbers. May be set to 'table' or 'inline'.", None),
+
             'lexer-settings' : (
                 "List of all settings which will be passed to the lexer constructor.",
                 []

@@ -7,6 +7,9 @@ class Plugin(object):
     """
     Base class for plugins. Define *instance* methods shared by plugins here.
     """
+    def help(self):
+        return inspect.getdoc(self.__class__)
+
     def setting(self, name_hyphen):
         if name_hyphen in self._settings:
             return self._settings[name_hyphen][1]
@@ -142,16 +145,16 @@ class PluginMeta(type):
 
                 return mod.__dict__[class_name]
             else:
-                from dexy.filters.process import SubprocessFilter
+                from dexy.filters.pexp import PexpectReplFilter
                 from dexy.filters.process import SubprocessCompileFilter
                 from dexy.filters.process import SubprocessCompileInputFilter
-                from dexy.filters.process import SubprocessStdoutFilter
                 from dexy.filters.process import SubprocessExtToFormatFilter
-                from dexy.filters.process import SubprocessStdoutTextFilter
+                from dexy.filters.process import SubprocessFilter
                 from dexy.filters.process import SubprocessFormatFlagFilter
-                from dexy.filters.process import SubprocessInputFilter
                 from dexy.filters.process import SubprocessInputFileFilter
-                from dexy.filters.pexp import PexpectReplFilter
+                from dexy.filters.process import SubprocessInputFilter
+                from dexy.filters.process import SubprocessStdoutFilter
+                from dexy.filters.process import SubprocessStdoutTextFilter
                 from dexy.filters.standard import PreserveDataClassFilter
                 return locals()[class_or_class_name]
         else:
