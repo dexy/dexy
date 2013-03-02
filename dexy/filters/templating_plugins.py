@@ -7,6 +7,7 @@ import dexy.commands
 import dexy.data
 import dexy.exceptions
 import dexy.plugin
+import inflection
 import json
 import os
 import pygments
@@ -48,12 +49,6 @@ class PrettyPrintHtml(TemplatePlugin):
         soup = BeautifulSoup(unicode(html))
         return soup.prettify()
 
-try:
-    import inflection
-    INFLECTION_AVAILABLE = True
-except ImportError:
-    INFLECTION_AVAILABLE = False
-
 class Inflection(TemplatePlugin):
     """
     Exposes the inflection package for doing nice things with strings 
@@ -66,10 +61,6 @@ class Inflection(TemplatePlugin):
                 'titleize', 'transliterate', 'underscore'])
             }
 
-    @classmethod
-    def is_active(klass):
-        return INFLECTION_AVAILABLE
-    
     def run(self):
         args = {}
         for method in self.setting('methods'):

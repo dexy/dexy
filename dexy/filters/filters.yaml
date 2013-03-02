@@ -535,7 +535,7 @@ kshint:
     initial-prompt: "^\\s*\\d*(#|\\$)\\s+"
     prompt-regex: "\\d*(#|\\$)"
     trim-prompt: "\\d*(\\$|#)"
-    ps1: "$ "
+    ps1: "\\$ "
 
 pycon|pyrepl:
     class: PexpectReplFilter
@@ -573,7 +573,7 @@ shint|bashint:
     prompt-regex: "\\d*[#$]"
     initial-prompt: "\\d*[#$]"
     trim-prompt: "\\d*[#$]"
-    ps1: "$ "
+    ps1: "\\$ "
 
 r|rint:
     class: PexpectReplFilter

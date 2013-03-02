@@ -13,7 +13,6 @@ class YamlargsFilter(DexyFilter):
         if re.search(regex, input_text):
             raw_yamlargs, content = re.split(regex, input_text)
             yamlargs = parse_yaml(raw_yamlargs)
-            print "yamlargs are", yamlargs
             self.update_all_args(yamlargs)
             return content
         else:

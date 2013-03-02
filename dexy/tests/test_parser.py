@@ -31,7 +31,8 @@ def test_parse_default():
         parser.parse(YAML_WITH_DEFAULT_OFF)
 
         wrapper.batch.run()
-        assert len(wrapper.batch.tasks()) == 0
+        assert wrapper.batch.task_count == 0
+        assert len(wrapper.batch.tasks()) == 1
 
     with wrap() as wrapper:
         wrapper.full = True
@@ -40,6 +41,7 @@ def test_parse_default():
         parser.parse(YAML_WITH_DEFAULT_OFF)
 
         wrapper.batch.run()
+        assert wrapper.batch.task_count == 1
         assert len(wrapper.batch.tasks()) == 1
 
 def test_yaml_with_defaults():

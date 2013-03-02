@@ -235,7 +235,7 @@ class Sqlite3(Database):
 
         # make sure we don't go too long before committing changes to sqlite
         self._pending_transaction_counter += 1
-        if self._pending_transaction_counter > 200:
+        if self._pending_transaction_counter > 50:
             self.commit()
             self._pending_transaction_counter = 0
 

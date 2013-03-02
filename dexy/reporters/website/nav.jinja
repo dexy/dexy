@@ -1,17 +1,37 @@
 {% macro children() -%}
 <h2>Children</h2>
 <ul>
-{% for dirname in sorted(navigation.children[1]) -%}
-<li><a href="/{{ navigation.current_dir }}/{{ dirname }}">{{ titleize(dirname) }}</a></li>
-{% endfor -%}
-</ul>
+{% for child in nav.children -%}
+{% if child.index_page -%}
+<li><a href="{{ child.location }}">{{ child.index_page.title() }}</a></li>
+{% endif -%}
+{% endfor -%} </ul>
 {% endmacro -%}
 
 {% macro pagetree() -%}
 <h2>Pagetree</h2>
-<ul>
-{% for dirname in sorted(navigation.children[1]) -%}
-<li><a href="/{{ navigation.current_dir }}/{{ dirname }}">{{ titleize(dirname) }}</a></li>
-{% endfor -%}
+<ul class="sitemap">
+{%- for item in nav.children recursive %}
+{%- if item.index_page -%}
+    <li><a href="{{ item.location | e }}">{{ item.index_page.title() }}</a>
+    {%- if item.has_children_with_index_pages() -%}
+        <ul>{{ loop(sorted(item.children, key=attrgetter('location'))) }}</ul>
+    {%- endif %}</li>
+{%- endif %}
+{%- endfor %}
+</ul>
+{% endmacro -%}
+
+{% macro sitemap() -%}
+<h2>Sitemap</h2>
+<ul class="sitemap">
+{%- for item in root.children recursive %}
+{%- if item.index_page -%}
+    <li><a href="{{ item.location | e }}">{{ item.index_page.title() }}</a>
+    {%- if item.has_children_with_index_pages() -%}
+        <ul>{{ loop(sorted(item.children, key=attrgetter('location'))) }}</ul>
+    {%- endif %}</li>
+{%- endif %}
+{%- endfor %}
 </ul>
 {% endmacro -%}

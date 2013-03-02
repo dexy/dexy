@@ -17,21 +17,24 @@ class Filter(dexy.plugin.Plugin):
 
     ALIASES = ['dexy']
     TAGS = []
+    NODOC_SETTINGS = [
+            'help', 'nodoc'
+            ]
     _SETTINGS = {
-            'help' : ('Help string for filter, if not already specified as a class docstring.', None),
             'add-new-files' : ('', False),
-            'require-output' : ("Should dexy raise an exception if no output is produced by this filter?", True),
             'additional-doc-filters' : ('', {}),
             'ext' : ('Extension to output.', None),
+            'help' : ('Help string for filter, if not already specified as a class docstring.', None),
             'input-extensions' : ("List of extensions which this filter can accept as input.", [".*"]),
-            'output-extensions' : ("List of extensions which this filter can produce as output.", [".*"]),
-            'output-data-type' : ("Alias of data type to use to store filter output.", "generic"),
             'keep-originals' : ('', False),
+            'nodoc' : ("Whether filter should be excluded from documentation.", False),
             'output' : ("Whether to output results of this filter by default.", False),
+            'output-data-type' : ("Alias of data type to use to store filter output.", "generic"),
+            'output-extensions' : ("List of extensions which this filter can produce as output.", [".*"]),
+            'preserve-prior-data-class' : ('', False),
+            'require-output' : ("Should dexy raise an exception if no output is produced by this filter?", True),
             'variables' : ('', {}),
             'vars' : ('', {}),
-            'preserve-prior-data-class' : ('', False),
-            'nodoc' : ("Whether filter should be excluded from documentation.", False)
             }
 
     def templates(self):
@@ -41,14 +44,26 @@ class Filter(dexy.plugin.Plugin):
         import dexy.template
         return [t for t in dexy.template.Template if any(a for a in self.ALIASES if a in t.FILTERS_USED)]
 
+    def filter_specific_settings(self):
+        nodoc = self.NODOC_SETTINGS
+        base = dexy.filter.Filter._SETTINGS
+        return dict((k, v) for k, v in self._settings.iteritems() if not k in nodoc and not k in base)
+
+    def info(self):
+        info = {}
+        info['settings'] = {}
+        for k, tup in self.filter_specific_settings().iteritems():
+            info['settings'][k] = {}
+            info['settings'][k]['help'] = tup[0]
+            info['settings'][k]['default'] = tup[1]
+            info['settings'][k]['is-env-var'] = hasattr(tup[1], 'startswith') and tup[1].startswith("$")
+        return info
+
     def is_active(self):
         return True
 
-    def inactive_because_missing(klass):
-        if hasattr(klass, 'executables'):
-            return klass.executables()
-        elif hasattr(klass, 'IMPORTS'):
-            return klass.IMPORTS
+    def inactive_because(self):
+        raise Exception("not implemented")
 
     def update_all_args(self, new_args):
         self.artifact.doc.args.update(new_args)
@@ -71,7 +86,7 @@ class Filter(dexy.plugin.Plugin):
     def doc_arg(self, arg_name_hyphen, default=None):
         return self.artifact.doc.arg_value(arg_name_hyphen, default)
 
-    def add_doc(self, doc_name, doc_contents=None, run=True):
+    def add_doc(self, doc_name, doc_contents=None, run=True, shortcut=None):
         doc_name = os_to_posix(doc_name)
         if not posixpath.sep in doc_name:
             doc_name = posixpath.join(self.input().parent_dir(), doc_name)
@@ -97,12 +112,12 @@ class Filter(dexy.plugin.Plugin):
                 self.artifact.add_doc(doc)
 
             doc_key = "%s|%s" % (doc_name, filters)
-            doc = dexy.doc.Doc(doc_key, contents=doc_contents)
+            doc = dexy.doc.Doc(doc_key, contents=doc_contents, shortcut=shortcut)
             self.artifact.add_doc(doc, run=run)
 
         else:
             doc_key = doc_name
-            doc = dexy.doc.Doc(doc_key, contents=doc_contents)
+            doc = dexy.doc.Doc(doc_key, contents=doc_contents, shortcut=shortcut)
             self.artifact.add_doc(doc, run=run)
 
         return doc

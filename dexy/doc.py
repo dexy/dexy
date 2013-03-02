@@ -64,7 +64,10 @@ class Doc(dexy.task.Task):
         elif self.is_index_page():
             # use subdirectory we're in
             subdir = posixpath.split(posixpath.dirname(self.name))[-1]
-            return inflection.titleize(subdir)
+            if subdir == "/":
+                return "Home"
+            else:
+                return inflection.titleize(subdir)
         else:
             return self.name
 

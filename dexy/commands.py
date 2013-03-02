@@ -420,11 +420,6 @@ def filters_text(
         versions=False # Whether to check the installed version of external software required by filters, slower
         ):
 
-    # List settings that don't need to be listed
-    NODOC_SETTINGS = [
-            'help', 'nodoc'
-            ]
-
     SETTING_STRING = "  %s: %s (default value: %s)"
     if len(alias) > 0:
         # We want help on a particular filter
@@ -436,16 +431,15 @@ def filters_text(
         text.append("")
         text.append("dexy-level settings:")
         for k in sorted(instance._settings):
-            if not k in NODOC_SETTINGS and k in dexy.filter.Filter._SETTINGS:
+            if not k in dexy.filter.Filter.NODOC_SETTINGS and k in dexy.filter.Filter._SETTINGS:
                 tup = instance._settings[k]
                 text.append(SETTING_STRING % (k, tup[0], tup[1]))
 
         text.append("")
         text.append("filter-specific settings:")
-        for k in sorted(instance._settings):
-            if not k in NODOC_SETTINGS and not k in dexy.filter.Filter._SETTINGS:
-                tup = instance._settings[k]
-                text.append(SETTING_STRING % (k, tup[0], tup[1]))
+        for k in sorted(instance.filter_specific_settings()):
+            tup = instance._settings[k]
+            text.append(SETTING_STRING % (k, tup[0], tup[1]))
 
         templates = instance.templates()
         if len(templates) > 0:

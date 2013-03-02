@@ -1,5 +1,7 @@
 import dexy.exceptions
 import inspect
+import json
+import os
 import sys
 import yaml
 
@@ -10,13 +12,19 @@ class Plugin(object):
     def help(self):
         return inspect.getdoc(self.__class__)
 
+    def json_info(self):
+        return json.dumps(self.info())
+
+    def info(self):
+        return {}
+
     def setting(self, name_hyphen):
         if name_hyphen in self._settings:
-            return self._settings[name_hyphen][1]
+            value = self._settings[name_hyphen][1]
         else:
             name_underscore = name_hyphen.replace("-", "_")
             if name_underscore in self._settings:
-                return self._settings[name_underscore][1]
+                value = self._settings[name_underscore][1]
             else:
                 if name_underscore == name_hyphen:
                     msg = "no setting named %s" % name_hyphen
@@ -24,6 +32,17 @@ class Plugin(object):
                     msg = "no setting named '%s' or '%s'"
                     msg = msg % (name_hyphen, name_underscore)
                 raise Exception(msg)
+
+        if hasattr(value, 'startswith') and value.startswith("$"):
+            env_var = value.lstrip("$")
+            if os.environ.has_key(env_var):
+                return os.getenv(env_var)
+            else:
+                raise dexy.exceptions.UserFeedback("'%s' is not defined in your environment" % env_var)
+        elif hasattr(value, 'startswith') and value.startswith("\$"):
+            return value.replace("\$", "$")
+        else:
+            return value
 
     def has_setting(self, name):
         return self._settings.has_key(name)
@@ -37,21 +56,7 @@ class Plugin(object):
         return dict((k, v[1]) for k, v in self._settings.iteritems() if not k in skip)
 
     def update_settings(self, new_settings):
-        for k, v in new_settings.iteritems():
-            if "-" in k:
-                hyphen_k = k
-                underscore_k = k.replace("-", "_")
-            elif "_" in k:
-                underscore_k = k
-                hyphen_k = k.replace("_", "-")
-            else:
-                hyphen_k = k
-                underscore_k = k
-
-            if (not hyphen_k in self._settings) and (not underscore_k in self._settings):
-                raise Exception("'%s' is not a valid setting for %s" % (k, self.__class__.__name__))
-
-        self.__class__.class_update_settings(self, new_settings)
+        self.__class__.class_update_settings(self, new_settings, False)
 
 class PluginMeta(type):
     """
@@ -160,7 +165,7 @@ class PluginMeta(type):
         else:
             raise Exception("Unexpected type %s" % type(class_or_class_name))
 
-    def class_update_settings(cls, instance, new_settings):
+    def class_update_settings(cls, instance, new_settings, enforce_helpstring=True):
         for raw_key, value in new_settings.iteritems():
             key = raw_key.replace("_", "-")
             key_in_settings = instance._settings.has_key(key)
@@ -169,7 +174,11 @@ class PluginMeta(type):
                 instance._settings[key] = value
             else:
                 if not instance._settings.has_key(key):
-                    raise Exception("You must specify param '%s' as a tuple of (helpstring, value)" % key)
+                    if enforce_helpstring:
+                        raise Exception("You must specify param '%s' as a tuple of (helpstring, value)" % key)
+                    else:
+                        # TODO check and warn if key is similar to an existing key
+                        instance._settings[key] = ('', value,)
                 else:
                     orig = instance._settings[key]
                     instance._settings[key] = (orig[0], value,)

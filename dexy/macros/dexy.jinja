@@ -1,0 +1,63 @@
+{% if ext is undefined -%}
+{% set ext = f.final_ext() -%}
+{% endif -%}
+
+
+{% if ext in ('.html', '.mobi') -%}
+{% set image_ext = "svg" -%}
+{% set vect_ext = 'png' -%}
+{% set output_fmt = 'html' -%}
+{% elif ext in ('.pdf') -%}
+{% set image_ext = "eps" -%}
+{% set vect_ext = "pdf" -%}
+{% set output_fmt = 'latex' -%}
+{% else -%}
+{% set image_ext = None -%}
+{% set vect_ext = None -%}
+{% set output_fmt = None -%}
+{% endif -%}
+
+
+{% macro code(basename) -%}
+{% if ext == '.html' %}
+.. raw:: html
+
+{{ d[basename + '|h'] | indent(4, true) }}
+
+{% elif ext == '.pdf' %}
+.. raw:: latex
+
+{{ d[basename + '|l'] | indent(4, true) }}
+{% elif ext == '.mobi' -%}
+
+.. image:: {{ s.relative_path_to(d[basename + '|pn'].name) }}
+
+{% else %}
+.. warning::
+
+    Unknown target extension {{ f.final_ext() }} for basename {{ basename }}.
+
+{% endif %}
+{%- endmacro %}
+
+{% macro codes(basename, section) -%}
+{% if ext == '.html' %}
+.. raw:: html
+
+{{ d[basename + '|h'][section] | indent(4, true) }}
+
+{% elif ext == '.pdf' %}
+.. raw:: latex
+
+{{ d[basename + '|l'][section] | indent(4, true) }}
+
+{% elif ext == '.mobi' %}
+
+.. image:: {{ s.relative_path_to(d[basename + '|pn'].key.replace("|", "--")) }}--{{ section }}.png
+
+{% else %}
+.. warning::
+
+    Unknown target extension {{ f.final_ext() }} for basename {{ basename }} section {{ section }}.
+{% endif %}
+{%- endmacro %}

@@ -16,8 +16,9 @@ class RestructuredTextBase(DexyFilter):
             "input-extensions" : [".rst", ".txt"],
             'output-extensions' : [".html", ".tex", ".xml"],
             'output' : True,
-            'writer' : ("Specify rst writer to use.", None),
-            'stylesheet' : ("Stylesheet arg to pass to rst", None)
+            'writer' : ("Specify rst writer to use (not required: dexy will attempt to determine automatically from filename if not specified).", None),
+            'stylesheet' : ("Stylesheet arg to pass to rst", None),
+            'template' : ("Template arg to pass to rst", None),
             }
 
     @classmethod
@@ -39,17 +40,30 @@ class RestructuredTextBase(DexyFilter):
 class RestructuredText(RestructuredTextBase):
     """
     A 'native' ReST filter which uses the docutils library.
+
+    Look for configuration options for writers here:
+    http://docutils.sourceforge.net/docs/user/config.html
     """
     ALIASES = ['rst']
+    SKIP_SETTINGS = 'settings-not-for-settings-overrides'
     _SETTINGS = {
-            'settings-for-settings-overrides' : (
-                "Which of the settings should be passed to settings_overrides.",
-                ['writer', 'stylesheet']
+            SKIP_SETTINGS : (
+                "Which of the settings should NOT be passed to settings_overrides.",
+                ['writer']
                 )
             }
 
     def process(self):
-        settings_overrides = dict((k, v) for k, v in self.setting_values().iteritems() if k in self.setting('settings-for-settings-overrides'))
+        def skip_setting(key):
+            in_base_filter = key in DexyFilter._SETTINGS
+            in_skip = key in self.setting(self.SKIP_SETTINGS) or key == self.SKIP_SETTINGS
+            return in_base_filter or in_skip
+
+        settings_overrides = dict((k.replace("-", "_"), v) for k, v in self.setting_values().iteritems() if v and not skip_setting(k))
+        writer_name = self.docutils_writer_name()
+
+        self.log.debug("settings for rst: %r" % settings_overrides)
+        self.log.debug("rst writer: %s" % writer_name)
 
         core.publish_file(
                 source_path = self.input().storage.data_file(),

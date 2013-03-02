@@ -65,7 +65,8 @@ class JinjaFilter(TemplateFilter):
             'variable-end-string' : ("Tag to indicate the start of a variable.", "}}"),
             'comment-start-string' : ("Tag to indicate the start of a comment.", "{#"),
             'comment-end-string' : ("Tag to indicate the start of a comment.", "#}"),
-            'changetags' : ("Automatically change from { to < based tags for .tex and .wiki files.", True)
+            'changetags' : ("Automatically change from { to < based tags for .tex and .wiki files.", True),
+            'jinja-path' : ("List of additional directories to pass to jinja loader.", []),
             }
     TEX_TAGS = {
             'block_start_string': '<%',
@@ -78,9 +79,10 @@ class JinjaFilter(TemplateFilter):
 
     def setup_jinja_env(self, loader=None):
         env_attrs = {}
+        skip_settings = ('changetags', 'jinja-path',)
         for k, v in self.setting_values().iteritems():
             underscore_k = k.replace("-", "_")
-            if k in self._SETTINGS and not k in ('changetags'):
+            if k in self._SETTINGS and not k in skip_settings:
                 env_attrs[underscore_k] = v
 
         env_attrs['undefined'] = jinja2.StrictUndefined
@@ -153,7 +155,8 @@ class JinjaFilter(TemplateFilter):
 
     def process(self):
         wd = self.setup_wd()
-        dirs = ['.', wd, self.artifact.tmp_dir()]
+        macro_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'macros'))
+        dirs = ['.', wd, self.artifact.tmp_dir(), macro_dir] + self.setting('jinja-path')
         self.log.debug("setting up jinja FileSystemLoader with dirs %s" % ", ".join(dirs))
         loader = FileSystemLoader(dirs)
 

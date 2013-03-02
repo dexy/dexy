@@ -64,6 +64,7 @@ class Data(dexy.plugin.Plugin):
         self.hashstring = hashstring
         self.args = args
         self.wrapper = wrapper
+        self.shortcut = self.args.get('shortcut')
 
         self.setup_storage(storage_type)
 
@@ -110,12 +111,15 @@ class Data(dexy.plugin.Plugin):
 
     def relative_refs(self, relative_to_file):
         doc_dir = posixpath.dirname(relative_to_file)
-        return [
+        refs = [
                 posixpath.relpath(self.key, doc_dir),
                 posixpath.relpath(self.long_name(), doc_dir),
                 "/%s" % self.key,
                 "/%s" % self.long_name()
         ]
+        if self.shortcut:
+            refs.append(self.shortcut)
+        return refs
 
     # Define functions that might get called on expectation of a string...
 

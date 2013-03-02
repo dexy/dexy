@@ -30,5 +30,10 @@ import pkg_resources
 for dist in pkg_resources.working_set:
     if dist.key.startswith("dexy-"):
         import_pkg = dist.egg_name().split("-")[0]
-        __import__(import_pkg)
+        try:
+            __import__(import_pkg)
+        except ImportError as e:
+            # print "skipping automatic load of plugin", import_pkg, "because", e
+            pass
+
 

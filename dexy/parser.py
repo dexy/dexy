@@ -158,13 +158,6 @@ class AbstractSyntaxTree():
             kwargs['wrapper'] = self.wrapper
             if kwargs.get('inactive') or kwargs.get('disabled'):
                 return
-            if not kwargs.get('default', True):
-                if self.wrapper.full:
-                    pass
-                elif self.wrapper.target and key.startswith(self.wrapper.target):
-                    pass
-                else:
-                    return
 
             input_tasks = [parse_item(i) for i in inputs if i]
 

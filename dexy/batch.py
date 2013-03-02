@@ -72,8 +72,12 @@ class Batch(object):
                 # TODO sort nodes..
 
         else:
-            nodes = self.tree
+            if self.wrapper.full:
+                nodes = self.tree
+            else:
+                nodes = [n for n in self.tree if n.args.get('default', True)]
 
+        self.wrapper.log.debug("nodes being run are %r" % (nodes))
         return nodes
 
     def run(self, target=None):
@@ -83,9 +87,12 @@ class Batch(object):
 
         self.state = 'populating'
 
+        self.task_count = 0
+
         for node in nodes:
             for task in node:
                 task()
+                self.task_count += 1
 
         self.state = 'settingup'
 

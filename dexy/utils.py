@@ -30,8 +30,9 @@ def reverse_iter_paths(path):
     Iterate over all subpaths of path starting with path, ending with root path.
     """
     path_elements = split_path(path)
-    for i in range(len(path_elements), -1, -1):
+    for i in range(len(path_elements), 0, -1):
         yield os.path.join(*path_elements[0:i])
+    yield "/"
 
 def split_path(path):
     # TODO test that paths are normed and don't include empty or '.' components.

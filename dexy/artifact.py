@@ -286,10 +286,9 @@ class FilterArtifact(Artifact):
             self.log.debug(rows[0])
             return False
         else:
-            for k, v in json.loads(raw_args).iteritems():
-                self.log.debug("updating arg %s of %s with stored value %s" % (k, self.key, v))
-                self.args[k] = v
-                self.doc.args[k] = v
+            stored_args = json.loads(raw_args)
+            self.args.update(stored_args)
+            self.doc.args.update(stored_args)
             return True
 
     def reconstitute_cached_children(self):
