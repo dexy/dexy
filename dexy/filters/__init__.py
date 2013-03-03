@@ -33,7 +33,4 @@ for dist in pkg_resources.working_set:
         try:
             __import__(import_pkg)
         except ImportError as e:
-            # print "skipping automatic load of plugin", import_pkg, "because", e
-            pass
-
-
+            print "plugin", import_pkg, "not registered because", e

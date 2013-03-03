@@ -185,7 +185,7 @@ class PluginMeta(type):
 
     def create_instance(cls, alias, *instanceargs, **instancekwargs):
         if not alias in cls.plugins:
-            raise dexy.exceptions.UserFeedback("No alias %s available." % alias)
+            raise dexy.exceptions.NoPlugin("No alias %s available." % alias)
         class_or_class_name, settings = cls.plugins[alias]
 
         klass = cls.get_reference_to_class(class_or_class_name)
@@ -234,11 +234,11 @@ class Command(Plugin):
     """
     Parent class for custom dexy commands.
     """
-    NAMESPACE = None
+    __metaclass__ = PluginMeta
+    _SETTINGS = {}
     ALIASES = []
     DEFAULT_COMMAND = None
-    __metaclass__ = PluginMeta
+    NAMESPACE = None
 
-    @classmethod
     def is_active(klass):
         return True

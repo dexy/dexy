@@ -1,0 +1,150 @@
+from dexy.utils import parse_json
+from dexy.utils import parse_yaml
+import dexy.wrapper
+import os
+import sys
+
+D = dexy.wrapper.Wrapper.DEFAULTS
+
+RENAME_PARAMS = {
+        'artifactsdir' : 'artifacts_dir',
+        'conf' : 'config_file',
+        'dbalias' : 'db_alias',
+        'dbfile' : 'db_file',
+        'disabletests' : 'disable_tests',
+        'dryrun' : 'dry_run',
+        'excludealso' : 'exclude_also',
+        'ignore' : 'ignore_nonzero_exit',
+        'logfile' : 'log_file',
+        'logformat' : 'log_format',
+        'loglevel' : 'log_level',
+        'logdir' : 'log_dir',
+        'nocache' : 'dont_use_cache'
+        }
+
+def default_config():
+    wrapper = dexy.wrapper.Wrapper()
+    conf = wrapper.__dict__.copy()
+
+    for k in conf.keys():
+        if not k in D.keys():
+            del conf[k]
+
+    reverse_rename = dict((v,k) for k, v in RENAME_PARAMS.iteritems())
+    for k in conf.keys():
+        renamed_key = reverse_rename.get(k, k)
+        if renamed_key != k:
+            conf[renamed_key] = conf[k]
+            del conf[k]
+
+    return conf
+
+def rename_params(kwargs):
+    renamed_args = {}
+    for k, v in kwargs.iteritems():
+        renamed_key = RENAME_PARAMS.get(k, k)
+        renamed_args[renamed_key] = v
+    return renamed_args
+
+def skip_params(kwargs):
+    ok_params = {}
+    for k, v in kwargs.iteritems():
+        if k in D.keys():
+            ok_params[k] = v
+    return ok_params
+
+def config_args(modargs):
+    cliargs = modargs.get("__cli_options", {})
+    kwargs = modargs.copy()
+
+    config_file = modargs.get('conf', dexy.wrapper.Wrapper.DEFAULTS['config_file'])
+
+    # Update from config file
+    if os.path.exists(config_file):
+        with open(config_file, "rb") as f:
+            if config_file.endswith(".conf"):
+                try:
+                    conf_args = parse_yaml(f.read())
+                except dexy.exceptions.UserFeedback as yaml_exception:
+                    try:
+                        conf_args = parse_json(f.read())
+                    except dexy.exceptions.UserFeedback as json_exception:
+                        print "--------------------------------------------------"
+                        print "Tried to parse YAML:"
+                        print yaml_exception
+                        print "--------------------------------------------------"
+                        print "Tried to parse JSON:"
+                        print json_exception
+                        print "--------------------------------------------------"
+                        raise dexy.exceptions.UserFeedback("Unable to parse config file '%s' as YAML or as JSON." % config_file)
+
+            elif config_file.endswith(".yaml"):
+                conf_args = parse_yaml(f.read())
+            elif config_file.endswith(".json"):
+                conf_args = parse_json(f.read())
+            else:
+                raise dexy.exceptions.UserFeedback("Don't know how to load config from '%s'" % config_file)
+
+            kwargs.update(conf_args)
+
+    if cliargs: # cliargs may be False
+        for k in cliargs.keys(): kwargs[k] = modargs[k]
+
+    # TODO allow updating from env variables, e.g. DEXY_ARTIFACTS_DIR
+
+    return kwargs
+
+def import_extra_plugins(kwargs):
+    if kwargs.get('plugins'):
+        for imp in kwargs.get('plugins').split():
+            print "loading", imp
+            __import__(imp)
+
+def init_wrapper(modargs):
+    kwargs = config_args(modargs)
+    import_extra_plugins(kwargs)
+    kwargs = rename_params(kwargs)
+    kwargs = skip_params(kwargs)
+    return dexy.wrapper.Wrapper(**kwargs)
+
+def template_text(
+        alias=None
+    ):
+    template = dexy.template.Template.aliases[alias]
+    for batch in template.dexy():
+        man_doc_key = 'Doc:dexy.rst|jinja|rst2man'
+        if man_doc_key in batch.lookup_table:
+            man_doc = batch.lookup_table[man_doc_key].output().storage.data_file()
+
+            command = "man %s" % man_doc
+            import subprocess
+            proc = subprocess.Popen(
+                       command,
+                       shell=True,
+                       stdout=subprocess.PIPE,
+                       stderr=subprocess.STDOUT
+                   )
+            stdout, stderr = proc.communicate()
+            return stdout
+        else:
+            return "no example found"
+
+def handle_user_feedback_exception(wrapper, e):
+    if hasattr(wrapper, 'log'):
+        wrapper.log.error("A problem has occurred with one of your documents:")
+        wrapper.log.error(e.message)
+    wrapper.cleanup_partial_run()
+    sys.stderr.write("Oops, there's a problem processing one of your documents. Here is the error message:" + os.linesep)
+    sys.stderr.write(e.message)
+    if not e.message.endswith(os.linesep) or e.message.endswith("\n"):
+        sys.stderr.write(os.linesep)
+    sys.stderr.write("Dexy is stopping. There might be more information at the end of the dexy log." + os.linesep)
+    sys.exit(1)
+
+def log_and_print_exception(wrapper, e):
+    if hasattr(wrapper, 'log'):
+        wrapper.log.error("An error has occurred.")
+        wrapper.log.error(e)
+        wrapper.log.error(e.message)
+    import traceback
+    traceback.print_exc()

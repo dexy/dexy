@@ -5,6 +5,9 @@ import platform
 class UserFeedback(Exception):
     pass
 
+class NoPlugin(UserFeedback):
+    pass
+
 class NoFilterOutput(UserFeedback):
     pass
 

@@ -14,7 +14,7 @@ def test_init_wrapper():
             f.write("artifactsdir: custom")
 
         modargs = {}
-        wrapper = dexy.commands.init_wrapper(modargs)
+        wrapper = dexy.commands.utils.init_wrapper(modargs)
         assert wrapper.artifacts_dir == 'custom'
 
 @patch.object(sys, 'argv', ['dexy', 'setup'])
@@ -143,25 +143,25 @@ def test_conf_command_with_print_option(stdout):
         assert "artifactsdir" in stdout.getvalue()
 
 def test_filters_text():
-    text = dexy.commands.filters_text()
+    text = dexy.commands.filters.filters_text()
     assert "pyg, pygments : Apply Pygments syntax highlighting." in text
 
 def test_filters_text_single_alias():
-    text = dexy.commands.filters_text(alias="pyg")
+    text = dexy.commands.filters.filters_text(alias="pyg")
     assert "pyg, pygments" in text
 
 def test_filters_text_versions():
-    text = dexy.commands.filters_text(versions=True)
+    text = dexy.commands.filters.filters_text(versions=True)
     assert "Installed version: Python" in text
 
 def test_filters_text_single_alias_source():
-    text = dexy.commands.filters_text(alias="pyg", source=True)
+    text = dexy.commands.filters.filters_text(alias="pyg", source=True)
     assert "pyg, pygments" in text
     assert "class" in text
     assert "PygmentsFilter" in text
     assert not "class PygmentsFilter" in text
 
 def test_filters_text_single_alias_source_nocolor():
-    text = dexy.commands.filters_text(alias="pyg", source=True, nocolor=True)
+    text = dexy.commands.filters.filters_text(alias="pyg", source=True, nocolor=True)
     assert "pyg, pygments" in text
     assert "class PygmentsFilter" in text

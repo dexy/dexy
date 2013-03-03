@@ -1,4 +1,4 @@
-from dexy.commands import init_wrapper
+from dexy.commands.utils import init_wrapper
 from dexy.doc import Doc
 from dexy.exceptions import UserFeedback
 from dexy.tests.utils import tempdir

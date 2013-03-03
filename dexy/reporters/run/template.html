@@ -104,8 +104,10 @@
                     <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">{{ a.content_source }}</td>
                     <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">
                         {% if hasattr(a.output_data, 'keys') -%}
-                        {% for k in a.output_data.keys() -%}
+                        {% for counter, k in enumerate(a.output_data.keys()) -%}
+                        {% if counter < 10 -%}
                         {{ k }}<br />
+                        {% endif -%}
                         {% endfor -%}
                         {% endif -%}
                     </td>
