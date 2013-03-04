@@ -26,6 +26,7 @@ def test_script_node_caching():
         with open("dexy.yaml", "w") as f:
             f.write(SCRIPT_YAML)
 
+        wrapper.walk()
         wrapper.setup_batch()
         wrapper.run()
 
@@ -175,6 +176,7 @@ def test_pattern_node():
         with open("bar.txt", "w") as f:
             f.write("bar!")
 
+        wrapper.walk()
         wrapper.setup_batch()
 
         node = PatternNode("*.txt", foo="bar", wrapper=wrapper)
@@ -193,6 +195,7 @@ def test_pattern_node_multiple_filters():
         with open("foo.txt", "w") as f:
             f.write("foo!")
 
+        wrapper.walk()
         wrapper.setup_batch()
 
         node = PatternNode("*.txt|dexy|dexy|dexy", wrapper=wrapper)
@@ -207,6 +210,7 @@ def test_pattern_node_one_filter():
         with open("foo.txt", "w") as f:
             f.write("foo!")
 
+        wrapper.walk()
         wrapper.setup_batch()
 
         node = PatternNode("*.txt|dexy", wrapper=wrapper)

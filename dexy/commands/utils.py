@@ -1,5 +1,6 @@
 from dexy.utils import parse_json
 from dexy.utils import parse_yaml
+from dexy.utils import file_exists
 import dexy.wrapper
 import os
 import sys
@@ -60,7 +61,7 @@ def config_args(modargs):
     config_file = modargs.get('conf', dexy.wrapper.Wrapper.DEFAULTS['config_file'])
 
     # Update from config file
-    if os.path.exists(config_file):
+    if file_exists(config_file):
         with open(config_file, "rb") as f:
             if config_file.endswith(".conf"):
                 try:
@@ -128,18 +129,6 @@ def template_text(
             return stdout
         else:
             return "no example found"
-
-def handle_user_feedback_exception(wrapper, e):
-    if hasattr(wrapper, 'log'):
-        wrapper.log.error("A problem has occurred with one of your documents:")
-        wrapper.log.error(e.message)
-    wrapper.cleanup_partial_run()
-    sys.stderr.write("Oops, there's a problem processing one of your documents. Here is the error message:" + os.linesep)
-    sys.stderr.write(e.message)
-    if not e.message.endswith(os.linesep) or e.message.endswith("\n"):
-        sys.stderr.write(os.linesep)
-    sys.stderr.write("Dexy is stopping. There might be more information at the end of the dexy log." + os.linesep)
-    sys.exit(1)
 
 def log_and_print_exception(wrapper, e):
     if hasattr(wrapper, 'log'):

@@ -3,8 +3,8 @@ from dexy.tests.utils import wrap
 
 def test_ast():
     with wrap() as wrapper:
-        ast = AbstractSyntaxTree()
-        ast.wrapper = wrapper
+        wrapper.walk()
+        ast = AbstractSyntaxTree(wrapper)
 
         ast.add_task_info("abc.txt", foo='bar')
         ast.add_dependency("abc.txt", "def.txt")

@@ -9,7 +9,6 @@ php:
 
 nodejs|node:
     class: SubprocessStdoutFilter
-    add-new-files: True
     help: Runs scripts using node js
     input-extensions: [.js, .txt]
     output-extensions: [.txt]
@@ -62,7 +61,7 @@ rst2odt:
     class: SubprocessFilter
     help: This uses the command line tool rst2odt.
     version-command: 'rst2pdf.py --version'
-    executables: [rst2odt, rst2odt.py]
+    executable: rst2odt.py
     input-extensions: ['.rst', '.txt']
     output-extensions: ['.odt']
 
@@ -112,7 +111,6 @@ pdfcrop:
 calibre|ebook:
     class: SubprocessFilter
     output: True
-    add-new-files: False
     executable: ebook-convert
     command-string: '%(prog)s "%(script_file)s" "%(output_file)s" %(args)s'
     version-command: ebook-convert --version
@@ -159,7 +157,6 @@ calibre|ebook:
 pandoc:
     class: SubprocessFilter
     output: True
-    add-new-files: False
     executable: pandoc
     command-string: '%(prog)s %(args)s "%(script_file)s" -o "%(output_file)s"'
     help: convert documents using pandoc
@@ -319,7 +316,6 @@ rageldot:
 rintbatch:
     class: SubprocessFilter
     help: Runs R files in batch mode, returning an R console transcript.
-    add-new-files: True
     executable: R CMD BATCH --quiet --no-timing
     version-command : R --version
     input-extensions : ['.txt', '.r', '.R']
@@ -328,7 +324,6 @@ rintbatch:
 rout|routbatch:
     class: SubprocessFilter
     help: Runs R files in batch mode, returning just the output.
-    add-new-files: True
     executable: 'R CMD BATCH --vanilla --quiet --slave --no-timing'
     version-command: R --version
     input-extensions: ['.R', '.r', '.txt']
@@ -339,11 +334,11 @@ htlatex:
     help: Generates HTML from Latex source using htlatex
     input-extensions: [.tex, .txt]
     output-extensions: [.html]
-    executables: ['htlatex']
+    executable: htlatex
     add-new-files: [".html", ".png", ".css"]
     latexargs: ["Arguments to be passed to the latex command.", '']
     tex4htargs: ["Arguments to be passed to tex4ht", '']
-    t4htargs: [Arguments to be passed to t4ht, '']
+    t4htargs: ["Arguments to be passed to t4ht", '']
     command-string: '%(prog)s %(script_file)s "%(args)s" "%(tex4htargs)s" "%(t4htargs)s" "%(latexargs)s"'
 
 strings:
@@ -424,7 +419,7 @@ lua:
 wiki2beamer:
     class: SubprocessStdoutFilter
     help: Converts wiki content to beamer.
-    executables: ['wiki2beamer']
+    executable: wiki2beamer
     input-extensions: [".wiki", ".txt"]
     output-extensions: [".tex"]
     version-command: "wiki2beamer --version"
@@ -432,7 +427,7 @@ wiki2beamer:
 escript:
     class: SubprocessStdoutFilter
     help: Runs Erlang scripts using the escript command.
-    executable: 'escript'
+    executable: escript
     input-extensions: [".erl"]
     output-extensions: [".txt"]
 
@@ -540,7 +535,6 @@ kshint:
 pycon|pyrepl:
     class: PexpectReplFilter
     help: Runs python code in python's REPL.
-    add-new-files: True
     check-return-code: False
     executable: 'python'
     input-extensions: [".txt", ".py"]
@@ -578,7 +572,6 @@ shint|bashint:
 r|rint:
     class: PexpectReplFilter
     help: Runs R in REPL.
-    add-new-files: True
     check-return-code: False
     executable: "R --quiet --vanilla"
     input-extensions: ['.txt', '.R', '.r']
@@ -602,7 +595,6 @@ r|rint:
 phantomjs:
     class: SubprocessStdoutFilter
     help: Runs scripts using phantom js.
-    add-new-files: True
     executable: phantomjs
     input-extensions: ['.js', '.txt']
     output-extensions: ['.txt']
@@ -617,8 +609,7 @@ latexdvi|dvilatex:
 rst2html:
     class: SubprocessFilter
     help: Convert rst to HTML
-    add-new-files: False
-    executables: ['rst2html', 'rst2html.py']
+    executable: rst2html.py
     version-command: rst2html.py --version
     input-extensions: [.rst, .txt]
     output-extensions: [.html]
@@ -626,8 +617,7 @@ rst2html:
 rst2latex:
     class: SubprocessFilter
     help: This uses the command line tool rst2latex.
-    add-new-files: False
-    executables: ['rst2latex', 'rst2latex.py']
+    executable: rst2latex.py
     input-extensions: [".rst", ".txt"]
     output-extensions: [".tex"]
     version-command: 'rst2latex.py --version'
@@ -635,8 +625,7 @@ rst2latex:
 rst2xml:
     class: SubprocessFilter
     help: This uses the command line tool rst2xml.
-    add-new-files: False
-    executables: ['rst2xml', 'rst2xml.py']
+    executable: rst2xml.py
     version-command: 'rst2xml.py --version'
     input-extensions: [".rst", ".txt"]
     output-extensions: [".tex"]
@@ -644,8 +633,7 @@ rst2xml:
 rst2beamer:
     class: SubprocessFilter
     help: Filter for rst2beamer command line tool, requires docutils plus rst2beamer package.
-    add-new-files: false
-    executables: ['rst2beamer', 'rst2beamer.py']
+    executable: rst2beamer.py
     input-extensions: [".rst", ".txt"]
     output-extensions: [".tex"]
     version-command: "rst2beamer --version"
@@ -653,8 +641,7 @@ rst2beamer:
 rst2man:
     class: SubprocessFilter
     help: Filter for rst2man command line tool, requires docutils.
-    add-new-files: false
-    executables: ['rst2man', 'rst2man.py']
+    executable: rst2man.py
     input-extensions: [".rst", ".txt"]
     output-extensions: [".man"]
     version-command: "rst2man.py --version"
@@ -662,7 +649,6 @@ rst2man:
 casperjs:
     class: SubprocessStdoutFilter
     help: Runs scripts using casper js. Saves cookies.
-    add-new-files: True
     input-extensions: [.js, .txt]
     output-extensions: [.txt]
     executable: casperjs

@@ -32,7 +32,7 @@ def test_except_patterndoc():
         with open("exceptme.abc", "w") as f:
             f.write("hello")
 
-        parser = YamlFileParser(wrapper)
+        parser = YamlFileParser(wrapper=wrapper)
         parser.parse(""".abc:\n  - except : 'exceptme.abc' """)
         wrapper.batch.run()
 
@@ -95,6 +95,7 @@ def test_single_file_doc():
         with open("hello.txt", "w") as f:
             f.write("hello")
 
+        wrapper.walk()
         parser = YamlFileParser(wrapper)
         parser.parse("hello.txt")
 

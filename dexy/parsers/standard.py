@@ -2,7 +2,6 @@ from dexy.parser import Parser
 from dexy.utils import parse_json
 from dexy.utils import parse_yaml
 import dexy.exceptions
-import os
 import re
 
 class YamlFileParser(Parser):
@@ -19,7 +18,7 @@ class YamlFileParser(Parser):
                     continue
 
                 original_file = original_task_key.split("|")[0]
-                if not os.path.exists(self.join_dir(directory, original_file)) and not "*" in original_task_key and not "." in original_task_key and not "|" in original_task_key:
+                if not self.file_exists(self.join_dir(directory, original_file)) and not "*" in original_task_key and not "." in original_task_key and not "|" in original_task_key:
                     self.wrapper.log.debug("treating %s as a bundle name, not prepending directory %s" % (original_task_key, directory))
                     task_key = original_task_key
                 else:

@@ -1,8 +1,26 @@
 from dexy.commands.utils import D
-from dexy.commands.utils import handle_user_feedback_exception
 from dexy.commands.utils import init_wrapper
 from dexy.commands.utils import log_and_print_exception
 import dexy.exceptions
+import os
+import subprocess
+import sys
+
+def handle_user_feedback_exception(wrapper, e):
+    if hasattr(wrapper, 'log'):
+        wrapper.log.error("A problem has occurred with one of your documents:")
+        wrapper.log.error(e.message)
+    wrapper.cleanup_partial_run()
+    sys.stderr.write("Oops, there's a problem processing one of your documents. Here is the error message:" + os.linesep)
+    sys.stderr.write(e.message)
+    if not e.message.endswith(os.linesep) or e.message.endswith("\n"):
+        sys.stderr.write(os.linesep)
+
+def handle_keyboard_interrupt():
+    sys.stderr.write("""
+    ok, stopping your dexy run
+    you might want to 'dexy reset' before running again\n""")
+    sys.exit(1)
 
 def run_dexy_in_profiler(wrapper, profile):
     if isinstance(profile, bool):
@@ -17,6 +35,35 @@ def run_dexy_in_profiler(wrapper, profile):
     stat = pstats.Stats(profile_filename)
     stat.sort_stats("cumulative")
     stat.print_stats(25)
+
+def run_dexy_in_strace(wrapper, strace):
+    if isinstance(strace, bool):
+        strace_filename = 'dexy.strace'
+    else:
+        strace_filename = strace
+
+    def run_command(command):
+        proc = subprocess.Popen(
+                   command,
+                   shell=True,
+                   stdout=subprocess.PIPE,
+                   stderr=subprocess.PIPE
+                   )
+        stdout, stderr = proc.communicate()
+        print stdout
+
+    commands = ( 
+            "strace dexy --reports \"\" 2> %s" % strace_filename, # TODO pass command line args except for --strace option
+            "echo \"calls to stat:\" ; grep \"^stat(\" %s | wc -l" % strace_filename,
+            "echo \"calls to read:\" ; grep \"^read(\" %s | wc -l" % strace_filename,
+            "echo \"calls to write:\" ; grep \"^write(\" %s | wc -l" % strace_filename,
+            "grep \"^stat(\" %s | sort | uniq -c | sort -r -n > strace-stats.txt" % strace_filename,
+            "grep \"^read(\" %s | sort | uniq -c | sort -r -n > strace-reads.txt" % strace_filename,
+            "grep \"^write(\" %s | sort | uniq -c | sort -r -n > strace-writes.txt" % strace_filename,
+        )
+
+    for command in commands:
+        run_command(command)
 
 def dexy_command(
         __cli_options=False,
@@ -49,8 +96,10 @@ def dexy_command(
         reset=False, # whether to clear cache before running dexy
         siblings=D['siblings'], # whether siblings should have prior siblings as inputs (slows dexy down on large projects, siblings should run in order regardless)
         silent=D['silent'], # Whether to not print any output when running dexy
+        strace=D['strace'], # Run dexy using strace (VERY slow)
         uselocals=D['uselocals'], # use cached local copies of remote URLs, faster but might not be up to date, 304 from server will override this setting
         target=D['target'], # Which target to run. By default all targets are run, this allows you to run only 1 bundle (and its dependencies).
+        timing=D['timing'], # Whether to record timing information for each artifact (time.now calls os.stat, may cause performance problems for large projects)
         version=False # For people who type -version out of habit
     ):
     """
@@ -69,19 +118,30 @@ def dexy_command(
     # Don't trap errors yet because error handling uses wrapper instance.
     wrapper = init_wrapper(locals())
 
+    run_reports = True
+
     try:
         if profile:
             run_dexy_in_profiler(wrapper, profile)
+        elif strace:
+            run_dexy_in_strace(wrapper, strace)
+            run_reports = False
         else:
             wrapper.run()
-
-        wrapper.report()
-        print "finished in %0.4f" % wrapper.batch.elapsed()
+            print "finished in %0.4f" % wrapper.batch.elapsed()
 
     except dexy.exceptions.UserFeedback as e:
         handle_user_feedback_exception(wrapper, e)
+        if hasattr(wrapper, 'batch'):
+            wrapper.batch.state = 'failed'
+    except KeyboardInterrupt:
+        handle_keyboard_interrupt()
     except Exception as e:
         log_and_print_exception(wrapper, e)
+        raise e
+
+    if run_reports and hasattr(wrapper, 'batch'):
+        wrapper.report()
 
 def it_command(**kwargs):
     # so you can type 'dexy it' if you want to

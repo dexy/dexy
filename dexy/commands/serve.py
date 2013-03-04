@@ -4,6 +4,7 @@ import dexy.reporter
 import socket
 import os
 import sys
+from dexy.utils import file_exists
 
 NO_OUTPUT_MSG = """Please run dexy first, or specify a directory to serve. \
 For help run 'dexy help -on serve'"""
@@ -23,7 +24,7 @@ def serve_command(
     if not directory:
         for alias in reporters:
             reporter = dexy.reporter.Reporter.create_instance(alias)
-            if os.path.exists(reporter.setting('dir')):
+            if file_exists(reporter.setting('dir')):
                 directory = reporter.setting('dir')
 
     if not directory:

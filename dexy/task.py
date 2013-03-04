@@ -141,12 +141,12 @@ class Task(dexy.plugin.Plugin):
     def set_log(self):
         if not hasattr(self, 'log'):
             self.log = logging.getLogger(self.key_for_log())
+            self.log.setLevel(self.wrapper.logging_log_level())
             self.logstream = StringIO.StringIO()
             handler = logging.StreamHandler(self.logstream)
             if hasattr(self, 'wrapper'):
                 handler.setFormatter(logging.Formatter(self.wrapper.log_format))
             self.log.addHandler(handler)
-            self.log.setLevel(logging.DEBUG)
 
             try:
                 self.log.addHandler(logging.getLogger('dexy').handlers[0])

@@ -36,13 +36,9 @@ def test_walk_working_dir():
             if doc.key_with_class() == "Doc:example.sh-sh.txt-files":
                 assert doc.output().as_sectioned()['newfile.txt'] == "hello" + os.linesep
 
-
 def test_not_present_executable():
-    try:
-        dexy.filter.Filter.create_instance('notreal')
-        assert False, "should raise InactiveFilter"
-    except dexy.exceptions.InactiveFilter:
-        assert True
+    # TODO modify test so we try to run this
+    dexy.filter.Filter.create_instance('notreal')
 
 class NotPresentExecutable(SubprocessFilter):
     """

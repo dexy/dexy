@@ -1,5 +1,6 @@
 from dexy.filters.process import SubprocessFilter
 import os
+from dexy.utils import file_exists
 
 class CasperJsSvg2PdfFilter(SubprocessFilter):
     """
@@ -37,8 +38,9 @@ class CasperJsSvg2PdfFilter(SubprocessFilter):
         """ % args
 
     def setup_wd(self):
-        wd = self.artifact.working_dir()
-        if not os.path.exists(wd):
+        wd = self.artifact.full_wd()
+        if not file_exists(wd):
+            self._wd_files_start = set()
             for doc, filename in self.artifact.setup_wd(self.input_filename()):
                 self.write_to_wd(wd, doc, filename)
 
@@ -46,7 +48,7 @@ class CasperJsSvg2PdfFilter(SubprocessFilter):
         height = self.setting('height')
         js = self.script_js(width, height)
 
-        wd = os.path.join(self.artifact.tmp_dir(), self.input().parent_dir())
+        wd = self.artifact.full_wd()
         scriptfile = os.path.join(wd, "script.js")
         self.log.debug("scriptfile: %s" % scriptfile)
         with open(scriptfile, "w") as f:
@@ -72,8 +74,9 @@ class PhantomJsRenderSubprocessFilter(SubprocessFilter):
             }
 
     def setup_wd(self):
-        wd = self.artifact.working_dir()
-        if not os.path.exists(wd):
+        wd = self.artifact.full_wd()
+        if not file_exists(wd):
+            self._wd_files_start = set()
             for doc, filename in self.artifact.setup_wd(self.input_filename()):
                 self.write_to_wd(wd, doc, filename)
 

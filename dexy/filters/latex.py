@@ -1,4 +1,5 @@
 from dexy.filters.process import SubprocessFilter
+from dexy.utils import file_exists
 import codecs
 import dexy.exceptions
 import dexy.utils
@@ -23,9 +24,7 @@ class LatexFilter(SubprocessFilter):
 
         latex_command = self.command_string()
 
-        bibtex_command = None
-        if dexy.utils.command_exists("bibtex"):
-            bibtex_command = "bibtex %s" % os.path.splitext(self.output().basename())[0]
+        bibtex_command = "bibtex %s" % os.path.splitext(self.output().basename())[0]
 
         def run_cmd(command):
             self.log.info("running %s in %s" % (command, wd))
@@ -46,7 +45,7 @@ class LatexFilter(SubprocessFilter):
         run_cmd(latex_command) # second run - fix references
         run_cmd(latex_command) # third run - just to be sure
 
-        if not os.path.exists(os.path.join(wd, self.output().basename())):
+        if not file_exists(os.path.join(wd, self.output().basename())):
             msg = "Latex file not generated. Look for information in latex log in %s directory." % os.path.abspath(wd)
             raise dexy.exceptions.UserFeedback(msg)
 
@@ -82,7 +81,7 @@ class TikzPgfFilter(LatexFilter):
             f.write(self.input().as_text())
             f.write(latex_footer)
 
-        latex_command = "%s -interaction=batchmode %s" % (self.executable(), latex_filename)
+        latex_command = "%s -interaction=batchmode %s" % (self.setting('executable'), latex_filename)
 
         def run_cmd(command):
             self.log.info("about to run %s in %s" % (command, wd))

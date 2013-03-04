@@ -35,7 +35,7 @@ class PexpectReplFilter(SubprocessFilter):
             }
 
     def is_active(klass):
-        return AVAILABLE and klass.executable() and klass.required_executables_present()
+        return AVAILABLE
 
     def prompt_search_terms(self):
         """
@@ -89,7 +89,8 @@ class PexpectReplFilter(SubprocessFilter):
             self.log.debug("Adding save-vars-to-json-cmd code:\n%s" % section_text)
             input_dict['dexy--save-vars'] = section_text
             if not self.setting('add-new-files'):
-                self._settings['add-new-files'] = (".json")
+                docstr = self._settings['add-new-files'][0]
+                self._settings['add-new-files'] = (docstr, ".json")
 
         search_terms = self.prompt_search_terms()
 
@@ -121,11 +122,12 @@ class PexpectReplFilter(SubprocessFilter):
         self.log.debug("timeout set to '%s'" % timeout)
 
         wd=self.setup_wd()
-        self.log.debug("About to spawn new process '%s' in %s." % (self.executable(), wd))
+        executable = self.setting('executable')
+        self.log.debug("About to spawn new process '%s' in %s." % (executable, wd))
 
         # Spawn the process
         proc = pexpect.spawn(
-                self.executable(),
+                executable,
                 cwd=wd,
                 env=env)
 
@@ -205,7 +207,7 @@ class PexpectReplFilter(SubprocessFilter):
             raise UserFeedback("process %s may not have closed" % proc.pid)
 
         if proc.exitstatus and self.setting('check-return-code'):
-            self.handle_subprocess_proc_return(self.executable(), proc.exitstatus, section_transcript)
+            self.handle_subprocess_proc_return(self.setting('executable'), proc.exitstatus, section_transcript)
 
     def process(self):
         output = OrderedDict()
@@ -238,7 +240,7 @@ class IpythonPexpectReplFilter(PexpectReplFilter):
             }
 
     def is_active(klass):
-        return klass.executable() and IPYTHON_AVAILABLE
+        return IPYTHON_AVAILABLE
 
 class ClojureInteractiveFilter(PexpectReplFilter):
     """
@@ -247,7 +249,7 @@ class ClojureInteractiveFilter(PexpectReplFilter):
     ALIASES = ['clj', 'cljint']
     _SETTINGS = {
             'check-return-code' : False,
-            'executables' : ['clojure -r', 'clj -r'],
+            'executable' : 'clojure -r',
             'input-extensions' : [".clj", ".txt"],
             'output-extensions' : [".txt"],
             'prompt' : "user=> "

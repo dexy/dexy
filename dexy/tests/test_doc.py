@@ -37,6 +37,8 @@ def test_doc_setup():
         with open("abc.txt", "w") as f:
             f.write("def")
 
+        wrapper.walk()
+
         doc = Doc("abc.txt|dexy|dexy", wrapper=wrapper)
 
         doc.populate()

@@ -147,21 +147,18 @@ class Filter(dexy.plugin.Plugin):
         return self.artifact.doc.final_artifact.ext
 
     def setup_wd(self, populate=True):
-        wd = self.artifact.working_dir()
-        wd_exists = os.path.exists(wd)
-        self.log.debug("setting up wd for %s. exists already: %s" % (self.artifact.key, wd))
-        written_already = set()
-        if not wd_exists:
-            for doc, filename in self.artifact.setup_wd(self.input_filename()):
-                wa = filename in written_already
-                self.write_to_wd(wd, doc, filename, wa)
-                written_already.add(filename)
-
+        wd = self.artifact.full_wd()
+        if not self.artifact._wd_setup:
+            self._wd_files_start = set()
+            input_filename = self.input_filename()
+            for doc, filename in self.artifact.setup_wd(input_filename):
+                self.write_to_wd(wd, doc, filename)
         return wd
 
-    def write_to_wd(self, wd, doc, filename, wa=False):
+    def write_to_wd(self, wd, doc, filename):
         try:
             doc.output().output_to_file(filename)
+            self._wd_files_start.add(filename)
         except Exception as e:
             args = (e.__class__.__name__, wd, self.artifact.key, doc.key, filename)
             self.log.debug("%s error occurred whlie trying to populate working directory %s for %s with %s (%s)" % args)

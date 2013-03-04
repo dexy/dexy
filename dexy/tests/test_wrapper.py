@@ -36,6 +36,7 @@ def test_config_for_directory():
         with open(os.path.join('s1', 'docs.yaml'), 'w') as f:
             f.write(""".def|dexy""")
 
+        wrapper.walk()
         wrapper.setup_config()
         wrapper.run()
 
@@ -107,6 +108,7 @@ def test_double_config_raises_error():
         with open("dexy.yaml", "w") as f:
             f.write("hello.txt")
 
+        wrapper.walk()
         wrapper.load_doc_config()
 
 def test_no_config_raises_error():

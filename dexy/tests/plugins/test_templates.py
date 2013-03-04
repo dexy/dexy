@@ -3,5 +3,5 @@ from dexy_filter_examples import Cowsay
 
 def test_cowsay():
     with tempdir():
-        for batch in Cowsay.dexy():
+        for batch in Cowsay().dexy():
             print batch

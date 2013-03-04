@@ -3,6 +3,7 @@ from dexy.filters.templating_plugins import TemplatePlugin
 from dexy.reporters.output import OutputReporter
 from dexy.utils import iter_paths
 from dexy.utils import reverse_iter_paths
+from dexy.utils import file_exists
 from jinja2 import Environment
 from jinja2 import FileSystemLoader
 import dexy.exceptions
@@ -139,7 +140,7 @@ class WebsiteReporter(OutputReporter):
         template_path = None
         for subpath in reverse_iter_paths(doc.output().name):
             template_path = os.path.join(subpath, template_file)
-            if os.path.exists(template_path):
+            if file_exists(template_path):
                 break
 
         if not template_path:
@@ -196,8 +197,10 @@ class WebsiteReporter(OutputReporter):
         fp = os.path.join(self.setting('dir'), doc.output().name).replace(".json", ".html")
 
         parent_dir = os.path.dirname(fp)
-        if not os.path.exists(parent_dir):
+        try:
             os.makedirs(os.path.dirname(fp))
+        except os.error:
+            pass
 
         self.log.debug("  writing to %s" % (fp))
         template.stream(env_data).dump(fp, encoding="utf-8")

@@ -18,7 +18,7 @@ class JythonFilter(SubprocessStdoutFilter):
 
     def is_active(klass):
         if platform.system() in ('Linux', 'Windows'):
-            return klass.executable() and True or False
+            return True
         elif platform.system() in ('Darwin'):
             if hasattr(klass, 'log'):
                 klass.log.warn("The jython dexy filter should not be run on MacOS due to a serious bug. This filter is being disabled.")
@@ -26,7 +26,7 @@ class JythonFilter(SubprocessStdoutFilter):
         else:
             if hasattr(klass, 'log'):
                 klass.log.warn("""Can't detect your system. If you see this message please report this to the dexy project maintainer, your platform.system() value is '%s'. The jython dexy filter should not be run on MacOS due to a serious bug.""" % platform.system())
-            return klass.executable() and True or False
+            return True
 
 class JythonInteractiveFilter(PexpectReplFilter):
     """
@@ -44,13 +44,13 @@ class JythonInteractiveFilter(PexpectReplFilter):
 
     def is_active(klass):
         if platform.system() in ('Linux', 'Windows'):
-            return klass.executable() and True or False
+            return True
         elif platform.system() in ('Darwin'):
             print "The jythoni dexy filter should not be run on MacOS due to a serious bug. This filter is being disabled."
             return False
         else:
             print """Can't detect your system. If you see this message please report this to the dexy project maintainer, your platform.system() value is '%s'. The jythoni dexy filter should not be run on MacOS due to a serious bug.""" % platform.system()
-            return klass.executable() and True or False
+            return True
 
 class JavaFilter(SubprocessCompileFilter):
     """
@@ -81,7 +81,7 @@ class JavaFilter(SubprocessCompileFilter):
 
         classpath_elements = []
 
-        working_dir = os.path.join(self.artifact.tmp_dir(), self.output().parent_dir())
+        working_dir = os.path.join(self.artifact.wd(), self.output().parent_dir())
         abs_working_dir = os.path.abspath(working_dir)
         self.log.debug("Adding working dir %s to classpath" % abs_working_dir)
         classpath_elements.append(abs_working_dir)

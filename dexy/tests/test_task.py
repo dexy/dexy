@@ -33,13 +33,14 @@ def test_invalid_transition():
     task.transition('complete')
 
 def test_set_log():
-    task = dexy.task.Task("key")
-    assert not hasattr(task, 'log')
-    task.set_log()
-    assert hasattr(task, 'log')
-    assert hasattr(task, 'logstream')
-    task.log.debug("please write me to log")
-    assert "please write me to log" in task.logstream.getvalue()
+    with wrap() as wrapper:
+        task = dexy.task.Task("key", wrapper=wrapper)
+        assert not hasattr(task, 'log')
+        task.set_log()
+        assert hasattr(task, 'log')
+        assert hasattr(task, 'logstream')
+        task.log.warn("please write me to log")
+        assert "please write me to log" in task.logstream.getvalue()
 
 def test_circular():
     with wrap() as wrapper:

@@ -156,7 +156,7 @@ class JinjaFilter(TemplateFilter):
     def process(self):
         wd = self.setup_wd()
         macro_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'macros'))
-        dirs = ['.', wd, self.artifact.tmp_dir(), macro_dir] + self.setting('jinja-path')
+        dirs = ['.', wd, self.artifact.full_wd(), macro_dir] + self.setting('jinja-path')
         self.log.debug("setting up jinja FileSystemLoader with dirs %s" % ", ".join(dirs))
         loader = FileSystemLoader(dirs)
 
@@ -182,15 +182,19 @@ class JinjaFilter(TemplateFilter):
             self.log.debug("about to process jinja template")
             template.stream(template_data).dump(self.output_filepath(), encoding="utf-8")
         except (TemplateSyntaxError, UndefinedError, TypeError) as e:
-            if os.path.exists(self.output_filepath()):
+            try:
                 self.log.debug("removing %s since jinja had an error" % self.output_filepath())
                 os.remove(self.output_filepath())
+            except os.error:
+                pass
             self.handle_jinja_exception(e, self.input().as_text(), template_data)
         except TemplateNotFound as e:
             raise dexy.exceptions.UserFeedback("Jinja couldn't find the template '%s', make sure this file is an input to %s" % (e.message, self.artifact.doc.key))
         except Exception as e:
-            if os.path.exists(self.output_filepath()):
+            try:
                 self.log.debug("removing %s since jinja had an error" % self.output_filepath())
                 os.remove(self.output_filepath())
+            except os.error:
+                pass
             self.log.debug(str(e))
             raise

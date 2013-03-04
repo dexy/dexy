@@ -6,6 +6,7 @@ import json
 import os
 import platform
 import subprocess
+from dexy.utils import file_exists
 
 class SubprocessFilter(Filter):
     """
@@ -25,47 +26,13 @@ class SubprocessFilter(Filter):
             'command-string' : ("The full command string.",
                 """%(prog)s %(args)s "%(script_file)s" %(scriptargs)s "%(output_file)s" """),
             'executable' : ('The executable to be run', None),
-            'executables' : ('The executables to be run', None),
             'initial-timeout' : ('', 10),
             'scriptargs' : ("Arguments to be passed to the executable.", ''),
             'timeout' : ('', 10),
             'version-command': ( "Command to call to return version of installed software.", None),
             'windows-version-command': ( "Command to call on windows to return version of installed software.", None),
             'walk-working-dir' : ("Automatically register extra files that are found in working dir.", False),
-            'required-executables' : ("Other executables that must be present on system.", [])
             }
-
-    def executables(self):
-        if platform.system() == 'Windows' and self._settings.has_key('windows-executable'):
-            return [self.setting('windows-executable')]
-        else:
-            if self.setting('executable'):
-                executable = self.setting('executable')
-                if not isinstance(executable, basestring):
-                    msg = "Executable for %s must be a string, not a %s. '%s'"
-                    args = (self.__class__.__name__, executable.__class__.__name__, executable)
-                    raise dexy.exceptions.InternalDexyProblem(msg%args)
-                return [executable]
-            elif self.setting('executables'):
-                return self.setting('executables')
-            else:
-                return []
-
-    def executable(self):
-        """
-        Returns the executable to use, or None if no executable found on the system.
-        """
-        for exe in self.executables():
-            if exe:
-                cmd = exe.split()[0] # remove any --arguments
-                if dexy.utils.command_exists(cmd):
-                    return exe
-
-    def required_executables_present(self):
-        return all(dexy.utils.command_exists(exe) for exe in self.setting('required-executables'))
-
-    def is_active(klass):
-        return klass.executable() and klass.required_executables_present()
 
     def version_command(klass):
         if platform.system() == 'Windows':
@@ -96,7 +63,7 @@ class SubprocessFilter(Filter):
         self.copy_canonical_file()
 
         if self.do_add_new_files():
-            self.log.debug("adding new files found in %s for %s" % (self.artifact.tmp_dir(), self.artifact.key))
+            self.log.debug("adding new files found in %s for %s" % (self.artifact.wd(), self.artifact.key))
             self.add_new_files()
 
     def command_string_args(self):
@@ -105,7 +72,7 @@ class SubprocessFilter(Filter):
     def default_command_string_args(self):
         args = {
                 'args' : " ".join([self.setting('args'), self.setting('clargs')]),
-                'prog' : self.executable(),
+                'prog' : self.setting('executable'),
                 'script_file' : self.input_filename(),
                 'output_file' : self.output_filename()
                 }
@@ -162,18 +129,21 @@ class SubprocessFilter(Filter):
         return env
 
     def add_new_files(self):
-        wd = self.artifact.tmp_dir()
+        """
+        Walk working directory and add a new dexy document for every newly
+        created file found.
+        """
+        print "running add_new_files for", self.artifact.key_with_class()
+        wd = self.artifact.wd()
 
-        do_add_new = self.do_add_new_files()
+        do_add_new = self.setting('add-new-files')
 
         for dirpath, dirnames, filenames in os.walk(wd):
             for filename in filenames:
-                filepath = os.path.join(dirpath, filename)
-                filesize = os.path.getsize(filepath)
+                filepath = os.path.normpath(os.path.join(dirpath, filename))
                 relpath = os.path.relpath(filepath, wd)
 
-                already_have_file = (relpath in self.artifact.wrapper.batch.doc_names())
-                empty_file = (filesize == 0)
+                already_have_file = (relpath in self._wd_files_start)
 
                 if isinstance(do_add_new, list):
                     is_valid_file_extension = False
@@ -204,15 +174,17 @@ class SubprocessFilter(Filter):
                 else:
                     raise dexy.exceptions.InternalDexyProblem("type is %s value is %s" % (do_add_new.__class__, do_add_new))
 
-                if (not already_have_file) and is_valid_file_extension and (not empty_file):
+                if (not already_have_file) and is_valid_file_extension:
                     with open(filepath, 'rb') as f:
                         contents = f.read()
                     self.add_doc(relpath, contents)
 
-    def do_walk_working_directory(self):
-        return self.setting('walk-working-dir')
-
     def walk_working_directory(self, doc=None, section_name=None):
+        """
+        Walk working directory and read contents of multiple files into a
+        single new document.
+        """
+        print "running walk_working_dir for", self.artifact.key_with_class()
         if not doc:
             if section_name:
                 doc_key = "%s-%s-files" % (self.output().long_name(), section_name)
@@ -221,7 +193,8 @@ class SubprocessFilter(Filter):
 
             doc = self.add_doc(doc_key, {})
 
-        wd = self.artifact.tmp_dir()
+        wd = self.artifact.wd()
+
         for dirpath, dirnames, filenames in os.walk(wd):
             for filename in filenames:
                 filepath = os.path.join(dirpath, filename)
@@ -270,8 +243,8 @@ class SubprocessFilter(Filter):
         return (proc, stdout)
 
     def copy_canonical_file(self):
-        canonical_file = os.path.join(self.artifact.tmp_dir(), self.output().name)
-        if not self.output().is_cached() and os.path.exists(canonical_file):
+        canonical_file = os.path.join(self.artifact.wd(), self.output().name)
+        if not self.output().is_cached() and file_exists(canonical_file):
             self.output().copy_from_file(canonical_file)
 
 class SubprocessStdoutFilter(SubprocessFilter):
@@ -290,11 +263,11 @@ class SubprocessStdoutFilter(SubprocessFilter):
         self.handle_subprocess_proc_return(command, proc.returncode, stdout)
         self.output().set_data(stdout)
 
-        if self.do_walk_working_directory():
+        if self.setting('walk-working-dir'):
             self.walk_working_directory()
 
         if self.do_add_new_files():
-            self.log.debug("adding new files found in %s for %s" % (self.artifact.tmp_dir(), self.artifact.key))
+            self.log.debug("adding new files found in %s for %s" % (self.artifact.wd(), self.artifact.key))
             self.add_new_files()
 
 class SubprocessCompileFilter(SubprocessFilter):
@@ -302,7 +275,7 @@ class SubprocessCompileFilter(SubprocessFilter):
     Base class for filters which need to compile code, then run the compiled executable.
     """
     _SETTINGS = {
-            'add-new-files' : True,
+            'add-new-files' : False,
             'check-return-code' : False,
             'compiled-extension' : ("Extension which compiled files end with.", ".o"),
             'compiler-command-string' : (
@@ -349,7 +322,7 @@ class SubprocessCompileFilter(SubprocessFilter):
         self.output().set_data(stdout)
 
         if self.do_add_new_files():
-            self.log.debug("adding new files found in %s for %s" % (self.artifact.tmp_dir(), self.artifact.key))
+            self.log.debug("adding new files found in %s for %s" % (self.artifact.wd(), self.artifact.key))
             self.add_new_files()
 
 class SubprocessInputFilter(SubprocessFilter):

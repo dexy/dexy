@@ -11,11 +11,9 @@ class Template(dexy.plugin.Plugin):
     __metaclass__ = dexy.plugin.PluginMeta
     _SETTINGS = {}
 
-    @classmethod
     def is_active(klass):
         return True
 
-    @classmethod
     def template_source_dir(klass):
         template_install_dir = os.path.dirname(sys.modules[klass.__module__].__file__)
 
@@ -27,20 +25,18 @@ class Template(dexy.plugin.Plugin):
 
         return os.path.join(template_install_dir, contents_dirname)
 
-    @classmethod
-    def run(klass, directory, **kwargs):
-        if os.path.exists(directory):
+    def run(self, directory, **kwargs):
+        if dexy.utils.file_exists(directory):
             raise dexy.exceptions.UserFeedback("Directory '%s' already exists, aborting." % directory)
-        source = klass.template_source_dir()
+        source = self.template_source_dir()
         shutil.copytree(source, directory)
 
         dexy_rst = os.path.join(directory, 'dexy.rst')
-        if os.path.exists(dexy_rst):
+        if dexy.utils.file_exists(dexy_rst):
             if not kwargs.get('meta'):
                 os.remove(dexy_rst)
 
-    @classmethod
-    def dexy(klass, meta=True, additional_doc_keys=None):
+    def dexy(self, meta=True, additional_doc_keys=None):
         """
         Run dexy on this template's files in a temporary directory.
 
@@ -56,7 +52,7 @@ class Template(dexy.plugin.Plugin):
 
         with dexy.utils.tempdir():
             # Copy files to directory 'ex'
-            klass.run("ex", meta=meta)
+            self.run("ex", meta=meta)
 
             # Run dexy in directory 'ex'
             os.chdir("ex")
@@ -70,7 +66,7 @@ class Template(dexy.plugin.Plugin):
                 for doc_key in additional_doc_keys:
                     ast.add_task_info(doc_key)
 
-            if meta and os.path.exists('dexy.rst'):
+            if meta and dexy.utils.file_exists('dexy.rst'):
                 for doc_key in DOC_KEYS:
                     ast.add_task_info(doc_key)
                     for task in ast.lookup_table.keys():
@@ -87,7 +83,6 @@ class Template(dexy.plugin.Plugin):
 
             yield(wrapper.batch)
 
-    @classmethod
     def validate(klass):
         """
         Runs dexy and validates filter list.

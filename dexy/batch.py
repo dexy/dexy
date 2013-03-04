@@ -3,6 +3,7 @@ import time
 class Batch(object):
     def __init__(self, wrapper, batch_id=None):
         self.wrapper = wrapper
+        self.end_time = None
 
         if batch_id:
             self.load(batch_id)
@@ -111,7 +112,10 @@ class Batch(object):
         self.end_time = time.time()
 
     def elapsed(self):
-        return self.end_time - self.start_time
+        if self.end_time and self.start_time:
+            return self.end_time - self.start_time
+        else:
+            return 0.0
 
     # Methods for accessing lists of tasks
     def task(self, task_key):

@@ -112,9 +112,7 @@
                         {% endif -%}
                     </td>
                     <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">
-                        {% if a.working_dir_exists() -%}
-                        <a href="../../{{ a.working_dir() }}">wd</a>
-                        {% endif -%}
+                        <a href="../../{{ a.wd() }}">wd</a>
                     </td>
                 </tr>
                 {% endfor -%}

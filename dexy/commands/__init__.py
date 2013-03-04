@@ -81,9 +81,7 @@ def parse_and_run_cmd(argv, module, default_command):
         sys.stderr.write(os.linesep)
         sys.exit(1)
     except KeyboardInterrupt:
-        sys.stderr.write("""
-        ok, stopping your dexy run
-        you might want to 'dexy reset' before running again\n""")
+        sys.stderr.write("stopping...")
         sys.exit(1)
 
 def run():

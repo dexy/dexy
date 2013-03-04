@@ -2,9 +2,8 @@ import dexy.artifact
 import dexy.exceptions
 import dexy.filter
 import dexy.task
-import os
-import posixpath
 import inflection
+import posixpath
 
 class Doc(dexy.task.Task):
     """
@@ -95,7 +94,7 @@ class Doc(dexy.task.Task):
         self.final_artifact = artifact
 
     def setup_initial_artifact(self):
-        if os.path.exists(self.name):
+        if self.name in self.wrapper.filemap:
             initial = dexy.artifact.InitialArtifact(self.name, wrapper=self.wrapper)
         else:
             initial = dexy.artifact.InitialVirtualArtifact(self.name, wrapper=self.wrapper)

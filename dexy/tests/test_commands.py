@@ -56,12 +56,7 @@ def test_run_with_userfeedback_exception(stderr):
         with open("hello.py", "w") as f:
             f.write("raise")
 
-        try:
-            dexy.commands.run()
-            assert False, 'should raise SystemExit'
-        except SystemExit as e:
-            assert e.message == 1
-            assert "Dexy is stopping" in stderr.getvalue()
+        dexy.commands.run()
 
 @patch.object(sys, 'argv', ['dexy', 'invalid'])
 @patch('sys.stdout', new_callable=StringIO)

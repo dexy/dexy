@@ -12,8 +12,7 @@ foo:
 
 def test_parse_inactive():
     with wrap() as wrapper:
-        parser = YamlFileParser()
-        parser.wrapper = wrapper
+        parser = YamlFileParser(wrapper)
         parser.parse(YAML_WITH_INACTIVE)
 
         wrapper.batch.run()
@@ -78,8 +77,7 @@ def test_yaml_parser():
 
 def test_text_parser_blank_lines():
     with wrap() as wrapper:
-        parser = TextFileParser()
-        parser.wrapper = wrapper
+        parser = TextFileParser(wrapper)
         parser.parse("\n\n")
         docs = wrapper.batch.tree
         assert len(docs) == 0
@@ -133,8 +131,8 @@ def test_text_parser():
         with open("index.md", "w") as f:
             f.write("")
 
-        parser = TextFileParser()
-        parser.wrapper = wrapper
+        wrapper.walk()
+        parser = TextFileParser(wrapper)
         parser.parse("""
         *.py
         *.py|pyg

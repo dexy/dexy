@@ -89,7 +89,7 @@ class RIntBatchSectionsFilter(SubprocessFilter):
             with open(os.path.join(wd, outfile), "rb") as f:
                 result[section_name] = f.read()
 
-        if self.do_walk_working_directory():
+        if self.setting('walk-working-dir'):
             self.walk_working_directory()
 
         if self.do_add_new_files():
@@ -111,7 +111,7 @@ class EmbedFonts(SubprocessFilter):
     def preprocess_command_string(self):
         pf = self.input_filename()
         af = self.output_filename()
-        return "%s -dPDFSETTINGS=/prepress %s %s" % (self.executable(), pf, af)
+        return "%s -dPDFSETTINGS=/prepress %s %s" % (self.setting('executable'), pf, af)
 
     def pdffonts_command_string(self):
         return "%s %s" % ("pdffonts", self.result().name)
@@ -196,7 +196,7 @@ class AbcMultipleFormatsFilter(SubprocessFilter):
             raise dexy.exceptions.InternalDexyProblem("bad ext '%s'" % ext)
 
         args = {
-            'prog' : self.executable(),
+            'prog' : self.setting('executable'),
             'args' : clargs,
             'output_flag' : output_flag,
             'script_file' : self.input_filename(),
@@ -240,7 +240,6 @@ class ManPage(SubprocessStdoutFilter):
 
     _SETTINGS = {
             'executable' : 'man',
-            'required-executables' : ['strings'],
             'version-command' : 'man --version',
             'input-extensions' : [".txt"],
             'output-extensions' : [".json"]
@@ -267,14 +266,14 @@ class ApplySed(SubprocessInputFilter):
     """
     ALIASES = ['used']
     _SETTINGS = {
-            'executables' : ['gsed', 'sed'],
+            'executable' : 'sed',
             'output-data-type' : 'generic',
             }
 
     def process(self):
         for doc in self.artifact.doc.node.walk_input_docs():
             if doc.output().ext == ".sed":
-                command = "%s -f %s" % (self.executable(), doc.output().name)
+                command = "%s -f %s" % (self.setting('executable'), doc.output().name)
 
         if not command:
             raise dexy.exceptions.UserFeedback("A .sed file must be passed as an input to %s" % self.artifact.key)
@@ -292,10 +291,10 @@ class Sed(SubprocessInputFilter):
     """
     ALIASES = ['sed']
     _SETTINGS = {
-            'executables' : ['gsed', 'sed'],
+            'executable' : 'sed',
             'input-extensions' : ['.sed'],
             'output-extensions' : ['.sed', '.txt'],
             }
 
     def command_string(self):
-        return "%s -f %s" % (self.executable(), self.input_filename())
+        return "%s -f %s" % (self.setting('executable'), self.input_filename())

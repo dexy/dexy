@@ -31,6 +31,7 @@ def test_casperjs_stdout_filter():
     with wrap() as wrapper:
         node = DocNode("example.js|casperjs",
                 contents=CASPER_JS,
+                casperjs={"add-new-files" : True },
                 wrapper=wrapper)
 
         wrapper.run_docs(node)

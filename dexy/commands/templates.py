@@ -5,6 +5,7 @@ from dexy.utils import getdoc
 import dexy.template
 import os
 import sys
+from dexy.utils import file_exists
 
 DEFAULT_TEMPLATE = 'dexy:default'
 def gen_command(
@@ -37,7 +38,7 @@ def gen_command(
     wrapper = init_wrapper({})
     wrapper.setup_dexy_dirs()
     print "Success! Your new dexy project has been created in directory '%s'" % d
-    if os.path.exists("README"):
+    if file_exists("README"):
         with open("README", "r") as f:
             print f.read()
         print "\nThis information is in the 'README' file for future reference."

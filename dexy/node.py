@@ -1,7 +1,6 @@
 import dexy.doc
 import dexy.task
 import fnmatch
-import os
 import re
 
 class Node(dexy.task.Task):
@@ -112,11 +111,7 @@ class PatternNode(Node):
         file_pattern = self.key.split("|")[0]
         filter_aliases = self.key.split("|")[1:]
 
-        recurse = self.args.get('recurse', True)
-        for dirpath, filename in self.wrapper.walk(".", recurse):
-            raw_filepath = os.path.join(dirpath, filename)
-            filepath = os.path.normpath(raw_filepath)
-
+        for filepath, fileinfo in self.wrapper.filemap.iteritems():
             if fnmatch.fnmatch(filepath, file_pattern):
                 except_p = self.args.get('except')
                 if except_p and re.search(except_p, filepath):
@@ -134,14 +129,6 @@ class PatternNode(Node):
 
                     doc_args.update(self.args_before_defaults)
                     doc_args['wrapper'] = self.wrapper
-
-                    # TODO implement 'depends'
-                    #if doc_args.has_key('depends'):
-                    #    if doc_args.get('depends'):
-                    #        doc_children = self.wrapper.registered_docs()
-                    #    else:
-                    #        doc_children = []
-                    #    del doc_args['depends']
 
                     self.log.debug("creating child of patterndoc %s: %s" % (self.key, doc_key))
                     self.log.debug("with args %s" % doc_args)

@@ -1,6 +1,7 @@
 import dexy.filter
 import json
 import os
+from dexy.utils import file_exists
 
 class ApiFilter(dexy.filter.DexyFilter):
     """
@@ -54,7 +55,7 @@ class ApiFilter(dexy.filter.DexyFilter):
         Creates a key file.
         """
         key_filename = os.path.expanduser(self.setting(keyfilekey))
-        if os.path.exists(key_filename):
+        if file_exists(key_filename):
             raise dexy.exceptions.UserFeedback("File %s already exists!" % key_filename)
 
         keyfile_content = {}
@@ -74,14 +75,14 @@ class ApiFilter(dexy.filter.DexyFilter):
 
     def document_config_file(self):
         postfix_config_filename = "%s%s" % (os.path.splitext(self.output().name)[0], self.setting('document-api-config-postfix'))
-        if os.path.exists(postfix_config_filename):
+        if file_exists(postfix_config_filename):
             return postfix_config_filename
         else:
             return os.path.join(self.output().parent_dir(), self.setting('document-api-config-file'))
 
     def read_document_config(self):
         document_config = self.document_config_file()
-        if os.path.exists(document_config):
+        if file_exists(document_config):
             with open(document_config, "r") as f:
                 return json.load(f)
         else:
@@ -100,7 +101,7 @@ class ApiFilter(dexy.filter.DexyFilter):
             if "~" in filename:
                 filename = os.path.expanduser(filename)
 
-            if os.path.exists(filename):
+            if file_exists(filename):
                 with open(filename, "r") as f:
                     params = json.load(f)
                     if params.has_key(self.setting('api-key-name')):

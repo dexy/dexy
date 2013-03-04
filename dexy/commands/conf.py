@@ -1,8 +1,8 @@
 from dexy.commands.utils import D
 from dexy.commands.utils import default_config
+from dexy.utils import file_exists
 import dexy.exceptions
 import json
-import os
 import yaml
 
 def conf_command(
@@ -12,7 +12,7 @@ def conf_command(
     """
     Write a config file containing dexy's defaults.
     """
-    if os.path.exists(conf) and not p:
+    if file_exists(conf) and not p:
         print "Config file %s already exists, will print conf to stdout instead..." % conf
         p = True
 

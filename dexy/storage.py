@@ -1,11 +1,10 @@
 from dexy.common import OrderedDict
-import dexy.plugin
+from dexy.utils import file_exists
 import dexy.exceptions
+import dexy.plugin
 import os
 import shutil
 import sqlite3
-
-# Generic Data
 
 class Storage(dexy.plugin.Plugin):
     """
@@ -14,19 +13,18 @@ class Storage(dexy.plugin.Plugin):
     __metaclass__ = dexy.plugin.PluginMeta
     _SETTINGS = {}
 
-    @classmethod
     def is_active(klass):
         return True
 
     def check_location_is_in_project_dir(self, filepath):
-        project_root = os.path.abspath(os.getcwd())
-        if not project_root in os.path.abspath(filepath):
-            raise dexy.exceptions.UserFeedback("trying to write '%s' outside of '%s'" % (filepath, project_root))
+        if not self.wrapper.project_root in os.path.abspath(filepath):
+            raise dexy.exceptions.UserFeedback("trying to write '%s' outside of '%s'" % (filepath, self.wrapper.project_root))
 
     def __init__(self, hashstring, ext, wrapper):
         self.hashstring = hashstring
         self.ext = ext
         self.wrapper = wrapper
+        self._size = None
 
 class GenericStorage(Storage):
     """
@@ -42,11 +40,16 @@ class GenericStorage(Storage):
         return os.path.join(self.wrapper.artifacts_dir, "%s%s" % (self.hashstring, ext))
 
     def data_file_exists(self):
-        return os.path.exists(self.data_file())
+        size = self.data_file_size()
+        return (not size is None)
 
     def data_file_size(self):
-        if self.data_file_exists():
-            return os.path.getsize(self.data_file())
+        if not self._size:
+            try:
+                self._size = os.path.getsize(self.data_file())
+            except os.error:
+                pass
+        return self._size
 
     def write_data(self, data, filepath=None):
         if not filepath:
@@ -68,11 +71,11 @@ class GenericStorage(Storage):
         """
         If data file exists, copy file and return true. Otherwise return false.
         """
-        if self.data_file_exists():
+        try:
             self.check_location_is_in_project_dir(filepath)
             shutil.copyfile(self.data_file(), filepath)
             return True
-        else:
+        except:
             return False
 
 # Sectioned Data
@@ -187,12 +190,14 @@ class Sqlite3Storage(GenericStorage):
         return os.path.join(self.wrapper.artifacts_dir, "%s-tmp%s" % (self.hashstring, self.ext))
 
     def setup(self):
-        if os.path.exists(self.data_file()):
+        if file_exists(self.data_file()):
             self._storage = sqlite3.connect(self.data_file())
             self._cursor = self._storage.cursor()
         else:
-            if os.path.exists(self.working_file()):
+            try:
                 os.remove(self.working_file())
+            except os.error:
+                pass
             self._storage = sqlite3.connect(self.working_file())
             self._cursor = self._storage.cursor()
             self._cursor.execute("CREATE TABLE kvstore (key TEXT, value TEXT)")

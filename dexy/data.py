@@ -153,16 +153,13 @@ class Generic(Data):
         self._data = self.storage.read_data()
 
     def has_data(self):
-        return self._data or self.storage.data_file_exists()
+        return self._data or self.is_cached()
 
     def is_cached(self):
-        if self.storage.data_file_size() == 0:
-            self.wrapper.log.debug("Data file for %s (%s) has size 0" % (self.key, self.storage.data_file()))
         return self.storage.data_file_exists()
 
     def filesize(self):
-        if self.is_cached():
-            return os.path.getsize(self.storage.data_file())
+        return self.storage.data_file_size()
 
     def data(self):
         if not self._data:
@@ -195,8 +192,11 @@ class Generic(Data):
         self._data = None
 
     def clear_cache(self):
-        if os.path.exists(self.storage.data_file()):
+        self._size = None
+        try:
             os.remove(self.storage.data_file())
+        except os.error as e:
+            self.wrapper.log.warn(str(e))
 
     def output_to_file(self, filepath):
         """

@@ -12,6 +12,7 @@ import inspect
 import json
 import os
 import posixpath
+import re
 import shutil
 import stat
 import time
@@ -24,6 +25,8 @@ class Artifact(dexy.task.Task):
         super(Artifact, self).__init__(key, **kwargs)
         self.created_by_doc = None
         self.remaining_doc_filters = []
+        self.elapsed = 0.0
+        self._wd_setup = False
 
     def key_for_log(self):
         if len(self.remaining_doc_filters) > 0:
@@ -33,9 +36,6 @@ class Artifact(dexy.task.Task):
 
     def key_with_class(self):
         return "%s:%s" % (self.__class__.__name__, self.key_for_log())
-
-    def tmp_dir(self):
-        return os.path.join(self.wrapper.artifacts_dir, self.hashstring)
 
     def input_filename(self):
         if self.ext and (self.ext == self.prior.ext):
@@ -63,45 +63,52 @@ class Artifact(dexy.task.Task):
             name_without_ext = posixpath.splitext(self.key)[0]
             return "%s%s" % (name_without_ext, self.ext)
 
-    def working_dir(self):
-        return os.path.join(self.tmp_dir(), self.output_data.parent_dir())
+    def wd(self):
+        return os.path.join(self.wrapper.artifacts_dir, self.hashstring)
 
-    def working_dir_exists(self):
-        return os.path.exists(self.working_dir()) and os.path.isdir(self.working_dir())
+    def full_wd(self):
+        return os.path.join(self.wd(), os.path.dirname(self.key))
 
     def setup_wd(self, input_filename):
-        tmp_dir = self.tmp_dir()
+        """
+        Sets up a working directory for this artifact. Removes any working
+        directory that already exists. Yields input docs so behaviour can be
+        customized per-filter.
+        """
+        wd = self.wd()
+        full_wd = self.full_wd()
 
-        # Clear any old working dir.
-        shutil.rmtree(tmp_dir, ignore_errors=True)
+        shutil.rmtree(wd, ignore_errors=True)
+        os.makedirs(full_wd)
 
-        # Create the base working dir.
-        os.mkdir(tmp_dir)
+        parent_dirs_created = set([full_wd])
 
         for doc in self.doc.node.walk_input_docs():
             if doc.state == 'complete' or len(doc.filters) == 0:
-                import re
                 exclude_wd = self.args.get('exclude_wd')
                 if exclude_wd and re.search(exclude_wd, doc.key):
-                    self.log.debug("not saving '%s' to wd for '%s' because matches exclude_wd pattern '%s'" % (doc.key, self.key, exclude_wd))
+                    msg = "not saving '%s' to wd for '%s' because matches exclude_wd pattern '%s'"
+                    msg_args = (doc.key, self.key, exclude_wd,)
+                    self.log.debug(msg % msg_args)
+
                 else:
                     # Figure out path to write this child doc.
-                    filename = os.path.join(tmp_dir, doc.output().name)
-                    parent_dir = os.path.dirname(filename)
+                    input_filepath = os.path.join(wd, doc.output().name)
+                    parent_dir = os.path.dirname(input_filepath)
 
                     # Ensure all parent directories exist.
-                    if not os.path.exists(parent_dir):
-                        os.makedirs(parent_dir)
+                    if not parent_dir in parent_dirs_created:
+                        try:
+                            os.makedirs(parent_dir)
+                            parent_dirs_created.add(parent_dir)
+                        except os.error:
+                            pass
 
-                    yield(doc, filename)
+                    yield(doc, input_filepath)
 
-        parent_dir = self.working_dir()
-        input_filepath = os.path.join(parent_dir, input_filename)
-
-        if not os.path.exists(parent_dir):
-            os.makedirs(parent_dir)
-
+        input_filepath = os.path.join(full_wd, input_filename)
         self.input_data.output_to_file(input_filepath)
+        self._wd_setup = True
 
     def data_class_alias(self):
         return 'generic'
@@ -138,7 +145,7 @@ class InitialArtifact(Artifact):
     def set_metadata_attrs(self):
         self.metadata.key = self.key
 
-        stat_info = os.stat(self.name)
+        stat_info = self.wrapper.filemap[self.name]['stat']
         self.metadata.mtime = stat_info[stat.ST_MTIME]
         self.metadata.size = stat_info[stat.ST_SIZE]
 
@@ -150,10 +157,12 @@ class InitialArtifact(Artifact):
 
     def run(self, *args, **kw):
         self.log.debug("hashstring is %s" % self.hashstring)
-        start_time = time.time()
+        if self.wrapper.timing:
+            start_time = time.time()
         if not self.output_data.is_cached():
             self.set_output_data()
-        self.elapsed = time.time() - start_time
+        if self.wrapper.timing:
+            self.elapsed = time.time() - start_time
 
 class InitialVirtualArtifact(InitialArtifact):
     """
@@ -241,7 +250,8 @@ class FilterArtifact(Artifact):
         self.filter_instance.update_settings(self.args.get(self.filter_alias, {}))
 
     def run(self, *args, **kw):
-        start_time = time.time()
+        if self.wrapper.timing:
+            start_time = time.time()
         self.log.debug("Running %s" % self.key_with_class())
 
         is_cached = self.output_data.is_cached()
@@ -265,7 +275,8 @@ class FilterArtifact(Artifact):
                     raise dexy.exceptions.NoFilterOutput("No output file after filter ran: %s" % self.key)
             self.content_source = 'generated'
 
-        self.elapsed = time.time() - start_time
+        if self.wrapper.timing:
+            self.elapsed = time.time() - start_time
 
     def load_cached_args(self):
         """
@@ -405,10 +416,3 @@ class FilterArtifact(Artifact):
                         raise dexy.exceptions.InternalDexyProblem(msg)
             else:
                 self.ext = this_filter_outputs[0]
-
-#    def filter_args(self):
-#        """
-#        Arguments that are passed by the user which are specifically for the
-#        filter that will be run by this artifact.
-#        """
-#        return self.args.get(self.filter_alias, {})

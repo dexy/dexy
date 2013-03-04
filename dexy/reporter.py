@@ -1,3 +1,4 @@
+from dexy.utils import file_exists
 import StringIO
 import dexy.artifact
 import dexy.plugin
@@ -15,13 +16,13 @@ class Reporter(dexy.plugin.Plugin):
     _SETTINGS = {
             "default" : ("Whether to run this report by default. Should be False for reports with side effects.", True),
             "dir" : ("Top-level directory in which report will be stored", None),
+            "run-on-failed-batch" : ("Whether to run if an error occurs while processing the dexy batch.", False),
             "readme-filename" : ("Name of README file.", "README"),
             "safety-filename" : ("Name of a file which will be created in generated dir, and checked before generated dir is removed.", ".dexy-generated"),
             }
     _UNSET = []
 
-    @classmethod
-    def is_active(klass):
+    def is_active(self):
         return True
 
     def create_reports_dir(self, reports_dir=None):
@@ -36,7 +37,7 @@ class Reporter(dexy.plugin.Plugin):
         safety_filepath = os.path.join(reports_dir, self.setting('safety-filename'))
         readme_filepath = os.path.join(reports_dir, self.setting('readme-filename'))
 
-        if not os.path.exists(reports_dir):
+        if not file_exists(reports_dir):
             os.mkdir(reports_dir)
 
         with open(safety_filepath, "w") as f:
@@ -57,9 +58,9 @@ class Reporter(dexy.plugin.Plugin):
 
         safety_filepath = os.path.join(reports_dir, self.setting('safety-filename'))
 
-        if os.path.exists(reports_dir) and not os.path.exists(safety_filepath):
+        if file_exists(reports_dir) and not file_exists(safety_filepath):
             raise Exception("Please remove directory %s, Dexy wants to put a report here but doesn't want to overwrite anything by accident." % os.path.abspath(reports_dir))
-        elif os.path.exists(reports_dir):
+        elif file_exists(reports_dir):
             if keep_empty_dir:
                 # Does not remove the base directory, useful if you are running
                 # a process (like 'dexy serve') from inside that directory
@@ -78,12 +79,12 @@ class Reporter(dexy.plugin.Plugin):
     def set_log(self):
         if not hasattr(self, 'log'):
             self.log = logging.getLogger("report:%s" % self.ALIASES[0])
+            self.log.setLevel(self.wrapper.logging_log_level())
             self.logstream = StringIO.StringIO()
             handler = logging.StreamHandler(self.logstream)
             if hasattr(self, 'wrapper'):
                 handler.setFormatter(logging.Formatter(self.wrapper.log_format))
             self.log.addHandler(handler)
-            self.log.setLevel(logging.DEBUG)
 
             try:
                 self.log.addHandler(logging.getLogger('dexy').handlers[0])

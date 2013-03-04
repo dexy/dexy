@@ -1,4 +1,5 @@
 from dexy.utils import s
+from dexy.utils import file_exists
 import dexy.batch
 import dexy.database
 import dexy.doc
@@ -8,6 +9,7 @@ import logging
 import logging.handlers
 import os
 import shutil
+import posixpath
 
 class Wrapper(object):
     """
@@ -31,15 +33,18 @@ class Wrapper(object):
         'ignore_nonzero_exit' : False,
         'log_dir' : 'logs',
         'log_file' : 'dexy.log',
-        'log_format' : "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        'log_level' : "DEBUG",
+#        'log_format' : "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        'log_format' : "%(name)s - %(levelname)s - %(message)s",
+        'log_level' : "WARN",
         'plugins': '',
         'profile' : False,
         'recurse' : True,
         'reports' : '',
         'siblings' : False,
         'silent' : False,
+        'strace' : False,
         'target' : False,
+        'timing' : True,
         'uselocals' : False
     }
 
@@ -53,6 +58,8 @@ class Wrapper(object):
         self.args = args
         self.initialize_attribute_defaults()
         self.update_attributes_from_kwargs(kwargs)
+        self.filemap = {}
+        self.project_root = os.path.abspath(os.getcwd())
 
     def initialize_attribute_defaults(self):
         for name, value in self.DEFAULTS.iteritems():
@@ -65,6 +72,7 @@ class Wrapper(object):
             setattr(self, key, value)
 
     def setup(self, setup_dirs=False, log_config=True):
+        self.walk()
         if setup_dirs:
             self.setup_dexy_dirs()
         self.check_dexy_dirs()
@@ -125,19 +133,19 @@ class Wrapper(object):
             self.batch_id = self.db.max_batch_id()
 
     def check_dexy_dirs(self):
-        if not (os.path.exists(self.artifacts_dir) and os.path.exists(self.log_dir)):
+        if not (file_exists(self.artifacts_dir) and file_exists(self.log_dir)):
             raise dexy.exceptions.UserFeedback("You need to run 'dexy setup' in this directory first.")
 
     def setup_dexy_dirs(self):
-        if not os.path.exists(self.artifacts_dir):
+        if not file_exists(self.artifacts_dir):
             os.mkdir(self.artifacts_dir)
-        if not os.path.exists(self.log_dir):
+        if not file_exists(self.log_dir):
             os.mkdir(self.log_dir)
 
     def remove_dexy_dirs(self, reports=False):
-        if os.path.exists(self.artifacts_dir):
+        if file_exists(self.artifacts_dir):
             shutil.rmtree(self.artifacts_dir)
-        if os.path.exists(self.log_dir):
+        if file_exists(self.log_dir):
             shutil.rmtree(self.log_dir)
 
         if reports:
@@ -201,7 +209,7 @@ class Wrapper(object):
             if kwargs:
                 raise Exception("Shouldn't have kwargs if arg is a list")
 
-            alias, pattern = dexy.parser.Parser.qualify_key(arg[0])
+            alias, pattern = dexy.parser.Parser(self).qualify_key(arg[0])
             return dexy.task.Task.create(alias, pattern, **arg[1])
 
         elif isinstance(arg, basestring):
@@ -229,18 +237,21 @@ class Wrapper(object):
             reporters = [i for i in dexy.reporter.Reporter if i.setting('default')]
 
         for reporter in reporters:
-            self.log.debug("running reporter %s" % reporter.ALIASES[0])
-            reporter.run(self)
+            batch_ok = (self.batch.state != 'failed')
+            run_on_failed_batch = reporter.setting('run-on-failed-batch')
+            if batch_ok or run_on_failed_batch:
+                self.log.debug("running reporter %s" % reporter.ALIASES[0])
+                reporter.run(self)
 
     def is_valid_dexy_dir(self, dirpath, dirnames):
         nodexy_file = os.path.join(dirpath, '.nodexy')
         pip_delete_this_dir_file = os.path.join(dirpath, "pip-delete-this-directory.txt")
-        if os.path.exists(nodexy_file):
+        if file_exists(nodexy_file):
             self.log.debug("  skipping directory '%s' and its children because .nodexy file found" % dirpath)
             dirnames[:] = []
             return False
         else:
-            if os.path.exists(pip_delete_this_dir_file):
+            if file_exists(pip_delete_this_dir_file):
                 print s("""WARNING pip left an old build/ file lying around!
                 You probably want to cancel this dexy run (ctrl+c) and remove this directory first!
                 Dexy will continue running unless you stop it...""")
@@ -260,27 +271,26 @@ class Wrapper(object):
         ast = dexy.parser.AbstractSyntaxTree(self)
 
         config_files_used = []
-        for dirpath, dirnames, filenames in os.walk("."):
-            if self.is_valid_dexy_dir(dirpath, dirnames):
-                check_for_double_config = []
-                for alias in dexy.parser.Parser.plugins.keys():
-                    path_to_config = os.path.normpath(os.path.join(dirpath, alias))
+        dirs_with_config_files = []
+        for alias in dexy.parser.Parser.plugins.keys():
+            for filepath, fileinfo in self.filemap.iteritems():
+                if filepath.endswith(alias):
+                    os_filepath = fileinfo['ospath']
+                    self.log.debug("loading config from '%s'" % os_filepath)
 
-                    if os.path.exists(path_to_config):
-                        self.log.debug("loading config from '%s'" % path_to_config)
-                        with open(path_to_config, "r") as f:
-                            config_text = f.read()
+                    with open(os_filepath, "r") as f:
+                        config_text = f.read()
 
-                        check_for_double_config.append(path_to_config)
-                        config_files_used.append(path_to_config)
+                    parent_dir = os.path.dirname(os_filepath)
+                    if parent_dir in dirs_with_config_files:
+                        msg = "more than one config file found in dir %s" % parent_dir
+                        raise dexy.exceptions.UserFeedback(msg)
+                    dirs_with_config_files.append(parent_dir)
 
-                        parser = dexy.parser.Parser.create_instance(alias, self, ast)
-                        parser.build_ast(os.path.normpath(dirpath), config_text)
-
-                if len(check_for_double_config) > 1:
-                    msg = "more than one config file found in dir %s: %s"
-                    msg_args = (dirpath, ", ".join(check_for_double_config))
-                    raise dexy.exceptions.UserFeedback(msg % msg_args)
+                    config_files_used.append(os_filepath)
+    
+                    parser = dexy.parser.Parser.create_instance(alias, self, ast)
+                    parser.build_ast(parent_dir, config_text)
 
         if len(config_files_used) == 0:
             msg = "WARNING: Didn't find any document config files (like %s)"
@@ -321,20 +331,22 @@ class Wrapper(object):
 
         return globals_dict
 
-    def walk(self, start, recurse=True):
+    def walk(self):
+        """
+        Generates a complete list of files present in the project directory.
+        """
         exclude = self.exclude_dirs()
 
-        for dirpath, dirnames, filenames in os.walk(start):
+        for dirpath, dirnames, filenames in os.walk('.'):
             for x in exclude:
                 if x in dirnames:
                     dirnames.remove(x)
 
-            if not recurse:
-                dirnames[:] = []
-
-            nodexy_file = os.path.join(dirpath, '.nodexy')
-            if os.path.exists(nodexy_file):
+            if '.nodexy' in filenames:
                 dirnames[:] = []
             else:
                 for filename in filenames:
-                    yield(dirpath, filename)
+                    filepath = posixpath.normpath(posixpath.join(dirpath, filename))
+                    self.filemap[filepath] = {}
+                    self.filemap[filepath]['stat'] = os.stat(os.path.join(dirpath, filename))
+                    self.filemap[filepath]['ospath'] = os.path.normpath(os.path.join(dirpath, filename))

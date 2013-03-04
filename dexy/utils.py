@@ -8,6 +8,15 @@ import shutil
 import tempfile
 import yaml
 
+def file_exists(filepath):
+    #print "calling file_exists on %s" % filepath
+    #frame = inspect.currentframe()
+    #for f in inspect.getouterframes(frame):
+    #    print "   ", f[1], f[2], f[3]
+    #del frame
+    #del f
+    return os.path.exists(filepath)
+
 def iter_paths(path):
     """
     Iterate over all subpaths of path starting with root path.
@@ -69,7 +78,6 @@ class tempdir(object):
     def __exit__(self, type, value, traceback):
         if not isinstance(value, Exception):
             self.remove_temp_dir()
-
 
 def value_for_hyphenated_or_underscored_arg(arg_dict, arg_name_hyphen, default=None):
     if not "-" in arg_name_hyphen and "_" in arg_name_hyphen:
@@ -184,28 +192,3 @@ def char_diff(str1, str2):
     # TODO add code for str2 longer than str1
 
     return msg
-
-# Based on http://nedbatchelder.com/code/utilities/wh.py
-def command_exists(cmd_name):
-    path = os.environ["PATH"]
-    if ";" in path:
-        path = filter(None, path.split(";"))
-    else:
-        path = filter(None, path.split(":"))
-
-    if os.environ.has_key("PATHEXT"):
-        # Present on windows, returns e.g. '.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC'
-        pathext = os.environ["PATHEXT"]
-        pathext = filter(None, pathext.split(";"))
-    else:
-        # Not windows, look for exact command name.
-        pathext = [""]
-
-    cmd_found = False
-    for d in path:
-        for e in pathext:
-            filepath = os.path.join(d, cmd_name + e)
-            if os.path.exists(filepath):
-                cmd_found = True
-                break
-    return cmd_found

@@ -13,25 +13,26 @@ class OutputReporter(Reporter):
     def write_canonical_doc(self, doc):
         fp = os.path.join(self.setting('dir'), doc.output().name)
 
+        if fp in self.locations:
+            print "WARNING overwriting file", fp
+        else:
+            self.locations[fp] = []
+        self.locations[fp].append(doc.key)
+
         parent_dir = os.path.dirname(fp)
-        if not os.path.exists(parent_dir):
+        try:
             os.makedirs(parent_dir)
+        except os.error:
+            pass
 
         self.log.debug("  writing %s to %s" % (doc.key, fp))
-        if os.path.exists(fp):
-            print "WARNING %s is overwriting file %s. Already written to by:" % (doc.key, fp)
-            for tup in self.keys_to_outfiles:
-                k, v = tup
-                if v == fp:
-                    print "    %s" % k
-        self.keys_to_outfiles.append((doc.key, fp,))
 
         doc.output().output_to_file(fp)
 
     def run(self, wrapper):
         self.wrapper=wrapper
         self.set_log()
-        self.keys_to_outfiles = []
+        self.locations = {}
 
         self.create_reports_dir()
         for doc in wrapper.batch.docs():
@@ -54,9 +55,10 @@ class LongOutputReporter(Reporter):
         for doc in wrapper.batch.docs():
             fp = os.path.join(self.setting('dir'), doc.output().long_name())
 
-            parent_dir = os.path.dirname(fp)
-            if not os.path.exists(parent_dir):
+            try:
                 os.makedirs(os.path.dirname(fp))
+            except os.error:
+                pass
 
             self.log.debug("  writing %s to %s" % (doc.key, fp))
             doc.output().output_to_file(fp)

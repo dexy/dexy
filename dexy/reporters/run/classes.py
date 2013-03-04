@@ -11,8 +11,10 @@ class RunReporter(Reporter):
     """
     Returns info about a dexy run.
     """
-    ALLREPORTS = True
     ALIASES = ['run']
+    _SETTINGS = {
+            'run-on-failed-batch' : True
+            }
 
     def run(self, wrapper):
         latest_report_dir = os.path.join(wrapper.log_dir, 'run-latest')

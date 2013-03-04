@@ -137,6 +137,8 @@ def test_initial_artifact_hash():
         with open(filename, "w") as f:
             f.write("hello this is some text")
 
+        wrapper.walk()
+
         artifact = InitialArtifact(filename, wrapper=wrapper)
         artifact.name = filename
         artifact.doc = Doc(filename)
@@ -149,6 +151,8 @@ def test_initial_artifact_hash():
 
         with open(filename, "w") as f:
             f.write("hello this is different text")
+
+        wrapper.walk()
 
         artifact = InitialArtifact(filename, wrapper=wrapper)
         artifact.name = filename

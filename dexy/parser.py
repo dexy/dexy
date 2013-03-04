@@ -13,6 +13,10 @@ class AbstractSyntaxTree():
         self.root_nodes_ordered = False
         self.wrapper = wrapper
         self.default_args = []
+        self.parser = Parser(self.wrapper)
+
+    def file_exists(self, filepath):
+        return filepath in self.wrapper.filemap
 
     def default_args_for_directory(self, path):
         default_kwargs = {}
@@ -27,7 +31,10 @@ class AbstractSyntaxTree():
         return default_kwargs
 
     def standardize_key(self, key):
-        return Parser.standardize_key(key)
+        return self.parser.standardize_key(key)
+
+    def qualify_key(self, key):
+        return self.parser.qualify_key(key)
 
     def add_task_info(self, task_key, **kwargs):
         """
@@ -141,7 +148,7 @@ class AbstractSyntaxTree():
             if not key in created_tasks:
                 msg = "creating task '%s' with inputs '%s' with original kwargs '%s'"
                 self.wrapper.log.debug(msg % (key, inputs, kwargs))
-                alias, pattern = Parser.qualify_key(key)
+                alias, pattern = self.qualify_key(key)
                 
                 kwargs_with_defaults = self.default_args_for_directory(pattern)
                 kwargs_with_defaults.update(kwargs)
@@ -186,8 +193,12 @@ class Parser(dexy.plugin.Plugin):
     def is_active(klass):
         return True
 
-    @classmethod
-    def qualify_key(klass, key):
+    def file_exists(self, filepath):
+        if not self.wrapper:
+            raise Exception("wrapper is none")
+        return filepath in self.wrapper.filemap
+
+    def qualify_key(self, key):
         """
         Returns key split into pattern and alias, figuring out alias if not explict.
         """
@@ -203,11 +214,11 @@ class Parser(dexy.plugin.Plugin):
 
             # Allow '.ext' instead of '*.ext', shorter + easier for YAML
             if pattern.startswith(".") and not pattern.startswith("./"):
-                if not os.path.exists(pattern):
+                if not self.file_exists(pattern):
                     pattern = "*%s" % pattern
 
             filepath = pattern.split("|")[0]
-            if os.path.exists(filepath) and not os.path.isdir(filepath):
+            if self.file_exists(filepath):
                 alias = 'doc'
             elif (not "." in pattern) and (not "|" in pattern):
                 alias = 'bundle'
@@ -216,7 +227,7 @@ class Parser(dexy.plugin.Plugin):
             else:
                 alias = 'doc'
 
-        alias = klass.standardize_alias(alias)
+        alias = self.standardize_alias(alias)
         return alias, pattern
 
     @classmethod
@@ -224,13 +235,12 @@ class Parser(dexy.plugin.Plugin):
         task_class, settings = dexy.task.Task.plugins[alias]
         return task_class.ALIASES[0]
 
-    @classmethod
-    def standardize_key(klass, key):
+    def standardize_key(self, key):
         """
         Only standardized keys should be used in the AST, so we don't create 2
         entries for what turns out to be the same task.
         """
-        alias, pattern = klass.qualify_key(key)
+        alias, pattern = self.qualify_key(key)
         return "%s:%s" % (alias, pattern)
 
     def __init__(self, wrapper=None, ast=None):
@@ -241,8 +251,7 @@ class Parser(dexy.plugin.Plugin):
         """
         Method for testing, after this can call batch.run()
         """
-        self.ast = AbstractSyntaxTree()
-        self.ast.wrapper = self.wrapper
+        self.ast = AbstractSyntaxTree(self.wrapper)
         self.build_ast(directory, input_text)
 
         self.wrapper.batch = dexy.batch.Batch(self.wrapper)
@@ -256,7 +265,8 @@ class Parser(dexy.plugin.Plugin):
             return key
         else:
             starts_with_dot = key.startswith(".") and not key.startswith("./")
-            does_not_exist = not os.path.exists(os.path.join(directory, key))
-            if starts_with_dot and does_not_exist:
-                key = "*%s" % key
+            if starts_with_dot:
+                path_to_key = os.path.join(directory, key)
+                if not self.file_exists(path_to_key):
+                    key = "*%s" % key
             return posixpath.join(directory, key)
