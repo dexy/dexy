@@ -87,6 +87,7 @@ class Batch(object):
         nodes = self.nodes_for_target(target)
 
         self.state = 'populating'
+        self.wrapper.log.info("in state %s" % self.state)
 
         self.task_count = 0
 
@@ -96,20 +97,24 @@ class Batch(object):
                 self.task_count += 1
 
         self.state = 'settingup'
+        self.wrapper.log.info("in state %s" % self.state)
 
         for node in nodes:
             for task in node:
                 task()
 
         self.state = 'running'
+        self.wrapper.log.info("in state %s" % self.state)
 
         for node in nodes:
             for task in node:
                 task()
 
         self.state = 'complete'
+        self.wrapper.log.info("in state %s" % self.state)
 
         self.end_time = time.time()
+        self.wrapper.log.info("elapsed time %s" % self.elapsed())
 
     def elapsed(self):
         if self.end_time and self.start_time:
