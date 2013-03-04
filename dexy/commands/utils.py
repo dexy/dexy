@@ -129,11 +129,3 @@ def template_text(
             return stdout
         else:
             return "no example found"
-
-def log_and_print_exception(wrapper, e):
-    if hasattr(wrapper, 'log'):
-        wrapper.log.error("An error has occurred.")
-        wrapper.log.error(e)
-        wrapper.log.error(e.message)
-    import traceback
-    traceback.print_exc()

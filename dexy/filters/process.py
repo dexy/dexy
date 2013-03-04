@@ -133,7 +133,6 @@ class SubprocessFilter(Filter):
         Walk working directory and add a new dexy document for every newly
         created file found.
         """
-        print "running add_new_files for", self.artifact.key_with_class()
         wd = self.artifact.wd()
 
         do_add_new = self.setting('add-new-files')
@@ -184,7 +183,6 @@ class SubprocessFilter(Filter):
         Walk working directory and read contents of multiple files into a
         single new document.
         """
-        print "running walk_working_dir for", self.artifact.key_with_class()
         if not doc:
             if section_name:
                 doc_key = "%s-%s-files" % (self.output().long_name(), section_name)

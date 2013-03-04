@@ -1,10 +1,17 @@
 from dexy.commands.utils import D
 from dexy.commands.utils import init_wrapper
-from dexy.commands.utils import log_and_print_exception
 import dexy.exceptions
 import os
 import subprocess
 import sys
+
+def log_and_print_exception(wrapper, e):
+    if hasattr(wrapper, 'log'):
+        wrapper.log.error("An error has occurred.")
+        wrapper.log.error(e)
+        wrapper.log.error(e.message)
+    import traceback
+    traceback.print_exc()
 
 def handle_user_feedback_exception(wrapper, e):
     if hasattr(wrapper, 'log'):

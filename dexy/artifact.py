@@ -258,7 +258,7 @@ class FilterArtifact(Artifact):
         cache_ok = False
 
         if is_cached:
-            self.log.info("output is cached with hashstring %s" % self.hashstring)
+            self.log.info("output is cached (hashstring %s)" % self.hashstring)
             cache_ok = self.load_cached_args()
             if cache_ok:
                 self.reconstitute_cached_children()
@@ -268,7 +268,7 @@ class FilterArtifact(Artifact):
                 self.output_data.setup()
 
         if (not is_cached) or (not cache_ok):
-            self.log.info("output is not cached" % self.hashstring)
+            self.log.info("output is not cached (hashstring %s)" % self.hashstring)
             self.filter_instance.process()
             if not self.output_data.is_cached():
                 if self.filter_instance.setting('require-output'):
