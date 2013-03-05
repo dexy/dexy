@@ -35,6 +35,8 @@ class Node(dexy.task.Task):
                 yield child
 
     def setup(self):
+        self.set_log()
+        self.log.debug("calculating hash: inputs for node are: %s" % self.inputs)
         self.metadata.input_hashstrings = ",".join(i.hashstring for i in self.inputs)
         self.set_hashstring()
 

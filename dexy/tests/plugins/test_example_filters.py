@@ -74,6 +74,7 @@ def test_doc_children_artifacts():
                 contents="hello",
                 wrapper=wrapper)
 
+        wrapper.setup()
         wrapper.root_nodes = [parent]
 
         node.populate()

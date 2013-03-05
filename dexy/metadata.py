@@ -1,4 +1,3 @@
-from dexy.common import OrderedDict
 import dexy.plugin
 import hashlib
 
@@ -11,10 +10,10 @@ class Metadata(dexy.plugin.Plugin):
         return True
 
     def get_string_for_hash(self):
-        ordered = OrderedDict()
+        ordered = []
         for k in sorted(self.__dict__):
-            ordered[k] = str(self.__dict__[k])
-
+            v = self.__dict__[k]
+            ordered.append((k, str(v),))
         return str(ordered)
 
 class Md5(Metadata):

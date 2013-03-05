@@ -51,7 +51,14 @@ class Task(dexy.plugin.Plugin):
             self.wrapper = args['wrapper']
 
     def set_hashstring(self):
+        if hasattr(self, 'log'):
+            self.log.debug("calculating hash for %s" % self.key_with_class())
+            self.log.debug("calculating hash %s" % self.metadata.get_string_for_hash())
         self.hashstring = self.metadata.compute_hash()
+        if hasattr(self, 'log'):
+            self.log.debug("calculating hash: result: %s" % self.hashstring)
+            if hasattr(self, 'output_data'):
+                self.log.debug("calculating hash: is cached: %s" % self.output_data.is_cached())
 
     def transition(self, to_state):
         if (self.state, to_state) in self.STATE_TRANSITIONS:
@@ -136,11 +143,23 @@ class Task(dexy.plugin.Plugin):
         return "%s:%s" % (self.__class__.__name__, self.key)
 
     def key_with_batch_id(self):
-        return "%s:%s" % (self.wrapper.batch.batch_id, self.key_with_class())
+        if hasattr(self.wrapper, 'batch'):
+            batch_id = self.wrapper.batch.batch_id
+        else:
+            batch_id = '-'
+        return "%s:%s" % (batch_id, self.key)
+
+    def key_with_class_and_batch_id(self):
+        if hasattr(self.wrapper, 'batch'):
+            batch_id = self.wrapper.batch.batch_id
+        else:
+            batch_id = '-'
+        return "%s:%s:%s" % (batch_id, self.__class__.__name__, self.key_with_class())
 
     def set_log(self):
         if not hasattr(self, 'log'):
-            self.log = logging.getLogger(self.key_for_log())
+
+            self.log = logging.getLogger(self.key_with_class_and_batch_id())
             self.log.setLevel(self.wrapper.logging_log_level())
             self.logstream = StringIO.StringIO()
             handler = logging.StreamHandler(self.logstream)

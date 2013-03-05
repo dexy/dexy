@@ -137,12 +137,13 @@ class SubprocessFilter(Filter):
 
         do_add_new = self.setting('add-new-files')
 
+        new_files_added = 0
         for dirpath, dirnames, filenames in os.walk(wd):
             for filename in filenames:
                 filepath = os.path.normpath(os.path.join(dirpath, filename))
                 relpath = os.path.relpath(filepath, wd)
 
-                already_have_file = (relpath in self._wd_files_start)
+                already_have_file = (filepath in self._wd_files_start)
 
                 if isinstance(do_add_new, list):
                     is_valid_file_extension = False
@@ -155,6 +156,7 @@ class SubprocessFilter(Filter):
                             if filename.endswith(pattern):
                                 is_valid_file_extension = True
                                 continue
+
                 elif isinstance(do_add_new, basestring):
                     is_valid_file_extension = False
                     for pattern in [do_add_new]:
@@ -166,6 +168,7 @@ class SubprocessFilter(Filter):
                             if filename.endswith(pattern):
                                 is_valid_file_extension = True
                                 continue
+
                 elif isinstance(do_add_new, bool):
                     if not do_add_new:
                         raise dexy.exceptions.InternalDexyProblem("should not get here")
@@ -177,6 +180,10 @@ class SubprocessFilter(Filter):
                     with open(filepath, 'rb') as f:
                         contents = f.read()
                     self.add_doc(relpath, contents)
+                    new_files_added += 1
+
+        if new_files_added > 10:
+            self.log.warn("%s additional files added" % (new_files_added))
 
     def walk_working_directory(self, doc=None, section_name=None):
         """

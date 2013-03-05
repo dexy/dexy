@@ -37,7 +37,7 @@ class GenericStorage(Storage):
         if not ext:
             ext = ".ext"
 
-        return os.path.join(self.wrapper.artifacts_dir, "%s%s" % (self.hashstring, ext))
+        return os.path.join(self.artifacts_dir(), "%s%s" % (self.hashstring, ext))
 
     def data_file_exists(self):
         size = self.data_file_size()
@@ -50,6 +50,14 @@ class GenericStorage(Storage):
             except os.error:
                 pass
         return self._size
+
+    def artifacts_dir(self):
+        d = os.path.join(self.wrapper.artifacts_dir, self.hashstring[0:2])
+        try:
+            os.makedirs(d)
+        except os.error:
+            pass
+        return d
 
     def write_data(self, data, filepath=None):
         if not filepath:

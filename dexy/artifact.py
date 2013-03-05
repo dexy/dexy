@@ -64,7 +64,7 @@ class Artifact(dexy.task.Task):
             return "%s%s" % (name_without_ext, self.ext)
 
     def wd(self):
-        return os.path.join(self.wrapper.artifacts_dir, self.hashstring)
+        return os.path.join(self.wrapper.artifacts_dir, self.hashstring[0:2], self.hashstring)
 
     def full_wd(self):
         return os.path.join(self.wd(), os.path.dirname(self.key))
