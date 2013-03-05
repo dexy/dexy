@@ -1,4 +1,6 @@
 from dexy.filter import DexyFilter
+import dexy.exceptions
+import os
 
 try:
     from docutils import core
@@ -47,6 +49,7 @@ class RestructuredText(RestructuredTextBase):
     ALIASES = ['rst']
     SKIP_SETTINGS = 'settings-not-for-settings-overrides'
     _SETTINGS = {
+            'allow-any-template-extension' : ("Whether to NOT raise an error if template extension does not match document extension.", False),
             SKIP_SETTINGS : (
                 "Which of the settings should NOT be passed to settings_overrides.",
                 ['writer']
@@ -65,12 +68,32 @@ class RestructuredText(RestructuredTextBase):
         self.log.debug("settings for rst: %r" % settings_overrides)
         self.log.debug("rst writer: %s" % writer_name)
 
-        core.publish_file(
-                source_path = self.input().storage.data_file(),
-                destination_path = self.output().storage.data_file(),
-                writer_name=self.docutils_writer_name(),
-                settings_overrides=settings_overrides
-                )
+        # Check that template extension matches output.
+        if 'template' in settings_overrides and not self.setting('allow-any-template-extension'):
+            template = settings_overrides['template']
+            template_ext = os.path.splitext(template)[1]
+            if not template_ext == self.artifact.ext:
+                msg = "You requested template '%s' with extension '%s' for %s, does not match document extension of '%s'"
+                args = (template, template_ext, self.artifact.key_for_log(), self.artifact.ext)
+                raise dexy.exceptions.UserFeedback(msg % args)
+
+        try:
+            core.publish_file(
+                    source_path = self.input().storage.data_file(),
+                    destination_path = self.output().storage.data_file(),
+                    writer_name=self.docutils_writer_name(),
+                    settings_overrides=settings_overrides
+                    )
+        except ValueError as e:
+            if "Invalid placeholder in string" in e.message and 'template' in settings_overrides:
+                self.log.warn("you are using template '%s'. is this correct?" % settings_overrides['template'])
+            raise e
+        except Exception as e:
+            self.log.warn("An error occurred while generating reStructuredText.")
+            self.log.warn("source file %s" % (self.input().storage.data_file()))
+            self.log.warn("settings for rst: %r" % settings_overrides)
+            self.log.warn("rst writer: %s" % writer_name)
+            raise e
 
 class RstBody(RestructuredTextBase):
     """
