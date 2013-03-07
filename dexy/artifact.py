@@ -316,11 +316,8 @@ class FilterArtifact(Artifact):
         rows = self.wrapper.db.get_child_hashes_in_previous_batch(self.hashstring)
         for row in rows:
             self.log.debug("Reconstituting %s from database and cache" % row['doc_key'])
-            print row['class_name']
             if 'Initial' in row['class_name']:
                 doc_args = json.loads(row['args'])
-                print row['doc_key']
-                print doc_args.keys()
                 doc = dexy.doc.Doc(row['doc_key'], **doc_args)
                 self.add_doc(doc)
 
