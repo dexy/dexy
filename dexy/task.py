@@ -149,12 +149,15 @@ class Task(dexy.plugin.Plugin):
             batch_id = '-'
         return "%s:%s" % (batch_id, self.key)
 
+    def unique_key(self):
+        return self.key_with_class_and_batch_id()
+
     def key_with_class_and_batch_id(self):
         if hasattr(self.wrapper, 'batch'):
             batch_id = self.wrapper.batch.batch_id
         else:
             batch_id = '-'
-        return "%s:%s:%s" % (batch_id, self.__class__.__name__, self.key_with_class())
+        return "%s:%s" % (batch_id, self.key_with_class())
 
     def set_log(self):
         if not hasattr(self, 'log'):

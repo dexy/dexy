@@ -286,6 +286,9 @@ class FilterArtifact(Artifact):
 
         if len(rows) == 0:
             rows = self.wrapper.db.task_from_current_batch(self.hashstring)
+            row_from_previous_batch = False
+        else:
+            row_from_previous_batch = True
 
         if len(rows) == 0:
             raise dexy.exceptions.InternalDexyProblem("No rows found for %s in current or previous batch." % self.hashstring)
@@ -293,9 +296,12 @@ class FilterArtifact(Artifact):
         raw_args = rows[0]['args']
 
         if not raw_args:
-            self.log.debug("args not found in DB, cache may be corrupt")
-            self.log.debug(rows[0])
-            return False
+            if row_from_previous_batch:
+                self.log.debug("args not found in DB, cache may be corrupt")
+                self.log.debug(rows[0])
+                return False
+            else:
+                return True
         else:
             stored_args = json.loads(raw_args)
             self.args.update(stored_args)
@@ -310,8 +316,11 @@ class FilterArtifact(Artifact):
         rows = self.wrapper.db.get_child_hashes_in_previous_batch(self.hashstring)
         for row in rows:
             self.log.debug("Reconstituting %s from database and cache" % row['doc_key'])
+            print row['class_name']
             if 'Initial' in row['class_name']:
                 doc_args = json.loads(row['args'])
+                print row['doc_key']
+                print doc_args.keys()
                 doc = dexy.doc.Doc(row['doc_key'], **doc_args)
                 self.add_doc(doc)
 

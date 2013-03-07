@@ -115,6 +115,7 @@ class Batch(object):
 
         self.end_time = time.time()
         self.wrapper.log.info("elapsed time %s" % self.elapsed())
+        self.wrapper.log.info("cumulative time making db calls %0.4f" % self.wrapper.db.cum_time)
 
     def elapsed(self):
         if self.end_time and self.start_time:
