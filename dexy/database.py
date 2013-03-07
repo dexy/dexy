@@ -49,6 +49,31 @@ class Sqlite3(Database):
         self.cursor = self.conn.cursor()
         self.create_table()
         self._pending_transaction_counter = 0
+        self.cum_time = 0
+
+    def execute(self, conn_or_cursor, sql, values):
+        import time
+        start = time.time()
+        try:
+            if values:
+                conn_or_cursor.execute(sql, values)
+            else:
+                conn_or_cursor.execute(sql)
+        except Exception:
+            self.wrapper.log.warn("error occurred trying to execute:")
+            self.wrapper.log.warn(sql)
+            self.wrapper.log.warn(values)
+            raise
+
+        elapsed = time.time() - start
+        self.cum_time += elapsed
+        self.wrapper.log.debug("%0.4f %s %s" % (elapsed, sql, values))
+
+    def conn_execute(self, sql, values=None):
+        self.execute(self.conn, sql, values)
+
+    def cursor_execute(self, sql, values=None):
+        self.execute(self.cursor, sql, values)
 
     def docs(self, n=10):
         """
@@ -56,18 +81,20 @@ class Sqlite3(Database):
         """
         sql = "select unique_key, key from tasks where batch_id = ? and class_name = 'Doc' LIMIT ?"
         values = (self.wrapper.batch_id, n,)
-        self.cursor.execute(sql, values)
+        self.cursor_execute(sql, values)
         rows = self.cursor.fetchall()
         return rows
 
     def query_docs(self, query):
         sql = "select * from tasks where batch_id = ? and key like ? and class_name='Doc'"
-        self.cursor.execute(sql, (self.max_batch_id(), "%%%s%%" % query))
+        values = (self.max_batch_id(), "%%%s%%" % query)
+        self.cursor_execute(sql, values)
         return self.cursor.fetchall()
 
     def find_filter_artifact_for_doc_key(self, doc_key):
         sql = "select data_type, key, ext, canonical_name, hashstring, args, storage_type from tasks where key=? and batch_id=? AND class_name like '%Artifact'"
-        self.cursor.execute(sql, (doc_key, self.wrapper.batch_id,))
+        values = (doc_key, self.wrapper.batch_id,)
+        self.cursor_execute(sql, values)
         row = self.cursor.fetchone()
 
         return dexy.data.Data.retrieve(
@@ -82,7 +109,8 @@ class Sqlite3(Database):
 
     def find_filter_artifact_for_hashstring(self, hashstring):
         sql = "select data_type, key, ext, canonical_name, hashstring, args, storage_type from tasks where hashstring=? and batch_id=? AND class_name like '%Artifact'"
-        self.cursor.execute(sql, (hashstring, self.wrapper.batch_id,))
+        values = (hashstring, self.wrapper.batch_id,)
+        self.cursor_execute(sql, values)
         row = self.cursor.fetchone()
 
         return dexy.data.Data.retrieve(
@@ -101,28 +129,32 @@ class Sqlite3(Database):
 
     def calculate_previous_batch_id(self, current_batch_id):
         sql = "select max(batch_id) as previous_batch_id from tasks where batch_id < ?"
-        self.cursor.execute(sql, (current_batch_id,))
+        values = (current_batch_id,)
+        self.cursor_execute(sql, values)
         row = self.cursor.fetchone()
         return row['previous_batch_id']
 
     def get_child_hashes_in_previous_batch(self, parent_hashstring):
         sql = "select * from tasks where batch_id = ? and created_by_doc = ? order by doc_key, started_at"
-        self.cursor.execute(sql, (self.wrapper.batch.previous_batch_id, parent_hashstring))
+        values = (self.wrapper.batch.previous_batch_id, parent_hashstring,)
+        self.cursor_execute(sql, values)
         return self.cursor.fetchall()
 
     def task_from_previous_batch(self, hashstring):
         sql = "select * from tasks where class_name = 'FilterArtifact' and batch_id = ? and hashstring = ?"
-        self.cursor.execute(sql, (self.wrapper.batch.previous_batch_id, hashstring))
+        values = (self.wrapper.batch.previous_batch_id, hashstring)
+        self.cursor_execute(sql, values)
         return self.cursor.fetchall()
 
     def task_from_current_batch(self, hashstring):
         sql = "select * from tasks where class_name = 'FilterArtifact' and batch_id = ? and hashstring = ?"
-        self.cursor.execute(sql, (self.wrapper.batch.batch_id, hashstring))
+        values = (self.wrapper.batch.batch_id, hashstring)
+        self.cursor_execute(sql, values)
         return self.cursor.fetchall()
 
     def max_batch_id(self):
         sql = "select max(batch_id) as max_batch_id from tasks"
-        self.cursor.execute(sql)
+        self.cursor_execute(sql)
         row = self.cursor.fetchone()
         return row['max_batch_id']
 
@@ -167,9 +199,14 @@ class Sqlite3(Database):
                 'hashstring' : task.hashstring,
                 'key' : task.key,
                 'started_at' : datetime.now(),
-                'unique_key' : task.key_with_batch_id()
+                'unique_key' : task.unique_key(),
                 }
-        self.create_record(attrs)
+        try:
+            self.create_record(attrs)
+            return True
+        except sqlite3.IntegrityError:
+            self.wrapper.log.debug("duplicate record %s" % doc_key)
+            return False
 
     def update_task_after_running(self, task):
         if hasattr(task, 'ext'):
@@ -191,7 +228,7 @@ class Sqlite3(Database):
                 'data_type' : data_type,
                 'storage_type' : storage_type
                 }
-        unique_key = task.key_with_batch_id()
+        unique_key = task.unique_key()
         self.update_record(unique_key, attrs)
 
     def commit(self):
@@ -203,13 +240,24 @@ class Sqlite3(Database):
         self.conn.close()
 
     def create_table_sql(self):
-        sql = "create table tasks (%s)"
+        sql = "CREATE TABLE tasks (%s)"
         fields = ["%s %s" % k for k in self.FIELDS]
         return sql % (", ".join(fields))
 
+    def create_index_sql(self):
+        return [
+            "CREATE UNIQUE INDEX key ON tasks (unique_key)",
+            "CREATE INDEX common ON tasks (batch_id, class_name)"
+            ]
+
     def create_table(self):
+        table_sql = self.create_table_sql()
+        indexes = self.create_index_sql()
+        sqls = [table_sql] + indexes
         try:
-            self.conn.execute(self.create_table_sql())
+            for sql in sqls:
+                self.wrapper.log.debug(sql)
+                self.conn.execute(sql)
             self.conn.commit()
         except sqlite3.OperationalError as e:
             if e.message != "table tasks already exists":
@@ -221,7 +269,7 @@ class Sqlite3(Database):
 
         qs = ("?," * len(keys))[:-1]
         sql = "insert into tasks (%s) VALUES (%s)" % (",".join(keys), qs)
-        self.conn.execute(sql, values)
+        self.conn_execute(sql, values)
 
     def update_record(self, unique_key, attrs):
         keys = sorted(attrs)
@@ -231,7 +279,7 @@ class Sqlite3(Database):
         sql = "update tasks set %s WHERE unique_key=?" % ", ".join(updates)
         values.append(unique_key)
 
-        self.conn.execute(sql, values)
+        self.conn_execute(sql, values)
 
         # make sure we don't go too long before committing changes to sqlite
         self._pending_transaction_counter += 1
@@ -241,6 +289,7 @@ class Sqlite3(Database):
 
     def fetch_record(self, unique_key):
         sql = "select * from tasks where unique_key=?"
-        self.cursor.execute(sql, (unique_key,))
+        values = (unique_key,)
+        self.cursor_execute(sql, values)
         rows = self.cursor.fetchall()
         return rows

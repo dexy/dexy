@@ -1,4 +1,5 @@
 [feature] allow having 'relative canonical name' which preserves the directory but changes document base name | id:019043fb42d86fd02a7ddfe9f5db187ccd594b5c
+[feature] make it possible to 'inherit' from an alias in addition to a class | id:0454cb45ce46e4f1ff801d02eb5c4b9370dd8eeb
 [filter] update xxml filter | id:0869b2e7441930e6678100c050b69b6530c5336d
 [issue] if you forget to add hyphens to make single child doc into a list, yaml parser tries to iterate over string | id:0af99c8a441b5f27a4140d0de91f0d0a6d27ad01
 [feature] have method for getting JSON dict into env for another filter | id:1012845dcb49a8e36f5f1361338835482eacfba4
@@ -19,6 +20,7 @@
 [feature] implement include_wd and INCLUDE_WD to whitelist file extensions that working dir should be populated with | id:38a5df561a68cd3fdad9a6fadef2a9c00079237b
 [issue] detect when two additional docs have same key - hashstrings will clash when reconstitutedw | id:39b6cc8940b782c6593c1992d807ea5c373ed93e
 [feature] dump dexy env into working dir so easy to troubleshoot | id:3c03b3aadc4b3e799be0b4da8022dc1b56f7bc68
+[feature] allow setting canon to false for additional docs, e.g. docs/filters/filter-info.json | id:3f66133c67b0ae356d18dcacffba6bfaedbcbb38
 [feature] s3 uploader reporter | id:439932c2c272d6b590792d40179c4f75b140e7da
 [perf] add timing for running reporters | id:45629c726d242ef858eb01bada1f9d1c49b16894
 [todo] update custom search engine | id:460ebbbe3e5ca7011eff6a19365cdcef2430e3bf
@@ -26,6 +28,7 @@
 [feature] add sqlite3 filter which takes .sqlite file as main input and scripts as extra inputs | id:48e75022ebcf40eb9ca7716ad3b45bf736705451
 [issue] test all jinja filters, e.g. report that indent(4) does not work on *.py|py output | id:4a7939681b6eaec5edf4abc063583a7de654678d
 [feature] generate doc config files based on python document objects | id:4aa1593ac56ff4d31666aeba81b06f07dd6f96d6
+[feature] allow referencing docs relative to location of dexy.yaml file they are declared in | id:4ac5b5d4ad9ed0ad688f438ad74d87f23ed40bd2
 [issue] better feedback for named docs not being pattern docs, user should add an asterisk or specify exact path to file | id:58336d8495093b1d9574f02a2314845916bdb713
 [feature] automatically generate TOC and next/prev/up links for collections of pages (in jinja filter and WebsiteReporter) | id:5a074d7da0254559bcaa3e5ec65c284827525a1f
 [feature] finish implementing 'except' feature and test, clarify regex or fnmatch or both | id:5af09bc445c7790bf478bf7e576c53129daa46a5
@@ -34,6 +37,7 @@
 [issue] Make sure keys are unique, must have key + doc's key, issues arise with e.g. *.py and *.py|py in same project. | id:642cf20f163f834395ad847b9107477e76b9f251
 [issue] get UndefinedError: unicode object has no attribute 'blah' when idio is not correctly detected | id:646da510731a292ab94b7ba7f98a6b5f7d3d267d
 [issue] test every filter for, if error occurs, file is not left in cache | id:64e43af4a67e3b0a8ae2c3e16f921b50c5de2e21
+[issue] dexy should ignore directories starting with dot by default | id:698b84d51e6f12a944f2d9990337978215644b26
 [feature] make a PLY-based parsing filter for any filter which needs to parse input text, e.g. parse html to detect images | id:69a2cb1700175885a5d11a1fd1edbaebcffe0c1c
 [feature] detect if files get passed through jinja filter and, if so, pygments/idio should default to using ext+jinja lexer | id:6b1c952501e257aafd9957b260da93473c5162eb
 [feature] make it easier to run filter methods outside of dexy, e.g. to run pydoc to generate a modules.sqlite file | id:703f37dc40c36c71878aae010406e44b6aa7c6da
@@ -44,7 +48,9 @@
 [feature] missing plugins should detect which package they are avaliable in and suggest installing that | id:7e19102f14c4521e4a3d0bef98ba4e630e92594b
 [feature] use casperjs to output location of element want an arrow to, then use image magick to point to that element | id:7f00fd06d8cf8317a2538417d37ae74971f5423f
 [feature] have a script mode where if any siblings have changed, all siblings are re-run | id:7f29557ddfba92d9b72bfdb72a8cd3c119fe6622
+[feature] lock a document to a hashstring so it doesn't get rebuilt | id:80d57c10d29dbf498499f5ad8d472474f6819c5a
 [issue] if default is False, should still run if required by something else that runs | id:814825938d2596847b568688c6f8cca185a7ddfb
+[feature] detect when error class has been applied by pygments filter | id:8307408b088f00e93a6d77253a96c3071f67909f
 [perf] jinja should not need to create a working dir | id:86f3f99ccfd4b9f5f26e23c9d543848545f7d3bb
 [feature] progress indicator when running dexy to give an idea of how many items are cached vs. generated | id:8898eb7430f810f735a3bc09a43d9d7bc483673c
 [feature] implement support for remote files | id:89d523dfcf3604864658e494f0bc367c8f801cfd
@@ -68,6 +74,7 @@
 [issue] self.ast.add_task_info(self.join_dir(directory, task_key), **task_kwargs) TypeError: add_task_info() keywords must be strings | id:c2a6b03f190dfb2b4aa91f8af8d477a9bc3401dc
 [feature] run the RunReporter even when an exception has occurred, add a section with exception information | id:c3e3551172f65f62fcf24ca11e8b8e89b97ab984
 [feature] think about standard way of documenting plugins | id:c8b5e4e98f05cf928a19c00c319cbf7bcad7622c
+[feature] support docutils.conf files in rst filters | id:cf27b484d80147be4049ceca49371426f4f87239
 [issue] standardize options for fnmatch/regex arrays/strings everywhere that we exclude or include based on a pattern | id:d1181bec83e804f1c77eff244aa23c00f7ae2fec
 [issue] investigate whether jinja doesn't raise an exception when error occurs in macro | id:d3f18c8fbeaee6a1e9b272fc48f6051999e69bc2
 [feature] make decorator to skip tests that require internet if no internet available | id:db01a7088bc471ec8e09480c2941647713d8afd7
@@ -83,5 +90,4 @@
 [issue] key value filters should sync file extension with storage type | id:ea56460ba928c6b9353cc74646592baa968ceffc
 [feature] make an AST visualization reporter (or add to run reporter) | id:f03a516414f78d46a1a571f3279681949d2c4d89
 [feature] create function for making image of latex output in jinja (for mobi/epub) | id:f654e13a8138d689be89b7eab408620f6feaf0b2
-[feature] have filters whitelist the args they accept, use whitelist dict to generate documentation | id:f66ead6328967185158bff019af1c20d32bc03a9
 [issue] change name of globals param. also decide what it actually does now. | id:fdb5339ace291149a46abfb51a67ea4912e70b3f
