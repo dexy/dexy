@@ -8,3 +8,4 @@ logs/
 !dexy/artifacts/
 build
 dist
+cover/
