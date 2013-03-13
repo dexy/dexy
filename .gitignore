@@ -2,10 +2,11 @@
 dexy.egg-info
 output/
 output-long/
+output-site/
 artifacts/
 logs/
 *.swp
-!dexy/artifacts/
 build
 dist
 cover/
+dexy/reporters/contentmap.py

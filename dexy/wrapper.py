@@ -58,6 +58,7 @@ class Wrapper(object):
         self.initialize_attribute_defaults()
         self.update_attributes_from_kwargs(kwargs)
         self.filemap = {}
+        self.environment = {}
         self.project_root = os.path.abspath(os.getcwd())
 
     def initialize_attribute_defaults(self):
@@ -208,11 +209,11 @@ class Wrapper(object):
             if kwargs:
                 raise Exception("Shouldn't have kwargs if arg is a list")
 
-            alias, pattern = dexy.parser.Parser(self).qualify_key(arg[0])
+            alias, pattern = dexy.parser.DocumentConfig(self).qualify_key(arg[0])
             return dexy.task.Task.create(alias, pattern, **arg[1])
 
         elif isinstance(arg, basestring):
-            alias, pattern = dexy.parser.Parser.qualify_key(arg[0])
+            alias, pattern = dexy.parser.DocumentConfig(self).qualify_key(arg[0])
             return dexy.task.Task.create(alias, pattern, **kwargs)
 
         else:
@@ -275,25 +276,27 @@ class Wrapper(object):
             for filepath, fileinfo in self.filemap.iteritems():
                 if filepath.endswith(alias):
                     os_filepath = fileinfo['ospath']
-                    self.log.debug("loading config from '%s'" % os_filepath)
+                    parent_dir = os.path.dirname(os_filepath)
 
+                    parser = dexy.parser.Parser.create_instance(alias, self, ast)
+
+                    if parser.setting('warn-if-not-unique'):
+                        if parent_dir in dirs_with_config_files:
+                            msg = "more than one config file found in dir %s" % parent_dir
+                            raise dexy.exceptions.UserFeedback(msg)
+                        dirs_with_config_files.append(parent_dir)
+                        config_files_used.append(os_filepath)
+
+                    self.log.debug("loading config from '%s'" % os_filepath)
                     with open(os_filepath, "r") as f:
                         config_text = f.read()
 
-                    parent_dir = os.path.dirname(os_filepath)
-                    if parent_dir in dirs_with_config_files:
-                        msg = "more than one config file found in dir %s" % parent_dir
-                        raise dexy.exceptions.UserFeedback(msg)
-                    dirs_with_config_files.append(parent_dir)
-
-                    config_files_used.append(os_filepath)
-    
-                    parser = dexy.parser.Parser.create_instance(alias, self, ast)
                     parser.build_ast(parent_dir, config_text)
 
         if len(config_files_used) == 0:
-            msg = "WARNING: Didn't find any document config files (like %s)"
-            print msg % (", ".join(dexy.parser.Parser.plugins.keys()))
+            msg = "Didn't find any document config files (like %s)"
+            self.log.warn(msg % (", ".join(dexy.parser.Parser.plugins.keys())))
+
         self.log.debug("AST completed:")
         ast.debug(self.log)
 

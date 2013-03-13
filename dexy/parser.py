@@ -185,18 +185,29 @@ class Parser(dexy.plugin.Plugin):
     Parse various types of config file.
     """
     ALIASES = []
-    _SETTINGS = {}
+    _SETTINGS = {
+            'warn-if-not-unique' : ("Warn if more than 1 config file with this setting set to True is found in a directory.", False)
+            }
 
     __metaclass__ = dexy.plugin.PluginMeta
 
-    @classmethod
-    def is_active(klass):
+    def __init__(self, wrapper=None, ast=None):
+        self.wrapper = wrapper
+
+    def is_active(self):
         return True
 
-    def file_exists(self, filepath):
-        if not self.wrapper:
-            raise Exception("wrapper is none")
-        return filepath in self.wrapper.filemap
+    def standardize_alias(klass, alias):
+        task_class, settings = dexy.task.Task.plugins[alias]
+        return task_class.ALIASES[0]
+
+    def standardize_key(self, key):
+        """
+        Only standardized keys should be used in the AST, so we don't create 2
+        entries for what turns out to be the same task.
+        """
+        alias, pattern = self.qualify_key(key)
+        return "%s:%s" % (alias, pattern)
 
     def qualify_key(self, key):
         """
@@ -230,18 +241,18 @@ class Parser(dexy.plugin.Plugin):
         alias = self.standardize_alias(alias)
         return alias, pattern
 
-    @classmethod
-    def standardize_alias(klass, alias):
-        task_class, settings = dexy.task.Task.plugins[alias]
-        return task_class.ALIASES[0]
+    def file_exists(self, filepath):
+        if not self.wrapper:
+            raise Exception("wrapper is none")
+        return filepath in self.wrapper.filemap
 
-    def standardize_key(self, key):
-        """
-        Only standardized keys should be used in the AST, so we don't create 2
-        entries for what turns out to be the same task.
-        """
-        alias, pattern = self.qualify_key(key)
-        return "%s:%s" % (alias, pattern)
+class DocumentConfig(Parser):
+    """
+    Parse various types of config file.
+    """
+    _SETTINGS = {
+            'warn-if-not-unique' : True
+            }
 
     def __init__(self, wrapper=None, ast=None):
         self.wrapper = wrapper

@@ -12,6 +12,7 @@ script:scriptnode:
     - middle.sh|shint
     - end.sh|shint
 """
+
 def test_script_node_caching():
     with wrap() as wrapper:
         with open("start.sh", "w") as f:
@@ -28,6 +29,7 @@ def test_script_node_caching():
 
         wrapper.walk()
         wrapper.setup_batch()
+        wrapper.log_level = 'DEBUG'
         wrapper.run()
 
         tasks = [
@@ -41,6 +43,7 @@ def test_script_node_caching():
 
         wrapper2 = Wrapper()
         wrapper2.setup()
+        wrapper2.log_level = 'DEBUG'
         wrapper2.run()
 
         for t in tasks:
@@ -51,6 +54,7 @@ def test_script_node_caching():
 
         wrapper3 = Wrapper()
         wrapper3.setup()
+        wrapper3.log_level = 'DEBUG'
         wrapper3.run()
 
         for t in tasks:

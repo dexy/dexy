@@ -1,4 +1,4 @@
-from dexy.parsers.standard import YamlFileParser
+from dexy.parsers.standard import Yaml
 from dexy.tests.utils import wrap
 from dexy.tests.utils import tempdir
 import os
@@ -32,7 +32,7 @@ def test_except_patterndoc():
         with open("exceptme.abc", "w") as f:
             f.write("hello")
 
-        parser = YamlFileParser(wrapper=wrapper)
+        parser = Yaml(wrapper=wrapper)
         parser.parse(""".abc:\n  - except : 'exceptme.abc' """)
         wrapper.batch.run()
 
@@ -43,7 +43,7 @@ def test_except_patterndoc_pattern():
         with open("exceptme.abc", "w") as f:
             f.write("hello")
 
-        parser = YamlFileParser(wrapper)
+        parser = Yaml(wrapper)
         parser.parse(""".abc:\n  - except : 'exceptme.*' """)
         wrapper.batch.run()
 
@@ -51,7 +51,7 @@ def test_except_patterndoc_pattern():
 
 def test_children_siblings_order():
     with wrap() as wrapper:
-        parser = YamlFileParser(wrapper)
+        parser = Yaml(wrapper)
         parser.parse("""
         p1:
             - c1
@@ -96,7 +96,7 @@ def test_single_file_doc():
             f.write("hello")
 
         wrapper.walk()
-        parser = YamlFileParser(wrapper)
+        parser = Yaml(wrapper)
         parser.parse("hello.txt")
 
         wrapper.batch.run()
@@ -104,7 +104,7 @@ def test_single_file_doc():
 
 def test_single_bundle_doc():
     with wrap() as wrapper:
-        parser = YamlFileParser(wrapper)
+        parser = Yaml(wrapper)
         parser.parse("hello")
 
         wrapper.batch.run()
@@ -112,7 +112,7 @@ def test_single_bundle_doc():
 
 def test_single_bundle_doc_with_args():
     with wrap() as wrapper:
-        parser = YamlFileParser(wrapper)
+        parser = Yaml(wrapper)
         parser.parse("""
         more:
             - hello
@@ -138,7 +138,7 @@ def test_single_bundle_doc_with_args():
 
 def test_single_bundle_doc_with_args_2():
     with wrap() as wrapper:
-        parser = YamlFileParser(wrapper)
+        parser = Yaml(wrapper)
         parser.parse("""
 
       -  hello:

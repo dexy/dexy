@@ -51,14 +51,13 @@ class Task(dexy.plugin.Plugin):
             self.wrapper = args['wrapper']
 
     def set_hashstring(self):
-        if hasattr(self, 'log'):
-            self.log.debug("calculating hash for %s" % self.key_with_class())
-            self.log.debug("calculating hash %s" % self.metadata.get_string_for_hash())
         self.hashstring = self.metadata.compute_hash()
-        if hasattr(self, 'log'):
-            self.log.debug("calculating hash: result: %s" % self.hashstring)
-            if hasattr(self, 'output_data'):
-                self.log.debug("calculating hash: is cached: %s" % self.output_data.is_cached())
+
+    def set_hashstring_without_inputs(self):
+        self.hashstring_without_inputs = self.metadata.compute_hash_without_inputs()
+
+    def set_hashstring_with_children(self):
+        self.hashstring = self.metadata.compute_hash_with_children()
 
     def transition(self, to_state):
         if (self.state, to_state) in self.STATE_TRANSITIONS:

@@ -103,6 +103,9 @@ class Batch(object):
             for task in node:
                 task()
 
+        for node in nodes:
+            node.call_after_setup()
+
         self.state = 'running'
         self.wrapper.log.info("in state %s" % self.state)
 

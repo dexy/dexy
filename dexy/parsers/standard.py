@@ -1,10 +1,10 @@
-from dexy.parser import Parser
+from dexy.parser import DocumentConfig
 from dexy.utils import parse_json
 from dexy.utils import parse_yaml
 import dexy.exceptions
 import re
 
-class YamlFileParser(Parser):
+class Yaml(DocumentConfig):
     """
     Parses YAML configs.
     """
@@ -90,7 +90,7 @@ class YamlFileParser(Parser):
         config = parse_yaml(input_text)
         parse_keys(config, top=True)
 
-class TextFileParser(Parser):
+class TextFile(DocumentConfig):
     """
     parses plain text configs
     """
@@ -122,7 +122,7 @@ class TextFileParser(Parser):
                 for child_key in self.ast.lookup_table.keys():
                     self.ast.add_dependency(self.join_dir(directory, key), self.join_dir(directory, child_key))
 
-class OriginalDexyParser(Parser):
+class Original(DocumentConfig):
     """
     parses JSON config files like .dexy
     """

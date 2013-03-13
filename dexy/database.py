@@ -21,6 +21,7 @@ class Sqlite3(Database):
     Implementation of dexy database using sqlite3.
     """
     START_BATCH_ID = 1001
+    COMMIT_EVERY = 500
     ALIASES = ['sqlite3', 'sqlite']
     FIELDS = [
             ("unique_key", "text"),
@@ -191,12 +192,17 @@ class Sqlite3(Database):
         else:
             doc_key = task.key
 
+        if hasattr(task, 'hashstring'):
+            hashstring = task.hashstring
+        else:
+            hashstring = None
+        
         attrs = {
                 'doc_key' : doc_key,
                 'batch_id' : task.wrapper.batch.batch_id,
                 'class_name' : task.__class__.__name__,
                 'created_by_doc' : task.created_by_doc,
-                'hashstring' : task.hashstring,
+                'hashstring' : hashstring,
                 'key' : task.key,
                 'started_at' : datetime.now(),
                 'unique_key' : task.unique_key(),
@@ -281,9 +287,8 @@ class Sqlite3(Database):
 
         self.conn_execute(sql, values)
 
-        # make sure we don't go too long before committing changes to sqlite
         self._pending_transaction_counter += 1
-        if self._pending_transaction_counter > 500:
+        if self._pending_transaction_counter > self.COMMIT_EVERY:
             self.commit()
             self._pending_transaction_counter = 0
 

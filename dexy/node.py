@@ -13,7 +13,7 @@ class Node(dexy.task.Task):
         super(Node, self).__init__(key, **kwargs)
         self.inputs = list(kwargs.get('inputs', []))
 
-    def hashstring(self):
+    def calculate_hashstring(self):
         return self.metadata.compute_hash()
 
     def walk_inputs(self):
@@ -34,24 +34,15 @@ class Node(dexy.task.Task):
             for child in node.children:
                 yield child
 
-    def setup(self):
-        self.set_log()
-        self.log.debug("calculating hash: inputs for node are: %s" % self.inputs)
-        self.metadata.input_hashstrings = ",".join(i.hashstring for i in self.inputs)
-        self.set_hashstring()
+    def call_after_setup(self):
+        print "in call_after_setup for %s" % self.key_with_class()
+        self.after_setup()
+        for inpt in self.inputs:
+            inpt.call_after_setup()
 
-        # Now update child hashstrings for inputs.
-        for doc in self.children:
-            for artifact in doc.children[1:]:
-                artifact.metadata.node_hashstring = self.hashstring
-                artifact.set_hashstring()
-                artifact.setup_output_data()
-                artifact.input_data = artifact.prior.output_data
-
-        # Now update node's hashstring for children, won't affect children but
-        # will affect other docs using this node as an input.
-        self.metadata.child_hashstrings = ",".join(c.hashstring for c in self.children)
-        self.set_hashstring()
+    def after_setup(self):
+        print "in after_setup for %s, doing nothing" % self.key_with_class()
+        pass
 
 class DocNode(Node):
     """
@@ -68,6 +59,34 @@ class DocNode(Node):
         doc.populate()
         doc.transition('populated')
 
+    def after_setup(self):
+        self.set_hashstring()
+
+        # Now update child hashstrings for inputs.
+        for doc in self.children:
+            for i, artifact in enumerate(doc.children):
+                if i == 0:
+                    artifact.set_hashstring()
+                    artifact.setup_output_data()
+                else:
+                    artifact.metadata.hash_info['inputs'][self.key_with_class()] = self.hashstring
+                    artifact.set_hashstring()
+                    artifact.input_data = artifact.prior.output_data
+                    artifact.setup_output_data()
+
+        # Now update node's hashstring for children, won't affect children but
+        # will affect other docs using this node as an input.
+        for doc in self.children:
+            self.metadata.hash_info['children'][doc.key_with_class()] = doc.final_artifact.hashstring_without_inputs
+        self.set_hashstring_with_children()
+
+class AdditionalDocNode(Node):
+    """
+    Node containing an additional doc created from a document.
+    """
+    ALIASES = ['additional']
+    pass
+
 class BundleNode(Node):
     """
     Node representing a bundle of other nodes.
@@ -83,22 +102,16 @@ class ScriptNode(BundleNode):
     ALIASES = ['script']
 
     def setup(self):
-        self.metadata.input_hashstrings = ",".join(i.hashstring for i in self.inputs)
-        self.metadata.child_hashstrings = ",".join(c.hashstring for c in self.children)
-        self.set_hashstring()
-
-        for node in self.inputs:
-            doc = node.children[0]
-            for artifact in doc.children[1:]:
-                artifact.metadata.node_hashstring = self.hashstring
-                artifact.set_hashstring()
+        self.set_log()
 
         # Create a shared key-value store that children can access.
         self.script_storage = {}
 
-    def populate(self):
-        for inpt in self.inputs:
-            inpt.parent = self
+    def after_setup(self):
+        for i in self.inputs:
+            i.set_hashstring()
+        self.metadata.input_hashstrings = ",".join(i.hashstring for i in self.inputs)
+        self.set_hashstring()
 
 class PatternNode(Node):
     """
@@ -139,4 +152,3 @@ class PatternNode(Node):
                     self.children.append(doc)
                     doc.populate()
                     doc.transition('populated')
-

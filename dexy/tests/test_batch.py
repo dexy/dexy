@@ -1,5 +1,5 @@
 from dexy.tests.utils import wrap
-from dexy.parsers.standard import YamlFileParser
+from dexy.parsers.standard import Yaml
 
 YAML = """foo:
     - bar
@@ -15,7 +15,7 @@ xyz:
 
 def run_yaml_with_target(target):
     with wrap() as wrapper:
-        parser = YamlFileParser()
+        parser = Yaml()
         parser.wrapper = wrapper
         parser.parse(YAML)
         assert len(wrapper.batch.tree) == 3

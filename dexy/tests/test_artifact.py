@@ -176,8 +176,8 @@ def test_parent_doc_hash():
         hashstring = doc.final_artifact.hashstring
 
         wrapper = Wrapper(*args)
-        wrapper.setup_db()
         wrapper.setup_log()
+        wrapper.setup_db()
         wrapper.setup_batch()
         rows = wrapper.db.get_child_hashes_in_previous_batch(hashstring)
         assert len(rows) == 3

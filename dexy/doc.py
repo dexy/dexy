@@ -145,10 +145,6 @@ class Doc(dexy.task.Task):
         artifact.transition('populated')
         self.add_artifact(artifact)
 
-    def setup(self):
-        self.metadata.final_artifact_hashstring = self.final_artifact.hashstring
-        self.set_hashstring()
-
     def populate(self):
         self.set_log()
         self.name = self.key.split("|")[0]

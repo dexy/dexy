@@ -209,6 +209,7 @@ class WebsiteReporter(OutputReporter):
         self.wrapper=wrapper
         self.set_log()
         self.keys_to_outfiles = []
+        self.locations = {}
 
         self._navobj = Navigation()
         self._navobj.populate_lookup_table(self.wrapper.batch.docs())

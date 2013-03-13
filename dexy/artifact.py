@@ -129,11 +129,7 @@ class Artifact(dexy.task.Task):
         self.set_metadata_attrs()
 
         # sets hashstring w/o node data, will be set again by node.
-        self.set_hashstring()
-
-        if hasattr(self, 'prior') and self.prior:
-            self.input_data = self.prior.output_data
-        self.setup_output_data()
+        self.set_hashstring_without_inputs()
 
 class InitialArtifact(Artifact):
     """
@@ -143,11 +139,11 @@ class InitialArtifact(Artifact):
         pass
 
     def set_metadata_attrs(self):
-        self.metadata.key = self.key
-
         stat_info = self.wrapper.filemap[self.name]['stat']
-        self.metadata.mtime = stat_info[stat.ST_MTIME]
-        self.metadata.size = stat_info[stat.ST_SIZE]
+
+        self.metadata.hash_info['file']['key'] = self.key
+        self.metadata.hash_info['file']['mtime'] = stat_info[stat.ST_MTIME]
+        self.metadata.hash_info['file']['size'] = stat_info[stat.ST_SIZE]
 
     def set_output_data(self):
         self.output_data.copy_from_file(self.name)
@@ -211,10 +207,10 @@ class InitialVirtualArtifact(InitialArtifact):
 
     def set_metadata_attrs(self):
         if self.args.get('dirty'):
-            self.metadata.dirty = time.time()
+            self.metadata.hash_info['args']['dirty'] = time.time()
 
-        self.metadata.key = self.key
-        self.metadata.contentshash = self.get_contents_hash()
+        self.metadata.hash_info['file']['key'] = self.key
+        self.metadata.hash_info['file']['contentshash'] = self.get_contents_hash()
 
     def set_output_data(self):
         self.output_data.set_data(self.get_contents())
@@ -327,27 +323,26 @@ class FilterArtifact(Artifact):
                 assert new_calc_hashstring == db_hashstring, msg
 
     def set_metadata_attrs(self):
-        self.metadata.dexy_version = DEXY_VERSION
-        self.metadata.ext = self.ext
-        self.metadata.key = self.key
-        self.metadata.next_filter_name = self.next_filter_name
+        self.metadata.hash_info['env']['dexy-version'] = DEXY_VERSION
+        self.metadata.hash_info['args']['ext'] = self.ext
+        self.metadata.hash_info['args']['next-filter-name'] = self.next_filter_name
+        self.metadata.hash_info['file']['key'] = self.key
 
-        # hash of the artifact supplying input to this
-        self.metadata.prior_hash = self.prior.hashstring
+        # TODO break this up so we can determine if just file has changed
+        self.metadata.hash_info['env']['prior-hash'] = self.prior.hashstring_without_inputs
 
         # args passed to this document by user
-        strargs = []
         skip_arg_keys = ['wrapper']
+        self.metadata.hash_info['args']['args'] = {}
         for k in sorted(self.args):
             if not k in skip_arg_keys:
                 v = str(self.args[k])
-                strargs.append("%s: %s" % (k, v))
-        self.metadata.argstr = ", ".join(strargs)
+                self.metadata.hash_info['args'][k] = v
 
         # version of external software being run, if any
         if hasattr(self.filter_instance, 'version'):
             version = self.filter_instance.version()
-            self.metadata.software_version = version
+            self.metadata.hash_info['env']['software-version'] = version
 
     def add_doc(self, doc, run=True):
         if doc.state == 'complete':
@@ -369,6 +364,8 @@ class FilterArtifact(Artifact):
             for task in (doc,):
                 for t in task:
                     t()
+            doc.children[0].set_hashstring()
+            doc.children[0].setup_output_data()
             for task in (doc,):
                 for t in task:
                     t()

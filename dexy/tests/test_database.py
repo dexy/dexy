@@ -9,7 +9,7 @@ def test_add_task():
                 "args" : {},
                 "doc.key" : "abc23456",
                 'hashstring' : '12345',
-                "key_with_batch_id.return_value" : "def1234556",
+                "unique_key.return_value" : "def1234556",
                 "wrapper.batch.batch_id" : 1001,
                 "state" : "running",
                 "created_by_doc" : None,
@@ -37,7 +37,7 @@ def test_update_task():
         attrs = {
                 "args" : {},
                 "doc.key" : "abc23456",
-                "key_with_batch_id.return_value" : "def1234556",
+                "unique_key.return_value" : "def1234556",
                 "wrapper.batch.batch_id" : 1001,
                 "hashstring" : "abc123001",
                 "output_data.name" : "abc23456",
