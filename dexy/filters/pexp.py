@@ -17,7 +17,7 @@ class PexpectReplFilter(SubprocessFilter):
     """
     Base class for filters which use pexpect to retrieve output line-by-line based on detecting prompts.
     """
-    _SETTINGS = {
+    _settings = {
             'trim-prompt' : ("The closing prompt to be trimmed off.", '>>>'),
             'line-ending' : ("The line ending returned by REPL.", "\n"),
             'save-vars-to-json-cmd' : ("Command to be run to save variables to a JSON file.", None),
@@ -86,7 +86,7 @@ class PexpectReplFilter(SubprocessFilter):
                 raise UserFeedback("You specified record-vars but this option isn't available since SAVE_VARS_TO_JSON_CMD is not set for this filter.")
 
             section_text = self.setting('save-vars-to-json-cmd') % self.input().basename()
-            self.log.debug("Adding save-vars-to-json-cmd code:\n%s" % section_text)
+            self.log_debug("Adding save-vars-to-json-cmd code:\n%s" % section_text)
             input_dict['dexy--save-vars'] = section_text
             if not self.setting('add-new-files'):
                 docstr = self._settings['add-new-files'][0]
@@ -98,32 +98,32 @@ class PexpectReplFilter(SubprocessFilter):
 
         if self.setting('ps1'):
             ps1 = self.setting('ps1')
-            self.log.debug("Setting PS1 to %s" % ps1)
+            self.log_debug("Setting PS1 to %s" % ps1)
             env['PS1'] = ps1
 
         if self.setting('ps2'):
             ps2 = self.setting('PS2')
-            self.log.debug("Setting PS2 to %s" % ps2)
+            self.log_debug("Setting PS2 to %s" % ps2)
             env['PS2'] = ps2
 
         if self.setting('ps3'):
             ps3 = self.arg_value('PS3')
-            self.log.debug("Setting PS3 to %s" % ps3)
+            self.log_debug("Setting PS3 to %s" % ps3)
             env['PS3'] = ps3
 
         if self.setting('ps4'):
             ps4 = self.arg_value('PS4')
-            self.log.debug("Setting PS4 to %s" % ps4)
+            self.log_debug("Setting PS4 to %s" % ps4)
             env['PS4'] = ps4
 
         timeout = self.setup_timeout()
         initial_timeout = self.setup_initial_timeout()
 
-        self.log.debug("timeout set to '%s'" % timeout)
+        self.log_debug("timeout set to '%s'" % timeout)
 
         wd=self.setup_wd()
         executable = self.setting('executable')
-        self.log.debug("About to spawn new process '%s' in %s." % (executable, wd))
+        self.log_debug("About to spawn new process '%s' in %s." % (executable, wd))
 
         # Spawn the process
         proc = pexpect.spawn(
@@ -131,7 +131,7 @@ class PexpectReplFilter(SubprocessFilter):
                 cwd=wd,
                 env=env)
 
-        self.log.debug("Capturing initial prompt...")
+        self.log_debug("Capturing initial prompt...")
         initial_prompt = self.setting('initial-prompt')
         try:
             if initial_prompt:
@@ -157,8 +157,8 @@ class PexpectReplFilter(SubprocessFilter):
 
         start = proc.before + proc.after
 
-        self.log.debug(u"Initial prompt captured!")
-        self.log.debug(unicode(start))
+        self.log_debug(u"Initial prompt captured!")
+        self.log_debug(unicode(start))
 
         for section_key, section_text in input_dict.items():
             section_transcript = start
@@ -166,7 +166,7 @@ class PexpectReplFilter(SubprocessFilter):
 
             lines = self.lines_for_section(section_text)
             for l in lines:
-                self.log.debug(u"Sending '%s'" % l)
+                self.log_debug(u"Sending '%s'" % l)
                 section_transcript += start
                 proc.send(l.rstrip() + "\n")
                 try:
@@ -176,12 +176,12 @@ class PexpectReplFilter(SubprocessFilter):
                         proc.expect_exact(search_terms, timeout=timeout)
 
 
-                    self.log.debug(u"Received '%s'" % unicode(proc.before, errors='replace'))
+                    self.log_debug(u"Received '%s'" % unicode(proc.before, errors='replace'))
 
                     section_transcript += self.strip_newlines(proc.before)
                     start = proc.after
                 except pexpect.EOF:
-                    self.log.debug("EOF occurred!")
+                    self.log_debug("EOF occurred!")
                     raise DexyEOFException()
                 except pexpect.TIMEOUT:
                     msg = "failed at matching prompt within %s seconds. " % timeout
@@ -213,7 +213,7 @@ class PexpectReplFilter(SubprocessFilter):
         output = OrderedDict()
 
         for section_key, section_transcript in self.section_output(self.input().as_sectioned()):
-            self.log.debug("Processing section %s" % section_key)
+            self.log_debug("Processing section %s" % section_key)
             section_output = self.strip_trailing_prompts(section_transcript)
 
             output[section_key] = section_output
@@ -230,8 +230,8 @@ class IpythonPexpectReplFilter(PexpectReplFilter):
     """
     Runs python code in ipython.
     """
-    ALIASES = ['ipython']
-    _SETTINGS = {
+    aliases = ['ipython']
+    _settings = {
             'executable' : 'ipython --classic',
             'check-return-code' : False,
             'input-extensions' : [".txt", ".py"],
@@ -246,8 +246,8 @@ class ClojureInteractiveFilter(PexpectReplFilter):
     """
     Runs clojure.
     """
-    ALIASES = ['clj', 'cljint']
-    _SETTINGS = {
+    aliases = ['clj', 'cljint']
+    _settings = {
             'check-return-code' : False,
             'executable' : 'clojure -r',
             'input-extensions' : [".clj", ".txt"],

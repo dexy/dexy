@@ -15,12 +15,12 @@ class Filter(dexy.plugin.Plugin):
     """
     __metaclass__ = dexy.plugin.PluginMeta
 
-    ALIASES = ['dexy']
+    aliases = ['dexy']
     TAGS = []
-    NODOC_SETTINGS = [
+    NODOC_settings = [
             'help', 'nodoc'
             ]
-    _SETTINGS = {
+    _settings = {
             'add-new-files' : ('', False),
             'additional-doc-filters' : ('', {}),
             'ext' : ('Extension to output.', None),
@@ -37,54 +37,130 @@ class Filter(dexy.plugin.Plugin):
             'vars' : ('', {}),
             }
 
+    def __init__(self, doc=None):
+        self.doc = doc
+
+    def data_class_alias(self, ext):
+        return self.setting('output-data-type')
+
+    def setup(self, key, storage_key, prev_filter, next_filter):
+        self.key = key
+        self.storage_key = storage_key
+        self.prev_filter = prev_filter
+        self.next_filter = next_filter
+
+        if self.prev_filter:
+            self.input_data = self.prev_filter.output
+            self.prev_ext = self.prev_filter.ext
+        else:
+            self.input_data = self.doc.initial_data
+            self.prev_ext = self.doc.initial_data.ext
+
+        self.set_extension()
+    
+        self.output = dexy.data.Data.create_instance(
+                self.data_class_alias(self.ext),
+                self.key,
+                self.ext,
+                self.calculate_canonical_name(),
+                self.storage_key,
+                {},
+                None,
+                self.doc.wrapper
+                )
+        self.output.setup_storage()
+
+    def set_extension(self):
+        i_accept = self.setting('input-extensions')
+        i_output = self.setting('output-extensions')
+
+        if self.prev_filter:
+            prev_ext = self.prev_filter.ext
+        else:
+            prev_ext = self.doc.ext
+
+        # Check that we can handle input extension
+        if set([prev_ext, ".*"]).isdisjoint(set(i_accept)):
+            msg = "Filter '%s' in '%s' can't handle file extension %s, supported extensions are %s"
+            params = (self.filter_alias, self.key, prev_ext, ", ".join(i_accept))
+            raise dexy.exceptions.UserFeedback(msg % params)
+
+        # Figure out output extension
+        ext = self.setting('ext')
+        if ext:
+            # User has specified desired extension
+            if not ext.startswith('.'):
+                ext = '.%s' % ext
+
+            # Make sure it's a valid one
+            if (not ext in i_output) and (not ".*" in i_output):
+                msg = "You have requested file extension %s in %s but filter %s can't generate that."
+                raise dexy.exceptions.UserFeedback(msg % (ext, self.key, self.filter_alias))
+
+            self.ext = ext
+
+        elif ".*" in i_output:
+            self.ext = prev_ext
+
+        else:
+            # User has not specified desired extension, and we don't output wildcards,
+            # figure out extension based on next filter in sequence, if any.
+            if self.next_filter:
+                next_filter_accepts = self.next_filter.setting('input-extensions')
+
+                if ".*" in next_filter_accepts:
+                    self.ext = i_output[0]
+                else:
+                    if set(i_output).isdisjoint(set(next_filter_accepts)):
+                        msg = "Filter %s can't go after filter %s, no file extensions in common."
+                        raise dexy.exceptions.UserFeedback(msg % (self.next_filter_alias, self.filter_alias))
+
+                    for e in i_output:
+                        if e in next_filter_accepts:
+                            self.ext = e
+
+                    if not self.ext:
+                        msg = "no file extension found but checked already for disjointed, should not be here"
+                        raise dexy.exceptions.InternalDexyProblem(msg)
+            else:
+                self.ext = i_output[0]
+
     def templates(self):
         """
         List of dexy templates which refer to this filter.
         """
         import dexy.template
-        return [t for t in dexy.template.Template if any(a for a in self.ALIASES if a in t.FILTERS_USED)]
+        return [t for t in dexy.template.Template if any(a for a in self.aliases if a in t.FILTERS_USED)]
 
     def filter_specific_settings(self):
-        nodoc = self.NODOC_SETTINGS
-        base = dexy.filter.Filter._SETTINGS
+        nodoc = self.NODOC_settings
+        base = dexy.filter.Filter._settings
         return dict((k, v) for k, v in self._settings.iteritems() if not k in nodoc and not k in base)
 
-    def info(self):
-        info = {}
-        info['settings'] = {}
-        for k, tup in self.filter_specific_settings().iteritems():
-            info['settings'][k] = {}
-            info['settings'][k]['help'] = tup[0]
-            info['settings'][k]['default'] = tup[1]
-            info['settings'][k]['is-env-var'] = hasattr(tup[1], 'startswith') and tup[1].startswith("$")
-        return info
+    def key_with_class(self):
+        return "%s:%s" % (self.__class__.__name__, self.key)
 
-    def is_active(self):
-        return True
+    def log_debug(self, message):
+        self.doc.wrapper.log.debug("%s: %s" % (self.key_with_class(), message))
 
-    def inactive_because(self):
-        raise Exception("not implemented")
+    def log_info(self, message):
+        self.doc.wrapper.log.info("%s: %s" % (self.key_with_class(), message))
 
-    def update_all_args(self, new_args):
-        self.artifact.doc.args.update(new_args)
-        for a in self.artifact.doc.children[1:]:
-            a.update_args(new_args)
-
-    def data_class_alias(self, file_ext):
-        return self.setting('output-data-type')
-
-    def do_add_new_files(self):
-        return self.setting('add-new-files')
+    def log_warn(self, message):
+        self.doc.wrapper.log.warn("%s: %s" % (self.key_with_class(), message))
 
     def process(self):
+        """
+        Run the filter, converting input to output.
+        """
         pass
 
     def calculate_canonical_name(self):
-        name_without_ext = posixpath.splitext(self.artifact.key)[0]
-        return "%s%s" % (name_without_ext, self.artifact.ext)
+        name_without_ext = posixpath.splitext(self.key)[0]
+        return "%s%s" % (name_without_ext, self.ext)
 
     def doc_arg(self, arg_name_hyphen, default=None):
-        return self.artifact.doc.arg_value(arg_name_hyphen, default)
+        return self.doc.arg_value(arg_name_hyphen, default)
 
     def add_doc(self, doc_name, doc_contents=None, run=True, shortcut=None):
         doc_name = os_to_posix(doc_name)
@@ -92,7 +168,7 @@ class Filter(dexy.plugin.Plugin):
             doc_name = posixpath.join(self.input().parent_dir(), doc_name)
 
         additional_doc_filters = self.setting('additional-doc-filters')
-        self.log.debug("additional-doc-filters are %s" % additional_doc_filters)
+        self.log_debug("additional-doc-filters are %s" % additional_doc_filters)
 
         doc_ext = os.path.splitext(doc_name)[1]
 
@@ -109,60 +185,36 @@ class Filter(dexy.plugin.Plugin):
             if self.setting('keep-originals'):
                 doc_key = doc_name
                 doc = dexy.doc.Doc(doc_key, contents=doc_contents)
-                self.artifact.add_doc(doc)
+                self.doc.add_doc(doc)
 
             doc_key = "%s|%s" % (doc_name, filters)
             doc = dexy.doc.Doc(doc_key, contents=doc_contents, shortcut=shortcut)
-            self.artifact.add_doc(doc, run=run)
+            self.doc.add_doc(doc, run=run)
 
         else:
             doc_key = doc_name
             doc = dexy.doc.Doc(doc_key, contents=doc_contents, shortcut=shortcut)
-            self.artifact.add_doc(doc, run=run)
+            self.doc.add_doc(doc, run=run)
 
         return doc
 
-    def input(self):
-        return self.artifact.input_data
+    def workspace(self):
+        return os.path.join(self.doc.wrapper.artifacts_dir, self.doc.wrapper.workspace, self.storage_key)
 
-    def inputs(self):
-        return self.artifact.doc.node.walk_inputs()
-
-    def input_filename(self):
-        return self.artifact.input_filename()
-
-    def output_filename(self):
-        return self.artifact.output_filename()
-
-    def output(self):
-        return self.artifact.output_data
-
-    def output_filepath(self):
-        return self.output().storage.data_file()
-
-    def processed(self):
-        return self.artifact.doc.node.walk_input_docs()
-
-    def final_ext(self):
-        return self.artifact.doc.final_artifact.ext
-
-    def setup_wd(self, populate=True):
-        wd = self.artifact.full_wd()
-        if not self.artifact._wd_setup:
-            self._wd_files_start = set()
-            input_filename = self.input_filename()
-            for doc, filename in self.artifact.setup_wd(input_filename):
-                self.write_to_wd(wd, doc, filename)
-        return wd
+    def populate_workspace(self):
+        os.makedirs(self.workspace())
+        for inpt in self.doc.walk_inputs():
+            print inpt.key_with_class()
+            print inpt.filters[-1].output_data.name
 
     def write_to_wd(self, wd, doc, filename):
         try:
-            doc.output().output_to_file(filename)
+            doc.output.output_to_file(filename)
             self._wd_files_start.add(filename)
         except Exception as e:
             args = (e.__class__.__name__, wd, self.artifact.key, doc.key, filename)
-            self.log.debug("%s error occurred whlie trying to populate working directory %s for %s with %s (%s)" % args)
-            self.log.debug(str(e))
+            self.log_debug("%s error occurred whlie trying to populate working directory %s for %s with %s (%s)" % args)
+            self.log_debug(str(e))
 
     def resolve_conflict(self, doc, conflict_docs):
         """
@@ -188,38 +240,38 @@ class DexyFilter(Filter):
     """
     Filter which implements some default behaviors.
     """
-    ALIASES = ['dexy']
+    aliases = ['dexy']
 
-    def data_class_alias(klass, file_ext):
-        if hasattr(klass, 'process_dict'):
+    def data_class_alias(self, file_ext):
+        if hasattr(self, 'process_dict'):
             return 'sectioned'
-        elif hasattr(klass, 'process_text_to_dict'):
+        elif hasattr(self, 'process_text_to_dict'):
             return 'sectioned'
         else:
-            return klass.setting('output-data-type')
+            return self.setting('output-data-type')
 
     def process(self):
         if hasattr(self, "process_text_to_dict"):
-            output = self.process_text_to_dict(unicode(self.input()))
-            self.output().set_data(output)
+            output = self.process_text_to_dict(unicode(self.input_data))
+            self.output.set_data(output)
 
         elif hasattr(self, "process_dict"):
-            output = self.process_dict(self.input().as_sectioned())
-            self.output().set_data(output)
+            output = self.process_dict(self.input_data.as_sectioned())
+            self.output.set_data(output)
 
         elif hasattr(self, "process_text"):
-            output = self.process_text(unicode(self.input()))
-            self.output().set_data(output)
+            output = self.process_text(unicode(self.input_data))
+            self.output.set_data(output)
 
         else:
-            self.output().copy_from_file(self.input().storage.data_file())
+            self.output.copy_from_file(self.input_data.storage.data_file())
 
 class AliasFilter(DexyFilter):
     """
     Filter to be used when an Alias is specified. Should not change input.
     """
-    ALIASES = ['-']
-    _SETTINGS = {
+    aliases = ['-']
+    _settings = {
             'preserve-prior-data-class' : True
             }
 

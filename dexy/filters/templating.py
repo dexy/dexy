@@ -17,9 +17,9 @@ class TemplateFilter(DexyFilter):
 
     Plugins are used to prepare content.
     """
-    ALIASES = ['template']
+    aliases = ['template']
 
-    _SETTINGS = {
+    _settings = {
             'output' : True,
             'variables' : ("Variables to be made available to document.", {}),
             'vars' : ("Variables to be made available to document.", {}),
@@ -38,7 +38,7 @@ class TemplateFilter(DexyFilter):
     def run_plugins(self):
         env = {}
         for plugin in self.template_plugins():
-            self.log.debug("Running template plugin %s" % plugin.__class__.__name__)
+            self.log_debug("Running template plugin %s" % plugin.__class__.__name__)
             new_env_vars = plugin.run()
             if any(v in env.keys() for v in new_env_vars):
                 new_keys = ", ".join(sorted(new_env_vars))
@@ -56,9 +56,9 @@ class JinjaFilter(TemplateFilter):
     """
     Runs the Jinja templating engine.
     """
-    ALIASES = ['jinja']
+    aliases = ['jinja']
 
-    _SETTINGS = {
+    _settings = {
             'block-start-string' : ("Tag to indicate the start of a block.", "{%"),
             'block-end-string' : ("Tag to indicate the start of a block.", "%}"),
             'variable-start-string' : ("Tag to indicate the start of a variable.", "{{"),
@@ -82,24 +82,24 @@ class JinjaFilter(TemplateFilter):
         skip_settings = ('changetags', 'jinja-path',)
         for k, v in self.setting_values().iteritems():
             underscore_k = k.replace("-", "_")
-            if k in self._SETTINGS and not k in skip_settings:
+            if k in self.__class__._settings and not k in skip_settings:
                 env_attrs[underscore_k] = v
 
         env_attrs['undefined'] = jinja2.StrictUndefined
 
-        if self.artifact.ext in (".tex", ".wiki") and self.setting('changetags'):
-            self.log.debug("Changing tags to latex/wiki format.")
+        if self.ext in (".tex", ".wiki") and self.setting('changetags'):
+            self.log_debug("Changing tags to latex/wiki format.")
             for k, v in self.TEX_TAGS.iteritems():
                 hyphen_k = k.replace("_", "-")
-                if env_attrs[k] == self._SETTINGS[hyphen_k][1]:
-                    self.log.debug("Setting %s to %s" % (k, v))
+                if env_attrs[k] == self._settings[hyphen_k][1]:
+                    self.log_debug("Setting %s to %s" % (k, v))
                     env_attrs[k] = v
 
         if loader:
             env_attrs['loader'] = loader
 
         debug_attr_string = ", ".join("%s: %r" % (k, v) for k, v in env_attrs.iteritems())
-        self.log.debug("creating jinja2 environment with: %s" % debug_attr_string)
+        self.log_debug("creating jinja2 environment with: %s" % debug_attr_string)
         return jinja2.Environment(**env_attrs)
 
     def handle_jinja_exception(self, e, input_text, template_data):
@@ -114,11 +114,11 @@ class JinjaFilter(TemplateFilter):
                 e.lineno = int(m.groups()[0])
             else:
                 e.lineno = 0
-                self.log.warn("unable to parse line number from traceback")
+                self.log_warn("unable to parse line number from traceback")
 
         args = {
                 'error_type' : e.__class__.__name__,
-                'key' : self.artifact.key,
+                'key' : self.key,
                 'lineno' : e.lineno,
                 'message' : e.message,
                 'name' : self.output().name,
@@ -154,13 +154,15 @@ class JinjaFilter(TemplateFilter):
         raise dexy.exceptions.UserFeedback("\n".join(result))
 
     def process(self):
-        wd = self.setup_wd()
+        self.populate_workspace()
+
+        wd = self.workspace()
         macro_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'macros'))
-        dirs = ['.', wd, self.artifact.full_wd(), macro_dir] + self.setting('jinja-path')
-        self.log.debug("setting up jinja FileSystemLoader with dirs %s" % ", ".join(dirs))
+        dirs = ['.', wd, os.path.dirname(self.doc.name), macro_dir] + self.setting('jinja-path')
+        self.log_debug("setting up jinja FileSystemLoader with dirs %s" % ", ".join(dirs))
         loader = FileSystemLoader(dirs)
 
-        self.log.debug("setting up jinja environment")
+        self.log_debug("setting up jinja environment")
         env = self.setup_jinja_env(loader=loader)
 
         env.filters['pygmentize'] = dexy.filters.templating_plugins.PygmentsStylesheet.highlight
@@ -171,30 +173,30 @@ class JinjaFilter(TemplateFilter):
         if dexy.filters.templating_plugins.PrettyPrintHtml.is_active():
             env.filters['prettify_html'] = dexy.filters.templating_plugins.PrettyPrintHtml.prettify_html
 
-        self.log.debug("initializing template")
+        self.log_debug("initializing template")
 
         template_data = self.run_plugins()
-        self.log.debug("jinja template data keys are %s" % ", ".join(sorted(template_data)))
+        self.log_debug("jinja template data keys are %s" % ", ".join(sorted(template_data)))
 
         try:
-            self.log.debug("about to create jinja template")
+            self.log_debug("about to create jinja template")
             template = env.get_template(self.input_filename())
-            self.log.debug("about to process jinja template")
+            self.log_debug("about to process jinja template")
             template.stream(template_data).dump(self.output_filepath(), encoding="utf-8")
         except (TemplateSyntaxError, UndefinedError, TypeError) as e:
             try:
-                self.log.debug("removing %s since jinja had an error" % self.output_filepath())
+                self.log_debug("removing %s since jinja had an error" % self.output_filepath())
                 os.remove(self.output_filepath())
             except os.error:
                 pass
             self.handle_jinja_exception(e, self.input().as_text(), template_data)
         except TemplateNotFound as e:
-            raise dexy.exceptions.UserFeedback("Jinja couldn't find the template '%s', make sure this file is an input to %s" % (e.message, self.artifact.doc.key))
+            raise dexy.exceptions.UserFeedback("Jinja couldn't find the template '%s', make sure this file is an input to %s" % (e.message, self.doc.key))
         except Exception as e:
             try:
-                self.log.debug("removing %s since jinja had an error" % self.output_filepath())
+                self.log_debug("removing %s since jinja had an error" % self.output_filepath())
                 os.remove(self.output_filepath())
             except os.error:
                 pass
-            self.log.debug(str(e))
+            self.log_debug(str(e))
             raise

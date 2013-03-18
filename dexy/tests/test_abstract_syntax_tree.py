@@ -3,13 +3,18 @@ from dexy.tests.utils import wrap
 
 def test_ast():
     with wrap() as wrapper:
-        wrapper.walk()
         ast = AbstractSyntaxTree(wrapper)
 
-        ast.add_task_info("abc.txt", foo='bar')
+        ast.add_node("abc.txt", foo='bar', contents = 'abc')
         ast.add_dependency("abc.txt", "def.txt")
-        ast.add_task_info("def.txt", foo='baz')
+        ast.add_node("def.txt", foo='baz', contents = 'def')
 
         assert ast.tree == ['doc:abc.txt']
-        assert ast.task_kwargs('doc:abc.txt')['foo'] == 'bar'
-        assert ast.task_kwargs('doc:def.txt')['foo'] == 'baz'
+        assert ast.args_for_node('doc:abc.txt')['foo'] == 'bar'
+        assert ast.args_for_node('doc:def.txt')['foo'] == 'baz'
+        assert ast.inputs_for_node('abc.txt') == ['doc:def.txt']
+        assert not ast.inputs_for_node('def.txt')
+
+        roots, nodes = ast.walk()
+        assert len(roots) == 1
+        assert len(nodes) == 2

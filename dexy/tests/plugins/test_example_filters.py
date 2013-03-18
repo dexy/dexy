@@ -1,6 +1,4 @@
-from dexy.artifact import InitialVirtualArtifact, FilterArtifact
 from dexy.doc import Doc
-from dexy.node import DocNode
 from dexy.tests.utils import assert_output
 from dexy.tests.utils import runfilter
 from dexy.tests.utils import wrap

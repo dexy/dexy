@@ -40,9 +40,9 @@ class WordPressFilter(ApiFilter):
     For now, we recommend using an external site to host your images and
     assets, such as Amazon S3.
     """
-    ALIASES = ['wp', 'wordpress']
+    aliases = ['wp', 'wordpress']
 
-    _SETTINGS = {
+    _settings = {
             'blog-id' : ("The wordpress blog id.", 0),
             'page-content-extensions' : ('', ['.md', '.txt', '.html']),
             'document-api-config-file' : 'wordpress.json',
@@ -98,7 +98,7 @@ class WordPressFilter(ApiFilter):
 
         for key, value in document_config.iteritems():
             if not key == "description":
-                self.log.debug("%s: %s" % (key, value))
+                self.log_debug("%s: %s" % (key, value))
 
         if post_id:
             self.api().metaWeblog.editPost(
@@ -126,7 +126,7 @@ class WordPressFilter(ApiFilter):
 
         for key, value in post_info.iteritems():
             if not key == "description":
-                self.log.debug("%s: %s" % (key, value))
+                self.log_debug("%s: %s" % (key, value))
 
         del document_config['description']
         document_config['publish'] = publish
@@ -155,9 +155,9 @@ class WordPressFilter(ApiFilter):
                      upload_file
                      )
 
-            self.log.debug("wordpress upload results: %s" % upload_result)
+            self.log_debug("wordpress upload results: %s" % upload_result)
             url = upload_result['url']
-            self.log.debug("uploaded %s to %s" % (self.artifact.key, url))
+            self.log_debug("uploaded %s to %s" % (self.artifact.key, url))
 
         self.output().set_data(url)
 

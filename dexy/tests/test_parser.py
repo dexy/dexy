@@ -1,9 +1,33 @@
-from dexy.parsers.standard import OriginalDexyParser
-from dexy.parsers.standard import TextFileParser
-from dexy.parsers.standard import YamlFileParser
+from dexy.parsers.standard import Yaml
+from dexy.parsers.standard import TextFile
+from dexy.parsers.standard import Original
 from dexy.tests.utils import wrap
 import dexy.exceptions
 import os
+from dexy.parser import AbstractSyntaxTree
+
+def test_text_parser():
+    with wrap() as wrapper:
+
+        with open("f1.py", "w") as f:
+            f.write("print 'hello'")
+
+        with open("f2.py", "w") as f:
+            f.write("print 'hello'")
+
+        with open("index.md", "w") as f:
+            f.write("")
+
+        ast = AbstractSyntaxTree(wrapper)
+        parser = TextFile(wrapper, ast)
+        parser.parse(".", """
+        *.py
+        *.py|pyg
+        *.md|jinja
+        """)
+
+        docs = wrapper.batch.docs()
+        assert len(docs) == 5
 
 YAML_WITH_INACTIVE = """
 foo:
@@ -12,7 +36,7 @@ foo:
 
 def test_parse_inactive():
     with wrap() as wrapper:
-        parser = YamlFileParser(wrapper)
+        parser = Yaml(wrapper)
         parser.parse(YAML_WITH_INACTIVE)
 
         wrapper.batch.run()
@@ -25,22 +49,20 @@ foo:
 
 def test_parse_default():
     with wrap() as wrapper:
-        parser = YamlFileParser()
+        parser = Yaml()
         parser.wrapper = wrapper
         parser.parse(YAML_WITH_DEFAULT_OFF)
 
         wrapper.batch.run()
-        assert wrapper.batch.task_count == 0
         assert len(wrapper.batch.tasks()) == 1
 
     with wrap() as wrapper:
         wrapper.full = True
-        parser = YamlFileParser()
+        parser = Yaml()
         parser.wrapper = wrapper
         parser.parse(YAML_WITH_DEFAULT_OFF)
 
         wrapper.batch.run()
-        assert wrapper.batch.task_count == 1
         assert len(wrapper.batch.tasks()) == 1
 
 def test_yaml_with_defaults():
@@ -49,7 +71,9 @@ def test_yaml_with_defaults():
 
         with open("s1/s2/hello.txt", "w") as f:
             f.write("hello")
-        parser = YamlFileParser()
+
+        wrapper.walk()
+        parser = Yaml()
         parser.wrapper = wrapper
         parser.parse(YAML_WITH_DEFAULTS)
 
@@ -57,7 +81,7 @@ def test_yaml_with_defaults():
     
 def test_invalid_yaml():
     with wrap() as wrapper:
-        parser = YamlFileParser()
+        parser = Yaml()
         parser.wrapper = wrapper
         try:
             parser.parse(INVALID_YAML)
@@ -67,27 +91,32 @@ def test_invalid_yaml():
 
 def test_yaml_parser():
     with wrap() as wrapper:
-        parser = YamlFileParser()
+        parser = Yaml()
         parser.wrapper = wrapper
         parser.parse(YAML)
         docs = wrapper.batch.tree
         for doc in docs:
             assert doc.__class__.__name__ == 'BundleNode'
             assert doc.key in ['code', 'wordpress']
+            for inpt in doc.walk_inputs():
+                print inpt
+
+        wrapper.run()
+
 
 def test_text_parser_blank_lines():
     with wrap() as wrapper:
-        parser = TextFileParser(wrapper)
+        parser = TextFile(wrapper)
         parser.parse("\n\n")
         docs = wrapper.batch.tree
         assert len(docs) == 0
 
 def test_text_parser_comments():
     with wrap() as wrapper:
-        parser = TextFileParser()
+        parser = TextFile()
         parser.wrapper = wrapper
         parser.parse("""
-        valid.doc
+        valid.doc { "contents" : "foo" }
         # commented-out.doc
         """)
 
@@ -97,19 +126,19 @@ def test_text_parser_comments():
 
 def test_text_parser_valid_json():
     with wrap() as wrapper:
-        parser = TextFileParser()
+        parser = TextFile()
         parser.wrapper=wrapper
         parser.parse("""
-        doc.txt { "contents" : 123 }
+        doc.txt { "contents" : "123" }
         """)
 
         docs = wrapper.batch.tree
         assert docs[0].key == "doc.txt"
-        assert docs[0].args['contents'] == 123
+        assert docs[0].args['contents'] == "123"
 
 def test_text_parser_invalid_json():
     with wrap() as wrapper:
-        parser = TextFileParser()
+        parser = TextFile()
         parser.wrapper = wrapper
 
         try:
@@ -120,33 +149,9 @@ def test_text_parser_invalid_json():
         except dexy.exceptions.UserFeedback as e:
             assert 'unable to parse' in e.message
 
-def test_text_parser():
-    with wrap() as wrapper:
-        with open("f1.py", "w") as f:
-            f.write("print 'hello'")
-
-        with open("f2.py", "w") as f:
-            f.write("print 'hello'")
-
-        with open("index.md", "w") as f:
-            f.write("")
-
-        wrapper.walk()
-        parser = TextFileParser(wrapper)
-        parser.parse("""
-        *.py
-        *.py|pyg
-        *.md|jinja
-        """)
-
-        wrapper.batch.run()
-
-        docs = wrapper.batch.docs()
-        assert len(docs) == 5
-
 def test_text_parser_virtual_file():
     with wrap() as wrapper:
-        parser = TextFileParser()
+        parser = TextFile()
         parser.wrapper = wrapper
         parser.parse("""
         virtual.txt { "contents" : "hello" }
@@ -164,7 +169,7 @@ def test_original_parser():
         "*.txt" : {}
         }"""
 
-        parser = OriginalDexyParser()
+        parser = Original()
         parser.wrapper = wrapper
         parser.parse(conf)
 
@@ -178,7 +183,7 @@ def test_original_parser_allinputs():
         "*.md|jinja" : { "allinputs" : true }
         }"""
 
-        parser = OriginalDexyParser(wrapper)
+        parser = Original(wrapper)
         parser.wrapper = wrapper
         parser.parse(conf)
 
@@ -199,7 +204,8 @@ code:
 
 wordpress:
     - code
-    - test.txt|jinja
+    - test.txt|jinja:
+        - contents: 'test'
     - .md|jinja|markdown|wp
 """
 

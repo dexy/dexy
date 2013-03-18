@@ -14,8 +14,8 @@ class IdioFilter(PygmentsFilter):
     Apply idiopidae to split document into sections at ### @export
     "section-name" comments.
     """
-    ALIASES = ['idio', 'idiopidae']
-    _SETTINGS = {
+    aliases = ['idio', 'idiopidae']
+    _settings = {
             'output-extensions' : PygmentsFilter.MARKUP_OUTPUT_EXTENSIONS + PygmentsFilter.IMAGE_OUTPUT_EXTENSIONS + [".txt"]
             }
 
@@ -57,7 +57,7 @@ class IdioFilter(PygmentsFilter):
         add_new_files = self.do_add_new_files()
 
         for i, s in enumerate(builder.sections):
-            self.log.debug("In section no. %s name %s" % (i, s))
+            self.log_debug("In section no. %s name %s" % (i, s))
             lines = builder.statements[i]['lines']
             all_lines.extend(lines)
 
@@ -101,8 +101,8 @@ class IdioMultipleFormatsFilter(PygmentsFilter):
     "section-name" comments, then apply syntax highlighting for all available
     text-based formats.
     """
-    ALIASES = ['idiom']
-    _SETTINGS = {
+    aliases = ['idiom']
+    _settings = {
             'output-extensions' : ['.json']
             }
 
@@ -123,7 +123,7 @@ class IdioMultipleFormatsFilter(PygmentsFilter):
         lineno = 1
 
         for i, s in enumerate(builder.sections):
-            self.log.debug("In section no. %s name %s" % (i, s))
+            self.log_debug("In section no. %s name %s" % (i, s))
             lines = builder.statements[i]['lines']
             if len(lines) == 0:
                 next

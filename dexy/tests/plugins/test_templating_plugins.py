@@ -42,7 +42,7 @@ class TestSubdirectory(TemplateFilter):
     """
     test subdir
     """
-    ALIASES = ['testsubdir']
+    aliases = ['testsubdir']
     TEMPLATE_PLUGINS = [plugin.Subdirectories]
 
 def test_subdirectories():
@@ -65,7 +65,7 @@ class TestVariables(TemplateFilter):
     """
     test variables
     """
-    ALIASES = ['testvars']
+    aliases = ['testvars']
     TEMPLATE_PLUGINS = [plugin.Variables]
 
 def test_variables():
@@ -86,7 +86,7 @@ class TestGlobals(TemplateFilter):
     """
     test globals
     """
-    ALIASES = ['testglobals']
+    aliases = ['testglobals']
     TEMPLATE_PLUGINS = [plugin.Globals]
 
 def test_globals():

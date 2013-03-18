@@ -4,6 +4,7 @@ from dexy.reporters.output import OutputReporter
 from dexy.utils import iter_paths
 from dexy.utils import reverse_iter_paths
 from dexy.utils import file_exists
+from dexy.utils import dict_from_string
 from jinja2 import Environment
 from jinja2 import FileSystemLoader
 import dexy.exceptions
@@ -117,8 +118,8 @@ class WebsiteReporter(OutputReporter):
     Templates are applied to all files with .html extension which don't already
     contain "<head" or "<body" tags.
     """
-    ALIASES = ['ws']
-    _SETTINGS = {
+    aliases = ['ws']
+    _settings = {
             "dir" : "output-site",
             "default-template" : ("Path to the default template to apply.", "_template.html"),
             "plugins" : (
@@ -146,7 +147,7 @@ class WebsiteReporter(OutputReporter):
         if not template_path:
             raise dexy.exceptions.UserFeedback("no template path for %s" % doc.key)
         else:
-            self.log.debug("  using template %s for %s" % (template_path, doc.key))
+            self.log_debug("  using template %s for %s" % (template_path, doc.key))
 
         # Populate template environment
         env = Environment(undefined=jinja2.StrictUndefined)
@@ -154,7 +155,7 @@ class WebsiteReporter(OutputReporter):
         dirs = [".", os.path.dirname(__file__), os.path.dirname(template_path)]
         env.loader = FileSystemLoader(dirs)
 
-        self.log.debug("  loading template at %s" % template_path)
+        self.log_debug("  loading template at %s" % template_path)
         template = env.get_template(template_path)
 
         if doc.output().ext == '.html':
@@ -192,7 +193,7 @@ class WebsiteReporter(OutputReporter):
                 'year' : datetime.now().year
                 })
 
-        env_data.update(self.wrapper.parse_globals())
+        env_data.update(dict_from_string(self.wrapper.globals))
 
         fp = os.path.join(self.setting('dir'), doc.output().name).replace(".json", ".html")
 
@@ -202,30 +203,29 @@ class WebsiteReporter(OutputReporter):
         except os.error:
             pass
 
-        self.log.debug("  writing to %s" % (fp))
+        self.log_debug("  writing to %s" % (fp))
         template.stream(env_data).dump(fp, encoding="utf-8")
 
     def run(self, wrapper):
         self.wrapper=wrapper
-        self.set_log()
         self.keys_to_outfiles = []
         self.locations = {}
 
         self._navobj = Navigation()
-        self._navobj.populate_lookup_table(self.wrapper.batch.docs())
+        self._navobj.populate_lookup_table(self.wrapper.nodes)
         self._navobj.walk()
 
         self.create_reports_dir()
 
-        for doc in wrapper.batch.docs():
-            self.log.debug("processing doc %s" % doc.key_with_class())
+        for doc in wrapper.nodes.values():
+            self.log_debug("processing doc %s" % doc.key_with_class())
             if doc.is_canonical_output():
                 if doc.final_artifact.ext == ".html":
                     fragments = ('<html', '<body', '<head')
                     has_html_header = any(html_fragment in unicode(doc.output()) for html_fragment in fragments)
 
                     if has_html_header and not doc.arg_value('ws-template'):
-                        self.log.debug("  found html tag in output of %s" % doc.key)
+                        self.log_debug("  found html tag in output of %s" % doc.key)
                         self.write_canonical_doc(doc)
                     else:
                         self.apply_and_render_template(doc)
@@ -234,4 +234,4 @@ class WebsiteReporter(OutputReporter):
                 else:
                     self.write_canonical_doc(doc)
 
-        self.log.debug("finished")
+        self.log_debug("finished")

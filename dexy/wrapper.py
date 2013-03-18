@@ -1,230 +1,324 @@
-from dexy.utils import s
+from dexy.batch import Batch
+from dexy.exceptions import DeprecatedException
+from dexy.exceptions import InternalDexyProblem
+from dexy.exceptions import UserFeedback
 from dexy.utils import file_exists
-import dexy.batch
-import dexy.database
+from dexy.utils import s
 import dexy.doc
 import dexy.parser
 import dexy.reporter
+import dexy.utils
 import logging
 import logging.handlers
 import os
-import shutil
 import posixpath
+import shutil
+import time
 
 class Wrapper(object):
     """
-    Class that assists in interacting with dexy, including running dexy.
+    Class that manages run configuration and state and provides utilities such
+    as logging and setting up/tearing down workspace on file system.
     """
-    DEFAULTS = {
-        'artifacts_dir' : 'artifacts',
-        'config_file' : 'dexy.conf',
-        'danger' : False,
-        'db_alias' : 'sqlite3',
-        'db_file' : 'dexy.sqlite3',
-        'disable_tests' : False,
-        'dont_use_cache' : False,
-        'dry_run' : False,
-        'encoding' : 'utf-8',
-        'exclude' : '.git, .svn, tmp, cache',
-        'exclude_also' : '',
-        'full' : False,
-        'globals' : '',
-        'hashfunction' : 'md5',
-        'ignore_nonzero_exit' : False,
-        'log_dir' : 'logs',
-        'log_file' : 'dexy.log',
-        'log_format' : "%(name)s - %(levelname)s - %(message)s",
-        'log_level' : "INFO",
-        'plugins': '',
-        'profile' : False,
-        'recurse' : True,
-        'reports' : '',
-        'siblings' : False,
-        'silent' : False,
-        'strace' : False,
-        'target' : False,
-        'timing' : True,
-        'uselocals' : False
-    }
+    _required_dirs = ['artifacts_dir', 'log_dir']
 
-    LOG_LEVELS = {
-        'DEBUG' : logging.DEBUG,
-        'INFO' : logging.INFO,
-        'WARN' : logging.WARN
-    }
-
-    def __init__(self, *args, **kwargs):
-        self.args = args
+    def __init__(self, **kwargs):
         self.initialize_attribute_defaults()
         self.update_attributes_from_kwargs(kwargs)
-        self.filemap = {}
-        self.environment = {}
-        self.project_root = os.path.abspath(os.getcwd())
 
+        self.nodes = None
+        if self.dexy_dirs_exist():
+            self.setup_log()
+            self.project_root = os.path.abspath(os.getcwd())
+            self.filemap = self.map_files()
+
+    # Attributes
     def initialize_attribute_defaults(self):
-        for name, value in self.DEFAULTS.iteritems():
+        """
+        Applies the values in defaults dict to this wrapper instance.
+        """
+        for name, value in dexy.utils.defaults.iteritems():
             setattr(self, name, value)
 
     def update_attributes_from_kwargs(self, kwargs):
+        """
+        Updates instance values from a dictionary of kwargs, checking that the
+        attribute names are also present in defaults dict.
+        """
         for key, value in kwargs.iteritems():
-            if not key in self.DEFAULTS:
-                raise Exception("invalid kwargs %s" % key)
+            if not key in dexy.utils.defaults:
+                msg = "invalid kwarg '%s' being passed to wrapper, not defined in defaults dict" 
+                raise InternalDexyProblem(msg % key)
             setattr(self, key, value)
 
-    def setup(self, setup_dirs=False, log_config=True):
-        self.walk()
-        if setup_dirs:
-            self.setup_dexy_dirs()
-        self.check_dexy_dirs()
-        self.setup_log()
-        self.setup_db()
-        if log_config:
-            self.log_dexy_config()
-
-    def run(self):
-        self.setup()
-
-        self.batch = self.init_batch()
-        self.batch.run(self.target)
-
-        self.save_db()
-        self.log.debug("batch %s complete" % self.batch.batch_id)
-
-    def log_dexy_config(self):
-        self.log.debug("dexy has config:")
-        for k in sorted(self.__dict__):
-            if not k in ('ast', 'args', 'db', 'log', 'tasks'):
-                self.log.debug("  %s: %s" % (k, self.__dict__[k]))
-
-    def db_path(self):
-        return os.path.join(self.artifacts_dir, self.db_file)
-
-    def log_path(self):
-        return os.path.join(self.log_dir, self.log_file)
-
-    def setup_batch(self):
+    # Dexy Dirs
+    def iter_dexy_dirs(self):
         """
-        Shortcut method for calling init_batch and assigning to batch instance variable.
+        Iterate over the required dirs (e.g. artifacts, logs)
         """
-        self.batch = self.init_batch()
+        for d in self.__class__._required_dirs:
+            dirpath = self.__dict__[d]
+            safety_filepath = os.path.join(dirpath, self.safety_filename)
+            try:
+                stat = os.stat(dirpath)
+            except OSError:
+                stat = None
 
-    def init_batch(self):
-        batch = dexy.batch.Batch(self)
+            if stat:
+                if not file_exists(safety_filepath):
+                    raise UserFeedback("safety filepath does not exist")
 
-        if len(self.args) > 0:
-            batch.tree = self.docs_from_args()
-            batch.create_lookup_table()
-        else:
-            ast = self.load_doc_config()
-            batch.load_ast(ast)
+            yield (dirpath, safety_filepath, stat)
 
-        return batch
+    def dexy_dirs_exist(self):
+        """
+        Returns a boolean indicating whether dexy dirs exist.
+        """
+        return all(file_exists(d[0]) for d in self.iter_dexy_dirs())
 
-    def run_docs(self, *docs):
-        self.args = docs
-        self.run()
+    def assert_dexy_dirs_exist(self):
+        """
+        Raise a UserFeedback error if user has tried to run dexy without
+        setting up necessary directories first.
+        """
+        if not self.dexy_dirs_exist():
+            msg = "You need to run 'dexy setup' in this directory first."
+            raise UserFeedback(msg)
 
-    def setup_read(self, batch_id=None):
-        self.setup(log_config=False)
-
-        if batch_id:
-            self.batch_id = batch_id
-        else:
-            self.batch_id = self.db.max_batch_id()
-
-    def check_dexy_dirs(self):
-        if not (file_exists(self.artifacts_dir) and file_exists(self.log_dir)):
-            raise dexy.exceptions.UserFeedback("You need to run 'dexy setup' in this directory first.")
-
-    def setup_dexy_dirs(self):
-        if not file_exists(self.artifacts_dir):
-            os.mkdir(self.artifacts_dir)
-        if not file_exists(self.log_dir):
-            os.mkdir(self.log_dir)
+    def create_dexy_dirs(self):
+        """
+        Creates the directories needed for dexy to run. Does not complain if
+        directories are already present.
+        """
+        for dirpath, safety_filepath, dirstat in self.iter_dexy_dirs():
+            if not dirstat:
+                os.mkdir(dirpath)
+                with open(safety_filepath, 'w') as f:
+                    f.write("This directory was created by dexy.")
 
     def remove_dexy_dirs(self, reports=False):
-        if file_exists(self.artifacts_dir):
-            shutil.rmtree(self.artifacts_dir)
-        if file_exists(self.log_dir):
-            shutil.rmtree(self.log_dir)
+        """
+        Removes directories created by dexy. If 'reports' argument is true,
+        also removes directories created by dexy's reports.
+        """
+        for dirpath, safety_filepath, dirstat in self.iter_dexy_dirs():
+            if dirstat:
+                shutil.rmtree(dirpath)
 
         if reports:
             if isinstance(reports, bool):
+                # return an iterator over all reporters
                 reports=dexy.reporter.Reporter
 
             for report in reports:
                 report.remove_reports_dir()
 
-    def logging_log_level(self):
-        try:
-            return self.LOG_LEVELS[self.log_level.upper()]
-        except KeyError:
-            msg = "'%s' is not a valid log level, check python logging module docs."
-            raise dexy.exceptions.UserFeedback(msg % self.log_level)
+    # Logging
+    def log_path(self):
+        """
+        Returns path to logfile.
+        """
+        return os.path.join(self.log_dir, self.log_file)
 
     def setup_log(self):
-        if not hasattr(self, 'log') or not self.log:
-            self.log = logging.getLogger('dexy')
-            self.log.setLevel(self.logging_log_level())
-
-            handler = logging.handlers.RotatingFileHandler(
-                    self.log_path(),
-                    encoding="utf-8")
-
-            formatter = logging.Formatter(self.log_format)
-            handler.setFormatter(formatter)
-
-            self.log.addHandler(handler)
-
-    def setup_db(self):
-        self.db = dexy.database.Database.create_instance(self.db_alias, self)
-
-    def docs_from_args(self):
         """
-        Creates document objects from argument strings, returns array of newly created docs.
+        Creates a logger and assigns it to 'log' attribute of wrapper.
         """
-        docs = []
-        for arg in self.args:
-            self.log.debug("Processing arg %s" % arg)
-            doc = self.create_doc_from_arg(arg)
-            if not doc:
-                raise Exception("no doc created for %s" % arg)
-            doc.wrapper = self
-            docs.append(doc)
-        return docs
+        formatter = logging.Formatter(self.log_format)
+        log_level = dexy.utils.logging_log_level(self.log_level)
 
-    def create_doc_from_arg(self, arg, **kwargs):
-        if isinstance(arg, dexy.task.Task):
-            return arg
+        handler = logging.handlers.RotatingFileHandler(
+                self.log_path(),
+                encoding="utf-8")
 
-        elif isinstance(arg, list):
-            if not isinstance(arg[0], basestring):
-                msg = "First arg in %s should be a string" % arg
-                raise dexy.exceptions.UserFeedback(msg)
+        handler.setFormatter(formatter)
 
-            if not isinstance(arg[1], dict):
-                msg = "Second arg in %s should be a dict" % arg
-                raise dexy.exceptions.UserFeedback(msg)
+        self.log = logging.getLogger('dexy')
+        self.log.setLevel(log_level)
+        self.log.addHandler(handler)
 
-            if kwargs:
-                raise Exception("Shouldn't have kwargs if arg is a list")
+    # Project files
+    def exclude_dirs(self):
+        """
+        Returns list of directory names which should be excluded from dexy processing.
+        """
+        exclude_str = self.exclude
+        if self.exclude_also:
+            exclude_str += ",%s" % self.exclude_also
 
-            alias, pattern = dexy.parser.DocumentConfig(self).qualify_key(arg[0])
-            return dexy.task.Task.create(alias, pattern, **arg[1])
+        exclude = [d.strip() for d in exclude_str.split(",")]
+        exclude += [d[0] for d in self.iter_dexy_dirs()]
+        exclude += self.reports_dirs()
 
-        elif isinstance(arg, basestring):
-            alias, pattern = dexy.parser.DocumentConfig(self).qualify_key(arg[0])
-            return dexy.task.Task.create(alias, pattern, **kwargs)
-
-        else:
-            raise Exception("unknown arg type %s for arg %s" % (arg.__class__.__name__, arg))
-
-    def save_db(self):
-        self.db.save()
+        return exclude
 
     def reports_dirs(self):
-        return [i.setting('dir') for i in dexy.reporter.Reporter]
+        """
+        Returns list of directories which are written to by reporters.
+        """
+        dirs_and_nones = [i.setting('dir') for i in dexy.reporter.Reporter]
+        return [d for d in dirs_and_nones if d]
 
+    def map_files(self):
+        """
+        Generates a map of files present in the project directory.
+        """
+        exclude = self.exclude_dirs()
+        filemap = {}
+
+        for dirpath, dirnames, filenames in os.walk('.'):
+            for x in exclude:
+                if x in dirnames:
+                    dirnames.remove(x)
+
+            if '.nodexy' in filenames:
+                dirnames[:] = []
+            elif 'pip-delete-this-directory.txt' in filenames:
+                msg = s("""pip left an old build/ file lying around,
+                please remove this before running dexy""")
+                raise UserFeedback(msg)
+            else:
+                for filename in filenames:
+                    filepath = posixpath.normpath(posixpath.join(dirpath, filename))
+                    filemap[filepath] = {}
+                    filemap[filepath]['stat'] = os.stat(os.path.join(dirpath, filename))
+                    filemap[filepath]['ospath'] = os.path.normpath(os.path.join(dirpath, filename))
+                    filemap[filepath]['dir'] = os.path.normpath(dirpath)
+        return filemap
+
+    def file_available(self, filepath):
+        """
+        Does the file exist and is it available to dexy?
+        """
+        return filepath in self.filemap
+
+    # Running Dexy
+    def add_node(self, node):
+        if not self.nodes:
+            msg = "trying to add node with no nodes dict set up"
+            raise dexy.exceptions.InternalDexyProblem(msg)
+
+        key = node.key_with_class()
+        self.nodes[key] = node
+        self.roots.append(node)
+
+    def run(self):
+        self.assert_dexy_dirs_exist()
+
+        self.batch = Batch(self)
+        self.batch.start_time = time.time()
+
+        ast = self.parse_configs()
+        roots, self.nodes = ast.walk()
+
+        if self.target:
+            run_roots = [n for n in roots if n.key.starstwith(self.target)]
+        else:
+            run_roots = roots
+
+        for root_node in run_roots:
+            for task in root_node:
+                task()
+
+        self.batch.end_time = time.time()
+        self.batch.save_to_file()
+
+    def qualify_key(self, key):
+        """
+        A full node key is of the form alias:pattern where alias indicates
+        the type of node to be created. This method determines the alias if it
+        is not specified explicitly, and returns the alias, pattern tuple.
+        """
+        if not key:
+            msg = "trying to call qualify_key with key of '%s'!"
+            raise DeprecatedException(msg % key)
+
+        if ":" in key:
+            # split qualified key into alias & pattern
+            alias, pattern = key.split(":")
+        else:
+            # this is an unqualified key, figure out its alias
+            pattern = key
+
+            # Allow '.ext' instead of '*.ext', shorter + easier for YAML
+            if pattern.startswith(".") and not pattern.startswith("./"):
+                if not self.file_available(pattern):
+                    pattern = "*%s" % pattern
+
+            filepath = pattern.split("|")[0]
+            if self.file_available(filepath):
+                alias = 'doc'
+            elif (not "." in pattern) and (not "|" in pattern):
+                alias = 'bundle'
+            elif "*" in pattern:
+                alias = 'pattern'
+            else:
+                alias = 'doc'
+
+        return alias, pattern
+
+    def standardize_alias(self, alias):
+        """
+        Nodes can have multiple aliases, standardize on first one in list.
+        """
+        # TODO should we just make it so nodes only have 1 alias?
+        node_class, _ = dexy.node.Node.plugins[alias]
+        return node_class.aliases[0]
+
+    def standardize_key(self, key):
+        """
+        Standardizes the key by making the alias explicit and standardized, so
+        we don't create 2 entires in the AST for what turns out to be the same
+        node/task.
+        """
+        alias, pattern = self.qualify_key(key)
+        alias = self.standardize_alias(alias)
+        return "%s:%s" % (alias, pattern)
+
+    def join_dir(self, directory, key):
+        if directory == ".":
+            return key
+        else:
+            starts_with_dot = key.startswith(".") and not key.startswith("./")
+            if starts_with_dot:
+                path_to_key = os.path.join(directory, key)
+                if not self.file_available(path_to_key):
+                    key = "*%s" % key
+            return posixpath.join(directory, key)
+
+    def parse_configs(self):
+        """
+        Look for document config files in current working tree and load them.
+        Return an Abstract Syntax Tree with information about nodes to be
+        processed.
+        """
+        parser_aliases = sorted(dexy.parser.Parser.plugins.keys())
+
+        # collect all doc config files in project dir
+        config_files = []
+        for alias in parser_aliases:
+            for filepath, fileinfo in self.filemap.iteritems():
+                if os.path.split(filepath)[1] == alias:
+                    config_file_info = (fileinfo['ospath'], fileinfo['dir'], alias,)
+                    config_files.append(config_file_info)
+
+        # warn if we don't find any configs
+        if len(config_files) == 0:
+            msg = "didn't find any document config files (like %s)"
+            print msg % (", ".join(parser_aliases))
+
+        # parse each config file and add to ast
+        ast = dexy.parser.AbstractSyntaxTree(self)
+
+        for config_file, dirname, alias in config_files:
+            with open(config_file, "r") as f:
+                config_text = f.read()
+            parser = dexy.parser.Parser.create_instance(alias, self, ast)
+            parser.parse(dirname, config_text)
+
+        return ast
+
+    # Old
     def report(self):
         if self.reports:
             self.log.debug("generating user-specified reports '%s'" % self.reports)
@@ -237,118 +331,5 @@ class Wrapper(object):
             reporters = [i for i in dexy.reporter.Reporter if i.setting('default')]
 
         for reporter in reporters:
-            batch_ok = (self.batch.state != 'failed')
-            run_on_failed_batch = reporter.setting('run-on-failed-batch')
-            if batch_ok or run_on_failed_batch:
-                self.log.debug("running reporter %s" % reporter.ALIASES[0])
-                reporter.run(self)
-
-    def is_valid_dexy_dir(self, dirpath, dirnames):
-        nodexy_file = os.path.join(dirpath, '.nodexy')
-        pip_delete_this_dir_file = os.path.join(dirpath, "pip-delete-this-directory.txt")
-        if file_exists(nodexy_file):
-            self.log.debug("  skipping directory '%s' and its children because .nodexy file found" % dirpath)
-            dirnames[:] = []
-            return False
-        else:
-            if file_exists(pip_delete_this_dir_file):
-                print s("""WARNING pip left an old build/ file lying around!
-                You probably want to cancel this dexy run (ctrl+c) and remove this directory first!
-                Dexy will continue running unless you stop it...""")
-
-            for x in self.exclude_dirs():
-                if x in dirnames:
-                    skipping_dir = os.path.join(dirpath, x)
-                    self.log.debug("  skipping directory '%s' because it matches exclude '%s'" % (skipping_dir, x))
-                    dirnames.remove(x)
-
-            return True
-
-    def load_doc_config(self):
-        """
-        Look for document config files in current working tree and load them.
-        """
-        ast = dexy.parser.AbstractSyntaxTree(self)
-
-        config_files_used = []
-        dirs_with_config_files = []
-        for alias in dexy.parser.Parser.plugins.keys():
-            for filepath, fileinfo in self.filemap.iteritems():
-                if filepath.endswith(alias):
-                    os_filepath = fileinfo['ospath']
-                    parent_dir = os.path.dirname(os_filepath)
-
-                    parser = dexy.parser.Parser.create_instance(alias, self, ast)
-
-                    if parser.setting('warn-if-not-unique'):
-                        if parent_dir in dirs_with_config_files:
-                            msg = "more than one config file found in dir %s" % parent_dir
-                            raise dexy.exceptions.UserFeedback(msg)
-                        dirs_with_config_files.append(parent_dir)
-                        config_files_used.append(os_filepath)
-
-                    self.log.debug("loading config from '%s'" % os_filepath)
-                    with open(os_filepath, "r") as f:
-                        config_text = f.read()
-
-                    parser.build_ast(parent_dir, config_text)
-
-        if len(config_files_used) == 0:
-            msg = "Didn't find any document config files (like %s)"
-            self.log.warn(msg % (", ".join(dexy.parser.Parser.plugins.keys())))
-
-        self.log.debug("AST completed:")
-        ast.debug(self.log)
-
-        return ast
-
-    def setup_config(self):
-        self.setup_dexy_dirs()
-        self.setup_log()
-        self.load_doc_config()
-
-    def cleanup_partial_run(self):
-        if hasattr(self, 'db'):
-            # TODO remove any entries which don't have
-            self.db.save()
-
-    def exclude_dirs(self):
-        exclude_str = self.exclude
-        if self.exclude_also:
-            exclude_str += ",%s" % self.exclude_also
-        exclude = [d.strip() for d in exclude_str.split(",")]
-
-        exclude.append(self.artifacts_dir)
-        exclude.append(self.log_dir)
-        exclude.extend(self.reports_dirs())
-
-        return exclude
-
-    def parse_globals(self):
-        globals_dict = {}
-        if len(self.globals) > 0:
-            for pair in self.globals.split(","):
-                x, y = pair.split("=")
-                globals_dict[x] = y
-
-        return globals_dict
-
-    def walk(self):
-        """
-        Generates a complete list of files present in the project directory.
-        """
-        exclude = self.exclude_dirs()
-
-        for dirpath, dirnames, filenames in os.walk('.'):
-            for x in exclude:
-                if x in dirnames:
-                    dirnames.remove(x)
-
-            if '.nodexy' in filenames:
-                dirnames[:] = []
-            else:
-                for filename in filenames:
-                    filepath = posixpath.normpath(posixpath.join(dirpath, filename))
-                    self.filemap[filepath] = {}
-                    self.filemap[filepath]['stat'] = os.stat(os.path.join(dirpath, filename))
-                    self.filemap[filepath]['ospath'] = os.path.normpath(os.path.join(dirpath, filename))
+            self.log.debug("running reporter %s" % reporter.aliases[0])
+            reporter.run(self)

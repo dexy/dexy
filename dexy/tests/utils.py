@@ -28,7 +28,8 @@ class wrap(tempdir):
     def __enter__(self):
         self.make_temp_dir()
         wrapper = dexy.wrapper.Wrapper()
-        wrapper.setup(setup_dirs=True)
+        wrapper.create_dexy_dirs()
+        wrapper = dexy.wrapper.Wrapper()
         return wrapper
 
     def __exit__(self, type, value, traceback):
@@ -115,7 +116,7 @@ def assert_in_output(filter_alias, doc_contents, expected_output, ext=".txt"):
         else:
             raise Exception(unicode(doc.output()))
 
-class divert_stdout():
+class capture_stdout():
     def __enter__(self):
         self.old_stdout = sys.stdout
         self.my_stdout = StringIO()

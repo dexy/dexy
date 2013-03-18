@@ -1,5 +1,5 @@
 from dexy.commands.utils import init_wrapper
-from dexy.commands.utils import D
+from dexy.utils import defaults
 
 def grep_command(
         __cli_options=False, # nodoc
@@ -7,8 +7,8 @@ def grep_command(
         keyexpr="", # Only search for keys matching this expression, implies keys=True
         keys=False, # if True, try to list the keys in any found files
         recurse=False, # if True, recurse into keys to look for sub keys (implies keys=True)
-        artifactsdir=D['artifacts_dir'], # location of directory in which to store artifacts
-        logdir=D['log_dir'] # location of directory in which to store logs
+        artifactsdir=defaults['artifacts_dir'], # location of directory in which to store artifacts
+        logdir=defaults['log_dir'] # location of directory in which to store logs
         ):
     """
     Search for a Dexy document in the database matching the expression.
@@ -16,10 +16,9 @@ def grep_command(
     For sqlite the expression will be wrapped in % for you.
     """
     wrapper = init_wrapper(locals())
-    wrapper.setup_read()
 
-    for row in wrapper.db.query_docs("%%%s%%" % expr):
-        print row['key']
+#    for row in wrapper.db.query_docs("%%%s%%" % expr):
+#        print row['key']
 #        if keys or len(keyexpr) > 0 or recurse:
 #            artifact_classes = dexy.introspect.artifact_classes()
 #            artifact_class = artifact_classes[artifactclass]

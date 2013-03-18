@@ -4,5 +4,5 @@ class DefaultTemplate(dexy.template.Template):
     """
     A very boring default template that ships with dexy.
     """
-    ALIASES = ['default']
+    aliases = ['default']
     FILTERS_USED = ['jinja']

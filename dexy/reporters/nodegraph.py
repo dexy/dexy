@@ -5,8 +5,8 @@ class NodeGraph(Reporter):
     """
     Emits a graphviz graph of the network structure.
     """
-    ALIASES = ['nodegraph']
-    _SETTINGS = {
+    aliases = ['nodegraph']
+    _settings = {
             'filename' : ("Name of file to write output to.", 'graph.txt'),
             'run-on-failed-batch' : True
             }
@@ -29,7 +29,7 @@ class NodeGraph(Reporter):
 
         graph = []
         graph.append("digraph G {")
-        for node in wrapper.batch.tree:
+        for node in wrapper.nodes.values():
             graph.extend(print_inputs(node))
         graph.append("}")
 
@@ -41,8 +41,8 @@ class PlainTextGraph(Reporter):
     """
     Emits a plain text graph of the network structure.
     """
-    ALIASES = ['plaintextgraph']
-    _SETTINGS = {
+    aliases = ['plaintextgraph']
+    _settings = {
             'filename' : ("Name of file to write output to.", 'graph.txt'),
             'run-on-failed-batch' : True
             }
@@ -57,7 +57,7 @@ class PlainTextGraph(Reporter):
             return content
 
         graph = []
-        for node in wrapper.batch.tree:
+        for node in wrapper.nodes.values():
             graph.extend(print_inputs(node))
 
         filename = os.path.join(wrapper.log_dir, self.setting('filename'))

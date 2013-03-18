@@ -1,2 +1,2 @@
-import dexy.parsers.standard
+import dexy.parsers.doc
 import dexy.parsers.environment

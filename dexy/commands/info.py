@@ -1,5 +1,5 @@
 from dexy.commands.utils import init_wrapper
-from dexy.commands.utils import D
+from dexy.utils import defaults
 
 INFO_ATTRS = [
         'name',
@@ -23,8 +23,8 @@ STORAGE_METHODS = [
 def info_command(
         __cli_options=False,
         k=None, # The doc key to query. Use dexy grep to search doc keys.
-        artifactsdir=D['artifacts_dir'], # location of directory in which to store artifacts
-        logdir=D['log_dir'] # location of directory in which to store logs
+        artifactsdir=defaults['artifacts_dir'], # location of directory in which to store artifacts
+        logdir=defaults['log_dir'] # location of directory in which to store logs
         ):
     wrapper = init_wrapper(locals())
     wrapper.setup_read()

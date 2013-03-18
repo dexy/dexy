@@ -22,4 +22,4 @@ def reports_command():
 
     report_classes = sorted(dexy.reporter.Reporter.plugins, key=sort_key)
     for klass in report_classes:
-        print "%s: %s" % (klass.__name__, ", ".join(klass.ALIASES))
+        print "%s: %s" % (klass.__name__, ", ".join(klass.aliases))

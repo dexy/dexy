@@ -1,10 +1,53 @@
-from dexy.node import Node
-from dexy.node import DocNode
-from dexy.node import PatternNode
-from dexy.task import Task
 from dexy.tests.utils import wrap
 from dexy.wrapper import Wrapper
 import time
+import os
+import dexy.doc
+import dexy.node
+
+def test_create_node():
+    with wrap() as wrapper:
+        node = dexy.node.Node.create_instance(
+                "doc",
+                "foo.txt",
+                wrapper,
+                [],
+                # kwargs
+                foo='bar',
+                contents="these are contents"
+                )
+
+        assert node.__class__ == dexy.doc.Doc
+        assert node.args['foo'] == 'bar'
+        assert node.wrapper == wrapper
+        assert node.inputs == []
+        assert len(node.hashid) == 32
+        assert isinstance(node.doc_changed, bool)
+        assert isinstance(node.args_changed, bool)
+        assert isinstance(node.changed(), bool)
+
+def test_node_arg_caching():
+    with wrap() as wrapper:
+        node = dexy.node.Node("foo", wrapper, [], foo='bar', baz=123)
+        assert node.hashid == 'acbd18db4cc2f85cedef654fccc4a4d8'
+        assert node.args_filename() == ".cache/acbd18db4cc2f85cedef654fccc4a4d8.args"
+        assert node.args['foo'] == 'bar'
+        assert node.args['baz'] == 123
+        assert node.sorted_arg_string() == '[["baz", 123], ["foo", "bar"]]'
+
+        assert os.path.exists(wrapper.artifacts_dir)
+        assert not os.path.exists(node.args_filename())
+        node.save_args()
+        assert os.path.exists(node.args_filename())
+        assert not node.check_args_changed()
+
+        node.args['baz'] = 456
+        assert node.check_args_changed()
+        node.save_args()
+        assert not node.check_args_changed()
+
+        os.remove(node.args_filename())
+        assert node.check_args_changed()
 
 SCRIPT_YAML = """
 script:scriptnode:
@@ -27,10 +70,10 @@ def test_script_node_caching():
         with open("dexy.yaml", "w") as f:
             f.write(SCRIPT_YAML)
 
-        wrapper.walk()
-        wrapper.setup_batch()
-        wrapper.log_level = 'DEBUG'
-        wrapper.run()
+        wrapper1 = Wrapper()
+#        wrapper1.log_level = 'DEBUG'
+        wrapper1.setup()
+        wrapper1.run()
 
         tasks = [
             "FilterArtifact:start.sh|shint",
@@ -39,11 +82,11 @@ def test_script_node_caching():
             ]
 
         for t in tasks:
-            assert wrapper.batch.task(t).content_source == 'generated', "%s should be generated" % t
+            assert wrapper1.batch.task(t).content_source == 'generated', "%s should be generated" % t
 
         wrapper2 = Wrapper()
+#        wrapper2.log_level = 'DEBUG'
         wrapper2.setup()
-        wrapper2.log_level = 'DEBUG'
         wrapper2.run()
 
         for t in tasks:
@@ -53,8 +96,8 @@ def test_script_node_caching():
             f.write("echo 'new'")
 
         wrapper3 = Wrapper()
+#        wrapper3.log_level = 'DEBUG'
         wrapper3.setup()
-        wrapper3.log_level = 'DEBUG'
         wrapper3.run()
 
         for t in tasks:

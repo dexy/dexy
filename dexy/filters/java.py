@@ -8,8 +8,8 @@ class JythonFilter(SubprocessStdoutFilter):
     """
     jython
     """
-    ALIASES = ['jython']
-    _SETTINGS = {
+    aliases = ['jython']
+    _settings = {
             'executable' : 'jython',
             'input-extensions' : [".py", ".txt"],
             'output-extensions' : [".txt"],
@@ -32,8 +32,8 @@ class JythonInteractiveFilter(PexpectReplFilter):
     """
     jython in REPL
     """
-    ALIASES = ['jythoni']
-    _SETTINGS = {
+    aliases = ['jythoni']
+    _settings = {
             'check-return-code' : False,
             'executable' : 'jython -i',
             'initial-timeout' : 30,
@@ -56,8 +56,8 @@ class JavaFilter(SubprocessCompileFilter):
     """
     Compiles java code and runs main method.
     """
-    ALIASES = ['java']
-    _SETTINGS = {
+    aliases = ['java']
+    _settings = {
             'check-return-code' : True,
             'classpath' : ("Custom entries in classpath.", []),
             'executable' : 'javac',
@@ -77,13 +77,13 @@ class JavaFilter(SubprocessCompileFilter):
         an input has been passed through the javac filter, its directory is
         added to the classpath.
         """
-        self.log.debug("in setup_cp for %s" % self.artifact.key)
+        self.log_debug("in setup_cp for %s" % self.artifact.key)
 
         classpath_elements = []
 
         working_dir = os.path.join(self.artifact.wd(), self.output().parent_dir())
         abs_working_dir = os.path.abspath(working_dir)
-        self.log.debug("Adding working dir %s to classpath" % abs_working_dir)
+        self.log_debug("Adding working dir %s to classpath" % abs_working_dir)
         classpath_elements.append(abs_working_dir)
 
         for doc in self.processed():
@@ -100,7 +100,7 @@ class JavaFilter(SubprocessCompileFilter):
                 classpath_elements.append(x)
 
         cp = ":".join(classpath_elements)
-        self.log.debug("Classpath %s" % cp)
+        self.log_debug("Classpath %s" % cp)
         return cp
 
     def compile_command_string(self):
@@ -141,9 +141,9 @@ class JavacFilter(JavaFilter):
     """
     Compiles java code and returns the .class object
     """
-    ALIASES = ['javac']
+    aliases = ['javac']
 
-    _SETTINGS = {
+    _settings = {
             'executable' : 'javac',
             'input-extensions' : ['.java'],
             'output-extensions' : ['.class'],

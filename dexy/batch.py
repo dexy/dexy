@@ -1,145 +1,79 @@
-import time
+import uuid
+import json
+import os
+import dexy.data
 
 class Batch(object):
-    def __init__(self, wrapper, batch_id=None):
+    def __init__(self, wrapper):
         self.wrapper = wrapper
-        self.end_time = None
+        self.docs = {}
+        self.uuid = str(uuid.uuid4())
 
-        if batch_id:
-            self.load(batch_id)
-        else:
-            self.new()
+    def __repr__(self):
+        return "Batch(%s)" % self.uuid
 
-    def filters_used(self):
-        filters = set()
-        for doc in self.docs():
-            filters = filters.union([f for f in doc.filters if not f.startswith("-")])
-        return filters
+    def doc_data(self, doc_key, input_or_output):
+        doc_info = self.docs[doc_key]["%s-data" % input_or_output]
+        data = dexy.data.Data.create_instance(*doc_info + [self.wrapper])
+        data.setup_storage()
+        return data
 
-    def load(self, batch_id):
-        """
-        Loads a previously run batch into memory.
-        """
-        self.batch_id = batch_id
+    def doc_output_data(self, doc_key):
+        return self.doc_data(doc_key, 'output')
 
-    def save(self):
-        """
-        Persist a batch's info to disk (for later retrieval by load).
-        """
-        pass
-
-    def add_doc(self, new_doc):
-        self.lookup_table[new_doc.key_with_class()] = new_doc
-
-    def new(self):
-        """
-        Sets up defaults for a new batch.
-        """
-        self.state = 'new'
-        self.batch_id = self.wrapper.db.next_batch_id()
-        self.previous_batch_id = self.wrapper.db.calculate_previous_batch_id(self.batch_id)
-
-    def create_lookup_table(self):
-        """
-        Creates a lookup table assuming the tree has already been populated.
-        """
-        self.lookup_table = dict((t.key_with_class(), t) for t in self.tree)
-
-    def load_ast(self, ast):
-        self.ast = ast
-        self.tree, self.nodes = self.ast.walk()
-
-        self.lookup_table = {}
-        for task in self.nodes.values():
-            self.lookup_table[task.key_with_class()] = task
-
-    def nodes_for_target(self, target=None):
-        if target:
-            # Look for identical target in root-level nodes
-            nodes = [n for n in self.tree if n.key == target]
-            
-            if not nodes:
-                # Look for similar target in root-level nodes
-                nodes = [n for n in self.tree if n.key.startswith(target)]
-
-            if not nodes:
-                # Look for identical target anywhere in tree
-                nodes = [n for n in self.nodes.values() if n.key == target]
-                # TODO sort nodes..
-
-            if not nodes:
-                # Look for similar target anywhere in tree
-                nodes = [n for n in self.nodes.values() if n.key.startswith(target)]
-                # TODO sort nodes..
-
-        else:
-            if self.wrapper.full:
-                nodes = self.tree
-            else:
-                nodes = [n for n in self.tree if n.args.get('default', True)]
-
-        self.wrapper.log.debug("nodes being run are %r" % (nodes))
-        return nodes
-
-    def run(self, target=None):
-        self.start_time = time.time()
-
-        nodes = self.nodes_for_target(target)
-
-        self.state = 'populating'
-        self.wrapper.log.info("in state %s" % self.state)
-
-        self.task_count = 0
-
-        for node in nodes:
-            for task in node:
-                task()
-                self.task_count += 1
-
-        self.state = 'settingup'
-        self.wrapper.log.info("in state %s" % self.state)
-
-        for node in nodes:
-            for task in node:
-                task()
-
-        for node in nodes:
-            node.call_after_setup()
-
-        self.state = 'running'
-        self.wrapper.log.info("in state %s" % self.state)
-
-        for node in nodes:
-            for task in node:
-                task()
-
-        self.state = 'complete'
-        self.wrapper.log.info("in state %s" % self.state)
-
-        self.end_time = time.time()
-        self.wrapper.log.info("elapsed time %s" % self.elapsed())
-        self.wrapper.log.info("cumulative time making db calls %0.4f" % self.wrapper.db.cum_time)
+    def doc_input_data(self, doc_key):
+        return self.doc_data(doc_key, 'input')
 
     def elapsed(self):
-        if self.end_time and self.start_time:
-            return self.end_time - self.start_time
-        else:
-            return 0.0
+        return self.end_time - self.start_time
 
-    # Methods for accessing lists of tasks
-    def task(self, task_key):
-        if not ":" in task_key:
-            task_key = "Doc:%s" % task_key
-        return self.lookup_table[task_key]
+    def filename(self):
+        return "%s.json" % self.uuid
 
-    def tasks(self):
-        return self.lookup_table.values()
+    def filepath(self):
+        return os.path.join(self.batch_dir(), self.filename())
 
-    def docs(self):
-        return [v for k, v in self.lookup_table.iteritems() if k.startswith("Doc:")]
+    def most_recent_filename(self):
+        return os.path.join(self.batch_dir(), 'most-recent-batch.txt')
 
-    def doc_names(self):
-        return [doc.name for doc in self.docs()]
+    def batch_dir(self):
+        return os.path.join(self.wrapper.artifacts_dir, 'batches')
 
-    def tasks_by_elapsed(self, n=10):
-        return sorted(self.lookup_table.values(), key=lambda task: hasattr(task, 'doc') and task.elapsed or None, reverse=True)[0:n]
+    def to_dict(self):
+        attr_names = ['docs', 'uuid']
+        return dict((k, getattr(self, k),) for k in attr_names)
+
+    def save_to_file(self):
+        try:
+            os.makedirs(self.batch_dir())
+        except OSError:
+            pass
+
+        with open(self.filepath(), 'w') as f:
+            json.dump(self.to_dict(), f)
+
+        with open(self.most_recent_filename(), 'w') as f:
+            f.write(self.uuid)
+
+    def load_from_file(self):
+        with open(self.filepath(), 'r') as f:
+            d = json.load(f)
+            for k, v in d.iteritems():
+                setattr(self, k, v)
+
+    @classmethod
+    def load_most_recent(klass, wrapper):
+        """
+        Retuns a batch instance representing the most recent batch as indicated
+        by the UUID stored in most-recent-batch.txt.
+        """
+        batch = Batch(wrapper)
+        try:
+            with open(batch.most_recent_filename(), 'r') as f:
+                most_recent_uuid = f.read()
+
+            batch.uuid = most_recent_uuid
+            batch.load_from_file()
+            return batch
+        except IOError:
+            pass

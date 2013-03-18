@@ -45,7 +45,7 @@ class NotPresentExecutable(SubprocessFilter):
     notreal
     """
     EXECUTABLE = 'notreal'
-    ALIASES = ['notreal']
+    aliases = ['notreal']
 
 def test_command_line_args():
     with wrap() as wrapper:

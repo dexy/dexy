@@ -7,8 +7,8 @@ class HtmlSectionsFilter(DexyFilter):
     """
     Split content according to HTML comments.
     """
-    ALIASES = ['htmlsections']
-    _SETTINGS = {
+    aliases = ['htmlsections']
+    _settings = {
             'output' : True,
             'output-data-type' : 'sectioned',
             'output-extensions' : ['.json']
@@ -34,8 +34,8 @@ class SplitHtmlFilter(DexyFilter):
     The split filter looks for specially formatted HTML comments in your
     document and splits your HTML into separate pages at each split comment.
     """
-    ALIASES = ['split', 'splithtml']
-    _SETTINGS = {
+    aliases = ['split', 'splithtml']
+    _settings = {
             'output' : True,
             'input-extensions' : ['.html'],
             'output-extensions' : ['.html']

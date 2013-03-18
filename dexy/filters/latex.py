@@ -10,8 +10,8 @@ class LatexFilter(SubprocessFilter):
     """
     Generates a PDF file from LaTeX source.
     """
-    ALIASES = ['latex', 'pdflatex']
-    _SETTINGS = {
+    aliases = ['latex', 'pdflatex']
+    _settings = {
             'executable' : 'pdflatex',
             'input-extensions' : ['.tex', '.txt'],
             'output-extensions' : ['.pdf'],
@@ -27,7 +27,7 @@ class LatexFilter(SubprocessFilter):
         bibtex_command = "bibtex %s" % os.path.splitext(self.output().basename())[0]
 
         def run_cmd(command):
-            self.log.info("running %s in %s" % (command, wd))
+            self.log_info("running %s in %s" % (command, wd))
             proc = subprocess.Popen(command, shell=True,
                                     cwd=wd,
                                     stdout=subprocess.PIPE,
@@ -35,7 +35,7 @@ class LatexFilter(SubprocessFilter):
                                     env=env)
 
             stdout, stderr = proc.communicate()
-            self.log.debug(stdout)
+            self.log_debug(stdout)
 
         if bibtex_command:
             run_cmd(latex_command) #generate aux
@@ -50,7 +50,7 @@ class LatexFilter(SubprocessFilter):
             raise dexy.exceptions.UserFeedback(msg)
 
         if self.do_add_new_files():
-            self.log.debug("adding new files found in %s for %s" % (self.artifact.tmp_dir(), self.artifact.key))
+            self.log_debug("adding new files found in %s for %s" % (self.artifact.tmp_dir(), self.artifact.key))
             self.add_new_files()
 
         self.copy_canonical_file()
@@ -59,7 +59,7 @@ class TikzPgfFilter(LatexFilter):
     """
     Takes a snippet of Tikz code, wraps it in a LaTeX document, and renders it to PDF.
     """
-    ALIASES = ['tikz']
+    aliases = ['tikz']
 
     def process(self):
         latex_filename = self.output().basename().replace(self.artifact.ext, ".tex")
@@ -75,7 +75,7 @@ class TikzPgfFilter(LatexFilter):
         wd = self.setup_wd()
 
         work_path = os.path.join(wd, latex_filename)
-        self.log.debug("writing latex header + tikz content to %s" % work_path)
+        self.log_debug("writing latex header + tikz content to %s" % work_path)
         with codecs.open(work_path, "w", encoding="utf-8") as f:
             f.write(latex_header)
             f.write(self.input().as_text())
@@ -84,7 +84,7 @@ class TikzPgfFilter(LatexFilter):
         latex_command = "%s -interaction=batchmode %s" % (self.setting('executable'), latex_filename)
 
         def run_cmd(command):
-            self.log.info("about to run %s in %s" % (command, wd))
+            self.log_info("about to run %s in %s" % (command, wd))
             proc = subprocess.Popen(command, shell=True,
                                     cwd=wd,
                                     stdout=subprocess.PIPE,
@@ -97,7 +97,7 @@ class TikzPgfFilter(LatexFilter):
                 raise dexy.exceptions.UserFeedback("latex error, look for information in %s" %
                                 latex_filename.replace(".tex", ".log"))
             elif proc.returncode > 0:
-                self.log.warn("""A non-critical latex error has occurred running %s,
+                self.log_warn("""A non-critical latex error has occurred running %s,
                 status code returned was %s, look for information in %s""" % (
                 self.artifact.key, proc.returncode,
                 latex_filename.replace(".tex", ".log")))

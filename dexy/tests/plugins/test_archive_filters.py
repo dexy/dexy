@@ -1,28 +1,34 @@
-from dexy.node import DocNode
+from dexy.doc import Doc
+from dexy.tests.utils import tempdir
 from dexy.tests.utils import wrap
+from dexy.wrapper import Wrapper
 import os
 import tarfile
 import zipfile
 
 def test_zip_archive_filter():
-    with wrap() as wrapper:
+    with tempdir():
         with open("hello.py", "w") as f:
             f.write("print 'hello'")
 
         with open("hello.rb", "w") as f:
             f.write("puts 'hello'")
 
-        doc = DocNode("archive.zip|zip",
+        wrapper = Wrapper()
+        wrapper.create_dexy_dirs()
+        wrapper = Wrapper()
+
+        doc = Doc("archive.zip|zip",
                 inputs = [
-                    DocNode("hello.py", wrapper=wrapper),
-                    DocNode("hello.rb", wrapper=wrapper),
-                    DocNode("hello.py|pyg", wrapper=wrapper),
-                    DocNode("hello.rb|pyg", wrapper=wrapper)
+                    Doc("hello.py", wrapper),
+                    Doc("hello.rb", wrapper),
+                    Doc("hello.py|pyg", wrapper),
+                    Doc("hello.rb|pyg", wrapper)
                     ],
                 contents=" ",
                 wrapper=wrapper)
 
-        wrapper.run_docs(doc)
+        wrapper.run()
         wrapper.report()
 
         assert os.path.exists("output/archive.zip")
@@ -42,12 +48,12 @@ def test_archive_filter():
         with open("hello.rb", "w") as f:
             f.write("puts 'hello'")
 
-        doc = DocNode("archive.tgz|archive",
+        doc = Doc("archive.tgz|archive",
                 inputs = [
-                    DocNode("hello.py", wrapper=wrapper),
-                    DocNode("hello.rb", wrapper=wrapper),
-                    DocNode("hello.py|pyg", wrapper=wrapper),
-                    DocNode("hello.rb|pyg", wrapper=wrapper)
+                    Doc("hello.py", wrapper=wrapper),
+                    Doc("hello.rb", wrapper=wrapper),
+                    Doc("hello.py|pyg", wrapper=wrapper),
+                    Doc("hello.rb|pyg", wrapper=wrapper)
                 ],
                 contents=" ",
                 wrapper=wrapper)
@@ -72,12 +78,12 @@ def test_archive_filter_with_short_names():
         with open("hello.rb", "w") as f:
             f.write("puts 'hello'")
 
-        doc = DocNode("archive.tgz|archive",
+        doc = Doc("archive.tgz|archive",
                 inputs = [
-                    DocNode("hello.py", wrapper=wrapper),
-                    DocNode("hello.rb", wrapper=wrapper),
-                    DocNode("hello.py|pyg", wrapper=wrapper),
-                    DocNode("hello.rb|pyg", wrapper=wrapper)
+                    Doc("hello.py", wrapper=wrapper),
+                    Doc("hello.rb", wrapper=wrapper),
+                    Doc("hello.py|pyg", wrapper=wrapper),
+                    Doc("hello.rb|pyg", wrapper=wrapper)
                     ],
                 contents=" ",
                 archive={'use-short-names' : True},
@@ -103,10 +109,12 @@ def test_unprocessed_directory_archive_filter():
         with open("def.txt", "w") as f:
             f.write('this is def')
 
-        doc = DocNode("archive.tgz|tgzdir",
+        doc = Doc("archive.tgz|tgzdir",
+                wrapper,
+                [],
                 contents="ignore",
-                tgzdir={'dir' : '.'},
-                wrapper=wrapper)
+                tgzdir={'dir' : '.'}
+                )
         wrapper.run_docs(doc)
         wrapper.report()
 

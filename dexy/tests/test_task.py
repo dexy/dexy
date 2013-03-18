@@ -2,7 +2,6 @@ from dexy.exceptions import UnexpectedState, InvalidStateTransition, CircularDep
 from dexy.tests.utils import divert_stdout
 from dexy.tests.utils import wrap
 from nose.tools import raises
-import dexy.task
 
 def test_init():
     task = dexy.task.Task("key")
@@ -31,16 +30,6 @@ def test_invalid_state():
 def test_invalid_transition():
     task = dexy.task.Task('key')
     task.transition('complete')
-
-def test_set_log():
-    with wrap() as wrapper:
-        task = dexy.task.Task("key", wrapper=wrapper)
-        assert not hasattr(task, 'log')
-        task.set_log()
-        assert hasattr(task, 'log')
-        assert hasattr(task, 'logstream')
-        task.log.warn("please write me to log")
-        assert "please write me to log" in task.logstream.getvalue()
 
 def test_circular():
     with wrap() as wrapper:

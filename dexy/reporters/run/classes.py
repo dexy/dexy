@@ -11,10 +11,7 @@ class RunReporter(Reporter):
     """
     Returns info about a dexy run.
     """
-    ALIASES = ['run']
-    _SETTINGS = {
-            'run-on-failed-batch' : True
-            }
+    aliases = ['run']
 
     def run(self, wrapper):
         latest_report_dir = os.path.join(wrapper.log_dir, 'run-latest')
@@ -40,10 +37,9 @@ class RunReporter(Reporter):
         env_data['len'] = len
         env_data['sorted'] = sorted
 
-        env_data['batch'] = wrapper.batch
-
-        env_data['docs'] = wrapper.batch.docs()
+        env_data['docs'] = wrapper.nodes.values()
         env_data['wrapper'] = wrapper
+        env_data['batch'] = wrapper.batch
 
         env_data['enumerate'] = enumerate
 

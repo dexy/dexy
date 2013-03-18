@@ -13,31 +13,16 @@ class Data(dexy.plugin.Plugin):
     Base class for types of Data.
     """
     __metaclass__ = dexy.plugin.PluginMeta
-    _SETTINGS = {}
 
-    ALIASES = []
-    DEFAULT_STORAGE_TYPE = 'generic'
-
-    @classmethod
-    def is_active(klass):
-        return True
-
-    @classmethod
-    def retrieve(klass, data_type, key, ext, name, hashstring, args, wrapper, storage_type):
-        """
-        Method to retrieve a Data object based on info stored in database.
-
-        Optional kwags are passed to a RunParams instance.
-        """
-        data_class = klass.aliases[data_type]
-        return data_class(key, ext, name, hashstring, args, wrapper, storage_type)
-
-    @classmethod
-    def storage_class_alias(klass, file_ext):
-        return klass.DEFAULT_STORAGE_TYPE
+    _settings = {
+            'default-storage-type' : ("Type of storage to use if not specified", 'generic'),
+            }
 
     def __repr__(self):
         return "Data('%s')" % (self.key)
+
+    def storage_class_alias(self, file_ext):
+        return self.setting('default-storage-type')
 
     def __unicode__(self):
         if isinstance(self.data(), unicode):
@@ -57,31 +42,37 @@ class Data(dexy.plugin.Plugin):
     def __str__(self):
         return str(unicode(self))
 
-    def __init__(self, key, ext, canonical_name, hashstring, args, wrapper, storage_type=None):
+    def __init__(self, key, ext, canonical_name, storage_key, args, storage_type, wrapper):
         self.key = key
         self.ext = ext
         self.name = canonical_name
-        self.hashstring = hashstring
+        self.storage_key = storage_key
         self.args = args
         self.wrapper = wrapper
         self.shortcut = self.args.get('shortcut')
-
-        self.setup_storage(storage_type)
+        self.storage_type = storage_type
 
         self._data = None
 
         # allow doing custom setup in subclasses
         self.setup()
 
+    def args_to_data_init(self):
+        """
+        Returns a tuple of attributes in the correct order to pass to create_instance
+        """
+        return (self.alias, self.key, self.ext, self.name,
+                self.storage_key, self.args, self.storage_type,)
+    
     def keys(self):
         return []
 
     def setup(self):
         pass
 
-    def setup_storage(self, storage_type):
-        self.storage_type = storage_type or self.storage_class_alias(self.ext)
-        instanceargs = (self.hashstring, self.ext, self.wrapper,)
+    def setup_storage(self):
+        self.storage_type = self.storage_type or self.storage_class_alias(self.ext)
+        instanceargs = (self.storage_key, self.ext, self.wrapper,)
         self.storage = dexy.storage.Storage.create_instance(self.storage_type, *instanceargs)
         self.storage.check_location_is_in_project_dir(self.name)
 
@@ -133,8 +124,10 @@ class Generic(Data):
     """
     Data type representing generic binary or text-based data.
     """
-    ALIASES = ['generic']
-    DEFAULT_STORAGE_TYPE = 'generic'
+    aliases = ['generic']
+    _settings = {
+            'default-storage-type' : 'generic'
+            }
 
     def save(self):
         if isinstance(self._data, unicode):
@@ -209,9 +202,11 @@ class Sectioned(Generic):
     """
     Data in sections which must be kept in order.
     """
-    ALIASES = ['sectioned']
-    DEFAULT_STORAGE_TYPE = 'jsonordered'
+    aliases = ['sectioned']
 
+    _settings = {
+            'default-storage-type' : 'jsonordered'
+            }
 
     def __unicode__(self):
         return u"\n".join(unicode(v) for v in self.data().values())
@@ -242,17 +237,18 @@ class KeyValue(Generic):
     """
     Data class for key-value data.
     """
-    ALIASES  = ['keyvalue']
-    DEFAULT_STORAGE_TYPE = 'sqlite3'
+    aliases  = ['keyvalue']
+    _settings = {
+            'default-storage-type' : 'sqlite3'
+            }
 
-    @classmethod
-    def storage_class_alias(klass, file_ext):
+    def storage_class_alias(self, file_ext):
         if file_ext == '.sqlite3':
             return 'sqlite3'
         elif file_ext == '.json':
             return 'json'
         else:
-            return klass.DEFAULT_STORAGE_TYPE
+            return self.setting('default-storage-type')
 
     def setup(self):
         self.storage.setup()

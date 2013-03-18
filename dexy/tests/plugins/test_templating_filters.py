@@ -125,7 +125,7 @@ class TestSimple(TemplatePlugin):
     """
     test plugin
     """
-    ALIASES = ['testtemplate']
+    aliases = ['testtemplate']
     def run(self):
         return {'aaa' : 1}
 
@@ -133,7 +133,7 @@ class TestTemplateFilter(TemplateFilter):
     """
     test template
     """
-    ALIASES = ['testtemplatefilter']
+    aliases = ['testtemplatefilter']
 
 def test_template_filter_with_custom_filter_only():
     with wrap() as wrapper:

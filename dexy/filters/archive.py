@@ -7,8 +7,8 @@ class UnprocessedDirectoryArchiveFilter(DexyFilter):
     """
     Create a tgz archive containing the original (unprocessed) files in a directory.
     """
-    ALIASES = ['tgzdir']
-    _SETTINGS = {
+    aliases = ['tgzdir']
+    _settings = {
             'output' : True,
             'output-extensions' : ['.tgz'],
             'dir' : ("Directory in which to output the archive.", '')
@@ -22,7 +22,7 @@ class UnprocessedDirectoryArchiveFilter(DexyFilter):
         tar = tarfile.open(af, mode="w:gz")
         for fn in os.listdir(dir_to_archive):
             fp = os.path.join(dir_to_archive, fn)
-            self.log.debug("Adding file %s to archive %s" % (fp, af))
+            self.log_debug("Adding file %s to archive %s" % (fp, af))
             tar.add(fp, arcname=os.path.join(subdir, fn))
         tar.close()
 
@@ -33,8 +33,8 @@ class ArchiveFilter(DexyFilter):
     The use-short-names option will store documents under their short
     (canonical) filenames.
     """
-    ALIASES = ['archive', 'tgz']
-    _SETTINGS = {
+    aliases = ['archive', 'tgz']
+    _settings = {
             'output' : True,
             'output-extensions' : ['.tgz'],
             'use-short-names' : ("Whether to use short, potentially non-unique names within the archive.", False),
@@ -80,8 +80,8 @@ class ZipArchiveFilter(ArchiveFilter):
     The use-short-names option will store documents under their short
     (canonical) filenames.
     """
-    ALIASES = ['zip']
-    _SETTINGS = {
+    aliases = ['zip']
+    _settings = {
             'output-extensions' : ['.zip']
             }
 

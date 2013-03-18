@@ -5,8 +5,8 @@ class OutputReporter(Reporter):
     """
     Creates canonical dexy output with files given short filenames.
     """
-    ALIASES = ['output']
-    _SETTINGS = {
+    aliases = ['output']
+    _settings = {
             'dir' : 'output'
             }
 
@@ -25,34 +25,32 @@ class OutputReporter(Reporter):
         except os.error:
             pass
 
-        self.log.debug("  writing %s to %s" % (doc.key, fp))
+        self.log_debug("  writing %s to %s" % (doc.key, fp))
 
         doc.output().output_to_file(fp)
 
     def run(self, wrapper):
         self.wrapper=wrapper
-        self.set_log()
         self.locations = {}
 
         self.create_reports_dir()
-        for doc in wrapper.batch.docs():
-            if doc.is_canonical_output():
-                self.write_canonical_doc(doc)
+        for node in wrapper.nodes:
+            if node.is_canonical_output():
+                self.write_canonical_doc(node)
 
 class LongOutputReporter(Reporter):
     """
     Creates complete dexy output with files given long, unique filenames.
     """
-    ALIASES = ['long']
-    _SETTINGS = {
+    aliases = ['long']
+    _settings = {
             'dir' : 'output-long'
             }
 
     def run(self, wrapper):
         self.wrapper=wrapper
-        self.set_log()
         self.create_reports_dir()
-        for doc in wrapper.batch.docs():
+        for doc in wrapper.nodes.values():
             fp = os.path.join(self.setting('dir'), doc.output().long_name())
 
             try:
@@ -60,5 +58,5 @@ class LongOutputReporter(Reporter):
             except os.error:
                 pass
 
-            self.log.debug("  writing %s to %s" % (doc.key, fp))
+            self.log_debug("  writing %s to %s" % (doc.key, fp))
             doc.output().output_to_file(fp)

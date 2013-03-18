@@ -6,10 +6,10 @@ import dexy.utils
 import dexy.wrapper
 
 class Template(dexy.plugin.Plugin):
-    ALIASES = []
+    aliases = []
     FILTERS_USED = []
     __metaclass__ = dexy.plugin.PluginMeta
-    _SETTINGS = {}
+    _settings = {}
 
     def is_active(klass):
         return True
@@ -21,7 +21,7 @@ class Template(dexy.plugin.Plugin):
             contents_dirname = klass.CONTENTS
         else:
             # default is to have contents in directory with same name as alias followed by "-template"
-            contents_dirname = "%s-template" % klass.ALIASES[0]
+            contents_dirname = "%s-template" % klass.aliases[0]
 
         return os.path.join(template_install_dir, contents_dirname)
 
@@ -57,8 +57,6 @@ class Template(dexy.plugin.Plugin):
             # Run dexy in directory 'ex'
             os.chdir("ex")
             wrapper = dexy.wrapper.Wrapper()
-            wrapper.setup(True)
-            wrapper.batch = dexy.batch.Batch(wrapper)
 
             ast = wrapper.load_doc_config()
 

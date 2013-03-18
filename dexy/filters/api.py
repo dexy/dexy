@@ -25,9 +25,9 @@ class ApiFilter(dexy.filter.DexyFilter):
     concern about identifying the entry in a .dexy file or accidentally
     overwriting some unrelated information.
     """
-    ALIASES = ['apis']
+    aliases = ['apis']
 
-    _SETTINGS = {
+    _settings = {
             # Files to hold collections of API keys
             'master-api-key-file' : ("Master API key file for user.", "~/.dexyapis"),
             'project-api-key-file' : ("API key file for project.", ".dexyapis"),

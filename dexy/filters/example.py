@@ -10,16 +10,16 @@ class Example(DexyFilter):
     """
     Base class for example filters intended to show filter development features but not be actual usable filters.
     """
-    ALIASES = []
+    aliases = []
     NODOC = True
 
 class KeyValueExample(Example):
     """
     Example of storing key value data.
     """
-    ALIASES = ['keyvalueexample']
+    aliases = ['keyvalueexample']
 
-    _SETTINGS = {
+    _settings = {
             'output-data-type' : 'keyvalue',
             'output-extensions' : ['.sqlite3', '.json']
             }
@@ -32,7 +32,7 @@ class AccessOtherDocuments(Example):
     """
     Example of accessing other documents.
     """
-    ALIASES = ["others"]
+    aliases = ["others"]
 
     def process_text(self, input_text):
         info = []
@@ -62,7 +62,7 @@ class AddNewDocument(Example):
     """
     A filter which adds an extra document to the tree.
     """
-    ALIASES = ['newdoc']
+    aliases = ['newdoc']
 
     def process_text(self, input_text):
         self.add_doc("newfile.txt|processtext", "newfile")
@@ -72,7 +72,7 @@ class ConvertDict(Example):
     """
     Returns an ordered dict with a single element.
     """
-    ALIASES = ['dict']
+    aliases = ['dict']
 
     def process_text_to_dict(self, input_text):
         ordered_dict = OrderedDict()
@@ -83,7 +83,7 @@ class ExampleProcessTextMethod(Example):
     """
     Uses process_text method
     """
-    ALIASES = ['processtext']
+    aliases = ['processtext']
 
     def process_text(self, input_text):
         return "Dexy processed the text '%s'" % input_text
@@ -92,7 +92,7 @@ class ExampleProcessDictMethod(Example):
     """
     Uses process_dict method
     """
-    ALIASES = ['processdict']
+    aliases = ['processdict']
 
     def process_dict(self, input_dict):
         output_dict = OrderedDict()
@@ -104,7 +104,7 @@ class ExampleProcessTextToDictMethod(Example):
     """
     Uses process_text_do_dict method
     """
-    ALIASES = ['processtexttodict']
+    aliases = ['processtexttodict']
 
     def process_text_to_dict(self, input_text):
         output_dict = OrderedDict()
@@ -115,7 +115,7 @@ class ExampleProcessMethod(Example):
     """
     A filter implementing a process method which stores raw data.
     """
-    ALIASES = ['process']
+    aliases = ['process']
 
     def process(self):
         output = "Dexy processed the text '%s'" % self.input().data()
@@ -125,7 +125,7 @@ class ExampleProcessMethodManualWrite(Example):
     """
     A filter implementing a process method which stores raw data by writing directly to the output file.
     """
-    ALIASES = ['processmanual']
+    aliases = ['processmanual']
 
     def process(self):
         input_data = self.input().data()
@@ -137,24 +137,22 @@ class ExampleProcessWithDictMethod(Example):
     """
     A filter implementing a process method which uses OrderedDict to store sectional data.
     """
-    ALIASES = ['processwithdict']
-    _SETTINGS = {
+    aliases = ['processwithdict']
+    _settings = {
             'output-data-type' : 'sectioned'
             }
 
     def process(self):
-        input_data = self.input().data()
         output_dict = OrderedDict()
-        output_dict['1'] = "Dexy processed the text '%s'" % input_data
+        output_dict['1'] = "Dexy processed the text '%s'" % self.input_data
         self.output().set_data(output_dict)
 
 class AbcExtension(Example):
     """
     Only outputs extension .abc
     """
-    ALIASES = ['outputabc']
-
-    _SETTINGS = {
+    aliases = ['outputabc']
+    _settings = {
             'output-extensions' : ['.abc']
             }
 
@@ -165,9 +163,9 @@ class ExampleFilterArgs(Example):
     """
     Prints out the args it receives.
     """
-    ALIASES = ['filterargs']
+    aliases = ['filterargs']
 
-    _SETTINGS = {
+    _settings = {
             "abc" : ("The abc setting.", None),
             "foo" : ("The foo setting.", None),
             }

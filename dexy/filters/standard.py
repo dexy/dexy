@@ -9,8 +9,8 @@ class PreserveDataClassFilter(DexyFilter):
     """
     Sets PRESERVE_PRIOR_DATA_CLASS to True.
     """
-    ALIASES = []
-    _SETTINGS = {
+    aliases = []
+    _settings = {
             'preserve-prior-data-class' : True
             }
 
@@ -21,14 +21,14 @@ class ChangeExtensionManuallyFilter(PreserveDataClassFilter):
     """
     Dummy filter for allowing changing a file extension.
     """
-    ALIASES = ['chext']
+    aliases = ['chext']
 
 class KeyValueStoreFilter(DexyFilter):
     """
     Filter for creating a new key value store on the fly
     """
-    ALIASES = ['kv']
-    _SETTINGS = {
+    aliases = ['kv']
+    _settings = {
             'output-data-type' : 'keyvalue'
             }
 
@@ -42,8 +42,8 @@ class HeaderFilter(DexyFilter):
     """
     Apply another file to top of file.
     """
-    ALIASES = ['hd']
-    _SETTINGS = {
+    aliases = ['hd']
+    _settings = {
             'key-name' : ("Name of key to use.", 'header'),
             'header' : ("Document key of file to use as header.", None)
             }
@@ -79,8 +79,8 @@ class FooterFilter(HeaderFilter):
     """
     Apply another file to bottom of file.
     """
-    ALIASES = ['ft']
-    _SETTINGS = {
+    aliases = ['ft']
+    _settings = {
             'key-name' : 'footer',
             'footer' : ("Document key of file to use as footer.", None)
             }
@@ -93,8 +93,8 @@ class MarkupTagsFilter(DexyFilter):
     """
     Wrap text in specified HTML tags.
     """
-    ALIASES = ['tags']
-    _SETTINGS = {
+    aliases = ['tags']
+    _settings = {
             'tags' : ("Tags.", {})
             }
 
@@ -112,8 +112,8 @@ class StartSpaceFilter(DexyFilter):
 
     Useful for passing syntax highlighted/preformatted code to mediawiki.
     """
-    ALIASES = ['ss', 'startspace']
-    _SETTINGS = {
+    aliases = ['ss', 'startspace']
+    _settings = {
             'n' : ("Number of spaces to prepend to each line.", 1)
             }
 
@@ -133,8 +133,8 @@ class SectionsByLineFilter(DexyFilter):
     """
     Returns each line in its own section.
     """
-    ALIASES = ['lines']
-    _SETTINGS = {
+    aliases = ['lines']
+    _settings = {
             'output-data-type' : 'sectioned'
             }
 
@@ -148,8 +148,8 @@ class PrettyPrintJsonFilter(DexyFilter):
     """
     Pretty prints JSON input.
     """
-    ALIASES = ['ppjson']
-    _SETTINGS = {
+    aliases = ['ppjson']
+    _settings = {
             'output-extensions' : ['.json']
             }
 
@@ -164,7 +164,7 @@ class JoinFilter(DexyFilter):
     sections as input, so this forces acknowledgement that sections will be
     lost.
     """
-    ALIASES = ['join']
+    aliases = ['join']
 
     def process(self):
         joined_data = "\n".join(self.artifact.input_data.as_sectioned().values())
@@ -174,7 +174,7 @@ class HeadFilter(DexyFilter):
     """
     Returns just the first 10 lines of input.
     """
-    ALIASES = ['head']
+    aliases = ['head']
 
     def process_text(self, input_text):
         return "\n".join(input_text.split("\n")[0:10]) + "\n"
@@ -184,8 +184,8 @@ class WordWrapFilter(DexyFilter):
     Wraps text after 79 characters (tries to preserve existing line breaks and
     spaces).
     """
-    ALIASES = ['ww', 'wrap']
-    _SETTINGS = {
+    aliases = ['ww', 'wrap']
+    _settings = {
             'width' : ("Width of text to wrap to.", 79)
             }
 

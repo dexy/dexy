@@ -7,8 +7,8 @@ class CasperJsSvg2PdfFilter(SubprocessFilter):
     Converts an SVG file to PDF by running it through casper js.
     # TODO convert this to phantomjs, no benefit to using casper here (js is not user facing) and more restrictive
     """
-    ALIASES = ['svg2pdf']
-    _SETTINGS = {
+    aliases = ['svg2pdf']
+    _settings = {
             'add-new-files' : True,
             'executable' : 'casperjs',
             'version-command' : 'casperjs --version',
@@ -50,7 +50,7 @@ class CasperJsSvg2PdfFilter(SubprocessFilter):
 
         wd = self.artifact.full_wd()
         scriptfile = os.path.join(wd, "script.js")
-        self.log.debug("scriptfile: %s" % scriptfile)
+        self.log_debug("scriptfile: %s" % scriptfile)
         with open(scriptfile, "w") as f:
             f.write(js)
 
@@ -61,8 +61,8 @@ class PhantomJsRenderSubprocessFilter(SubprocessFilter):
     Renders HTML to PNG/PDF using phantom.js. If the HTML relies on local
     assets such as CSS or image files, these should be specified as inputs.
     """
-    ALIASES = ['phrender']
-    _SETTINGS = {
+    aliases = ['phrender']
+    _settings = {
             'add-new-files' : True,
             'executable' :  'phantomjs',
             "width" : ("Width of page to capture.", 1024),
@@ -115,7 +115,7 @@ class PhantomJsRenderSubprocessFilter(SubprocessFilter):
         """ % args
 
         scriptfile = os.path.join(wd, "script.js")
-        self.log.debug("scriptfile: %s" % scriptfile)
+        self.log_debug("scriptfile: %s" % scriptfile)
         with open(scriptfile, "w") as f:
             f.write(js)
 
