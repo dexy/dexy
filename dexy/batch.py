@@ -12,9 +12,16 @@ class Batch(object):
     def __repr__(self):
         return "Batch(%s)" % self.uuid
 
+    def __iter__(self):
+        for doc_key in self.docs:
+            yield self.doc_output_data(doc_key)
+
     def doc_data(self, doc_key, input_or_output):
         doc_info = self.docs[doc_key]["%s-data" % input_or_output]
-        data = dexy.data.Data.create_instance(*doc_info + [self.wrapper])
+        args = []
+        args.extend(doc_info)
+        args.append(self.wrapper)
+        data = dexy.data.Data.create_instance(*args)
         data.setup_storage()
         return data
 

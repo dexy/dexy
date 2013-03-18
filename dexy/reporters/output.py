@@ -11,7 +11,7 @@ class OutputReporter(Reporter):
             }
 
     def write_canonical_doc(self, doc):
-        fp = os.path.join(self.setting('dir'), doc.output().name)
+        fp = os.path.join(self.setting('dir'), doc.name)
 
         if fp in self.locations:
             print "WARNING overwriting file", fp
@@ -27,16 +27,16 @@ class OutputReporter(Reporter):
 
         self.log_debug("  writing %s to %s" % (doc.key, fp))
 
-        doc.output().output_to_file(fp)
+        doc.output_to_file(fp)
 
     def run(self, wrapper):
         self.wrapper=wrapper
         self.locations = {}
 
         self.create_reports_dir()
-        for node in wrapper.nodes:
-            if node.is_canonical_output():
-                self.write_canonical_doc(node)
+        for data in wrapper.batch:
+            if data.is_canonical_output():
+                self.write_canonical_doc(data)
 
 class LongOutputReporter(Reporter):
     """
@@ -50,8 +50,8 @@ class LongOutputReporter(Reporter):
     def run(self, wrapper):
         self.wrapper=wrapper
         self.create_reports_dir()
-        for doc in wrapper.nodes.values():
-            fp = os.path.join(self.setting('dir'), doc.output().long_name())
+        for doc in wrapper.batch:
+            fp = os.path.join(self.setting('dir'), doc.long_name())
 
             try:
                 os.makedirs(os.path.dirname(fp))
@@ -59,4 +59,4 @@ class LongOutputReporter(Reporter):
                 pass
 
             self.log_debug("  writing %s to %s" % (doc.key, fp))
-            doc.output().output_to_file(fp)
+            doc.output_to_file(fp)

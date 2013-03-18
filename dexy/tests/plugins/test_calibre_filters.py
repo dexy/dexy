@@ -1,5 +1,5 @@
 from dexy.tests.utils import wrap
-from dexy.node import DocNode
+from dexy.doc import Doc
 
 HTML = """
 <h1>Header</h1>
@@ -8,13 +8,14 @@ HTML = """
 
 def run_calibre(ext):
     with wrap() as wrapper:
-        node = DocNode("book.html|calibre",
+        node = Doc("book.html|calibre",
+                wrapper,
+                [],
                 calibre = { 'ext' : ext },
-                contents = HTML,
-                wrapper=wrapper)
+                contents = HTML
+                )
         wrapper.run_docs(node)
-        doc = node.children[0]
-        assert doc.output().is_cached()
+        assert node.output_data().is_cached()
 
 def test_calibre_mobi():
     run_calibre('.mobi')

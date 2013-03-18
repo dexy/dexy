@@ -1,9 +1,9 @@
-from dexy.batch import Batch
 from dexy.exceptions import DeprecatedException
 from dexy.exceptions import InternalDexyProblem
 from dexy.exceptions import UserFeedback
 from dexy.utils import file_exists
 from dexy.utils import s
+import dexy.batch
 import dexy.doc
 import dexy.parser
 import dexy.reporter
@@ -205,7 +205,7 @@ class Wrapper(object):
     def run(self):
         self.assert_dexy_dirs_exist()
 
-        self.batch = Batch(self)
+        self.batch = dexy.batch.Batch(self)
         self.batch.start_time = time.time()
 
         ast = self.parse_configs()
@@ -218,6 +218,21 @@ class Wrapper(object):
 
         for root_node in run_roots:
             for task in root_node:
+                task()
+
+        self.batch.end_time = time.time()
+        self.batch.save_to_file()
+
+    def run_docs(self, *docs):
+        self.assert_dexy_dirs_exist()
+
+        self.batch = dexy.batch.Batch(self)
+        self.batch.start_time = time.time()
+
+        self.nodes = dict((d.key_with_class(), d) for d in docs)
+        print self.nodes
+        for node in docs:
+            for task in node:
                 task()
 
         self.batch.end_time = time.time()

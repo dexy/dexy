@@ -60,7 +60,7 @@ class SubprocessFilter(Filter):
         self.handle_subprocess_proc_return(command, proc.returncode, stdout)
         self.copy_canonical_file()
 
-        if self.do_add_new_files():
+        if self.setting('add-new-files'):
             self.log_debug("adding new files found in %s for %s" % (self.artifact.wd(), self.artifact.key))
             self.add_new_files()
 
@@ -214,7 +214,8 @@ class SubprocessFilter(Filter):
         return doc
 
     def run_command(self, command, env, input_text=None):
-        wd = self.setup_wd()
+        self.populate_workspace()
+        wd = self.workspace()
 
         stdout = subprocess.PIPE
 
@@ -246,9 +247,9 @@ class SubprocessFilter(Filter):
         return (proc, stdout)
 
     def copy_canonical_file(self):
-        canonical_file = os.path.join(self.artifact.wd(), self.output().name)
-        if not self.output().is_cached() and file_exists(canonical_file):
-            self.output().copy_from_file(canonical_file)
+        canonical_file = os.path.join(self.workspace(), self.output_data.name)
+        if not self.output_data.is_cached() and file_exists(canonical_file):
+            self.output_data.copy_from_file(canonical_file)
 
 class SubprocessStdoutFilter(SubprocessFilter):
     """
@@ -269,7 +270,7 @@ class SubprocessStdoutFilter(SubprocessFilter):
         if self.setting('walk-working-dir'):
             self.walk_working_directory()
 
-        if self.do_add_new_files():
+        if self.setting('add-new-files'):
             self.log_debug("adding new files found in %s for %s" % (self.artifact.wd(), self.artifact.key))
             self.add_new_files()
 
@@ -324,7 +325,7 @@ class SubprocessCompileFilter(SubprocessFilter):
 
         self.output().set_data(stdout)
 
-        if self.do_add_new_files():
+        if self.setting('add-new-files'):
             self.log_debug("adding new files found in %s for %s" % (self.artifact.wd(), self.artifact.key))
             self.add_new_files()
 

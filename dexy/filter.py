@@ -57,8 +57,8 @@ class Filter(dexy.plugin.Plugin):
             self.prev_ext = self.doc.initial_data.ext
 
         self.set_extension()
-    
-        self.output = dexy.data.Data.create_instance(
+
+        self.output_data = dexy.data.Data.create_instance(
                 self.data_class_alias(self.ext),
                 self.key,
                 self.ext,
@@ -68,7 +68,7 @@ class Filter(dexy.plugin.Plugin):
                 None,
                 self.doc.wrapper
                 )
-        self.output.setup_storage()
+        self.output_data.setup_storage()
 
     def set_extension(self):
         i_accept = self.setting('input-extensions')
@@ -159,6 +159,15 @@ class Filter(dexy.plugin.Plugin):
         name_without_ext = posixpath.splitext(self.key)[0]
         return "%s%s" % (name_without_ext, self.ext)
 
+    def input_filename(self):
+        return self.input_data.name
+
+    def output_filename(self):
+        return self.output_data.name
+
+    def output_filepath(self):
+        return self.output_data.storage.data_file()
+
     def doc_arg(self, arg_name_hyphen, default=None):
         return self.doc.arg_value(arg_name_hyphen, default)
 
@@ -202,19 +211,14 @@ class Filter(dexy.plugin.Plugin):
         return os.path.join(self.doc.wrapper.artifacts_dir, self.doc.wrapper.workspace, self.storage_key)
 
     def populate_workspace(self):
-        os.makedirs(self.workspace())
-        for inpt in self.doc.walk_inputs():
+        ws = self.workspace()
+        os.makedirs(ws)
+        print "in populate_workspace"
+        for inpt in self.doc.walk_input_docs():
             print inpt.key_with_class()
-            print inpt.filters[-1].output_data.name
+            print inpt.output_data().name
 
-    def write_to_wd(self, wd, doc, filename):
-        try:
-            doc.output.output_to_file(filename)
-            self._wd_files_start.add(filename)
-        except Exception as e:
-            args = (e.__class__.__name__, wd, self.artifact.key, doc.key, filename)
-            self.log_debug("%s error occurred whlie trying to populate working directory %s for %s with %s (%s)" % args)
-            self.log_debug(str(e))
+        self.input_data.output_to_file(os.path.join(ws, 'foo.txt'))
 
     def resolve_conflict(self, doc, conflict_docs):
         """
@@ -228,13 +232,14 @@ class Filter(dexy.plugin.Plugin):
             return doc in conflict_docs and conflict_docs.index(doc) == 0
 
     def is_part_of_script_bundle(self):
-        if hasattr(self.artifact.doc.node, 'parent'):
-            return hasattr(self.artifact.doc.node.parent, 'script_storage')
+        if hasattr(self.doc, 'parent'):
+            return hasattr(self.doc.parent, 'script_storage')
 
     def script_storage(self):
         if not self.is_part_of_script_bundle():
-            raise dexy.exceptions.UserFeedback("%s must be part of script bundle to access script storage" % self.key)
-        return self.artifact.doc.node.parent.script_storage
+            msg = "%s must be part of script bundle to access script storage"
+            raise dexy.exceptions.UserFeedback(msg % self.key)
+        return self.doc.parent.script_storage
 
 class DexyFilter(Filter):
     """

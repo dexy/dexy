@@ -44,7 +44,7 @@
 
             <h2>Tree</h2>
             <p>Click to Expand</p>
-            {% for node in wrapper.nodes -%}
+            {% for node in wrapper.nodes.values() -%}
             {% for line in print_children(node) -%}
             {{ line }}
             {% endfor -%}
@@ -65,7 +65,7 @@
             {% endif -%}
 
             <h2>Documents</h2>
-            {% for doc in docs -%}
+            {% for doc in batch -%}
             <hr />
             <h3 style="padding-top: 60px;" id="{{ doc.websafe_key() }}">{{ doc.key }} &nbsp;&nbsp;&nbsp; <a href="#top">&uarr;</a></h3>
             {% set args = printable_args(doc.args) -%}

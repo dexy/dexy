@@ -77,6 +77,7 @@ class Doc(dexy.node.Node):
                 }
 
     def append_to_batch(self):
+        print "appending info to batch for", self.key_with_class()
         self.wrapper.batch.docs[self.key_with_class()] = self.batch_info()
 
     def setup(self):
@@ -93,7 +94,7 @@ class Doc(dexy.node.Node):
         prev_filter = None
         for i, f in enumerate(self.filters):
             filter_aliases = self.filter_aliases[0:i+1]
-            filter_key = "%s|%s" % (self.hashid, "|".join(filter_aliases))
+            filter_key = "%s|%s" % (self.name, "|".join(filter_aliases))
             storage_key = "%s-%03d-%s" % (self.hashid, i+1, "-".join(filter_aliases))
 
             if i < len(self.filters) - 1:
@@ -102,4 +103,5 @@ class Doc(dexy.node.Node):
                 next_filter = None
 
             f.setup(filter_key, storage_key, prev_filter, next_filter)
+            f.update_settings(self.args.get(f.alias, {}))
             prev_filter = f

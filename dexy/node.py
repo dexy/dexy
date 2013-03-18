@@ -40,6 +40,9 @@ class Node(dexy.plugin.Plugin):
     def setup(self):
         pass
 
+    def websafe_key(self):
+        return self.key
+
     def walk_inputs(self):
         """
         Yield all direct inputs and their inputs.
@@ -48,6 +51,18 @@ class Node(dexy.plugin.Plugin):
             for i in inputs:
                 walk(i)
                 yield i
+
+        return walk(self.inputs)
+
+    def walk_input_docs(self):
+        """
+        Yield all direct inputs and their inputs, if they are of class 'doc'
+        """
+        def walk(inputs):
+            for i in inputs:
+                walk(i)
+                if i.__class__.__name__ == 'Doc':
+                    yield i
 
         return walk(self.inputs)
 
@@ -121,7 +136,7 @@ class Node(dexy.plugin.Plugin):
                 self.state = 'complete'
 
             elif self.state == 'running':
-                raise dexy.exceptions.CircularDependency
+                raise dexy.exceptions.CircularDependency(self.key)
 
             elif self.state == 'complete':
                 pass

@@ -17,7 +17,6 @@ from pygments.lexers.web import XmlLexer
 import dexy.commands
 import dexy.exceptions
 import pygments.lexers.web
-import re
 
 class SyntaxHighlightRstFilter(DexyFilter):
     """
@@ -125,7 +124,7 @@ class PygmentsFilter(DexyFilter):
             self.log_hebug("custom lexer %s specified" % self.setting('lexer'))
             lexer = get_lexer_by_name(self.setting('lexer'), **lexer_args)
         else:
-            is_json_file = ext in ('.json', '.dexy') or self.output.name.endswith(".dexy")
+            is_json_file = ext in ('.json', '.dexy') or self.output_data.name.endswith(".dexy")
             if ext == '.pycon':
                 lexer_class = PythonConsoleLexer
             elif ext == '.rbcon':
@@ -157,9 +156,9 @@ class PygmentsFilter(DexyFilter):
 
     def create_formatter_instance(self):
         formatter_args = self.constructor_args('formatter', {
-            'lineanchors' : self.output.web_safe_document_key() })
+            'lineanchors' : self.output_data.web_safe_document_key() })
         self.log_debug("creating pygments formatter with args %s" % (formatter_args))
-        return get_formatter_for_filename(self.output.name, **formatter_args)
+        return get_formatter_for_filename(self.output_data.name, **formatter_args)
 
     def process(self):
         if self.ext in self.IMAGE_OUTPUT_EXTENSIONS:
@@ -181,7 +180,7 @@ class PygmentsFilter(DexyFilter):
             else:
                 raise dexy.commands.UserFeedback("pyg filter doesn't know how to generate a stylesheet for %s extension" % ext)
 
-            self.output.set_data(output)
+            self.output_data.set_data(output)
 
         else:
             lexer = self.create_lexer_instance()
@@ -205,4 +204,4 @@ class PygmentsFilter(DexyFilter):
                 output_dict = OrderedDict()
                 for k, v in self.input_data.as_sectioned().iteritems():
                     output_dict[k] = highlight(v.decode("utf-8"), lexer, formatter)
-                self.output.set_data(output_dict)
+                self.output_data.set_data(output_dict)

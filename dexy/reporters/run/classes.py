@@ -37,7 +37,6 @@ class RunReporter(Reporter):
         env_data['len'] = len
         env_data['sorted'] = sorted
 
-        env_data['docs'] = wrapper.nodes.values()
         env_data['wrapper'] = wrapper
         env_data['batch'] = wrapper.batch
 

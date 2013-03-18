@@ -178,6 +178,15 @@ class Generic(Data):
             with open(self.storage.data_file(), "r") as f:
                 return dexy.utils.parse_json_from_file(f)
 
+    def is_canonical_output(self):
+        return True
+
+    def is_index_page(self):
+        return self.name.endswith("index.html")
+
+    def websafe_key(self):
+        return self.key
+
     def copy_from_file(self, filename):
         shutil.copyfile(filename, self.storage.data_file())
 
