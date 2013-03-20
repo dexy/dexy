@@ -14,8 +14,14 @@ class PreserveDataClassFilter(DexyFilter):
             'preserve-prior-data-class' : True
             }
 
+    def data_class_alias(self, ext):
+        if self.setting('preserve-prior-data-class'):
+            return self.input_data.alias
+        else:
+            return self.setting('output-data-type')
+
     def calculate_canonical_name(self):
-        return self.artifact.prior.filter_instance.calculate_canonical_name()
+        return self.prev_filter.calculate_canonical_name()
 
 class ChangeExtensionManuallyFilter(PreserveDataClassFilter):
     """
@@ -33,10 +39,10 @@ class KeyValueStoreFilter(DexyFilter):
             }
 
     def process(self):
-        self.output().copy_from_file(self.input().storage.data_file())
+        self.output_data().copy_from_file(self.input_data.storage.data_file())
 
         # Call setup() again since it will have created a new blank database.
-        self.output().storage.setup()
+        self.output_data().storage.setup()
 
 class HeaderFilter(DexyFilter):
     """
@@ -49,8 +55,8 @@ class HeaderFilter(DexyFilter):
             }
 
     def find_input_in_parent_dir(self, matches):
-        docs = list(self.artifact.doc.node.walk_input_docs())
-        docs_d = dict((task.output().long_name(), task) for task in docs)
+        docs = list(self.doc.walk_input_docs())
+        docs_d = dict((task.output_data().long_name(), task) for task in docs)
 
         key_name = self.setting('key-name')
         requested = self.setting(key_name)
@@ -63,13 +69,15 @@ class HeaderFilter(DexyFilter):
         else:
             matched_key = None
             for k in sorted(docs_d.keys()):
-                if (os.path.dirname(k) in self.output().parent_dir()) and (matches in k):
+                if (os.path.dirname(k) in self.output_data.parent_dir()) and (matches in k):
                     matched_key = k
 
         if not matched_key:
-            raise dexy.exceptions.UserFeedback("No %s input found for %s" % (self.KEY_NAME, self.artifact.key))
+            msg = "no %s input found for %s" 
+            msgargs = (self.KEY_NAME, self.key)
+            raise dexy.exceptions.UserFeedback(msg % msgargs)
 
-        return docs_d[matched_key].output()
+        return docs_d[matched_key].output_data()
 
     def process_text(self, input_text):
         header_data = self.find_input_in_parent_dir("_header")
@@ -167,8 +175,8 @@ class JoinFilter(DexyFilter):
     aliases = ['join']
 
     def process(self):
-        joined_data = "\n".join(self.artifact.input_data.as_sectioned().values())
-        self.artifact.output_data.set_data(joined_data)
+        joined_data = "\n".join(self.input_data.as_sectioned().values())
+        self.output_data.set_data(joined_data)
 
 class HeadFilter(DexyFilter):
     """

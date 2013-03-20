@@ -6,6 +6,7 @@ import fnmatch
 import re
 import os
 import json
+import inflection
 
 class Node(dexy.plugin.Plugin):
     """
@@ -19,6 +20,7 @@ class Node(dexy.plugin.Plugin):
         self.key = os_to_posix(pattern)
         self.wrapper = wrapper
         self.args = kwargs
+        self.runtime_args = {}
         self.children = []
         self.state = 'new'
 
@@ -28,8 +30,9 @@ class Node(dexy.plugin.Plugin):
             self.inputs = []
 
         self.hashid = md5_hash(self.key)
-        self.doc_changed = self.check_doc_changed()
+
         self.args_changed = self.check_args_changed()
+        self.doc_changed = False
 
         # Class-specific setup.
         self.setup()
@@ -37,11 +40,21 @@ class Node(dexy.plugin.Plugin):
     def __repr__(self):
         return "%s(%s)" % ( self.__class__.__name__, self.key)
 
+    def add_runtime_args(self, args):
+        self.args.update(args)
+        self.runtime_args.update(args)
+
+    def arg_value(self, key, default=None):
+        return self.args.get(key, default) or self.args.get(key.replace("-", "_"), default)
+
     def setup(self):
         pass
 
     def websafe_key(self):
         return self.key
+
+    def title(self):
+        return self.args.get('title', inflection.titleize(self.name))
 
     def walk_inputs(self):
         """
@@ -50,6 +63,10 @@ class Node(dexy.plugin.Plugin):
         def walk(inputs):
             for i in inputs:
                 walk(i)
+                for ii in i.inputs:
+                    yield ii
+                for c in i.children:
+                    yield c
                 yield i
 
         return walk(self.inputs)
@@ -58,13 +75,9 @@ class Node(dexy.plugin.Plugin):
         """
         Yield all direct inputs and their inputs, if they are of class 'doc'
         """
-        def walk(inputs):
-            for i in inputs:
-                walk(i)
-                if i.__class__.__name__ == 'Doc':
-                    yield i
-
-        return walk(self.inputs)
+        for node in self.walk_inputs():
+            if node.__class__.__name__ == 'Doc':
+                yield node
 
     def log_debug(self, message):
         self.wrapper.log.debug("%s: %s" % (self.key_with_class(), message))
@@ -77,9 +90,6 @@ class Node(dexy.plugin.Plugin):
 
     def key_with_class(self):
         return "%s:%s" % (self.__class__.aliases[0], self.key)
-
-    def check_doc_changed(self):
-        return False
 
     def check_args_changed(self):
         """
@@ -94,13 +104,17 @@ class Node(dexy.plugin.Plugin):
         except IOError:
             return True
 
-    def sorted_args(self):
+    def sorted_args(self, skip=['contents']):
         """
         Returns a list of args in sorted order.
         """
+        if not skip:
+            skip = []
+
         sorted_args = []
         for k in sorted(self.args):
-            sorted_args.append((k, self.args[k]))
+            if not k in skip:
+                sorted_args.append((k, self.args[k]))
         return sorted_args
 
     def sorted_arg_string(self):
@@ -115,12 +129,27 @@ class Node(dexy.plugin.Plugin):
         """
         return os.path.join(self.wrapper.artifacts_dir, "%s.args" % self.hashid)
 
+    def runtime_args_filename(self):
+        """
+        Returns filename used to store runtime args.
+        """
+        return os.path.join(self.wrapper.artifacts_dir, "%s.runtimeargs" % self.hashid)
+
     def save_args(self):
         """
         Saves the args (for debugging, and to compare against next run).
         """
         with open(self.args_filename(), "w") as f:
             json.dump(self.sorted_args(), f)
+    
+    def save_runtime_args(self):
+        with open(self.runtime_args_filename(), "w") as f:
+            json.dump(self.runtime_args, f)
+
+    def load_runtime_args(self):
+        with open(self.runtime_args_filename(), "r") as f:
+            runtime_args = json.load(f)
+            self.add_runtime_args(runtime_args)
 
     def inputs_changed(self):
         return any(i.changed() for i in self.inputs)
@@ -153,9 +182,12 @@ class Node(dexy.plugin.Plugin):
         self.call_run(*args, **kw)
 
     def call_run(self, *args, **kw):
+        self.save_args()
         if self.changed():
             self.run(*args, **kw)
-        self.save_args()
+            self.save_runtime_args()
+        else:
+            self.load_runtime_args()
 
     def run(self, *args, **kw):
         for child in self.children:
@@ -206,3 +238,4 @@ class PatternNode(Node):
                     doc = dexy.doc.Doc(doc_key, self.wrapper, [], **self.args)
                     doc.parent = self
                     self.children.append(doc)
+                    self.wrapper.add_node(doc)

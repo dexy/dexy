@@ -25,8 +25,8 @@ class KeyValueExample(Example):
             }
 
     def process(self):
-        self.output().append("foo", "bar")
-        self.output().save()
+        self.output_data.append("foo", "bar")
+        self.output_data.save()
 
 class AccessOtherDocuments(Example):
     """
@@ -36,10 +36,10 @@ class AccessOtherDocuments(Example):
 
     def process_text(self, input_text):
         info = []
-        info.append("Here is a list of previous docs in this tree (not including %s)." % self.artifact.key)
+        info.append("Here is a list of previous docs in this tree (not including %s)." % self.key)
 
         ### @export "access-other-docs-iterate"
-        for doc in self.processed():
+        for doc in self.doc.walk_input_docs():
             assert isinstance(doc, Doc)
 
             ### @export "access-other-docs-lens"
@@ -47,10 +47,10 @@ class AccessOtherDocuments(Example):
             n_inputs = len(doc.inputs)
 
             ### @export "access-other-docs-output-length"
-            if doc.output().has_data():
-                length = len(doc.output().data())
+            if doc.output_data().has_data():
+                length = len(doc.output_data().data())
             else:
-                length = len(doc.output().ordered_dict())
+                length = len(doc.output_data().ordered_dict())
 
             ### @export "access-other-docs-finish"
             info.append("%s (%s children, %s inputs, length %s)" % (doc.key, n_children, n_inputs, length))
@@ -118,8 +118,8 @@ class ExampleProcessMethod(Example):
     aliases = ['process']
 
     def process(self):
-        output = "Dexy processed the text '%s'" % self.input().data()
-        self.output().set_data(output)
+        output = "Dexy processed the text '%s'" % self.input_data
+        self.output_data.set_data(output)
 
 class ExampleProcessMethodManualWrite(Example):
     """
@@ -128,7 +128,7 @@ class ExampleProcessMethodManualWrite(Example):
     aliases = ['processmanual']
 
     def process(self):
-        input_data = self.input().data()
+        input_data = self.input_data
         output = "Dexy processed the text '%s'" % input_data
         with open(self.output_filepath(), "wb") as f:
             f.write(output)
@@ -145,7 +145,7 @@ class ExampleProcessWithDictMethod(Example):
     def process(self):
         output_dict = OrderedDict()
         output_dict['1'] = "Dexy processed the text '%s'" % self.input_data
-        self.output().set_data(output_dict)
+        self.output_data.set_data(output_dict)
 
 class AbcExtension(Example):
     """
@@ -179,8 +179,8 @@ class ExampleFilterArgs(Example):
 
         # Doc args
         result.append("Here are the document args:")
-        for k in sorted(self.artifact.args):
-            v = self.artifact.args[k]
+        for k in sorted(self.doc.args):
+            v = self.doc.args[k]
             result.append("  %s: %s" % (k, v))
 
         return os.linesep.join(result)

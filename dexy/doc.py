@@ -4,6 +4,7 @@ import dexy.filter
 import dexy.node
 import os
 import time
+import posixpath
 
 class Doc(dexy.node.Node):
     """
@@ -11,8 +12,19 @@ class Doc(dexy.node.Node):
     """
     aliases = ['doc']
 
+    def canonical_name_from_args(self):
+        raw_arg_name = self.arg_value('canonical-name')
+    
+        if raw_arg_name:
+            raw_arg_name = raw_arg_name % self.args
+
+            if "/" in raw_arg_name:
+                return raw_arg_name
+            else:
+                return posixpath.join(posixpath.dirname(self.key), raw_arg_name)
+
     def setup_initial_data(self):
-        canonical_name = self.key
+        canonical_name = self.canonical_name_from_args() or self.name
         storage_key = "%s-000" % self.hashid
 
         self.initial_data = dexy.data.Data.create_instance(
@@ -27,12 +39,32 @@ class Doc(dexy.node.Node):
                 )
 
         self.initial_data.setup_storage()
+        self.doc_changed = self.check_doc_changed()
 
         if self.name in self.wrapper.filemap:
             # This is a real file on the file system.
             self.initial_data.copy_from_file(self.name)
         else:
             self.initial_data.set_data(self.get_contents())
+
+    def check_doc_changed(self):
+        if self.name in self.wrapper.filemap:
+            live_stat = self.wrapper.filemap[self.name]['stat']
+            cache_stat = self.initial_data.storage.stat()
+            if cache_stat:
+                # we have a file in the cache, compare its mtime to filemap
+                # to determine whether it has changed
+                import stat
+                cache_mtime = cache_stat[stat.ST_MTIME]
+                live_mtime = live_stat[stat.ST_MTIME]
+                return live_mtime != cache_mtime
+            else:
+                # there is no file in the cache, therefore it has 'changed'
+                return True
+        else:
+            # virtual
+            # TODO check hash of contents
+            return False
 
     def data_class_alias(self):
         data_class_alias = self.args.get('data-class-alias')
@@ -77,8 +109,8 @@ class Doc(dexy.node.Node):
                 }
 
     def append_to_batch(self):
-        print "appending info to batch for", self.key_with_class()
         self.wrapper.batch.docs[self.key_with_class()] = self.batch_info()
+        self.wrapper.batch.filters_used.extend(self.filter_aliases)
 
     def setup(self):
         self.name = self.key.split("|")[0]
@@ -102,6 +134,7 @@ class Doc(dexy.node.Node):
             else:
                 next_filter = None
 
-            f.setup(filter_key, storage_key, prev_filter, next_filter)
-            f.update_settings(self.args.get(f.alias, {}))
+            filter_settings_from_args = self.args.get(f.alias, {})
+            f.setup(filter_key, storage_key, prev_filter,
+                    next_filter, filter_settings_from_args)
             prev_filter = f

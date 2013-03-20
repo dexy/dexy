@@ -15,6 +15,6 @@ def test_ast():
         assert ast.inputs_for_node('abc.txt') == ['doc:def.txt']
         assert not ast.inputs_for_node('def.txt')
 
-        roots, nodes = ast.walk()
-        assert len(roots) == 1
-        assert len(nodes) == 2
+        ast.walk()
+        assert len(wrapper.roots) == 1
+        assert len(wrapper.nodes) == 2

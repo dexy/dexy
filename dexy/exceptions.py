@@ -46,3 +46,6 @@ class InternalDexyProblem(Exception):
 
 class DeprecatedException(InternalDexyProblem):
     pass
+
+class TemplateException(InternalDexyProblem):
+    pass

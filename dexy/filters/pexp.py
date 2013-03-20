@@ -85,7 +85,7 @@ class PexpectReplFilter(SubprocessFilter):
             if not self.setting('save-vars-to-json-cmd'):
                 raise UserFeedback("You specified record-vars but this option isn't available since SAVE_VARS_TO_JSON_CMD is not set for this filter.")
 
-            section_text = self.setting('save-vars-to-json-cmd') % self.input().basename()
+            section_text = self.setting('save-vars-to-json-cmd') % self.input_data.basename()
             self.log_debug("Adding save-vars-to-json-cmd code:\n%s" % section_text)
             input_dict['dexy--save-vars'] = section_text
             if not self.setting('add-new-files'):
@@ -121,7 +121,7 @@ class PexpectReplFilter(SubprocessFilter):
 
         self.log_debug("timeout set to '%s'" % timeout)
 
-        wd=self.setup_wd()
+        wd=self.parent_work_dir()
         executable = self.setting('executable')
         self.log_debug("About to spawn new process '%s' in %s." % (executable, wd))
 
@@ -198,7 +198,7 @@ class PexpectReplFilter(SubprocessFilter):
 
             yield section_key, section_transcript
 
-        if self.do_add_new_files():
+        if self.setting('add-new-files'):
             self.add_new_files()
 
         try:
@@ -210,15 +210,16 @@ class PexpectReplFilter(SubprocessFilter):
             self.handle_subprocess_proc_return(self.setting('executable'), proc.exitstatus, section_transcript)
 
     def process(self):
+        self.populate_workspace()
         output = OrderedDict()
 
-        for section_key, section_transcript in self.section_output(self.input().as_sectioned()):
+        for section_key, section_transcript in self.section_output(self.input_data.as_sectioned()):
             self.log_debug("Processing section %s" % section_key)
             section_output = self.strip_trailing_prompts(section_transcript)
 
             output[section_key] = section_output
 
-        self.output().set_data(output)
+        self.output_data.set_data(output)
 
 try:
     import IPython

@@ -61,7 +61,7 @@ class SubprocessFilter(Filter):
         self.copy_canonical_file()
 
         if self.setting('add-new-files'):
-            self.log_debug("adding new files found in %s for %s" % (self.artifact.wd(), self.artifact.key))
+            self.log_debug("adding new files found in %s for %s" % (self.workspace(), self.key))
             self.add_new_files()
 
     def command_string_args(self):
@@ -71,8 +71,8 @@ class SubprocessFilter(Filter):
         args = {
                 'args' : " ".join([self.setting('args'), self.setting('clargs')]),
                 'prog' : self.setting('executable'),
-                'script_file' : self.input_filename(),
-                'output_file' : self.output_filename()
+                'script_file' : self.work_input_filename(),
+                'output_file' : self.work_output_filename()
                 }
         skip = ['args', 'clargs']
         args.update(self.setting_values(skip))
@@ -82,23 +82,23 @@ class SubprocessFilter(Filter):
         return self.setting('command-string') % self.command_string_args()
 
     def ignore_nonzero_exit(self):
-        return self.artifact.wrapper.ignore_nonzero_exit
+        return self.doc.wrapper.ignore_nonzero_exit
 
     def clear_cache(self):
-        self.output().clear_cache()
+        self.output_data.clear_cache()
 
     def handle_subprocess_proc_return(self, command, exitcode, stderr):
         if exitcode is None:
             raise dexy.exceptions.InternalDexyProblem("no return code, proc not finished!")
         elif exitcode != 0 and self.setting('check-return-code'):
             if self.ignore_nonzero_exit():
-                self.artifact.log.warn("Nonzero exit status %s" % exitcode)
-                self.artifact.log.warn("output from process: %s" % stderr)
+                self.log_warn("Nonzero exit status %s" % exitcode)
+                self.log_warn("output from process: %s" % stderr)
             else:
-                err_msg = "The command '%s' for %s exited with nonzero exit status %s." % (command, self.artifact.key, exitcode)
+                err_msg = "The command '%s' for %s exited with nonzero exit status %s." % (command, self.key, exitcode)
                 if stderr:
                     err_msg += " Here is stderr:\n%s" % stderr
-                self.output().clear_cache()
+                self.output_data.clear_cache()
                 raise dexy.exceptions.UserFeedback(err_msg)
 
     def setup_timeout(self):
@@ -131,7 +131,8 @@ class SubprocessFilter(Filter):
         Walk working directory and add a new dexy document for every newly
         created file found.
         """
-        wd = self.artifact.wd()
+        wd = self.workspace()
+        self.log_debug("adding new files found in %s for %s" % (wd, self.key))
 
         do_add_new = self.setting('add-new-files')
 
@@ -141,7 +142,8 @@ class SubprocessFilter(Filter):
                 filepath = os.path.normpath(os.path.join(dirpath, filename))
                 relpath = os.path.relpath(filepath, wd)
 
-                already_have_file = (filepath in self._wd_files_start)
+                print "looking for %s in %s" % (relpath, self._files_workspace_populated_with)
+                already_have_file = (relpath in self._files_workspace_populated_with)
 
                 if isinstance(do_add_new, list):
                     is_valid_file_extension = False
@@ -190,13 +192,13 @@ class SubprocessFilter(Filter):
         """
         if not doc:
             if section_name:
-                doc_key = "%s-%s-files" % (self.output().long_name(), section_name)
+                doc_key = "%s-%s-files" % (self.output_data.long_name(), section_name)
             else:
-                doc_key = "%s-files" % self.output().long_name()
+                doc_key = "%s-files" % self.output_data.long_name()
 
             doc = self.add_doc(doc_key, {})
 
-        wd = self.artifact.wd()
+        wd = self.workspace()
 
         for dirpath, dirnames, filenames in os.walk(wd):
             for filename in filenames:
@@ -207,15 +209,18 @@ class SubprocessFilter(Filter):
                     contents = f.read()
                 try:
                     json.dumps(contents)
-                    doc.output().append(relpath, contents)
+                    doc.output_data().append(relpath, contents)
                 except UnicodeDecodeError:
-                    doc.output().append(relpath, 'binary')
+                    doc.output_data().append(relpath, 'binary')
 
         return doc
 
     def run_command(self, command, env, input_text=None):
-        self.populate_workspace()
-        wd = self.workspace()
+        ws = self.workspace()
+        if os.path.exists(ws):
+            print "already have workspace"
+        else:
+            self.populate_workspace()
 
         stdout = subprocess.PIPE
 
@@ -229,6 +234,7 @@ class SubprocessFilter(Filter):
         else:
             stderr = subprocess.PIPE
 
+        wd = self.parent_work_dir()
         self.log_debug("about to run '%s' in '%s'" % (command, os.path.abspath(wd)))
         proc = subprocess.Popen(command, shell=True,
                                     cwd=wd,
@@ -265,13 +271,12 @@ class SubprocessStdoutFilter(SubprocessFilter):
         command = self.command_string()
         proc, stdout = self.run_command(command, self.setup_env())
         self.handle_subprocess_proc_return(command, proc.returncode, stdout)
-        self.output().set_data(stdout)
+        self.output_data.set_data(stdout)
 
         if self.setting('walk-working-dir'):
             self.walk_working_directory()
 
         if self.setting('add-new-files'):
-            self.log_debug("adding new files found in %s for %s" % (self.artifact.wd(), self.artifact.key))
             self.add_new_files()
 
 class SubprocessCompileFilter(SubprocessFilter):
@@ -296,7 +301,7 @@ class SubprocessCompileFilter(SubprocessFilter):
         return self.setting('compiler-command-string') % args
 
     def compiled_filename(self):
-        basename = os.path.basename(self.input().name)
+        basename = os.path.basename(self.input_data.name)
         nameroot = os.path.splitext(basename)[0]
         return "%s%s" % (nameroot, self.setting('compiled-extension'))
 
@@ -323,10 +328,12 @@ class SubprocessCompileFilter(SubprocessFilter):
         if self.setting('check-return-code'):
             self.handle_subprocess_proc_return(command, proc.returncode, stdout)
 
-        self.output().set_data(stdout)
+        self.output_data.set_data(stdout)
 
         if self.setting('add-new-files'):
-            self.log_debug("adding new files found in %s for %s" % (self.artifact.wd(), self.artifact.key))
+            msg = "adding new files found in %s for %s" 
+            msgargs = (self.workspace(), self.key)
+            self.log_debug(msg % msgargs)
             self.add_new_files()
 
 class SubprocessInputFilter(SubprocessFilter):
@@ -342,25 +349,25 @@ class SubprocessInputFilter(SubprocessFilter):
     def process(self):
         command = self.command_string()
 
-        inputs = list(self.artifact.doc.node.walk_input_docs())
+        inputs = list(self.doc.walk_input_docs())
 
         output = OrderedDict()
 
         if len(inputs) == 1:
             doc = inputs[0]
-            for section_name, section_text in doc.output().as_sectioned().iteritems():
+            for section_name, section_text in doc.output_data().as_sectioned().iteritems():
                 proc, stdout = self.run_command(command, self.setup_env(), section_text)
                 if self.setting('check-return-code'):
                     self.handle_subprocess_proc_return(command, proc.returncode, stdout)
                 output[section_name] = stdout
         else:
             for doc in inputs:
-                proc, stdout = self.run_command(command, self.setup_env(), unicode(doc.output()))
+                proc, stdout = self.run_command(command, self.setup_env(), unicode(doc.output_data()))
                 if self.setting('check-return-code'):
                     self.handle_subprocess_proc_return(command, proc.returncode, stdout)
                 output[doc.key] = stdout
 
-        self.output().set_data(output)
+        self.output_data.set_data(output)
 
 class SubprocessInputFileFilter(SubprocessFilter):
     """
@@ -375,25 +382,24 @@ class SubprocessInputFileFilter(SubprocessFilter):
 
     def command_string_args(self, input_doc):
         args = self.default_command_string_args()
-        args['input_text'] = input_doc.output().name
+        args['input_text'] = input_doc.name
         return args
     
     def command_string_for_input(self, input_doc):
         return self.setting('command-string') % self.command_string_args(input_doc)
 
     def process(self):
-        inputs = list(self.artifact.doc.node.walk_input_docs())
-
+        self.populate_workspace()
         output = OrderedDict()
 
-        for doc in inputs:
+        for doc in self.doc.walk_input_docs():
             command = self.command_string_for_input(doc)
             proc, stdout = self.run_command(command, self.setup_env())
             if self.setting('check-return-code'):
                 self.handle_subprocess_proc_return(command, proc.returncode, stdout)
             output[doc.key] = stdout
 
-        self.output().set_data(output)
+        self.output_data.set_data(output)
 
 class SubprocessCompileInputFilter(SubprocessCompileFilter):
     """
@@ -413,25 +419,25 @@ class SubprocessCompileInputFilter(SubprocessCompileFilter):
 
         command = self.run_command_string()
 
-        inputs = list(self.artifact.doc.node.walk_input_docs())
+        inputs = list(self.doc.walk_input_docs())
 
         output = OrderedDict()
 
         if len(inputs) == 1:
             doc = inputs[0]
-            for section_name, section_text in doc.output().as_sectioned().iteritems():
+            for section_name, section_text in doc.output_data().as_sectioned().iteritems():
                 proc, stdout = self.run_command(command, self.setup_env(), section_text)
                 if self.setting('check-return-code'):
                     self.handle_subprocess_proc_return(command, proc.returncode, stdout)
                 output[section_name] = stdout
         else:
             for doc in inputs:
-                proc, stdout = self.run_command(command, self.setup_env(), doc.output().as_text())
+                proc, stdout = self.run_command(command, self.setup_env(), doc.output_data().as_text())
                 if self.setting('check-return-code'):
                     self.handle_subprocess_proc_return(command, proc.returncode, stdout)
                 output[doc.key] = stdout
 
-        self.output().set_data(output)
+        self.output_data.set_data(output)
 
 class SubprocessFormatFlagFilter(SubprocessFilter):
     """
@@ -450,7 +456,7 @@ class SubprocessFormatFlagFilter(SubprocessFilter):
             # Already have specified the format manually.
             fmt = ''
         else:
-            fmt = flags[self.artifact.ext]
+            fmt = flags[self.ext]
 
         args['format'] = fmt
         return args
@@ -472,7 +478,7 @@ class SubprocessExtToFormatFilter(SubprocessFilter):
             # Already have specified the format manually.
             fmt = ''
         else:
-            fmt_setting = self.setting('ext-to-format')[self.artifact.ext]
+            fmt_setting = self.setting('ext-to-format')[self.ext]
             if fmt_setting:
                 fmt = "%s%s" % (fmt_specifier, fmt_setting)
             else:
@@ -490,5 +496,5 @@ class SubprocessStdoutTextFilter(SubprocessStdoutFilter):
 
     def command_string_args(self):
         args = self.default_command_string_args()
-        args['text'] = self.input().as_text()
+        args['text'] = self.input_data.as_text()
         return args

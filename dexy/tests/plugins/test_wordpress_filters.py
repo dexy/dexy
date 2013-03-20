@@ -1,7 +1,7 @@
 from dexy.doc import Doc
 from dexy.tests.utils import TEST_DATA_DIR
 from dexy.tests.utils import wrap
-from dexy.tests.utils import divert_stdout
+from dexy.tests.utils import capture_stdout
 from mock import patch
 import dexy.exceptions
 import json
@@ -60,7 +60,7 @@ def test_wordpress_without_doc_config_file():
                 )
 
         try:
-            wrapper.run_docs(doc)
+            wrapper.run(doc)
             assert False, 'should raise exception'
         except dexy.exceptions.UserFeedback as e:
             assert "wordpress.json" in e.message
@@ -103,7 +103,7 @@ def test_wordpress(MockXmlrpclib):
 
         # Create new (unpublished) draft
         doc = mk_wp_doc(wrapper)
-        wrapper.run_docs(doc)
+        wrapper.run(doc)
 
         with open("wordpress.json", "rb") as f:
             result = json.load(f)
@@ -113,8 +113,8 @@ def test_wordpress(MockXmlrpclib):
 
         # Update existing draft
         doc = mk_wp_doc(wrapper)
-        wrapper.run_docs(doc)
-        assert doc.output().json_as_dict().keys() == ['permaLink']
+        wrapper.run(doc)
+        assert doc.output_data().json_as_dict().keys() == ['permaLink']
 
         result['publish'] = True
         with open("wordpress.json", "wb") as f:
@@ -122,12 +122,15 @@ def test_wordpress(MockXmlrpclib):
 
         # Publish existing draft
         doc = mk_wp_doc(wrapper)
-        wrapper.run_docs(doc)
-        assert doc.output().as_text() == "http://example.com/blog/42"
+        wrapper.run(doc)
+        print doc.output_data().as_text() 
+        assert doc.output_data().from_json()['permaLink'] == "http://example.com/blog/42"
 
         # Now, separately, test an image upload.
         orig = os.path.join(TEST_DATA_DIR, 'color-graph.pdf')
         shutil.copyfile(orig, 'example.pdf')
+        from dexy.wrapper import Wrapper
+        wrapper = Wrapper()
         doc = Doc("example.pdf|wp",
                 wrapper=wrapper)
 
@@ -139,10 +142,10 @@ def test_wordpress(MockXmlrpclib):
                     'password' : 'bar'
                     }}, f)
 
-        wrapper.run_docs(doc)
-        assert doc.output().as_text() == "http://example.com/example.pdf"
+        wrapper.run(doc)
+        assert doc.output_data().as_text() == "http://example.com/example.pdf"
 
         # test list categories
-        with divert_stdout() as stdout:
+        with capture_stdout() as stdout:
             dexy.filter.Filter.create_instance("wp").docmd_list_categories()
             assert stdout.getvalue() == "categoryName\nfoo\nbar\n"

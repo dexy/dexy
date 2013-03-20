@@ -29,7 +29,7 @@ class MarkdownFilter(DexyFilter):
 
     def process_text(self, input_text):
         markdown_logger = logging.getLogger('MARKDOWN')
-        markdown_logger.addHandler(self.log.handlers[-1])
+        markdown_logger.addHandler(self.doc.wrapper.log.handlers[-1])
 
         extension_configs = self.setting('extensions')
         extensions = extension_configs.keys()

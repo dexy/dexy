@@ -3,9 +3,10 @@ from dexy.tests.utils import assert_in_output
 from dexy.tests.utils import assert_output_cached
 from dexy.tests.utils import wrap
 from dexy.tests.utils import TEST_DATA_DIR
-from dexy.node import DocNode
+from dexy.doc import Doc
 import os
 import shutil
+from dexy.wrapper import Wrapper
 
 PYIN_CONTENTS = """import sys
 i = 0
@@ -19,52 +20,57 @@ while True:
 
 def test_python_input():
     with wrap() as wrapper:
-        node = DocNode("hello.py|pyin",
-                contents=PYIN_CONTENTS,
-                inputs = [
-                    DocNode("input.in",
-                        contents="here is some input\nmore",
-                        wrapper=wrapper)
+        node = Doc("hello.py|pyin",
+                wrapper,
+                [
+                    Doc("input.in",
+                        wrapper,
+                        [],
+                        contents="here is some input\nmore")
                     ],
-                wrapper=wrapper)
-        wrapper.run_docs(node)
-        doc = node.children[0]
-        assert str(doc.output()) == """\
+                contents=PYIN_CONTENTS
+                )
+        wrapper.run(node)
+        assert str(node.output_data()) == """\
 line 1 has 19 chars
 line 2 has 4 chars
 """
 
 def test_pandoc_filter_odt():
     with wrap() as wrapper:
-        node = DocNode("hello.md|pandoc",
+        node = Doc("hello.md|pandoc",
+                wrapper,
+                [],
                 contents = "hello",
-                pandoc = { "ext" : ".odt"},
-                wrapper=wrapper)
-        wrapper.run_docs(node)
+                pandoc = { "ext" : ".odt"}
+                )
+        wrapper.run(node)
         wrapper.report()
         assert os.path.exists("output/hello.odt")
 
 def test_pandoc_filter_pdf():
     with wrap() as wrapper:
-        node = DocNode("hello.md|pandoc",
+        node = Doc("hello.md|pandoc",
+                wrapper,
+                [],
                 contents = "hello",
-                pandoc = { "ext" : ".pdf"},
-                wrapper=wrapper)
-        wrapper.run_docs(node)
+                pandoc = { "ext" : ".pdf"}
+                )
+        wrapper.run(node)
         wrapper.report()
         assert os.path.exists("output/hello.pdf")
 
 def test_pandoc_filter_txt():
     with wrap() as wrapper:
-        node = DocNode("hello.md|pandoc",
-                contents = "hello",
-                pandoc = { "ext" : ".txt"},
-                wrapper=wrapper)
-        wrapper.run_docs(node)
+        node = Doc("hello.md|pandoc",
+            wrapper, [],
+            contents = "hello",
+            pandoc = { "ext" : ".txt"},
+            )
+        wrapper.run(node)
         wrapper.report()
-        doc = node.children[0]
         assert os.path.exists("output/hello.txt")
-        assert str(doc.output()) == 'hello\n'
+        assert str(node.output_data()) == 'hello\n'
 
 R_SECTIONS = """\
 ### @export "assign-vars"
@@ -77,15 +83,16 @@ x * y
 
 def test_rint_mock():
     with wrap() as wrapper:
-        node = DocNode("example.R|idio|rintmock",
-                contents=R_SECTIONS,
-                wrapper=wrapper)
+        node = Doc("example.R|idio|rintmock",
+                wrapper,
+                [],
+                contents=R_SECTIONS
+                )
 
-        wrapper.run_docs(node)
-        doc = node.children[0]
-        assert doc.output().is_cached()
-        assert doc.output().as_sectioned()['assign-vars'] == "> x <- 6\n> y <- 7\n> \n"
-        assert doc.output().as_sectioned()['multiply'] == "> x * y\n[1] 42\n> \n"
+        wrapper.run(node)
+        assert node.output_data().is_cached()
+        assert node.output_data().as_sectioned()['assign-vars'] == "> x <- 6\n> y <- 7\n> \n"
+        assert node.output_data().as_sectioned()['multiply'] == "> x * y\n[1] 42\n> \n"
 
 def test_ht_latex():
     assert_output_cached("htlatex", LATEX, ext=".tex")
@@ -101,13 +108,12 @@ def test_ragel_ruby_filter():
 
 def test_ps2pdf_filter():
     with wrap() as wrapper:
-        node = DocNode("hello.ps|ps2pdf",
-                contents = PS,
-                wrapper=wrapper)
-        wrapper.run_docs(node)
-        doc = node.children[0]
-        assert doc.output().is_cached()
-        assert doc.output().filesize() > 1000
+        node = Doc("hello.ps|ps2pdf",
+                wrapper, [],
+                contents = PS)
+        wrapper.run(node)
+        assert node.output_data().is_cached()
+        assert node.output_data().filesize() > 1000
 
 def test_html2pdf_filter():
     assert_output_cached("html2pdf", "<p>hello</p>", min_filesize=1000)
@@ -119,46 +125,41 @@ def test_pdf2img_filter():
     with wrap() as wrapper:
         orig = os.path.join(TEST_DATA_DIR, 'color-graph.pdf')
         shutil.copyfile(orig, 'example.pdf')
-        node = DocNode("example.pdf|pdf2img",
-                wrapper=wrapper)
-
-        wrapper.run_docs(node)
-        doc = node.children[0]
-        assert doc.output().is_cached()
-        assert doc.output().filesize() > 1000
+        wrapper=Wrapper()
+        node = Doc("example.pdf|pdf2img", wrapper)
+        wrapper.run(node)
+        assert node.output_data().is_cached()
+        assert node.output_data().filesize() > 1000
 
 def test_pdf2jpg_filter():
     with wrap() as wrapper:
         orig = os.path.join(TEST_DATA_DIR, 'color-graph.pdf')
         shutil.copyfile(orig, 'example.pdf')
-        node = DocNode("example.pdf|pdf2jpg",
-                wrapper=wrapper)
+        wrapper=Wrapper()
+        node = Doc("example.pdf|pdf2jpg", wrapper)
 
-        wrapper.run_docs(node)
-        doc = node.children[0]
-        assert doc.output().is_cached()
+        wrapper.run(node)
+        assert node.output_data().is_cached()
 
 def test_bw_filter():
     with wrap() as wrapper:
         orig = os.path.join(TEST_DATA_DIR, 'color-graph.pdf')
         shutil.copyfile(orig, 'example.pdf')
-        node = DocNode("example.pdf|bw",
-                wrapper=wrapper)
+        wrapper=Wrapper()
+        node = Doc("example.pdf|bw", wrapper)
 
-        wrapper.run_docs(node)
-        doc = node.children[0]
-        assert doc.output().is_cached()
+        wrapper.run(node)
+        assert node.output_data().is_cached()
 
 def test_pdfcrop_filter():
     with wrap() as wrapper:
         orig = os.path.join(TEST_DATA_DIR, 'color-graph.pdf')
         shutil.copyfile(orig, 'example.pdf')
-        node = DocNode("example.pdf|pdfcrop|pdfinfo",
-                wrapper=wrapper)
+        wrapper=Wrapper()
+        node = Doc("example.pdf|pdfcrop|pdfinfo", wrapper)
 
-        wrapper.run_docs(node)
-        doc = node.children[0]
-        assert doc.output().is_cached()
+        wrapper.run(node)
+        assert node.output_data().is_cached()
 
 def test_asciidoc_filter():
     assert_in_output("asciidoc", "hello", """<div class="paragraph"><p>hello</p></div>""")

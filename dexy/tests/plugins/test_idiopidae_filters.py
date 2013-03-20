@@ -6,14 +6,16 @@ import dexy.exceptions
 @raises(dexy.exceptions.UserFeedback)
 def test_idio_invalid_input():
     with wrap() as wrapper:
-        doc = Doc("hello.py|idio", wrapper=wrapper, contents=" ")
-        wrapper.run_docs(doc)
+        doc = Doc("hello.py|idio",
+                wrapper, [],
+                contents=" ")
+        wrapper.run(doc)
 
 @raises(dexy.exceptions.UserFeedback)
 def test_idio_bad_file_extension():
     with wrap() as wrapper:
-        doc = Doc("hello.xyz|idio", wrapper=wrapper, contents=" ")
-        wrapper.run_docs(doc)
+        doc = Doc("hello.xyz|idio", wrapper, [], contents=" ")
+        wrapper.run(doc)
 
 def test_multiple_sections():
     with wrap() as wrapper:
@@ -27,28 +29,32 @@ x*y
 
 """
         doc = Doc("example.py|idio",
-                contents=src,
-                wrapper=wrapper)
+                wrapper,
+                [],
+                contents=src)
 
-        wrapper.run_docs(doc)
+        wrapper.run(doc)
 
-        assert doc.output().keys() == ['1', 'vars', 'multiply']
+        assert doc.output_data().keys() == ['1', 'vars', 'multiply']
 
 def test_force_text():
     with wrap() as wrapper:
         node = Doc("example.py|idio|t",
-                contents="print 'hello'\n",
-                wrapper=wrapper)
+                wrapper,
+                [],
+                contents="print 'hello'\n")
 
-        wrapper.run_docs(node)
-        assert str(node.output()) == "print 'hello'\n"
+        wrapper.run(node)
+        print node.output_data().__class__
+        assert str(node.output_data()) == "print 'hello'\n"
 
 def test_force_latex():
     with wrap() as wrapper:
         doc = Doc("example.py|idio|l",
-                contents="print 'hello'\n",
-                wrapper=wrapper)
+                wrapper,
+                [],
+                contents="print 'hello'\n")
 
-        wrapper.run_docs(doc)
+        wrapper.run(doc)
 
-        assert "begin{Verbatim}" in str(doc.output())
+        assert "begin{Verbatim}" in str(doc.output_data())

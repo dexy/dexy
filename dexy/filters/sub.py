@@ -33,14 +33,16 @@ class Pdf2ImgSubprocessFilter(SubprocessExtToFormatFilter):
             }
 
     def process(self):
+        self.populate_workspace()
+
         command = self.command_string()
         proc, stdout = self.run_command(command, self.setup_env())
         self.handle_subprocess_proc_return(command, proc.returncode, stdout)
 
         page = self.setting('page')
-        page_file = "%s-%s" % (page, self.output().basename())
+        page_file = "%s-%s" % (page, self.output_data.basename())
 
-        wd = self.setup_wd()
+        wd = self.parent_work_dir()
         page_path = os.path.join(wd, page_file)
         shutil.copyfile(page_path, self.output_filepath())
 
@@ -62,11 +64,11 @@ class RIntBatchSectionsFilter(SubprocessFilter):
             }
 
     def command_string(self, section_name, section_text, wd):
-        br = self.input().baserootname()
+        br = self.input_data.baserootname()
 
         args = self.default_command_string_args()
-        args['script_file'] = "%s-%s%s" % (br, section_name, self.input().ext)
-        args['output_file'] = "%s-%s-out%s" % (br, section_name, self.output().ext)
+        args['script_file'] = "%s-%s%s" % (br, section_name, self.input_data.ext)
+        args['output_file'] = "%s-%s-out%s" % (br, section_name, self.output_data.ext)
 
         work_filepath = os.path.join(wd, args['script_file'])
 
@@ -77,11 +79,12 @@ class RIntBatchSectionsFilter(SubprocessFilter):
         return command, args['output_file']
 
     def process(self):
-        wd = self.setup_wd()
+        self.populate_workspace()
+        wd = self.parent_work_dir()
 
         result = OrderedDict()
 
-        for section_name, section_text in self.input().as_sectioned().iteritems():
+        for section_name, section_text in self.input_data.as_sectioned().iteritems():
             command, outfile = self.command_string(section_name, section_text, wd)
             proc, stdout = self.run_command(command, self.setup_env())
             self.handle_subprocess_proc_return(command, proc.returncode, stdout)
@@ -92,10 +95,10 @@ class RIntBatchSectionsFilter(SubprocessFilter):
         if self.setting('walk-working-dir'):
             self.walk_working_directory()
 
-        if self.do_add_new_files():
+        if self.setting('add-new-files'):
             self.add_new_files()
 
-        self.output().set_data(result)
+        self.output_data.set_data(result)
 
 class EmbedFonts(SubprocessFilter):
     """
@@ -109,8 +112,8 @@ class EmbedFonts(SubprocessFilter):
             }
 
     def preprocess_command_string(self):
-        pf = self.input_filename()
-        af = self.output_filename()
+        pf = self.work_input_filename()
+        af = self.work_output_filename()
         return "%s -dPDFSETTINGS=/prepress %s %s" % (self.setting('executable'), pf, af)
 
     def pdffonts_command_string(self):
@@ -157,15 +160,14 @@ class AbcFilter(SubprocessFormatFlagFilter):
 
         if self.artifact.ext in ('.svg', '.eps'):
             # Fix for abcm2ps adding 001 to file name.
-            nameparts = os.path.splitext(self.output().name)
+            nameparts = os.path.splitext(self.output_data.name)
             output_filename = "%s001%s" % (nameparts[0], nameparts[1])
             output_filepath = os.path.join(self.artifact.tmp_dir(), output_filename)
-            self.output().copy_from_file(output_filepath)
+            self.output_data.copy_from_file(output_filepath)
         else:
             self.copy_canonical_file()
 
-        if self.do_add_new_files():
-            self.log_debug("adding new files found in %s for %s" % (self.artifact.tmp_dir(), self.artifact.key))
+        if self.setting('add-new-files'):
             self.add_new_files()
 
 class AbcMultipleFormatsFilter(SubprocessFilter):
@@ -199,16 +201,18 @@ class AbcMultipleFormatsFilter(SubprocessFilter):
             'prog' : self.setting('executable'),
             'args' : clargs,
             'output_flag' : output_flag,
-            'script_file' : self.input_filename(),
+            'script_file' : self.work_input_filename(),
             'output_file' : self.output_workfile(ext)
         }
         return "%(prog)s %(args)s %(output_flag)s -O %(output_file)s %(script_file)s" % args
 
     def output_workfile(self, ext):
-        return "%s%s" % (self.artifact.output_data.baserootname(), ext)
+        return "%s%s" % (self.output_data.baserootname(), ext)
 
     def process(self):
         output = {}
+
+        wd = self.parent_work_dir()
 
         for ext in ('.eps', '.svg', '.html', '.xhtml'):
             command = self.command_string(ext)
@@ -227,7 +231,7 @@ class AbcMultipleFormatsFilter(SubprocessFilter):
             with open(output_filepath, "r") as f:
                 output[ext] = f.read()
 
-        self.output().set_data(json.dumps(output))
+        self.output_data.set_data(json.dumps(output))
 
 class ManPage(SubprocessStdoutFilter):
     """
@@ -251,13 +255,13 @@ class ManPage(SubprocessStdoutFilter):
 
     def process(self):
         man_info = {}
-        for prog_name in self.input().data().split():
+        for prog_name in str(self.input_data).split():
             command = self.command_string(prog_name)
             proc, stdout = self.run_command(command, self.setup_env())
             self.handle_subprocess_proc_return(command, proc.returncode, stdout)
             man_info[prog_name] = stdout
 
-        self.output().set_data(json.dumps(man_info))
+        self.output_data.set_data(json.dumps(man_info))
 
 class ApplySed(SubprocessInputFilter):
     """
@@ -271,16 +275,16 @@ class ApplySed(SubprocessInputFilter):
             }
 
     def process(self):
-        for doc in self.artifact.doc.node.walk_input_docs():
-            if doc.output().ext == ".sed":
-                command = "%s -f %s" % (self.setting('executable'), doc.output().name)
+        for doc in self.doc.walk_input_docs():
+            if doc.output_data().ext == ".sed":
+                command = "%s -f %s" % (self.setting('executable'), doc.name)
 
         if not command:
-            raise dexy.exceptions.UserFeedback("A .sed file must be passed as an input to %s" % self.artifact.key)
+            raise dexy.exceptions.UserFeedback("A .sed file must be passed as an input to %s" % self.key)
 
-        proc, stdout = self.run_command(command, self.setup_env(), unicode(self.input()))
+        proc, stdout = self.run_command(command, self.setup_env(), unicode(self.input_data))
         self.handle_subprocess_proc_return(command, proc.returncode, stdout)
-        self.output().set_data(stdout)
+        self.output_data.set_data(stdout)
 
 class Sed(SubprocessInputFilter):
     """
@@ -297,4 +301,4 @@ class Sed(SubprocessInputFilter):
             }
 
     def command_string(self):
-        return "%s -f %s" % (self.setting('executable'), self.input_filename())
+        return "%s -f %s" % (self.setting('executable'), self.work_input_filename())

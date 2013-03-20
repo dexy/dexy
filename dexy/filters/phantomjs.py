@@ -1,6 +1,5 @@
 from dexy.filters.process import SubprocessFilter
 import os
-from dexy.utils import file_exists
 
 class CasperJsSvg2PdfFilter(SubprocessFilter):
     """
@@ -23,8 +22,8 @@ class CasperJsSvg2PdfFilter(SubprocessFilter):
         args = {
                 'width' : width,
                 'height' : height,
-                'svgfile' : self.input_filename(),
-                'pdffile' : self.output_filename()
+                'svgfile' : self.work_input_filename(),
+                'pdffile' : self.work_output_filename()
                 }
         return """
         var casper = require('casper').create({
@@ -37,24 +36,20 @@ class CasperJsSvg2PdfFilter(SubprocessFilter):
         casper.run();
         """ % args
 
-    def setup_wd(self):
-        wd = self.artifact.full_wd()
-        if not file_exists(wd):
-            self._wd_files_start = set()
-            for doc, filename in self.artifact.setup_wd(self.input_filename()):
-                self.write_to_wd(wd, doc, filename)
-
+    def custom_populate_workspace(self):
+        print "running custom_populate_workspace"
         width = self.setting('width')
         height = self.setting('height')
         js = self.script_js(width, height)
 
-        wd = self.artifact.full_wd()
+        wd = self.parent_work_dir()
         scriptfile = os.path.join(wd, "script.js")
+
         self.log_debug("scriptfile: %s" % scriptfile)
+        self.log_debug("js for scriptfile: %s" % js)
+
         with open(scriptfile, "w") as f:
             f.write(js)
-
-        return wd
 
 class PhantomJsRenderSubprocessFilter(SubprocessFilter):
     """
@@ -73,13 +68,8 @@ class PhantomJsRenderSubprocessFilter(SubprocessFilter):
             'output-extensions' : [".png", ".pdf"]
             }
 
-    def setup_wd(self):
-        wd = self.artifact.full_wd()
-        if not file_exists(wd):
-            self._wd_files_start = set()
-            for doc, filename in self.artifact.setup_wd(self.input_filename()):
-                self.write_to_wd(wd, doc, filename)
-
+    def custom_populate_workspace(self):
+        print "running custom_populate_workspace"
         width = self.setting('width')
         height = self.setting('height')
 
@@ -88,8 +78,8 @@ class PhantomJsRenderSubprocessFilter(SubprocessFilter):
             raise Exception("must have timeout")
 
         args = {
-                'address' : self.input_filename(),
-                'output' : self.output_filename(),
+                'address' : self.work_input_filename(),
+                'output' : self.work_output_filename(),
                 'width' : width,
                 'height' : height,
                 'timeout' : timeout
@@ -114,9 +104,9 @@ class PhantomJsRenderSubprocessFilter(SubprocessFilter):
         });
         """ % args
 
+        wd = self.parent_work_dir()
         scriptfile = os.path.join(wd, "script.js")
         self.log_debug("scriptfile: %s" % scriptfile)
+        self.log_debug("js for scriptfile: %s" % js)
         with open(scriptfile, "w") as f:
             f.write(js)
-
-        return wd

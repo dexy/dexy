@@ -8,6 +8,7 @@ class Batch(object):
         self.wrapper = wrapper
         self.docs = {}
         self.uuid = str(uuid.uuid4())
+        self.filters_used = []
 
     def __repr__(self):
         return "Batch(%s)" % self.uuid

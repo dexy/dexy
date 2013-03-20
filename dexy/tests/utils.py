@@ -1,13 +1,14 @@
 from StringIO import StringIO
 from dexy.common import OrderedDict
+from dexy.doc import Doc
 from dexy.utils import char_diff
+from dexy.utils import tempdir
 from mock import MagicMock
 from nose.exc import SkipTest
 import dexy.wrapper
 import os
 import re
 import sys
-from dexy.utils import tempdir
 
 # make sure plugins are loaded
 import dexy.filters
@@ -29,7 +30,7 @@ class wrap(tempdir):
         self.make_temp_dir()
         wrapper = dexy.wrapper.Wrapper()
         wrapper.create_dexy_dirs()
-        wrapper = dexy.wrapper.Wrapper()
+        wrapper = dexy.wrapper.Wrapper(log_level = 'DEBUG')
         return wrapper
 
     def __exit__(self, type, value, traceback):
@@ -51,17 +52,22 @@ class runfilter(wrap):
     def __enter__(self):
         self.make_temp_dir()
 
-        doc_key = "subdir/example%s|%s" % (self.ext, self.filter_alias)
-        doc_spec = [doc_key, {"contents" : self.doc_contents}]
-
         try:
-            wrapper = dexy.wrapper.Wrapper(doc_spec)
-            wrapper.setup(setup_dirs=True)
-            wrapper.run()
+            wrapper = dexy.wrapper.Wrapper()
+            wrapper.create_dexy_dirs()
+            wrapper = dexy.wrapper.Wrapper(log_level = 'DEBUG')
+            doc_key = "subdir/example%s|%s" % (self.ext, self.filter_alias)
+            doc = Doc(
+                    doc_key,
+                    wrapper,
+                    [],
+                    contents = self.doc_contents
+                    )
+            wrapper.run(doc)
         except dexy.exceptions.InactiveFilter:
             raise SkipTest
 
-        return wrapper.batch.tree[0].children[0]
+        return doc
 
 def assert_output(filter_alias, doc_contents, expected_output, ext=".txt"):
     if not ext.startswith("."):
@@ -75,17 +81,17 @@ def assert_output(filter_alias, doc_contents, expected_output, ext=".txt"):
     with runfilter(filter_alias, doc_contents, ext=ext) as doc:
         if expected_output:
             try:
-                assert doc.output().data() == expected_output
+                assert doc.output_data().data() == expected_output
             except AssertionError as e:
                 if not isinstance(expected_output, OrderedDict):
-                    print char_diff(unicode(doc.output()), expected_output)
+                    print char_diff(unicode(doc.output_data()), expected_output)
                 else:
-                    print "Output: %s" % doc.output().data()
+                    print "Output: %s" % doc.output_data().data()
                     print "Expected: %s" % expected_output
 
                 raise e
         else:
-            raise Exception("Output is '%s'" % doc.output().data())
+            raise Exception("Output is '%s'" % doc.output_data().data())
 
 def assert_output_matches(filter_alias, doc_contents, expected_regex, ext=".txt"):
     if not ext.startswith("."):
@@ -93,18 +99,18 @@ def assert_output_matches(filter_alias, doc_contents, expected_regex, ext=".txt"
 
     with runfilter(filter_alias, doc_contents, ext=ext) as doc:
         if expected_regex:
-            assert re.match(expected_regex, unicode(doc.output()))
+            assert re.match(expected_regex, unicode(doc.output_data()))
         else:
-            raise Exception(unicode(doc.output()))
+            raise Exception(unicode(doc.output_data()))
 
 def assert_output_cached(filter_alias, doc_contents, ext=".txt", min_filesize=None):
     if not ext.startswith("."):
         raise Exception("ext arg to assert_output_cached must start with dot")
 
     with runfilter(filter_alias, doc_contents, ext=ext) as doc:
-        assert doc.output().is_cached()
+        assert doc.output_data().is_cached()
         if min_filesize:
-            assert doc.output().filesize() > min_filesize
+            assert doc.output_data().filesize() > min_filesize
 
 def assert_in_output(filter_alias, doc_contents, expected_output, ext=".txt"):
     if not ext.startswith("."):
@@ -112,9 +118,11 @@ def assert_in_output(filter_alias, doc_contents, expected_output, ext=".txt"):
 
     with runfilter(filter_alias, doc_contents, ext=ext) as doc:
         if expected_output:
-            assert expected_output in unicode(doc.output())
+            actual_output = unicode(doc.output_data())
+            msg = "did not find expected '%s' in actual output '%s'"
+            assert expected_output in actual_output, msg % (expected_output, actual_output)
         else:
-            raise Exception(unicode(doc.output()))
+            raise Exception(unicode(doc.output_data()))
 
 class capture_stdout():
     def __enter__(self):

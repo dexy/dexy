@@ -28,7 +28,7 @@ class IdioFilter(PygmentsFilter):
     def do_add_new_files(self):
         if self.setting('add-new-files'):
             return True
-        elif self.artifact.ext in self.IMAGE_OUTPUT_EXTENSIONS:
+        elif self.ext in self.IMAGE_OUTPUT_EXTENSIONS:
             return True
         else:
             return False
@@ -36,7 +36,7 @@ class IdioFilter(PygmentsFilter):
     def process(self):
         lexer = self.create_lexer_instance()
 
-        input_text = self.input().as_text()
+        input_text = self.input_data.as_text()
         composer = Composer()
 
         try:
@@ -44,7 +44,7 @@ class IdioFilter(PygmentsFilter):
             builder = P.Document()
         except zapps.rt.SyntaxError as s:
             zapps_err = zapps.rt.print_error(input_text + "\n\0", s, P._scanner, False)
-            msg = "Idiopidae was unable to parse input for %s\n%s" % (self.artifact.key, zapps_err)
+            msg = "Idiopidae was unable to parse input for %s\n%s" % (self.key, zapps_err)
             raise dexy.exceptions.UserFeedback(msg)
         except zapps.rt.NoMoreTokens as s:
             msg = "Could not complete parsing; stopped around here:%s" % P._scanner
@@ -78,22 +78,22 @@ class IdioFilter(PygmentsFilter):
             formatted_lines = composer.format(lines, lexer, formatter)
 
             if add_new_files:
-                new_doc_name = "%s--%s%s" % (self.artifact.doc.key.replace("|", "--"), s, self.artifact.ext)
-                doc = self.add_doc(new_doc_name, formatted_lines)
+                new_doc_name = "%s--%s%s" % (self.doc.key.replace("|", "--"), s, self.ext)
+                self.add_doc(new_doc_name, formatted_lines)
 
-            if not self.artifact.ext in self.IMAGE_OUTPUT_EXTENSIONS:
+            if not self.ext in self.IMAGE_OUTPUT_EXTENSIONS:
                 if add_new_files:
                     self.update_all_args({'output' : False })
                 output_dict[s] = formatted_lines
 
             lineno += len(lines)
 
-        if self.artifact.ext in self.IMAGE_OUTPUT_EXTENSIONS:
+        if self.ext in self.IMAGE_OUTPUT_EXTENSIONS:
             formatter = self.create_formatter_instance()
             formatted_lines = composer.format(lines, lexer, formatter)
-            self.output().set_data(formatted_lines)
+            self.output_data.set_data(formatted_lines)
         else:
-            self.output().set_data(output_dict)
+            self.output_data.set_data(output_dict)
 
 class IdioMultipleFormatsFilter(PygmentsFilter):
     """
@@ -107,7 +107,7 @@ class IdioMultipleFormatsFilter(PygmentsFilter):
             }
 
     def process(self):
-        input_text = self.input().as_text()
+        input_text = self.input_data.as_text()
         composer = Composer()
         builder = idiopidae.parser.parse('Document', input_text + "\n\0")
 
@@ -144,4 +144,4 @@ class IdioMultipleFormatsFilter(PygmentsFilter):
 
             lineno += len(lines)
 
-        self.output().set_data(json.dumps(output_dict))
+        self.output_data.set_data(json.dumps(output_dict))

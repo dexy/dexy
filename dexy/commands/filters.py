@@ -59,7 +59,7 @@ def filters_text(
         text.append("")
         text.append("dexy-level settings:")
         for k in sorted(instance._settings):
-            if not k in dexy.filter.Filter.NODOC_settings and k in dexy.filter.Filter._settings:
+            if not k in dexy.filter.Filter.nodoc_settings and k in dexy.filter.Filter._settings:
                 tup = instance._settings[k]
                 text.append(SETTING_STRING % (k, tup[0], tup[1]))
 

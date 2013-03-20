@@ -1,48 +1,50 @@
 from dexy.doc import Doc
-from dexy.tests.utils import tempdir
 from dexy.tests.utils import wrap
-from dexy.wrapper import Wrapper
 
 def test_yamlargs_with_caching():
-    with tempdir():
-        wrapper = Wrapper()
-        wrapper.setup_dexy_dirs()
+    with wrap() as wrapper:
         doc = Doc("example.txt|yamlargs",
-                contents = "title: My Title\n---\r\nThis is the content.",
-                wrapper=wrapper)
-        wrapper.run_docs(doc)
+                wrapper,
+                [],
+                contents = "title: My Title\n---\r\nThis is the content."
+                )
+        wrapper.run(doc)
 
-        task = wrapper.batch.lookup_table["FilterArtifact:example.txt|yamlargs"]
+        task = wrapper.nodes["doc:example.txt|yamlargs"]
         assert task.args['title'] == "My Title"
-        assert task.content_source == 'generated'
+        assert task.changed()
 
-        wrapper = Wrapper()
         doc = Doc("example.txt|yamlargs",
-                contents = "title: My Title\n---\r\nThis is the content.",
-                wrapper=wrapper)
-        wrapper.run_docs(doc)
-        task = wrapper.batch.lookup_table["FilterArtifact:example.txt|yamlargs"]
+                wrapper,
+                [],
+                contents = "title: My Title\n---\r\nThis is the content."
+                )
+        wrapper.run(doc)
+        task = wrapper.nodes["doc:example.txt|yamlargs"]
         assert task.args['title'] == "My Title"
-        assert task.content_source == 'cached'
+        assert not task.changed()
 
 def test_yamlargs_no_yaml():
     with wrap() as wrapper:
         doc = Doc("example.txt|yamlargs",
-                contents = "This is the content.",
-                wrapper=wrapper)
+                wrapper,
+                [],
+                contents = "This is the content.")
 
-        wrapper.run_docs(doc)
-        assert doc.output().as_text() == "This is the content."
+        wrapper.run(doc)
+        assert doc.output_data().as_text() == "This is the content."
 
 def test_yamlargs():
     with wrap() as wrapper:
         doc = Doc("example.txt|yamlargs",
-                contents = "title: My Title\n---\r\nThis is the content.",
-                wrapper=wrapper)
+                wrapper,
+                [],
+                contents = "title: My Title\n---\r\nThis is the content."
+                )
 
-        wrapper.run_docs(doc)
+        wrapper.run(doc)
         assert doc.title() == "My Title"
-        assert doc.output().as_text() == "This is the content."
+        assert doc.output_data().as_text() == "This is the content."
 
 YAML = """filterargs:
   abc: xyz
@@ -52,11 +54,13 @@ YAML = """filterargs:
 def test_yamlargs_filterargs():
     with wrap() as wrapper:
         doc = Doc("example.txt|yamlargs|filterargs",
+                wrapper,
+                [],
                 contents = "%s\n---\r\nThis is the content." % YAML,
-                wrapper=wrapper)
+                )
 
-        wrapper.run_docs(doc)
+        wrapper.run(doc)
 
-        output = doc.output().as_text()
+        output = doc.output_data().as_text()
         assert "abc: xyz" in output
         assert "foo: 5" in output

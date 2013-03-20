@@ -22,6 +22,10 @@ class Storage(dexy.plugin.Plugin):
         self.ext = ext
         self.wrapper = wrapper
         self._size = None
+        self.setup()
+
+    def setup(self):
+        pass
 
 class GenericStorage(Storage):
     """
@@ -35,6 +39,12 @@ class GenericStorage(Storage):
     def data_file_exists(self):
         size = self.data_file_size()
         return (not size is None)
+
+    def stat(self):
+        try:
+            return os.stat(self.data_file())
+        except OSError:
+            pass
 
     def data_file_size(self):
         if not self._size:

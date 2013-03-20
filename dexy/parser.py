@@ -113,15 +113,17 @@ class AbstractSyntaxTree():
         Creates Node objects for all elements in tree. Returns a list of root
         nodes and a dict of all nodes referenced by qualified keys.
         """
-        nodes = {}
-        roots = []
+        if self.wrapper.nodes:
+            print "nodes are not empty", self.wrapper.nodes
+        if self.wrapper.roots:
+            print "roots are not empty", self.wrapper.roots
 
         def create_dexy_node(key, *inputs, **kwargs):
             """
             Stores already created nodes in nodes dict, if called more than
             once for the same key, returns already created node.
             """
-            if not key in nodes:
+            if not key in self.wrapper.nodes:
                 alias, pattern = self.wrapper.qualify_key(key)
                 
                 kwargs_with_defaults = self.calculate_default_args_for_directory(pattern)
@@ -135,18 +137,23 @@ class AbstractSyntaxTree():
                         **kwargs_with_defaults)
 
                 node.environment = self.calculate_environment_for_directory(pattern)
-                nodes[key] = node
+                self.wrapper.nodes[key] = node
 
                 for child in node.children:
-                    nodes[child.key_with_class()] = child
+                    self.wrapper.nodes[child.key_with_class()] = child
 
-            return nodes[key]
+            return self.wrapper.nodes[key]
 
         def parse_item(key):
             inputs = self.inputs_for_node(key)
             kwargs = self.args_for_node(key)
 
             if kwargs.get('inactive') or kwargs.get('disabled'):
+                return
+
+            matches_target = self.wrapper.target and key.startswith(self.wrapper.target)
+            if not kwargs.get('default', True) and not self.wrapper.full and not matches_target:
+                print "default for '%s' is false and not full or matches target" % key
                 return
 
             input_nodes = [parse_item(i) for i in inputs if i]
@@ -156,9 +163,8 @@ class AbstractSyntaxTree():
 
         for node_key in self.tree:
             root_node = parse_item(node_key)
-            roots.append(root_node)
-
-        return roots, nodes
+            if root_node:
+                self.wrapper.roots.append(root_node)
 
 class Parser(dexy.plugin.Plugin):
     """
@@ -173,8 +179,8 @@ class Parser(dexy.plugin.Plugin):
         self.ast = ast
 
     def file_exists(self, directory, filename):
-        filepath = self.wrapper.join(directory, filename)
-        return self.wrapper.file_exists(filepath)
+        filepath = self.wrapper.join_dir(directory, filename)
+        return self.wrapper.file_available(filepath)
 
     def parse(self, directory, input_text):
         pass

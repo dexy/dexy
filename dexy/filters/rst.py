@@ -30,14 +30,14 @@ class RestructuredTextBase(DexyFilter):
     def docutils_writer_name(self):
         if self.setting('writer'):
             return self.setting('writer')
-        elif self.artifact.ext == ".html":
+        elif self.ext == ".html":
             return 'html'
-        elif self.artifact.ext == ".tex":
+        elif self.ext == ".tex":
             return 'latex2e'
-        elif self.artifact.ext == ".xml":
+        elif self.ext == ".xml":
             return 'docutils_xml'
         else:
-            raise Exception("unsupported extension %s" % self.artifact.ext)
+            raise Exception("unsupported extension %s" % self.ext)
 
 class RestructuredText(RestructuredTextBase):
     """
@@ -72,9 +72,9 @@ class RestructuredText(RestructuredTextBase):
         if 'template' in settings_overrides and not self.setting('allow-any-template-extension'):
             template = settings_overrides['template']
             template_ext = os.path.splitext(template)[1]
-            if not template_ext == self.artifact.ext:
+            if not template_ext == self.ext:
                 msg = "You requested template '%s' with extension '%s' for %s, does not match document extension of '%s'"
-                args = (template, template_ext, self.artifact.key_for_log(), self.artifact.ext)
+                args = (template, template_ext, self.key, self.ext)
                 raise dexy.exceptions.UserFeedback(msg % args)
 
         try:

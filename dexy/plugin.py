@@ -187,7 +187,9 @@ class PluginMeta(type):
 
     def create_instance(cls, alias, *instanceargs, **instancekwargs):
         if not alias in cls.plugins:
-            raise dexy.exceptions.NoPlugin("No alias %s available." % alias)
+            msg = "no alias '%s' available for '%s'"
+            msgargs = (alias, cls.__name__)
+            raise dexy.exceptions.NoPlugin(msg % msgargs)
 
         class_or_class_name, settings = cls.plugins[alias]
         klass = cls.get_reference_to_class(class_or_class_name)

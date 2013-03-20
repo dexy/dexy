@@ -1,14 +1,14 @@
-from dexy.parsers.standard import Yaml
-from dexy.parsers.standard import TextFile
-from dexy.parsers.standard import Original
+from dexy.parsers.doc import Yaml
+from dexy.parsers.doc import TextFile
+from dexy.parsers.doc import Original
 from dexy.tests.utils import wrap
 import dexy.exceptions
 import os
 from dexy.parser import AbstractSyntaxTree
+from dexy.wrapper import Wrapper
 
 def test_text_parser():
     with wrap() as wrapper:
-
         with open("f1.py", "w") as f:
             f.write("print 'hello'")
 
@@ -18,6 +18,7 @@ def test_text_parser():
         with open("index.md", "w") as f:
             f.write("")
 
+        wrapper = Wrapper()
         ast = AbstractSyntaxTree(wrapper)
         parser = TextFile(wrapper, ast)
         parser.parse(".", """
@@ -25,9 +26,8 @@ def test_text_parser():
         *.py|pyg
         *.md|jinja
         """)
-
-        docs = wrapper.batch.docs()
-        assert len(docs) == 5
+        ast.walk()
+        assert len(wrapper.nodes) == 8
 
 YAML_WITH_INACTIVE = """
 foo:
@@ -36,11 +36,11 @@ foo:
 
 def test_parse_inactive():
     with wrap() as wrapper:
-        parser = Yaml(wrapper)
-        parser.parse(YAML_WITH_INACTIVE)
-
-        wrapper.batch.run()
-        assert len(wrapper.batch.tasks()) == 0
+        ast = AbstractSyntaxTree(wrapper)
+        parser = Yaml(wrapper, ast)
+        parser.parse('.', YAML_WITH_INACTIVE)
+        ast.walk()
+        assert len(wrapper.nodes) == 0
 
 YAML_WITH_DEFAULT_OFF = """
 foo:
@@ -49,21 +49,19 @@ foo:
 
 def test_parse_default():
     with wrap() as wrapper:
-        parser = Yaml()
-        parser.wrapper = wrapper
-        parser.parse(YAML_WITH_DEFAULT_OFF)
-
-        wrapper.batch.run()
-        assert len(wrapper.batch.tasks()) == 1
+        ast = AbstractSyntaxTree(wrapper)
+        parser = Yaml(wrapper, ast)
+        parser.parse('.', YAML_WITH_DEFAULT_OFF)
+        ast.walk()
+        assert len(wrapper.nodes) == 0
 
     with wrap() as wrapper:
+        ast = AbstractSyntaxTree(wrapper)
         wrapper.full = True
-        parser = Yaml()
-        parser.wrapper = wrapper
-        parser.parse(YAML_WITH_DEFAULT_OFF)
-
-        wrapper.batch.run()
-        assert len(wrapper.batch.tasks()) == 1
+        parser = Yaml(wrapper, ast)
+        parser.parse('.', YAML_WITH_DEFAULT_OFF)
+        ast.walk()
+        assert len(wrapper.nodes) == 1
 
 def test_yaml_with_defaults():
     with wrap() as wrapper:
@@ -72,30 +70,30 @@ def test_yaml_with_defaults():
         with open("s1/s2/hello.txt", "w") as f:
             f.write("hello")
 
-        wrapper.walk()
-        parser = Yaml()
-        parser.wrapper = wrapper
-        parser.parse(YAML_WITH_DEFAULTS)
+        wrapper = Wrapper()
+        ast = AbstractSyntaxTree(wrapper)
+        parser = Yaml(wrapper, ast)
+        parser.parse('.', YAML_WITH_DEFAULTS)
+        ast.walk()
 
-        assert wrapper.batch.tree[0].args['foo'] == 'bar'
+        assert wrapper.roots[0].args['foo'] == 'bar'
     
 def test_invalid_yaml():
     with wrap() as wrapper:
-        parser = Yaml()
-        parser.wrapper = wrapper
+        ast = AbstractSyntaxTree(wrapper)
+        parser = Yaml(wrapper, ast)
         try:
-            parser.parse(INVALID_YAML)
+            parser.parse('.', INVALID_YAML)
             assert False, "should raise UserFeedback"
         except dexy.exceptions.UserFeedback as e:
             assert 'YAML' in e.message
 
 def test_yaml_parser():
     with wrap() as wrapper:
-        parser = Yaml()
-        parser.wrapper = wrapper
-        parser.parse(YAML)
-        docs = wrapper.batch.tree
-        for doc in docs:
+        ast = AbstractSyntaxTree(wrapper)
+        parser = Yaml(wrapper, ast)
+        parser.parse('.', YAML)
+        for doc in wrapper.roots:
             assert doc.__class__.__name__ == 'BundleNode'
             assert doc.key in ['code', 'wordpress']
             for inpt in doc.walk_inputs():
@@ -103,46 +101,47 @@ def test_yaml_parser():
 
         wrapper.run()
 
-
 def test_text_parser_blank_lines():
     with wrap() as wrapper:
-        parser = TextFile(wrapper)
-        parser.parse("\n\n")
-        docs = wrapper.batch.tree
+        ast = AbstractSyntaxTree(wrapper)
+        parser = TextFile(wrapper, ast)
+        parser.parse('.', "\n\n")
+        ast.walk()
+        docs = wrapper.roots
         assert len(docs) == 0
 
 def test_text_parser_comments():
     with wrap() as wrapper:
-        parser = TextFile()
-        parser.wrapper = wrapper
-        parser.parse("""
+        ast = AbstractSyntaxTree(wrapper)
+        parser = TextFile(wrapper, ast)
+        parser.parse('.', """
         valid.doc { "contents" : "foo" }
         # commented-out.doc
         """)
+        ast.walk()
 
-        docs = wrapper.batch.tree
-        assert len(docs) == 1
-        assert docs[0].key == "valid.doc"
+        assert len(wrapper.roots) == 1
+        assert wrapper.roots[0].key == "valid.doc"
 
 def test_text_parser_valid_json():
     with wrap() as wrapper:
-        parser = TextFile()
-        parser.wrapper=wrapper
-        parser.parse("""
+        ast = AbstractSyntaxTree(wrapper)
+        parser = TextFile(wrapper, ast)
+        parser.parse('.', """
         doc.txt { "contents" : "123" }
         """)
+        ast.walk()
 
-        docs = wrapper.batch.tree
+        docs = wrapper.roots
         assert docs[0].key == "doc.txt"
         assert docs[0].args['contents'] == "123"
 
 def test_text_parser_invalid_json():
     with wrap() as wrapper:
-        parser = TextFile()
-        parser.wrapper = wrapper
-
+        ast = AbstractSyntaxTree(wrapper)
+        parser = TextFile(wrapper, ast)
         try:
-            parser.parse("""
+            parser.parse('.', """
             doc.txt { "contents" : 123
             """)
             assert False, 'should raise UserFeedback'
@@ -151,29 +150,30 @@ def test_text_parser_invalid_json():
 
 def test_text_parser_virtual_file():
     with wrap() as wrapper:
-        parser = TextFile()
-        parser.wrapper = wrapper
-        parser.parse("""
+        ast = AbstractSyntaxTree(wrapper)
+        parser = TextFile(wrapper, ast)
+        parser.parse('.', """
         virtual.txt { "contents" : "hello" }
         """)
+        ast.walk()
 
-        wrapper.batch.run()
-        docs = wrapper.batch.tree
+        wrapper.run()
+        docs = wrapper.roots
 
         assert docs[0].key == "virtual.txt"
-        assert str(docs[0].children[0].output()) == "hello"
+        assert str(docs[0].output_data()) == "hello"
 
 def test_original_parser():
     with wrap() as wrapper:
         conf = """{
         "*.txt" : {}
         }"""
+        ast = AbstractSyntaxTree(wrapper)
+        parser = Original(wrapper, ast)
+        parser.parse('.', conf)
+        ast.walk()
 
-        parser = Original()
-        parser.wrapper = wrapper
-        parser.parse(conf)
-
-        assert wrapper.batch.tree[0].key_with_class() == "PatternNode:*.txt"
+        assert wrapper.roots[0].key_with_class() == "pattern:*.txt"
 
 def test_original_parser_allinputs():
     with wrap() as wrapper:
@@ -183,12 +183,13 @@ def test_original_parser_allinputs():
         "*.md|jinja" : { "allinputs" : true }
         }"""
 
-        parser = Original(wrapper)
-        parser.wrapper = wrapper
-        parser.parse(conf)
+        ast = AbstractSyntaxTree(wrapper)
+        parser = Original(wrapper, ast)
+        parser.parse('.', conf)
+        ast.walk()
 
-        assert len(wrapper.batch.tree) == 1
-        assert wrapper.batch.tree[0].key_with_class() == "PatternNode:*.md|jinja"
+        assert len(wrapper.roots) == 1
+        assert wrapper.roots[0].key_with_class() == "pattern:*.md|jinja"
 
 INVALID_YAML = """
 code:

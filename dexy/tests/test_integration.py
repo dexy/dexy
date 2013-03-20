@@ -1,5 +1,5 @@
 from dexy.node import PatternNode
-from dexy.node import DocNode
+from dexy.doc import Doc
 from dexy.tests.utils import TEST_DATA_DIR
 from dexy.tests.utils import wrap
 import inspect
@@ -20,10 +20,11 @@ def test_ragel_state_chart_to_image():
           %% write exec;
         """)
     with wrap() as wrapper:
-        node = DocNode("example.rl|rlrbd|dot",
-                contents=ragel,
-                wrapper=wrapper)
-        wrapper.run_docs(node)
+        node = Doc("example.rl|rlrbd|dot",
+                wrapper,
+                [],
+                contents=ragel)
+        wrapper.run(node)
 
 def test_latex_filter_with_unicode():
     with wrap() as wrapper:
@@ -32,8 +33,10 @@ def test_latex_filter_with_unicode():
             shutil.copyfile(start, f)
 
         doc = PatternNode("*.tex|jinja|latex",
-                inputs = [
-                    PatternNode("*.py|idio|pycon|pyg|l", wrapper=wrapper)
-                    ],
-                wrapper=wrapper)
-        wrapper.run_docs(doc)
+                wrapper,
+                [
+                    PatternNode(
+                        "*.py|idio|pycon|pyg|l",
+                        wrapper)
+                ])
+        wrapper.run(doc)

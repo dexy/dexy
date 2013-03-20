@@ -1,4 +1,4 @@
-from dexy.node import DocNode
+from dexy.doc import Doc
 from dexy.tests.utils import assert_in_output
 from dexy.tests.utils import wrap
 
@@ -8,15 +8,15 @@ y = 7
 """
 def test_python_filter_record_vars():
     with wrap() as wrapper:
-        doc = DocNode("example.py|pycon",
-                wrapper = wrapper,
+        doc = Doc("example.py|pycon",
+                wrapper,
+                [],
                 pycon = { 'record-vars' :  True},
                 contents = PYTHON_CONTENT
                 )
 
-        wrapper.run_docs(doc)
-
-        assert "Doc:example.py-vars.json" in wrapper.batch.lookup_table
+        wrapper.run(doc)
+        assert "doc:example.py-vars.json" in wrapper.nodes
 
 def test_matlab_filter():
     assert_in_output('matlabint', "fprintf (1, 'Hello, world\\n')\n", "< M A T L A B (R) >")
@@ -54,12 +54,13 @@ touch newfile.txt
 ### @export "ls"
 ls
 """
-        doc = DocNode("example.sh|idio|shint|pyg",
-                contents = src,
-                wrapper=wrapper)
-        wrapper.run_docs(doc)
+        doc = Doc("example.sh|idio|shint|pyg",
+                wrapper,
+                [],
+                contents = src)
+        wrapper.run(doc)
 
-        assert doc.children[0].output().keys() == ['1', 'touch', 'ls']
+        assert doc.output_data().keys() == ['1', 'touch', 'ls']
 
 def test_pycon_filter():
     with wrap() as wrapper:
@@ -72,20 +73,19 @@ y = 7
 x*y
 
 """
-        node = DocNode("example.py|idio|pycon",
-                contents=src,
-                wrapper=wrapper)
+        node = Doc("example.py|idio|pycon",
+                wrapper,
+                [],
+                contents=src)
 
-        wrapper.run_docs(node)
+        wrapper.run(node)
 
-        doc = node.children[0]
-
-        assert doc.output().keys() == ['1', 'vars', 'multiply']
-        assert doc.output().as_sectioned()['vars'] == """
+        assert node.output_data().keys() == ['1', 'vars', 'multiply']
+        assert node.output_data().as_sectioned()['vars'] == """
 >>> x = 6
 >>> y = 7"""
 
-        assert doc.output().as_sectioned()['multiply'] == """
+        assert node.output_data().as_sectioned()['multiply'] == """
 >>> x*y
 42"""
 

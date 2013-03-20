@@ -26,7 +26,9 @@ class Wrapper(object):
         self.initialize_attribute_defaults()
         self.update_attributes_from_kwargs(kwargs)
 
-        self.nodes = None
+        self.nodes = {}
+        self.roots = []
+
         if self.dexy_dirs_exist():
             self.setup_log()
             self.project_root = os.path.abspath(os.getcwd())
@@ -113,12 +115,28 @@ class Wrapper(object):
             for report in reports:
                 report.remove_reports_dir()
 
+    def clean_dexy_dirs(self):
+        """
+        Cleans up files that aren't needed at the start of new runs, like prev
+        run's temporary working directories.
+        """
+        # TODO make sure we are in project dir.
+        dirs = [self.filter_ws()]
+        for d in dirs:
+            try:
+                shutil.rmtree(d)
+            except OSError:
+                pass
+
     # Logging
     def log_path(self):
         """
         Returns path to logfile.
         """
         return os.path.join(self.log_dir, self.log_file)
+
+    def filter_ws(self):
+        return os.path.join(self.artifacts_dir, self.workspace)
 
     def setup_log(self):
         """
@@ -194,45 +212,41 @@ class Wrapper(object):
 
     # Running Dexy
     def add_node(self, node):
-        if not self.nodes:
-            msg = "trying to add node with no nodes dict set up"
-            raise dexy.exceptions.InternalDexyProblem(msg)
-
+        """
+        Add new nodes which are not children of other nodes.
+        """
         key = node.key_with_class()
         self.nodes[key] = node
         self.roots.append(node)
 
-    def run(self):
+    def run(self, *docs):
         self.assert_dexy_dirs_exist()
+        self.clean_dexy_dirs()
 
         self.batch = dexy.batch.Batch(self)
         self.batch.start_time = time.time()
 
-        ast = self.parse_configs()
-        roots, self.nodes = ast.walk()
+        if docs:
+            self.nodes = dict((d.key_with_class(), d) for d in docs)
+            self.roots = list(docs)
+            run_roots = self.roots
 
-        if self.target:
-            run_roots = [n for n in roots if n.key.starstwith(self.target)]
         else:
-            run_roots = roots
+            if not self.nodes:
+                ast = self.parse_configs()
+                ast.walk()
+
+            if self.target:
+                run_roots = [n for n in self.roots if n.key == self.target]
+                if not run_roots:
+                    run_roots = [n for n in self.roots if n.key.startswith(self.target)]
+                if not run_roots:
+                    run_roots = [n for n in self.nodes.values() if n.key.startswith(self.target)]
+            else:
+                run_roots = self.roots
 
         for root_node in run_roots:
             for task in root_node:
-                task()
-
-        self.batch.end_time = time.time()
-        self.batch.save_to_file()
-
-    def run_docs(self, *docs):
-        self.assert_dexy_dirs_exist()
-
-        self.batch = dexy.batch.Batch(self)
-        self.batch.start_time = time.time()
-
-        self.nodes = dict((d.key_with_class(), d) for d in docs)
-        print self.nodes
-        for node in docs:
-            for task in node:
                 task()
 
         self.batch.end_time = time.time()

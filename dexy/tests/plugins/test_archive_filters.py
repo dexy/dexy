@@ -28,7 +28,7 @@ def test_zip_archive_filter():
                     ],
                 contents=" ")
 
-        wrapper.run_docs(doc)
+        wrapper.run(doc)
         wrapper.report()
 
         assert os.path.exists("output/archive.zip")
@@ -62,7 +62,7 @@ def test_archive_filter():
                 ],
                 contents=" ")
 
-        wrapper.run_docs(doc)
+        wrapper.run(doc)
         wrapper.report()
 
         assert os.path.exists("output/archive.tgz")
@@ -98,7 +98,7 @@ def test_archive_filter_with_short_names():
                 archive={'use-short-names' : True}
                 )
 
-        wrapper.run_docs(doc)
+        wrapper.run(doc)
         wrapper.report()
 
 
@@ -129,7 +129,7 @@ def test_unprocessed_directory_archive_filter():
                 contents="ignore",
                 tgzdir={'dir' : '.'}
                 )
-        wrapper.run_docs(doc)
+        wrapper.run(doc)
         wrapper.report()
 
         assert os.path.exists("output/archive.tgz")

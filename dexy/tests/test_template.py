@@ -4,14 +4,15 @@ import os
 
 def test_run():
     with tempdir():
-        DefaultTemplate().run("test")
+        DefaultTemplate().generate("test")
         assert not os.path.exists("dexy.rst")
 
 def test_dexy():
     for batch in DefaultTemplate().dexy():
-        assert 'jinja' in batch.filters_used()
-        assert "Doc:hello.txt|jinja" in batch.lookup_table
-        assert "Doc:dexy.rst|jinja|rst2html" in batch.lookup_table
+        assert 'jinja' in batch.filters_used
+        print batch.docs
+        assert "doc:hello.txt|jinja" in batch.docs
+        assert "doc:dexy.rst|jinja|rst2html" in batch.docs
 
 def test_validate_default():
     DefaultTemplate().validate()

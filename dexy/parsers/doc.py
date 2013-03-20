@@ -15,7 +15,7 @@ class Yaml(Parser):
             for original_node_key, v in mapping.iteritems():
                 # handle things which aren't nodes
                 if original_node_key == 'defaults':
-                    self.ast.default_args.append((directory, v,))
+                    self.ast.default_args_for_directory.append((directory, v,))
                     continue
 
                 # handle nodes
@@ -126,10 +126,12 @@ class TextFile(Parser):
                     key = line
                     kwargs = {}
 
-                self.ast.add_node(self.wrapper.join_dir(directory, key), **kwargs)
+                node_key = self.wrapper.join_dir(directory, key)
+                self.ast.add_node(node_key, **kwargs)
                 # all tasks already in the ast are children
                 for child_key in self.ast.lookup_table.keys():
-                    self.ast.add_dependency(self.wrapper.join_dir(directory, key), self.wrapper.join_dir(directory, child_key))
+                    child_node_key = self.wrapper.join_dir(directory, child_key)
+                    self.ast.add_dependency(node_key, child_node_key)
 
 class Original(Parser):
     """

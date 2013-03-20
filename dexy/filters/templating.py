@@ -80,6 +80,7 @@ class JinjaFilter(TemplateFilter):
     def setup_jinja_env(self, loader=None):
         env_attrs = {}
         skip_settings = ('changetags', 'jinja-path',)
+
         for k, v in self.setting_values().iteritems():
             underscore_k = k.replace("-", "_")
             if k in self.__class__._settings and not k in skip_settings:
@@ -89,11 +90,11 @@ class JinjaFilter(TemplateFilter):
 
         if self.ext in (".tex", ".wiki") and self.setting('changetags'):
             self.log_debug("Changing tags to latex/wiki format.")
-            for k, v in self.TEX_TAGS.iteritems():
-                hyphen_k = k.replace("_", "-")
-                if env_attrs[k] == self._settings[hyphen_k][1]:
-                    self.log_debug("Setting %s to %s" % (k, v))
-                    env_attrs[k] = v
+            for underscore_k, v in self.TEX_TAGS.iteritems():
+                hyphen_k = underscore_k.replace("_", "-")
+                if env_attrs[underscore_k] == self.__class__._settings[hyphen_k][1]:
+                    self.log_debug("setting %s to %s" % (underscore_k, v))
+                    env_attrs[underscore_k] = v
 
         if loader:
             env_attrs['loader'] = loader
@@ -121,8 +122,8 @@ class JinjaFilter(TemplateFilter):
                 'key' : self.key,
                 'lineno' : e.lineno,
                 'message' : e.message,
-                'name' : self.output().name,
-                'workfile' : self.input().storage.data_file()
+                'name' : self.output_data.name,
+                'workfile' : self.input_data.storage.data_file()
                 }
 
         result.append("a %(error_type)s problem was detected: %(message)s" % args)
@@ -156,7 +157,8 @@ class JinjaFilter(TemplateFilter):
     def process(self):
         self.populate_workspace()
 
-        wd = self.workspace()
+        wd = self.parent_work_dir()
+
         macro_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'macros'))
         dirs = ['.', wd, os.path.dirname(self.doc.name), macro_dir] + self.setting('jinja-path')
         self.log_debug("setting up jinja FileSystemLoader with dirs %s" % ", ".join(dirs))
@@ -180,7 +182,7 @@ class JinjaFilter(TemplateFilter):
 
         try:
             self.log_debug("about to create jinja template")
-            template = env.get_template(self.input_filename())
+            template = env.get_template(self.work_input_filename())
             self.log_debug("about to process jinja template")
             template.stream(template_data).dump(self.output_filepath(), encoding="utf-8")
         except (TemplateSyntaxError, UndefinedError, TypeError) as e:
@@ -189,9 +191,11 @@ class JinjaFilter(TemplateFilter):
                 os.remove(self.output_filepath())
             except os.error:
                 pass
-            self.handle_jinja_exception(e, self.input().as_text(), template_data)
+            self.handle_jinja_exception(e, str(self.input_data), template_data)
         except TemplateNotFound as e:
-            raise dexy.exceptions.UserFeedback("Jinja couldn't find the template '%s', make sure this file is an input to %s" % (e.message, self.doc.key))
+            msg = "Jinja couldn't find the template '%s', make sure this file is an input to %s" 
+            msgargs = (e.message, self.doc.key)
+            raise dexy.exceptions.UserFeedback(msg % msgargs)
         except Exception as e:
             try:
                 self.log_debug("removing %s since jinja had an error" % self.output_filepath())

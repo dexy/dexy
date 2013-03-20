@@ -1,5 +1,5 @@
 from dexy.common import OrderedDict
-from dexy.node import DocNode
+from dexy.doc import Doc
 from dexy.tests.utils import wrap
 
 REGETRON_INPUT_1 = "hello\n"
@@ -12,28 +12,30 @@ this is 100 mixed text and numbers
 
 def test_regetron_filter():
     with wrap() as wrapper:
-        node = DocNode("example.regex|regetron",
-                inputs = [
-                    DocNode("input1.txt",
-                        contents=REGETRON_INPUT_1,
-                        wrapper=wrapper),
-                    DocNode("input2.txt",
-                        contents=REGETRON_INPUT_2,
-                        wrapper=wrapper)
+        node = Doc("example.regex|regetron",
+                wrapper,
+                [
+                    Doc("input1.txt",
+                        wrapper,
+                        [],
+                        contents=REGETRON_INPUT_1),
+                    Doc("input2.txt",
+                        wrapper,
+                        [],
+                        contents=REGETRON_INPUT_2)
                     ],
-                contents="^[a-z\s]+$",
-                wrapper=wrapper)
+                contents="^[a-z\s]+$"
+                )
 
-        wrapper.run_docs(node)
-        doc = node.children[0]
+        wrapper.run(node)
 
-        assert doc.output()['input1.txt'] == """\
+        assert node.output_data()['input1.txt'] == """\
 > ^[a-z\s]+$
 0000: hello
 > 
 
 """
-        assert doc.output()['input2.txt'] == """\
+        assert node.output_data()['input2.txt'] == """\
 > ^[a-z\s]+$
 0000: this is some text
 0002: nine
@@ -43,68 +45,70 @@ def test_regetron_filter():
 
 def test_used_filter():
     with wrap() as wrapper:
-        node = DocNode("input.txt|used",
-                inputs = [
-                    DocNode("example.sed",
-                        contents="s/e/E/g",
-                        wrapper=wrapper)
+        node = Doc("input.txt|used",
+                wrapper,
+                [
+                    Doc("example.sed",
+                        wrapper,
+                        [],
+                        contents="s/e/E/g")
                     ],
-                contents="hello",
-                wrapper=wrapper)
+                contents="hello")
 
-        wrapper.run_docs(node)
-        doc = node.children[0]
-        assert str(doc.output()) == "hEllo"
+        wrapper.run(node)
+        assert str(node.output_data()) == "hEllo"
 
 def test_sed_filter_single_simple_input_file():
     with wrap() as wrapper:
-        node = DocNode("example.sed|sed",
-                inputs = [
-                    DocNode("input.txt",
-                        contents="hello",
-                        wrapper=wrapper)
+        node = Doc("example.sed|sed",
+                wrapper,
+                [
+                    Doc("input.txt",
+                        wrapper,
+                        [],
+                        contents="hello")
                     ],
-                contents="s/e/E/g",
-                wrapper=wrapper)
+                contents="s/e/E/g")
 
-        wrapper.run_docs(node)
-        doc = node.children[0]
-        assert str(doc.output()) == "hEllo"
+        wrapper.run(node)
+        assert str(node.output_data()) == "hEllo"
 
 def test_sed_filter_single_input_file_with_sections():
     with wrap() as wrapper:
-        node = DocNode("example.sed|sed",
-                contents="s/e/E/g",
-                inputs = [
-                    DocNode("input.txt",
+        node = Doc("example.sed|sed",
+                wrapper,
+                [
+                    Doc("input.txt",
+                        wrapper,
+                        [],
                         contents=OrderedDict([
                             ('foo', 'hello'),
                             ('bar', 'telephone')
                             ]),
-                        wrapper=wrapper)
+                        )
                         ],
-                wrapper=wrapper)
+                contents="s/e/E/g")
 
-        wrapper.run_docs(node)
-        doc = node.children[0]
-        assert doc.output()['foo'] == 'hEllo'
-        assert doc.output()['bar'] == 'tElEphonE'
+        wrapper.run(node)
+        assert node.output_data()['foo'] == 'hEllo'
+        assert node.output_data()['bar'] == 'tElEphonE'
 
 def test_sed_filter_multiple_inputs():
     with wrap() as wrapper:
-        node = DocNode("example.sed|sed",
-                contents="s/e/E/g",
+        node = Doc("example.sed|sed",
+                wrapper,
                 inputs = [
-                    DocNode("foo.txt",
-                        contents='hello',
-                        wrapper=wrapper),
-                    DocNode("bar.txt",
-                        contents='telephone',
-                        wrapper=wrapper)
+                    Doc("foo.txt",
+                        wrapper,
+                        [],
+                        contents='hello'),
+                    Doc("bar.txt",
+                        wrapper,
+                        [],
+                        contents='telephone')
                     ],
-                wrapper=wrapper)
+                contents="s/e/E/g")
 
-        wrapper.run_docs(node)
-        doc = node.children[0]
-        assert doc.output()['foo.txt'] == 'hEllo'
-        assert doc.output()['bar.txt'] == 'tElEphonE'
+        wrapper.run(node)
+        assert node.output_data()['foo.txt'] == 'hEllo'
+        assert node.output_data()['bar.txt'] == 'tElEphonE'

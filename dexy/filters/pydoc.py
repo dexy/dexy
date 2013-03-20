@@ -27,8 +27,8 @@ class PythonDocumentationFilter(DexyFilter):
 
             self.add_source_for_key(key, source)
 
-            self.output().append("%s:doc" % key, inspect.getdoc(item))
-            self.output().append("%s:comments" % key, inspect.getcomments(item))
+            self.output_data.append("%s:doc" % key, inspect.getdoc(item))
+            self.output_data.append("%s:comments" % key, inspect.getcomments(item))
 
         else: # not a function or a method
             try:
@@ -43,10 +43,10 @@ class PythonDocumentationFilter(DexyFilter):
         """
         Appends source code + syntax highlighted source code to persistent store.
         """
-        self.output().append("%s:value" % key, source)
+        self.output_data.append("%s:value" % key, source)
         if not (type(source) == str or type(source) == unicode):
             source = inspect.getsource(source)
-        self.output().append("%s:source" % key, source)
+        self.output_data.append("%s:source" % key, source)
 
     def process_members(self, package_name, mod):
         """
@@ -64,8 +64,8 @@ class PythonDocumentationFilter(DexyFilter):
                 key = "%s.%s" % (mod.__name__, k)
                 try:
                     item_content = inspect.getsource(m)
-                    self.output().append("%s:doc" % key, inspect.getdoc(m))
-                    self.output().append("%s:comments" % key, inspect.getcomments(m))
+                    self.output_data.append("%s:doc" % key, inspect.getdoc(m))
+                    self.output_data.append("%s:comments" % key, inspect.getcomments(m))
                     self.add_source_for_key(key, item_content)
                 except IOError:
                     self.log_debug("can't get source for %s" % key)
@@ -105,7 +105,7 @@ class PythonDocumentationFilter(DexyFilter):
         """
         input_text should be a list of installed python libraries to document.
         """
-        package_names = self.input().as_text().split()
+        package_names = str(self.input_data).split()
         packages = [__import__(package_name) for package_name in package_names]
 
         for package in packages:
@@ -123,4 +123,4 @@ class PythonDocumentationFilter(DexyFilter):
             else:
                 self.process_module(package.__name__, package.__name__)
 
-        self.output().save()
+        self.output_data.save()

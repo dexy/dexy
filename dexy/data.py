@@ -13,7 +13,6 @@ class Data(dexy.plugin.Plugin):
     Base class for types of Data.
     """
     __metaclass__ = dexy.plugin.PluginMeta
-
     _settings = {
             'default-storage-type' : ("Type of storage to use if not specified", 'generic'),
             }
@@ -125,9 +124,6 @@ class Generic(Data):
     Data type representing generic binary or text-based data.
     """
     aliases = ['generic']
-    _settings = {
-            'default-storage-type' : 'generic'
-            }
 
     def save(self):
         if isinstance(self._data, unicode):
@@ -188,6 +184,7 @@ class Generic(Data):
         return self.key
 
     def copy_from_file(self, filename):
+        print "copying contents of %s from %s" % (self.key, filename)
         shutil.copyfile(filename, self.storage.data_file())
 
     def clear_data(self):
@@ -258,9 +255,6 @@ class KeyValue(Generic):
             return 'json'
         else:
             return self.setting('default-storage-type')
-
-    def setup(self):
-        self.storage.setup()
 
     def __unicode__(self):
         return self.as_text()

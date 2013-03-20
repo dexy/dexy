@@ -239,7 +239,7 @@ class Subdirectories(TemplatePlugin):
     aliases = ['subdirectories']
     def run(self):
         # The directory containing the document to be processed.
-        doc_dir = os.path.dirname(self.filter_instance.output().name)
+        doc_dir = os.path.dirname(self.filter_instance.output_data.name)
 
         # Get a list of subdirectories under this document's directory.
         subdirectories = [d for d in sorted(os.listdir(os.path.join(os.curdir, doc_dir))) if os.path.isdir(os.path.join(os.curdir, doc_dir, d))]
@@ -278,8 +278,7 @@ class Inputs(TemplatePlugin):
     aliases = ['inputs']
 
     def input_tasks(self):
-        for doc in self.filter_instance.doc.wrapper.batch.lookup_table.values():
-            yield doc
+        return self.filter_instance.doc.walk_input_docs()
 
     def a(self, relative_ref):
         return self.map_relative_refs[relative_ref]
@@ -287,16 +286,16 @@ class Inputs(TemplatePlugin):
     def run(self):
         self.map_relative_refs = {}
 
-        for task in self.input_tasks():
-            for ref in task.output_data.relative_refs(self.filter_instance.output().name):
-                self.map_relative_refs[ref] = task.output_data
+        for doc in self.input_tasks():
+            for ref in doc.output_data().relative_refs(self.filter_instance.output_data.name):
+                self.map_relative_refs[ref] = doc.output_data()
 
         return {
             'a' : self.a,
             'args' : self.filter_instance.doc.args,
             'd' : D(self.filter_instance.doc, self.map_relative_refs),
             'f' : self.filter_instance,
-            's' : self.filter_instance.output(),
+            's' : self.filter_instance.output_data,
             'w' : self.filter_instance.doc.wrapper
             }
 
@@ -309,4 +308,6 @@ class D(object):
         if self._map_relative_refs.has_key(relative_ref):
             return self._map_relative_refs[relative_ref]
         else:
-            raise dexy.exceptions.UserFeedback("There is no document named %s available to %s" % (relative_ref, self._artifact.key))
+            msg = "There is no document named %s available to %s"
+            msgargs = (relative_ref, self._artifact.key)
+            raise dexy.exceptions.UserFeedback(msg % msgargs)

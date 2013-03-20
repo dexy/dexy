@@ -77,18 +77,18 @@ class JavaFilter(SubprocessCompileFilter):
         an input has been passed through the javac filter, its directory is
         added to the classpath.
         """
-        self.log_debug("in setup_cp for %s" % self.artifact.key)
+        self.log_debug("in setup_cp for %s" % self.key)
 
         classpath_elements = []
 
-        working_dir = os.path.join(self.artifact.wd(), self.output().parent_dir())
+        working_dir = os.path.join(self.workspace(), self.output_data.parent_dir())
         abs_working_dir = os.path.abspath(working_dir)
         self.log_debug("Adding working dir %s to classpath" % abs_working_dir)
         classpath_elements.append(abs_working_dir)
 
-        for doc in self.processed():
-            if (doc.output().ext == ".class") and ("javac" in doc.key):
-                classpath_elements.append(doc.output().parent_dir())
+        for doc in self.doc.walk_input_docs():
+            if (doc.output_data().ext == ".class") and ("javac" in doc.key):
+                classpath_elements.append(doc.output_data().parent_dir())
 
         for item in self.setting('classpath'):
             for x in item.split(":"):
@@ -130,7 +130,7 @@ class JavaFilter(SubprocessCompileFilter):
         return "java %(args)s %(classpath)s %(main_method)s" % args
 
     def setup_main_method(self):
-        basename = os.path.basename(self.input().name)
+        basename = os.path.basename(self.input_data.name)
         default_main = os.path.splitext(basename)[0]
         if self.setting('main'):
             return self.setting('main')

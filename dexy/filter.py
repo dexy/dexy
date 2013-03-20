@@ -17,7 +17,7 @@ class Filter(dexy.plugin.Plugin):
 
     aliases = ['dexy']
     TAGS = []
-    NODOC_settings = [
+    nodoc_settings = [
             'help', 'nodoc'
             ]
     _settings = {
@@ -41,16 +41,26 @@ class Filter(dexy.plugin.Plugin):
         self.doc = doc
 
     def data_class_alias(self, ext):
-        return self.setting('output-data-type')
+        if self.setting('preserve-prior-data-class'):
+            return self.input_data.alias
+        else:
+            return self.setting('output-data-type')
 
-    def setup(self, key, storage_key, prev_filter, next_filter):
+    def update_all_args(self, new_args):
+        self.doc.add_runtime_args(new_args)
+        for f in self.doc.filters:
+            f.update_settings(new_args)
+
+    def setup(self, key, storage_key, prev_filter, next_filter, custom_settings):
         self.key = key
         self.storage_key = storage_key
         self.prev_filter = prev_filter
         self.next_filter = next_filter
 
+        self.update_settings(custom_settings)
+
         if self.prev_filter:
-            self.input_data = self.prev_filter.output
+            self.input_data = self.prev_filter.output_data
             self.prev_ext = self.prev_filter.ext
         else:
             self.input_data = self.doc.initial_data
@@ -130,10 +140,10 @@ class Filter(dexy.plugin.Plugin):
         List of dexy templates which refer to this filter.
         """
         import dexy.template
-        return [t for t in dexy.template.Template if any(a for a in self.aliases if a in t.FILTERS_USED)]
+        return [t for t in dexy.template.Template if any(a for a in self.aliases if a in t.__class__.filters_used)]
 
     def filter_specific_settings(self):
-        nodoc = self.NODOC_settings
+        nodoc = self.nodoc_settings
         base = dexy.filter.Filter._settings
         return dict((k, v) for k, v in self._settings.iteritems() if not k in nodoc and not k in base)
 
@@ -156,14 +166,8 @@ class Filter(dexy.plugin.Plugin):
         pass
 
     def calculate_canonical_name(self):
-        name_without_ext = posixpath.splitext(self.key)[0]
+        name_without_ext = posixpath.splitext(self.doc.name)[0]
         return "%s%s" % (name_without_ext, self.ext)
-
-    def input_filename(self):
-        return self.input_data.name
-
-    def output_filename(self):
-        return self.output_data.name
 
     def output_filepath(self):
         return self.output_data.storage.data_file()
@@ -172,9 +176,12 @@ class Filter(dexy.plugin.Plugin):
         return self.doc.arg_value(arg_name_hyphen, default)
 
     def add_doc(self, doc_name, doc_contents=None, run=True, shortcut=None):
+        """
+        Creates a new Doc object for an on-the-fly document.
+        """
         doc_name = os_to_posix(doc_name)
         if not posixpath.sep in doc_name:
-            doc_name = posixpath.join(self.input().parent_dir(), doc_name)
+            doc_name = posixpath.join(self.input_data.parent_dir(), doc_name)
 
         additional_doc_filters = self.setting('additional-doc-filters')
         self.log_debug("additional-doc-filters are %s" % additional_doc_filters)
@@ -183,42 +190,147 @@ class Filter(dexy.plugin.Plugin):
 
         if isinstance(additional_doc_filters, dict):
             filters = additional_doc_filters.get(doc_ext, '')
-        elif isinstance(additional_doc_filters, str) or isinstance(additional_doc_filters, unicode):
+        elif isinstance(additional_doc_filters, basestring):
             filters = additional_doc_filters
         else:
+            msg = "additional doc filters should be str/unicode or dict, received %s"
+            msgargs = additional_doc_filters.__class__.__name__
+            raise dexy.exceptions.InternalDexyProblem(msg % msgargs)
             # TODO allow passing a list of tuples so input can be
             # used in more than 1 way
-            raise Exception("not implemented")
 
         if len(filters) > 0:
             if self.setting('keep-originals'):
                 doc_key = doc_name
-                doc = dexy.doc.Doc(doc_key, contents=doc_contents)
-                self.doc.add_doc(doc)
+                doc = dexy.doc.Doc(doc_key, self.doc.wrapper, [], contents=doc_contents)
+
+                self.doc.children.append(doc)
+                self.doc.wrapper.add_node(doc)
 
             doc_key = "%s|%s" % (doc_name, filters)
-            doc = dexy.doc.Doc(doc_key, contents=doc_contents, shortcut=shortcut)
-            self.doc.add_doc(doc, run=run)
+            doc = dexy.doc.Doc(
+                    doc_key,
+                    self.doc.wrapper,
+                    [],
+                    contents=doc_contents,
+                    shortcut=shortcut)
+
+            self.doc.children.append(doc)
+            self.doc.wrapper.add_node(doc)
+            if run:
+                doc.run()
 
         else:
             doc_key = doc_name
-            doc = dexy.doc.Doc(doc_key, contents=doc_contents, shortcut=shortcut)
-            self.doc.add_doc(doc, run=run)
+            doc = dexy.doc.Doc(doc_key,
+                    self.doc.wrapper,
+                    [],
+                    contents=doc_contents,
+                    shortcut=shortcut)
+            
+            self.doc.children.append(doc)
+            self.doc.wrapper.add_node(doc)
+            if run:
+                doc.run()
 
         return doc
 
     def workspace(self):
-        return os.path.join(self.doc.wrapper.artifacts_dir, self.doc.wrapper.workspace, self.storage_key)
+        """
+        Directory in which all working files for this filter are stored.
+
+        The `populate_workspace` method will populate this directory with
+        inputs to this filter.
+        """
+        ws = self.doc.wrapper.filter_ws()
+        return os.path.join(ws, self.storage_key[0:2], self.storage_key)
+
+    def parent_work_dir(self):
+        """
+        Within the 'workspace', this is the parent directory of the file to be
+        processed. This is the directory which subprocess/pexpect will 'cwd' to
+        and execute processes.
+        """
+        return os.path.join(self.workspace(), self.output_data.parent_dir())
+
+    def work_input_filename(self):
+        """
+        Name of work file to use input from. Processes will take this file name
+        as input. Does not contain full path to file, just the file name. File
+        will be in parent_work_dir() and processes should set their working
+        directory to parent_work_dir() before running.
+        """
+        if self.ext and (self.ext == self.prev_ext):
+            return "%s-work%s" % (self.input_data.baserootname(), self.prev_ext)
+        else:
+            return self.input_data.basename()
+
+    def work_input_filepath(self):
+        return os.path.join(self.parent_work_dir(), self.work_input_filename())
+
+    def work_output_filename(self):
+        """
+        Name of work file to save output to. Processes will take this file name
+        as output. Does not contain full path to file, just the file name. File
+        will be in parent_work_dir() and processes should set their working
+        directory to parent_work_dir() before running.
+        """
+        return self.output_data.basename()
+
+    def work_output_filepath(self):
+        return os.path.join(self.parent_work_dir(), self.work_output_filename())
 
     def populate_workspace(self):
-        ws = self.workspace()
-        os.makedirs(ws)
-        print "in populate_workspace"
-        for inpt in self.doc.walk_input_docs():
-            print inpt.key_with_class()
-            print inpt.output_data().name
+        """
+        Populates the workspace directory with inputs to the filter, under
+        their canonical names.
+        """
+        already_created_dirs = set()
+        wd = self.parent_work_dir()
 
-        self.input_data.output_to_file(os.path.join(ws, 'foo.txt'))
+        self._files_workspace_populated_with = set()
+
+        try:
+            os.makedirs(wd)
+            already_created_dirs.add(wd)
+        except OSError:
+            msg = "workspace '%s' for filter '%s' already exists"
+            msgargs = (os.path.abspath(wd), self.key,)
+            raise dexy.exceptions.InternalDexyProblem(msg % msgargs)
+
+        for inpt in self.doc.walk_input_docs():
+            data = inpt.output_data()
+
+            filepath = data.name
+
+            # Ensure parent dir exists.
+            parent_dir = os.path.join(self.workspace(), os.path.dirname(filepath))
+            if not parent_dir in already_created_dirs:
+                try:
+                    os.makedirs(parent_dir)
+                    already_created_dirs.add(parent_dir)
+                except OSError:
+                    pass
+
+            # Save contents of file to workspace
+            file_dest = os.path.join(self.workspace(), filepath)
+
+            data.output_to_file(file_dest)
+            self._files_workspace_populated_with.add(filepath)
+
+        self.input_data.output_to_file(self.work_input_filepath())
+        rel_path_to_work_file = os.path.join(os.path.dirname(self.key), self.work_input_filename())
+        self._files_workspace_populated_with.add(rel_path_to_work_file)
+
+        self.custom_populate_workspace()
+
+    def custom_populate_workspace(self):
+        """
+        Allow filters to run the standard populate_workspace, and also do extra
+        things to workspace after populate_workspace runs. Filters can also
+        just override populate_workspace.
+        """
+        pass
 
     def resolve_conflict(self, doc, conflict_docs):
         """
@@ -258,18 +370,18 @@ class DexyFilter(Filter):
     def process(self):
         if hasattr(self, "process_text_to_dict"):
             output = self.process_text_to_dict(unicode(self.input_data))
-            self.output.set_data(output)
+            self.output_data.set_data(output)
 
         elif hasattr(self, "process_dict"):
             output = self.process_dict(self.input_data.as_sectioned())
-            self.output.set_data(output)
+            self.output_data.set_data(output)
 
         elif hasattr(self, "process_text"):
             output = self.process_text(unicode(self.input_data))
-            self.output.set_data(output)
+            self.output_data.set_data(output)
 
         else:
-            self.output.copy_from_file(self.input_data.storage.data_file())
+            self.output_data.copy_from_file(self.input_data.storage.data_file())
 
 class AliasFilter(DexyFilter):
     """
