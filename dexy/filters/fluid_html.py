@@ -14,11 +14,19 @@ class FluidHtml(DexyFilter):
             }
 
     def process_text(self, input_text):
+        css = self.setting('css')
+        if css:
+            self.log_debug("custom css is %s" % css)
+
+        js = self.setting('js')
+        if js:
+            self.log_debug("custom js is %s" % js)
+
         args = {
                 'pygments_css' : self.PYGMENTS_CSS,
                 'css_framework' : self.CSS_FRAMEWORK,
-                'custom_css' : self.setting("css"),
-                'custom_js' : self.setting("js"),
+                'custom_css' : css,
+                'custom_js' : js,
                 'content' : input_text
                 }
         return """
@@ -28,6 +36,7 @@ class FluidHtml(DexyFilter):
         <style type="text/css">
             %(css_framework)s
             %(pygments_css)s
+            %(custom_css)s
         </style>
         %(custom_js)s
     </head>

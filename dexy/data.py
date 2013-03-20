@@ -129,6 +129,8 @@ class Generic(Data):
         if isinstance(self._data, unicode):
             self.storage.write_data(self._data.encode("utf-8"))
         else:
+            if self._data == None:
+                raise dexy.exceptions.InternalDexyProblem("no data for %s" % self.key)
             self.storage.write_data(self._data)
 
     def set_data(self, data):
@@ -292,4 +294,8 @@ class KeyValue(Generic):
         return self.storage.keys()
 
     def save(self):
-        self.storage.save()
+        try:
+            self.storage.save()
+        except Exception as e:
+            print e
+            raise dexy.exceptions.InternalDexyProblem("problem saving %s" % self.key)

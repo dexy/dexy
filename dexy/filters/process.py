@@ -142,7 +142,6 @@ class SubprocessFilter(Filter):
                 filepath = os.path.normpath(os.path.join(dirpath, filename))
                 relpath = os.path.relpath(filepath, wd)
 
-                print "looking for %s in %s" % (relpath, self._files_workspace_populated_with)
                 already_have_file = (relpath in self._files_workspace_populated_with)
 
                 if isinstance(do_add_new, list):

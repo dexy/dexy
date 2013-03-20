@@ -121,7 +121,7 @@ class PygmentsFilter(DexyFilter):
 
         # Create a lexer instance.
         if self.setting('lexer'):
-            self.log_hebug("custom lexer %s specified" % self.setting('lexer'))
+            self.log_debug("custom lexer %s specified" % self.setting('lexer'))
             lexer = get_lexer_by_name(self.setting('lexer'), **lexer_args)
         else:
             is_json_file = ext in ('.json', '.dexy') or self.output_data.name.endswith(".dexy")

@@ -52,7 +52,8 @@ def test_casperjs_stdout_filter():
                 raise e
             except IOError:
                 raise SkipTest
-
+            else:
+                raise e
 
 PHANTOM_JS = """
 console.log('Hello, world!');

@@ -114,9 +114,9 @@ class AbstractSyntaxTree():
         nodes and a dict of all nodes referenced by qualified keys.
         """
         if self.wrapper.nodes:
-            print "nodes are not empty", self.wrapper.nodes
+            self.log_warn("nodes are not empty: %s" % ", ".join(self.wrapper.nodes))
         if self.wrapper.roots:
-            print "roots are not empty", self.wrapper.roots
+            self.log_warn("roots are not empty: %s" % ", ".join(self.wrapper.roots))
 
         def create_dexy_node(key, *inputs, **kwargs):
             """
@@ -136,6 +136,9 @@ class AbstractSyntaxTree():
                         inputs,
                         **kwargs_with_defaults)
 
+                self.wrapper.log.debug("creating node %s" % node.key)
+                if node.inputs:
+                    self.wrapper.log.debug("inputs are %s" % ", ".join(i.key for i in node.inputs))
                 node.environment = self.calculate_environment_for_directory(pattern)
                 self.wrapper.nodes[key] = node
 
@@ -145,6 +148,7 @@ class AbstractSyntaxTree():
             return self.wrapper.nodes[key]
 
         def parse_item(key):
+            self.wrapper.log.debug("parsing item %s" % key)
             inputs = self.inputs_for_node(key)
             kwargs = self.args_for_node(key)
 

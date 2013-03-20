@@ -39,10 +39,10 @@ class KeyValueStoreFilter(DexyFilter):
             }
 
     def process(self):
-        self.output_data().copy_from_file(self.input_data.storage.data_file())
+        self.output_data.copy_from_file(self.input_data.storage.data_file())
 
         # Call setup() again since it will have created a new blank database.
-        self.output_data().storage.setup()
+        self.output_data.storage.setup()
 
 class HeaderFilter(DexyFilter):
     """

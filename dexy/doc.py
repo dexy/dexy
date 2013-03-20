@@ -44,7 +44,11 @@ class Doc(dexy.node.Node):
             # This is a real file on the file system.
             self.initial_data.copy_from_file(self.name)
         else:
-            self.initial_data.set_data(self.get_contents())
+            is_dummy = self.initial_data.is_cached() and self.get_contents() == 'dummy contents'
+            if is_dummy:
+                self.initial_data.load_data()
+            else:
+                self.initial_data.set_data(self.get_contents())
 
     def check_doc_changed(self):
         #print "checking doc changed for %s" % self.name

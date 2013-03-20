@@ -23,6 +23,7 @@ class Node(dexy.plugin.Plugin):
         self.runtime_args = {}
         self.children = []
         self.state = 'new'
+        self.additional_docs = []
 
         if inputs:
             self.inputs = inputs
@@ -43,6 +44,8 @@ class Node(dexy.plugin.Plugin):
     def add_runtime_args(self, args):
         self.args.update(args)
         self.runtime_args.update(args)
+
+    # TODO get additional doc info + reconstitute...
 
     def arg_value(self, key, default=None):
         return self.args.get(key, default) or self.args.get(key.replace("-", "_"), default)
@@ -140,10 +143,18 @@ class Node(dexy.plugin.Plugin):
         """
         return os.path.join(self.wrapper.artifacts_dir, self.hashid[0:2], "%s.runtimeargs" % self.hashid)
 
+    def additional_docs_filename(self):
+        return os.path.join(self.wrapper.artifacts_dir, self.hashid[0:2], "%s.additionaldocs" % self.hashid)
+
     def save_args(self):
         """
         Saves the args (for debugging, and to compare against next run).
         """
+        # TODO make all two letter a0 a1 a2 dirs automatically, remove this
+        try:
+            os.makedirs(os.path.dirname(self.args_filename()))
+        except OSError:
+            pass
         with open(self.args_filename(), "w") as f:
             json.dump(self.sorted_args(), f)
     
@@ -155,6 +166,33 @@ class Node(dexy.plugin.Plugin):
         with open(self.runtime_args_filename(), "r") as f:
             runtime_args = json.load(f)
             self.add_runtime_args(runtime_args)
+
+    def save_additional_docs(self):
+        additional_doc_info = []
+        for doc in self.additional_docs:
+            info = (doc.key, doc.hashid)
+            additional_doc_info.append(info)
+
+        with open(self.additional_docs_filename(), "w") as f:
+            json.dump(additional_doc_info, f)
+
+    def load_additional_docs(self):
+        with open(self.additional_docs_filename(), "r") as f:
+            additional_doc_info = json.load(f)
+
+        for doc_key, hashid in additional_doc_info:
+            new_doc = dexy.doc.Doc(doc_key, self.wrapper, [], contents='dummy contents')
+            new_doc.contents = None
+            assert new_doc.hashid == hashid
+            new_doc.initial_data.load_data()
+            new_doc.output_data().load_data()
+            self.add_additional_doc(new_doc)
+
+    def add_additional_doc(self, doc):
+        self.log_debug("adding additional doc '%s'" % doc.key)
+        self.children.append(doc)
+        self.wrapper.add_node(doc)
+        self.additional_docs.append(doc)
 
     def inputs_changed(self):
         return any(i.changed() for i in self.inputs)
@@ -185,7 +223,7 @@ class Node(dexy.plugin.Plugin):
         return next_task()
 
     def __call__(self, *args, **kw):
-        for inpt in self.inputs:
+        for inpt in self.walk_inputs():
             for node in inpt:
                 node(*args, **kw)
 
@@ -205,9 +243,14 @@ class Node(dexy.plugin.Plugin):
             self.log_info("running")
             self.run(*args, **kw)
             self.save_runtime_args()
+            if self.additional_docs:
+                self.save_additional_docs()
         else:
             self.log_info("node is cached, not running")
             self.load_runtime_args()
+            if os.path.exists(self.additional_docs_filename()):
+                self.log_debug("loading additional docs")
+                self.load_additional_docs()
 
     def run(self, *args, **kw):
         for child in self.children:

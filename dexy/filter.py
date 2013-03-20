@@ -40,6 +40,9 @@ class Filter(dexy.plugin.Plugin):
     def __init__(self, doc=None):
         self.doc = doc
 
+    def final_ext(self):
+        return self.doc.output_data().ext
+
     def data_class_alias(self, ext):
         if self.setting('preserve-prior-data-class'):
             return self.input_data.alias
@@ -151,7 +154,7 @@ class Filter(dexy.plugin.Plugin):
         return "%s:%s" % (self.__class__.__name__, self.key)
 
     def log_debug(self, message):
-        self.doc.wrapper.log.debug("%s: %s" % (self.key_with_class(), message))
+        self.doc.wrapper.log.debug("%s %s: %s" % (self.doc.hashid, self.key_with_class(), message))
 
     def log_info(self, message):
         self.doc.wrapper.log.info("%s: %s" % (self.key_with_class(), message))
@@ -203,9 +206,7 @@ class Filter(dexy.plugin.Plugin):
             if self.setting('keep-originals'):
                 doc_key = doc_name
                 doc = dexy.doc.Doc(doc_key, self.doc.wrapper, [], contents=doc_contents)
-
-                self.doc.children.append(doc)
-                self.doc.wrapper.add_node(doc)
+                self.doc.add_additional_doc(doc)
 
             doc_key = "%s|%s" % (doc_name, filters)
             doc = dexy.doc.Doc(
@@ -215,8 +216,7 @@ class Filter(dexy.plugin.Plugin):
                     contents=doc_contents,
                     shortcut=shortcut)
 
-            self.doc.children.append(doc)
-            self.doc.wrapper.add_node(doc)
+            self.doc.add_additional_doc(doc)
             if run:
                 doc.run()
 
@@ -228,8 +228,7 @@ class Filter(dexy.plugin.Plugin):
                     contents=doc_contents,
                     shortcut=shortcut)
             
-            self.doc.children.append(doc)
-            self.doc.wrapper.add_node(doc)
+            self.doc.add_additional_doc(doc)
             if run:
                 doc.run()
 
@@ -319,7 +318,12 @@ class Filter(dexy.plugin.Plugin):
             # Save contents of file to workspace
             file_dest = os.path.join(self.workspace(), filepath)
 
-            data.output_to_file(file_dest)
+            try:
+                data.output_to_file(file_dest)
+            except Exception as e:
+                self.log_warn("problem populating working dir with input %s" % data.key)
+                self.log_warn(e)
+
             self._files_workspace_populated_with.add(filepath)
 
         self.input_data.output_to_file(self.work_input_filepath())

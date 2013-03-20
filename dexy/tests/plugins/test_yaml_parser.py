@@ -74,10 +74,10 @@ def test_children_siblings_order():
         p1 = wrapper.nodes['bundle:p1']
         assert [i.key_with_class() for i in p1.walk_inputs()] == [
                 'bundle:c1',
+                'bundle:c2',
                 'bundle:g1',
                 'bundle:g2',
                 'bundle:g3',
-                'bundle:c2',
                 'bundle:c3'
                 ]
 

@@ -33,7 +33,7 @@ def test_node_arg_caching():
     with wrap() as wrapper:
         node = dexy.node.Node("foo", wrapper, [], foo='bar', baz=123)
         assert node.hashid == 'acbd18db4cc2f85cedef654fccc4a4d8'
-        assert node.args_filename() == ".cache/acbd18db4cc2f85cedef654fccc4a4d8.args"
+        assert node.args_filename() == ".cache/ac/acbd18db4cc2f85cedef654fccc4a4d8.args"
         assert node.args['foo'] == 'bar'
         assert node.args['baz'] == 123
         assert node.sorted_arg_string() == '[["baz", 123], ["foo", "bar"]]'
@@ -41,6 +41,7 @@ def test_node_arg_caching():
         assert os.path.exists(wrapper.artifacts_dir)
         assert not os.path.exists(node.args_filename())
         node.save_args()
+        node.save_runtime_args()
         assert os.path.exists(node.args_filename())
         assert not node.check_args_changed()
 
