@@ -10,9 +10,9 @@ def test_filter_args():
                 filterargs={"abc" : 123, "foo" : "baz" },
                 wrapper=wrapper)
 
-        wrapper.run_docs(doc)
+        wrapper.run(doc)
 
-        result = doc.output().data()
+        result = str(doc.output_data())
 
         assert "Here are the filter settings:" in result
         assert "abc: 123" in result

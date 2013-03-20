@@ -8,8 +8,8 @@ class PythonDocumentationFilter(DexyFilter):
     """
     Returns doc info for named python modules.
     """
-    ALIASES = ["pydoc"]
-    _SETTINGS = {
+    aliases = ["pydoc"]
+    _settings = {
             'input-extensions' : ['.txt'],
             'output-data-type' : 'keyvalue',
             'output-extensions' : ['.sqlite3', '.json']
@@ -27,8 +27,8 @@ class PythonDocumentationFilter(DexyFilter):
 
             self.add_source_for_key(key, source)
 
-            self.output().append("%s:doc" % key, inspect.getdoc(item))
-            self.output().append("%s:comments" % key, inspect.getcomments(item))
+            self.output_data.append("%s:doc" % key, inspect.getdoc(item))
+            self.output_data.append("%s:comments" % key, inspect.getcomments(item))
 
         else: # not a function or a method
             try:
@@ -43,10 +43,10 @@ class PythonDocumentationFilter(DexyFilter):
         """
         Appends source code + syntax highlighted source code to persistent store.
         """
-        self.output().append("%s:value" % key, source)
+        self.output_data.append("%s:value" % key, source)
         if not (type(source) == str or type(source) == unicode):
             source = inspect.getsource(source)
-        self.output().append("%s:source" % key, source)
+        self.output_data.append("%s:source" % key, source)
 
     def process_members(self, package_name, mod):
         """
@@ -55,7 +55,7 @@ class PythonDocumentationFilter(DexyFilter):
         name = mod.__name__
 
         for k, m in inspect.getmembers(mod):
-            self.log.debug("in %s processing element %s" % (mod.__name__, k))
+            self.log_debug("in %s processing element %s" % (mod.__name__, k))
             if not inspect.isclass(m) and hasattr(m, '__module__') and m.__module__ and m.__module__.startswith(package_name):
                 key = "%s.%s" % (m.__module__, k)
                 self.fetch_item_content(key, m)
@@ -64,11 +64,11 @@ class PythonDocumentationFilter(DexyFilter):
                 key = "%s.%s" % (mod.__name__, k)
                 try:
                     item_content = inspect.getsource(m)
-                    self.output().append("%s:doc" % key, inspect.getdoc(m))
-                    self.output().append("%s:comments" % key, inspect.getcomments(m))
+                    self.output_data.append("%s:doc" % key, inspect.getdoc(m))
+                    self.output_data.append("%s:comments" % key, inspect.getcomments(m))
                     self.add_source_for_key(key, item_content)
                 except IOError:
-                    self.log.debug("can't get source for %s" % key)
+                    self.log_debug("can't get source for %s" % key)
                     self.add_source_for_key(key, "")
 
                 try:
@@ -84,32 +84,32 @@ class PythonDocumentationFilter(DexyFilter):
 
     def process_module(self, package_name, name):
         try:
-            self.log.debug("Trying to import %s" % name)
+            self.log_debug("Trying to import %s" % name)
             __import__(name)
             mod = sys.modules[name]
-            self.log.debug("Success importing %s" % name)
+            self.log_debug("Success importing %s" % name)
 
             try:
                 module_source = inspect.getsource(mod)
                 json.dumps(module_source)
                 self.add_source_for_key(name, inspect.getsource(mod))
             except (UnicodeDecodeError, IOError, TypeError):
-                self.log.debug("Unable to load module source for %s" % name)
+                self.log_debug("Unable to load module source for %s" % name)
 
             self.process_members(package_name, mod)
 
         except (ImportError, TypeError) as e:
-            self.log.debug(e)
+            self.log_debug(e)
 
     def process(self):
         """
         input_text should be a list of installed python libraries to document.
         """
-        package_names = self.input().as_text().split()
+        package_names = str(self.input_data).split()
         packages = [__import__(package_name) for package_name in package_names]
 
         for package in packages:
-            self.log.debug("processing package %s" % package)
+            self.log_debug("processing package %s" % package)
             package_name = package.__name__
             prefix = package.__name__ + "."
 
@@ -117,10 +117,10 @@ class PythonDocumentationFilter(DexyFilter):
 
             if hasattr(package, '__path__'):
                 for module_loader, name, ispkg in pkgutil.walk_packages(package.__path__, prefix=prefix):
-                    self.log.debug("in package %s processing module %s" % (package_name, name))
+                    self.log_debug("in package %s processing module %s" % (package_name, name))
                     if not name.endswith("__main__"):
                         self.process_module(package_name, name)
             else:
                 self.process_module(package.__name__, package.__name__)
 
-        self.output().save()
+        self.output_data.save()

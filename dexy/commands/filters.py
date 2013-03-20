@@ -53,13 +53,13 @@ def filters_text(
         # We want help on a particular filter
         instance = dexy.filter.Filter.create_instance(alias)
         text = []
-        text.append("aliases: %s" % ", ".join(instance.ALIASES))
+        text.append("aliases: %s" % ", ".join(instance.aliases))
         text.append("")
         text.append(inspect.getdoc(instance.__class__))
         text.append("")
         text.append("dexy-level settings:")
         for k in sorted(instance._settings):
-            if not k in dexy.filter.Filter.NODOC_SETTINGS and k in dexy.filter.Filter._SETTINGS:
+            if not k in dexy.filter.Filter.nodoc_settings and k in dexy.filter.Filter._settings:
                 tup = instance._settings[k]
                 text.append(SETTING_STRING % (k, tup[0], tup[1]))
 
@@ -75,7 +75,7 @@ def filters_text(
             text.append("Templates which use this filter:")
             for t in templates:
                 text.append("")
-                text.append("  %s" % t.ALIASES[0])
+                text.append("  %s" % t.aliases[0])
                 text.append("            %s" % dexy.utils.getdoc(t.__class__))
 
             if example:
@@ -133,7 +133,7 @@ def filters_text(
                     version_message = "'%s' failed, filter may not be available." % instance.version_command()
 
             if not skip:
-                aliases = ", ".join(instance.ALIASES)
+                aliases = ", ".join(instance.__class__.aliases)
                 filter_help = "  " + aliases + " : " + getdoc(instance.__class__)
                 if (versions or showmissing or (showall and not version)):
                     filter_help += " %s" % version_message

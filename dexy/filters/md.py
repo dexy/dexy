@@ -16,8 +16,8 @@ class MarkdownFilter(DexyFilter):
     Markdown extensions can be enabled in your config:
     http://packages.python.org/Markdown/extensions/index.html
     """
-    ALIASES = ['markdown']
-    _SETTINGS = {
+    aliases = ['markdown']
+    _settings = {
             'input-extensions' : ['.*'],
             'output-extensions' : ['.html'],
             'extensions' : ("Which Markdown extensions to enable.", { 'toc' : {} }),
@@ -29,20 +29,20 @@ class MarkdownFilter(DexyFilter):
 
     def process_text(self, input_text):
         markdown_logger = logging.getLogger('MARKDOWN')
-        markdown_logger.addHandler(self.log.handlers[-1])
+        markdown_logger.addHandler(self.doc.wrapper.log.handlers[-1])
 
         extension_configs = self.setting('extensions')
         extensions = extension_configs.keys()
 
         dbg = "Initializing Markdown with extensions: %s and extension configs: %s"
-        self.log.debug(dbg % (json.dumps(extensions), json.dumps(extension_configs)))
+        self.log_debug(dbg % (json.dumps(extensions), json.dumps(extension_configs)))
 
         try:
             md = markdown.Markdown(
                     extensions=extensions,
                     extension_configs=extension_configs)
         except ValueError as e:
-            self.log.debug(e.message)
+            self.log_debug(e.message)
             if "markdown.Extension" in e.message:
                 raise dexy.exceptions.UserFeedback("There's a problem with the markdown extensions you specified.")
             else:

@@ -1,6 +1,4 @@
-from dexy.artifact import InitialVirtualArtifact, FilterArtifact
 from dexy.doc import Doc
-from dexy.node import DocNode
 from dexy.tests.utils import assert_output
 from dexy.tests.utils import runfilter
 from dexy.tests.utils import wrap
@@ -25,93 +23,42 @@ def test_process_method_with_dict():
 
 def test_add_new_document():
     with runfilter("newdoc", "hello") as doc:
-        assert doc.node.children[-1].key == "subdir/newfile.txt|processtext"
-        assert doc.output().data() == "we added a new file"
-        assert doc.node.children[0].output().data() == "we added a new file"
-        assert doc.node.children[1].output().data() == "Dexy processed the text 'newfile'"
+        assert doc.children[-1].key == "subdir/newfile.txt|processtext"
+        assert str(doc.output_data()) == "we added a new file"
 
-        assert "Doc:subdir/example.txt|newdoc" in doc.wrapper.batch.lookup_table
-        assert "Doc:subdir/newfile.txt|processtext" in doc.wrapper.batch.lookup_table
+        assert "doc:subdir/example.txt|newdoc" in doc.wrapper.nodes
+        assert "doc:subdir/newfile.txt|processtext" in doc.wrapper.nodes
 
 def test_key_value_example():
     with wrap() as wrapper:
         doc = Doc(
                 "hello.txt|keyvalueexample",
-                contents="hello",
-                wrapper=wrapper
+                wrapper,
+                [],
+                contents="hello"
                 )
 
-        wrapper.run_docs(doc)
+        wrapper.run(doc)
 
-        assert doc.output().as_text() == "foo: bar"
+        assert str(doc.output_data()) == "foo: bar"
 
 def test_access_other_documents():
     with wrap() as wrapper:
-        node = DocNode("hello.txt|newdoc", contents="hello", wrapper=wrapper)
-        parent = DocNode("test.txt|others",
-                    inputs=[node],
-                    contents="hello",
-                    wrapper=wrapper)
-        wrapper.run_docs(parent)
+        node = Doc("hello.txt|newdoc", wrapper, [], contents="hello")
+        parent = Doc("test.txt|others",
+                wrapper,
+                [node],
+                contents="hello"
+                )
+        wrapper.run(parent)
 
         expected_items = [
             "Here is a list of previous docs in this tree (not including test.txt|others).",
-            "newfile.txt|processtext (2 children, 0 inputs, length 33)",
-            "hello.txt|newdoc (2 children, 0 inputs, length 19)"
+            "newfile.txt|processtext (0 children, 0 inputs, length 33)",
+            "hello.txt|newdoc (1 children, 0 inputs, length 19)"
             ]
 
-        output = unicode(parent.children[-1].output())
+        output = unicode(parent.output_data())
 
         for item in expected_items:
             assert item in output
-
-def test_doc_children_artifacts():
-    with wrap() as wrapper:
-        node = DocNode("hello.txt|newdoc", contents="hello", wrapper=wrapper)
-
-        parent = DocNode("parent.txt|process",
-                inputs=[node],
-                contents="hello",
-                wrapper=wrapper)
-
-        wrapper.setup()
-        wrapper.root_nodes = [parent]
-
-        node.populate()
-        parent.populate()
-
-        doc = node.children[0]
-
-        # Doc's children are artifacts
-        assert len(doc.children) == 2
-        assert isinstance(doc.children[0], InitialVirtualArtifact)
-        assert isinstance(doc.children[1], FilterArtifact)
-
-        # Parent's children and inputs are other nodes
-        assert len(parent.children) == 1
-        assert len(parent.inputs) == 1
-
-        assert isinstance(parent.children[0], Doc)
-        assert isinstance(parent.inputs[0], DocNode)
-
-        node = DocNode("hello.txt|newdoc", contents="hello", wrapper=wrapper)
-
-        parent = DocNode("parent.txt|process",
-                inputs=[node],
-                contents="hello",
-                wrapper=wrapper)
-
-        wrapper.run_docs(parent)
-
-        doc = node.children[0]
-
-        assert len(doc.children) == 2
-        assert isinstance(doc.children[0], InitialVirtualArtifact)
-        assert isinstance(doc.children[1], FilterArtifact)
-
-        assert len(parent.inputs) == 1
-        assert len(parent.children) == 1
-
-        assert "Doc:hello.txt|newdoc" in wrapper.batch.lookup_table
-        assert "Doc:parent.txt|process" in wrapper.batch.lookup_table
-        assert "Doc:newfile.txt|processtext" in wrapper.batch.lookup_table

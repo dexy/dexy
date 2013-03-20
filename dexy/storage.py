@@ -11,37 +11,40 @@ class Storage(dexy.plugin.Plugin):
     Base class for types of Storage.
     """
     __metaclass__ = dexy.plugin.PluginMeta
-    _SETTINGS = {}
-
-    def is_active(klass):
-        return True
+    _settings = {}
 
     def check_location_is_in_project_dir(self, filepath):
         if not self.wrapper.project_root in os.path.abspath(filepath):
             raise dexy.exceptions.UserFeedback("trying to write '%s' outside of '%s'" % (filepath, self.wrapper.project_root))
 
-    def __init__(self, hashstring, ext, wrapper):
-        self.hashstring = hashstring
+    def __init__(self, storage_key, ext, wrapper):
+        self.storage_key = storage_key
         self.ext = ext
         self.wrapper = wrapper
         self._size = None
+        self.setup()
+
+    def setup(self):
+        pass
 
 class GenericStorage(Storage):
     """
     Default type of storage where content is stored in files.
     """
-    ALIASES = ['generic']
+    aliases = ['generic']
 
     def data_file(self):
-        ext = self.ext
-        if not ext:
-            ext = ".ext"
-
-        return os.path.join(self.artifacts_dir(), "%s%s" % (self.hashstring, ext))
+        return os.path.join(self.artifacts_dir(), "%s%s" % (self.storage_key, self.ext))
 
     def data_file_exists(self):
         size = self.data_file_size()
         return (not size is None)
+
+    def stat(self):
+        try:
+            return os.stat(self.data_file())
+        except OSError:
+            pass
 
     def data_file_size(self):
         if not self._size:
@@ -52,7 +55,7 @@ class GenericStorage(Storage):
         return self._size
 
     def artifacts_dir(self):
-        d = os.path.join(self.wrapper.artifacts_dir, self.hashstring[0:2])
+        d = os.path.join(self.wrapper.artifacts_dir, self.storage_key[0:2])
         try:
             os.makedirs(d)
         except os.error:
@@ -92,7 +95,7 @@ class JsonOrderedStorage(GenericStorage):
     """
     Storage for ordered sectional data using JSON.
     """
-    ALIASES = ['jsonordered']
+    aliases = ['jsonordered']
     MAX_DATA_DICT_DECIMALS = 5
     MAX_DATA_DICT_LENGTH = 10 ** MAX_DATA_DICT_DECIMALS
 
@@ -145,7 +148,7 @@ class JsonStorage(GenericStorage):
     """
     Storage for key value data using JSON.
     """
-    ALIASES = ['json']
+    aliases = ['json']
 
     def setup(self):
         self._data = {}
@@ -192,10 +195,10 @@ class Sqlite3Storage(GenericStorage):
     """
     Storage of key value storage in sqlite3 database files.
     """
-    ALIASES = ['sqlite3']
+    aliases = ['sqlite3']
 
     def working_file(self):
-        return os.path.join(self.wrapper.artifacts_dir, "%s-tmp%s" % (self.hashstring, self.ext))
+        return os.path.join(self.wrapper.artifacts_dir, "%s-tmp%s" % (self.storage_key, self.ext))
 
     def setup(self):
         if file_exists(self.data_file()):

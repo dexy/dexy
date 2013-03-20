@@ -1,7 +1,7 @@
 from dexy.tests.utils import assert_output
 from dexy.tests.utils import assert_in_output
 from dexy.tests.utils import wrap
-from dexy.node import DocNode
+from dexy.doc import Doc
 
 RST = """
 * a bullet point using "*"
@@ -15,12 +15,12 @@ RST = """
 
 def test_rst2odt():
     with wrap() as wrapper:
-        node = DocNode("example.txt|rst2odt",
-                contents=RST,
-                wrapper=wrapper)
-        wrapper.run_docs(node)
-        doc = node.children[0]
-        assert doc.output().filesize() > 8000
+        node = Doc("example.txt|rst2odt",
+                wrapper,
+                [],
+                contents=RST)
+        wrapper.run(node)
+        assert node.output_data().filesize() > 8000
 
 def test_rst2xml():
     assert_in_output('rst2xml', RST, """<list_item><paragraph>a sub-list using "-"</paragraph><bullet_list bullet="+"><list_item>""")
@@ -35,14 +35,16 @@ def test_rst2html():
 
 def test_rest_to_tex():
     with wrap() as wrapper:
-        node = DocNode("example.txt|rstbody",
+        node = Doc("example.txt|rstbody",
+                wrapper,
+                [],
                 contents=RST,
-                rstbody={"ext" : ".tex"},
-                wrapper=wrapper)
+                rstbody={"ext" : ".tex"}
+                )
 
-        wrapper.run_docs(node)
-        doc = node.children[0]
-        assert str(doc.output()) == """\
+        wrapper.run(node)
+        print node.output_data()
+        assert str(node.output_data()) == """\
 %
 \\begin{itemize}
 

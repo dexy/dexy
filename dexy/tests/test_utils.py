@@ -39,7 +39,7 @@ class InactiveDexyFilter(Filter):
     filter which is always inactive, for testing
     """
     NODOC = True
-    ALIASES = ['inactive']
+    aliases = ['inactive']
     @classmethod
     def is_active(klass):
         return False

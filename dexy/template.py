@@ -1,36 +1,44 @@
+from dexy.utils import s
 import dexy.plugin
-import os
-import sys
-import shutil
 import dexy.utils
 import dexy.wrapper
+import os
+import shutil
+import sys
 
 class Template(dexy.plugin.Plugin):
-    ALIASES = []
-    FILTERS_USED = []
     __metaclass__ = dexy.plugin.PluginMeta
-    _SETTINGS = {}
+    _settings = {
+            'contents-dir' : ("Directory containing contents of template.", None)
+            }
+    aliases = []
+    filters_used = []
 
-    def is_active(klass):
-        return True
+    def template_source_dir(self):
+        template_install_dir = os.path.dirname(sys.modules[self.__module__].__file__)
 
-    def template_source_dir(klass):
-        template_install_dir = os.path.dirname(sys.modules[klass.__module__].__file__)
-
-        if hasattr(klass, 'CONTENTS'):
-            contents_dirname = klass.CONTENTS
+        if self.setting('contents-dir'):
+            contents_dirname = self.setting('contents-dir')
         else:
             # default is to have contents in directory with same name as alias followed by "-template"
-            contents_dirname = "%s-template" % klass.ALIASES[0]
+            contents_dirname = "%s-template" % self.__class__.aliases[0]
 
         return os.path.join(template_install_dir, contents_dirname)
 
-    def run(self, directory, **kwargs):
+    def generate(self, directory, **kwargs):
+        """
+        Generates the template, making a copy of the template's files in
+        the specified directory. Does not run dexy.
+        """
         if dexy.utils.file_exists(directory):
-            raise dexy.exceptions.UserFeedback("Directory '%s' already exists, aborting." % directory)
+            msg = "directory '%s' already exists, aborting" % directory
+            raise dexy.exceptions.UserFeedback(msg)
+
+        # copy template files
         source = self.template_source_dir()
         shutil.copytree(source, directory)
 
+        # remove template documentation unless 'meta' is specified
         dexy_rst = os.path.join(directory, 'dexy.rst')
         if dexy.utils.file_exists(dexy_rst):
             if not kwargs.get('meta'):
@@ -43,7 +51,7 @@ class Template(dexy.plugin.Plugin):
         Yields the batch object for the dexy run, so we can call methods on it
         while still in the tempdir.
         """
-        DOC_KEYS = [
+        meta_doc_keys = [
                 "dexy.yaml|idio|t",
                 "dexy.rst|idio|t",
                 "dexy.rst|jinja|rst2html",
@@ -51,51 +59,62 @@ class Template(dexy.plugin.Plugin):
                 ]
 
         with dexy.utils.tempdir():
-            # Copy files to directory 'ex'
-            self.run("ex", meta=meta)
+            # Copy template files to directory 'ex'
+            self.generate("ex", meta=meta)
 
             # Run dexy in directory 'ex'
             os.chdir("ex")
             wrapper = dexy.wrapper.Wrapper()
-            wrapper.setup(True)
+            wrapper.create_dexy_dirs()
+            wrapper = dexy.wrapper.Wrapper()
+
             wrapper.batch = dexy.batch.Batch(wrapper)
 
-            ast = wrapper.load_doc_config()
-
+            ast = wrapper.parse_configs()
             if additional_doc_keys:
                 for doc_key in additional_doc_keys:
-                    ast.add_task_info(doc_key)
+                    ast.add_node(doc_key)
 
             if meta and dexy.utils.file_exists('dexy.rst'):
-                for doc_key in DOC_KEYS:
-                    ast.add_task_info(doc_key)
-                    for task in ast.lookup_table.keys():
-                        if 'jinja' in doc_key and not 'jinja' in task:
-                            ast.add_dependency(doc_key, task)
-
-            wrapper.batch.load_ast(ast)
+                for doc_key in meta_doc_keys:
+                    ast.add_node(doc_key)
+                    if 'jinja' in doc_key:
+                        for task in ast.lookup_table.keys():
+                            if not task in meta_doc_keys:
+                                ast.add_dependency(doc_key, task)
+            ast.walk()
 
             try:
-                wrapper.batch.run()
-                wrapper.save_db()
-            except:
-                raise Exception("pushd %s" % os.path.abspath("."))
+                wrapper.run()
+            except Exception as e:
+                error = str(e)
+                template_dir = os.path.abspath(".")
+                msg = "%s\npushd %s" % (error, template_dir)
+                raise dexy.exceptions.TemplateException(msg)
 
             yield(wrapper.batch)
 
-    def validate(klass):
+    def validate(self):
         """
         Runs dexy and validates filter list.
         """
-        for batch in klass.dexy(False):
-            filters_used = batch.filters_used()
+        for batch in self.dexy(False):
+            filters_used = batch.filters_used
 
-        for f in klass.FILTERS_USED:
-            assert f in filters_used, "filter %s not used by %s" % (f, klass.__name__)
+        for f in self.__class__.filters_used:
+            msg = "filter %s not used by %s" % (f, self.__class__.__name__)
+            assert f in filters_used, msg
 
         for f in filters_used:
-            if not f in klass.FILTERS_USED:
-                print "filter %s used by %s but not listed in klass.FILTERS_USED, adjust list to:" % (f, klass.__name__)
-                print "   FILTERS_USED = [%s]" % ", ".join("'%s'" % f for f in filters_used)
+            if not f in self.__class__.filters_used:
+                msg = s("""filter %(filter)s used by %(template)s
+                        but not listed in klass.filters_used,
+                        adjust list to: filters_used = [%(list)s]""")
+                msgargs = {
+                        'filter' : f,
+                        'template' : self.__class__.__name,
+                        'list'  : ", ".join("'%s'" % f for f in filters_used)
+                        }
+                print msg % msgargs
 
         return True

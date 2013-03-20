@@ -1,8 +1,5 @@
 from dexy.utils import file_exists
-import StringIO
-import dexy.artifact
 import dexy.plugin
-import logging
 import os
 import shutil
 
@@ -10,10 +7,10 @@ class Reporter(dexy.plugin.Plugin):
     """
     Base class for types of reporter.
     """
-    ALIASES = []
+    aliases = []
     __metaclass__ = dexy.plugin.PluginMeta
 
-    _SETTINGS = {
+    _settings = {
             "default" : ("Whether to run this report by default. Should be False for reports with side effects.", True),
             "dir" : ("Top-level directory in which report will be stored", None),
             "run-on-failed-batch" : ("Whether to run if an error occurs while processing the dexy batch.", False),
@@ -24,6 +21,18 @@ class Reporter(dexy.plugin.Plugin):
 
     def is_active(self):
         return True
+
+    def key_for_log(self):
+        return "reporter:%s" % self.aliases[0]
+
+    def log_debug(self, message):
+        self.wrapper.log.debug("%s: %s" % (self.key_for_log(), message))
+
+    def log_info(self, message):
+        self.wrapper.log.info("%s: %s" % (self.key_for_log(), message))
+
+    def log_warn(self, message):
+        self.wrapper.log.warn("%s: %s" % (self.key_for_log(), message))
 
     def create_reports_dir(self, reports_dir=None):
         if not reports_dir:
@@ -75,18 +84,3 @@ class Reporter(dexy.plugin.Plugin):
 
     def run(self, wrapper):
         pass
-
-    def set_log(self):
-        if not hasattr(self, 'log'):
-            self.log = logging.getLogger("report:%s" % self.ALIASES[0])
-            self.log.setLevel(self.wrapper.logging_log_level())
-            self.logstream = StringIO.StringIO()
-            handler = logging.StreamHandler(self.logstream)
-            if hasattr(self, 'wrapper'):
-                handler.setFormatter(logging.Formatter(self.wrapper.log_format))
-            self.log.addHandler(handler)
-
-            try:
-                self.log.addHandler(logging.getLogger('dexy').handlers[0])
-            except IndexError:
-                pass

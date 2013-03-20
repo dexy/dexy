@@ -44,15 +44,16 @@
 
             <h2>Tree</h2>
             <p>Click to Expand</p>
-            {% for node in batch.tree -%}
+            {% for node in wrapper.nodes.values() -%}
             {% for line in print_children(node) -%}
             {{ line }}
             {% endfor -%}
             {% endfor -%}
 
             <h2>Timing</h2>
-            <p>The total elapsed time for batch {{ batch.batch_id }} was {{ "%0.2f" % batch.elapsed() }} ({{ "%0.2f" % (float(batch.elapsed())/60)}} minutes).</p>
+            <p>The total elapsed time was {{ "%0.2f" % batch.elapsed() }} ({{ "%0.2f" % (float(batch.elapsed())/60)}} minutes).</p>
 
+            {% if False -%}
             <h3>Slowest Tasks</h3>
             <ul>
                 {% for task in batch.tasks_by_elapsed() -%}
@@ -61,9 +62,10 @@
                 {% endif -%}
                 {% endfor -%}
             </ul>
+            {% endif -%}
 
             <h2>Documents</h2>
-            {% for doc in docs -%}
+            {% for doc in batch -%}
             <hr />
             <h3 style="padding-top: 60px;" id="{{ doc.websafe_key() }}">{{ doc.key }} &nbsp;&nbsp;&nbsp; <a href="#top">&uarr;</a></h3>
             {% set args = printable_args(doc.args) -%}
@@ -124,9 +126,6 @@
             {{ a.stdout }}
             {% endif -%}
             {% endfor -%}
-            <br />
-            <h4>Document Log</h4>
-<pre>{{ doc.logstream.getvalue() }}</pre>
             <br />
             {% endfor %}
 

@@ -5,9 +5,8 @@ class FluidHtml(DexyFilter):
     Wraps your text in HTML header/footer which includes Baseline CSS resets.
     Easy way to add styles (includes Python syntax highlighting).
     """
-    ALIASES = ['easyhtml']
-
-    _SETTINGS = {
+    aliases = ['easyhtml']
+    _settings = {
             'input-extensions' : ['.html'],
             'output-extensions' : ['.html'],
             "css" : ("Custom CSS to include in header.", ""),

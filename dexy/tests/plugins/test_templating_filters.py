@@ -1,4 +1,4 @@
-from dexy.node import DocNode
+from dexy.doc import Doc
 from dexy.filters.templating import TemplateFilter
 from dexy.filters.templating_plugins import TemplatePlugin
 from dexy.tests.utils import wrap
@@ -7,125 +7,135 @@ import dexy.exceptions
 
 def test_jinja_indent_function():
     with wrap() as wrapper:
-        node = DocNode("hello.txt|jinja",
-                contents = """lines are:\n   {{ d['lines.txt'] | indent(3) }}""",
-                inputs = [
-                    DocNode("lines.txt",
-                        contents = "line one\nline two",
-                        wrapper=wrapper)
+        node = Doc("hello.txt|jinja",
+                wrapper,
+                [
+                    Doc("lines.txt",
+                        wrapper,
+                        [],
+                        contents = "line one\nline two"
+                        )
                     ],
-                wrapper=wrapper)
-        wrapper.run_docs(node)
-        assert str(node.children[0].output()) == """lines are:
+                contents = """lines are:\n   {{ d['lines.txt'] | indent(3) }}"""
+                )
+        wrapper.run(node)
+        assert str(node.output_data()) == """lines are:
    line one
    line two"""
 
 def test_jinja_kv():
     with wrap() as wrapper:
-        node = DocNode("hello.txt|jinja",
-                contents = """value of foo is '{{ d['blank.txt|keyvalueexample']['foo'] }}'""",
-                inputs = [
-                    DocNode("blank.txt|keyvalueexample",
-                        contents = " ",
-                        wrapper=wrapper)
+        node = Doc("hello.txt|jinja",
+                wrapper,
+                [
+                    Doc("blank.txt|keyvalueexample",
+                        wrapper,
+                        [],
+                        contents = " ")
                     ],
-                wrapper=wrapper)
-        wrapper.run_docs(node)
-        doc = node.children[0]
-        assert str(doc.output()) == "value of foo is 'bar'"
+                contents = """value of foo is '{{ d['blank.txt|keyvalueexample']['foo'] }}'"""
+                )
+        wrapper.run(node)
+        assert str(node.output_data()) == "value of foo is 'bar'"
 
 @raises(dexy.exceptions.UserFeedback)
 def test_jinja_sectioned_invalid_section():
     with wrap() as wrapper:
-        doc = DocNode("hello.txt|jinja",
-                contents = """first line is '{{ d['lines.txt|lines']['3'] }}'""",
-                inputs = [
-                    DocNode("lines.txt|lines",
-                        contents = "line one\nline two",
-                        wrapper=wrapper)
+        doc = Doc("hello.txt|jinja",
+                wrapper,
+                [
+                    Doc("lines.txt|lines",
+                        wrapper,
+                        [],
+                        contents = "line one\nline two"
+                        )
                     ],
-                wrapper=wrapper)
-        wrapper.run_docs(doc)
+                contents = """first line is '{{ d['lines.txt|lines']['3'] }}'"""
+                )
+        wrapper.run(doc)
 
 def test_jinja_sectioned():
     with wrap() as wrapper:
-        node = DocNode("hello.txt|jinja",
-                contents = """first line is '{{ d['lines.txt|lines']['1'] }}'""",
-                inputs = [
-                    DocNode("lines.txt|lines",
-                        contents = "line one\nline two",
-                        wrapper=wrapper)
+        node = Doc("hello.txt|jinja",
+                wrapper,
+                [
+                    Doc("lines.txt|lines",
+                        wrapper,
+                        [],
+                        contents = "line one\nline two")
                     ],
-                wrapper=wrapper)
-        wrapper.run_docs(node)
-        doc = node.children[0]
-        assert str(doc.output()) == "first line is 'line one'"
+                contents = """first line is '{{ d['lines.txt|lines']['1'] }}'""")
+        wrapper.run(node)
+        assert str(node.output_data()) == "first line is 'line one'"
 
 def test_jinja_json_convert_to_dict():
     with wrap() as wrapper:
-        node = DocNode("hello.txt|jinja",
-                contents = """foo is {{ d['input.json'].json_as_dict()['foo'] }}""",
-                inputs = [
-                    DocNode("input.json",
-                        contents = """{"foo":123}""",
-                        wrapper=wrapper)
+        node = Doc("hello.txt|jinja",
+                wrapper,
+                [
+                    Doc("input.json",
+                        wrapper, [],
+                        contents = """{"foo":123}"""
+                        )
                     ],
-                wrapper=wrapper)
-        wrapper.run_docs(node)
-        doc = node.children[0]
-        assert str(doc.output()) == "foo is 123"
+                contents = """foo is {{ d['input.json'].json_as_dict()['foo'] }}""")
+        wrapper.run(node)
+        assert str(node.output_data()) == "foo is 123"
 
 @raises(dexy.exceptions.UserFeedback)
 def test_jinja_json():
     with wrap() as wrapper:
-        node = DocNode("hello.txt|jinja",
-                contents = """foo is {{ d['input.json']['foo'] }}""",
-                inputs = [
-                    DocNode("input.json",
-                        contents = """{"foo":123}""",
-                        wrapper=wrapper)
+        node = Doc("hello.txt|jinja",
+                wrapper,
+                [
+                    Doc("input.json",
+                        wrapper,
+                        [],
+                        contents = """{"foo":123}""")
                     ],
-                wrapper=wrapper)
-        wrapper.run_docs(node)
+                contents = """foo is {{ d['input.json']['foo'] }}""")
+        wrapper.run(node)
 
 @raises(dexy.exceptions.UserFeedback)
 def test_jinja_undefined():
     with wrap() as wrapper:
-        node = DocNode("template.txt|jinja",
-                contents = """{{ foo }}""",
-                wrapper=wrapper)
+        node = Doc("template.txt|jinja",
+                wrapper,
+                [],
+                contents = """{{ foo }}""")
 
-        wrapper.run_docs(node)
+        wrapper.run(node)
 
 @raises(dexy.exceptions.UserFeedback)
 def test_jinja_syntax_error():
     with wrap() as wrapper:
-        node = DocNode("template.txt|jinja",
-                contents = """{% < set foo = 'bar' -%}\nfoo is {{ foo }}\n""",
-                wrapper=wrapper)
+        node = Doc("template.txt|jinja",
+                wrapper,
+                [],
+                contents = """{% < set foo = 'bar' -%}\nfoo is {{ foo }}\n"""
+                )
 
-        wrapper.run_docs(node)
+        wrapper.run(node)
 
 def test_jinja_filter_inputs():
     with wrap() as wrapper:
-        node = DocNode("template.txt|jinja",
-                contents = "The input is '{{ d['input.txt'] }}'",
-                inputs = [
-                    DocNode("input.txt",
-                        contents = "I am the input.",
-                        wrapper=wrapper)
-                    ],
-                wrapper=wrapper)
+        node = Doc("template.txt|jinja",
+                wrapper,
+                [Doc("input.txt",
+                    wrapper,
+                    [],
+                    contents = "I am the input.")
+                ],
+                contents = "The input is '{{ d['input.txt'] }}'")
 
-        wrapper.run_docs(node)
-        doc = node.children[0]
-        assert doc.output().as_text() == "The input is 'I am the input.'"
+        wrapper.run(node)
+        assert str(node.output_data()) == "The input is 'I am the input.'"
 
 class TestSimple(TemplatePlugin):
     """
     test plugin
     """
-    ALIASES = ['testtemplate']
+    aliases = ['testtemplate']
     def run(self):
         return {'aaa' : 1}
 
@@ -133,72 +143,78 @@ class TestTemplateFilter(TemplateFilter):
     """
     test template
     """
-    ALIASES = ['testtemplatefilter']
+    aliases = ['testtemplatefilter']
 
 def test_template_filter_with_custom_filter_only():
     with wrap() as wrapper:
-        node = DocNode("hello.txt|testtemplatefilter",
+        node = Doc("hello.txt|testtemplatefilter",
+                wrapper,
+                [],
                 contents = "aaa equals %(aaa)s",
-                testtemplatefilter = { "plugins" : ["testtemplate"] },
-                wrapper=wrapper)
+                testtemplatefilter = { "plugins" : ["testtemplate"] }
+                )
 
-        wrapper.run_docs(node)
-        doc = node.children[0]
-        assert doc.output().as_text() == "aaa equals 1"
-        plugins_used = doc.final_artifact.filter_instance.template_plugins()
+        wrapper.run(node)
+        assert node.output_data().as_text() == "aaa equals 1"
+        plugins_used = node.filters[-1].template_plugins()
         assert len(plugins_used) == 1
         assert isinstance(plugins_used[0], TestSimple)
 
 def test_jinja_filter():
     with wrap() as wrapper:
-        node = DocNode("template.txt|jinja",
-                contents = "1 + 1 is {{ 1+1 }}",
-                wrapper=wrapper)
+        node = Doc("template.txt|jinja",
+                wrapper,
+                [],
+                contents = "1 + 1 is {{ 1+1 }}"
+                )
 
-        wrapper.run_docs(node)
-        doc = node.children[0]
-        assert doc.output().as_text() == "1 + 1 is 2"
+        wrapper.run(node)
+        assert node.output_data().as_text() == "1 + 1 is 2"
 
 def test_jinja_filter_tex_extension():
     with wrap() as wrapper:
-        node = DocNode("template.tex|jinja",
-                contents = "1 + 1 is << 1+1 >>",
-                wrapper=wrapper)
+        node = Doc("template.tex|jinja",
+                wrapper,
+                [],
+                contents = "1 + 1 is << 1+1 >>")
 
-        wrapper.run_docs(node)
-        doc = node.children[0]
-        assert doc.output().as_text() == "1 + 1 is 2"
+        wrapper.run(node)
+        assert node.output_data().as_text() == "1 + 1 is 2"
 
 def test_jinja_filter_custom_delims():
     with wrap() as wrapper:
-        node = DocNode("template.tex|jinja",
+        node = Doc("template.tex|jinja",
+                wrapper,
+                [],
                 contents = "1 + 1 is %- 1+1 -%",
                 jinja = {
                     "variable_start_string" : "%-",
                     "variable_end_string" : "-%"
-                    },
-                wrapper=wrapper)
+                    }
+                )
 
-        wrapper.run_docs(node)
-        doc = node.children[0]
-        assert doc.output().as_text() == "1 + 1 is 2"
+        wrapper.run(node)
+        print node.output_data()
+        assert node.output_data().as_text() == "1 + 1 is 2"
 
 def test_jinja_filter_set_vars():
     with wrap() as wrapper:
-        node = DocNode("template.txt|jinja",
-                contents = """{% set foo = 'bar' -%}\nfoo is {{ foo }}\n""",
-                wrapper=wrapper)
+        node = Doc("template.txt|jinja",
+                wrapper,
+                [],
+                contents = """{% set foo = 'bar' -%}\nfoo is {{ foo }}\n"""
+                )
 
-        wrapper.run_docs(node)
-        doc = node.children[0]
-        assert doc.output().as_text() == "foo is bar"
+        wrapper.run(node)
+        assert node.output_data().as_text() == "foo is bar"
 
 def test_jinja_filter_using_inflection():
     with wrap() as wrapper:
-        node = DocNode("template.txt|jinja",
-                contents = """{{ humanize("abc_def") }}""",
-                wrapper=wrapper)
+        node = Doc("template.txt|jinja",
+                wrapper,
+                [],
+                contents = """{{ humanize("abc_def") }}"""
+                )
 
-        wrapper.run_docs(node)
-        doc = node.children[0]
-        assert doc.output().as_text() == "Abc def"
+        wrapper.run(node)
+        assert node.output_data().as_text() == "Abc def"

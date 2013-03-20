@@ -1,4 +1,4 @@
-from dexy.node import DocNode
+from dexy.doc import Doc
 from dexy.filters.templating import TemplateFilter
 from dexy.filters.templating_plugins import TemplatePlugin
 from dexy.tests.utils import run_templating_plugin as run
@@ -42,7 +42,7 @@ class TestSubdirectory(TemplateFilter):
     """
     test subdir
     """
-    ALIASES = ['testsubdir']
+    aliases = ['testsubdir']
     TEMPLATE_PLUGINS = [plugin.Subdirectories]
 
 def test_subdirectories():
@@ -50,14 +50,15 @@ def test_subdirectories():
         os.makedirs("s1")
         os.makedirs("s2")
 
-        node = DocNode("file.txt|testsubdir",
-                contents="hello",
-                wrapper=wrapper)
+        node = Doc("file.txt|testsubdir",
+                wrapper,
+                [],
+                contents="hello"
+                )
 
-        wrapper.run_docs(node)
-        doc = node.children[0]
+        wrapper.run(node)
 
-        env = doc.final_artifact.filter_instance.run_plugins()
+        env = node.filters[-1].run_plugins()
         assert 's1' in env['subdirectories']
         assert 's2' in env['subdirectories']
 
@@ -65,20 +66,21 @@ class TestVariables(TemplateFilter):
     """
     test variables
     """
-    ALIASES = ['testvars']
+    aliases = ['testvars']
     TEMPLATE_PLUGINS = [plugin.Variables]
 
 def test_variables():
     with wrap() as wrapper:
-        node = DocNode("hello.txt|testvars",
+        node = Doc("hello.txt|testvars",
+                wrapper,
+                [],
                 contents = "hello",
-                testvars = { "variables" : {"foo" : "bar", "x" : 123.4 } },
-                wrapper=wrapper)
+                testvars = { "variables" : {"foo" : "bar", "x" : 123.4 } }
+                )
 
-        wrapper.run_docs(node)
-        doc = node.children[0]
+        wrapper.run(node)
 
-        env = doc.final_artifact.filter_instance.run_plugins()
+        env = node.filters[-1].run_plugins()
         assert env['foo'] == 'bar'
         assert env['x'] == 123.4
 
@@ -86,17 +88,18 @@ class TestGlobals(TemplateFilter):
     """
     test globals
     """
-    ALIASES = ['testglobals']
+    aliases = ['testglobals']
     TEMPLATE_PLUGINS = [plugin.Globals]
 
 def test_globals():
     with wrap() as wrapper:
         wrapper.globals = "foo=bar"
-        node = DocNode("hello.txt|testglobals",
-                contents = "hello",
-                wrapper=wrapper)
+        node = Doc("hello.txt|testglobals",
+                wrapper,
+                [],
+                contents = "hello"
+                )
 
-        wrapper.run_docs(node)
-        doc = node.children[0]
-        env = doc.final_artifact.filter_instance.run_plugins()
+        wrapper.run(node)
+        env = node.filters[-1].run_plugins()
         assert env['foo'] == 'bar'

@@ -5,19 +5,19 @@ class ExampleClass(object):
     An example of a base pluginable class.
     """
     __metaclass__ = dexy.plugin.PluginMeta
-    _SETTINGS = {}
+    _settings = {}
 
 class One(ExampleClass):
     """
     An example class named One.
     """
-    ALIASES = ['one']
+    aliases = ['one']
 
 class Two(One):
     """
     An example class named Two.
     """
-    ALIASES = ['two']
+    aliases = ['two']
 
 def test_plugin_meta():
     assert 'one' in ExampleClass.plugins

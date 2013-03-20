@@ -8,31 +8,31 @@ import os
 def test_canonical_name():
     with wrap() as wrapper:
         doc = Doc("hello.txt",
+                wrapper,
+                [],
                 contents="hello",
-                canonical_name="yello.abc",
-                wrapper=wrapper)
+                canonical_name="yello.abc")
 
-        wrapper.run_docs(doc)
-        assert doc.output().name == "yello.abc"
+        wrapper.run(doc)
+        assert doc.output_data().name == "yello.abc"
         wrapper.report()
         assert os.path.exists(os.path.join('output', 'yello.abc'))
 
 def test_attempt_write_outside_project_root():
     with wrap() as wrapper:
-        doc = Doc("../../example.txt",
-                contents = "hello",
-                wrapper=wrapper)
-
         try:
-            wrapper.run_docs(doc)
-            wrapper.report()
+            Doc("../../example.txt",
+                wrapper,
+                [],
+                contents = "hello")
             assert False, 'should raise UserFeedback'
         except dexy.exceptions.UserFeedback as e:
             assert 'trying to write' in str(e)
 
 def test_key_value_data():
     with wrap() as wrapper:
-        data = dexy.data.KeyValue("doc.json", ".json", "doc.json", "hash1", {}, wrapper, storage_type='json')
+        data = dexy.data.KeyValue("doc.json", ".json", "doc.json", "hash1", {}, 'json', wrapper)
+        data.setup_storage()
 
         assert not data._data
         assert data.storage._data == {}
@@ -48,7 +48,8 @@ def test_key_value_data():
 
 def test_key_value_data_sqlite():
     with wrap() as wrapper:
-        data = dexy.data.KeyValue("doc.sqlite3", ".sqlite3", "doc.sqlite3", "hash1", {}, wrapper)
+        data = dexy.data.KeyValue("doc.sqlite3", ".sqlite3", "doc.sqlite3", "hash1", {}, None, wrapper)
+        data.setup_storage()
 
         data.append('foo', 'bar')
         assert len(data.keys()) == 1
@@ -63,7 +64,8 @@ def test_generic_data():
         CONTENTS = "contents go here"
 
         # Create a GenericData object
-        data = dexy.data.Generic("doc.txt", ".txt", "doc.txt", "hash1", {}, wrapper)
+        data = dexy.data.Generic("doc.txt", ".txt", "doc.txt", "hash1", {}, None, wrapper)
+        data.setup_storage()
 
         # Assign some text contents
         data._data = CONTENTS
@@ -93,13 +95,14 @@ def test_generic_data():
         assert data.as_sectioned()['1'] == CONTENTS
 
 def test_init_data():
-    wrapper = Wrapper()
-    data = dexy.data.Generic("doc.txt", ".abc", "doc.abc", "def123", {}, wrapper)
+    with wrap() as wrapper:
+        data = dexy.data.Generic("doc.txt", ".abc", "doc.abc", "def123", {}, None, wrapper)
+        data.setup_storage()
 
-    assert data.key == "doc.txt"
-    assert data.name == "doc.abc"
-    assert data.ext == ".abc"
-    assert data.hashstring == "def123"
+        assert data.key == "doc.txt"
+        assert data.name == "doc.abc"
+        assert data.ext == ".abc"
+        assert data.storage_key == "def123"
 
-    assert not data.has_data()
-    assert not data.is_cached()
+        assert not data.has_data()
+        assert not data.is_cached()

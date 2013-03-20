@@ -1,5 +1,5 @@
 from dexy.tests.utils import wrap
-from dexy.node import DocNode
+from dexy.doc import Doc
 
 def test_split_html_filter():
     with wrap() as wrapper:
@@ -13,27 +13,28 @@ def test_split_html_filter():
         bottom
         """
 
-        node = DocNode("subdir/example.html|splithtml", contents=contents, wrapper=wrapper)
-        wrapper.run_docs(node)
+        node = Doc("subdir/example.html|splithtml", wrapper, [], contents=contents)
+        wrapper.run(node)
 
-        assert node.children[1].key == "subdir/a-page.html"
-        assert node.children[2].key == "subdir/another-page.html"
+        assert node.children[0].key == "subdir/a-page.html"
+        assert node.children[1].key == "subdir/another-page.html"
 
-        doc = node.children[0]
-        od = doc.output().data()
+        od = str(node.output_data())
 
         assert "<p>This is at the top.</p>" in od
         assert '<a href="a-page.html">' in od
         assert '<a href="another-page.html">' in od
         assert "bottom" in od
 
-        assert "<p>This is at the top.</p>" in node.children[1].output().data()
-        assert "some content on a page" in node.children[1].output().data()
-        assert "bottom" in node.children[1].output().data()
+        od = str(node.children[0].output_data())
+        assert "<p>This is at the top.</p>" in od
+        assert "some content on a page" in od
+        assert "bottom" in od
 
-        assert "<p>This is at the top.</p>" in node.children[2].output().data()
-        assert "some content on another page" in node.children[2].output().data()
-        assert "bottom" in node.children[2].output().data()
+        od = str(node.children[1].output_data())
+        assert "<p>This is at the top.</p>" in od
+        assert "some content on another page" in od
+        assert "bottom" in od
 
 def test_split_html_additional_filters():
     with wrap() as wrapper:
@@ -47,33 +48,32 @@ def test_split_html_additional_filters():
         bottom
         """
 
-        node = DocNode("example.html|splithtml",
+        node = Doc("example.html|splithtml",
+                wrapper,
+                [],
                 contents=contents,
                 splithtml = { "keep-originals" : False, "additional-doc-filters" : "processtext" },
-                wrapper=wrapper
               )
-        wrapper.run_docs(node)
+        wrapper.run(node)
 
-        doc = node.children[0]
+        assert node.children[0].key == "a-page.html|processtext"
+        assert node.children[1].key == "another-page.html|processtext"
 
-        assert node.children[1].key == "a-page.html|processtext"
-        assert node.children[2].key == "another-page.html|processtext"
-
-        od = doc.output().data()
+        od = str(node.output_data())
         assert "<p>This is at the top.</p>" in od
         assert '<a href="a-page.html">' in od
         assert '<a href="another-page.html">' in od
         assert "bottom" in od
 
-        a_page = node.children[1]
-        a_page_data = a_page.output().data()
+        a_page = node.children[0]
+        a_page_data = str(a_page.output_data())
         assert "<p>This is at the top.</p>" in a_page_data
         assert "some content on a page" in a_page_data
         assert "bottom" in a_page_data
         assert "Dexy processed the text" in a_page_data
 
-        another_page = node.children[2]
-        another_page_data = another_page.output().data()
+        another_page = node.children[1]
+        another_page_data = str(another_page.output_data())
         assert "<p>This is at the top.</p>" in another_page_data
         assert "some content on another page" in another_page_data
         assert "bottom" in another_page_data

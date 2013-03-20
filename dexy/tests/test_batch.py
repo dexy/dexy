@@ -1,62 +1,40 @@
-from dexy.tests.utils import wrap
-from dexy.parsers.standard import Yaml
+from dexy.tests.utils import tempdir
+from dexy.wrapper import Wrapper
+import dexy.batch
+import os
 
-YAML = """foo:
-    - bar
-    - baz
+def test_batch():
+    with tempdir():
+        wrapper = Wrapper()
+        wrapper.create_dexy_dirs()
 
-foob:
-    - foobar
+        wrapper = Wrapper()
+        batch = dexy.batch.Batch(wrapper)
+        os.makedirs(batch.batch_dir())
 
-xyz:
-    - abc
-    - def
-"""
+        batch.save_to_file()
+        assert batch.filename() in os.listdir(".cache/batches")
 
-def run_yaml_with_target(target):
-    with wrap() as wrapper:
-        parser = Yaml()
-        parser.wrapper = wrapper
-        parser.parse(YAML)
-        assert len(wrapper.batch.tree) == 3
+        wrapper = Wrapper()
+        batch = dexy.batch.Batch.load_most_recent(wrapper)
 
-        wrapper.batch.run(target)
-        yield wrapper.batch
+def test_batch_with_docs():
+    with tempdir():
+        wrapper = Wrapper()
+        wrapper.create_dexy_dirs()
 
-def test_run_target_foo():
-    for batch in run_yaml_with_target("foo"):
-        # foo and children have been run
-        assert batch.lookup_table['BundleNode:foo'].state == 'complete'
-        assert batch.lookup_table['BundleNode:bar'].state == 'complete'
-        assert batch.lookup_table['BundleNode:baz'].state == 'complete'
+        with open("hello.txt", "w") as f:
+            f.write("hello")
 
-        # foob and children have not been run
-        assert batch.lookup_table['BundleNode:foob'].state == 'new'
-        assert batch.lookup_table['BundleNode:foobar'].state == 'new'
+        with open("dexy.yaml", "w") as f:
+            f.write("hello.txt")
 
-def test_run_target_fo():
-    for batch in run_yaml_with_target("fo"):
-        # foo and children have been run
-        assert batch.lookup_table['BundleNode:foo'].state == 'complete'
-        assert batch.lookup_table['BundleNode:bar'].state == 'complete'
-        assert batch.lookup_table['BundleNode:baz'].state == 'complete'
+        wrapper = Wrapper()
+        wrapper.run()
 
-        # foob and children have been run
-        assert batch.lookup_table['BundleNode:foob'].state == 'complete'
-        assert batch.lookup_table['BundleNode:foobar'].state == 'complete'
+        batch = dexy.batch.Batch.load_most_recent(wrapper)
+        assert batch
 
-def test_run_target_bar():
-    for batch in run_yaml_with_target("bar"):
-        assert batch.lookup_table['BundleNode:foo'].state == 'new'
-        assert batch.lookup_table['BundleNode:bar'].state == 'complete'
-        assert batch.lookup_table['BundleNode:baz'].state == 'new'
-        assert batch.lookup_table['BundleNode:foob'].state == 'new'
-        assert batch.lookup_table['BundleNode:foobar'].state == 'new'
-
-def test_run_target_ba():
-    for batch in run_yaml_with_target("ba"):
-        assert batch.lookup_table['BundleNode:foo'].state == 'new'
-        assert batch.lookup_table['BundleNode:bar'].state == 'complete'
-        assert batch.lookup_table['BundleNode:baz'].state == 'complete'
-        assert batch.lookup_table['BundleNode:foob'].state == 'new'
-        assert batch.lookup_table['BundleNode:foobar'].state == 'new'
+        for doc_key in batch.docs:
+            assert batch.doc_input_data(doc_key)
+            assert batch.doc_output_data(doc_key)

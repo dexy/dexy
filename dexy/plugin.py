@@ -1,6 +1,5 @@
 import dexy.exceptions
 import inspect
-import json
 import os
 import sys
 import yaml
@@ -9,16 +8,20 @@ class Plugin(object):
     """
     Base class for plugins. Define *instance* methods shared by plugins here.
     """
+    def is_active(self):
+        return True
+
     def help(self):
         return inspect.getdoc(self.__class__)
 
-    def json_info(self):
-        return json.dumps(self.info())
-
-    def info(self):
-        return {}
-
     def setting(self, name_hyphen):
+        """
+        Retrieves the setting value whose name is indicated by name_hyphen.
+
+        Values starting with $ are assumed to reference environment variables,
+        and the value stored in environment variables is retrieved. (It's an
+        error if there's no corresponding environment variable set.)
+        """
         if name_hyphen in self._settings:
             value = self._settings[name_hyphen][1]
         else:
@@ -44,9 +47,6 @@ class Plugin(object):
         else:
             return value
 
-    def has_setting(self, name):
-        return self._settings.has_key(name)
-
     def setting_values(self, skip=None):
         """
         Returns dict of all setting values (removes the helpstrings)
@@ -68,7 +68,7 @@ class PluginMeta(type):
             cls.plugins = {}
         else:
             assert hasattr(cls, 'plugins')
-            cls.register_plugin(cls.ALIASES, cls, {})
+            cls.register_plugin(cls.aliases, cls, {})
 
     def __iter__(cls, *instanceargs):
         processed = []
@@ -127,7 +127,9 @@ class PluginMeta(type):
         class_info = (class_or_class_name, settings)
         for alias in aliases:
             if cls.plugins.has_key(alias):
-                raise Exception("Already have alias %s" % alias)
+                msg = "Trying to define alias '%s' for %s, already an alias for %s"
+                msg_args = (alias, class_or_class_name, cls.plugins[alias][0],)
+                raise dexy.exceptions.InternalDexyProblem(msg%msg_args)
             cls.plugins[alias] = class_info
 
     def imro(cls):
@@ -185,21 +187,21 @@ class PluginMeta(type):
 
     def create_instance(cls, alias, *instanceargs, **instancekwargs):
         if not alias in cls.plugins:
-            raise dexy.exceptions.NoPlugin("No alias %s available." % alias)
+            msg = "no alias '%s' available for '%s'"
+            msgargs = (alias, cls.__name__)
+            raise dexy.exceptions.NoPlugin(msg % msgargs)
+
         class_or_class_name, settings = cls.plugins[alias]
-
         klass = cls.get_reference_to_class(class_or_class_name)
-
 
         instance = klass(*instanceargs, **instancekwargs)
         instance._settings = {}
         instance.alias = alias
 
         for parent_class in klass.imro():
-            klass.class_update_settings(instance, parent_class._SETTINGS)
+            klass.class_update_settings(instance, parent_class._settings)
             if hasattr(parent_class, 'UNSET'):
                 for unset in parent_class.UNSET:
-                    print "Removing setting '%s' from %s" % (unset, parent_class.__name__)
                     del instance._settings[unset]
 
         # Update with any settings defined at time plugin was registered.
@@ -217,10 +219,7 @@ class Command(Plugin):
     Parent class for custom dexy commands.
     """
     __metaclass__ = PluginMeta
-    _SETTINGS = {}
-    ALIASES = []
+    _settings = {}
+    aliases = []
     DEFAULT_COMMAND = None
     NAMESPACE = None
-
-    def is_active(klass):
-        return True

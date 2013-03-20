@@ -7,8 +7,8 @@ class HtmlSectionsFilter(DexyFilter):
     """
     Split content according to HTML comments.
     """
-    ALIASES = ['htmlsections']
-    _SETTINGS = {
+    aliases = ['htmlsections']
+    _settings = {
             'output' : True,
             'output-data-type' : 'sectioned',
             'output-extensions' : ['.json']
@@ -17,7 +17,7 @@ class HtmlSectionsFilter(DexyFilter):
     def process(self):
         output = OrderedDict()
 
-        sections = re.split("<!-- section \"(.+)\" -->\n", self.input().as_text())
+        sections = re.split("<!-- section \"(.+)\" -->\n", unicode(self.input_data()))
 
         for i in range(1, len(sections), 2):
             section_name = sections[i]
@@ -25,7 +25,7 @@ class HtmlSectionsFilter(DexyFilter):
             if not section_name == 'end':
                 output[section_name] = section_content
 
-        self.output().set_data(output)
+        self.output_data.set_data(output)
 
 class SplitHtmlFilter(DexyFilter):
     """
@@ -34,15 +34,16 @@ class SplitHtmlFilter(DexyFilter):
     The split filter looks for specially formatted HTML comments in your
     document and splits your HTML into separate pages at each split comment.
     """
-    ALIASES = ['split', 'splithtml']
-    _SETTINGS = {
+    aliases = ['split', 'splithtml']
+    _settings = {
             'output' : True,
             'input-extensions' : ['.html'],
-            'output-extensions' : ['.html']
+            'output-extensions' : ['.html'],
+            'split-ul-class' : ("HTML class to apply to <ul> elements", None)
             }
 
     def process(self):
-        input_text = self.input().data()
+        input_text = unicode(self.input_data)
 
         if input_text.find("<!-- endsplit -->") > 0:
             body, footer = re.split("<!-- endsplit -->", input_text, maxsplit=1)
@@ -59,14 +60,14 @@ class SplitHtmlFilter(DexyFilter):
                     section_url = section_label.split(" ")[0]
 
                     filename = "%s.html" % section_url
-                    filepath = os.path.join(self.output().parent_dir(), filename)
+                    filepath = os.path.join(self.output_data.parent_dir(), filename)
                     pages[section_label] = filename
 
                     new_page = self.add_doc(filepath, header + sections[i+1] + footer)
                     new_page.args['title'] = section_label
 
-                    self.artifact.log.debug("added key %s to artifact %s ; links to file %s" %
-                              (filepath, self.artifact.key, new_page.name))
+                    self.log_debug("added key %s to %s ; links to file %s" %
+                              (filepath, self.key, new_page.name))
 
             index_items = []
             for k in sorted(pages.keys()):
@@ -78,8 +79,8 @@ class SplitHtmlFilter(DexyFilter):
             if index_content:
                 output.append(index_content)
 
-            if self.artifact.args.has_key("split-ul-class"):
-                ul = "<ul class=\"%s\">" % self.artifact.args['split-ul-class']
+            if self.setting("split-ul-class"):
+                ul = "<ul class=\"%s\">" % self.setting('split-ul-class')
             else:
                 ul = "<ul class=\"split\">"
 
@@ -89,4 +90,4 @@ class SplitHtmlFilter(DexyFilter):
             # No endsplit found, do nothing.
             output = input_text
 
-        self.output().set_data("\n".join(output))
+        self.output_data.set_data("\n".join(output))

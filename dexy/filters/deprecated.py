@@ -5,7 +5,7 @@ class Deprecated(DexyFilter):
     """
     Base class for deprecated filters.
     """
-    ALIASES = []
+    aliases = []
 
     def process(self):
         msg = "%s\n%s" % (self.artifact.key, self.__doc__)
@@ -18,5 +18,5 @@ class FilenameFilter(Deprecated):
     remove '|fn' from your config and anywhere documents are referenced, and
     remove the 'dexy--' prefix from filenames in your scripts.
     """
-    ALIASES = ['fn']
+    aliases = ['fn']
 

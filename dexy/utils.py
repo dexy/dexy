@@ -1,6 +1,8 @@
 import dexy.exceptions
+import hashlib
 import inspect
 import json
+import logging
 import os
 import posixpath
 import re
@@ -8,13 +10,76 @@ import shutil
 import tempfile
 import yaml
 
-def file_exists(filepath):
-    #print "calling file_exists on %s" % filepath
-    #frame = inspect.currentframe()
-    #for f in inspect.getouterframes(frame):
-    #    print "   ", f[1], f[2], f[3]
-    #del frame
-    #del f
+# TODO values in defaults dict should be ('helpstring', 'default-value',) tuples
+defaults = {
+    'artifacts_dir' : '.cache',
+    'config_file' : 'dexy.conf',
+    'danger' : False,
+    'db_alias' : 'sqlite3',
+    'db_file' : 'dexy.sqlite3',
+    'disable_tests' : False,
+    'dont_use_cache' : False,
+    'dry_run' : False,
+    'encoding' : 'utf-8',
+    'exclude' : '.git, .svn, tmp, cache',
+    'exclude_also' : '',
+    'full' : False,
+    'globals' : '',
+    'hashfunction' : 'md5',
+    'ignore_nonzero_exit' : False,
+    'log_dir' : 'logs',
+    'log_file' : 'dexy.log',
+    'log_format' : "%(name)s - %(levelname)s - %(message)s",
+    'log_level' : "INFO",
+    'plugins': '',
+    'profile' : False,
+    'recurse' : True,
+    'reports' : '',
+    'safety_filename' : '.dexy-generated',
+    'siblings' : False,
+    'silent' : False,
+    'strace' : False,
+    'target' : False,
+    'timing' : True,
+    'uselocals' : False,
+    'workspace' : 'work',
+}
+
+log_levels = {
+    'DEBUG' : logging.DEBUG,
+    'INFO' : logging.INFO,
+    'WARN' : logging.WARN
+}
+
+def logging_log_level(log_level):
+    try:
+        return log_levels[log_level.upper()]
+    except KeyError:
+        msg = "'%s' is not a valid log level, check python logging module docs"
+        raise dexy.exceptions.UserFeedback(msg % log_level)
+
+def md5_hash(text):
+    return hashlib.md5(text).hexdigest()
+
+def dict_from_string(text):
+    """
+    Creates a dict from string like "key1=value1,k2=v2"
+    """
+    d = {}
+    if text > 0:
+        for pair in text.split(","):
+            x, y = pair.split("=")
+            d[x] = y
+    return d
+
+def file_exists(filepath, debug=False):
+    if debug:
+        print "calling file_exists on %s" % filepath
+        frame = inspect.currentframe()
+        for f in inspect.getouterframes(frame):
+            print "   ", f[1], f[2], f[3]
+        del frame
+        del f
     return os.path.exists(filepath)
 
 def iter_paths(path):

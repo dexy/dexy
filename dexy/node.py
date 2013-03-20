@@ -1,97 +1,203 @@
+from dexy.utils import md5_hash
+from dexy.utils import os_to_posix
 import dexy.doc
-import dexy.task
+import dexy.plugin
 import fnmatch
 import re
+import os
+import json
+import inflection
 
-class Node(dexy.task.Task):
+class Node(dexy.plugin.Plugin):
     """
     base class for Nodes
     """
-    ALIASES = ['node']
+    aliases = []
+    __metaclass__ = dexy.plugin.PluginMeta
+    _settings = {}
 
-    def __init__(self, key, **kwargs):
-        super(Node, self).__init__(key, **kwargs)
-        self.inputs = list(kwargs.get('inputs', []))
+    def __init__(self, pattern, wrapper, inputs=None, **kwargs):
+        self.key = os_to_posix(pattern)
+        self.wrapper = wrapper
+        self.args = kwargs
+        self.runtime_args = {}
+        self.children = []
+        self.state = 'new'
 
-    def calculate_hashstring(self):
-        return self.metadata.compute_hash()
+        if inputs:
+            self.inputs = inputs
+        else:
+            self.inputs = []
+
+        self.hashid = md5_hash(self.key)
+
+        self.args_changed = self.check_args_changed()
+        self.doc_changed = False
+
+        # Class-specific setup.
+        self.setup()
+
+    def __repr__(self):
+        return "%s(%s)" % ( self.__class__.__name__, self.key)
+
+    def add_runtime_args(self, args):
+        self.args.update(args)
+        self.runtime_args.update(args)
+
+    def arg_value(self, key, default=None):
+        return self.args.get(key, default) or self.args.get(key.replace("-", "_"), default)
+
+    def setup(self):
+        pass
+
+    def websafe_key(self):
+        return self.key
+
+    def title(self):
+        return self.args.get('title', inflection.titleize(self.name))
 
     def walk_inputs(self):
         """
-        Returns a generator which recursively yields all inputs and their inputs.
+        Yield all direct inputs and their inputs.
         """
-        def walk(node, level=0):
-            for inpt in node.inputs:
-                for t in walk(inpt,level+1):
-                    yield t
-            if level > 0:
-                yield node
+        def walk(inputs):
+            for i in inputs:
+                walk(i)
+                for ii in i.inputs:
+                    yield ii
+                for c in i.children:
+                    yield c
+                yield i
 
-        return walk(self)        
+        return walk(self.inputs)
 
     def walk_input_docs(self):
+        """
+        Yield all direct inputs and their inputs, if they are of class 'doc'
+        """
         for node in self.walk_inputs():
-            for child in node.children:
-                yield child
+            if node.__class__.__name__ == 'Doc':
+                yield node
 
-    def call_after_setup(self):
-        print "in call_after_setup for %s" % self.key_with_class()
-        self.after_setup()
+    def log_debug(self, message):
+        self.wrapper.log.debug("%s: %s" % (self.key_with_class(), message))
+
+    def log_info(self, message):
+        self.wrapper.log.info("%s: %s" % (self.key_with_class(), message))
+
+    def log_warn(self, message):
+        self.wrapper.log.warn("%s: %s" % (self.key_with_class(), message))
+
+    def key_with_class(self):
+        return "%s:%s" % (self.__class__.aliases[0], self.key)
+
+    def check_args_changed(self):
+        """
+        Checks if args have changed by comparing calculated hash against the
+        archived calculated hash from last run.
+        """
+        saved_args = None
+        try:
+            with open(self.args_filename(), "r") as f:
+                saved_args = f.read()
+            return saved_args != self.sorted_arg_string()
+        except IOError:
+            return True
+
+    def sorted_args(self, skip=['contents']):
+        """
+        Returns a list of args in sorted order.
+        """
+        if not skip:
+            skip = []
+
+        sorted_args = []
+        for k in sorted(self.args):
+            if not k in skip:
+                sorted_args.append((k, self.args[k]))
+        return sorted_args
+
+    def sorted_arg_string(self):
+        """
+        Returns a string representation of args in consistent, sorted order.
+        """
+        return json.dumps(self.sorted_args())
+
+    def args_filename(self):
+        """
+        Returns filename used to store arg hash to compare in next run.
+        """
+        return os.path.join(self.wrapper.artifacts_dir, "%s.args" % self.hashid)
+
+    def runtime_args_filename(self):
+        """
+        Returns filename used to store runtime args.
+        """
+        return os.path.join(self.wrapper.artifacts_dir, "%s.runtimeargs" % self.hashid)
+
+    def save_args(self):
+        """
+        Saves the args (for debugging, and to compare against next run).
+        """
+        with open(self.args_filename(), "w") as f:
+            json.dump(self.sorted_args(), f)
+    
+    def save_runtime_args(self):
+        with open(self.runtime_args_filename(), "w") as f:
+            json.dump(self.runtime_args, f)
+
+    def load_runtime_args(self):
+        with open(self.runtime_args_filename(), "r") as f:
+            runtime_args = json.load(f)
+            self.add_runtime_args(runtime_args)
+
+    def inputs_changed(self):
+        return any(i.changed() for i in self.inputs)
+
+    def changed(self):
+        return self.doc_changed or self.args_changed or self.inputs_changed()
+
+    def __iter__(self):
+        def next_task():
+            if self.state == 'new':
+                self.state = 'running'
+                yield self
+                self.state = 'complete'
+
+            elif self.state == 'running':
+                raise dexy.exceptions.CircularDependency(self.key)
+
+            elif self.state == 'complete':
+                pass
+
+            else:
+                raise dexy.exceptions.UnexpectedState("%s in %s" % (self.state, self.key))
+
+        return next_task()
+
+    def __call__(self, *args, **kw):
         for inpt in self.inputs:
-            inpt.call_after_setup()
+            for node in inpt:
+                node(*args, **kw)
+        self.call_run(*args, **kw)
 
-    def after_setup(self):
-        print "in after_setup for %s, doing nothing" % self.key_with_class()
-        pass
+    def call_run(self, *args, **kw):
+        self.save_args()
+        if self.changed():
+            self.run(*args, **kw)
+            self.save_runtime_args()
+        else:
+            self.load_runtime_args()
 
-class DocNode(Node):
-    """
-    Node representing a single doc.
-    """
-    ALIASES = ['doc']
-
-    def populate(self):
-        doc = dexy.doc.Doc(self.key, **self.args)
-        if not hasattr(doc, 'wrapper') or not doc.wrapper:
-            doc.wrapper = self.wrapper
-        doc.node = self
-        self.children.append(doc)
-        doc.populate()
-        doc.transition('populated')
-
-    def after_setup(self):
-        self.set_hashstring()
-
-        # Now update child hashstrings for inputs.
-        for doc in self.children:
-            for i, artifact in enumerate(doc.children):
-                if i == 0:
-                    artifact.set_hashstring()
-                    artifact.setup_output_data()
-                else:
-                    artifact.metadata.hash_info['inputs'][self.key_with_class()] = self.hashstring
-                    artifact.set_hashstring()
-                    artifact.input_data = artifact.prior.output_data
-                    artifact.setup_output_data()
-
-        # Now update node's hashstring for children, won't affect children but
-        # will affect other docs using this node as an input.
-        for doc in self.children:
-            self.metadata.hash_info['children'][doc.key_with_class()] = doc.final_artifact.hashstring_without_inputs
-        self.set_hashstring_with_children()
-
-class AdditionalDocNode(Node):
-    """
-    Node containing an additional doc created from a document.
-    """
-    ALIASES = ['additional']
-    pass
+    def run(self, *args, **kw):
+        for child in self.children:
+            child.run()
 
 class BundleNode(Node):
     """
     Node representing a bundle of other nodes.
     """
-    ALIASES = ['bundle']
+    aliases = ['bundle']
 
 class ScriptNode(BundleNode):
     """
@@ -99,30 +205,21 @@ class ScriptNode(BundleNode):
     order, so if any of the bundle siblings change, the whole bundle should be
     re-run.
     """
-    ALIASES = ['script']
+    aliases = ['script']
 
     def setup(self):
-        self.set_log()
-
-        # Create a shared key-value store that children can access.
         self.script_storage = {}
 
-    def after_setup(self):
-        for i in self.inputs:
-            i.set_hashstring()
-        self.metadata.input_hashstrings = ",".join(i.hashstring for i in self.inputs)
-        self.set_hashstring()
+        # iterate over inputs and make sure each has all other docs as inputs?
 
 class PatternNode(Node):
     """
     A node which takes a file matching pattern and creates individual Doc
     objects for all files that match the pattern.
     """
-    ALIASES = ['pattern']
+    aliases = ['pattern']
 
-    def populate(self):
-        self.set_log()
-
+    def setup(self):
         file_pattern = self.key.split("|")[0]
         filter_aliases = self.key.split("|")[1:]
 
@@ -130,25 +227,15 @@ class PatternNode(Node):
             if fnmatch.fnmatch(filepath, file_pattern):
                 except_p = self.args.get('except')
                 if except_p and re.search(except_p, filepath):
-                    self.log.debug("skipping file '%s' because it matches except '%s'" % (filepath, except_p))
+                    self.log_debug("skipping file '%s' because it matches except '%s'" % (filepath, except_p))
                 else:
                     if len(filter_aliases) > 0:
                         doc_key = "%s|%s" % (filepath, "|".join(filter_aliases))
                     else:
                         doc_key = filepath
 
-                    if hasattr(self.wrapper.batch, 'ast'):
-                        doc_args = self.wrapper.batch.ast.default_args_for_directory(filepath)
-                    else:
-                        doc_args = {}
-
-                    doc_args.update(self.args_before_defaults)
-                    doc_args['wrapper'] = self.wrapper
-
-                    self.log.debug("creating child of patterndoc %s: %s" % (self.key, doc_key))
-                    self.log.debug("with args %s" % doc_args)
-                    doc = dexy.doc.Doc(doc_key, **doc_args)
-                    doc.node = self
+                    self.log_debug("creating child of patterndoc %s: %s" % (self.key, doc_key))
+                    doc = dexy.doc.Doc(doc_key, self.wrapper, [], **self.args)
+                    doc.parent = self
                     self.children.append(doc)
-                    doc.populate()
-                    doc.transition('populated')
+                    self.wrapper.add_node(doc)

@@ -2,7 +2,6 @@ from dexy.filters.api import ApiFilter
 import dexy.exceptions
 import json
 import mimetypes
-import os
 import xmlrpclib
 
 class WordPressFilter(ApiFilter):
@@ -40,9 +39,9 @@ class WordPressFilter(ApiFilter):
     For now, we recommend using an external site to host your images and
     assets, such as Amazon S3.
     """
-    ALIASES = ['wp', 'wordpress']
+    aliases = ['wp', 'wordpress']
 
-    _SETTINGS = {
+    _settings = {
             'blog-id' : ("The wordpress blog id.", 0),
             'page-content-extensions' : ('', ['.md', '.txt', '.html']),
             'document-api-config-file' : 'wordpress.json',
@@ -89,7 +88,7 @@ class WordPressFilter(ApiFilter):
             print "\t".join(category_info[h] for h in headers)
 
     def upload_page_content(self):
-        input_text = self.input().as_text()
+        input_text = self.input_data.as_text()
         document_config = self.read_document_config()
 
         document_config['description'] = input_text
@@ -98,7 +97,7 @@ class WordPressFilter(ApiFilter):
 
         for key, value in document_config.iteritems():
             if not key == "description":
-                self.log.debug("%s: %s" % (key, value))
+                self.log_debug("%s: %s" % (key, value))
 
         if post_id:
             self.api().metaWeblog.editPost(
@@ -126,24 +125,24 @@ class WordPressFilter(ApiFilter):
 
         for key, value in post_info.iteritems():
             if not key == "description":
-                self.log.debug("%s: %s" % (key, value))
+                self.log_debug("%s: %s" % (key, value))
 
         del document_config['description']
         document_config['publish'] = publish
         self.save_document_config(document_config)
 
         if publish:
-            self.output().set_data(post_info['permaLink'])
+            self.output_data.set_data(post_info['permaLink'])
         else:
-            self.output().set_data(json.dumps(post_info))
+            self.output_data.set_data(json.dumps(post_info))
 
     def upload_image_content(self):
-        with open(self.input().storage.data_file(), 'rb') as f:
+        with open(self.input_data.storage.data_file(), 'rb') as f:
             image_base_64 = xmlrpclib.Binary(f.read())
 
             upload_file = {
-                     'name' : self.input_filename(),
-                     'type' : mimetypes.types_map[os.path.splitext(self.input_filename())[1]],
+                     'name' : self.work_input_filename(),
+                     'type' : mimetypes.types_map[self.prev_ext],
                      'bits' : image_base_64,
                      'overwrite' : 'true'
                      }
@@ -155,15 +154,15 @@ class WordPressFilter(ApiFilter):
                      upload_file
                      )
 
-            self.log.debug("wordpress upload results: %s" % upload_result)
+            self.log_debug("wordpress upload results: %s" % upload_result)
             url = upload_result['url']
-            self.log.debug("uploaded %s to %s" % (self.artifact.key, url))
+            self.log_debug("uploaded %s to %s" % (self.key, url))
 
-        self.output().set_data(url)
+        self.output_data.set_data(url)
 
     def process(self):
         try:
-            if self.input().ext in self.setting('page-content-extensions'):
+            if self.prev_ext in self.setting('page-content-extensions'):
                 self.upload_page_content()
             else:
                 self.upload_image_content()

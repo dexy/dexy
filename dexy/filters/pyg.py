@@ -17,14 +17,13 @@ from pygments.lexers.web import XmlLexer
 import dexy.commands
 import dexy.exceptions
 import pygments.lexers.web
-import re
 
 class SyntaxHighlightRstFilter(DexyFilter):
     """
     Surrounds code with highlighting instructions for ReST
     """
-    ALIASES = ['pyg4rst']
-    _SETTINGS = {
+    aliases = ['pyg4rst']
+    _settings = {
             'n' : ("Number of chars to indent.", 2)
             }
 
@@ -33,10 +32,10 @@ class SyntaxHighlightRstFilter(DexyFilter):
         result = OrderedDict()
 
         try:
-            lexer = get_lexer_for_filename(self.input().storage.data_file())
+            lexer = get_lexer_for_filename(self.input_data.storage.data_file())
         except pygments.util.ClassNotFound:
             msg = PygmentsFilter.LEXER_ERR_MSG
-            raise dexy.exceptions.UserFeedback(msg % (self.input().name, self.artifact.key))
+            raise dexy.exceptions.UserFeedback(msg % (self.input_data.name, self.key))
 
         lexer_alias = lexer.aliases[0]
 
@@ -50,13 +49,13 @@ class PygmentsFilter(DexyFilter):
     """
     Apply Pygments syntax highlighting. Image formats require PIL.
     """
-    ALIASES = ['pyg', 'pygments']
+    aliases = ['pyg', 'pygments']
     IMAGE_OUTPUT_EXTENSIONS = ['.png', '.bmp', '.gif', '.jpg']
     MARKUP_OUTPUT_EXTENSIONS = [".html", ".tex", ".svg"] # make sure .html is first so it is default output format
     LEXER_ERR_MSG = """Pygments doesn't know how to syntax highlight files like '%s' (for '%s').\
     You might need to specify the lexer manually."""
 
-    _SETTINGS = {
+    _settings = {
             'lexer' : ("""The name of the pygments lexer to use (will normally be determined automatically,
             only use this if you need to override the default setting
             or your filename isn't mapped to the lexer you want to use.""", None),
@@ -98,11 +97,11 @@ class PygmentsFilter(DexyFilter):
         return formatter.get_style_defs()
 
     def calculate_canonical_name(self):
-        ext = self.artifact.prior.ext
-        if ext in [".css", ".sty"] and self.artifact.ext == ext:
-            return self.artifact.doc.name
+        ext = self.prev_ext
+        if ext in [".css", ".sty"] and self.ext == ext:
+            return self.doc.name
         else:
-            return "%s%s" % (self.artifact.doc.name, self.artifact.ext)
+            return "%s%s" % (self.doc.name, self.ext)
 
     def constructor_args(self, constructor_type, custom_args=None):
         if custom_args:
@@ -116,16 +115,16 @@ class PygmentsFilter(DexyFilter):
         return args
 
     def create_lexer_instance(self):
-        ext = self.artifact.prior.ext
+        ext = self.prev_ext
         lexer_args = self.constructor_args('lexer')
         lexer = None
 
         # Create a lexer instance.
         if self.setting('lexer'):
-            self.log.debug("custom lexer %s specified" % self.setting('lexer'))
+            self.log_hebug("custom lexer %s specified" % self.setting('lexer'))
             lexer = get_lexer_by_name(self.setting('lexer'), **lexer_args)
         else:
-            is_json_file = ext in ('.json', '.dexy') or self.output().name.endswith(".dexy")
+            is_json_file = ext in ('.json', '.dexy') or self.output_data.name.endswith(".dexy")
             if ext == '.pycon':
                 lexer_class = PythonConsoleLexer
             elif ext == '.rbcon':
@@ -140,40 +139,40 @@ class PygmentsFilter(DexyFilter):
                 lexer_class = XmlLexer
             elif ext == '.jinja':
                 lexer_class = DjangoLexer
-            elif ext == '.Makefile' or (ext == '' and 'Makefile' in self.input().name):
+            elif ext == '.Makefile' or (ext == '' and 'Makefile' in self.input_data.name):
                 lexer_class = MakefileLexer
             else:
                 fake_file_name = "input_text%s" % ext
                 try:
                     lexer = get_lexer_for_filename(fake_file_name, **lexer_args)
                 except pygments.util.ClassNotFound:
-                    raise dexy.exceptions.UserFeedback(self.LEXER_ERR_MSG % (self.input().name, self.artifact.key))
+                    raise dexy.exceptions.UserFeedback(self.LEXER_ERR_MSG % (self.input_data.name, self.key))
 
             if not lexer:
                 lexer = lexer_class(**lexer_args)
 
-        self.log.debug("using pygments lexer %s with args %s" % (lexer.__class__.__name__, lexer_args))
+        self.log_debug("using pygments lexer %s with args %s" % (lexer.__class__.__name__, lexer_args))
         return lexer
 
     def create_formatter_instance(self):
         formatter_args = self.constructor_args('formatter', {
-            'lineanchors' : self.output().web_safe_document_key() })
-        self.log.debug("creating pygments formatter with args %s" % (formatter_args))
-        return get_formatter_for_filename(self.output().name, **formatter_args)
+            'lineanchors' : self.output_data.web_safe_document_key() })
+        self.log_debug("creating pygments formatter with args %s" % (formatter_args))
+        return get_formatter_for_filename(self.output_data.name, **formatter_args)
 
     def process(self):
-        if self.artifact.ext in self.IMAGE_OUTPUT_EXTENSIONS:
+        if self.ext in self.IMAGE_OUTPUT_EXTENSIONS:
             try:
                 import PIL
             except ImportError:
                 print "python imaging library is required by pygments to create image output"
                 raise dexy.exceptions.InactiveFilter('pyg')
 
-        ext = self.artifact.prior.ext
-        if ext in [".css", ".sty"] and self.artifact.ext == ext:
+        ext = self.prev_ext
+        if ext in [".css", ".sty"] and self.ext == ext:
             # Special case if we get a virtual empty file, generate style file
 
-            self.log.debug("creating a style file in %s" % self.artifact.key)
+            self.log_debug("creating a style file in %s" % self.key)
             if ext == '.css':
                 output = self.generate_css(self.setting('style'))
             elif ext == '.sty':
@@ -181,28 +180,28 @@ class PygmentsFilter(DexyFilter):
             else:
                 raise dexy.commands.UserFeedback("pyg filter doesn't know how to generate a stylesheet for %s extension" % ext)
 
-            self.output().set_data(output)
+            self.output_data.set_data(output)
 
         else:
             lexer = self.create_lexer_instance()
 
-            if self.artifact.ext in self.IMAGE_OUTPUT_EXTENSIONS:
+            if self.ext in self.IMAGE_OUTPUT_EXTENSIONS:
                 # Place each section into an image.
-                for k, v in self.input().as_sectioned().iteritems():
+                for k, v in self.input_data.as_sectioned().iteritems():
                     formatter = self.create_formatter_instance()
                     output_for_section = highlight(v.decode("utf-8"), lexer, formatter)
-                    new_doc_name = "%s--%s%s" % (self.artifact.doc.key.replace("|", "--"), k, self.artifact.ext)
+                    new_doc_name = "%s--%s%s" % (self.doc.key.replace("|", "--"), k, self.ext)
                     self.add_doc(new_doc_name, output_for_section)
 
                 # Place entire contents into main file.
                 formatter = self.create_formatter_instance()
                 self.update_all_args({'output' : False })
                 with open(self.output_filepath(), 'wb') as f:
-                    f.write(highlight(self.input().as_text(), lexer, formatter))
+                    f.write(highlight(self.input_data.as_text(), lexer, formatter))
 
             else:
                 formatter = self.create_formatter_instance()
                 output_dict = OrderedDict()
-                for k, v in self.input().as_sectioned().iteritems():
+                for k, v in self.input_data.as_sectioned().iteritems():
                     output_dict[k] = highlight(v.decode("utf-8"), lexer, formatter)
-                self.output().set_data(output_dict)
+                self.output_data.set_data(output_dict)

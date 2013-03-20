@@ -1,34 +1,39 @@
 from dexy.parser import Parser
 from dexy.utils import parse_json
-#from dexy.utils import parse_yaml
-#import dexy.exceptions
-#import re
+
+class Environment(Parser):
+    @classmethod
+    def parse_environment_from_text(klass, text):
+        pass
+
+    def parse(self, parent_dir, config_text):
+        config = self.parse_environment_from_text(config_text)
+        self.ast.environment_for_directory.append((parent_dir, config,))
 
 class JsonEnvironment(Parser):
     """
     Loads environment variables from a JSON file.
     """
-    ALIASES = ['dexy-env.json']
+    aliases = ['dexy-env.json']
 
-    def build_ast(self, parent_dir, config_text):
-        config = parse_json(config_text)
-        if not self.wrapper.environment.has_key(parent_dir):
-            self.wrapper.environment[parent_dir] = {}
-        self.wrapper.environment[parent_dir].update(config)
+    @classmethod
+    def parse_environment_from_text(klass, text):
+        return parse_json(text)
 
 class PythonEnvironment(Parser):
     """
     Loads environment variables from a python script.
     """
-    ALIASES = ['dexy-env.py']
+    aliases = ['dexy-env.py']
 
-    def build_ast(self, parent_dir, config_text):
-        exec config_text
-        config = {}
-        skip = ('config', 'skip', 'self', 'parent_dir', 'config_text')
+    @classmethod
+    def parse_environment_from_text(klass, text):
+        env = {}
+        skip = ('env', 'skip', 'self', 'parent_dir', 'env_text')
+
+        exec text
+
         for k, v in locals().iteritems():
             if not k in skip:
-                config[k] = v
-        if not self.wrapper.environment.has_key(parent_dir):
-            self.wrapper.environment[parent_dir] = {}
-        self.wrapper.environment[parent_dir].update(config)
+                env[k] = v
+        return env

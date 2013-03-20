@@ -5,13 +5,13 @@ class OutputReporter(Reporter):
     """
     Creates canonical dexy output with files given short filenames.
     """
-    ALIASES = ['output']
-    _SETTINGS = {
+    aliases = ['output']
+    _settings = {
             'dir' : 'output'
             }
 
     def write_canonical_doc(self, doc):
-        fp = os.path.join(self.setting('dir'), doc.output().name)
+        fp = os.path.join(self.setting('dir'), doc.name)
 
         if fp in self.locations:
             print "WARNING overwriting file", fp
@@ -25,40 +25,38 @@ class OutputReporter(Reporter):
         except os.error:
             pass
 
-        self.log.debug("  writing %s to %s" % (doc.key, fp))
+        self.log_debug("  writing %s to %s" % (doc.key, fp))
 
-        doc.output().output_to_file(fp)
+        doc.output_to_file(fp)
 
     def run(self, wrapper):
         self.wrapper=wrapper
-        self.set_log()
         self.locations = {}
 
         self.create_reports_dir()
-        for doc in wrapper.batch.docs():
-            if doc.is_canonical_output():
-                self.write_canonical_doc(doc)
+        for data in wrapper.batch:
+            if data.is_canonical_output():
+                self.write_canonical_doc(data)
 
 class LongOutputReporter(Reporter):
     """
     Creates complete dexy output with files given long, unique filenames.
     """
-    ALIASES = ['long']
-    _SETTINGS = {
+    aliases = ['long']
+    _settings = {
             'dir' : 'output-long'
             }
 
     def run(self, wrapper):
         self.wrapper=wrapper
-        self.set_log()
         self.create_reports_dir()
-        for doc in wrapper.batch.docs():
-            fp = os.path.join(self.setting('dir'), doc.output().long_name())
+        for doc in wrapper.batch:
+            fp = os.path.join(self.setting('dir'), doc.long_name())
 
             try:
                 os.makedirs(os.path.dirname(fp))
             except os.error:
                 pass
 
-            self.log.debug("  writing %s to %s" % (doc.key, fp))
-            doc.output().output_to_file(fp)
+            self.log_debug("  writing %s to %s" % (doc.key, fp))
+            doc.output_to_file(fp)

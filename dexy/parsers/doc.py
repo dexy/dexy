@@ -1,35 +1,44 @@
-from dexy.parser import DocumentConfig
+from dexy.parser import Parser
 from dexy.utils import parse_json
 from dexy.utils import parse_yaml
 import dexy.exceptions
 import re
 
-class Yaml(DocumentConfig):
+class Yaml(Parser):
     """
     Parses YAML configs.
     """
-    ALIASES = ["dexy.yaml", "docs.yaml"]
+    aliases = ["dexy.yaml", "docs.yaml"]
 
-    def build_ast(self, directory, input_text):
+    def parse(self, directory, input_text):
         def parse_key_mapping(mapping):
-            for original_task_key, v in mapping.iteritems():
-                if original_task_key == 'defaults':
-                    self.ast.default_args.append((directory, v,))
+            for original_node_key, v in mapping.iteritems():
+                # handle things which aren't nodes
+                if original_node_key == 'defaults':
+                    self.ast.default_args_for_directory.append((directory, v,))
                     continue
 
-                original_file = original_task_key.split("|")[0]
-                if not self.file_exists(self.join_dir(directory, original_file)) and not "*" in original_task_key and not "." in original_task_key and not "|" in original_task_key:
-                    self.wrapper.log.debug("treating %s as a bundle name, not prepending directory %s" % (original_task_key, directory))
-                    task_key = original_task_key
+                # handle nodes
+                original_file = original_node_key.split("|")[0]
+
+                orig_exists = self.file_exists(directory, original_file) 
+                star_in_key = "*" in original_node_key
+                dot_in_key = "." in original_node_key
+                pipe_in_key = "|" in original_node_key
+
+                treat_key_as_bundle_name = not orig_exists and not star_in_key and not dot_in_key and not pipe_in_key
+
+                if treat_key_as_bundle_name:
+                    node_key = original_node_key
                 else:
-                    task_key = self.join_dir(directory, original_task_key)
+                    node_key = self.wrapper.join_dir(directory, original_node_key)
 
                 # v is a sequence whose members may be children or kwargs
                 if not v:
-                    raise dexy.exceptions.UserFeedback("Empty doc config for %s" % task_key)
+                    raise dexy.exceptions.UserFeedback("Empty doc config for %s" % node_key)
 
                 if hasattr(v, 'keys'):
-                    raise dexy.exceptions.UserFeedback("You passed a dict to %s, please pass a sequence" % task_key)
+                    raise dexy.exceptions.UserFeedback("You passed a dict to %s, please pass a sequence" % node_key)
 
                 siblings = []
                 for element in v:
@@ -43,42 +52,42 @@ class Yaml(DocumentConfig):
                             # child task but if starts with 'args' or if it
                             # matches a filter alias for the parent doc, then
                             # it is nested complex kwargs.
-                            if kk == "args" or (kk in task_key.split("|")):
+                            if kk == "args" or (kk in node_key.split("|")):
                                 # nested complex kwargs
                                 for vvv in vv:
-                                    self.ast.add_task_info(task_key, **vvv)
+                                    self.ast.add_node(node_key, **vvv)
 
                             else:
                                 # child task. we note the dependency, add
                                 # dependencies on prior siblings, and recurse
                                 # to process the child.
-                                self.ast.add_dependency(task_key, self.join_dir(directory, kk))
+                                self.ast.add_dependency(node_key, self.wrapper.join_dir(directory, kk))
 
                                 if self.wrapper.siblings:
                                     for s in siblings:
-                                        self.ast.add_dependency(self.join_dir(directory, kk), s)
-                                    siblings.append(self.join_dir(directory, kk))
+                                        self.ast.add_dependency(self.wrapper.join_dir(directory, kk), s)
+                                    siblings.append(self.wrapper.join_dir(directory, kk))
 
                                 parse_key_mapping(element)
 
                         else:
                             # This is a key:value argument for this task
-                            self.ast.add_task_info(task_key, **element)
+                            self.ast.add_node(node_key, **element)
 
                     else:
                         # This is a child task with no args, we only have to
                         # note the dependencies
-                        self.ast.add_dependency(task_key, self.join_dir(directory, element))
+                        self.ast.add_dependency(node_key, self.wrapper.join_dir(directory, element))
                         if self.wrapper.siblings:
                             for s in siblings:
-                                self.ast.add_dependency(self.join_dir(directory, element), s)
-                            siblings.append(self.join_dir(directory, element))
+                                self.ast.add_dependency(self.wrapper.join_dir(directory, element), s)
+                            siblings.append(self.wrapper.join_dir(directory, element))
 
         def parse_keys(data, top=False):
             if hasattr(data, 'keys'):
                 parse_key_mapping(data)
             elif isinstance(data, basestring):
-                self.ast.add_task_info(self.join_dir(directory, data))
+                self.ast.add_node(self.wrapper.join_dir(directory, data))
             elif isinstance(data, list):
                 if top:
                     self.ast.root_nodes_ordered = True
@@ -90,13 +99,13 @@ class Yaml(DocumentConfig):
         config = parse_yaml(input_text)
         parse_keys(config, top=True)
 
-class TextFile(DocumentConfig):
+class TextFile(Parser):
     """
     parses plain text configs
     """
-    ALIASES = ["dexy.txt", "docs.txt"]
+    aliases = ["dexy.txt", "docs.txt"]
 
-    def build_ast(self, directory, input_text):
+    def parse(self, directory, input_text):
         for line in input_text.splitlines():
             line = line.strip()
 
@@ -117,30 +126,32 @@ class TextFile(DocumentConfig):
                     key = line
                     kwargs = {}
 
-                self.ast.add_task_info(self.join_dir(directory, key), **kwargs)
+                node_key = self.wrapper.join_dir(directory, key)
+                self.ast.add_node(node_key, **kwargs)
                 # all tasks already in the ast are children
                 for child_key in self.ast.lookup_table.keys():
-                    self.ast.add_dependency(self.join_dir(directory, key), self.join_dir(directory, child_key))
+                    child_node_key = self.wrapper.join_dir(directory, child_key)
+                    self.ast.add_dependency(node_key, child_node_key)
 
-class Original(DocumentConfig):
+class Original(Parser):
     """
     parses JSON config files like .dexy
     """
-    ALIASES = ["dexy.json", "docs.json", ".dexy"]
+    aliases = ["dexy.json", "docs.json", ".dexy"]
 
-    def build_ast(self, directory, input_text):
+    def parse(self, directory, input_text):
         data = parse_json(input_text)
 
         for task_key, v in data.iteritems():
-            self.ast.add_task_info(self.join_dir(directory, task_key))
+            self.ast.add_node(self.wrapper.join_dir(directory, task_key))
 
             for kk, vv in v.iteritems():
                 if kk == 'depends':
                     for child_key in vv:
-                        self.ast.add_dependency(self.join_dir(directory, task_key), self.join_dir(directory, child_key))
+                        self.ast.add_dependency(self.wrapper.join_dir(directory, task_key), self.wrapper.join_dir(directory, child_key))
                 else:
                     task_kwargs = {kk : vv}
-                    self.ast.add_task_info(self.join_dir(directory, task_key), **task_kwargs)
+                    self.ast.add_node(self.wrapper.join_dir(directory, task_key), **task_kwargs)
 
         def children_for_allinputs(priority=None):
             children = []

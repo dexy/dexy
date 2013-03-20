@@ -5,7 +5,7 @@ def test_plugin_meta():
             "Foo",
             (dexy.plugin.Plugin,),
             {
-                'ALIASES' : [],
+                'aliases' : [],
                 "__doc__" : 'help',
                 '__metaclass__' : dexy.plugin.PluginMeta
                 }
@@ -13,5 +13,31 @@ def test_plugin_meta():
 
     assert new_class.__name__ == 'Foo'
     assert new_class.__doc__ == 'help'
-    assert new_class.ALIASES == []
+    assert new_class.aliases == []
     assert new_class.plugins == {}
+
+class WidgetBase(dexy.plugin.Plugin):
+    __metaclass__ = dexy.plugin.PluginMeta
+    _settings = {
+            'foo' : ("Default value for foo", "bar"),
+            'abc' : ("Default value for abc", 123)
+            }
+
+class Widget(WidgetBase):
+    aliases = ['widget']
+
+class SubWidget(Widget):
+    aliases = ['sub']
+    _settings = {
+            'foo' : 'baz'
+            }
+
+def test_create_instance():
+    widget = Widget.create_instance('widget')
+    assert widget.setting('foo') == 'bar'
+
+    sub = Widget.create_instance('sub')
+    assert sub.setting('foo') == 'baz'
+    assert sub.setting('abc') == 123
+    assert sub.setting_values()['foo'] == 'baz'
+    assert sub.setting_values()['abc'] == 123

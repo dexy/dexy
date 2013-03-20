@@ -3,23 +3,23 @@ import dexy.exceptions
 
 def test_latex():
     with runfilter('latex', LATEX) as doc:
-        assert ".pdf" in doc.output().name
-        assert doc.output().is_cached()
+        assert ".pdf" in doc.output_data().name
+        assert doc.output_data().is_cached()
 
 def test_latex_dvi():
     with runfilter('latexdvi', LATEX) as doc:
-        assert ".dvi" in doc.output().name
-        assert doc.output().is_cached()
+        assert ".dvi" in doc.output_data().name
+        assert doc.output_data().is_cached()
 
 def test_tikz():
     with runfilter('tikz', TIKZ) as doc:
-        assert ".pdf" in doc.output().name
-        assert doc.output().is_cached()
+        assert ".pdf" in doc.output_data().name
+        assert doc.output_data().is_cached()
 
 def test_xetex():
     with runfilter('xetex', LATEX) as doc:
-        assert ".pdf" in doc.output().name
-        assert doc.output().is_cached()
+        assert ".pdf" in doc.output_data().name
+        assert doc.output_data().is_cached()
 
 def test_broken_latex():
     try:

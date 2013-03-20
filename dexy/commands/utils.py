@@ -1,11 +1,8 @@
 from dexy.utils import parse_json
 from dexy.utils import parse_yaml
 from dexy.utils import file_exists
+from dexy.utils import defaults
 import dexy.wrapper
-import os
-import sys
-
-D = dexy.wrapper.Wrapper.DEFAULTS
 
 RENAME_PARAMS = {
         'artifactsdir' : 'artifacts_dir',
@@ -28,7 +25,7 @@ def default_config():
     conf = wrapper.__dict__.copy()
 
     for k in conf.keys():
-        if not k in D.keys():
+        if not k in defaults.keys():
             del conf[k]
 
     reverse_rename = dict((v,k) for k, v in RENAME_PARAMS.iteritems())
@@ -50,7 +47,7 @@ def rename_params(kwargs):
 def skip_params(kwargs):
     ok_params = {}
     for k, v in kwargs.iteritems():
-        if k in D.keys():
+        if k in defaults.keys():
             ok_params[k] = v
     return ok_params
 
@@ -58,7 +55,7 @@ def config_args(modargs):
     cliargs = modargs.get("__cli_options", {})
     kwargs = modargs.copy()
 
-    config_file = modargs.get('conf', dexy.wrapper.Wrapper.DEFAULTS['config_file'])
+    config_file = modargs.get('conf', dexy.utils.defaults['config_file'])
 
     # Update from config file
     if file_exists(config_file):

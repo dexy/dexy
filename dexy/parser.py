@@ -2,282 +2,185 @@ import copy
 import dexy.doc
 import dexy.exceptions
 import dexy.plugin
-import os
 import posixpath
-import pprint
 
 class AbstractSyntaxTree():
-    def __init__(self, wrapper=None):
+    def __init__(self, wrapper):
+        self.wrapper = wrapper
+
+        self.root_nodes_ordered = False
+
         self.lookup_table = {}
         self.tree = []
-        self.root_nodes_ordered = False
-        self.wrapper = wrapper
-        self.default_args = []
-        self.parser = Parser(self.wrapper)
 
-    def file_exists(self, filepath):
-        return filepath in self.wrapper.filemap
+        # Lists of (directory, settings) tuples
+        self.default_args_for_directory = []
+        self.environment_for_directory = []
 
-    def default_args_for_directory(self, path):
-        default_kwargs = {}
-        dir_path = posixpath.dirname(posixpath.abspath(path))
-
-        for d, args in self.default_args:
-            if posixpath.abspath(d) in dir_path:
-                self.wrapper.log.debug("applying default args for dir %s of %s" % (d, args))
-                default_kwargs.update(args)
-                self.wrapper.log.debug("after updating: %s" % default_kwargs)
-
-        return default_kwargs
-
-    def standardize_key(self, key):
-        return self.parser.standardize_key(key)
-
-    def qualify_key(self, key):
-        return self.parser.qualify_key(key)
-
-    def add_task_info(self, task_key, **kwargs):
+    def all_inputs(self):
         """
-        Adds kw args to kwarg dict in lookup table dict for this task
+        Returns a set of all node keys identified as inputs of some other
+        element.
         """
-        task_key = self.standardize_key(task_key)
-        self.wrapper.log.debug("adding task info for '%s'" % task_key)
-
-        if not task_key in self.tree:
-            self.tree.append(task_key)
-
-        if self.lookup_table.has_key(task_key):
-            self.lookup_table[task_key].update(kwargs)
-        else:
-            self.lookup_table[task_key] = kwargs
-            if not kwargs.has_key('children') or kwargs.has_key('inputs'):
-                self.lookup_table[task_key]['inputs'] = []
-
-        self.clean_tree()
-
-    def add_dependency(self, task_key, input_task_key):
-        """
-        Adds input to list of inputs in lookup table dict for this task.
-        """
-        task_key = self.standardize_key(task_key)
-        input_task_key = self.standardize_key(input_task_key)
-        self.wrapper.log.debug("adding dependency of '%s' on '%s'" % (input_task_key, task_key))
-
-        if task_key == input_task_key:
-            return
-
-        if not task_key in self.tree:
-            self.tree.append(task_key)
-
-        if self.lookup_table.has_key(task_key):
-            self.lookup_table[task_key]['inputs'].append(input_task_key)
-        else:
-            self.lookup_table[task_key] = { 'inputs' : [input_task_key] }
-
-        if not self.lookup_table.has_key(input_task_key):
-            self.lookup_table[input_task_key] = { 'inputs' : [] }
-
-        self.clean_tree()
+        all_inputs = set()
+        for kwargs in self.lookup_table.values():
+            inputs = kwargs['inputs']
+            all_inputs.update(inputs)
+        return all_inputs
 
     def clean_tree(self):
         """
-        Removes tasks which are already represented as inputs.
+        Removes tasks which are already represented as inputs (tree should
+        only contain root nodes).
         """
-        all_inputs = self.all_inputs()
-
-        # make copy since can't iterate and remove from same tree
         treecopy = copy.deepcopy(self.tree)
-
+        all_inputs = self.all_inputs()
         for task in treecopy:
             if task in all_inputs:
                 self.tree.remove(task)
 
-    def all_inputs(self):
+    def add_node(self, node_key, **kwargs):
         """
-        Returns a set of all task keys identified as inputs of some other element.
+        Adds the node and its kwargs to the tree and lookup table
         """
-        all_inputs = set()
-        for kwargs in self.lookup_table.values():
-            all_inputs.update(kwargs['inputs'])
-        return all_inputs
+        node_key = self.wrapper.standardize_key(node_key)
 
-    def task_kwargs(self, task_key):
+        if not node_key in self.tree:
+            self.tree.append(node_key)
+
+        if not self.lookup_table.has_key(node_key):
+            self.lookup_table[node_key] = {}
+
+        self.lookup_table[node_key].update(kwargs)
+
+        if not self.lookup_table[node_key].has_key('inputs'):
+            self.lookup_table[node_key]['inputs'] = []
+
+        self.clean_tree()
+        return node_key
+
+    def add_dependency(self, node_key, input_node_key):
         """
-        Returns the dict of kw args for a task
+        Adds input_node_key to list of inputs for node_key (both nodes are
+        also added to tree).
         """
-        args = self.lookup_table[task_key].copy()
+        node_key = self.add_node(node_key)
+        input_node_key = self.add_node(input_node_key)
+
+        if not node_key == input_node_key:
+            self.lookup_table[node_key]['inputs'].append(input_node_key)
+
+        self.clean_tree()
+
+    def args_for_node(self, node_key):
+        """
+        Returns the dict of kw args for a node
+        """
+        node_key = self.wrapper.standardize_key(node_key)
+        args = copy.deepcopy(self.lookup_table[node_key])
         del args['inputs']
         return args
 
-    def task_inputs(self, parent_key):
+    def inputs_for_node(self, node_key):
         """
-        Returns the list of inputs for a atsk
+        Returns the list of inputs for a node
         """
-        return self.lookup_table[parent_key]['inputs']
+        node_key = self.wrapper.standardize_key(node_key)
+        return self.lookup_table[node_key]['inputs']
 
-    def debug(self, log=None):
-        text = []
-        text.append('tree:')
-        for item in self.tree:
-            text.append("  %s" % item)
-        if self.root_nodes_ordered:
-            text.append("root notes ordered.")
-        text.append('lookup table:')
-        for k, v in self.lookup_table.iteritems():
-            pformat_v = pprint.pformat(v).splitlines()
-            if len(pformat_v) == 0:
-                raise Exception("no lines in pformat_v!")
-            elif len(pformat_v) == 1:
-                text.append("    %s: %s" % (k, pformat_v[0]))
-            else:
-                text.append("    %s:" % k)
-                for line in pformat_v:
-                    text.append("      %s" % line)
+    def calculate_default_args_for_directory(self, path):
+        dir_path = posixpath.dirname(posixpath.abspath(path))
+        default_kwargs = {}
 
-        if log:
-            log.debug("\n".join(text))
-        else:
-            for line in text:
-                print line
+        for d, args in self.default_args_for_directory:
+            if posixpath.abspath(d) in dir_path:
+                default_kwargs.update(args)
+
+        return default_kwargs
+
+    def calculate_environment_for_directory(self, path):
+        dir_path = posixpath.dirname(posixpath.abspath(path))
+        env = {}
+
+        for d, args in self.environment_for_directory:
+            if posixpath.abspath(d) in dir_path:
+                env.update(args)
+
+        return env
 
     def walk(self):
-        created_tasks = {}
-        root_nodes = []
+        """
+        Creates Node objects for all elements in tree. Returns a list of root
+        nodes and a dict of all nodes referenced by qualified keys.
+        """
+        if self.wrapper.nodes:
+            print "nodes are not empty", self.wrapper.nodes
+        if self.wrapper.roots:
+            print "roots are not empty", self.wrapper.roots
 
-        def create_dexy_task(key, *inputs, **kwargs):
-            if not key in created_tasks:
-                msg = "creating task '%s' with inputs '%s' with original kwargs '%s'"
-                self.wrapper.log.debug(msg % (key, inputs, kwargs))
-                alias, pattern = self.qualify_key(key)
+        def create_dexy_node(key, *inputs, **kwargs):
+            """
+            Stores already created nodes in nodes dict, if called more than
+            once for the same key, returns already created node.
+            """
+            if not key in self.wrapper.nodes:
+                alias, pattern = self.wrapper.qualify_key(key)
                 
-                kwargs_with_defaults = self.default_args_for_directory(pattern)
+                kwargs_with_defaults = self.calculate_default_args_for_directory(pattern)
                 kwargs_with_defaults.update(kwargs)
-                kwargs_with_defaults['inputs'] = inputs
 
-                task = dexy.task.Task.create(alias, pattern, **kwargs_with_defaults)
-                task.args_before_defaults = kwargs
-                created_tasks[key] = task
-            return created_tasks[key]
+                node = dexy.node.Node.create_instance(
+                        alias,
+                        pattern,
+                        self.wrapper,
+                        inputs,
+                        **kwargs_with_defaults)
+
+                node.environment = self.calculate_environment_for_directory(pattern)
+                self.wrapper.nodes[key] = node
+
+                for child in node.children:
+                    self.wrapper.nodes[child.key_with_class()] = child
+
+            return self.wrapper.nodes[key]
 
         def parse_item(key):
-            inputs = self.task_inputs(key)
-            kwargs = self.task_kwargs(key)
-            kwargs['wrapper'] = self.wrapper
+            inputs = self.inputs_for_node(key)
+            kwargs = self.args_for_node(key)
+
             if kwargs.get('inactive') or kwargs.get('disabled'):
                 return
 
-            input_tasks = [parse_item(i) for i in inputs if i]
+            matches_target = self.wrapper.target and key.startswith(self.wrapper.target)
+            if not kwargs.get('default', True) and not self.wrapper.full and not matches_target:
+                print "default for '%s' is false and not full or matches target" % key
+                return
 
-            # filter out inactive inputs
-            input_tasks = [i for i in input_tasks if i]
+            input_nodes = [parse_item(i) for i in inputs if i]
+            input_nodes = [i for i in input_nodes if i]
     
-            return create_dexy_task(key, *input_tasks, **kwargs)
+            return create_dexy_node(key, *input_nodes, **kwargs)
 
-        for key in self.tree:
-            task = parse_item(key)
-            if task:
-                root_nodes.append(task)
-
-        return root_nodes, created_tasks
+        for node_key in self.tree:
+            root_node = parse_item(node_key)
+            if root_node:
+                self.wrapper.roots.append(root_node)
 
 class Parser(dexy.plugin.Plugin):
     """
     Parse various types of config file.
     """
-    ALIASES = []
-    _SETTINGS = {
-            'warn-if-not-unique' : ("Warn if more than 1 config file with this setting set to True is found in a directory.", False)
-            }
-
+    aliases = []
+    _settings = {}
     __metaclass__ = dexy.plugin.PluginMeta
 
-    def __init__(self, wrapper=None, ast=None):
-        self.wrapper = wrapper
-
-    def is_active(self):
-        return True
-
-    def standardize_alias(klass, alias):
-        task_class, settings = dexy.task.Task.plugins[alias]
-        return task_class.ALIASES[0]
-
-    def standardize_key(self, key):
-        """
-        Only standardized keys should be used in the AST, so we don't create 2
-        entries for what turns out to be the same task.
-        """
-        alias, pattern = self.qualify_key(key)
-        return "%s:%s" % (alias, pattern)
-
-    def qualify_key(self, key):
-        """
-        Returns key split into pattern and alias, figuring out alias if not explict.
-        """
-        if not key:
-            raise dexy.exceptions.InternalDexyProblem("Trying to call qualify_key with key of '%s'!" % key)
-
-        if ":" in key:
-            # split qualified key into alias & pattern
-            alias, pattern = key.split(":")
-        else:
-            # this is an unqualified key, figure out its alias
-            pattern = key
-
-            # Allow '.ext' instead of '*.ext', shorter + easier for YAML
-            if pattern.startswith(".") and not pattern.startswith("./"):
-                if not self.file_exists(pattern):
-                    pattern = "*%s" % pattern
-
-            filepath = pattern.split("|")[0]
-            if self.file_exists(filepath):
-                alias = 'doc'
-            elif (not "." in pattern) and (not "|" in pattern):
-                alias = 'bundle'
-            elif "*" in pattern:
-                alias = 'pattern'
-            else:
-                alias = 'doc'
-
-        alias = self.standardize_alias(alias)
-        return alias, pattern
-
-    def file_exists(self, filepath):
-        if not self.wrapper:
-            raise Exception("wrapper is none")
-        return filepath in self.wrapper.filemap
-
-class DocumentConfig(Parser):
-    """
-    Parse various types of config file.
-    """
-    _SETTINGS = {
-            'warn-if-not-unique' : True
-            }
-
-    def __init__(self, wrapper=None, ast=None):
+    def __init__(self, wrapper, ast):
         self.wrapper = wrapper
         self.ast = ast
 
-    def parse(self, input_text, directory="."):
-        """
-        Method for testing, after this can call batch.run()
-        """
-        self.ast = AbstractSyntaxTree(self.wrapper)
-        self.build_ast(directory, input_text)
+    def file_exists(self, directory, filename):
+        filepath = self.wrapper.join_dir(directory, filename)
+        return self.wrapper.file_available(filepath)
 
-        self.wrapper.batch = dexy.batch.Batch(self.wrapper)
-        self.wrapper.batch.load_ast(self.ast)
-
-    def build_ast(self, directory, input_text):
-        raise Exception("Implement in subclass.")
-
-    def join_dir(self, directory, key):
-        if directory == ".":
-            return key
-        else:
-            starts_with_dot = key.startswith(".") and not key.startswith("./")
-            if starts_with_dot:
-                path_to_key = os.path.join(directory, key)
-                if not self.file_exists(path_to_key):
-                    key = "*%s" % key
-            return posixpath.join(directory, key)
+    def parse(self, directory, input_text):
+        pass

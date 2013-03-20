@@ -38,8 +38,8 @@ class BotoUploadFilter(ApiFilter):
     necessary for you to specify a name. You can use an existing S3 bucket,
     a new bucket will be created if your bucket does not already exist.
     """
-    ALIASES = ['s3', 'botoup']
-    _SETTINGS = {
+    aliases = ['s3', 'botoup']
+    _settings = {
             'api-key-name' : 'AWS',
             'output-extensions' : ['.txt'],
             }
@@ -63,7 +63,7 @@ class BotoUploadFilter(ApiFilter):
                 print "Can't automatically determine username. Please specify AWS_BUCKET_NAME for upload to S3."
                 raise e
         bucket_name = datetime.now().strftime(bucket_name)
-        self.log.debug("S3 bucket name is %s" % bucket_name)
+        self.log_debug("S3 bucket name is %s" % bucket_name)
         return bucket_name
 
     def boto_connection(self):
@@ -84,7 +84,7 @@ class BotoUploadFilter(ApiFilter):
         b = self.get_bucket()
         k = Key(b)
         k.key = self.input().web_safe_document_key()
-        self.log.debug("Uploading contents of %s" % self.input().storage.data_file())
+        self.log_debug("Uploading contents of %s" % self.input().storage.data_file())
         k.set_contents_from_filename(self.input().storage.data_file())
         k.set_acl('public-read')
         self.output().set_data("https://s3.amazonaws.com/%s/%s" % (self.bucket_name(), k.key))

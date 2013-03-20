@@ -27,11 +27,11 @@ def test_gif():
 @raises(dexy.exceptions.UserFeedback)
 def test_pyg4rst_bad_file_extension():
     with wrap() as wrapper:
-        doc = Doc("hello.xyz|pyg4rst", wrapper=wrapper, contents=" ")
-        wrapper.run_docs(doc)
+        doc = Doc("hello.xyz|pyg4rst", wrapper, [], contents=" ")
+        wrapper.run(doc)
 
 @raises(dexy.exceptions.UserFeedback)
 def test_pygments_bad_file_extension():
     with wrap() as wrapper:
-        doc = Doc("hello.xyz|pyg", wrapper=wrapper, contents=" ")
-        wrapper.run_docs(doc)
+        doc = Doc("hello.xyz|pyg", wrapper, [], contents=" ")
+        wrapper.run(doc)

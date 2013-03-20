@@ -12,9 +12,9 @@ class RestructuredTextBase(DexyFilter):
     """
     Base class for ReST filters using the docutils library.
     """
-    ALIASES = []
+    aliases = []
 
-    _SETTINGS = {
+    _settings = {
             "input-extensions" : [".rst", ".txt"],
             'output-extensions' : [".html", ".tex", ".xml"],
             'output' : True,
@@ -30,14 +30,14 @@ class RestructuredTextBase(DexyFilter):
     def docutils_writer_name(self):
         if self.setting('writer'):
             return self.setting('writer')
-        elif self.artifact.ext == ".html":
+        elif self.ext == ".html":
             return 'html'
-        elif self.artifact.ext == ".tex":
+        elif self.ext == ".tex":
             return 'latex2e'
-        elif self.artifact.ext == ".xml":
+        elif self.ext == ".xml":
             return 'docutils_xml'
         else:
-            raise Exception("unsupported extension %s" % self.artifact.ext)
+            raise Exception("unsupported extension %s" % self.ext)
 
 class RestructuredText(RestructuredTextBase):
     """
@@ -46,11 +46,11 @@ class RestructuredText(RestructuredTextBase):
     Look for configuration options for writers here:
     http://docutils.sourceforge.net/docs/user/config.html
     """
-    ALIASES = ['rst']
-    SKIP_SETTINGS = 'settings-not-for-settings-overrides'
-    _SETTINGS = {
+    aliases = ['rst']
+    skip_settings = 'settings-not-for-settings-overrides'
+    _settings = {
             'allow-any-template-extension' : ("Whether to NOT raise an error if template extension does not match document extension.", False),
-            SKIP_SETTINGS : (
+            skip_settings : (
                 "Which of the settings should NOT be passed to settings_overrides.",
                 ['writer']
                 )
@@ -58,23 +58,23 @@ class RestructuredText(RestructuredTextBase):
 
     def process(self):
         def skip_setting(key):
-            in_base_filter = key in DexyFilter._SETTINGS
-            in_skip = key in self.setting(self.SKIP_SETTINGS) or key == self.SKIP_SETTINGS
+            in_base_filter = key in DexyFilter._settings
+            in_skip = key in self.setting(self.SKIP_settings) or key == self.SKIP_settings
             return in_base_filter or in_skip
 
         settings_overrides = dict((k.replace("-", "_"), v) for k, v in self.setting_values().iteritems() if v and not skip_setting(k))
         writer_name = self.docutils_writer_name()
 
-        self.log.debug("settings for rst: %r" % settings_overrides)
-        self.log.debug("rst writer: %s" % writer_name)
+        self.log_debug("settings for rst: %r" % settings_overrides)
+        self.log_debug("rst writer: %s" % writer_name)
 
         # Check that template extension matches output.
         if 'template' in settings_overrides and not self.setting('allow-any-template-extension'):
             template = settings_overrides['template']
             template_ext = os.path.splitext(template)[1]
-            if not template_ext == self.artifact.ext:
+            if not template_ext == self.ext:
                 msg = "You requested template '%s' with extension '%s' for %s, does not match document extension of '%s'"
-                args = (template, template_ext, self.artifact.key_for_log(), self.artifact.ext)
+                args = (template, template_ext, self.key, self.ext)
                 raise dexy.exceptions.UserFeedback(msg % args)
 
         try:
@@ -99,7 +99,7 @@ class RstBody(RestructuredTextBase):
     """
     Returns just the body part of an ReST document.
     """
-    ALIASES = ['rstbody']
+    aliases = ['rstbody']
 
     def process_text(self, input_text):
         parts = core.publish_parts(
@@ -115,8 +115,8 @@ class RstDocParts(DexyFilter):
     """
     Returns key-value storage of document parts.
     """
-    ALIASES = ['rstdocparts']
-    _SETTINGS = {
+    aliases = ['rstdocparts']
+    _settings = {
             'input-extensions' : [".rst", ".txt"],
             'output-data-type' : 'keyvalue',
             'output-extensions' : ['.sqlite3', '.json'],

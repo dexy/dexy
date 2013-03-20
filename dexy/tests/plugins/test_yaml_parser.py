@@ -1,11 +1,11 @@
-from dexy.parsers.standard import Yaml
+from dexy.parsers.doc import Yaml
 from dexy.tests.utils import wrap
-from dexy.tests.utils import tempdir
 import os
-import dexy.wrapper
+from dexy.wrapper import Wrapper
+from dexy.parser import AbstractSyntaxTree
 
 def test_subdir_config_with_bundle():
-    with tempdir():
+    with wrap() as wrapper:
 
         with open("dexy.yaml", "w") as f:
             f.write("""
@@ -23,8 +23,7 @@ def test_subdir_config_with_bundle():
         with open("abc/def/hello.py", "w") as f:
             f.write("print 'hello'")
 
-        wrapper = dexy.wrapper.Wrapper()
-        wrapper.setup(setup_dirs=True)
+        wrapper = Wrapper()
         wrapper.run()
 
 def test_except_patterndoc():
@@ -32,27 +31,34 @@ def test_except_patterndoc():
         with open("exceptme.abc", "w") as f:
             f.write("hello")
 
-        parser = Yaml(wrapper=wrapper)
-        parser.parse(""".abc:\n  - except : 'exceptme.abc' """)
-        wrapper.batch.run()
+        wrapper = Wrapper()
+        ast = AbstractSyntaxTree(wrapper)
+        parser = Yaml(wrapper, ast)
+        parser.parse('.', """.abc:\n  - except : 'exceptme.abc' """)
+        ast.walk()
+        wrapper.run()
 
-        assert len(wrapper.batch.lookup_table) == 1
+        assert len(wrapper.nodes) == 1
 
 def test_except_patterndoc_pattern():
     with wrap() as wrapper:
         with open("exceptme.abc", "w") as f:
             f.write("hello")
 
-        parser = Yaml(wrapper)
-        parser.parse(""".abc:\n  - except : 'exceptme.*' """)
-        wrapper.batch.run()
+        wrapper = Wrapper()
+        ast = AbstractSyntaxTree(wrapper)
+        parser = Yaml(wrapper, ast)
+        parser.parse('.', """.abc:\n  - except : 'exceptme.*' """)
+        ast.walk()
+        wrapper.run()
 
-        assert len(wrapper.batch.lookup_table) == 1
+        assert len(wrapper.nodes) == 1
 
 def test_children_siblings_order():
     with wrap() as wrapper:
-        parser = Yaml(wrapper)
-        parser.parse("""
+        ast = AbstractSyntaxTree(wrapper)
+        parser = Yaml(wrapper, ast)
+        parser.parse('.', """
         p1:
             - c1
             - c2:
@@ -61,33 +67,34 @@ def test_children_siblings_order():
                 - g3
             - c3
         """)
+        ast.walk()
 
-        wrapper.batch.run()
+        wrapper.run()
 
-        p1 = wrapper.batch.lookup_table['BundleNode:p1']
+        p1 = wrapper.nodes['bundle:p1']
         assert [i.key_with_class() for i in p1.walk_inputs()] == [
-                'BundleNode:c1',
-                'BundleNode:g1',
-                'BundleNode:g2',
-                'BundleNode:g3',
-                'BundleNode:c2',
-                'BundleNode:c3'
+                'bundle:c1',
+                'bundle:g1',
+                'bundle:g2',
+                'bundle:g3',
+                'bundle:c2',
+                'bundle:c3'
                 ]
 
-        c1 = wrapper.batch.lookup_table['BundleNode:c1']
+        c1 = wrapper.nodes['bundle:c1']
         assert len(c1.inputs) == 0
 
-        c2 = wrapper.batch.lookup_table['BundleNode:c2']
+        c2 = wrapper.nodes['bundle:c2']
         assert [i.key_with_class() for i in c2.walk_inputs()] == [
-                'BundleNode:g1',
-                'BundleNode:g2',
-                'BundleNode:g3'
+                'bundle:g1',
+                'bundle:g2',
+                'bundle:g3'
                 ]
 
-        c3 = wrapper.batch.lookup_table['BundleNode:c3']
+        c3 = wrapper.nodes['bundle:c3']
         assert len(c3.inputs) == 0
 
-        g3 = wrapper.batch.lookup_table['BundleNode:g3']
+        g3 = wrapper.nodes['bundle:g3']
         assert len(g3.inputs) == 0
 
 def test_single_file_doc():
@@ -95,25 +102,28 @@ def test_single_file_doc():
         with open("hello.txt", "w") as f:
             f.write("hello")
 
-        wrapper.walk()
-        parser = Yaml(wrapper)
-        parser.parse("hello.txt")
+        wrapper = Wrapper()
+        ast = AbstractSyntaxTree(wrapper)
+        parser = Yaml(wrapper, ast)
+        parser.parse('.', "hello.txt")
+        ast.walk()
 
-        wrapper.batch.run()
-        assert "Doc:hello.txt" in wrapper.batch.lookup_table
+        wrapper.run()
+        assert "doc:hello.txt" in wrapper.nodes
 
 def test_single_bundle_doc():
     with wrap() as wrapper:
-        parser = Yaml(wrapper)
-        parser.parse("hello")
-
-        wrapper.batch.run()
-        assert "BundleNode:hello" in wrapper.batch.lookup_table
+        ast = AbstractSyntaxTree(wrapper)
+        parser = Yaml(wrapper, ast)
+        parser.parse('.', "hello")
+        ast.walk()
+        assert "bundle:hello" in wrapper.nodes
 
 def test_single_bundle_doc_with_args():
     with wrap() as wrapper:
-        parser = Yaml(wrapper)
-        parser.parse("""
+        ast = AbstractSyntaxTree(wrapper)
+        parser = Yaml(wrapper, ast)
+        parser.parse('.', """
         more:
             - hello
             - one-more-task
@@ -130,16 +140,16 @@ def test_single_bundle_doc_with_args():
                     - foo: bar
             - one-more-task
         """)
+        ast.walk()
 
-        wrapper.batch.run()
-
-        assert wrapper.batch.tree[0].key_with_class() == "BundleNode:more"
-        assert len(wrapper.batch.lookup_table) == 5
+        assert wrapper.roots[0].key_with_class() == "bundle:more"
+        assert len(wrapper.nodes) == 5
 
 def test_single_bundle_doc_with_args_2():
     with wrap() as wrapper:
-        parser = Yaml(wrapper)
-        parser.parse("""
+        ast = AbstractSyntaxTree(wrapper)
+        parser = Yaml(wrapper, ast)
+        parser.parse('.', """
 
       -  hello:
             - foo: bar
@@ -159,7 +169,7 @@ def test_single_bundle_doc_with_args_2():
 
         """)
 
-        wrapper.batch.run()
+        ast.walk()
 
-        assert wrapper.batch.tree[0].key_with_class() == "BundleNode:more"
-        assert len(wrapper.batch.lookup_table) == 5
+        assert wrapper.roots[0].key_with_class() == "bundle:more"
+        assert len(wrapper.nodes) == 5

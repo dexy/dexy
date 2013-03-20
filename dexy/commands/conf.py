@@ -1,4 +1,4 @@
-from dexy.commands.utils import D
+from dexy.utils import defaults
 from dexy.commands.utils import default_config
 from dexy.utils import file_exists
 import dexy.exceptions
@@ -6,7 +6,7 @@ import json
 import yaml
 
 def conf_command(
-        conf=D['config_file'], # name of config file to write to
+        conf=defaults['config_file'], # name of config file to write to
         p=False # whether to print to stdout rather than write to file
         ):
     """

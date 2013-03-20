@@ -2,7 +2,6 @@ from datetime import datetime
 from dexy.version import DEXY_VERSION
 from pygments.styles import get_all_styles
 import calendar
-import dexy.artifact
 import dexy.commands
 import dexy.data
 import dexy.exceptions
@@ -16,8 +15,8 @@ import re
 
 class TemplatePlugin(dexy.plugin.Plugin):
     __metaclass__ = dexy.plugin.PluginMeta
-    ALIASES = []
-    _SETTINGS = {}
+    aliases = []
+    _settings = {}
 
     def is_active(klass):
         return True
@@ -25,7 +24,6 @@ class TemplatePlugin(dexy.plugin.Plugin):
     def __init__(self, filter_instance=None):
         if filter_instance:
             self.filter_instance = filter_instance
-            self.log = self.filter_instance.artifact.log
 
     def run(self):
         return {}
@@ -53,8 +51,8 @@ class Inflection(TemplatePlugin):
     """
     Exposes the inflection package for doing nice things with strings 
     """
-    ALIASES = ['inflection']
-    _SETTINGS = {
+    aliases = ['inflection']
+    _settings = {
             'methods' : ("Methods of the inflection module to expose.",
                 ['camelize', 'dasherize', 'humanize', 'ordinal',
                 'ordinalize', 'parameterize', 'pluralize', 'singularize',
@@ -87,7 +85,7 @@ class PrettyPrintJson(TemplatePlugin):
     """
     Exposes ppjson command.
     """
-    ALIASES = ['ppjson']
+    aliases = ['ppjson']
 
     def ppjson(self, json_string):
         return json.dumps(json.loads(json_string), sort_keys = True, indent = 4)
@@ -141,7 +139,7 @@ class PythonDatetime(TemplatePlugin):
     """
     Exposes python datetime and calendar functions.
     """
-    ALIASES = ['datetime', 'calendar']
+    aliases = ['datetime', 'calendar']
     def run(self):
         today = datetime.today()
         month = today.month
@@ -163,7 +161,7 @@ class DexyVersion(TemplatePlugin):
     """
     Exposes the current dexy version
     """
-    ALIASES = ['dexyversion']
+    aliases = ['dexyversion']
     def run(self):
         return { "DEXY_VERSION" : DEXY_VERSION }
 
@@ -171,7 +169,7 @@ class SimpleJson(TemplatePlugin):
     """
     Exposes the json module.
     """
-    ALIASES = ['json']
+    aliases = ['json']
     def run(self):
         return { 'json' : json }
 
@@ -179,7 +177,7 @@ class RegularExpressions(TemplatePlugin):
     """
     Exposes re_match and re_search.
     """
-    ALIASES = ['regex']
+    aliases = ['regex']
     def run(self):
         return { 're_match' : re.match, 're_search' : re.search}
 
@@ -187,7 +185,7 @@ class PythonBuiltins(TemplatePlugin):
     """
     Exposes python builtins.
     """
-    ALIASES = ['builtins']
+    aliases = ['builtins']
     # Intended to be all builtins that make sense to run within a document.
     PYTHON_BUILTINS = [abs, all, any, bin, bool, bytearray, callable, chr,
         cmp, complex, dict, dir, divmod, enumerate, filter, float, format, hex,
@@ -202,7 +200,7 @@ class PygmentsStylesheet(TemplatePlugin):
     """
     Generates pygments stylesheets.
     """
-    ALIASES = ['pygments']
+    aliases = ['pygments']
 
     # TODO figure out default fmt based on document ext
     @classmethod
@@ -215,8 +213,8 @@ class PygmentsStylesheet(TemplatePlugin):
 
     def run(self):
         pygments_stylesheets = {}
-        if self.filter_instance.artifact.args.has_key('pygments'):
-            formatter_args = self.filter_instance.artifact.args['pygments']
+        if self.filter_instance.doc.args.has_key('pygments'):
+            formatter_args = self.filter_instance.doc.args['pygments']
         else:
             formatter_args = {}
 
@@ -238,10 +236,10 @@ class Subdirectories(TemplatePlugin):
     """
     Show subdirectories under this document.
     """
-    ALIASES = ['subdirectories']
+    aliases = ['subdirectories']
     def run(self):
         # The directory containing the document to be processed.
-        doc_dir = os.path.dirname(self.filter_instance.output().name)
+        doc_dir = os.path.dirname(self.filter_instance.output_data.name)
 
         # Get a list of subdirectories under this document's directory.
         subdirectories = [d for d in sorted(os.listdir(os.path.join(os.curdir, doc_dir))) if os.path.isdir(os.path.join(os.curdir, doc_dir, d))]
@@ -251,7 +249,7 @@ class Variables(TemplatePlugin):
     """
     Allow users to set variables in document args which will be available to an individual document.
     """
-    ALIASES = ['variables']
+    aliases = ['variables']
     def run(self):
         variables = {}
         variables.update(self.filter_instance.setting('variables'))
@@ -263,9 +261,9 @@ class Globals(TemplatePlugin):
     Makes available the global variables specified on the dexy command line
     using the --globals option
     """
-    ALIASES = ['globals']
+    aliases = ['globals']
     def run(self):
-        raw_globals = self.filter_instance.artifact.wrapper.globals
+        raw_globals = self.filter_instance.doc.wrapper.globals
         env = {}
         for kvpair in raw_globals.split(","):
             if "=" in kvpair:
@@ -277,11 +275,10 @@ class Inputs(TemplatePlugin):
     """
     Populates the 'd' object.
     """
-    ALIASES = ['inputs']
+    aliases = ['inputs']
 
     def input_tasks(self):
-        for doc in self.filter_instance.processed():
-            yield doc.final_artifact
+        return self.filter_instance.doc.walk_input_docs()
 
     def a(self, relative_ref):
         return self.map_relative_refs[relative_ref]
@@ -289,26 +286,28 @@ class Inputs(TemplatePlugin):
     def run(self):
         self.map_relative_refs = {}
 
-        for task in self.input_tasks():
-            for ref in task.output_data.relative_refs(self.filter_instance.output().name):
-                self.map_relative_refs[ref] = task.output_data
+        for doc in self.input_tasks():
+            for ref in doc.output_data().relative_refs(self.filter_instance.output_data.name):
+                self.map_relative_refs[ref] = doc.output_data()
 
         return {
             'a' : self.a,
-            'args' : self.filter_instance.artifact.args,
-            'd' : D(self.filter_instance.artifact, self.map_relative_refs),
+            'args' : self.filter_instance.doc.args,
+            'd' : D(self.filter_instance.doc, self.map_relative_refs),
             'f' : self.filter_instance,
-            's' : self.filter_instance.output(),
-            'w' : self.filter_instance.artifact.wrapper
+            's' : self.filter_instance.output_data,
+            'w' : self.filter_instance.doc.wrapper
             }
 
 class D(object):
-    def __init__(self, artifact, map_relative_refs):
-        self._artifact = artifact
+    def __init__(self, doc, map_relative_refs):
+        self._artifact = doc
         self._map_relative_refs = map_relative_refs
 
     def __getitem__(self, relative_ref):
         if self._map_relative_refs.has_key(relative_ref):
             return self._map_relative_refs[relative_ref]
         else:
-            raise dexy.exceptions.UserFeedback("There is no document named %s available to %s" % (relative_ref, self._artifact.key))
+            msg = "There is no document named %s available to %s"
+            msgargs = (relative_ref, self._artifact.key)
+            raise dexy.exceptions.UserFeedback(msg % msgargs)
