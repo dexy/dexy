@@ -68,7 +68,13 @@ class Wrapper(object):
 
             if stat:
                 if not file_exists(safety_filepath):
-                    raise UserFeedback("safety filepath does not exist")
+                    msg = s("""You need to manually delete the '%s' directory
+                    and then run 'dexy setup' to create new directories. This
+                    should just be a once-off issue due to a change in dexy to
+                    prevent accidentally deleting directories which dexy does
+                    not create.
+                    """) % dirpath
+                    raise UserFeedback(msg)
 
             yield (dirpath, safety_filepath, stat)
 
@@ -105,6 +111,7 @@ class Wrapper(object):
         """
         for dirpath, safety_filepath, dirstat in self.iter_dexy_dirs():
             if dirstat:
+                print "removing directory '%s'" % dirpath
                 shutil.rmtree(dirpath)
 
         if reports:

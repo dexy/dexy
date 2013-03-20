@@ -184,7 +184,6 @@ class Generic(Data):
         return self.key
 
     def copy_from_file(self, filename):
-        print "copying contents of %s from %s" % (self.key, filename)
         shutil.copyfile(filename, self.storage.data_file())
 
     def clear_data(self):

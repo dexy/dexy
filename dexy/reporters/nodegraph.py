@@ -30,7 +30,6 @@ class NodeGraph(Reporter):
         graph = []
         graph.append("digraph G {")
         for node in wrapper.nodes.values():
-            print node
             graph.extend(print_inputs(node))
         graph.append("}")
 
@@ -59,7 +58,6 @@ class PlainTextGraph(Reporter):
 
         graph = []
         for node in wrapper.nodes.values():
-            print node
             graph.extend(print_inputs(node))
 
         filename = os.path.join(wrapper.log_dir, self.setting('filename'))

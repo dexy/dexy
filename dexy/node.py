@@ -54,28 +54,32 @@ class Node(dexy.plugin.Plugin):
         return self.key
 
     def title(self):
-        return self.args.get('title', inflection.titleize(self.name))
+        title_from_name = inflection.titleize(self.output_data().baserootname())
+        return self.args.get('title', title_from_name)
 
     def walk_inputs(self):
         """
         Yield all direct inputs and their inputs.
         """
+        children = []
         def walk(inputs):
-            for i in inputs:
-                walk(i)
-                for ii in i.inputs:
-                    yield ii
-                for c in i.children:
-                    yield c
-                yield i
+            for inpt in inputs:
+                children.extend(inpt.children)
+                children.append(inpt)
+                walk(inpt.inputs)
 
-        return walk(self.inputs)
+        if self.inputs:
+            walk(self.inputs)
+        elif hasattr(self, 'parent'):
+            children = self.parent.walk_inputs()
+
+        return children
 
     def walk_input_docs(self):
         """
         Yield all direct inputs and their inputs, if they are of class 'doc'
         """
-        for node in self.walk_inputs():
+        for node in list(self.walk_inputs()):
             if node.__class__.__name__ == 'Doc':
                 yield node
 
@@ -97,10 +101,11 @@ class Node(dexy.plugin.Plugin):
         archived calculated hash from last run.
         """
         saved_args = None
+        runtime_args_cached = os.path.exists(self.runtime_args_filename())
         try:
             with open(self.args_filename(), "r") as f:
                 saved_args = f.read()
-            return saved_args != self.sorted_arg_string()
+            return not runtime_args_cached or (saved_args != self.sorted_arg_string())
         except IOError:
             return True
 
@@ -127,13 +132,13 @@ class Node(dexy.plugin.Plugin):
         """
         Returns filename used to store arg hash to compare in next run.
         """
-        return os.path.join(self.wrapper.artifacts_dir, "%s.args" % self.hashid)
+        return os.path.join(self.wrapper.artifacts_dir, self.hashid[0:2], "%s.args" % self.hashid)
 
     def runtime_args_filename(self):
         """
         Returns filename used to store runtime args.
         """
-        return os.path.join(self.wrapper.artifacts_dir, "%s.runtimeargs" % self.hashid)
+        return os.path.join(self.wrapper.artifacts_dir, self.hashid[0:2], "%s.runtimeargs" % self.hashid)
 
     def save_args(self):
         """
@@ -155,6 +160,10 @@ class Node(dexy.plugin.Plugin):
         return any(i.changed() for i in self.inputs)
 
     def changed(self):
+        #print "checking if %s is changed" % self.key
+        #print "  doc changed %s" % self.doc_changed
+        #print "  args changed %s" % self.args_changed
+        #print "  inputs changed %s" % self.inputs_changed()
         return self.doc_changed or self.args_changed or self.inputs_changed()
 
     def __iter__(self):
@@ -179,14 +188,25 @@ class Node(dexy.plugin.Plugin):
         for inpt in self.inputs:
             for node in inpt:
                 node(*args, **kw)
+
+        import time
+        self.run_start_time = time.time()
         self.call_run(*args, **kw)
+        self.run_finish_time = time.time()
+
+        self.append_to_batch()
+
+    def append_to_batch(self):
+        pass
 
     def call_run(self, *args, **kw):
         self.save_args()
         if self.changed():
+            self.log_info("running")
             self.run(*args, **kw)
             self.save_runtime_args()
         else:
+            self.log_info("node is cached, not running")
             self.load_runtime_args()
 
     def run(self, *args, **kw):

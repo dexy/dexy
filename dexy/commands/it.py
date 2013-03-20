@@ -117,7 +117,7 @@ def dexy_command(
         return dexy.commands.version_command()
 
     if r or reset:
-        print "Resetting dexy cache..."
+        print "resetting dexy cache..."
         dexy.commands.setup.reset_command(artifactsdir=artifactsdir, logdir=logdir)
 
     # Don't trap errors yet because error handling uses wrapper instance.
@@ -133,10 +133,13 @@ def dexy_command(
             run_reports = False
         else:
             wrapper.run()
+            print "dexy run finished in %s" % wrapper.batch.elapsed()
 
     except dexy.exceptions.UserFeedback as e:
         handle_user_feedback_exception(wrapper, e)
         if hasattr(wrapper, 'batch'):
+            import time
+            wrapper.batch.end_time = time.time()
             wrapper.batch.state = 'failed'
     except KeyboardInterrupt:
         handle_keyboard_interrupt()

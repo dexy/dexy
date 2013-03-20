@@ -3,7 +3,6 @@ import dexy.exceptions
 import dexy.filter
 import dexy.node
 import os
-import time
 import posixpath
 
 class Doc(dexy.node.Node):
@@ -48,6 +47,7 @@ class Doc(dexy.node.Node):
             self.initial_data.set_data(self.get_contents())
 
     def check_doc_changed(self):
+        #print "checking doc changed for %s" % self.name
         if self.name in self.wrapper.filemap:
             live_stat = self.wrapper.filemap[self.name]['stat']
             cache_stat = self.initial_data.storage.stat()
@@ -57,9 +57,12 @@ class Doc(dexy.node.Node):
                 import stat
                 cache_mtime = cache_stat[stat.ST_MTIME]
                 live_mtime = live_stat[stat.ST_MTIME]
-                return live_mtime != cache_mtime
+                #print "live mtime %s cache mtime %s" % (live_mtime, cache_mtime),
+                #print live_mtime > cache_mtime
+                return live_mtime > cache_mtime
             else:
                 # there is no file in the cache, therefore it has 'changed'
+                #print "no file in cache"
                 return True
         else:
             # virtual
@@ -85,13 +88,8 @@ class Doc(dexy.node.Node):
         return contents
 
     def run(self):
-        self.run_start_time = time.time()
-
         for f in self.filters:
             f.process()
-
-        self.run_finish_time = time.time()
-        self.append_to_batch()
 
     def output_data(self):
         if self.filters:
@@ -101,8 +99,10 @@ class Doc(dexy.node.Node):
 
     def batch_info(self):
         return {
+                'title' : self.title(),
                 'input-data' : self.initial_data.args_to_data_init(),
                 'output-data' : self.output_data().args_to_data_init(),
+                'filters-data' : [f.output_data.args_to_data_init() for f in self.filters],
                 'start_time' : self.run_start_time,
                 'finish_time' : self.run_finish_time,
                 'elapsed' : self.run_finish_time - self.run_start_time

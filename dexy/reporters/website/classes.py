@@ -139,7 +139,7 @@ class WebsiteReporter(OutputReporter):
 
         # Look for a file named template_file in nearest parent dir to document.
         template_path = None
-        for subpath in reverse_iter_paths(doc.output().name):
+        for subpath in reverse_iter_paths(doc.output_data().name):
             template_path = os.path.join(subpath, template_file)
             if file_exists(template_path):
                 break
@@ -158,12 +158,12 @@ class WebsiteReporter(OutputReporter):
         self.log_debug("  loading template at %s" % template_path)
         template = env.get_template(template_path)
 
-        if doc.output().ext == '.html':
-            content = unicode(doc.output())
+        if doc.output_data().ext == '.html':
+            content = unicode(doc.output_data())
         else:
-            content = doc.output()
+            content = doc.output_data()
             
-        current_dir = doc.output().parent_dir()
+        current_dir = doc.output_data().parent_dir()
         parent_dir = os.path.split(current_dir)[0]
 
         env_data = {}
@@ -195,7 +195,7 @@ class WebsiteReporter(OutputReporter):
 
         env_data.update(dict_from_string(self.wrapper.globals))
 
-        fp = os.path.join(self.setting('dir'), doc.output().name).replace(".json", ".html")
+        fp = os.path.join(self.setting('dir'), doc.output_data().name).replace(".json", ".html")
 
         parent_dir = os.path.dirname(fp)
         try:

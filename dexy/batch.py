@@ -17,6 +17,15 @@ class Batch(object):
         for doc_key in self.docs:
             yield self.doc_output_data(doc_key)
 
+    def doc_filter_data(self, doc_key, filter_index):
+        doc_info = self.docs[doc_key]["filter-data"][filter_index]
+        args = []
+        args.extend(doc_info)
+        args.append(self.wrapper)
+        data = dexy.data.Data.create_instance(*args)
+        data.setup_storage()
+        return data
+
     def doc_data(self, doc_key, input_or_output):
         doc_info = self.docs[doc_key]["%s-data" % input_or_output]
         args = []

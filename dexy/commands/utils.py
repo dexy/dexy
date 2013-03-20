@@ -110,9 +110,9 @@ def template_text(
     ):
     template = dexy.template.Template.aliases[alias]
     for batch in template.dexy():
-        man_doc_key = 'Doc:dexy.rst|jinja|rst2man'
+        man_doc_key = 'doc:dexy.rst|jinja|rst2man'
         if man_doc_key in batch.lookup_table:
-            man_doc = batch.lookup_table[man_doc_key].output().storage.data_file()
+            man_doc = batch.nodes[man_doc_key].output_data().storage.data_file()
 
             command = "man %s" % man_doc
             import subprocess

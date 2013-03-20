@@ -290,6 +290,10 @@ class Filter(dexy.plugin.Plugin):
 
         self._files_workspace_populated_with = set()
 
+        if os.path.exists(wd):
+            import shutil
+            shutil.rmtree(wd)
+
         try:
             os.makedirs(wd)
             already_created_dirs.add(wd)

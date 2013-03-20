@@ -83,8 +83,8 @@ class BotoUploadFilter(ApiFilter):
     def process(self):
         b = self.get_bucket()
         k = Key(b)
-        k.key = self.input().web_safe_document_key()
-        self.log_debug("Uploading contents of %s" % self.input().storage.data_file())
-        k.set_contents_from_filename(self.input().storage.data_file())
+        k.key = self.input_data.web_safe_document_key()
+        self.log_debug("Uploading contents of %s" % self.input_data.storage.data_file())
+        k.set_contents_from_filename(self.input_data.storage.data_file())
         k.set_acl('public-read')
-        self.output().set_data("https://s3.amazonaws.com/%s/%s" % (self.bucket_name(), k.key))
+        self.output_data.set_data("https://s3.amazonaws.com/%s/%s" % (self.bucket_name(), k.key))

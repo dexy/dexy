@@ -59,7 +59,7 @@ class RestructuredText(RestructuredTextBase):
     def process(self):
         def skip_setting(key):
             in_base_filter = key in DexyFilter._settings
-            in_skip = key in self.setting(self.SKIP_settings) or key == self.SKIP_settings
+            in_skip = key in self.setting(self.skip_settings) or key == self.skip_settings
             return in_base_filter or in_skip
 
         settings_overrides = dict((k.replace("-", "_"), v) for k, v in self.setting_values().iteritems() if v and not skip_setting(k))
@@ -79,20 +79,20 @@ class RestructuredText(RestructuredTextBase):
 
         try:
             core.publish_file(
-                    source_path = self.input().storage.data_file(),
-                    destination_path = self.output().storage.data_file(),
+                    source_path = self.input_data.storage.data_file(),
+                    destination_path = self.output_data.storage.data_file(),
                     writer_name=self.docutils_writer_name(),
                     settings_overrides=settings_overrides
                     )
         except ValueError as e:
             if "Invalid placeholder in string" in e.message and 'template' in settings_overrides:
-                self.log.warn("you are using template '%s'. is this correct?" % settings_overrides['template'])
+                self.log_warn("you are using template '%s'. is this correct?" % settings_overrides['template'])
             raise e
         except Exception as e:
-            self.log.warn("An error occurred while generating reStructuredText.")
-            self.log.warn("source file %s" % (self.input().storage.data_file()))
-            self.log.warn("settings for rst: %r" % settings_overrides)
-            self.log.warn("rst writer: %s" % writer_name)
+            self.log_warn("An error occurred while generating reStructuredText.")
+            self.log_warn("source file %s" % (self.input_data.storage.data_file()))
+            self.log_warn("settings for rst: %r" % settings_overrides)
+            self.log_warn("rst writer: %s" % writer_name)
             raise e
 
 class RstBody(RestructuredTextBase):
@@ -124,7 +124,7 @@ class RstDocParts(DexyFilter):
             }
 
     def process(self):
-        input_text = unicode(self.input())
+        input_text = unicode(self.input_data)
 
         parts = core.publish_parts(
                 input_text,
@@ -132,5 +132,5 @@ class RstDocParts(DexyFilter):
                 )
 
         for k, v in parts.iteritems():
-            self.output().append(k, v)
-        self.output().save()
+            self.output_data.append(k, v)
+        self.output_data.save()
