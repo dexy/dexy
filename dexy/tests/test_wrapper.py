@@ -200,8 +200,6 @@ def test_run_target_foo():
 def test_run_target_fo():
     for wrapper in run_yaml_with_target("fo"):
         # foo and children have been run
-        print wrapper.nodes
-
         assert wrapper.nodes['bundle:foo'].state == 'complete'
         assert wrapper.nodes['bundle:bar'].state == 'complete'
         assert wrapper.nodes['bundle:baz'].state == 'complete'

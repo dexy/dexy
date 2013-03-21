@@ -1,4 +1,5 @@
 from dexy.filter import DexyFilter
+import StringIO
 import dexy.exceptions
 import os
 
@@ -65,6 +66,9 @@ class RestructuredText(RestructuredTextBase):
         settings_overrides = dict((k.replace("-", "_"), v) for k, v in self.setting_values().iteritems() if v and not skip_setting(k))
         writer_name = self.docutils_writer_name()
 
+        warning_stream = StringIO.StringIO()
+        settings_overrides['warning_stream'] = warning_stream
+
         self.log_debug("settings for rst: %r" % settings_overrides)
         self.log_debug("rst writer: %s" % writer_name)
 
@@ -95,6 +99,8 @@ class RestructuredText(RestructuredTextBase):
             self.log_warn("rst writer: %s" % writer_name)
             raise e
 
+        self.log_debug("docutils warnings:\n%s\n" % warning_stream.getvalue())
+
 class RstBody(RestructuredTextBase):
     """
     Returns just the body part of an ReST document.
@@ -102,12 +108,19 @@ class RstBody(RestructuredTextBase):
     aliases = ['rstbody']
 
     def process_text(self, input_text):
+        warning_stream = StringIO.StringIO()
+        settings_overrides = {}
+        settings_overrides['warning_stream'] = warning_stream
+
         parts = core.publish_parts(
                 input_text,
                 writer_name=self.docutils_writer_name(),
+                settings_overrides=settings_overrides
                 )
         if parts.has_key('title') and parts['title']:
             self.update_all_args({'title' : parts['title']})
+
+        self.log_debug("docutils warnings:\n%s\n" % warning_stream.getvalue())
 
         return parts['body']
 
@@ -126,10 +139,17 @@ class RstDocParts(DexyFilter):
     def process(self):
         input_text = unicode(self.input_data)
 
+        warning_stream = StringIO.StringIO()
+        settings_overrides = {}
+        settings_overrides['warning_stream'] = warning_stream
+
         parts = core.publish_parts(
                 input_text,
-                writer_name = self.setting('writer')
+                writer_name = self.setting('writer'),
+                settings_overrides=settings_overrides
                 )
+
+        self.log_debug("docutils warnings:\n%s\n" % warning_stream.getvalue())
 
         for k, v in parts.iteritems():
             self.output_data.append(k, v)

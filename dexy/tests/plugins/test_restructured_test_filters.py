@@ -43,7 +43,6 @@ def test_rest_to_tex():
                 )
 
         wrapper.run(node)
-        print node.output_data()
         assert str(node.output_data()) == """\
 %
 \\begin{itemize}

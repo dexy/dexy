@@ -12,6 +12,9 @@ class RunReporter(Reporter):
     Returns info about a dexy run.
     """
     aliases = ['run']
+    _settings = {
+            'default' : False
+            }
 
     def run(self, wrapper):
         latest_report_dir = os.path.join(wrapper.log_dir, 'run-latest')

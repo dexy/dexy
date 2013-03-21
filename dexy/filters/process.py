@@ -217,7 +217,7 @@ class SubprocessFilter(Filter):
     def run_command(self, command, env, input_text=None):
         ws = self.workspace()
         if os.path.exists(ws):
-            print "already have workspace"
+            self.log_debug("already have workspace '%s'" % os.path.abspath(ws))
         else:
             self.populate_workspace()
 

@@ -96,8 +96,6 @@ def test_yaml_parser():
         for doc in wrapper.roots:
             assert doc.__class__.__name__ == 'BundleNode'
             assert doc.key in ['code', 'wordpress']
-            for inpt in doc.walk_inputs():
-                print inpt
 
         wrapper.run()
 

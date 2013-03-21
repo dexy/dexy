@@ -144,9 +144,6 @@ def test_node_caching__slow():
                 )
         wrapper.run(doc_txt)
 
-        print hello_py.doc_changed
-        print hello_py.args_changed
-        print hello_py.inputs_changed()
         assert not hello_py.changed()
         assert doc_txt.changed()
 
@@ -162,7 +159,6 @@ def test_node_caching__slow():
                 )
         wrapper.run(doc_txt)
 
-        print "inputs", doc_txt.inputs
         assert hello_py.changed()
         assert doc_txt.changed()
 

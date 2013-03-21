@@ -84,6 +84,7 @@
 </code></pre>
 {% endif -%}
 
+            {% if False -%}
             {% if len(doc.inputs) > 0 %}
             <br />
             <h4>Inputs</h4>
@@ -93,8 +94,10 @@
                 {% endfor %}
             </ul>
             {% endif %}
+            {% endif %}
 
             <br />
+            {% if False -%}
             <h4>Artifacts</h4>
             <table style="width: 800px; border: thin solid black; border-collapse: collapse;">
                 <tr><th>Key</th><th>Link</th><th>Elapsed</th><th>Run Type</th><th>Sections</th><th>wd</th></tr>
@@ -119,6 +122,7 @@
                 </tr>
                 {% endfor -%}
             </table>
+            {% endif %}
             <br />
             {% for a in doc.children -%}
             {% if a.stdout -%}

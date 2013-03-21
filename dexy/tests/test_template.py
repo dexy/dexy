@@ -10,7 +10,6 @@ def test_run():
 def test_dexy():
     for batch in DefaultTemplate().dexy():
         assert 'jinja' in batch.filters_used
-        print batch.docs
         assert "doc:hello.txt|jinja" in batch.docs
         assert "doc:dexy.rst|jinja|rst2html" in batch.docs
 

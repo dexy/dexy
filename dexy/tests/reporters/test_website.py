@@ -12,6 +12,3 @@ def test_iter():
 
     for n in [n2, n3]:
         nav.add_node(n)
-
-    print nav.root
-    print nav.debug()
