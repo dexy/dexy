@@ -1,51 +1,56 @@
+from dexy.batch import Batch
 from dexy.commands.utils import init_wrapper
 from dexy.utils import defaults
+from operator import attrgetter
 
 def grep_command(
         __cli_options=False, # nodoc
         expr=None, # The expression to search for
         keyexpr="", # Only search for keys matching this expression, implies keys=True
         keys=False, # if True, try to list the keys in any found files
-        recurse=False, # if True, recurse into keys to look for sub keys (implies keys=True)
+        keylimit=10, # maximum number of matching keys to print
+        limit=10, # maximum number of matching records to print
         artifactsdir=defaults['artifacts_dir'], # location of directory in which to store artifacts
         logdir=defaults['log_dir'] # location of directory in which to store logs
         ):
     """
-    Search for a Dexy document in the database matching the expression.
-
-    For sqlite the expression will be wrapped in % for you.
+    Search for a Dexy document in the previously run batch. Prints out document
+    keys which include the expression.
     """
     wrapper = init_wrapper(locals())
+    batch = Batch.load_most_recent(wrapper)
 
-#    for row in wrapper.db.query_docs("%%%s%%" % expr):
-#        print row['key']
-#        if keys or len(keyexpr) > 0 or recurse:
-#            artifact_classes = dexy.introspect.artifact_classes()
-#            artifact_class = artifact_classes[artifactclass]
-#            artifact = artifact_class.retrieve(row['hashstring'])
-#            if artifact.ext in [".json", ".kch", ".sqlite3"]:
-#                if len(keyexpr) > 0:
-#                    rows = artifact.kv_storage().query("%%%s%%" % keyexpr)
-#                else:
-#                    rows = artifact.kv_storage().keys()
-#
-#                if rows:
-#                    print "  key-value store keys:"
-#                for k in rows:
-#                    print "    %s" % k
-#                    if recurse:
-#                        v = artifact.retrieve_from_kv_storage(k)
-#                        try:
-#                            if not hasattr(v, "keys"):
-#                                v = json.loads(v)
-#                            if hasattr(v, "keys"):
-#                                for kk in v.keys():
-#                                    print "      %s" % kk
-#                        except Exception as e:
-#                            pass
-#
-#            if len(artifact.data_dict.keys()) > 1:
-#                print "  data dict keys:"
-#            for k in artifact.data_dict.keys():
-#                if not k == '1':
-#                    print "    %s" % k
+    def print_keys(pkeys):
+        n = len(pkeys)
+        if n > keylimit:
+            pkeys = pkeys[0:keylimit]
+        
+        for key in pkeys:
+            print '  ', key
+
+        if n > keylimit:
+            print "  only printed first %s of %s total keys" % (keylimit, n)
+
+    def print_match(match):
+        print match.key
+
+        if hasattr(match, 'keys'):
+            if keyexpr:
+                print_keys([key for key in match.keys() if keyexpr in key])
+            elif keys:
+                print_keys(match.keys())
+
+    def print_matches(matches):
+        for match in matches:
+            print_match(match)
+   
+    if not batch:
+        print "you need to run dexy first"
+    else:
+        matches = sorted([data for data in batch if expr in data.key], key=attrgetter('key'))
+        n = len(matches)
+        if n > limit:
+            print_matches(matches[0:limit])
+            print "only printed first %s of %s total matches" % (limit, n)
+        else:
+            print_matches(matches)
