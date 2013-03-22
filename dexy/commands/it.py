@@ -118,7 +118,7 @@ def dexy_command(
 
     if r or reset:
         print "resetting dexy cache..."
-        dexy.commands.setup.reset_command(artifactsdir=artifactsdir, logdir=logdir)
+        dexy.commands.dirs.reset_command(artifactsdir=artifactsdir, logdir=logdir)
 
     # Don't trap errors yet because error handling uses wrapper instance.
     wrapper = init_wrapper(locals())

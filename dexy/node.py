@@ -70,7 +70,7 @@ class Node(dexy.plugin.Plugin):
             for inpt in inputs:
                 children.extend(inpt.children)
                 children.append(inpt)
-                walk(inpt.inputs)
+                walk(list(inpt.inputs)+inpt.children)
 
         if self.inputs:
             walk(self.inputs)

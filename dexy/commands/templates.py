@@ -2,7 +2,7 @@ from dexy.commands.utils import import_extra_plugins
 from dexy.commands.utils import init_wrapper
 from dexy.commands.utils import template_text
 from dexy.utils import getdoc
-import dexy.template
+import dexy.templates
 import os
 import sys
 from dexy.utils import file_exists
@@ -25,18 +25,18 @@ def gen_command(
     elif t and template != DEFAULT_TEMPLATE:
         raise dexy.exceptions.UserFeedback("Only specify one of --t or --template, not both.")
 
-    if not template in dexy.template.Template.aliases:
+    if not template in dexy.template.Template.plugins:
         print "Can't find a template named '%s'. Run 'dexy templates' for a list of templates." % template
         sys.exit(1)
 
-    template_class = dexy.template.Template.aliases[template]
-    template_class().run(d, **kwargs)
+    template_instance = dexy.template.Template.create_instance(template)
+    template_instance.generate(d, **kwargs)
 
     # We run dexy setup. This will respect any dexy.conf file in the template
     # but passing command line options for 'setup' to 'gen' currently not supported.
     os.chdir(d)
     wrapper = init_wrapper({})
-    wrapper.setup_dexy_dirs()
+    wrapper.create_dexy_dirs()
     print "Success! Your new dexy project has been created in directory '%s'" % d
     if file_exists("README"):
         with open("README", "r") as f:
@@ -58,27 +58,23 @@ def templates_command(
     """
     import_extra_plugins({'plugins' : plugins})
 
-    aliases = []
-    for alias in sorted(dexy.template.Template.aliases):
-        klass = dexy.template.Template.aliases[alias]
-        if klass.is_active():
-            aliases.append(alias)
-
-    if simple:
-        print "\n".join(aliases)
-    else:
+    if not simple:
         FMT = "%-40s %s"
         print FMT % ("Alias", "Info")
-        for alias in aliases:
-            klass = dexy.template.Template.aliases[alias]
-            print FMT % (alias, getdoc(klass)),
+
+    for i, template in enumerate(dexy.template.Template):
+        if simple:
+            print template.alias
+        else:
+            print FMT % (template.alias, getdoc(template.__class__)),
             if validate:
                 print " validating...",
-                print klass.validate() and "OK" or "ERROR"
+                print template.validate() and "OK" or "ERROR"
             else:
                 print ''
+    
+    if i == 1:
+        print "Run '[sudo] pip install dexy-templates' to install some more templates."
 
-        if len(aliases) == 1:
-            print "Run '[sudo] pip install dexy-templates' to install some more templates."
-
+    if not simple:
         print "Run 'dexy help -on gen' for help on generating projects from templates."

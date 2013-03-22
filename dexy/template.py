@@ -106,13 +106,13 @@ class Template(dexy.plugin.Plugin):
             assert f in filters_used, msg
 
         for f in filters_used:
-            if not f in self.__class__.filters_used:
+            if not f.startswith('-') and not f in self.__class__.filters_used:
                 msg = s("""filter %(filter)s used by %(template)s
                         but not listed in klass.filters_used,
                         adjust list to: filters_used = [%(list)s]""")
                 msgargs = {
                         'filter' : f,
-                        'template' : self.__class__.__name,
+                        'template' : self.__class__.__name__,
                         'list'  : ", ".join("'%s'" % f for f in filters_used)
                         }
                 print msg % msgargs

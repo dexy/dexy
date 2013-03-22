@@ -186,7 +186,9 @@ class PluginMeta(type):
                     instance._settings[key] = (orig[0], value,)
 
     def create_instance(cls, alias, *instanceargs, **instancekwargs):
-        if not alias in cls.plugins:
+        if alias.startswith('-'):
+            alias = '-'
+        elif not alias in cls.plugins:
             msg = "no alias '%s' available for '%s'"
             msgargs = (alias, cls.__name__)
             raise dexy.exceptions.NoPlugin(msg % msgargs)

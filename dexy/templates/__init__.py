@@ -1,0 +1,1 @@
+import dexy.templates.standard

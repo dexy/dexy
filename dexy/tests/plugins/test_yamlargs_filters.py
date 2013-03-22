@@ -45,7 +45,7 @@ def test_yamlargs():
                 )
 
         wrapper.run(doc)
-        assert doc.title() == "My Title"
+        assert doc.output_data().title() == "My Title"
         assert doc.output_data().as_text() == "This is the content."
 
 YAML = """filterargs:

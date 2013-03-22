@@ -14,6 +14,9 @@ import dexy.parsers
 
 # import all commands
 from dexy.commands.conf import conf_command
+from dexy.commands.dirs import cleanup_command
+from dexy.commands.dirs import reset_command
+from dexy.commands.dirs import setup_command
 from dexy.commands.fcmds import fcmd_command
 from dexy.commands.fcmds import fcmds_command
 from dexy.commands.filters import filter_command
@@ -26,9 +29,6 @@ from dexy.commands.reporters import reporters_command
 from dexy.commands.reporters import reporters_command
 from dexy.commands.reporters import reports_command
 from dexy.commands.serve import serve_command
-from dexy.commands.setup import cleanup_command
-from dexy.commands.setup import reset_command
-from dexy.commands.setup import setup_command
 from dexy.commands.templates import gen_command
 from dexy.commands.templates import template_command
 from dexy.commands.templates import templates_command

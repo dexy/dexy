@@ -1,11 +1,11 @@
 from dexy.batch import Batch
 from dexy.commands.utils import init_wrapper
-from dexy.utils import defaults
-from operator import attrgetter
-import json
 from dexy.data import Generic
 from dexy.data import KeyValue
 from dexy.data import Sectioned
+from dexy.utils import defaults
+from operator import attrgetter
+import json
 
 def grep_command(
         __cli_options=False, # nodoc

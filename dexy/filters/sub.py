@@ -158,11 +158,11 @@ class AbcFilter(SubprocessFormatFlagFilter):
         proc, stdout = self.run_command(command, self.setup_env())
         self.handle_subprocess_proc_return(command, proc.returncode, stdout)
 
-        if self.artifact.ext in ('.svg', '.eps'):
+        if self.ext in ('.svg', '.eps'):
             # Fix for abcm2ps adding 001 to file name.
             nameparts = os.path.splitext(self.output_data.name)
             output_filename = "%s001%s" % (nameparts[0], nameparts[1])
-            output_filepath = os.path.join(self.artifact.tmp_dir(), output_filename)
+            output_filepath = os.path.join(self.workspace(), output_filename)
             self.output_data.copy_from_file(output_filepath)
         else:
             self.copy_canonical_file()
@@ -223,10 +223,10 @@ class AbcMultipleFormatsFilter(SubprocessFilter):
                 # Fix for abcm2ps adding 001 to file name.
                 nameparts = os.path.splitext(self.output_workfile(ext))
                 output_filename = "%s001%s" % (nameparts[0], nameparts[1])
-                output_filepath = os.path.join(self.artifact.tmp_dir(), output_filename)
+                output_filepath = os.path.join(wd, output_filename)
             else:
                 output_filename = self.output_workfile(ext)
-                output_filepath = os.path.join(self.artifact.tmp_dir(), output_filename)
+                output_filepath = os.path.join(wd, output_filename)
 
             with open(output_filepath, "r") as f:
                 output[ext] = f.read()
