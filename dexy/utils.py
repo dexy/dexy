@@ -4,6 +4,7 @@ import inspect
 import json
 import logging
 import os
+import platform
 import posixpath
 import re
 import shutil
@@ -50,6 +51,10 @@ log_levels = {
     'INFO' : logging.INFO,
     'WARN' : logging.WARN
 }
+
+def is_windows():
+    print "platform is", platform.system()
+    return platform.system() in ('windows',)
 
 def logging_log_level(log_level):
     try:

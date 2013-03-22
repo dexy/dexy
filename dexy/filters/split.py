@@ -17,7 +17,7 @@ class HtmlSectionsFilter(DexyFilter):
     def process(self):
         output = OrderedDict()
 
-        sections = re.split("<!-- section \"(.+)\" -->\n", unicode(self.input_data()))
+        sections = re.split("<!-- section \"(.+)\" -->\n", unicode(self.input_data))
 
         for i in range(1, len(sections), 2):
             section_name = sections[i]

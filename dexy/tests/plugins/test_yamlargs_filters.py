@@ -1,5 +1,6 @@
 from dexy.doc import Doc
 from dexy.tests.utils import wrap
+from dexy.wrapper import Wrapper
 
 def test_yamlargs_with_caching():
     with wrap() as wrapper:
@@ -14,6 +15,7 @@ def test_yamlargs_with_caching():
         assert task.args['title'] == "My Title"
         assert task.changed()
 
+        wrapper = Wrapper()
         doc = Doc("example.txt|yamlargs",
                 wrapper,
                 [],

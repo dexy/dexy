@@ -4,6 +4,7 @@ import dexy.filter
 import dexy.node
 import os
 import posixpath
+import stat
 
 class Doc(dexy.node.Node):
     """
@@ -26,6 +27,8 @@ class Doc(dexy.node.Node):
         canonical_name = self.canonical_name_from_args() or self.name
         storage_key = "%s-000" % self.hashid
 
+        canonical_output = len(self.filter_aliases) == 0
+
         self.initial_data = dexy.data.Data.create_instance(
                 self.data_class_alias(),
                 self.name,
@@ -34,6 +37,7 @@ class Doc(dexy.node.Node):
                 storage_key,
                 {},
                 None,
+                canonical_output,
                 self.wrapper
                 )
 
@@ -51,22 +55,17 @@ class Doc(dexy.node.Node):
                 self.initial_data.set_data(self.get_contents())
 
     def check_doc_changed(self):
-        #print "checking doc changed for %s" % self.name
         if self.name in self.wrapper.filemap:
             live_stat = self.wrapper.filemap[self.name]['stat']
             cache_stat = self.initial_data.storage.stat()
             if cache_stat:
                 # we have a file in the cache, compare its mtime to filemap
                 # to determine whether it has changed
-                import stat
                 cache_mtime = cache_stat[stat.ST_MTIME]
                 live_mtime = live_stat[stat.ST_MTIME]
-                #print "live mtime %s cache mtime %s" % (live_mtime, cache_mtime),
-                #print live_mtime > cache_mtime
                 return live_mtime > cache_mtime
             else:
                 # there is no file in the cache, therefore it has 'changed'
-                #print "no file in cache"
                 return True
         else:
             # virtual

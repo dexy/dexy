@@ -204,7 +204,9 @@ class PexpectReplFilter(SubprocessFilter):
         try:
             proc.close()
         except pexpect.ExceptionPexpect:
-            raise UserFeedback("process %s may not have closed" % proc.pid)
+            msg = "process %s may not have closed for %s"
+            msgargs = (proc.pid, self.key)
+            raise UserFeedback(msg % msgargs)
 
         if proc.exitstatus and self.setting('check-return-code'):
             self.handle_subprocess_proc_return(self.setting('executable'), proc.exitstatus, section_transcript)

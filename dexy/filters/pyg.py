@@ -181,6 +181,7 @@ class PygmentsFilter(DexyFilter):
                 raise dexy.commands.UserFeedback("pyg filter doesn't know how to generate a stylesheet for %s extension" % ext)
 
             self.output_data.set_data(output)
+            self.doc.add_runtime_args({'include-in-workspaces' : True })
 
         else:
             lexer = self.create_lexer_instance()

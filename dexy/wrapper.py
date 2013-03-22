@@ -3,16 +3,19 @@ from dexy.exceptions import InternalDexyProblem
 from dexy.exceptions import UserFeedback
 from dexy.utils import file_exists
 from dexy.utils import s
+from dexy.utils import is_windows
 import dexy.batch
 import dexy.doc
 import dexy.parser
 import dexy.reporter
 import dexy.utils
+import json
 import logging
 import logging.handlers
 import os
 import posixpath
 import shutil
+import subprocess
 import time
 
 class Wrapper(object):
@@ -28,11 +31,43 @@ class Wrapper(object):
 
         self.nodes = {}
         self.roots = []
+        self.project_root = os.path.abspath(os.getcwd())
 
         if self.dexy_dirs_exist():
             self.setup_log()
-            self.project_root = os.path.abspath(os.getcwd())
             self.filemap = self.map_files()
+            self.load_node_argstrings()
+
+    def load_node_argstrings(self):
+        """
+        Load saved node arg strings into a hash so nodes can check if their
+        args have changed.
+        """
+        try:
+            with open(self.saved_args_filename(), 'r') as f:
+                self.saved_args = json.load(f)
+        except IOError:
+            self.saved_args = {}
+
+    def save_node_argstrings(self):
+        """
+        Save string representation of node args to check if they have changed.
+        """
+        arg_info = {}
+
+        self.log.debug("nodes are %s" % self.nodes)
+        for node in self.nodes.values():
+            arg_info[node.key_with_class()] = node.sorted_arg_string()
+
+        self.log.debug("saving node argstrings:\n%s" % arg_info)
+        with open(self.saved_args_filename(), 'w') as f:
+            json.dump(arg_info, f)
+
+    def saved_args_filename(self):
+        """
+        Filename under which to save node arg strings.
+        """
+        return os.path.join(self.artifacts_dir, 'batch.args')
 
     # Attributes
     def initialize_attribute_defaults(self):
@@ -104,7 +139,23 @@ class Wrapper(object):
                 with open(safety_filepath, 'w') as f:
                     f.write("This directory was created by dexy.")
 
-    def remove_dexy_dirs(self, reports=False):
+        hexes = ['0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f']
+        for c in hexes:
+            for d in hexes:
+                try:
+                    os.makedirs(os.path.join(self.artifacts_dir, "%s%s" % (c,d)))
+                except OSError:
+                    pass
+
+    def remove_dexy_dirs(self):
+        if is_windows():
+            print "calling unforked rm"
+            self.unforked_remove_dexy_dirs()
+        else:
+            print "calling forked rm"
+            self.forked_remove_dexy_dirs()
+
+    def unforked_remove_dexy_dirs(self):
         """
         Removes directories created by dexy. If 'reports' argument is true,
         also removes directories created by dexy's reports.
@@ -114,6 +165,27 @@ class Wrapper(object):
                 print "removing directory '%s'" % dirpath
                 shutil.rmtree(dirpath)
 
+    def forked_remove_dexy_dirs(self):
+        """
+        Removes directories created by dexy by first moving the files to a new
+        location, then forking the rm process.
+        """
+        def forked_remove_directory(dirpath):
+            # TODO make a .trash directory and move to a random dir in .trash
+            move_to = "%s-old" % os.path.abspath(dirpath)
+            if not self.is_location_in_project_dir(move_to):
+                msg = "trying to rm '%s', not in project dir '%s"
+                msgargs = (move_to, self.project_root)
+                raise dexy.exceptions.InternalDexyProblem(msg % msgargs)
+            shutil.move(os.path.abspath(dirpath), move_to)
+            # fork a new process to rm x-old files so we don't have to wait
+            subprocess.Popen(['rm', '-r', move_to])
+
+        for dirpath, safety_filepath, dirstat in self.iter_dexy_dirs():
+            if dirstat:
+                forked_remove_directory(dirpath)
+
+    def remove_reports_dirs(self, reports=True):
         if reports:
             if isinstance(reports, bool):
                 # return an iterator over all reporters
@@ -172,8 +244,10 @@ class Wrapper(object):
             exclude_str += ",%s" % self.exclude_also
 
         exclude = [d.strip() for d in exclude_str.split(",")]
-        exclude += [d[0] for d in self.iter_dexy_dirs()]
         exclude += self.reports_dirs()
+
+        for d in self.iter_dexy_dirs():
+            exclude += [d[0], "%s-old" % d[0]]
 
         return exclude
 
@@ -209,6 +283,7 @@ class Wrapper(object):
                     filemap[filepath]['stat'] = os.stat(os.path.join(dirpath, filename))
                     filemap[filepath]['ospath'] = os.path.normpath(os.path.join(dirpath, filename))
                     filemap[filepath]['dir'] = os.path.normpath(dirpath)
+
         return filemap
 
     def file_available(self, filepath):
@@ -234,7 +309,11 @@ class Wrapper(object):
         self.batch.start_time = time.time()
 
         if docs:
-            self.nodes = dict((d.key_with_class(), d) for d in docs)
+            self.nodes = {}
+            for d in docs:
+                for inpt in d.walk_inputs():
+                    self.nodes[inpt.key_with_class()] = inpt
+                self.nodes[d.key_with_class()] = d
             self.roots = list(docs)
             run_roots = self.roots
 
@@ -252,11 +331,14 @@ class Wrapper(object):
             else:
                 run_roots = self.roots
 
+        self.save_node_argstrings()
+
         for root_node in run_roots:
             for task in root_node:
                 task()
 
         self.batch.end_time = time.time()
+        self.batch.state = 'complete'
         self.batch.save_to_file()
 
     def qualify_key(self, key):
@@ -354,7 +436,6 @@ class Wrapper(object):
 
         return ast
 
-    # Old
     def report(self):
         if self.reports:
             self.log.debug("generating user-specified reports '%s'" % self.reports)
@@ -363,9 +444,14 @@ class Wrapper(object):
                 reporter = dexy.reporter.Reporter.create_instance(alias)
                 reporters.append(reporter)
         else:
-            self.log.debug("no reports specified, generating all reports for which 'default' setting is True")
+            msg = "no reports specified, running default reports"
+            self.log.debug(msg)
             reporters = [i for i in dexy.reporter.Reporter if i.setting('default')]
 
         for reporter in reporters:
-            self.log.debug("running reporter %s" % reporter.aliases[0])
-            reporter.run(self)
+            if self.batch.state == 'complete' or reporter.setting('run-on-failed-batch'):
+                self.log.debug("running reporter %s" % reporter.aliases[0])
+                reporter.run(self)
+
+    def is_location_in_project_dir(self, filepath):
+        return os.path.abspath(self.project_root) in os.path.abspath(filepath)

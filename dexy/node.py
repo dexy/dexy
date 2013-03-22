@@ -12,9 +12,15 @@ class Node(dexy.plugin.Plugin):
     """
     base class for Nodes
     """
-    aliases = []
+    aliases = ['node']
     __metaclass__ = dexy.plugin.PluginMeta
     _settings = {}
+
+    def is_canonical_output(self):
+        return False
+
+    def is_index_page(self):
+        return False
 
     def __init__(self, pattern, wrapper, inputs=None, **kwargs):
         self.key = os_to_posix(pattern)
@@ -103,14 +109,11 @@ class Node(dexy.plugin.Plugin):
         Checks if args have changed by comparing calculated hash against the
         archived calculated hash from last run.
         """
-        saved_args = None
-        runtime_args_cached = os.path.exists(self.runtime_args_filename())
-        try:
-            with open(self.args_filename(), "r") as f:
-                saved_args = f.read()
-            return not runtime_args_cached or (saved_args != self.sorted_arg_string())
-        except IOError:
-            return True
+        saved_args = self.wrapper.saved_args.get(self.key_with_class())
+        self.log_debug("saved args '%s' (%s)" % (saved_args, saved_args.__class__))
+        self.log_debug("sorted args '%s' (%s)" % (self.sorted_arg_string(), self.sorted_arg_string().__class__))
+        self.log_debug("unequal: %s" % saved_args != self.sorted_arg_string())
+        return saved_args != self.sorted_arg_string()
 
     def sorted_args(self, skip=['contents']):
         """
@@ -127,37 +130,22 @@ class Node(dexy.plugin.Plugin):
 
     def sorted_arg_string(self):
         """
-        Returns a string representation of args in consistent, sorted order.
+        Returns a string representation of args in sorted order.
         """
-        return json.dumps(self.sorted_args())
-
-    def args_filename(self):
-        """
-        Returns filename used to store arg hash to compare in next run.
-        """
-        return os.path.join(self.wrapper.artifacts_dir, self.hashid[0:2], "%s.args" % self.hashid)
+        return unicode(json.dumps(self.sorted_args()))
 
     def runtime_args_filename(self):
         """
-        Returns filename used to store runtime args.
+        filename used to store runtime args
         """
-        return os.path.join(self.wrapper.artifacts_dir, self.hashid[0:2], "%s.runtimeargs" % self.hashid)
+        return os.path.join(self.wrapper.artifacts_dir, self.hashid[0:2], "%s.runtimeargs.json" % self.hashid)
 
     def additional_docs_filename(self):
-        return os.path.join(self.wrapper.artifacts_dir, self.hashid[0:2], "%s.additionaldocs" % self.hashid)
+        """
+        filename used to store additional doc information
+        """
+        return os.path.join(self.wrapper.artifacts_dir, self.hashid[0:2], "%s.additionaldocs.json" % self.hashid)
 
-    def save_args(self):
-        """
-        Saves the args (for debugging, and to compare against next run).
-        """
-        # TODO make all two letter a0 a1 a2 dirs automatically, remove this
-        try:
-            os.makedirs(os.path.dirname(self.args_filename()))
-        except OSError:
-            pass
-        with open(self.args_filename(), "w") as f:
-            json.dump(self.sorted_args(), f)
-    
     def save_runtime_args(self):
         with open(self.runtime_args_filename(), "w") as f:
             json.dump(self.runtime_args, f)
@@ -198,10 +186,10 @@ class Node(dexy.plugin.Plugin):
         return any(i.changed() for i in self.inputs)
 
     def changed(self):
-        #print "checking if %s is changed" % self.key
-        #print "  doc changed %s" % self.doc_changed
-        #print "  args changed %s" % self.args_changed
-        #print "  inputs changed %s" % self.inputs_changed()
+        self.log_debug("checking if %s is changed" % self.key)
+        self.log_debug("  doc changed %s" % self.doc_changed)
+        self.log_debug("  args changed %s" % self.args_changed)
+        self.log_debug("  inputs changed %s" % self.inputs_changed())
         return self.doc_changed or self.args_changed or self.inputs_changed()
 
     def __iter__(self):
@@ -238,7 +226,6 @@ class Node(dexy.plugin.Plugin):
         pass
 
     def call_run(self, *args, **kw):
-        self.save_args()
         if self.changed():
             self.log_info("running")
             self.run(*args, **kw)
@@ -290,7 +277,9 @@ class PatternNode(Node):
             if fnmatch.fnmatch(filepath, file_pattern):
                 except_p = self.args.get('except')
                 if except_p and re.search(except_p, filepath):
-                    self.log_debug("skipping file '%s' because it matches except '%s'" % (filepath, except_p))
+                    msg = "not creating child of patterndoc for file '%s' because it matches except '%s'"
+                    msgargs = (filepath, except_p)
+                    self.log_debug(msg % msgargs)
                 else:
                     if len(filter_aliases) > 0:
                         doc_key = "%s|%s" % (filepath, "|".join(filter_aliases))

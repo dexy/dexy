@@ -1,5 +1,6 @@
 from dexy.common import OrderedDict
 from dexy.utils import file_exists
+from dexy.utils import s
 import dexy.exceptions
 import dexy.plugin
 import os
@@ -13,9 +14,11 @@ class Storage(dexy.plugin.Plugin):
     __metaclass__ = dexy.plugin.PluginMeta
     _settings = {}
 
-    def check_location_is_in_project_dir(self, filepath):
-        if not self.wrapper.project_root in os.path.abspath(filepath):
-            raise dexy.exceptions.UserFeedback("trying to write '%s' outside of '%s'" % (filepath, self.wrapper.project_root))
+    def assert_location_is_in_project_dir(self, filepath):
+        if not self.wrapper.is_location_in_project_dir(filepath):
+            msg = "trying to write '%s' outside of '%s'"
+            msgargs = (filepath, self.wrapper.project_root,)
+            raise dexy.exceptions.UserFeedback(msg % msgargs)
 
     def __init__(self, storage_key, ext, wrapper):
         self.storage_key = storage_key
@@ -66,7 +69,7 @@ class GenericStorage(Storage):
         if not filepath:
             filepath = self.data_file()
 
-        self.check_location_is_in_project_dir(filepath)
+        self.assert_location_is_in_project_dir(filepath)
 
         if self.data_file_exists() and not filepath == self.data_file():
             shutil.copyfile(self.data_file(), filepath)
@@ -83,7 +86,7 @@ class GenericStorage(Storage):
         If data file exists, copy file and return true. Otherwise return false.
         """
         try:
-            self.check_location_is_in_project_dir(filepath)
+            self.assert_location_is_in_project_dir(filepath)
             shutil.copyfile(self.data_file(), filepath)
             return True
         except:
@@ -110,9 +113,11 @@ class JsonOrderedStorage(GenericStorage):
     @classmethod
     def convert_ordered_dict_to_numbered_dict(klass, ordered_dict):
         if len(ordered_dict) >= klass.MAX_DATA_DICT_LENGTH:
-            exception_msg = """Your data dict has %s items, which is greater than the arbitrary limit of %s items.
-You can increase this limit by changing MAX_DATA_DICT_DECIMALS."""
-            raise Exception(exception_msg % (len(ordered_dict), klass.MAX_DATA_DICT_LENGTH))
+            msg = s("""Your data dict has %s items, which is greater
+            than the arbitrary limit of %s items.  You can increase this limit
+            by changing MAX_DATA_DICT_DECIMALS.""")
+            msgargs = (len(ordered_dict), klass.MAX_DATA_DICT_LENGTH)
+            raise dexy.exceptions.InternalDexyProblem(msg % msgargs)
 
         data_dict = {}
         i = -1
@@ -137,7 +142,7 @@ You can increase this limit by changing MAX_DATA_DICT_DECIMALS."""
         if not filepath:
             filepath = self.data_file()
 
-        self.check_location_is_in_project_dir(filepath)
+        self.assert_location_is_in_project_dir(filepath)
 
         with open(filepath, "wb") as f:
             numbered_dict = self.convert_ordered_dict_to_numbered_dict(data)
@@ -182,7 +187,7 @@ class JsonStorage(GenericStorage):
         if not filepath:
             filepath = self.data_file()
 
-        self.check_location_is_in_project_dir(filepath)
+        self.assert_location_is_in_project_dir(filepath)
 
         with open(filepath, "wb") as f:
             json.dump(data, f)
@@ -201,6 +206,7 @@ class Sqlite3Storage(GenericStorage):
         return os.path.join(self.wrapper.artifacts_dir, "%s-tmp%s" % (self.storage_key, self.ext))
 
     def setup(self):
+        self._append_counter = 0
         if file_exists(self.data_file()):
             self._storage = sqlite3.connect(self.data_file())
             self._cursor = self._storage.cursor()
@@ -212,7 +218,6 @@ class Sqlite3Storage(GenericStorage):
             self._storage = sqlite3.connect(self.working_file())
             self._cursor = self._storage.cursor()
             self._cursor.execute("CREATE TABLE kvstore (key TEXT, value TEXT)")
-            self._append_counter = 0
 
     def append(self, key, value):
         self._cursor.execute("INSERT INTO kvstore VALUES (?, ?)", (str(key), str(value)))
@@ -259,6 +264,6 @@ class Sqlite3Storage(GenericStorage):
             yield k, v
 
     def save(self):
-        self.check_location_is_in_project_dir(self.data_file())
+        self.assert_location_is_in_project_dir(self.data_file())
         self._storage.commit()
         shutil.copyfile(self.working_file(), self.data_file())

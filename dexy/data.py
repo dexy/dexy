@@ -41,16 +41,18 @@ class Data(dexy.plugin.Plugin):
     def __str__(self):
         return str(unicode(self))
 
-    def __init__(self, key, ext, canonical_name, storage_key, args, storage_type, wrapper):
+    def __init__(self, key, ext, canonical_name, storage_key,
+            args, storage_type, canonical_output, wrapper):
         self.key = key
         self.ext = ext
         self.name = canonical_name
         self.storage_key = storage_key
         self.args = args
-        self.wrapper = wrapper
-        self.shortcut = self.args.get('shortcut')
         self.storage_type = storage_type
+        self.wrapper = wrapper
+        self.canonical_output = canonical_output
 
+        self.shortcut = self.args.get('shortcut')
         self._data = None
 
         # allow doing custom setup in subclasses
@@ -61,7 +63,8 @@ class Data(dexy.plugin.Plugin):
         Returns a tuple of attributes in the correct order to pass to create_instance
         """
         return (self.alias, self.key, self.ext, self.name,
-                self.storage_key, self.args, self.storage_type,)
+                self.storage_key, self.args, self.storage_type,
+                self.canonical_output,)
     
     def keys(self):
         return []
@@ -73,7 +76,7 @@ class Data(dexy.plugin.Plugin):
         self.storage_type = self.storage_type or self.storage_class_alias(self.ext)
         instanceargs = (self.storage_key, self.ext, self.wrapper,)
         self.storage = dexy.storage.Storage.create_instance(self.storage_type, *instanceargs)
-        self.storage.check_location_is_in_project_dir(self.name)
+        self.storage.assert_location_is_in_project_dir(self.name)
 
     def parent_dir(self):
         return posixpath.dirname(self.name)
@@ -141,7 +144,12 @@ class Generic(Data):
         self.save()
 
     def load_data(self):
-        self._data = self.storage.read_data()
+        try:
+            self._data = self.storage.read_data()
+        except IOError:
+            msg = "no data in file '%s' for %s"
+            msgargs = (self.storage.data_file(), self.key)
+            raise dexy.exceptions.InternalDexyProblem(msg % msgargs)
 
     def has_data(self):
         return self._data or self.is_cached()
@@ -177,7 +185,7 @@ class Generic(Data):
                 return dexy.utils.parse_json_from_file(f)
 
     def is_canonical_output(self):
-        return True
+        return self.canonical_output
 
     def is_index_page(self):
         return self.name.endswith("index.html")

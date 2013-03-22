@@ -11,6 +11,7 @@ def reset_command(
     """
     wrapper = init_wrapper(locals())
     wrapper.remove_dexy_dirs()
+    wrapper.remove_reports_dirs()
     wrapper.create_dexy_dirs()
 
 def cleanup_command(
@@ -23,7 +24,8 @@ def cleanup_command(
     Remove the artifacts and logs directories.
     """
     wrapper = init_wrapper(locals())
-    wrapper.remove_dexy_dirs(reports)
+    wrapper.remove_dexy_dirs()
+    wrapper.remove_reports_dirs(reports)
 
 def setup_command(__cli_options=False, **kwargs):
     """

@@ -1,6 +1,5 @@
 from dexy.doc import Doc
 from dexy.tests.utils import wrap
-from dexy.wrapper import Wrapper
 import dexy.data
 import dexy.exceptions
 import os
@@ -31,7 +30,8 @@ def test_attempt_write_outside_project_root():
 
 def test_key_value_data():
     with wrap() as wrapper:
-        data = dexy.data.KeyValue("doc.json", ".json", "doc.json", "hash1", {}, 'json', wrapper)
+        data = dexy.data.KeyValue("doc.json", ".json", "doc.json", "hash1",
+                {}, 'json', None, wrapper)
         data.setup_storage()
 
         assert not data._data
@@ -48,7 +48,8 @@ def test_key_value_data():
 
 def test_key_value_data_sqlite():
     with wrap() as wrapper:
-        data = dexy.data.KeyValue("doc.sqlite3", ".sqlite3", "doc.sqlite3", "hash1", {}, None, wrapper)
+        data = dexy.data.KeyValue("doc.sqlite3", ".sqlite3",
+                "doc.sqlite3", "hash1", {}, None, None, wrapper)
         data.setup_storage()
 
         data.append('foo', 'bar')
@@ -64,7 +65,8 @@ def test_generic_data():
         CONTENTS = "contents go here"
 
         # Create a GenericData object
-        data = dexy.data.Generic("doc.txt", ".txt", "doc.txt", "hash1", {}, None, wrapper)
+        data = dexy.data.Generic("doc.txt", ".txt", "doc.txt", "hash1",
+                {}, None, None, wrapper)
         data.setup_storage()
 
         # Assign some text contents
@@ -96,7 +98,8 @@ def test_generic_data():
 
 def test_init_data():
     with wrap() as wrapper:
-        data = dexy.data.Generic("doc.txt", ".abc", "doc.abc", "def123", {}, None, wrapper)
+        data = dexy.data.Generic("doc.txt", ".abc", "doc.abc", "def123",
+                {}, None, None, wrapper)
         data.setup_storage()
 
         assert data.key == "doc.txt"

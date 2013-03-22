@@ -32,26 +32,25 @@ def test_create_node():
 def test_node_arg_caching():
     with wrap() as wrapper:
         node = dexy.node.Node("foo", wrapper, [], foo='bar', baz=123)
+        wrapper.add_node(node)
+
         assert node.hashid == 'acbd18db4cc2f85cedef654fccc4a4d8'
-        assert node.args_filename() == ".cache/ac/acbd18db4cc2f85cedef654fccc4a4d8.args"
         assert node.args['foo'] == 'bar'
         assert node.args['baz'] == 123
         assert node.sorted_arg_string() == '[["baz", 123], ["foo", "bar"]]'
 
         assert os.path.exists(wrapper.artifacts_dir)
-        assert not os.path.exists(node.args_filename())
-        node.save_args()
-        node.save_runtime_args()
-        assert os.path.exists(node.args_filename())
+        assert not os.path.exists(wrapper.saved_args_filename())
+        wrapper.save_node_argstrings()
+        assert os.path.exists(wrapper.saved_args_filename())
+        wrapper.load_node_argstrings()
         assert not node.check_args_changed()
 
         node.args['baz'] = 456
         assert node.check_args_changed()
-        node.save_args()
+        wrapper.save_node_argstrings()
+        wrapper.load_node_argstrings()
         assert not node.check_args_changed()
-
-        os.remove(node.args_filename())
-        assert node.check_args_changed()
 
 SCRIPT_YAML = """
 script:scriptnode:
@@ -121,7 +120,7 @@ def test_node_caching__slow():
         assert hello_py.changed()
         assert doc_txt.changed()
 
-        wrapper = Wrapper()
+        wrapper = Wrapper(log_level='DEBUG')
         hello_py = Doc("hello.py|py", wrapper)
         doc_txt = Doc("doc.txt|jinja",
                 wrapper,

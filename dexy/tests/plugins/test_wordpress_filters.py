@@ -123,8 +123,7 @@ def test_wordpress(MockXmlrpclib):
         # Publish existing draft
         doc = mk_wp_doc(wrapper)
         wrapper.run(doc)
-        print doc.output_data().as_text() 
-        assert doc.output_data().from_json()['permaLink'] == "http://example.com/blog/42"
+        assert str(doc.output_data()) == "http://example.com/blog/42"
 
         # Now, separately, test an image upload.
         orig = os.path.join(TEST_DATA_DIR, 'color-graph.pdf')

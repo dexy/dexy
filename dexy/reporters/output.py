@@ -10,14 +10,14 @@ class OutputReporter(Reporter):
             'dir' : 'output'
             }
 
-    def write_canonical_doc(self, doc):
-        fp = os.path.join(self.setting('dir'), doc.name)
+    def write_canonical_doc(self, data):
+        fp = os.path.join(self.setting('dir'), data.name)
 
         if fp in self.locations:
             print "WARNING overwriting file", fp
         else:
             self.locations[fp] = []
-        self.locations[fp].append(doc.key)
+        self.locations[fp].append(data.key)
 
         parent_dir = os.path.dirname(fp)
         try:
@@ -25,9 +25,9 @@ class OutputReporter(Reporter):
         except os.error:
             pass
 
-        self.log_debug("  writing %s to %s" % (doc.key, fp))
+        self.log_debug("  writing %s to %s" % (data.key, fp))
 
-        doc.output_to_file(fp)
+        data.output_to_file(fp)
 
     def run(self, wrapper):
         self.wrapper=wrapper

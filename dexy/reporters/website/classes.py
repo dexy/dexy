@@ -20,17 +20,17 @@ class Navigation(object):
         self.nodes = {}
         self.root = None
 
-    def populate_lookup_table(self, docs):
-        for doc in docs:
-            if doc.is_canonical_output():
-                parent_dir = "/" + os.path.dirname(doc.name)
-                if not self.lookup_table.has_key(parent_dir):
-                    self.lookup_table[parent_dir] = {'docs' : []}
-    
-                self.lookup_table[parent_dir]['docs'].append(doc)
+    def populate_lookup_table(self, batch):
+        for data in batch:
+            parent_dir = "/" + os.path.dirname(data.name)
+            if not self.lookup_table.has_key(parent_dir):
+                self.lookup_table[parent_dir] = {'docs' : []}
 
-            if doc.is_index_page():
-                self.lookup_table[parent_dir]['index-page'] = doc
+            if data.is_canonical_output():
+                self.lookup_table[parent_dir]['docs'].append(data)
+
+            if data.is_index_page():
+                self.lookup_table[parent_dir]['index-page'] = data
 
     def walk(self):
         """
@@ -129,9 +129,9 @@ class WebsiteReporter(OutputReporter):
             "default" : False
             }
 
-    def apply_and_render_template(self, doc):
+    def apply_and_render_template(self, data):
         # Figure out which template to use.
-        ws_template = doc.arg_value('ws-template')
+        ws_template = data.args.get('ws-template')
         if ws_template and not isinstance(ws_template, bool):
             template_file = ws_template
         else:
@@ -139,15 +139,15 @@ class WebsiteReporter(OutputReporter):
 
         # Look for a file named template_file in nearest parent dir to document.
         template_path = None
-        for subpath in reverse_iter_paths(doc.output_data().name):
+        for subpath in reverse_iter_paths(data.name):
             template_path = os.path.join(subpath, template_file)
             if file_exists(template_path):
                 break
 
         if not template_path:
-            raise dexy.exceptions.UserFeedback("no template path for %s" % doc.key)
+            raise dexy.exceptions.UserFeedback("no template path for %s" % data.key)
         else:
-            self.log_debug("  using template %s for %s" % (template_path, doc.key))
+            self.log_debug("  using template %s for %s" % (template_path, data.key))
 
         # Populate template environment
         env = Environment(undefined=jinja2.StrictUndefined)
@@ -158,12 +158,12 @@ class WebsiteReporter(OutputReporter):
         self.log_debug("  loading template at %s" % template_path)
         template = env.get_template(template_path)
 
-        if doc.output_data().ext == '.html':
-            content = unicode(doc.output_data())
+        if data.ext == '.html':
+            content = unicode(data)
         else:
-            content = doc.output_data()
+            content = data
             
-        current_dir = doc.output_data().parent_dir()
+        current_dir = data.parent_dir()
         parent_dir = os.path.split(current_dir)[0]
 
         env_data = {}
@@ -184,18 +184,19 @@ class WebsiteReporter(OutputReporter):
                 'nav' : self._navobj.nodes["/%s" % current_dir],
                 'root' : self._navobj.nodes["/"],
                 'navobj' : self._navobj,
-                'page_title' : doc.title(),
+                'page_title' : self.wrapper.batch.docs["doc:%s" % data.key]['title'],
                 'parent_dir' : parent_dir,
                 'current_dir' : current_dir,
-                'source' : doc.name,
+                'source' : data.name,
                 'template_source' : template_path,
                 'wrapper' : self.wrapper,
                 'year' : datetime.now().year
                 })
 
-        env_data.update(dict_from_string(self.wrapper.globals))
+        if self.wrapper.globals:
+            env_data.update(dict_from_string(self.wrapper.globals))
 
-        fp = os.path.join(self.setting('dir'), doc.output_data().name).replace(".json", ".html")
+        fp = os.path.join(self.setting('dir'), data.name).replace(".json", ".html")
 
         parent_dir = os.path.dirname(fp)
         try:
@@ -212,26 +213,26 @@ class WebsiteReporter(OutputReporter):
         self.locations = {}
 
         self._navobj = Navigation()
-        self._navobj.populate_lookup_table(self.wrapper.nodes)
+        self._navobj.populate_lookup_table(self.wrapper.batch)
         self._navobj.walk()
 
         self.create_reports_dir()
 
-        for doc in wrapper.nodes.values():
-            self.log_debug("processing doc %s" % doc.key_with_class())
-            if doc.is_canonical_output():
-                if doc.final_artifact.ext == ".html":
+        for data in wrapper.batch:
+            self.log_debug("processing data %s" % data.key)
+            if data.is_canonical_output():
+                if data.ext == ".html":
                     fragments = ('<html', '<body', '<head')
-                    has_html_header = any(html_fragment in unicode(doc.output()) for html_fragment in fragments)
+                    has_html_header = any(html_fragment in unicode(data) for html_fragment in fragments)
 
-                    if has_html_header and not doc.arg_value('ws-template'):
-                        self.log_debug("  found html tag in output of %s" % doc.key)
-                        self.write_canonical_doc(doc)
+                    if has_html_header and not data.args.get('ws-template'):
+                        self.log_debug("  found html tag in output of %s" % data.key)
+                        self.write_canonical_doc(data)
                     else:
-                        self.apply_and_render_template(doc)
-                elif doc.final_artifact.ext == '.json' and 'htmlsections' in doc.filters:
-                    self.apply_and_render_template(doc)
+                        self.apply_and_render_template(data)
+                elif data.ext == '.json' and 'htmlsections' in data.key:
+                    self.apply_and_render_template(data)
                 else:
-                    self.write_canonical_doc(doc)
+                    self.write_canonical_doc(data)
 
         self.log_debug("finished")

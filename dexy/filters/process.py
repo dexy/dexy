@@ -182,7 +182,7 @@ class SubprocessFilter(Filter):
                     new_files_added += 1
 
         if new_files_added > 10:
-            self.log.warn("%s additional files added" % (new_files_added))
+            self.log_warn("%s additional files added" % (new_files_added))
 
     def walk_working_directory(self, doc=None, section_name=None):
         """

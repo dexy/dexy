@@ -28,13 +28,14 @@ class Filter(dexy.plugin.Plugin):
             'input-extensions' : ("List of extensions which this filter can accept as input.", [".*"]),
             'keep-originals' : ('', False),
             'nodoc' : ("Whether filter should be excluded from documentation.", False),
-            'output' : ("Whether to output results of this filter by default.", False),
+            'output' : ("Whether to output results of this filter by default by reporters such as 'output' or 'website'.", False),
             'output-data-type' : ("Alias of data type to use to store filter output.", "generic"),
             'output-extensions' : ("List of extensions which this filter can produce as output.", [".*"]),
             'preserve-prior-data-class' : ('', False),
             'require-output' : ("Should dexy raise an exception if no output is produced by this filter?", True),
             'variables' : ('', {}),
             'vars' : ('', {}),
+            'workspace-exclude-filters' : ("Filters whose output should be excluded from workspace.", ['pyg'])
             }
 
     def __init__(self, doc=None):
@@ -79,9 +80,18 @@ class Filter(dexy.plugin.Plugin):
                 self.storage_key,
                 {},
                 None,
+                self.is_canonical_output(),
                 self.doc.wrapper
                 )
         self.output_data.setup_storage()
+
+    def is_canonical_output(self):
+        if self.input_data.canonical_output == True:
+            return True
+        elif self.setting('output'):
+            return True
+        else:
+            return None
 
     def set_extension(self):
         i_accept = self.setting('input-extensions')
@@ -279,6 +289,23 @@ class Filter(dexy.plugin.Plugin):
     def work_output_filepath(self):
         return os.path.join(self.parent_work_dir(), self.work_output_filename())
 
+    def include_input_in_workspace(self, inpt):
+        """
+        Whether to include the contents of the input file inpt in the workspace
+        for this filter.
+        """
+        if inpt.args.get('include-in-workspaces'):
+            return True
+
+        # TODO only exclude/include files in same parent directory
+        # TODO exclude/include files by extension
+        exclude_filters = self.setting('workspace-exclude-filters')
+        if exclude_filters and any(a in exclude_filters for a in inpt.filter_aliases):
+            return False
+
+        # include anything left over
+        return True
+
     def populate_workspace(self):
         """
         Populates the workspace directory with inputs to the filter, under
@@ -302,6 +329,10 @@ class Filter(dexy.plugin.Plugin):
             raise dexy.exceptions.InternalDexyProblem(msg % msgargs)
 
         for inpt in self.doc.walk_input_docs():
+            if not self.include_input_in_workspace(inpt):
+                self.log_debug("not populating workspace with input '%s'" % inpt.key)
+                continue
+
             data = inpt.output_data()
 
             filepath = data.name
