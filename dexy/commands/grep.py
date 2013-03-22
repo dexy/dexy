@@ -2,6 +2,10 @@ from dexy.batch import Batch
 from dexy.commands.utils import init_wrapper
 from dexy.utils import defaults
 from operator import attrgetter
+import json
+from dexy.data import Generic
+from dexy.data import KeyValue
+from dexy.data import Sectioned
 
 def grep_command(
         __cli_options=False, # nodoc
@@ -10,6 +14,8 @@ def grep_command(
         keys=False, # if True, try to list the keys in any found files
         keylimit=10, # maximum number of matching keys to print
         limit=10, # maximum number of matching records to print
+        contents=False, # print out the contents of each matched file
+        lines=False, # maximum number of lines of content to print
         artifactsdir=defaults['artifacts_dir'], # location of directory in which to store artifacts
         logdir=defaults['log_dir'] # location of directory in which to store logs
         ):
@@ -39,6 +45,25 @@ def grep_command(
                 print_keys([key for key in match.keys() if keyexpr in key])
             elif keys:
                 print_keys(match.keys())
+
+        if contents:
+            if isinstance(match, Sectioned):
+                for section_name, section_contents in match.data().iteritems():
+                    print "  section: %s" % section_name
+                    print
+                    for i, line in enumerate(section_contents.splitlines()):
+                        if lines and i > lines-1:
+                            continue
+                        print "  ", line
+                    print
+            elif isinstance(match, KeyValue):
+                pass
+            elif isinstance(match, Generic):
+                try:
+                    json.dumps(unicode(match))
+                    print unicode(match)
+                except UnicodeDecodeError:
+                    print "  not printable"
 
     def print_matches(matches):
         for match in matches:
