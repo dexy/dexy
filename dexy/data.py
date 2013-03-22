@@ -7,6 +7,7 @@ import dexy.wrapper
 import os
 import posixpath
 import shutil
+import inflection
 
 class Data(dexy.plugin.Plugin):
     """
@@ -98,6 +99,10 @@ class Data(dexy.plugin.Plugin):
 
     def web_safe_document_key(self):
         return self.long_name().replace("/", "--")
+
+    def title(self):
+        title_from_name = inflection.titleize(self.baserootname())
+        return self.args.get('title', title_from_name)
 
     def relative_path_to(self, relative_to):
         return posixpath.relpath(relative_to, self.parent_dir())

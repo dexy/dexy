@@ -6,7 +6,6 @@ import fnmatch
 import re
 import os
 import json
-import inflection
 
 class Node(dexy.plugin.Plugin):
     """
@@ -61,10 +60,6 @@ class Node(dexy.plugin.Plugin):
 
     def websafe_key(self):
         return self.key
-
-    def title(self):
-        title_from_name = inflection.titleize(self.output_data().baserootname())
-        return self.args.get('title', title_from_name)
 
     def walk_inputs(self):
         """

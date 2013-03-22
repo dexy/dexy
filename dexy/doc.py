@@ -102,7 +102,7 @@ class Doc(dexy.node.Node):
 
     def batch_info(self):
         return {
-                'title' : self.title(),
+                'title' : self.output_data().title(),
                 'input-data' : self.initial_data.args_to_data_init(),
                 'output-data' : self.output_data().args_to_data_init(),
                 'filters-data' : [f.output_data.args_to_data_init() for f in self.filters],
