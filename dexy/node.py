@@ -215,10 +215,8 @@ class Node(dexy.plugin.Plugin):
         self.call_run(*args, **kw)
         self.run_finish_time = time.time()
 
-        self.append_to_batch()
-
-    def append_to_batch(self):
-        pass
+        if hasattr(self, 'batch_info'):
+            self.wrapper.batch.add_doc(self)
 
     def call_run(self, *args, **kw):
         if self.changed():

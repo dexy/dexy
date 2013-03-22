@@ -53,7 +53,9 @@ def resolve_argv():
         try:
             cmd = dexy.plugin.Command.create_instance(alias)
         except dexy.exceptions.NoPlugin:
-            sys.stderr.write("No command '%s' available. Run `dexy help` to see list of available commands." % alias)
+            msg = "No command '%s' available. Run `dexy help` to see list of available commands.\n"
+            msgargs = (alias)
+            sys.stderr.write(msg % msgargs)
             sys.exit(1)
 
         mod_name = cmd.__module__

@@ -111,10 +111,6 @@ class Doc(dexy.node.Node):
                 'elapsed' : self.run_finish_time - self.run_start_time
                 }
 
-    def append_to_batch(self):
-        self.wrapper.batch.docs[self.key_with_class()] = self.batch_info()
-        self.wrapper.batch.filters_used.extend(self.filter_aliases)
-
     def setup(self):
         self.name = self.key.split("|")[0]
         self.ext = os.path.splitext(self.name)[1]
