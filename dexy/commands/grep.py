@@ -37,6 +37,16 @@ def grep_command(
         if n > keylimit:
             print "  only printed first %s of %s total keys" % (keylimit, n)
 
+    def print_contents(text):
+        text_lines = text.splitlines()
+        for i, line in enumerate(text_lines):
+            if lines and i > lines-1:
+                continue
+            print "  ", line
+
+        if lines and lines < len(text_lines):
+            print "   only printed first %s of %s total lines" % (lines, len(text_lines))
+
     def print_match(match):
         print match.key
 
@@ -51,17 +61,14 @@ def grep_command(
                 for section_name, section_contents in match.data().iteritems():
                     print "  section: %s" % section_name
                     print
-                    for i, line in enumerate(section_contents.splitlines()):
-                        if lines and i > lines-1:
-                            continue
-                        print "  ", line
+                    print_contents(section_contents)
                     print
             elif isinstance(match, KeyValue):
                 pass
             elif isinstance(match, Generic):
                 try:
                     json.dumps(unicode(match))
-                    print unicode(match)
+                    print_contents(unicode(match))
                 except UnicodeDecodeError:
                     print "  not printable"
 
