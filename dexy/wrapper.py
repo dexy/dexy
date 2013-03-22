@@ -170,20 +170,21 @@ class Wrapper(object):
         Removes directories created by dexy by first moving the files to a new
         location, then forking the rm process.
         """
-        def forked_remove_directory(dirpath):
-            # TODO make a .trash directory and move to a random dir in .trash
-            move_to = "%s-old" % os.path.abspath(dirpath)
-            if not self.is_location_in_project_dir(move_to):
-                msg = "trying to rm '%s', not in project dir '%s"
-                msgargs = (move_to, self.project_root)
-                raise dexy.exceptions.InternalDexyProblem(msg % msgargs)
-            shutil.move(os.path.abspath(dirpath), move_to)
-            # fork a new process to rm x-old files so we don't have to wait
-            subprocess.Popen(['rm', '-r', move_to])
-
         for dirpath, safety_filepath, dirstat in self.iter_dexy_dirs():
             if dirstat:
-                forked_remove_directory(dirpath)
+                self.forked_remove_directory(dirpath)
+
+    def forked_remove_directory(self, dirpath):
+        # TODO make a .trash directory and move to a random dir in .trash
+        move_to = "%s-old" % os.path.abspath(dirpath)
+        if not self.is_location_in_project_dir(move_to):
+            msg = "trying to rm '%s', not in project dir '%s"
+            msgargs = (move_to, self.project_root)
+            raise dexy.exceptions.InternalDexyProblem(msg % msgargs)
+        shutil.move(os.path.abspath(dirpath), move_to)
+        # fork a new process to rm x-old files so we don't have to wait
+        proc = subprocess.Popen(['rm', '-r', move_to])
+        print proc.pid
 
     def remove_reports_dirs(self, reports=True):
         if reports:
@@ -202,10 +203,11 @@ class Wrapper(object):
         # TODO make sure we are in project dir.
         dirs = [self.filter_ws()]
         for d in dirs:
-            try:
-                shutil.rmtree(d)
-            except OSError:
-                pass
+            if os.path.exists(d):
+                try:
+                    self.forked_remove_directory(d)
+                except OSError:
+                    pass
 
     # Logging
     def log_path(self):
