@@ -61,3 +61,21 @@
     Unknown target extension {{ f.final_ext() }} for basename {{ basename }} section {{ section }}.
 {% endif %}
 {%- endmacro %}
+
+{% macro hl(contents, lexer) -%}
+{% if ext == '.html' %}
+.. raw:: html
+
+{{ highlight(contents, lexer, 'html') | indent(4, true) }}
+
+{% elif ext == '.pdf' %}
+.. raw:: latex
+
+{{ highlight(contents, lexer, 'latex') | indent(4, true) }}
+
+{% else %}
+.. warning::
+
+    unexpected target extension {{ f.final_ext() }} for macro hl
+{% endif %}
+{%- endmacro %}

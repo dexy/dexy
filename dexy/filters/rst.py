@@ -1,13 +1,8 @@
 from dexy.filter import DexyFilter
+from docutils import core
 import StringIO
 import dexy.exceptions
 import os
-
-try:
-    from docutils import core
-    AVAILABLE = True
-except ImportError:
-    AVAILABLE = False
 
 class RestructuredTextBase(DexyFilter):
     """
@@ -23,10 +18,6 @@ class RestructuredTextBase(DexyFilter):
             'stylesheet' : ("Stylesheet arg to pass to rst", None),
             'template' : ("Template arg to pass to rst", None),
             }
-
-    @classmethod
-    def is_active(klass):
-        return AVAILABLE
 
     def docutils_writer_name(self):
         if self.setting('writer'):

@@ -18,6 +18,8 @@ def test_add_new_files():
                 )
         wrapper.run(node)
 
+        print wrapper.nodes
+
         assert str(wrapper.nodes['doc:newfile.txt'].output_data()) == "hello" + os.linesep
         assert str(wrapper.nodes['doc:newfile.txt|markdown'].output_data()) == "<p>hello</p>"
 

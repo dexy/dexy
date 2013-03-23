@@ -15,12 +15,6 @@ class Node(dexy.plugin.Plugin):
     __metaclass__ = dexy.plugin.PluginMeta
     _settings = {}
 
-    def is_canonical_output(self):
-        return False
-
-    def is_index_page(self):
-        return False
-
     def __init__(self, pattern, wrapper, inputs=None, **kwargs):
         self.key = os_to_posix(pattern)
         self.wrapper = wrapper
@@ -105,10 +99,14 @@ class Node(dexy.plugin.Plugin):
         archived calculated hash from last run.
         """
         saved_args = self.wrapper.saved_args.get(self.key_with_class())
-        self.log_debug("saved args '%s' (%s)" % (saved_args, saved_args.__class__))
-        self.log_debug("sorted args '%s' (%s)" % (self.sorted_arg_string(), self.sorted_arg_string().__class__))
-        self.log_debug("unequal: %s" % saved_args != self.sorted_arg_string())
-        return saved_args != self.sorted_arg_string()
+        if not saved_args:
+            self.log_debug("no saved args")
+            return True
+        else:
+            self.log_debug("saved args '%s' (%s)" % (saved_args, saved_args.__class__))
+            self.log_debug("sorted args '%s' (%s)" % (self.sorted_arg_string(), self.sorted_arg_string().__class__))
+            self.log_debug("unequal: %s" % (saved_args != self.sorted_arg_string()))
+            return saved_args != self.sorted_arg_string()
 
     def sorted_args(self, skip=['contents']):
         """
@@ -142,8 +140,9 @@ class Node(dexy.plugin.Plugin):
         return os.path.join(self.wrapper.artifacts_dir, self.hashid[0:2], "%s.additionaldocs.json" % self.hashid)
 
     def save_runtime_args(self):
-        with open(self.runtime_args_filename(), "w") as f:
-            json.dump(self.runtime_args, f)
+        if self.runtime_args:
+            with open(self.runtime_args_filename(), "w") as f:
+                json.dump(self.runtime_args, f)
 
     def load_runtime_args(self):
         with open(self.runtime_args_filename(), "r") as f:
@@ -178,7 +177,13 @@ class Node(dexy.plugin.Plugin):
         self.additional_docs.append(doc)
 
     def inputs_changed(self):
-        return any(i.changed() for i in self.inputs)
+        if self.inputs:
+            return any(i.changed() for i in self.inputs)
+        elif hasattr(self, 'parent'):
+            return self.parent.changed()
+        else:
+            # There are no inputs, so they can't have changed.
+            return False
 
     def changed(self):
         self.log_debug("checking if %s is changed" % self.key)
@@ -227,7 +232,8 @@ class Node(dexy.plugin.Plugin):
                 self.save_additional_docs()
         else:
             self.log_info("node is cached, not running")
-            self.load_runtime_args()
+            if os.path.exists(self.runtime_args_filename()):
+                self.load_runtime_args()
             if os.path.exists(self.additional_docs_filename()):
                 self.log_debug("loading additional docs")
                 self.load_additional_docs()
@@ -250,10 +256,16 @@ class ScriptNode(BundleNode):
     """
     aliases = ['script']
 
+    def check_doc_changed(self):
+        return any(i.doc_changed for i in self.inputs)
+
     def setup(self):
         self.script_storage = {}
 
-        # iterate over inputs and make sure each has all other docs as inputs?
+        siblings = []
+        for doc in self.inputs:
+            doc.inputs = list(doc.inputs) + siblings
+            siblings.append(doc)
 
 class PatternNode(Node):
     """
@@ -261,6 +273,9 @@ class PatternNode(Node):
     objects for all files that match the pattern.
     """
     aliases = ['pattern']
+
+    def check_doc_changed(self):
+        return any(child.doc_changed for child in self.children)
 
     def setup(self):
         file_pattern = self.key.split("|")[0]

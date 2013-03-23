@@ -39,8 +39,10 @@ def gen_command(
     wrapper.create_dexy_dirs()
     print "Success! Your new dexy project has been created in directory '%s'" % d
     if file_exists("README"):
+        print "\n--------------------------------------------------"
         with open("README", "r") as f:
             print f.read()
+        print "\n--------------------------------------------------"
         print "\nThis information is in the 'README' file for future reference."
 
 def template_command(

@@ -123,7 +123,7 @@ class PexpectReplFilter(SubprocessFilter):
 
         wd=self.parent_work_dir()
         executable = self.setting('executable')
-        self.log_debug("About to spawn new process '%s' in %s." % (executable, wd))
+        self.log_debug("about to spawn new process '%s' in '%s'" % (executable, wd))
 
         # Spawn the process
         proc = pexpect.spawn(
@@ -212,6 +212,7 @@ class PexpectReplFilter(SubprocessFilter):
             self.handle_subprocess_proc_return(self.setting('executable'), proc.exitstatus, section_transcript)
 
     def process(self):
+        self.log_debug("about to populate_workspace")
         self.populate_workspace()
         output = OrderedDict()
 

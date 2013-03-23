@@ -26,7 +26,7 @@ class LatexFilter(SubprocessFilter):
 
         latex_command = self.command_string()
 
-        bibtex_command = "bibtex %s" % os.path.splitext(self.output_data.basename())[0]
+#        bibtex_command = "bibtex %s" % os.path.splitext(self.output_data.basename())[0]
 
         def run_cmd(command):
             self.log_info("running %s in %s" % (command, os.path.abspath(wd)))
@@ -39,15 +39,15 @@ class LatexFilter(SubprocessFilter):
             stdout, stderr = proc.communicate()
             self.log_debug(stdout)
 
-        if bibtex_command:
-            run_cmd(latex_command) #generate aux
-            run_cmd(bibtex_command) #generate bbl
+#        if bibtex_command:
+#            run_cmd(latex_command) #generate aux
+#            run_cmd(bibtex_command) #generate bbl
 
         # TODO specify in options how many times to run latex
         # TODO specify in options whether to run bibtex
         run_cmd(latex_command) # first run
         run_cmd(latex_command) # second run - fix references
-        run_cmd(latex_command) # third run - just to be sure
+#        run_cmd(latex_command) # third run - just to be sure
 
         if not file_exists(os.path.join(wd, self.output_data.basename())):
             msg = "Latex file not generated. Look for information in latex log in %s directory."

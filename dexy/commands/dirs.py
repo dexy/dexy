@@ -11,7 +11,7 @@ def reset_command(
     """
     wrapper = init_wrapper(locals())
     wrapper.remove_dexy_dirs()
-    wrapper.remove_reports_dirs()
+    wrapper.remove_reports_dirs(keep_empty_dir=True)
     wrapper.create_dexy_dirs()
 
 def cleanup_command(

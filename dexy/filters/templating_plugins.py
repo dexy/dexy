@@ -206,6 +206,7 @@ class PygmentsStylesheet(TemplatePlugin):
     @classmethod
     def highlight(klass, text, lexer_name, fmt = 'html', noclasses = False, lineanchors = 'l'):
         if text:
+            text = unicode(text)
             formatter_options = { "lineanchors" : lineanchors, "noclasses" : noclasses }
             lexer = pygments.lexers.get_lexer_by_name(lexer_name)
             formatter = pygments.formatters.get_formatter_by_name(fmt, **formatter_options)
@@ -309,6 +310,7 @@ class D(object):
             return self._map_relative_refs[relative_ref]
         else:
             msg = "no document named %s is available to %s"
-            self._artifact.log_debug(self._map_relative_refs.keys())
+            for k in sorted(self._map_relative_refs):
+                self._artifact.log_debug(k)
             msgargs = (relative_ref, self._artifact.key)
             raise dexy.exceptions.UserFeedback(msg % msgargs)

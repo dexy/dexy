@@ -34,6 +34,7 @@ setup(
         install_requires = [
             'PyYAML',
             'chardet',
+            'docutils',
             'idiopidae>=0.5.4',
             'inflection>=0.0.2',
             'jinja2',

@@ -202,46 +202,45 @@ class Filter(dexy.plugin.Plugin):
 
         doc_ext = os.path.splitext(doc_name)[1]
 
-        if isinstance(additional_doc_filters, dict):
-            filters = additional_doc_filters.get(doc_ext, '')
-        elif isinstance(additional_doc_filters, basestring):
-            filters = additional_doc_filters
-        else:
-            msg = "additional doc filters should be str/unicode or dict, received %s"
-            msgargs = additional_doc_filters.__class__.__name__
-            raise dexy.exceptions.InternalDexyProblem(msg % msgargs)
-            # TODO allow passing a list of tuples so input can be
-            # used in more than 1 way
+        def create_doc(name, filters, contents, shortcut=None):
+            if filters:
+                doc_key = "%s|%s" % (name, filters)
+            else:
+                doc_key = name
 
-        if len(filters) > 0:
-            if self.setting('keep-originals'):
-                doc_key = doc_name
-                doc = dexy.doc.Doc(doc_key, self.doc.wrapper, [], contents=doc_contents)
-                self.doc.add_additional_doc(doc)
-
-            doc_key = "%s|%s" % (doc_name, filters)
             doc = dexy.doc.Doc(
                     doc_key,
                     self.doc.wrapper,
                     [],
-                    contents=doc_contents,
-                    shortcut=shortcut)
-
+                    contents=contents,
+                    shortcut=shortcut
+                    )
             self.doc.add_additional_doc(doc)
+
             if run:
                 doc.run()
 
+            return doc
+
+        if isinstance(additional_doc_filters, dict):
+            filters = additional_doc_filters.get(doc_ext, '')
+        elif isinstance(additional_doc_filters, basestring):
+            filters = additional_doc_filters
+        elif isinstance(additional_doc_filters, list):
+            for filters in additional_doc_filters:
+                doc = create_doc(doc_name, filters, doc_contents)
+            # make filters empty so we don't make more docs later
+            filters = []
         else:
-            doc_key = doc_name
-            doc = dexy.doc.Doc(doc_key,
-                    self.doc.wrapper,
-                    [],
-                    contents=doc_contents,
-                    shortcut=shortcut)
-            
-            self.doc.add_additional_doc(doc)
-            if run:
-                doc.run()
+            msg = "received unexpected additional_doc_filters arg class %s"
+            msgargs = additional_doc_filters.__class__.__name__
+            raise dexy.exceptions.InternalDexyProblem(msg % msgargs)
+
+        if len(filters) == 0 or self.setting('keep-originals'):
+            doc = create_doc(doc_name, '', doc_contents)
+
+        if len(filters) > 0:
+            doc = create_doc(doc_name, filters, doc_contents, shortcut)
 
         return doc
 
@@ -348,6 +347,7 @@ class Filter(dexy.plugin.Plugin):
                     pass
 
             # Save contents of file to workspace
+            self.log_debug("populating workspace with %s for %s" % (filepath, inpt.key))
             file_dest = os.path.join(self.workspace(), filepath)
 
             try:

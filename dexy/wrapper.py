@@ -186,14 +186,14 @@ class Wrapper(object):
         proc = subprocess.Popen(['rm', '-r', move_to])
         print proc.pid
 
-    def remove_reports_dirs(self, reports=True):
+    def remove_reports_dirs(self, reports=True, keep_empty_dir=False):
         if reports:
             if isinstance(reports, bool):
                 # return an iterator over all reporters
                 reports=dexy.reporter.Reporter
 
             for report in reports:
-                report.remove_reports_dir()
+                report.remove_reports_dir(keep_empty_dir)
 
     def clean_dexy_dirs(self):
         """

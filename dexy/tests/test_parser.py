@@ -1,11 +1,11 @@
-from dexy.parsers.doc import Yaml
-from dexy.parsers.doc import TextFile
+from dexy.parser import AbstractSyntaxTree
 from dexy.parsers.doc import Original
+from dexy.parsers.doc import TextFile
+from dexy.parsers.doc import Yaml
 from dexy.tests.utils import wrap
+from dexy.wrapper import Wrapper
 import dexy.exceptions
 import os
-from dexy.parser import AbstractSyntaxTree
-from dexy.wrapper import Wrapper
 
 def test_text_parser():
     with wrap() as wrapper:
