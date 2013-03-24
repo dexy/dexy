@@ -33,9 +33,13 @@ class Node(dexy.plugin.Plugin):
 
         self.args_changed = self.check_args_changed()
         self.doc_changed = False
+        self.is_cached = None
 
         # Class-specific setup.
         self.setup()
+
+    def setup(self):
+        pass
 
     def __repr__(self):
         return "%s(%s)" % ( self.__class__.__name__, self.key)
@@ -44,16 +48,8 @@ class Node(dexy.plugin.Plugin):
         self.args.update(args)
         self.runtime_args.update(args)
 
-    # TODO get additional doc info + reconstitute...
-
     def arg_value(self, key, default=None):
         return self.args.get(key, default) or self.args.get(key.replace("-", "_"), default)
-
-    def setup(self):
-        pass
-
-    def websafe_key(self):
-        return self.key
 
     def walk_inputs(self):
         """
@@ -165,6 +161,7 @@ class Node(dexy.plugin.Plugin):
         for doc_key, hashid in additional_doc_info:
             new_doc = dexy.doc.Doc(doc_key, self.wrapper, [], contents='dummy contents')
             new_doc.contents = None
+            new_doc.args_changed = False
             assert new_doc.hashid == hashid
             new_doc.initial_data.load_data()
             new_doc.output_data().load_data()
