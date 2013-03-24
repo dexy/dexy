@@ -36,7 +36,11 @@ class IdioFilter(PygmentsFilter):
     def process(self):
         lexer = self.create_lexer_instance()
 
-        input_text = self.input_data.as_text()
+        try:
+            input_text = self.input_data.as_text()
+        except UnicodeDecodeError:
+            input_text = 'not printable'
+
         composer = Composer()
 
         try:
