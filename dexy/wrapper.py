@@ -149,10 +149,8 @@ class Wrapper(object):
 
     def remove_dexy_dirs(self):
         if is_windows():
-            print "calling unforked rm"
             self.unforked_remove_dexy_dirs()
         else:
-            print "calling forked rm"
             self.forked_remove_dexy_dirs()
 
     def unforked_remove_dexy_dirs(self):
@@ -183,8 +181,7 @@ class Wrapper(object):
             raise dexy.exceptions.InternalDexyProblem(msg % msgargs)
         shutil.move(os.path.abspath(dirpath), move_to)
         # fork a new process to rm x-old files so we don't have to wait
-        proc = subprocess.Popen(['rm', '-r', move_to])
-        print proc.pid
+        subprocess.Popen(['rm', '-r', move_to])
 
     def remove_reports_dirs(self, reports=True, keep_empty_dir=False):
         if reports:

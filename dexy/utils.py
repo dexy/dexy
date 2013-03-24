@@ -53,8 +53,7 @@ log_levels = {
 }
 
 def is_windows():
-    print "platform is", platform.system()
-    return platform.system() in ('windows',)
+    return platform.system() in ('Windows',)
 
 def logging_log_level(log_level):
     try:
