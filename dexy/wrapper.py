@@ -235,6 +235,7 @@ class Wrapper(object):
         self.log = logging.getLogger('dexy')
         self.log.setLevel(log_level)
         self.log.addHandler(handler)
+        self.log.info("starting logging for dexy")
 
     # Project files
     def exclude_dirs(self):
@@ -406,6 +407,12 @@ class Wrapper(object):
                     key = "*%s" % key
             return posixpath.join(directory, key)
 
+    def explicit_config_files(self):
+        return [c.strip() for c in self.configs.split()]
+
+    def is_explicit_config(self, filepath):
+        return filepath in self.explicit_config_files()
+
     def parse_configs(self):
         """
         Look for document config files in current working tree and load them.
@@ -418,9 +425,11 @@ class Wrapper(object):
         config_files = []
         for alias in parser_aliases:
             for filepath, fileinfo in self.filemap.iteritems():
-                if os.path.split(filepath)[1] == alias:
-                    config_file_info = (fileinfo['ospath'], fileinfo['dir'], alias,)
-                    config_files.append(config_file_info)
+                if fileinfo['dir'] == '.' or self.recurse or self.is_explicit_config(filepath):
+                    if os.path.split(filepath)[1] == alias:
+                        self.log.info("using config file '%s'" % filepath)
+                        config_file_info = (fileinfo['ospath'], fileinfo['dir'], alias,)
+                        config_files.append(config_file_info)
 
         # warn if we don't find any configs
         if len(config_files) == 0:

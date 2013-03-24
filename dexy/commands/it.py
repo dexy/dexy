@@ -75,6 +75,7 @@ def dexy_command(
         __cli_options=False,
         artifactsdir=defaults['artifacts_dir'], # location of directory in which to store artifacts
         conf=defaults['config_file'], # name to use for configuration file
+        configs=defaults['configs'], # list of doc config files to parse
         danger=defaults['danger'], # whether to allow running remote files
         dbalias=defaults['db_alias'], # type of database to use
         dbfile=defaults['db_file'], # name of the database file (it lives in the logs dir)
@@ -97,7 +98,7 @@ def dexy_command(
         plugins=defaults['plugins'], # additional python packages containing dexy plugins
         profile=defaults['profile'], # whether to run with cProfile. Arg can be a boolean, in which case profile saved to 'dexy.prof', or a filename to save to.
         r=False, # whether to clear cache before running dexy
-        recurse=defaults['recurse'], # whether to recurse into subdirectories when running Dexy
+        recurse=defaults['recurse'], # whether to include doc config files in subdirectories
         reports=defaults['reports'], # reports to be run after dexy runs, enclose in quotes and separate with spaces
         reset=False, # whether to clear cache before running dexy
         silent=defaults['silent'], # Whether to not print any output when running dexy

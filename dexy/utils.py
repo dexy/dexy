@@ -11,10 +11,10 @@ import shutil
 import tempfile
 import yaml
 
-# TODO values in defaults dict should be ('helpstring', 'default-value',) tuples
 defaults = {
     'artifacts_dir' : '.cache',
     'config_file' : 'dexy.conf',
+    'configs' : '',
     'danger' : False,
     'db_alias' : 'sqlite3',
     'db_file' : 'dexy.sqlite3',
