@@ -1,12 +1,11 @@
+from dexy.parser import AbstractSyntaxTree
 from dexy.parsers.doc import Yaml
 from dexy.tests.utils import wrap
-import os
 from dexy.wrapper import Wrapper
-from dexy.parser import AbstractSyntaxTree
+import os
 
 def test_subdir_config_with_bundle():
-    with wrap() as wrapper:
-
+    with wrap():
         with open("dexy.yaml", "w") as f:
             f.write("""
             foo:
@@ -25,6 +24,15 @@ def test_subdir_config_with_bundle():
 
         wrapper = Wrapper()
         wrapper.run()
+        assert "doc:abc/def/hello.py" in wrapper.nodes
+
+        wrapper = Wrapper(recurse=False)
+        wrapper.run()
+        assert not "doc:abc/def/hello.py" in wrapper.nodes
+
+        wrapper = Wrapper(recurse=False, configs="abc/def/dexy.yaml")
+        wrapper.run()
+        assert "doc:abc/def/hello.py" in wrapper.nodes
 
 def test_except_patterndoc():
     with wrap() as wrapper:

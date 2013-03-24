@@ -8,6 +8,12 @@ import os
 from dexy.parsers.doc import Yaml
 from dexy.parser import AbstractSyntaxTree
 
+def test_explicit_configs():
+    wrapper = Wrapper()
+    wrapper.configs = "foo.txt bar.txt   abc/def/foo.txt "
+    assert wrapper.explicit_config_files() == ['foo.txt',
+            'bar.txt', 'abc/def/foo.txt']
+
 def test_parse_doc_configs_single_empty_config():
     with tempdir():
         wrapper = Wrapper()
