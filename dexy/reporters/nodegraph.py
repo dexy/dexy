@@ -7,7 +7,7 @@ class NodeGraph(Reporter):
     """
     aliases = ['nodegraph']
     _settings = {
-            'filename' : ("Name of file to write output to.", 'graph.txt'),
+            'filename' : ("Name of file to write output to.", 'graph.dot'),
             'run-on-failed-batch' : True
             }
 

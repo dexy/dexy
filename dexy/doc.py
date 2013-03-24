@@ -67,16 +67,15 @@ class Doc(dexy.node.Node):
                 cache_mtime = cache_stat[stat.ST_MTIME]
                 live_mtime = live_stat[stat.ST_MTIME]
                 import time
-                msg = "cache %s mtime %s live mtime %s now %s live gt cache %s"
-                msgargs = (self.initial_data.storage_key, cache_mtime, live_mtime, time.time(), live_mtime > cache_mtime)
+                msg = "cache mtime %s live mtime %s now %s changed (live gt cache) %s"
+                msgargs = (cache_mtime, live_mtime, time.time(), live_mtime > cache_mtime)
                 self.log_debug(msg % msgargs)
                 return live_mtime > cache_mtime
             else:
                 # there is no file in the cache, therefore it has 'changed'
                 return True
         else:
-            # virtual
-            # TODO check hash of contents
+            # TODO check hash of contents of virtual files
             return False
 
     def data_class_alias(self):

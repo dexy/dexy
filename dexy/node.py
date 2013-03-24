@@ -67,7 +67,7 @@ class Node(dexy.plugin.Plugin):
             for inpt in inputs:
                 children.extend(inpt.children)
                 children.append(inpt)
-                walk(list(inpt.inputs)+inpt.children)
+                walk(inpt.inputs)
 
         if self.inputs:
             walk(self.inputs)
@@ -191,11 +191,6 @@ class Node(dexy.plugin.Plugin):
             self.is_cached = not self.doc_changed and not self.args_changed
             # TODO check that all storage files are present.
 
-    def assert_is_cached(self):
-        if hasattr(self, 'output_data'):
-            assert self.output_data().is_cached()
-        self.is_cached = True
-
     def __iter__(self):
         def next_task():
             if self.state == 'new':
@@ -231,29 +226,37 @@ class Node(dexy.plugin.Plugin):
         if hasattr(self, 'batch_info'):
             self.wrapper.batch.add_doc(self)
 
+    def is_cached_and_present(self):
+        if self.is_cached and hasattr(self, 'output_data'):
+            return self.output_data().is_cached()
+        else:
+            return self.is_cached
+
     def call_run(self, any_inputs_ran):
         self.calculate_is_cached()
 
-        if self.is_cached and not any_inputs_ran:
-            self.log_info("node is cached, not running")
-            if self.was_run == None:
-                self.was_run = False
+        if self.is_cached_and_present() and not any_inputs_ran:
+            self.log_info("cached, not running")
             self.load_runtime_args()
             self.load_additional_docs()
+            if self.was_run == None:
+                self.was_run = False
 
         else:
             self.log_info("running")
-            if self.was_run == None:
-                self.was_run = True
             self.run()
             self.save_runtime_args()
             self.save_additional_docs()
+            if self.was_run == None:
+                self.was_run = True
 
-        self.assert_is_cached()
+        assert self.is_cached or self.was_run
+        self.is_cached = True
+        assert self.is_cached_and_present()
 
     def run(self):
         for child in self.children:
-            child.run()
+            child()
             if child.was_run:
                 self.was_run = True
 
