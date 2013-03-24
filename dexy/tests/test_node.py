@@ -27,7 +27,6 @@ def test_create_node():
         assert len(node.hashid) == 32
         assert isinstance(node.doc_changed, bool)
         assert isinstance(node.args_changed, bool)
-        assert isinstance(node.changed(), bool)
 
 def test_node_arg_caching():
     with wrap() as wrapper:
@@ -77,13 +76,13 @@ def test_script_node_caching__slow():
         wrapper1.run()
 
         for node in wrapper1.nodes.values():
-            assert node.changed()
+            assert node.was_run
 
         wrapper2 = Wrapper()
         wrapper2.run()
 
         for node in wrapper2.nodes.values():
-            assert not node.changed()
+            assert not node.was_run
 
         time.sleep(1.1)
         with open("middle.sh", "w") as f:
@@ -93,7 +92,7 @@ def test_script_node_caching__slow():
         wrapper3.run()
 
         for node in wrapper1.nodes.values():
-            assert node.changed()
+            assert node.was_run
 
 # TODO mock out os.stat to get different mtimes without having to sleep?
 
@@ -117,8 +116,8 @@ def test_node_caching__slow():
         assert str(doc_txt.output_data()) == "1 + 1 = 3\n"
         assert str(hello_py.output_data()) == "3\n"
 
-        assert hello_py.changed()
-        assert doc_txt.changed()
+        assert hello_py.was_run == True
+        assert doc_txt.was_run == True
 
         wrapper = Wrapper(log_level='DEBUG')
         hello_py = Doc("hello.py|py", wrapper)
@@ -128,8 +127,8 @@ def test_node_caching__slow():
                 )
         wrapper.run(doc_txt)
 
-        assert not hello_py.changed()
-        assert not doc_txt.changed()
+        assert hello_py.was_run == False
+        assert doc_txt.was_run == False
 
         time.sleep(1.1)
         with open("doc.txt", "w") as f:
@@ -143,8 +142,8 @@ def test_node_caching__slow():
                 )
         wrapper.run(doc_txt)
 
-        assert not hello_py.changed()
-        assert doc_txt.changed()
+        assert hello_py.was_run == False
+        assert doc_txt.was_run == True
 
         time.sleep(1.1)
         with open("hello.py", "w") as f:
@@ -158,8 +157,8 @@ def test_node_caching__slow():
                 )
         wrapper.run(doc_txt)
 
-        assert hello_py.changed()
-        assert doc_txt.changed()
+        assert hello_py.was_run == True
+        assert doc_txt.was_run == True
 
 def test_node_init_with_inputs():
     with wrap() as wrapper:

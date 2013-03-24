@@ -302,7 +302,6 @@ class Wrapper(object):
         """
         key = node.key_with_class()
         self.nodes[key] = node
-        self.roots.append(node)
 
     def run(self, *docs):
         self.assert_dexy_dirs_exist()

@@ -41,26 +41,33 @@ class PlainTextGraph(Reporter):
     """
     Emits a plain text graph of the network structure.
     """
-    aliases = ['plaintextgraph']
+    aliases = ['graph']
     _settings = {
-            'filename' : ("Name of file to write output to.", 'graph.txt'),
+            'filename' : ("Name of file to write output to (within log directory).", 'graph.txt'),
             'run-on-failed-batch' : True
             }
 
     def run(self, wrapper):
         def print_inputs(node, indent=0):
             content = []
+
+            if node.was_run:
+                ran_or_cache = 'ran'
+            else:
+                ran_or_cache = 'cached'
+
             s = " " * indent * 4
-            content.append("%s%s" % (s, node))
-            for child in node.inputs:
+            content.append("%s%s (%s)" % (s, node, ran_or_cache))
+
+            for child in list(node.inputs) + node.children:
                 content.extend(print_inputs(child, indent+1))
             return content
 
         graph = []
-        for node in wrapper.nodes.values():
+        for node in wrapper.roots:
             graph.extend(print_inputs(node))
 
         filename = os.path.join(wrapper.log_dir, self.setting('filename'))
 
         with open(filename, "w") as f:
-            f.write("\n".join(graph))
+            f.write("\n".join(graph) + "\n")

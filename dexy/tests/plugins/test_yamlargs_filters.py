@@ -13,7 +13,7 @@ def test_yamlargs_with_caching():
 
         task = wrapper.nodes["doc:example.txt|yamlargs"]
         assert task.args['title'] == "My Title"
-        assert task.changed()
+        assert task.args_changed
 
         wrapper = Wrapper()
         doc = Doc("example.txt|yamlargs",
@@ -24,7 +24,7 @@ def test_yamlargs_with_caching():
         wrapper.run(doc)
         task = wrapper.nodes["doc:example.txt|yamlargs"]
         assert task.args['title'] == "My Title"
-        assert not task.changed()
+        assert not task.args_changed
 
 def test_yamlargs_no_yaml():
     with wrap() as wrapper:

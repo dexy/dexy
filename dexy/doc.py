@@ -67,7 +67,9 @@ class Doc(dexy.node.Node):
                 cache_mtime = cache_stat[stat.ST_MTIME]
                 live_mtime = live_stat[stat.ST_MTIME]
                 import time
-                self.log_debug("cache mtime %s live mtime %s now %s live gt cache %s" % (cache_mtime, live_mtime, time.time(), live_mtime > cache_mtime))
+                msg = "cache %s mtime %s live mtime %s now %s live gt cache %s"
+                msgargs = (self.initial_data.storage_key, cache_mtime, live_mtime, time.time(), live_mtime > cache_mtime)
+                self.log_debug(msg % msgargs)
                 return live_mtime > cache_mtime
             else:
                 # there is no file in the cache, therefore it has 'changed'

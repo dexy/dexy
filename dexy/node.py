@@ -32,14 +32,21 @@ class Node(dexy.plugin.Plugin):
         self.hashid = md5_hash(self.key)
 
         self.args_changed = self.check_args_changed()
-        self.doc_changed = False
+        self.doc_changed = None
         self.is_cached = None
+        self.was_run = None
 
         # Class-specific setup.
         self.setup()
 
+        assert_msg = "custom setup method for %s must set doc_changed"
+        assert self.doc_changed is not None, assert_msg % self.key_with_class()
+
     def setup(self):
-        pass
+        self.doc_changed = self.check_doc_changed()
+   
+    def check_doc_changed(self):
+        return False
 
     def __repr__(self):
         return "%s(%s)" % ( self.__class__.__name__, self.key)
@@ -141,31 +148,34 @@ class Node(dexy.plugin.Plugin):
                 json.dump(self.runtime_args, f)
 
     def load_runtime_args(self):
-        with open(self.runtime_args_filename(), "r") as f:
-            runtime_args = json.load(f)
-            self.add_runtime_args(runtime_args)
+        if os.path.exists(self.runtime_args_filename()):
+            with open(self.runtime_args_filename(), "r") as f:
+                runtime_args = json.load(f)
+                self.add_runtime_args(runtime_args)
 
     def save_additional_docs(self):
-        additional_doc_info = []
-        for doc in self.additional_docs:
-            info = (doc.key, doc.hashid)
-            additional_doc_info.append(info)
+        if self.additional_docs:
+            additional_doc_info = []
+            for doc in self.additional_docs:
+                info = (doc.key, doc.hashid)
+                additional_doc_info.append(info)
 
-        with open(self.additional_docs_filename(), "w") as f:
-            json.dump(additional_doc_info, f)
+            with open(self.additional_docs_filename(), "w") as f:
+                json.dump(additional_doc_info, f)
 
     def load_additional_docs(self):
-        with open(self.additional_docs_filename(), "r") as f:
-            additional_doc_info = json.load(f)
-
-        for doc_key, hashid in additional_doc_info:
-            new_doc = dexy.doc.Doc(doc_key, self.wrapper, [], contents='dummy contents')
-            new_doc.contents = None
-            new_doc.args_changed = False
-            assert new_doc.hashid == hashid
-            new_doc.initial_data.load_data()
-            new_doc.output_data().load_data()
-            self.add_additional_doc(new_doc)
+        if os.path.exists(self.additional_docs_filename()):
+            with open(self.additional_docs_filename(), "r") as f:
+                additional_doc_info = json.load(f)
+    
+            for doc_key, hashid in additional_doc_info:
+                new_doc = dexy.doc.Doc(doc_key, self.wrapper, [], contents='dummy contents')
+                new_doc.contents = None
+                new_doc.args_changed = False
+                assert new_doc.hashid == hashid
+                new_doc.initial_data.load_data()
+                new_doc.output_data().load_data()
+                self.add_additional_doc(new_doc)
 
     def add_additional_doc(self, doc):
         self.log_debug("adding additional doc '%s'" % doc.key)
@@ -173,21 +183,18 @@ class Node(dexy.plugin.Plugin):
         self.wrapper.add_node(doc)
         self.additional_docs.append(doc)
 
-    def inputs_changed(self):
-        if self.inputs:
-            return any(i.changed() for i in self.inputs)
-        elif hasattr(self, 'parent'):
-            return self.parent.changed()
-        else:
-            # There are no inputs, so they can't have changed.
-            return False
+    def calculate_is_cached(self):
+        if self.is_cached == None:
+            self.log_debug("checking if %s is changed" % self.key)
+            self.log_debug("  doc changed %s" % self.doc_changed)
+            self.log_debug("  args changed %s" % self.args_changed)
+            self.is_cached = not self.doc_changed and not self.args_changed
+            # TODO check that all storage files are present.
 
-    def changed(self):
-        self.log_debug("checking if %s is changed" % self.key)
-        self.log_debug("  doc changed %s" % self.doc_changed)
-        self.log_debug("  args changed %s" % self.args_changed)
-        self.log_debug("  inputs changed %s" % self.inputs_changed())
-        return self.doc_changed or self.args_changed or self.inputs_changed()
+    def assert_is_cached(self):
+        if hasattr(self, 'output_data'):
+            assert self.output_data().is_cached()
+        self.is_cached = True
 
     def __iter__(self):
         def next_task():
@@ -208,36 +215,47 @@ class Node(dexy.plugin.Plugin):
         return next_task()
 
     def __call__(self, *args, **kw):
+        any_inputs_ran = False
         for inpt in self.walk_inputs():
             for node in inpt:
                 node(*args, **kw)
+            if inpt.was_run:
+                any_inputs_ran = True
+            assert inpt.is_cached, "%s not cached!" % inpt.key_with_class()
 
         import time
         self.run_start_time = time.time()
-        self.call_run(*args, **kw)
+        self.call_run(any_inputs_ran)
         self.run_finish_time = time.time()
 
         if hasattr(self, 'batch_info'):
             self.wrapper.batch.add_doc(self)
 
-    def call_run(self, *args, **kw):
-        if self.changed():
-            self.log_info("running")
-            self.run(*args, **kw)
-            self.save_runtime_args()
-            if self.additional_docs:
-                self.save_additional_docs()
-        else:
-            self.log_info("node is cached, not running")
-            if os.path.exists(self.runtime_args_filename()):
-                self.load_runtime_args()
-            if os.path.exists(self.additional_docs_filename()):
-                self.log_debug("loading additional docs")
-                self.load_additional_docs()
+    def call_run(self, any_inputs_ran):
+        self.calculate_is_cached()
 
-    def run(self, *args, **kw):
+        if self.is_cached and not any_inputs_ran:
+            self.log_info("node is cached, not running")
+            if self.was_run == None:
+                self.was_run = False
+            self.load_runtime_args()
+            self.load_additional_docs()
+
+        else:
+            self.log_info("running")
+            if self.was_run == None:
+                self.was_run = True
+            self.run()
+            self.save_runtime_args()
+            self.save_additional_docs()
+
+        self.assert_is_cached()
+
+    def run(self):
         for child in self.children:
             child.run()
+            if child.was_run:
+                self.was_run = True
 
 class BundleNode(Node):
     """
@@ -263,6 +281,13 @@ class ScriptNode(BundleNode):
         for doc in self.inputs:
             doc.inputs = list(doc.inputs) + siblings
             siblings.append(doc)
+
+        self.doc_changed = self.check_doc_changed()
+
+        for doc in self.inputs:
+            if not self.doc_changed:
+                assert not doc.doc_changed
+            doc.doc_changed = self.doc_changed
 
 class PatternNode(Node):
     """
@@ -291,8 +316,12 @@ class PatternNode(Node):
                     else:
                         doc_key = filepath
 
-                    self.log_debug("creating child of patterndoc %s: %s" % (self.key, doc_key))
+                    msg = "creating child of patterndoc %s: %s"
+                    msgargs = (self.key, doc_key)
+                    self.log_debug(msg % msgargs)
                     doc = dexy.doc.Doc(doc_key, self.wrapper, [], **self.args)
                     doc.parent = self
                     self.children.append(doc)
                     self.wrapper.add_node(doc)
+
+        self.doc_changed = self.check_doc_changed()
