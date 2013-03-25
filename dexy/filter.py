@@ -79,7 +79,7 @@ class Filter(dexy.plugin.Plugin):
                 self.ext,
                 self.calculate_canonical_name(),
                 self.storage_key,
-                {},
+                self.doc.setting_values(),
                 None,
                 self.is_canonical_output(),
                 self.doc.wrapper
@@ -189,7 +189,7 @@ class Filter(dexy.plugin.Plugin):
     def doc_arg(self, arg_name_hyphen, default=None):
         return self.doc.arg_value(arg_name_hyphen, default)
 
-    def add_doc(self, doc_name, doc_contents=None, run=True, shortcut=None):
+    def add_doc(self, doc_name, doc_contents=None, doc_args = None):
         """
         Creates a new Doc object for an on-the-fly document.
         """
@@ -202,27 +202,23 @@ class Filter(dexy.plugin.Plugin):
 
         doc_ext = os.path.splitext(doc_name)[1]
 
-        def create_doc(name, filters, contents, shortcut=None):
+        def create_doc(name, filters, contents, args):
             if filters:
                 doc_key = "%s|%s" % (name, filters)
             else:
                 doc_key = name
+
+            if not args:
+                args = {}
 
             doc = dexy.doc.Doc(
                     doc_key,
                     self.doc.wrapper,
                     [],
                     contents=contents,
-                    shortcut=shortcut
+                    **args
                     )
             self.doc.add_additional_doc(doc)
-
-            doc.calculate_is_cached()
-
-            if run:
-                for task in doc:
-                    task()
-
             return doc
 
         if isinstance(additional_doc_filters, dict):
@@ -240,10 +236,10 @@ class Filter(dexy.plugin.Plugin):
             raise dexy.exceptions.InternalDexyProblem(msg % msgargs)
 
         if len(filters) == 0 or self.setting('keep-originals'):
-            doc = create_doc(doc_name, '', doc_contents)
+            doc = create_doc(doc_name, '', doc_contents, doc_args)
 
         if len(filters) > 0:
-            doc = create_doc(doc_name, filters, doc_contents, shortcut)
+            doc = create_doc(doc_name, filters, doc_contents, doc_args)
 
         return doc
 

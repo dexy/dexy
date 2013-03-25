@@ -12,6 +12,11 @@ class Doc(dexy.node.Node):
     Node representing a single doc.
     """
     aliases = ['doc']
+    _settings = {
+            'shortcut' : ( """A way to refer to this document without having to
+            use the full document key.""", None ),
+            'title' : ("""Title for this document.""", None)
+            }
 
     def canonical_name_from_args(self):
         raw_arg_name = self.arg_value('canonical-name')
@@ -39,7 +44,7 @@ class Doc(dexy.node.Node):
                 self.ext,
                 canonical_name,
                 storage_key,
-                {},
+                self.setting_values(),
                 None,
                 canonical_output,
                 self.wrapper
@@ -103,6 +108,13 @@ class Doc(dexy.node.Node):
         self.finish_time = time.time()
         self.elapsed_time = self.finish_time - self.start_time
         self.wrapper.batch.add_doc(self)
+
+        # Run additional docs
+        for doc in self.additional_docs:
+            doc.calculate_is_cached()
+            for task in doc:
+                task()
+
         self.save_runtime_args()
         self.save_additional_docs()
 
@@ -113,6 +125,7 @@ class Doc(dexy.node.Node):
             return self.initial_data
 
     def batch_info(self):
+        print self.output_data().args_to_data_init()
         return {
                 'title' : self.output_data().title(),
                 'input-data' : self.initial_data.args_to_data_init(),

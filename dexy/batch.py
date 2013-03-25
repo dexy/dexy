@@ -20,11 +20,12 @@ class Batch(object):
             yield self.doc_output_data(doc_key)
 
     def add_doc(self, doc):
-        doc_info = doc.batch_info()
-        self.docs[doc.key_with_class()] = doc_info
-        self.docs_by_storage_key[doc.output_data().storage_key] = doc_info
+        if hasattr(doc, 'batch_info'):
+            doc_info = doc.batch_info()
+            self.docs[doc.key_with_class()] = doc_info
+            self.docs_by_storage_key[doc.output_data().storage_key] = doc_info
 
-        self.filters_used.extend(doc.filter_aliases)
+            self.filters_used.extend(doc.filter_aliases)
 
     def doc_filter_data(self, doc_key, filter_index):
         doc_info = self.docs[doc_key]["filter-data"][filter_index]

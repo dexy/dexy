@@ -14,7 +14,7 @@ class OutputReporter(Reporter):
         fp = os.path.join(self.setting('dir'), data.name)
 
         if fp in self.locations:
-            self.log.warn("WARNING overwriting file %s" % fp)
+            self.log_warn("WARNING overwriting file %s" % fp)
         else:
             self.locations[fp] = []
         self.locations[fp].append(data.key)

@@ -29,9 +29,13 @@ class Node(dexy.plugin.Plugin):
         self.children = []
         self.additional_docs = []
 
+        args_for_settings = dict((k, v) for k, v in self.args.iteritems() if k in self._settings)
+        self.update_settings(args_for_settings)
+
         self.start_time = 0
         self.finish_time = 0
         self.elapsed_time = 0
+        self.shortcut = None
 
         if inputs:
             self.inputs = list(inputs)
@@ -117,7 +121,7 @@ class Node(dexy.plugin.Plugin):
         """
         saved_args = self.wrapper.saved_args.get(self.key_with_class())
         if not saved_args:
-            self.log_debug("no saved args")
+            self.log_debug("no saved args, will return True for args_changed")
             return True
         else:
             self.log_debug("saved args '%s' (%s)" % (saved_args, saved_args.__class__))
@@ -213,8 +217,11 @@ class Node(dexy.plugin.Plugin):
 
             if is_cached:
                 self.transition('cached')
+
+                # Do once-off stuff for cached tasks.
                 self.load_runtime_args()
                 self.load_additional_docs()
+                self.wrapper.batch.add_doc(self)
             else:
                 self.transition('checked')
 
@@ -244,6 +251,10 @@ class Node(dexy.plugin.Plugin):
         self.run()
 
     def run(self):
+        """
+        Method which processes node's content if not cached, also responsible
+        for calling child nodes.
+        """
         for child in self.children:
             for task in child:
                 task()

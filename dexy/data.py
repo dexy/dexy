@@ -53,7 +53,6 @@ class Data(dexy.plugin.Plugin):
         self.wrapper = wrapper
         self.canonical_output = canonical_output
 
-        self.shortcut = self.args.get('shortcut')
         self._data = None
 
         # allow doing custom setup in subclasses
@@ -101,8 +100,12 @@ class Data(dexy.plugin.Plugin):
         return self.long_name().replace("/", "--")
 
     def title(self):
-        title_from_name = inflection.titleize(self.baserootname())
-        return self.args.get('title', title_from_name)
+        if self.is_index_page():
+            title_from_name = inflection.titleize(self.parent_dir())
+        else:
+            title_from_name = inflection.titleize(self.baserootname())
+
+        return self.args.get('title') or title_from_name
 
     def relative_path_to(self, relative_to):
         return posixpath.relpath(relative_to, self.parent_dir())
@@ -115,8 +118,8 @@ class Data(dexy.plugin.Plugin):
                 "/%s" % self.key,
                 "/%s" % self.long_name()
         ]
-        if self.shortcut:
-            refs.append(self.shortcut)
+        if self.args.get('shortcut'):
+            refs.append(self.args.get('shortcut'))
         return refs
 
     # Define functions that might get called on expectation of a string...
