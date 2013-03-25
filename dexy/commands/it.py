@@ -118,7 +118,6 @@ def dexy_command(
         return dexy.commands.version_command()
 
     if r or reset:
-        print "emptying dexy cache before running"
         dexy.commands.dirs.reset_command(artifactsdir=artifactsdir, logdir=logdir)
 
     # Don't trap errors yet because error handling uses wrapper instance.
@@ -134,8 +133,7 @@ def dexy_command(
             run_reports = False
         else:
             wrapper.run()
-            if wrapper.batch.elapsed() > 5:
-                print "dexy run finished in %s" % wrapper.batch.elapsed()
+            print "dexy run finished in %0.3f" % wrapper.batch.elapsed()
 
     except dexy.exceptions.UserFeedback as e:
         handle_user_feedback_exception(wrapper, e)
@@ -150,7 +148,10 @@ def dexy_command(
         raise
 
     if run_reports and hasattr(wrapper, 'batch'):
+        import time
+        start_time = time.time()
         wrapper.report()
+        print "dexy reports finished in %0.3f" % (time.time() - start_time)
 
 def it_command(**kwargs):
     # so you can type 'dexy it' if you want to

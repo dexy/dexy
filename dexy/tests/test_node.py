@@ -76,13 +76,13 @@ def test_script_node_caching__slow():
         wrapper1.run()
 
         for node in wrapper1.nodes.values():
-            assert node.was_run
+            assert node.state == 'ran'
 
         wrapper2 = Wrapper()
         wrapper2.run()
 
         for node in wrapper2.nodes.values():
-            assert not node.was_run
+            assert node.state == 'cached'
 
         time.sleep(1.1)
         with open("middle.sh", "w") as f:
@@ -92,7 +92,7 @@ def test_script_node_caching__slow():
         wrapper3.run()
 
         for node in wrapper1.nodes.values():
-            assert node.was_run
+            assert node.state == 'ran'
 
 # TODO mock out os.stat to get different mtimes without having to sleep?
 
@@ -116,8 +116,8 @@ def test_node_caching__slow():
         assert str(doc_txt.output_data()) == "1 + 1 = 3\n"
         assert str(hello_py.output_data()) == "3\n"
 
-        assert hello_py.was_run == True
-        assert doc_txt.was_run == True
+        assert hello_py.state == 'ran'
+        assert doc_txt.state == 'ran'
 
         wrapper = Wrapper(log_level='DEBUG')
         hello_py = Doc("hello.py|py", wrapper)
@@ -127,8 +127,8 @@ def test_node_caching__slow():
                 )
         wrapper.run(doc_txt)
 
-        assert hello_py.was_run == False
-        assert doc_txt.was_run == False
+        assert hello_py.state == 'cached'
+        assert doc_txt.state == 'cached'
 
         time.sleep(1.1)
         with open("doc.txt", "w") as f:
@@ -142,8 +142,8 @@ def test_node_caching__slow():
                 )
         wrapper.run(doc_txt)
 
-        assert hello_py.was_run == False
-        assert doc_txt.was_run == True
+        assert hello_py.state == 'cached'
+        assert doc_txt.state == 'ran'
 
         time.sleep(1.1)
         with open("hello.py", "w") as f:
@@ -157,8 +157,8 @@ def test_node_caching__slow():
                 )
         wrapper.run(doc_txt)
 
-        assert hello_py.was_run == True
-        assert doc_txt.was_run == True
+        assert hello_py.state == 'ran'
+        assert doc_txt.state == 'ran'
 
 def test_node_init_with_inputs():
     with wrap() as wrapper:

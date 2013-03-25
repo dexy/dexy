@@ -14,6 +14,12 @@ class Node(dexy.plugin.Plugin):
     aliases = ['node']
     __metaclass__ = dexy.plugin.PluginMeta
     _settings = {}
+    state_transitions = (
+            ('new', 'cached'),
+            ('new', 'checked'),
+            ('checked', 'running'),
+            ('running', 'ran'),
+            )
 
     def __init__(self, pattern, wrapper, inputs=None, **kwargs):
         self.key = os_to_posix(pattern)
@@ -21,20 +27,22 @@ class Node(dexy.plugin.Plugin):
         self.args = kwargs
         self.runtime_args = {}
         self.children = []
-        self.state = 'new'
         self.additional_docs = []
 
+        self.start_time = 0
+        self.finish_time = 0
+        self.elapsed_time = 0
+
         if inputs:
-            self.inputs = inputs
+            self.inputs = list(inputs)
         else:
             self.inputs = []
 
         self.hashid = md5_hash(self.key)
 
+        self.state = 'new'
         self.args_changed = self.check_args_changed()
         self.doc_changed = None
-        self.is_cached = None
-        self.was_run = None
 
         # Class-specific setup.
         self.setup()
@@ -51,6 +59,13 @@ class Node(dexy.plugin.Plugin):
     def __repr__(self):
         return "%s(%s)" % ( self.__class__.__name__, self.key)
 
+    def transition(self, new_state):
+        attempted_transition = (self.state, new_state) 
+        if not attempted_transition in self.__class__.state_transitions:
+            msg = "%s -> %s"
+            raise dexy.exceptions.UnexpectedState(msg % attempted_transition)
+        self.state = new_state
+
     def add_runtime_args(self, args):
         self.args.update(args)
         self.runtime_args.update(args)
@@ -66,7 +81,7 @@ class Node(dexy.plugin.Plugin):
         def walk(inputs):
             for inpt in inputs:
                 children.append(inpt)
-                walk(list(inpt.inputs) + inpt.children)
+                walk(inpt.inputs + inpt.children)
 
         if self.inputs:
             walk(self.inputs)
@@ -79,7 +94,7 @@ class Node(dexy.plugin.Plugin):
         """
         Yield all direct inputs and their inputs, if they are of class 'doc'
         """
-        for node in list(self.walk_inputs()):
+        for node in self.walk_inputs():
             if node.__class__.__name__ == 'Doc':
                 yield node
 
@@ -172,6 +187,7 @@ class Node(dexy.plugin.Plugin):
                 new_doc.contents = None
                 new_doc.args_changed = False
                 assert new_doc.hashid == hashid
+                new_doc.calculate_is_cached()
                 new_doc.initial_data.load_data()
                 new_doc.output_data().load_data()
                 self.add_additional_doc(new_doc)
@@ -183,25 +199,37 @@ class Node(dexy.plugin.Plugin):
         self.additional_docs.append(doc)
 
     def calculate_is_cached(self):
-        if self.is_cached == None:
+        if self.state == 'new':
+            any_inputs_not_cached = False
+            for node in self.inputs + self.children:
+                node.calculate_is_cached()
+                if not node.state == 'cached':
+                    any_inputs_not_cached = True
+
             self.log_debug("checking if %s is changed" % self.key)
             self.log_debug("  doc changed %s" % self.doc_changed)
             self.log_debug("  args changed %s" % self.args_changed)
-            self.is_cached = not self.doc_changed and not self.args_changed
-            # TODO check that all storage files are present.
+            is_cached = not self.doc_changed and not self.args_changed and not any_inputs_not_cached
+
+            if is_cached:
+                self.transition('cached')
+                self.load_runtime_args()
+                self.load_additional_docs()
+            else:
+                self.transition('checked')
 
     def __iter__(self):
         def next_task():
-            if self.state == 'new':
-                self.state = 'running'
+            if self.state in ('checked'):
+                self.transition('running')
                 yield self
-                self.state = 'complete'
+                self.transition('ran')
 
             elif self.state == 'running':
                 raise dexy.exceptions.CircularDependency(self.key)
 
-            elif self.state == 'complete':
-                pass
+            elif self.state in ('ran', 'cached'):
+                pass # do nothing
 
             else:
                 raise dexy.exceptions.UnexpectedState("%s in %s" % (self.state, self.key))
@@ -209,55 +237,16 @@ class Node(dexy.plugin.Plugin):
         return next_task()
 
     def __call__(self, *args, **kw):
-        any_inputs_ran = False
-        for inpt in self.walk_inputs():
-            for node in inpt:
-                node(*args, **kw)
-            if inpt.was_run:
-                any_inputs_ran = True
-            assert inpt.is_cached, "%s not cached!" % inpt.key_with_class()
+        for inpt in self.inputs:
+            for task in inpt:
+                task()
 
-        import time
-        self.run_start_time = time.time()
-        self.call_run(any_inputs_ran)
-        self.run_finish_time = time.time()
-
-        if hasattr(self, 'batch_info'):
-            self.wrapper.batch.add_doc(self)
-
-    def is_cached_and_present(self):
-        if self.is_cached and hasattr(self, 'output_data'):
-            return self.output_data().is_cached()
-        else:
-            return self.is_cached
-
-    def call_run(self, any_inputs_ran):
-        self.calculate_is_cached()
-
-        if self.is_cached_and_present() and not any_inputs_ran:
-            self.log_info("cached, not running")
-            self.load_runtime_args()
-            self.load_additional_docs()
-            if self.was_run == None:
-                self.was_run = False
-
-        else:
-            self.log_info("running")
-            self.run()
-            self.save_runtime_args()
-            self.save_additional_docs()
-            if self.was_run == None:
-                self.was_run = True
-
-        assert self.is_cached or self.was_run
-        self.is_cached = True
-        assert self.is_cached_and_present()
+        self.run()
 
     def run(self):
         for child in self.children:
-            child()
-            if child.was_run:
-                self.was_run = True
+            for task in child:
+                task()
 
 class BundleNode(Node):
     """
@@ -281,7 +270,7 @@ class ScriptNode(BundleNode):
 
         siblings = []
         for doc in self.inputs:
-            doc.inputs = list(doc.inputs) + siblings
+            doc.inputs = doc.inputs + siblings
             siblings.append(doc)
 
         self.doc_changed = self.check_doc_changed()

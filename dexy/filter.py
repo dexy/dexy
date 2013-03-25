@@ -217,8 +217,11 @@ class Filter(dexy.plugin.Plugin):
                     )
             self.doc.add_additional_doc(doc)
 
+            doc.calculate_is_cached()
+
             if run:
-                doc.run()
+                for task in doc:
+                    task()
 
             return doc
 

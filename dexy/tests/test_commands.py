@@ -48,7 +48,7 @@ def test_help_text():
 @patch.object(sys, 'argv', ['dexy'])
 @patch('sys.stderr', new_callable=StringIO)
 def test_run_with_userfeedback_exception(stderr):
-    with tempdir():
+    with wrap():
         with open("docs.txt", "w") as f:
             f.write("*.py|py")
 

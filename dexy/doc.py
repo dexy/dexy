@@ -1,3 +1,4 @@
+import time
 from dexy.common import OrderedDict
 import dexy.exceptions
 import dexy.filter
@@ -66,7 +67,6 @@ class Doc(dexy.node.Node):
                 # to determine whether it has changed
                 cache_mtime = cache_stat[stat.ST_MTIME]
                 live_mtime = live_stat[stat.ST_MTIME]
-                import time
                 msg = "cache mtime %s live mtime %s now %s changed (live gt cache) %s"
                 msgargs = (cache_mtime, live_mtime, time.time(), live_mtime > cache_mtime)
                 self.log_debug(msg % msgargs)
@@ -97,8 +97,14 @@ class Doc(dexy.node.Node):
         return contents
 
     def run(self):
+        self.start_time = time.time()
         for f in self.filters:
             f.process()
+        self.finish_time = time.time()
+        self.elapsed_time = self.finish_time - self.start_time
+        self.wrapper.batch.add_doc(self)
+        self.save_runtime_args()
+        self.save_additional_docs()
 
     def output_data(self):
         if self.filters:
@@ -112,9 +118,9 @@ class Doc(dexy.node.Node):
                 'input-data' : self.initial_data.args_to_data_init(),
                 'output-data' : self.output_data().args_to_data_init(),
                 'filters-data' : [f.output_data.args_to_data_init() for f in self.filters],
-                'start_time' : self.run_start_time,
-                'finish_time' : self.run_finish_time,
-                'elapsed' : self.run_finish_time - self.run_start_time
+                'start_time' : self.start_time,
+                'finish_time' : self.finish_time,
+                'elapsed' : self.elapsed_time
                 }
 
     def setup(self):

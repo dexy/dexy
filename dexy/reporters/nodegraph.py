@@ -51,13 +51,8 @@ class PlainTextGraph(Reporter):
         def print_inputs(node, indent=0):
             content = []
 
-            if node.was_run:
-                ran_or_cache = 'ran'
-            else:
-                ran_or_cache = 'cached'
-
             s = " " * indent * 4
-            content.append("%s%s (%s)" % (s, node, ran_or_cache))
+            content.append("%s%s (%s)" % (s, node, node.state))
 
             for child in list(node.inputs) + node.children:
                 content.extend(print_inputs(child, indent+1))

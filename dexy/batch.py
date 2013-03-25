@@ -10,6 +10,7 @@ class Batch(object):
         self.docs_by_storage_key = {}
         self.uuid = str(uuid.uuid4())
         self.filters_used = []
+        self.filter_elapsed_time = 0.0
 
     def __repr__(self):
         return "Batch(%s)" % self.uuid

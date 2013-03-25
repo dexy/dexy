@@ -157,7 +157,6 @@ class AbstractSyntaxTree():
 
             matches_target = self.wrapper.target and key.startswith(self.wrapper.target)
             if not kwargs.get('default', True) and not self.wrapper.full and not matches_target:
-                print "default for '%s' is false and not full or matches target" % key
                 return
 
             input_nodes = [parse_item(i) for i in inputs if i]

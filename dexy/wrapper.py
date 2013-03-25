@@ -302,10 +302,11 @@ class Wrapper(object):
 
     def run(self, *docs):
         self.assert_dexy_dirs_exist()
-        self.clean_dexy_dirs()
 
         self.batch = dexy.batch.Batch(self)
         self.batch.start_time = time.time()
+
+        self.clean_dexy_dirs()
 
         if docs:
             self.nodes = {}
@@ -331,6 +332,9 @@ class Wrapper(object):
                 run_roots = self.roots
 
         self.save_node_argstrings()
+
+        for root_node in run_roots:
+            root_node.calculate_is_cached()
 
         for root_node in run_roots:
             for task in root_node:

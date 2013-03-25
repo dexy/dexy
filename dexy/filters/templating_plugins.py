@@ -309,8 +309,9 @@ class D(object):
         if self._map_relative_refs.has_key(relative_ref):
             return self._map_relative_refs[relative_ref]
         else:
-            msg = "no document named %s is available to %s"
+            msg = """no document named %s is available to %s, all available
+            doc keys have been written to log with WARN level"""
             for k in sorted(self._map_relative_refs):
-                self._artifact.log_debug(k)
+                self._artifact.log_warn(k)
             msgargs = (relative_ref, self._artifact.key)
             raise dexy.exceptions.UserFeedback(msg % msgargs)

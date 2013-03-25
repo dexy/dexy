@@ -196,9 +196,9 @@ def run_yaml_with_target(target):
 
 def test_run_target_foo():
     for wrapper in run_yaml_with_target("foo"):
-        assert wrapper.nodes['bundle:foo'].state == 'complete'
-        assert wrapper.nodes['bundle:bar'].state == 'complete'
-        assert wrapper.nodes['bundle:baz'].state == 'complete'
+        assert wrapper.nodes['bundle:foo'].state == 'ran'
+        assert wrapper.nodes['bundle:bar'].state == 'ran'
+        assert wrapper.nodes['bundle:baz'].state == 'ran'
         assert wrapper.nodes['bundle:foob'].state == 'new'
         assert wrapper.nodes['bundle:foobar'].state == 'new'
         assert wrapper.nodes['bundle:xyz'].state == 'new'
@@ -206,18 +206,18 @@ def test_run_target_foo():
 def test_run_target_fo():
     for wrapper in run_yaml_with_target("fo"):
         # foo and children have been run
-        assert wrapper.nodes['bundle:foo'].state == 'complete'
-        assert wrapper.nodes['bundle:bar'].state == 'complete'
-        assert wrapper.nodes['bundle:baz'].state == 'complete'
+        assert wrapper.nodes['bundle:foo'].state == 'ran'
+        assert wrapper.nodes['bundle:bar'].state == 'ran'
+        assert wrapper.nodes['bundle:baz'].state == 'ran'
 
         # foob and children have been run
-        assert wrapper.nodes['bundle:foob'].state == 'complete'
-        assert wrapper.nodes['bundle:foobar'].state == 'complete'
+        assert wrapper.nodes['bundle:foob'].state == 'ran'
+        assert wrapper.nodes['bundle:foobar'].state == 'ran'
 
 def test_run_target_bar():
     for wrapper in run_yaml_with_target("bar"):
         assert wrapper.nodes['bundle:foo'].state == 'new'
-        assert wrapper.nodes['bundle:bar'].state == 'complete'
+        assert wrapper.nodes['bundle:bar'].state == 'ran'
         assert wrapper.nodes['bundle:baz'].state == 'new'
         assert wrapper.nodes['bundle:foob'].state == 'new'
         assert wrapper.nodes['bundle:foobar'].state == 'new'
@@ -225,7 +225,7 @@ def test_run_target_bar():
 def test_run_target_ba():
     for wrapper in run_yaml_with_target("ba"):
         assert wrapper.nodes['bundle:foo'].state == 'new'
-        assert wrapper.nodes['bundle:bar'].state == 'complete'
-        assert wrapper.nodes['bundle:baz'].state == 'complete'
+        assert wrapper.nodes['bundle:bar'].state == 'ran'
+        assert wrapper.nodes['bundle:baz'].state == 'ran'
         assert wrapper.nodes['bundle:foob'].state == 'new'
         assert wrapper.nodes['bundle:foobar'].state == 'new'
