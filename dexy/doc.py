@@ -125,7 +125,6 @@ class Doc(dexy.node.Node):
             return self.initial_data
 
     def batch_info(self):
-        print self.output_data().args_to_data_init()
         return {
                 'title' : self.output_data().title(),
                 'input-data' : self.initial_data.args_to_data_init(),
