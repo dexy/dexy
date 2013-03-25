@@ -14,6 +14,9 @@ class Template(dexy.plugin.Plugin):
     aliases = []
     filters_used = []
 
+    def __init__(self):
+        self.initialize_settings()
+
     def template_source_dir(self):
         template_install_dir = os.path.dirname(sys.modules[self.__module__].__file__)
 

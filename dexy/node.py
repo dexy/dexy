@@ -25,22 +25,20 @@ class Node(dexy.plugin.Plugin):
         self.key = os_to_posix(pattern)
         self.wrapper = wrapper
         self.args = kwargs
-        self.runtime_args = {}
-        self.children = []
-        self.additional_docs = []
-
-        args_for_settings = dict((k, v) for k, v in self.args.iteritems() if k in self._settings)
-        self.update_settings(args_for_settings)
-
-        self.start_time = 0
-        self.finish_time = 0
-        self.elapsed_time = 0
-        self.shortcut = None
-
         if inputs:
             self.inputs = list(inputs)
         else:
             self.inputs = []
+
+        self.initialize_settings(**kwargs)
+
+        self.start_time = 0
+        self.finish_time = 0
+        self.elapsed_time = 0
+
+        self.runtime_args = {}
+        self.children = []
+        self.additional_docs = []
 
         self.hashid = md5_hash(self.key)
 
@@ -175,7 +173,7 @@ class Node(dexy.plugin.Plugin):
         if self.additional_docs:
             additional_doc_info = []
             for doc in self.additional_docs:
-                info = (doc.key, doc.hashid)
+                info = (doc.key, doc.hashid, doc.setting_values())
                 additional_doc_info.append(info)
 
             with open(self.additional_docs_filename(), "w") as f:
@@ -186,8 +184,13 @@ class Node(dexy.plugin.Plugin):
             with open(self.additional_docs_filename(), "r") as f:
                 additional_doc_info = json.load(f)
     
-            for doc_key, hashid in additional_doc_info:
-                new_doc = dexy.doc.Doc(doc_key, self.wrapper, [], contents='dummy contents')
+            for doc_key, hashid, doc_settings in additional_doc_info:
+                new_doc = dexy.doc.Doc(doc_key,
+                        self.wrapper,
+                        [],
+                        contents='dummy contents',
+                        **doc_settings
+                        )
                 new_doc.contents = None
                 new_doc.args_changed = False
                 assert new_doc.hashid == hashid
@@ -200,6 +203,7 @@ class Node(dexy.plugin.Plugin):
         self.log_debug("adding additional doc '%s'" % doc.key)
         self.children.append(doc)
         self.wrapper.add_node(doc)
+        self.wrapper.batch.add_doc(doc)
         self.additional_docs.append(doc)
 
     def calculate_is_cached(self):

@@ -89,8 +89,8 @@ class PexpectReplFilter(SubprocessFilter):
             self.log_debug("Adding save-vars-to-json-cmd code:\n%s" % section_text)
             input_dict['dexy--save-vars'] = section_text
             if not self.setting('add-new-files'):
-                docstr = self._settings['add-new-files'][0]
-                self._settings['add-new-files'] = (docstr, ".json")
+                docstr = self._instance_settings['add-new-files'][0]
+                self._instance_settings['add-new-files'] = (docstr, ".json")
 
         search_terms = self.prompt_search_terms()
 

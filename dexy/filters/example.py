@@ -173,8 +173,8 @@ class ExampleFilterArgs(Example):
     def process_text(self, input_text):
         # Filter Settings
         result = ["Here are the filter settings:"]
-        for k in sorted(self._settings):
-            v = self._settings[k][1]
+        for k in sorted(self.setting_values()):
+            v = self.setting_values()[k]
             result.append("  %s: %s" % (k, v))
 
         # Doc args

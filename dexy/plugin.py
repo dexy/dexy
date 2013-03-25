@@ -14,6 +14,19 @@ class Plugin(object):
     def help(self):
         return inspect.getdoc(self.__class__)
 
+    def initialize_settings(self, **raw_kwargs):
+        self._instance_settings = {}
+        for parent_class in self.__class__.imro():
+            if parent_class._settings:
+                self.__class__.class_update_settings(self, parent_class._settings)
+            if hasattr(parent_class, 'UNSET'):
+                for unset in parent_class.UNSET:
+                    del self._instance_settings[unset]
+
+        # Apply raw_kwargs settings
+        settings = dict((k, v) for k, v in raw_kwargs.items() if k in self._instance_settings)
+        self.__class__.class_update_settings(self, settings)
+
     def setting(self, name_hyphen):
         """
         Retrieves the setting value whose name is indicated by name_hyphen.
@@ -22,12 +35,12 @@ class Plugin(object):
         and the value stored in environment variables is retrieved. (It's an
         error if there's no corresponding environment variable set.)
         """
-        if name_hyphen in self._settings:
-            value = self._settings[name_hyphen][1]
+        if name_hyphen in self._instance_settings:
+            value = self._instance_settings[name_hyphen][1]
         else:
             name_underscore = name_hyphen.replace("-", "_")
-            if name_underscore in self._settings:
-                value = self._settings[name_underscore][1]
+            if name_underscore in self._instance_settings:
+                value = self._instance_settings[name_underscore][1]
             else:
                 if name_underscore == name_hyphen:
                     msg = "no setting named %s" % name_hyphen
@@ -53,7 +66,7 @@ class Plugin(object):
         """
         if not skip:
             skip = []
-        return dict((k, v[1]) for k, v in self._settings.iteritems() if not k in skip)
+        return dict((k, v[1]) for k, v in self._instance_settings.iteritems() if not k in skip)
 
     def update_settings(self, new_settings):
         self.__class__.class_update_settings(self, new_settings, False)
@@ -170,20 +183,20 @@ class PluginMeta(type):
     def class_update_settings(cls, instance, new_settings, enforce_helpstring=True):
         for raw_key, value in new_settings.iteritems():
             key = raw_key.replace("_", "-")
-            key_in_settings = instance._settings.has_key(key)
+            key_in_settings = instance._instance_settings.has_key(key)
             value_is_list_len_2 = isinstance(value, list) and len(value) == 2
             if isinstance(value, tuple) or (not key_in_settings and value_is_list_len_2):
-                instance._settings[key] = value
+                instance._instance_settings[key] = value
             else:
-                if not instance._settings.has_key(key):
+                if not instance._instance_settings.has_key(key):
                     if enforce_helpstring:
                         raise Exception("You must specify param '%s' as a tuple of (helpstring, value)" % key)
                     else:
                         # TODO check and warn if key is similar to an existing key
-                        instance._settings[key] = ('', value,)
+                        instance._instance_settings[key] = ('', value,)
                 else:
-                    orig = instance._settings[key]
-                    instance._settings[key] = (orig[0], value,)
+                    orig = instance._instance_settings[key]
+                    instance._instance_settings[key] = (orig[0], value,)
 
     def create_instance(cls, alias, *instanceargs, **instancekwargs):
         if alias.startswith('-'):
@@ -197,19 +210,11 @@ class PluginMeta(type):
         klass = cls.get_reference_to_class(class_or_class_name)
 
         instance = klass(*instanceargs, **instancekwargs)
-        instance._settings = {}
         instance.alias = alias
 
-        for parent_class in klass.imro():
-            klass.class_update_settings(instance, parent_class._settings)
-            if hasattr(parent_class, 'UNSET'):
-                for unset in parent_class.UNSET:
-                    del instance._settings[unset]
-
-        # Update with any settings defined at time plugin was registered.
-        klass.class_update_settings(instance, settings)
-
-        # TODO update settings from environment, dexy config
+        if not hasattr(instance, '_instance_settings'):
+            instance.initialize_settings()
+        instance.update_settings(settings)
 
         if not instance.is_active():
             raise dexy.exceptions.InactiveFilter(alias)

@@ -15,26 +15,44 @@ class Doc(dexy.node.Node):
     _settings = {
             'shortcut' : ( """A way to refer to this document without having to
             use the full document key.""", None ),
-            'title' : ("""Title for this document.""", None)
+            'title' : ("""Title for this document.""", None),
+            'output' : ("""Whether to output this document to reports such as
+                output/ and output-site/.""", None)
             }
 
-    def canonical_name_from_args(self):
-        raw_arg_name = self.arg_value('canonical-name')
-    
-        if raw_arg_name:
-            raw_arg_name = raw_arg_name % self.args
+    def setup(self):
+        self.name = self.key.split("|")[0]
+        self.ext = os.path.splitext(self.name)[1]
+        self.filter_aliases = self.key.split("|")[1:]
+        self.filters = []
+        self.setup_initial_data()
 
-            if "/" in raw_arg_name:
-                return raw_arg_name
+        for alias in self.filter_aliases:
+            f = dexy.filter.Filter.create_instance(alias, self)
+            self.filters.append(f)
+
+        prev_filter = None
+        for i, f in enumerate(self.filters):
+            filter_aliases = self.filter_aliases[0:i+1]
+            filter_key = "%s|%s" % (self.name, "|".join(filter_aliases))
+            storage_key = "%s-%03d-%s" % (self.hashid, i+1, "-".join(filter_aliases))
+
+            if i < len(self.filters) - 1:
+                next_filter = self.filters[i+1]
             else:
-                return posixpath.join(posixpath.dirname(self.key), raw_arg_name)
+                next_filter = None
+
+            filter_settings_from_args = self.args.get(f.alias, {})
+            f.setup(filter_key, storage_key, prev_filter,
+                    next_filter, filter_settings_from_args)
+            prev_filter = f
 
     def setup_initial_data(self):
         canonical_name = self.canonical_name_from_args() or self.name
         storage_key = "%s-000" % self.hashid
 
-        if self.arg_value('output') is not None:
-            canonical_output = self.arg_value('output')
+        if self.setting('output') is not None:
+            canonical_output = self.setting('output')
         else:
             canonical_output = len(self.filter_aliases) == 0
 
@@ -62,6 +80,17 @@ class Doc(dexy.node.Node):
                 self.initial_data.load_data()
             else:
                 self.initial_data.set_data(self.get_contents())
+
+    def canonical_name_from_args(self):
+        raw_arg_name = self.arg_value('canonical-name')
+    
+        if raw_arg_name:
+            raw_arg_name = raw_arg_name % self.args
+
+            if "/" in raw_arg_name:
+                return raw_arg_name
+            else:
+                return posixpath.join(posixpath.dirname(self.key), raw_arg_name)
 
     def check_doc_changed(self):
         if self.name in self.wrapper.filemap:
@@ -119,6 +148,9 @@ class Doc(dexy.node.Node):
         self.save_additional_docs()
 
     def output_data(self):
+        """
+        Returns a reference to the final data object for this document.
+        """
         if self.filters:
             return self.filters[-1].output_data
         else:
@@ -134,30 +166,3 @@ class Doc(dexy.node.Node):
                 'finish_time' : self.finish_time,
                 'elapsed' : self.elapsed_time
                 }
-
-    def setup(self):
-        self.name = self.key.split("|")[0]
-        self.ext = os.path.splitext(self.name)[1]
-        self.filter_aliases = self.key.split("|")[1:]
-        self.filters = []
-        self.setup_initial_data()
-
-        for alias in self.filter_aliases:
-            f = dexy.filter.Filter.create_instance(alias, self)
-            self.filters.append(f)
-
-        prev_filter = None
-        for i, f in enumerate(self.filters):
-            filter_aliases = self.filter_aliases[0:i+1]
-            filter_key = "%s|%s" % (self.name, "|".join(filter_aliases))
-            storage_key = "%s-%03d-%s" % (self.hashid, i+1, "-".join(filter_aliases))
-
-            if i < len(self.filters) - 1:
-                next_filter = self.filters[i+1]
-            else:
-                next_filter = None
-
-            filter_settings_from_args = self.args.get(f.alias, {})
-            f.setup(filter_key, storage_key, prev_filter,
-                    next_filter, filter_settings_from_args)
-            prev_filter = f

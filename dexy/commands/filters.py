@@ -58,15 +58,15 @@ def filters_text(
         text.append(inspect.getdoc(instance.__class__))
         text.append("")
         text.append("dexy-level settings:")
-        for k in sorted(instance._settings):
+        for k in sorted(instance._instance_settings):
             if not k in dexy.filter.Filter.nodoc_settings and k in dexy.filter.Filter._settings:
-                tup = instance._settings[k]
+                tup = instance._instance_settings[k]
                 text.append(SETTING_STRING % (k, tup[0], tup[1]))
 
         text.append("")
         text.append("filter-specific settings:")
         for k in sorted(instance.filter_specific_settings()):
-            tup = instance._settings[k]
+            tup = instance._instance_settings[k]
             text.append(SETTING_STRING % (k, tup[0], tup[1]))
 
         templates = instance.templates()

@@ -84,7 +84,7 @@ class Batch(object):
             pass
 
         with open(self.filepath(), 'w') as f:
-            json.dump(self.to_dict(), f)
+            json.dump(self.to_dict(), f, indent=4, sort_keys=True)
 
         with open(self.most_recent_filename(), 'w') as f:
             f.write(self.uuid)

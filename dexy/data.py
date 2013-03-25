@@ -53,6 +53,8 @@ class Data(dexy.plugin.Plugin):
         self.wrapper = wrapper
         self.canonical_output = canonical_output
 
+        self.initialize_settings()
+
         self._data = None
 
         # allow doing custom setup in subclasses
