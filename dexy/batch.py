@@ -27,7 +27,10 @@ class Batch(object):
             self.filters_used.extend(doc.filter_aliases)
 
     def doc_filter_data(self, doc_key, filter_index):
-        doc_info = self.docs[doc_key]["filter-data"][filter_index]
+        if not doc_key in self.docs:
+            msg = "can't find doc key '%s' in docs" % doc_key
+            raise dexy.exceptions.InternalDexyProblem(msg)
+        doc_info = self.docs[doc_key]["filters-data"][filter_index]
         args = []
         args.extend(doc_info)
         args.append(self.wrapper)

@@ -103,7 +103,11 @@ class Data(dexy.plugin.Plugin):
 
     def title(self):
         if self.is_index_page():
-            title_from_name = inflection.titleize(self.parent_dir())
+            subdir = posixpath.split(posixpath.dirname(self.name))[-1]
+            if subdir == "/":
+                title_from_name = "Home"
+            else:
+                title_from_name = inflection.titleize(subdir)
         else:
             title_from_name = inflection.titleize(self.baserootname())
 

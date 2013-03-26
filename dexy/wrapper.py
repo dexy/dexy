@@ -335,10 +335,13 @@ class Wrapper(object):
         key = node.key_with_class()
         self.nodes[key] = node
 
+    def setup_batch(self):
+        self.batch = dexy.batch.Batch(self)
+
     def run(self, *docs):
         self.assert_dexy_dirs_exist()
 
-        self.batch = dexy.batch.Batch(self)
+        self.setup_batch()
         self.batch.start_time = time.time()
 
         self.clean_dexy_dirs()

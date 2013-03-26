@@ -9,4 +9,3 @@ logs/
 build
 dist
 cover/
-dexy/reporters/contentmap.py

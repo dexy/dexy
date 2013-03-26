@@ -200,6 +200,7 @@ def test_pattern_node():
             f.write("bar!")
 
         wrapper = Wrapper()
+        wrapper.setup_batch()
 
         node = PatternNode("*.txt", 
                 wrapper,
@@ -220,6 +221,7 @@ def test_pattern_node_multiple_filters():
             f.write("foo!")
 
         wrapper = Wrapper()
+        wrapper.setup_batch()
 
         node = PatternNode("*.txt|dexy|dexy|dexy", wrapper=wrapper)
         doc = node.children[0]
@@ -233,6 +235,7 @@ def test_pattern_node_one_filter():
             f.write("foo!")
 
         wrapper = Wrapper()
+        wrapper.setup_batch()
 
         node = PatternNode("*.txt|dexy", wrapper=wrapper)
         doc = node.children[0]

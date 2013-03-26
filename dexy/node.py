@@ -4,7 +4,6 @@ import dexy.doc
 import dexy.plugin
 import fnmatch
 import re
-import os
 import json
 
 class Node(dexy.plugin.Plugin):
@@ -101,13 +100,13 @@ class Node(dexy.plugin.Plugin):
                 yield node
 
     def log_debug(self, message):
-        self.wrapper.log.debug("%s: %s" % (self.key_with_class(), message))
+        self.wrapper.log.debug("%s %s: %s" % (self.hashid, self.key_with_class(), message))
 
     def log_info(self, message):
-        self.wrapper.log.info("%s: %s" % (self.key_with_class(), message))
+        self.wrapper.log.info("%s %s: %s" % (self.hashid, self.key_with_class(), message))
 
     def log_warn(self, message):
-        self.wrapper.log.warn("%s: %s" % (self.key_with_class(), message))
+        self.wrapper.log.warn("%s %s: %s" % (self.hashid, self.key_with_class(), message))
 
     def key_with_class(self):
         return "%s:%s" % (self.__class__.aliases[0], self.key)
@@ -171,6 +170,7 @@ class Node(dexy.plugin.Plugin):
 
     def add_additional_doc(self, doc):
         self.log_debug("adding additional doc '%s'" % doc.key)
+        doc.created_by_doc = self
         self.children.append(doc)
         self.wrapper.add_node(doc)
         self.wrapper.batch.add_doc(doc)
@@ -302,5 +302,6 @@ class PatternNode(Node):
                     doc.parent = self
                     self.children.append(doc)
                     self.wrapper.add_node(doc)
+                    self.wrapper.batch.add_doc(doc)
 
         self.doc_changed = self.check_doc_changed()

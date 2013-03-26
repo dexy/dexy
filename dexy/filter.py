@@ -165,13 +165,13 @@ class Filter(dexy.plugin.Plugin):
         return "%s:%s" % (self.__class__.__name__, self.key)
 
     def log_debug(self, message):
-        self.doc.wrapper.log.debug("%s %s: %s" % (self.doc.hashid, self.key_with_class(), message))
+        self.doc.log_debug(message)
 
     def log_info(self, message):
-        self.doc.wrapper.log.info("%s %s: %s" % (self.doc.hashid, self.key_with_class(), message))
+        self.doc.log_info(message)
 
     def log_warn(self, message):
-        self.doc.wrapper.log.warn("%s %s: %s" % (self.doc.hashid, self.key_with_class(), message))
+        self.doc.log_warn(message)
 
     def process(self):
         """

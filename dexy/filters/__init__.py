@@ -25,9 +25,7 @@ import os
 yaml_file = os.path.join(os.path.dirname(__file__), "filters.yaml")
 dexy.filter.Filter.register_plugins_from_yaml(yaml_file)
 
-import time
 # Automatically register plugins in any python package named like dexy_*
-start_time = time.time()
 import pkg_resources
 for dist in pkg_resources.working_set:
     if dist.key.startswith("dexy-"):
@@ -36,4 +34,3 @@ for dist in pkg_resources.working_set:
             __import__(import_pkg)
         except ImportError as e:
             print "plugin", import_pkg, "not registered because", e
-print "elapsed time to load dexy plugins %0.3f" % (time.time() - start_time)

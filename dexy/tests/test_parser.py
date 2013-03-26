@@ -19,6 +19,7 @@ def test_text_parser():
             f.write("")
 
         wrapper = Wrapper()
+        wrapper.setup_batch()
         ast = AbstractSyntaxTree(wrapper)
         parser = TextFile(wrapper, ast)
         parser.parse(".", """
@@ -71,6 +72,7 @@ def test_yaml_with_defaults():
             f.write("hello")
 
         wrapper = Wrapper()
+        wrapper.setup_batch()
         ast = AbstractSyntaxTree(wrapper)
         parser = Yaml(wrapper, ast)
         parser.parse('.', YAML_WITH_DEFAULTS)
