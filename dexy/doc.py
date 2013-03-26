@@ -73,7 +73,8 @@ class Doc(dexy.node.Node):
 
         if self.name in self.wrapper.filemap:
             # This is a real file on the file system.
-            self.initial_data.copy_from_file(self.name)
+            if self.doc_changed or not self.initial_data.is_cached():
+                self.initial_data.copy_from_file(self.name)
         else:
             is_dummy = self.initial_data.is_cached() and self.get_contents() == 'dummy contents'
             if is_dummy:
