@@ -95,6 +95,7 @@ def dexy_command(
         logformat=defaults['log_format'], # format of log entries
         loglevel=defaults['log_level'], # log level, valid options are DEBUG, INFO, WARN
         nocache=defaults['dont_use_cache'], # whether to force artifacts to run even if there is a matching file in the cache
+        pickle=defaults['pickle'], # library to use for persisting info to disk, may be 'c', 'py', 'json'
         plugins=defaults['plugins'], # additional python packages containing dexy plugins
         profile=defaults['profile'], # whether to run with cProfile. Arg can be a boolean, in which case profile saved to 'dexy.prof', or a filename to save to.
         r=False, # whether to clear cache before running dexy

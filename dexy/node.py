@@ -146,58 +146,28 @@ class Node(dexy.plugin.Plugin):
         """
         return unicode(json.dumps(self.sorted_args()))
 
-    def runtime_args_filename(self):
-        """
-        filename used to store runtime args
-        """
-        return os.path.join(self.wrapper.artifacts_dir, self.hashid[0:2], "%s.runtimeargs.json" % self.hashid)
+    def additional_doc_info(self):
+        additional_doc_info = []
+        for doc in self.additional_docs:
+            info = (doc.key, doc.hashid, doc.setting_values())
+            additional_doc_info.append(info)
+        return additional_doc_info
 
-    def additional_docs_filename(self):
-        """
-        filename used to store additional doc information
-        """
-        return os.path.join(self.wrapper.artifacts_dir, self.hashid[0:2], "%s.additionaldocs.json" % self.hashid)
-
-    def save_runtime_args(self):
-        if self.runtime_args:
-            with open(self.runtime_args_filename(), "w") as f:
-                json.dump(self.runtime_args, f)
-
-    def load_runtime_args(self):
-        if os.path.exists(self.runtime_args_filename()):
-            with open(self.runtime_args_filename(), "r") as f:
-                runtime_args = json.load(f)
-                self.add_runtime_args(runtime_args)
-
-    def save_additional_docs(self):
-        if self.additional_docs:
-            additional_doc_info = []
-            for doc in self.additional_docs:
-                info = (doc.key, doc.hashid, doc.setting_values())
-                additional_doc_info.append(info)
-
-            with open(self.additional_docs_filename(), "w") as f:
-                json.dump(additional_doc_info, f)
-
-    def load_additional_docs(self):
-        if os.path.exists(self.additional_docs_filename()):
-            with open(self.additional_docs_filename(), "r") as f:
-                additional_doc_info = json.load(f)
-    
-            for doc_key, hashid, doc_settings in additional_doc_info:
-                new_doc = dexy.doc.Doc(doc_key,
-                        self.wrapper,
-                        [],
-                        contents='dummy contents',
-                        **doc_settings
-                        )
-                new_doc.contents = None
-                new_doc.args_changed = False
-                assert new_doc.hashid == hashid
-                new_doc.calculate_is_cached()
-                new_doc.initial_data.load_data()
-                new_doc.output_data().load_data()
-                self.add_additional_doc(new_doc)
+    def load_additional_docs(self, additional_doc_info):
+        for doc_key, hashid, doc_settings in additional_doc_info:
+            new_doc = dexy.doc.Doc(doc_key,
+                    self.wrapper,
+                    [],
+                    contents='dummy contents',
+                    **doc_settings
+                    )
+            new_doc.contents = None
+            new_doc.args_changed = False
+            assert new_doc.hashid == hashid
+            new_doc.calculate_is_cached()
+            new_doc.initial_data.load_data()
+            new_doc.output_data().load_data()
+            self.add_additional_doc(new_doc)
 
     def add_additional_doc(self, doc):
         self.log_debug("adding additional doc '%s'" % doc.key)
@@ -223,9 +193,12 @@ class Node(dexy.plugin.Plugin):
                 self.transition('cached')
 
                 # Do once-off stuff for cached tasks.
-                self.load_runtime_args()
-                self.load_additional_docs()
                 self.wrapper.batch.add_doc(self)
+
+                runtime_info = self.wrapper.prev_batch_runtime_info.get(self.key_with_class())
+                if runtime_info:
+                    self.add_runtime_args(runtime_info['runtime-args'])
+                    self.load_additional_docs(runtime_info['additional-docs'])
             else:
                 self.transition('checked')
 

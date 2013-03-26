@@ -29,10 +29,6 @@ def test_add_new_document():
         assert "doc:subdir/example.txt|newdoc" in doc.wrapper.nodes
         assert "doc:subdir/newfile.txt|processtext" in doc.wrapper.nodes
 
-        assert doc.additional_docs
-        doc.save_additional_docs()
-        doc.load_additional_docs()
-
 def test_key_value_example():
     with wrap() as wrapper:
         doc = Doc(

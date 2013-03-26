@@ -9,7 +9,6 @@ import dexy.doc
 import dexy.parser
 import dexy.reporter
 import dexy.utils
-import json
 import logging
 import logging.handlers
 import os
@@ -37,17 +36,16 @@ class Wrapper(object):
             self.setup_log()
             self.filemap = self.map_files()
             self.load_node_argstrings()
+            self.load_runtime_info()
 
-    def load_node_argstrings(self):
+    def pickle_lib(self):
+        return dexy.utils.pickle_lib(self)
+
+    def saved_args_filename(self):
         """
-        Load saved node arg strings into a hash so nodes can check if their
-        args have changed.
+        Filename under which to save node arg strings.
         """
-        try:
-            with open(self.saved_args_filename(), 'r') as f:
-                self.saved_args = json.load(f)
-        except IOError:
-            self.saved_args = {}
+        return os.path.join(self.artifacts_dir, 'batch.args.pickle')
 
     def save_node_argstrings(self):
         """
@@ -55,19 +53,56 @@ class Wrapper(object):
         """
         arg_info = {}
 
-        self.log.debug("nodes are %s" % self.nodes)
         for node in self.nodes.values():
             arg_info[node.key_with_class()] = node.sorted_arg_string()
 
-        self.log.debug("saving node argstrings:\n%s" % arg_info)
-        with open(self.saved_args_filename(), 'w') as f:
-            json.dump(arg_info, f)
+        with open(self.saved_args_filename(), 'wb') as f:
+            pickle = self.pickle_lib()
+            pickle.dump(arg_info, f)
 
-    def saved_args_filename(self):
+    def load_node_argstrings(self):
         """
-        Filename under which to save node arg strings.
+        Load saved node arg strings into a hash so nodes can check if their
+        args have changed.
         """
-        return os.path.join(self.artifacts_dir, 'batch.args')
+        try:
+            with open(self.saved_args_filename(), 'rb') as f:
+                print "loading saved args in", self.saved_args_filename()
+                pickle = self.pickle_lib()
+                self.saved_args = pickle.load(f)
+        except IOError:
+            self.saved_args = {}
+
+    def runtime_info_filename(self):
+        return os.path.join(self.artifacts_dir, 'batch.runtimeinfo.pickle')
+
+    def save_runtime_info(self):
+        """
+        Save runtime changes to metadata so they can be reapplied when node has
+        been cached.
+        """
+        info = {}
+
+        for node in self.nodes.values():
+            info[node.key_with_class()] = {
+                    'runtime-args' : node.runtime_args,
+                    'additional-docs' : node.additional_doc_info()
+                    }
+
+        with open(self.runtime_info_filename(), 'wb') as f:
+            pickle = self.pickle_lib()
+            pickle.dump(info, f)
+
+    def load_runtime_info(self):
+        """
+        """
+        try:
+            with open(self.runtime_info_filename(), 'rb') as f:
+                print "loading runtime info in", self.runtime_info_filename()
+                pickle = self.pickle_lib()
+                self.prev_batch_runtime_info = pickle.load(f)
+        except IOError:
+            self.prev_batch_runtime_info = {}
 
     # Attributes
     def initialize_attribute_defaults(self):
@@ -339,6 +374,8 @@ class Wrapper(object):
         for root_node in run_roots:
             for task in root_node:
                 task()
+
+        self.save_runtime_info()
 
         self.batch.end_time = time.time()
         self.batch.state = 'complete'

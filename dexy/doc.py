@@ -145,9 +145,6 @@ class Doc(dexy.node.Node):
             for task in doc:
                 task()
 
-        self.save_runtime_args()
-        self.save_additional_docs()
-
     def output_data(self):
         """
         Returns a reference to the final data object for this document.

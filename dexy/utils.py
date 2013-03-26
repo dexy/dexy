@@ -32,6 +32,7 @@ defaults = {
     'log_file' : 'dexy.log',
     'log_format' : "%(name)s - %(levelname)s - %(message)s",
     'log_level' : "INFO",
+    'pickle' : 'c',
     'plugins': '',
     'profile' : False,
     'recurse' : True,
@@ -51,6 +52,17 @@ log_levels = {
     'INFO' : logging.INFO,
     'WARN' : logging.WARN
 }
+
+def pickle_lib(wrapper):
+    if wrapper.pickle == 'c':
+        import cPickle as pickle
+        return pickle
+    elif wrapper.pickle == 'py':
+        import pickle
+        return pickle
+    else:
+        msg = "'%s' is not a valid value for pickle" % wrapper.pickle
+        raise dexy.exceptions.UserFeedback(msg)
 
 def is_windows():
     return platform.system() in ('Windows',)

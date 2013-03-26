@@ -1,5 +1,4 @@
 import uuid
-import json
 import os
 import dexy.data
 
@@ -62,7 +61,7 @@ class Batch(object):
         return self.end_time - self.start_time
 
     def filename(self):
-        return "%s.json" % self.uuid
+        return "%s.pickle" % self.uuid
 
     def filepath(self):
         return os.path.join(self.batch_dir(), self.filename())
@@ -84,14 +83,16 @@ class Batch(object):
             pass
 
         with open(self.filepath(), 'w') as f:
-            json.dump(self.to_dict(), f, indent=4, sort_keys=True)
+            pickle = dexy.utils.pickle_lib(self.wrapper)
+            pickle.dump(self.to_dict(), f)
 
         with open(self.most_recent_filename(), 'w') as f:
             f.write(self.uuid)
 
     def load_from_file(self):
+        pickle = dexy.utils.pickle_lib(self.wrapper)
         with open(self.filepath(), 'r') as f:
-            d = json.load(f)
+            d = pickle.load(f)
             for k, v in d.iteritems():
                 setattr(self, k, v)
 
