@@ -3,6 +3,7 @@ from dexy.version import DEXY_VERSION
 from pygments.styles import get_all_styles
 import calendar
 import dexy.commands
+import dexy.commands.cite
 import dexy.data
 import dexy.exceptions
 import dexy.plugin
@@ -53,7 +54,6 @@ class Bibtex(TemplatePlugin):
     """
     @classmethod
     def run(self):
-        import dexy.commnads.cite
         return { 'dexy_bibtex' : dexy.commands.cite.bibtex_text() }
 
 class Inflection(TemplatePlugin):
