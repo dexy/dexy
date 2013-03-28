@@ -15,6 +15,9 @@ class LatexFilter(SubprocessFilter):
             'executable' : 'pdflatex',
             'input-extensions' : ['.tex', '.txt'],
             'output-extensions' : ['.pdf'],
+            'run-bibtex' : ("Should we run bibtex if a .bib file is an input?", True),
+            'times-to-run-latex' : ("""How many times to run latex? (Latex is
+                run one additional time if bibtex runs.)""", 2),
             'command-string' : "%(prog)s -interaction=batchmode %(args)s %(script_file)s"
             }
 
@@ -26,7 +29,10 @@ class LatexFilter(SubprocessFilter):
 
         latex_command = self.command_string()
 
-#        bibtex_command = "bibtex %s" % os.path.splitext(self.output_data.basename())[0]
+        if any(doc.output_data().ext == '.bib' for doc in self.doc.walk_input_docs()):
+            bibtex_command = "bibtex %s" % os.path.splitext(self.output_data.basename())[0]
+        else:
+            bibtex_command = None
 
         def run_cmd(command):
             self.log_info("running %s in %s" % (command, os.path.abspath(wd)))
@@ -39,15 +45,14 @@ class LatexFilter(SubprocessFilter):
             stdout, stderr = proc.communicate()
             self.log_debug(stdout)
 
-#        if bibtex_command:
-#            run_cmd(latex_command) #generate aux
-#            run_cmd(bibtex_command) #generate bbl
+        if bibtex_command and self.setting('run-bibtex'):
+            run_cmd(latex_command) #generate aux
+            run_cmd(bibtex_command) #generate bbl
 
-        # TODO specify in options how many times to run latex
-        # TODO specify in options whether to run bibtex
-        run_cmd(latex_command) # first run
-        run_cmd(latex_command) # second run - fix references
-#        run_cmd(latex_command) # third run - just to be sure
+        n = self.setting('times-to-run-latex')
+        for i in range(n):
+            self.log_debug("running latex time %s (out of %s)" % (i+1, n))
+            run_cmd(latex_command)
 
         if not file_exists(os.path.join(wd, self.output_data.basename())):
             msg = "Latex file not generated. Look for information in latex log in %s directory."

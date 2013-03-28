@@ -47,6 +47,15 @@ class PrettyPrintHtml(TemplatePlugin):
         soup = BeautifulSoup(unicode(html))
         return soup.prettify()
 
+class Bibtex(TemplatePlugin):
+    """
+    Produces a bibtex entry for dexy.
+    """
+    @classmethod
+    def run(self):
+        import dexy.commnads.cite
+        return { 'dexy_bibtex' : dexy.commands.cite.bibtex_text() }
+
 class Inflection(TemplatePlugin):
     """
     Exposes the inflection package for doing nice things with strings 

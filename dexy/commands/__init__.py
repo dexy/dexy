@@ -13,6 +13,7 @@ import dexy.reporters
 import dexy.parsers
 
 # import all commands
+from dexy.commands.cite import cite_command
 from dexy.commands.conf import conf_command
 from dexy.commands.dirs import cleanup_command
 from dexy.commands.dirs import reset_command
