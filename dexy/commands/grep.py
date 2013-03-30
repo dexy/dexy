@@ -48,7 +48,7 @@ def grep_command(
             print "   only printed first %s of %s total lines" % (lines, len(text_lines))
 
     def print_match(match):
-        print match.key
+        print match.key, "\tcache key:", match.storage_key
 
         if hasattr(match, 'keys'):
             if keyexpr:

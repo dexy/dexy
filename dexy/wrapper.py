@@ -67,7 +67,6 @@ class Wrapper(object):
         """
         try:
             with open(self.saved_args_filename(), 'rb') as f:
-                print "loading saved args in", self.saved_args_filename()
                 pickle = self.pickle_lib()
                 self.saved_args = pickle.load(f)
         except IOError:
@@ -94,11 +93,8 @@ class Wrapper(object):
             pickle.dump(info, f)
 
     def load_runtime_info(self):
-        """
-        """
         try:
             with open(self.runtime_info_filename(), 'rb') as f:
-                print "loading runtime info in", self.runtime_info_filename()
                 pickle = self.pickle_lib()
                 self.prev_batch_runtime_info = pickle.load(f)
         except IOError:
