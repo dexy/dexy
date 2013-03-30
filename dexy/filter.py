@@ -15,7 +15,6 @@ class Filter(dexy.plugin.Plugin):
     """
     __metaclass__ = dexy.plugin.PluginMeta
 
-    aliases = ['dexy']
     TAGS = []
     nodoc_settings = [
             'help', 'nodoc'
@@ -53,6 +52,7 @@ class Filter(dexy.plugin.Plugin):
     def update_all_args(self, new_args):
         self.doc.add_runtime_args(new_args)
         for f in self.doc.filters:
+            f.input_data.args.update(new_args)
             f.output_data.args.update(new_args)
             f.update_settings(new_args)
 

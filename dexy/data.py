@@ -122,7 +122,8 @@ class Data(dexy.plugin.Plugin):
                 posixpath.relpath(self.key, doc_dir),
                 posixpath.relpath(self.long_name(), doc_dir),
                 "/%s" % self.key,
-                "/%s" % self.long_name()
+                "/%s" % self.long_name(),
+                "title:%s" % self.title()
         ]
         if self.args.get('shortcut'):
             refs.append(self.args.get('shortcut'))

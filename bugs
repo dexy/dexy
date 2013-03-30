@@ -92,4 +92,5 @@
 [issue] key value filters should sync file extension with storage type | id:ea56460ba928c6b9353cc74646592baa968ceffc
 [feature] make an AST visualization reporter (or add to run reporter) | id:f03a516414f78d46a1a571f3279681949d2c4d89
 [feature] create function for making image of latex output in jinja (for mobi/epub) | id:f654e13a8138d689be89b7eab408620f6feaf0b2
+[issue] ensure underscore forms of args, e.g. ws_template, are working | id:fd6a7dcf2fe36c3847426490f8411e0474f25fa3
 [issue] change name of globals param. also decide what it actually does now. | id:fdb5339ace291149a46abfb51a67ea4912e70b3f

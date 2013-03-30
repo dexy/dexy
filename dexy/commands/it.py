@@ -77,8 +77,6 @@ def dexy_command(
         conf=defaults['config_file'], # name to use for configuration file
         configs=defaults['configs'], # list of doc config files to parse
         danger=defaults['danger'], # whether to allow running remote files
-        dbalias=defaults['db_alias'], # type of database to use
-        dbfile=defaults['db_file'], # name of the database file (it lives in the logs dir)
         disabletests=defaults['disable_tests'], # Whether to disable the dexy 'test' filter
         dryrun=defaults['dry_run'], # if True, just parse config and print batch info, don't run dexy
         encoding=defaults['encoding'], # Default encoding. Set to 'chardet' to use chardet auto detection.

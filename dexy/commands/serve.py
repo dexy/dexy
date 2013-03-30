@@ -26,6 +26,7 @@ def serve_command(
             reporter = dexy.reporter.Reporter.create_instance(alias)
             if file_exists(reporter.setting('dir')):
                 directory = reporter.setting('dir')
+                break
 
     if not directory:
         print NO_OUTPUT_MSG

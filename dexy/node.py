@@ -178,15 +178,23 @@ class Node(dexy.plugin.Plugin):
 
     def calculate_is_cached(self):
         if self.state == 'new':
+            self.log_debug("checking if %s is changed" % self.key)
+
             any_inputs_not_cached = False
-            for node in self.inputs + self.children:
+            input_nodes = self.inputs + self.children
+
+            if hasattr(self, 'parent'):
+                input_nodes.extend(self.parent.inputs)
+
+            for node in input_nodes:
                 node.calculate_is_cached()
                 if not node.state == 'cached':
+                    self.log_debug("input node %s is not cached" % node.key_with_class())
                     any_inputs_not_cached = True
-
-            self.log_debug("checking if %s is changed" % self.key)
+                
             self.log_debug("  doc changed %s" % self.doc_changed)
             self.log_debug("  args changed %s" % self.args_changed)
+            self.log_debug("  any inputs not cached %s" % any_inputs_not_cached)
             is_cached = not self.doc_changed and not self.args_changed and not any_inputs_not_cached
 
             if is_cached:

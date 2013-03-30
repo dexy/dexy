@@ -119,6 +119,15 @@ class WebsiteReporter(OutputReporter):
     contain "<head" or "<body" tags.
     """
     aliases = ['ws']
+    _other_class_settings = {
+            'doc' : {
+                'ws-template' : ("""Key of template to apply for rendering in
+                website.  Setting of 'None' will use default template, 'False'
+                will force no template to be used.""",
+                None)
+                }
+            }
+
     _settings = {
             "dir" : "output-site",
             "default-template" : ("Path to the default template to apply.", "_template.html"),

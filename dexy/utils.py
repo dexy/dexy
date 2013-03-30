@@ -16,8 +16,6 @@ defaults = {
     'config_file' : 'dexy.conf',
     'configs' : '',
     'danger' : False,
-    'db_alias' : 'sqlite3',
-    'db_file' : 'dexy.sqlite3',
     'disable_tests' : False,
     'dont_use_cache' : False,
     'dry_run' : False,

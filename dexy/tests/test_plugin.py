@@ -41,3 +41,23 @@ def test_create_instance():
     assert sub.setting('abc') == 123
     assert sub.setting_values()['foo'] == 'baz'
     assert sub.setting_values()['abc'] == 123
+
+class Fruit(dexy.plugin.Plugin):
+    __metaclass__ = dexy.plugin.PluginMeta
+    aliases = ['fruit']
+    _settings = {}
+
+class Starch(dexy.plugin.Plugin):
+    __metaclass__ = dexy.plugin.PluginMeta
+    aliases = ['starch']
+    _settings = {}
+    _other_class_settings = {
+            'fruit' : {
+                    "color" : ("The color of the fruit", "red")
+                }
+            }
+
+def test_other_class_settings():
+    fruit = Fruit()
+    fruit.initialize_settings()
+    assert fruit.setting('color') == 'red'

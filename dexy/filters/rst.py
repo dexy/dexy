@@ -115,6 +115,37 @@ class RstBody(RestructuredTextBase):
 
         return parts['body']
 
+class RstMeta(RestructuredTextBase):
+    """
+    Extracts bibliographical metadata and makes this available to dexy.
+    """
+    aliases = ['rstmeta']
+    _settings = {
+            'output-extensions' : [".rst"]
+            }
+
+    def process_text(self, input_text):
+        warning_stream = StringIO.StringIO()
+        settings_overrides = {}
+        settings_overrides['warning_stream'] = warning_stream
+
+        parts = core.publish_parts(
+                input_text,
+                writer_name='html',
+                settings_overrides=settings_overrides
+                )
+
+        biblio_keys = ['subtitle', 'version', 'title', 'docinfo', 'author',
+                'authors', 'organization', 'status', 'date', 'copyright',
+                'field', 'topic']
+       
+        biblio_args = dict((k, parts[k]) for k in biblio_keys if parts.has_key(k) and parts[k])
+        self.log_debug("found args:\n%s\n" % biblio_args)
+        self.update_all_args(biblio_args)
+        self.log_debug("docutils warnings:\n%s\n" % warning_stream.getvalue())
+
+        return input_text
+
 class RstDocParts(DexyFilter):
     """
     Returns key-value storage of document parts.

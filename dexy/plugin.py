@@ -23,6 +23,12 @@ class Plugin(object):
                 for unset in parent_class.UNSET:
                     del self._instance_settings[unset]
 
+        if hasattr(self.__class__, 'aliases') and self.__class__.aliases:
+            alias = self.__class__.aliases[0]
+            settings_from_other_classes = PluginMeta._store_other_class_settings.get(alias)
+            if settings_from_other_classes:
+                self.__class__.class_update_settings(self, settings_from_other_classes)
+
         # Apply raw_kwargs settings
         settings = dict((k, v) for k, v in raw_kwargs.items() if k in self._instance_settings)
         self.__class__.class_update_settings(self, settings)
@@ -47,14 +53,15 @@ class Plugin(object):
                 else:
                     msg = "no setting named '%s' or '%s'"
                     msg = msg % (name_hyphen, name_underscore)
-                raise Exception(msg)
+                raise dexy.exceptions.UserFeedback(msg)
 
         if hasattr(value, 'startswith') and value.startswith("$"):
             env_var = value.lstrip("$")
             if os.environ.has_key(env_var):
                 return os.getenv(env_var)
             else:
-                raise dexy.exceptions.UserFeedback("'%s' is not defined in your environment" % env_var)
+                msg = "'%s' is not defined in your environment" % env_var
+                raise dexy.exceptions.UserFeedback(msg)
         elif hasattr(value, 'startswith') and value.startswith("\$"):
             return value.replace("\$", "$")
         else:
@@ -75,12 +82,13 @@ class PluginMeta(type):
     """
     Base meta class for anything plugin-able.
     """
+    _store_other_class_settings = {} # allow plugins to define settings for other classes
+
     def __init__(cls, name, bases, attrs):
         assert issubclass(cls, Plugin), "%s should inherit from class Plugin" % name
         if '__metaclass__' in attrs:
             cls.plugins = {}
-        else:
-            assert hasattr(cls, 'plugins')
+        if hasattr(cls, 'aliases'):
             cls.register_plugin(cls.aliases, cls, {})
 
     def __iter__(cls, *instanceargs):
@@ -133,8 +141,9 @@ class PluginMeta(type):
         else:
             aliases = alias_or_aliases
 
+        klass = cls.get_reference_to_class(class_or_class_name)
+
         if not settings.has_key('help'):
-            klass = cls.get_reference_to_class(class_or_class_name)
             settings['help'] = ("Helpstring for filter.", inspect.getdoc(klass))
 
         class_info = (class_or_class_name, settings)
@@ -144,6 +153,9 @@ class PluginMeta(type):
                 msg_args = (alias, class_or_class_name, cls.plugins[alias][0],)
                 raise dexy.exceptions.InternalDexyProblem(msg%msg_args)
             cls.plugins[alias] = class_info
+
+        if hasattr(klass, '_other_class_settings') and klass._other_class_settings:
+            PluginMeta._store_other_class_settings.update(klass._other_class_settings)
 
     def imro(cls):
         """
