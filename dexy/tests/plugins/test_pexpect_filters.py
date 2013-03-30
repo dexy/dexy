@@ -1,6 +1,32 @@
 from dexy.doc import Doc
 from dexy.tests.utils import assert_in_output
 from dexy.tests.utils import wrap
+from nose.exc import SkipTest
+
+RUST = """fn main() {
+    io::println("hello?");
+}"""
+
+def test_rust_interactive():
+    raise SkipTest()
+    with wrap() as wrapper:
+        doc = Doc("example.rs|rusti",
+                wrapper,
+                [],
+                contents = "1+1"
+                )
+        wrapper.run(doc)
+        assert "rusti> 1+1\n2" in str(doc.output_data())
+
+def test_rust():
+    with wrap() as wrapper:
+        doc = Doc("example.rs|rustc",
+                wrapper,
+                [],
+                contents = RUST
+                )
+        wrapper.run(doc)
+        assert str(doc.output_data()) == "hello?\n"
 
 PYTHON_CONTENT = """
 x = 6

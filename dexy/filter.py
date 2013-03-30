@@ -20,7 +20,10 @@ class Filter(dexy.plugin.Plugin):
             'help', 'nodoc'
             ]
     _settings = {
-            'add-new-files' : ('', False),
+            'add-new-files' : ("""Whether to add new files that have been
+                created as side effects of running this filter.""", False),
+            'exclude-add-new-files' : ("""Patterns to exclude when adding new
+                side effect files.""" , ''),
             'additional-doc-filters' : ('', {}),
             'ext' : ('Extension to output.', None),
             'help' : ('Help string for filter, if not already specified as a class docstring.', None),
@@ -202,7 +205,7 @@ class Filter(dexy.plugin.Plugin):
 
         doc_ext = os.path.splitext(doc_name)[1]
 
-        def create_doc(name, filters, contents, args):
+        def create_doc(name, filters, contents, args=None):
             if filters:
                 doc_key = "%s|%s" % (name, filters)
             else:

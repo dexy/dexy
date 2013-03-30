@@ -135,6 +135,7 @@ class SubprocessFilter(Filter):
         self.log_debug("adding new files found in %s for %s" % (wd, self.key))
 
         do_add_new = self.setting('add-new-files')
+        exclude = self.setting('exclude-add-new-files')
 
         new_files_added = 0
         for dirpath, dirnames, filenames in os.walk(wd):
@@ -175,7 +176,13 @@ class SubprocessFilter(Filter):
                 else:
                     raise dexy.exceptions.InternalDexyProblem("type is %s value is %s" % (do_add_new.__class__, do_add_new))
 
-                if (not already_have_file) and is_valid_file_extension:
+
+                if not exclude:
+                    skip_because_excluded = False
+                else:
+                    skip_because_excluded = exclude in filepath
+
+                if (not already_have_file) and is_valid_file_extension and not skip_because_excluded:
                     with open(filepath, 'rb') as f:
                         contents = f.read()
                     self.add_doc(relpath, contents)

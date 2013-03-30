@@ -175,7 +175,6 @@ class PexpectReplFilter(SubprocessFilter):
                     else:
                         proc.expect_exact(search_terms, timeout=timeout)
 
-
                     self.log_debug(u"Received '%s'" % unicode(proc.before, errors='replace'))
 
                     section_transcript += self.strip_newlines(proc.before)
@@ -183,10 +182,11 @@ class PexpectReplFilter(SubprocessFilter):
                 except pexpect.EOF:
                     self.log_debug("EOF occurred!")
                     raise DexyEOFException()
-                except pexpect.TIMEOUT:
-                    msg = "failed at matching prompt within %s seconds. " % timeout
+                except pexpect.TIMEOUT as e:
+                    msg = "pexpect timeout error. failed at matching prompt within %s seconds. " % timeout
                     msg += "received '%s', tried to match with '%s'" % (proc.before, search_terms)
                     msg += "something may have gone wrong, or you may need to set a longer timeout"
+                    self.log_warn(msg)
                     raise UserFeedback(msg)
                 except pexpect.ExceptionPexpect as e:
                     raise UserFeedback(str(e))

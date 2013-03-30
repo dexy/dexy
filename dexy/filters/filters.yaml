@@ -1,3 +1,21 @@
+rusti:
+    class: PexpectReplFilter
+    prompt : 'rusti>'
+    initial-prompt : "[^>]+rusti>"
+    help: Runs rust code in the rust repl (rusti). EXPERIMENTAL.
+    executable: rusti
+    input-extensions: [.rs, .txt]
+    output-extensions: [.txt]
+
+rust|rustc:
+    class: SubprocessCompileFilter
+    help: Runs rust code.
+    compiled-extension: ''
+    executable: rustc
+    input-extensions: [.rs, .txt]
+    output-extensions: [.txt]
+    version-command: rustc -v
+
 php:
     class: SubprocessStdoutFilter
     help: Runs php file, note that php code must be included in <?php ... ?> tags.
