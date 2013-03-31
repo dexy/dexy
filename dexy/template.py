@@ -9,7 +9,8 @@ import sys
 class Template(dexy.plugin.Plugin):
     __metaclass__ = dexy.plugin.PluginMeta
     _settings = {
-            'contents-dir' : ("Directory containing contents of template.", None)
+            'contents-dir' : ("Directory containing contents of template.", None),
+            'nodoc' : ("Whether to not document this template.", False)
             }
     aliases = []
     filters_used = []
@@ -42,9 +43,9 @@ class Template(dexy.plugin.Plugin):
         shutil.copytree(source, directory)
 
         # remove template documentation unless 'meta' is specified
-        dexy_rst = os.path.join(directory, 'dexy.rst')
-        if dexy.utils.file_exists(dexy_rst):
-            if not kwargs.get('meta'):
+        if not kwargs.get('meta'):
+            dexy_rst = os.path.join(directory, 'dexy.rst')
+            if dexy.utils.file_exists(dexy_rst):
                 os.remove(dexy_rst)
 
     def dexy(self, meta=True, additional_doc_keys=None):
@@ -55,6 +56,7 @@ class Template(dexy.plugin.Plugin):
         while still in the tempdir.
         """
         meta_doc_keys = [
+                ".*",
                 "dexy.yaml|idio|t",
                 "dexy.rst|idio|t",
                 "dexy.rst|jinja|rst2html",
@@ -69,7 +71,7 @@ class Template(dexy.plugin.Plugin):
             os.chdir("ex")
             wrapper = dexy.wrapper.Wrapper()
             wrapper.create_dexy_dirs()
-            wrapper = dexy.wrapper.Wrapper()
+            wrapper = dexy.wrapper.Wrapper(log_level='DEBUG')
 
             wrapper.batch = dexy.batch.Batch(wrapper)
 
@@ -85,6 +87,7 @@ class Template(dexy.plugin.Plugin):
                         for task in ast.lookup_table.keys():
                             if not task in meta_doc_keys:
                                 ast.add_dependency(doc_key, task)
+
             ast.walk()
 
             try:

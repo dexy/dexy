@@ -13,7 +13,7 @@ class RunReporter(Reporter):
     """
     aliases = ['run']
     _settings = {
-            'default' : False
+            'default' : True
             }
 
     def run(self, wrapper):
@@ -54,7 +54,7 @@ class RunReporter(Reporter):
             nbspaces = "&nbsp;" * 4 * indent
             content = []
             if node.__class__.__name__ == 'Doc':
-                link_if_doc = """&nbsp;<a href="#%s">&darr; doc info</a>""" % node.websafe_key()
+                link_if_doc = """&nbsp;<a href="#%s">&darr; doc info</a>""" % node.output_data().websafe_key()
             else:
                 link_if_doc = ""
             content.append("""%s<div data-toggle="collapse" data-target="#%s">%s%s%s</div>""" % (spaces, rand_id, nbspaces, node.key_with_class(), link_if_doc))

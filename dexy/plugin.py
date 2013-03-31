@@ -177,6 +177,7 @@ class PluginMeta(type):
 
                 return mod.__dict__[class_name]
             else:
+                from dexy.template import Template
                 from dexy.filters.pexp import PexpectReplFilter
                 from dexy.filters.process import SubprocessCompileFilter
                 from dexy.filters.process import SubprocessCompileInputFilter
@@ -221,8 +222,12 @@ class PluginMeta(type):
         class_or_class_name, settings = cls.plugins[alias]
         klass = cls.get_reference_to_class(class_or_class_name)
 
+        if not klass.aliases:
+            klass.aliases.append(alias)
+
         instance = klass(*instanceargs, **instancekwargs)
         instance.alias = alias
+
 
         if not hasattr(instance, '_instance_settings'):
             instance.initialize_settings()

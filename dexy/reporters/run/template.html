@@ -1,4 +1,3 @@
-{% if False -%}
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -125,12 +124,14 @@
             </table>
             {% endif %}
             <br />
+            {% if False -%}
             {% for a in doc.children -%}
             {% if a.stdout -%}
             <p><b>{{ a.key }} stdout</b></p>
             {{ a.stdout }}
             {% endif -%}
             {% endfor -%}
+            {% endif -%}
             <br />
             {% endfor %}
 
@@ -144,4 +145,3 @@
 
     </body>
 </html>
-{% endif -%}

@@ -53,7 +53,8 @@ def template_command(
 def templates_command(
         plugins='', # extra python packages to load so plugins will register with dexy
         simple=False, # Only print template names, without docstring or headers.
-        validate=False # For developer use only, validate templates (runs and checks each template).
+        validate=False, # Intended for developer use only, validate templates (runs and checks each template).
+        key=False # Only print information which matches this search key.
         ):
     """
     List templates that can be used to generate new projects.
@@ -65,6 +66,13 @@ def templates_command(
         print FMT % ("Alias", "Info")
 
     for i, template in enumerate(dexy.template.Template):
+        if key:
+            if not key in template.alias:
+                continue
+
+        if template.setting('nodoc'):
+            continue
+
         if simple:
             print template.alias
         else:

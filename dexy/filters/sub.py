@@ -141,6 +141,7 @@ class AbcFilter(SubprocessFormatFlagFilter):
             'command-string' : '%(prog)s %(args)s %(format)s -O %(output_file)s %(script_file)s',
             'add-new-files' : False,
             'output' : True,
+            'examples' : ['abc'],
             'executable' : 'abcm2ps',
             'input-extensions' : ['.abc'],
             'output-extensions': ['.svg', '.html', '.xhtml', '.eps'],

@@ -96,9 +96,15 @@ class PygmentsFilter(DexyFilter):
             return 'generic'
 
     def docmd_css(klass, style='default'):
+        """
+        Prints out CSS for the specified style.
+        """
         print klass.generate_css(style)
 
     def docmd_sty(klass, style='default'):
+        """
+        Prints out .sty file (latex) for the specified style.
+        """
         print klass.generate_sty(style)
 
     def generate_css(self, style='default'):

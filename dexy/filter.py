@@ -25,6 +25,7 @@ class Filter(dexy.plugin.Plugin):
             'exclude-add-new-files' : ("""Patterns to exclude when adding new
                 side effect files.""" , ''),
             'additional-doc-filters' : ('', {}),
+            'examples' : ("Templates which should be used as examples for this filter.", []),
             'ext' : ('Extension to output.', None),
             'help' : ('Help string for filter, if not already specified as a class docstring.', None),
             'input-extensions' : ("List of extensions which this filter can accept as input.", [".*"]),
@@ -157,7 +158,9 @@ class Filter(dexy.plugin.Plugin):
         List of dexy templates which refer to this filter.
         """
         import dexy.template
-        return [t for t in dexy.template.Template if any(a for a in self.aliases if a in t.__class__.filters_used)]
+        templates = [dexy.template.Template.create_instance(a) for a in self.setting('examples')]
+        assert all(self.aliases[0] in t.filters_used for t in templates)
+        return templates
 
     def filter_specific_settings(self):
         nodoc = self.nodoc_settings
@@ -183,7 +186,7 @@ class Filter(dexy.plugin.Plugin):
         pass
 
     def calculate_canonical_name(self):
-        name_without_ext = posixpath.splitext(self.doc.name)[0]
+        name_without_ext = posixpath.splitext(self.doc.canonical_name)[0]
         return "%s%s" % (name_without_ext, self.ext)
 
     def output_filepath(self):

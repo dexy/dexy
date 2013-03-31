@@ -2,32 +2,32 @@ import dexy.filter
 import os
 import inspect
 
-def fcmds_command(alias=False):
+def fcmds_command(
+        alias=False # alias of filter to list commands for, otherwise all commands are printed
+        ):
     """
     Returns a list of available filter commands (fcmds) defined by the specified alias.
 
     These commands can then be run using the fcmd command.
     """
-
-    def filter_class_commands(filter_alias):
-        filter_class = dexy.filter.Filter.aliases[filter_alias]
+    def filter_commands(filter_instance):
         cmds = []
-        for m in dir(filter_class):
+        for m in dir(filter_instance):
             if m.startswith("docmd_"):
                 cmds.append(m.replace("docmd_", ""))
         return sorted(cmds)
 
-    filters_dict = dexy.filter.Filter.aliases
-    if (not alias) or (not alias in filters_dict):
-        print "Aliases with filter commands defined are:"
-        for a in sorted(filters_dict):
-            cmds = filter_class_commands(a)
-            if len(cmds) > 0:
-                print a
+    if alias:
+        filter_instances = [dexy.filter.Filter.create_instance(alias)]
     else:
-        print "Filter commands defined for %s:" % alias
-        cmds = filter_class_commands(alias)
-        print os.linesep.join(cmds)
+        filter_instances = dexy.filter.Filter
+
+    for filter_instance in filter_instances:
+        cmds = filter_commands(filter_instance)
+        if cmds:
+            print filter_instance.alias
+            for cmd in cmds:
+                print "  %s" % cmd
 
 def fcmd_command(
         alias=None, # The alias of the filter which defines the custom command
@@ -38,29 +38,29 @@ def fcmd_command(
     """
     Run a command defined in a dexy filter.
     """
-    filter_class = dexy.filter.Filter.aliases.get(alias)
-
-    if not filter_class:
-        raise dexy.exceptions.UserFeedback("%s is not a valid alias" % alias)
+    filter_instance = dexy.filter.Filter.create_instance(alias)
 
     cmd_name = "docmd_%s" % cmd
 
-    if not filter_class.__dict__.has_key(cmd_name):
-        raise dexy.exceptions.UserFeedback("%s is not a valid command. There is no method %s defined in %s" % (cmd, cmd_name, filter_class.__name__))
+    if not cmd_name in dir(filter_instance):
+        msg = "%s is not a valid command. There is no method %s defined in %s"
+        msgargs = (cmd, cmd_name, filter_instance.__class__.__name__)
+        raise dexy.exceptions.UserFeedback(msg % msgargs)
     else:
-        class_method = filter_class.__dict__[cmd_name]
-        if type(class_method) == classmethod:
+        instance_method = getattr(filter_instance, cmd_name)
+        if inspect.ismethod(instance_method):
             if help:
-                print inspect.getdoc(class_method.__func__)
+                print inspect.getdoc(instance_method.__func__)
             else:
                 try:
-                    class_method.__func__(filter_class, **kwargs)
+                    instance_method.__func__(filter_instance, **kwargs)
                 except TypeError as e:
                     print e.message
-                    print inspect.getargspec(class_method.__func__)
-                    print inspect.getdoc(class_method.__func__)
+                    print inspect.getargspec(instance_method.__func__)
+                    print inspect.getdoc(instance_method.__func__)
                     raise e
 
         else:
-            raise dexy.exceptions.InternalDexyProblem("expected %s to be a classmethod of %s" % (cmd_name, filter_class.__name__))
-
+            msg = "expected %s to be an instance method of %s"
+            msgargs = (cmd_name, filter_instance.__class__.__name__)
+            raise dexy.exceptions.InternalDexyProblem(msg % msgargs)

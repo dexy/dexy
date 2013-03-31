@@ -15,6 +15,8 @@ class Doc(dexy.node.Node):
     _settings = {
             'shortcut' : ( """A way to refer to this document without having to
             use the full document key.""", None ),
+            'canonical-name' : ("""What the final output name (including path)
+                of this document should be.""", None),
             'title' : ("""Title for this document.""", None),
             'output' : ("""Whether to output this document to reports such as
                 output/ and output-site/.""", None)
@@ -48,7 +50,7 @@ class Doc(dexy.node.Node):
             prev_filter = f
 
     def setup_initial_data(self):
-        canonical_name = self.canonical_name_from_args() or self.name
+        self.canonical_name = self.calculate_canonical_name() or self.name
         storage_key = "%s-000" % self.hashid
 
         if self.setting('output') is not None:
@@ -60,7 +62,7 @@ class Doc(dexy.node.Node):
                 self.data_class_alias(),
                 self.name,
                 self.ext,
-                canonical_name,
+                self.canonical_name,
                 storage_key,
                 self.setting_values(),
                 None,
@@ -82,8 +84,8 @@ class Doc(dexy.node.Node):
             else:
                 self.initial_data.set_data(self.get_contents())
 
-    def canonical_name_from_args(self):
-        raw_arg_name = self.arg_value('canonical-name')
+    def calculate_canonical_name(self):
+        raw_arg_name = self.setting('canonical-name')
     
         if raw_arg_name:
             raw_arg_name = raw_arg_name % self.args

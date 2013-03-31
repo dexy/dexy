@@ -177,10 +177,19 @@ class SubprocessFilter(Filter):
                     raise dexy.exceptions.InternalDexyProblem("type is %s value is %s" % (do_add_new.__class__, do_add_new))
 
 
-                if not exclude:
-                    skip_because_excluded = False
-                else:
-                    skip_because_excluded = exclude in filepath
+                skip_because_excluded = False
+                if exclude:
+                    if isinstance(exclude, list):
+                        for exclude_item in exclude:
+                            if exclude_item in filepath:
+                                skip_because_excluded = True
+                                break
+                    elif isinstance(exclude, basestring):
+                        skip_because_excluded = exclude in filepath
+                    else:
+                        msg = "unexpected exclude type %s (%s)"
+                        msgargs = (exclude.__class__.__name__, exclude)
+                        raise dexy.exceptions.InternalDexyProblem(msg % msgargs)
 
                 if (not already_have_file) and is_valid_file_extension and not skip_because_excluded:
                     with open(filepath, 'rb') as f:

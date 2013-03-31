@@ -68,21 +68,24 @@ class Navigation(object):
         info = []
         for path, node in self.nodes.iteritems():
             info.append('')
-            info.append(path)
+            info.append("node: %s" % path)
 
             if node.index_page:
-                info.append("index-page:")
-                info.append(node.index_page.key_with_class())
+                info.append("  index-page:")
+                info.append("    %s" % node.index_page.key)
+                info.append('')
+            else:
+                info.append("  no index page.")
                 info.append('')
 
-            info.append("docs:")
+            info.append("  docs:")
             for child in node.docs:
-                info.append(child.key_with_class())
+                info.append("    %s" % child.key)
             info.append('')
 
-            info.append("children:")
+            info.append("  children:")
             for child in node.children:
-                info.append(child.location)
+                info.append("    %s" % child.location)
             info.append('')
         return "\n".join(info)
 

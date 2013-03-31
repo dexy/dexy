@@ -76,7 +76,6 @@ def dexy_command(
         artifactsdir=defaults['artifacts_dir'], # location of directory in which to store artifacts
         conf=defaults['config_file'], # name to use for configuration file
         configs=defaults['configs'], # list of doc config files to parse
-        danger=defaults['danger'], # whether to allow running remote files
         disabletests=defaults['disable_tests'], # Whether to disable the dexy 'test' filter
         dryrun=defaults['dry_run'], # if True, just parse config and print batch info, don't run dexy
         encoding=defaults['encoding'], # Default encoding. Set to 'chardet' to use chardet auto detection.
@@ -84,10 +83,9 @@ def dexy_command(
         excludealso=defaults['exclude_also'], # comma-separated list of directory names to exclude from dexy processing
         full=defaults['full'], # Whether to do a full run including tasks marked default: False
         globals=defaults['globals'], # global values to make available within dexy documents, should be KEY=VALUE pairs separated by spaces
-        help=False, # for people who type -help out of habit
-        h=False, # for people who type -h out of habit
+        help=False, #nodoc
+        h=False, #nodoc
         hashfunction=defaults['hashfunction'], # What hash function to use, set to crc32 or adler32 for more speed but less reliability
-        ignore=defaults['ignore_nonzero_exit'], # whether to ignore nonzero exit status or raise an error - may not be supported by all filters
         logdir=defaults['log_dir'], # location of directory in which to store logs
         logfile=defaults['log_file'], # name of log file
         logformat=defaults['log_format'], # format of log entries
@@ -104,7 +102,6 @@ def dexy_command(
         strace=defaults['strace'], # Run dexy using strace (VERY slow)
         uselocals=defaults['uselocals'], # use cached local copies of remote URLs, faster but might not be up to date, 304 from server will override this setting
         target=defaults['target'], # Which target to run. By default all targets are run, this allows you to run only 1 bundle (and its dependencies).
-        timing=defaults['timing'], # Whether to record timing information for each artifact (time.now calls os.stat, may cause performance problems for large projects)
         version=False # For people who type -version out of habit
     ):
     """
