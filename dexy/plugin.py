@@ -85,13 +85,21 @@ class PluginMeta(type):
     Base meta class for anything plugin-able.
     """
     _store_other_class_settings = {} # allow plugins to define settings for other classes
+    official_dexy_plugins = ("dexy_templates", "dexy_viewer", "dexy_filter_examples")
 
     def __init__(cls, name, bases, attrs):
         assert issubclass(cls, Plugin), "%s should inherit from class Plugin" % name
         if '__metaclass__' in attrs:
             cls.plugins = {}
         if hasattr(cls, 'aliases'):
-            cls.register_plugin(cls.aliases, cls, {})
+            is_dexy_module = cls.__module__.startswith("dexy.")
+            is_official_plugin = cls.__module__ in cls.official_dexy_plugins
+            if not is_dexy_module and not is_official_plugin:
+                prefix = cls.__module__.split("_", 1)[1]
+                aliases = ["%s:%s" % (prefix, a) for a in cls.aliases]
+            else:
+                aliases = cls.aliases
+            cls.register_plugin(aliases, cls, {})
 
     def __iter__(cls, *instanceargs):
         processed = []
