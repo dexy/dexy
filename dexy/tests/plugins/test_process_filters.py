@@ -3,6 +3,7 @@ from dexy.filters.process import SubprocessFilter
 from dexy.tests.utils import wrap
 import dexy.exceptions
 import os
+from nose.exc import SkipTest
 
 def test_add_new_files():
     with wrap() as wrapper:
@@ -16,9 +17,7 @@ def test_add_new_files():
                     "additional-doc-filters" : { '.txt' : 'markdown' }
                     }
                 )
-        wrapper.run(node)
-
-        print wrapper.nodes
+        wrapper.run_docs(node)
 
         assert str(wrapper.nodes['doc:newfile.txt'].output_data()) == "hello" + os.linesep
         assert str(wrapper.nodes['doc:newfile.txt|markdown'].output_data()) == "<p>hello</p>"
@@ -34,10 +33,10 @@ def test_walk_working_dir():
                     }
                 )
 
-        wrapper.run(node)
+        wrapper.run_docs(node)
 
-        print wrapper.nodes
         files_list = wrapper.nodes['doc:example.sh-sh.txt-files']
+        print files_list.output_data().as_sectioned()
         assert files_list.output_data().as_sectioned()['newfile.txt'] == "hello" + os.linesep
 
 def test_not_present_executable():
@@ -59,7 +58,7 @@ def test_command_line_args():
                 py={"args" : "-B"},
                 contents="print 'hello'"
                 )
-        wrapper.run(node)
+        wrapper.run_docs(node)
 
         assert str(node.output_data()) == "hello" + os.linesep
 
@@ -74,7 +73,7 @@ def test_scriptargs():
                 py={"scriptargs" : "--foo"},
                 contents="""import sys\nprint "args are: '%s'" % sys.argv[1]"""
                 )
-        wrapper.run(node)
+        wrapper.run_docs(node)
 
         assert "args are: '--foo'" in str(node.output_data())
 
@@ -89,7 +88,7 @@ def test_custom_env_in_args():
                 py={"env" : {"FOO" : "bar" }},
                 contents="import os\nprint os.environ['FOO']"
                 )
-        wrapper.run(node)
+        wrapper.run_docs(node)
 
         assert str(node.output_data()) == "bar" + os.linesep
 
@@ -101,7 +100,7 @@ def test_nonzero_exit():
                 contents="import sys\nsys.exit(1)"
                 )
         try:
-            wrapper.run(node)
+            wrapper.run_docs(node)
             assert False, "should raise error"
         except dexy.exceptions.UserFeedback:
             assert True
@@ -114,5 +113,5 @@ def test_ignore_nonzero_exit():
                 [],
                 contents="import sys\nsys.exit(1)"
                 )
-        wrapper.run(node)
+        wrapper.run_docs(node)
         assert True # no NonzeroExit was raised...

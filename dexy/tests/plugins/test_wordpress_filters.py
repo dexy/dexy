@@ -8,6 +8,7 @@ import json
 import os
 import shutil
 import dexy.filter
+import dexy.wrapper
 
 def test_docmd_create_keyfile():
     with wrap():
@@ -60,18 +61,21 @@ def test_wordpress_without_doc_config_file():
                 )
 
         try:
-            wrapper.run(doc)
+            wrapper.run_docs(doc)
             assert False, 'should raise exception'
         except dexy.exceptions.UserFeedback as e:
             assert "wordpress.json" in e.message
             assert "Filter wp" in e.message
 
 def mk_wp_doc(wrapper):
-    return Doc("hello.txt|wp",
+    doc = Doc("hello.txt|wp",
             contents = "hello, this is a blog post",
             dirty = True,
             wrapper=wrapper
             )
+    for d in doc.datas():
+        d.setup()
+    return doc
 
 ATTRS = {
         'return_value.metaWeblog.newPost.return_value' : 42,
@@ -89,7 +93,7 @@ ATTRS = {
 
 @patch('xmlrpclib.ServerProxy', **ATTRS)
 def test_wordpress(MockXmlrpclib):
-    with wrap() as wrapper:
+    with wrap():
         with open("wordpress.json", "wb") as f:
             json.dump({}, f)
 
@@ -102,8 +106,9 @@ def test_wordpress(MockXmlrpclib):
                     }}, f)
 
         # Create new (unpublished) draft
+        wrapper = dexy.wrapper.Wrapper()
         doc = mk_wp_doc(wrapper)
-        wrapper.run(doc)
+        wrapper.run_docs(doc)
 
         with open("wordpress.json", "rb") as f:
             result = json.load(f)
@@ -112,8 +117,9 @@ def test_wordpress(MockXmlrpclib):
         assert result['publish'] == False
 
         # Update existing draft
+        wrapper = dexy.wrapper.Wrapper()
         doc = mk_wp_doc(wrapper)
-        wrapper.run(doc)
+        wrapper.run_docs(doc)
         assert doc.output_data().json_as_dict().keys() == ['permaLink']
 
         result['publish'] = True
@@ -121,9 +127,10 @@ def test_wordpress(MockXmlrpclib):
             json.dump(result, f)
 
         # Publish existing draft
+        wrapper = dexy.wrapper.Wrapper()
         doc = mk_wp_doc(wrapper)
-        wrapper.run(doc)
-        assert str(doc.output_data()) == "http://example.com/blog/42"
+        wrapper.run_docs(doc)
+        assert "http://example.com/blog/42" in str(doc.output_data())
 
         # Now, separately, test an image upload.
         orig = os.path.join(TEST_DATA_DIR, 'color-graph.pdf')
@@ -141,7 +148,7 @@ def test_wordpress(MockXmlrpclib):
                     'password' : 'bar'
                     }}, f)
 
-        wrapper.run(doc)
+        wrapper.run_docs(doc)
         assert doc.output_data().as_text() == "http://example.com/example.pdf"
 
         # test list categories

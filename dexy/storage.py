@@ -25,7 +25,6 @@ class Storage(dexy.plugin.Plugin):
         self.ext = ext
         self.wrapper = wrapper
         self._size = None
-        self.setup()
 
     def setup(self):
         pass
@@ -37,7 +36,16 @@ class GenericStorage(Storage):
     aliases = ['generic']
 
     def data_file(self):
-        return os.path.join(self.artifacts_dir(), "%s%s" % (self.storage_key, self.ext))
+        """
+        Location of data file in this/ cache dir.
+        """
+        return os.path.join(self.storage_dir(), "%s%s" % (self.storage_key, self.ext))
+
+    def last_data_file(self):
+        """
+        Location of data file in last/ cache dir.
+        """
+        return os.path.join(self.storage_dir(True), "%s%s" % (self.storage_key, self.ext))
 
     def data_file_exists(self):
         size = self.data_file_size()
@@ -57,13 +65,13 @@ class GenericStorage(Storage):
                 pass
         return self._size
 
-    def artifacts_dir(self):
-        d = os.path.join(self.wrapper.artifacts_dir, self.storage_key[0:2])
-        try:
-            os.makedirs(d)
-        except os.error:
-            pass
-        return d
+    def storage_dir(self, this=True):
+        if this:
+            cache_dir = self.wrapper.this_cache_dir()
+        else:
+            cache_dir = self.wrapper.last_cache_dir()
+        
+        return os.path.join(cache_dir, self.storage_key[0:2])
 
     def write_data(self, data, filepath=None):
         if not filepath:
@@ -203,7 +211,13 @@ class Sqlite3Storage(GenericStorage):
     aliases = ['sqlite3']
 
     def working_file(self):
-        return os.path.join(self.wrapper.artifacts_dir, "%s-tmp%s" % (self.storage_key, self.ext))
+        sk = self.storage_key[0:2]
+        pathargs = (
+                self.wrapper.work_cache_dir(),
+                sk,
+                "%s-tmp%s" % (self.storage_key, self.ext)
+                )
+        return os.path.join(*pathargs)
 
     def setup(self):
         self._append_counter = 0
@@ -211,10 +225,8 @@ class Sqlite3Storage(GenericStorage):
             self._storage = sqlite3.connect(self.data_file())
             self._cursor = self._storage.cursor()
         else:
-            try:
-                os.remove(self.working_file())
-            except os.error:
-                pass
+            assert not os.path.exists(self.working_file())
+            assert os.path.exists(os.path.dirname(self.working_file()))
             self._storage = sqlite3.connect(self.working_file())
             self._cursor = self._storage.cursor()
             self._cursor.execute("CREATE TABLE kvstore (key TEXT, value TEXT)")

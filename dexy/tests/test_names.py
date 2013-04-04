@@ -13,7 +13,7 @@ def test_custom_name():
                 canonical_name="data.abc",
                 contents="12345.67"
                 )
-        wrapper.run(doc)
+        wrapper.run_docs(doc)
 
         assert doc.output_data().name == "data.abc"
 
@@ -26,7 +26,7 @@ def test_custom_name_in_subdir():
                 canonical_name="subdir/data.abc",
                 contents="12345.67"
                 )
-        wrapper.run(doc)
+        wrapper.run_docs(doc)
         wrapper.report()
 
         assert doc.output_data().name == "subdir/data.abc"
@@ -43,7 +43,7 @@ def test_custom_name_with_args():
                 bar='baz',
                 contents="12345.67"
                 )
-        wrapper.run(doc)
+        wrapper.run_docs(doc)
         wrapper.report()
 
         assert doc.output_data().name == "baz/data-bar.abc"
@@ -62,4 +62,4 @@ def test_custom_name_with_evil_args():
                 bar='baz',
                 contents="12345.67"
                 )
-        wrapper.run(doc)
+        wrapper.run_docs(doc)

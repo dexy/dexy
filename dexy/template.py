@@ -72,8 +72,11 @@ class Template(dexy.plugin.Plugin):
             wrapper = dexy.wrapper.Wrapper()
             wrapper.create_dexy_dirs()
             wrapper = dexy.wrapper.Wrapper(log_level='DEBUG')
-
+            wrapper.to_valid()
+            wrapper.nodes = {}
+            wrapper.roots = []
             wrapper.batch = dexy.batch.Batch(wrapper)
+            wrapper.filemap = wrapper.map_files()
 
             ast = wrapper.parse_configs()
             if additional_doc_keys:
@@ -89,6 +92,9 @@ class Template(dexy.plugin.Plugin):
                                 ast.add_dependency(doc_key, task)
 
             ast.walk()
+
+            wrapper.transition('walked')
+            wrapper.to_checked()
 
             try:
                 wrapper.run()

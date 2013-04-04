@@ -25,6 +25,7 @@ class KeyValueExample(Example):
             }
 
     def process(self):
+        assert self.output_data.state == 'ready'
         self.output_data.append("foo", "bar")
         self.output_data.save()
 

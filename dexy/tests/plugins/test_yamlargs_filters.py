@@ -9,7 +9,8 @@ def test_yamlargs_with_caching():
                 [],
                 contents = "title: My Title\n---\r\nThis is the content."
                 )
-        wrapper.run(doc)
+        doc.setup_datas()
+        wrapper.run_docs(doc)
 
         task = wrapper.nodes["doc:example.txt|yamlargs"]
         assert task.args['title'] == "My Title"
@@ -21,7 +22,8 @@ def test_yamlargs_with_caching():
                 [],
                 contents = "title: My Title\n---\r\nThis is the content."
                 )
-        wrapper.run(doc)
+        doc.setup_datas()
+        wrapper.run_docs(doc)
         task = wrapper.nodes["doc:example.txt|yamlargs"]
         assert task.args['title'] == "My Title"
         assert not task.args_changed
@@ -33,7 +35,7 @@ def test_yamlargs_no_yaml():
                 [],
                 contents = "This is the content.")
 
-        wrapper.run(doc)
+        wrapper.run_docs(doc)
         assert doc.output_data().as_text() == "This is the content."
 
 def test_yamlargs():
@@ -44,7 +46,7 @@ def test_yamlargs():
                 contents = "title: My Title\n---\r\nThis is the content."
                 )
 
-        wrapper.run(doc)
+        wrapper.run_docs(doc)
         assert doc.output_data().title() == "My Title"
         assert doc.output_data().as_text() == "This is the content."
 
@@ -61,7 +63,7 @@ def test_yamlargs_filterargs():
                 contents = "%s\n---\r\nThis is the content." % YAML,
                 )
 
-        wrapper.run(doc)
+        wrapper.run_docs(doc)
 
         output = doc.output_data().as_text()
         assert "abc: xyz" in output

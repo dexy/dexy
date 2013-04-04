@@ -56,7 +56,7 @@ def test_subdirectories():
                 contents="hello"
                 )
 
-        wrapper.run(node)
+        wrapper.run_docs(node)
 
         env = node.filters[-1].run_plugins()
         assert 's1' in env['subdirectories']
@@ -78,7 +78,7 @@ def test_variables():
                 testvars = { "variables" : {"foo" : "bar", "x" : 123.4 } }
                 )
 
-        wrapper.run(node)
+        wrapper.run_docs(node)
 
         env = node.filters[-1].run_plugins()
         assert env['foo'] == 'bar'
@@ -100,6 +100,6 @@ def test_globals():
                 contents = "hello"
                 )
 
-        wrapper.run(node)
+        wrapper.run_docs(node)
         env = node.filters[-1].run_plugins()
         assert env['foo'] == 'bar'

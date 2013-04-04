@@ -213,6 +213,7 @@ class SubprocessFilter(Filter):
 
             doc = self.add_doc(doc_key, {})
 
+        doc.output_data().setup()
         wd = self.workspace()
 
         for dirpath, dirnames, filenames in os.walk(wd):

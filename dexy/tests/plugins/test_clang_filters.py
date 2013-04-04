@@ -63,7 +63,7 @@ def test_cfussy_filter():
             doc = Doc("hello.c|cfussy",
                     contents=C_HELLO_WORLD,
                     wrapper=wrapper)
-            wrapper.run(doc)
+            wrapper.run_docs(doc)
         assert False, 'should raise error'
     except dexy.exceptions.UserFeedback:
         assert True
@@ -79,7 +79,7 @@ def test_c_input():
                 contents = C_WITH_INPUT,
                 wrapper=wrapper)
 
-        wrapper.run(node)
+        wrapper.run_docs(node)
         assert str(node.output_data()) == "hello, c"
 
 def test_clang_input():
@@ -93,7 +93,7 @@ def test_clang_input():
                 contents = C_WITH_INPUT,
                 wrapper=wrapper)
 
-        wrapper.run(node)
+        wrapper.run_docs(node)
         assert str(node.output_data()) == "hello, c"
 
 def test_clang_multiple_inputs():
@@ -110,6 +110,6 @@ def test_clang_multiple_inputs():
                 contents = C_WITH_INPUT,
                 wrapper=wrapper)
 
-        wrapper.run(node)
+        wrapper.run_docs(node)
         assert node.output_data()['input1.txt'] == 'hello, c'
         assert node.output_data()['input2.txt'] == 'more data'

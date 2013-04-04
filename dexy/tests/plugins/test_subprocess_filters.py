@@ -30,7 +30,7 @@ def test_python_input():
                     ],
                 contents=PYIN_CONTENTS
                 )
-        wrapper.run(node)
+        wrapper.run_docs(node)
         assert str(node.output_data()) == """\
 line 1 has 19 chars
 line 2 has 4 chars
@@ -44,7 +44,7 @@ def test_pandoc_filter_odt():
                 contents = "hello",
                 pandoc = { "ext" : ".odt"}
                 )
-        wrapper.run(node)
+        wrapper.run_docs(node)
         wrapper.report()
         assert os.path.exists("output/hello.odt")
 
@@ -56,7 +56,7 @@ def test_pandoc_filter_pdf():
                 contents = "hello",
                 pandoc = { "ext" : ".pdf"}
                 )
-        wrapper.run(node)
+        wrapper.run_docs(node)
         wrapper.report()
         assert os.path.exists("output/hello.pdf")
 
@@ -67,7 +67,7 @@ def test_pandoc_filter_txt():
             contents = "hello",
             pandoc = { "ext" : ".txt"},
             )
-        wrapper.run(node)
+        wrapper.run_docs(node)
         wrapper.report()
         assert os.path.exists("output/hello.txt")
         assert str(node.output_data()) == 'hello\n'
@@ -89,7 +89,7 @@ def test_rint_mock():
                 contents=R_SECTIONS
                 )
 
-        wrapper.run(node)
+        wrapper.run_docs(node)
         assert node.output_data().is_cached()
         assert node.output_data().as_sectioned()['assign-vars'] == "> x <- 6\n> y <- 7\n> \n"
         assert node.output_data().as_sectioned()['multiply'] == "> x * y\n[1] 42\n> \n"
@@ -111,7 +111,7 @@ def test_ps2pdf_filter():
         node = Doc("hello.ps|ps2pdf",
                 wrapper, [],
                 contents = PS)
-        wrapper.run(node)
+        wrapper.run_docs(node)
         assert node.output_data().is_cached()
         assert node.output_data().filesize() > 1000
 
@@ -127,7 +127,7 @@ def test_pdf2img_filter():
         shutil.copyfile(orig, 'example.pdf')
         wrapper=Wrapper()
         node = Doc("example.pdf|pdf2img", wrapper)
-        wrapper.run(node)
+        wrapper.run_docs(node)
         assert node.output_data().is_cached()
         assert node.output_data().filesize() > 1000
 
@@ -138,7 +138,7 @@ def test_pdf2jpg_filter():
         wrapper=Wrapper()
         node = Doc("example.pdf|pdf2jpg", wrapper)
 
-        wrapper.run(node)
+        wrapper.run_docs(node)
         assert node.output_data().is_cached()
 
 def test_bw_filter():
@@ -148,7 +148,7 @@ def test_bw_filter():
         wrapper=Wrapper()
         node = Doc("example.pdf|bw", wrapper)
 
-        wrapper.run(node)
+        wrapper.run_docs(node)
         assert node.output_data().is_cached()
 
 def test_pdfcrop_filter():
@@ -158,7 +158,7 @@ def test_pdfcrop_filter():
         wrapper=Wrapper()
         node = Doc("example.pdf|pdfcrop|pdfinfo", wrapper)
 
-        wrapper.run(node)
+        wrapper.run_docs(node)
         assert node.output_data().is_cached()
 
 def test_asciidoc_filter():

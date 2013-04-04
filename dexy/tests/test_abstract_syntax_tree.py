@@ -1,8 +1,14 @@
 from dexy.parser import AbstractSyntaxTree
 from dexy.tests.utils import wrap
+import dexy.batch
 
 def test_ast():
     with wrap() as wrapper:
+        wrapper.nodes = {}
+        wrapper.roots = []
+        wrapper.batch = dexy.batch.Batch(wrapper)
+        wrapper.filemap = wrapper.map_files()
+
         ast = AbstractSyntaxTree(wrapper)
 
         ast.add_node("abc.txt", foo='bar', contents = 'abc')

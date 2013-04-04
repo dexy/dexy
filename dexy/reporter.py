@@ -13,7 +13,7 @@ class Reporter(dexy.plugin.Plugin):
     _settings = {
             "default" : ("Whether to run this report by default. Should be False for reports with side effects.", True),
             "dir" : ("Top-level directory in which report will be stored", None),
-            "run-on-failed-batch" : ("Whether to run if an error occurs while processing the dexy batch.", False),
+            "run-for-wrapper-states" : ("List of states in which this report can be run.", ["ran"]),
             "readme-filename" : ("Name of README file.", "README"),
             "safety-filename" : ("Name of a file which will be created in generated dir, and checked before generated dir is removed.", ".dexy-generated"),
             }

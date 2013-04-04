@@ -27,7 +27,7 @@ def test_regetron_filter():
                 contents="^[a-z\s]+$"
                 )
 
-        wrapper.run(node)
+        wrapper.run_docs(node)
 
         assert node.output_data()['input1.txt'] == """\
 > ^[a-z\s]+$
@@ -55,7 +55,7 @@ def test_used_filter():
                     ],
                 contents="hello")
 
-        wrapper.run(node)
+        wrapper.run_docs(node)
         assert str(node.output_data()) == "hEllo"
 
 def test_sed_filter_single_simple_input_file():
@@ -70,7 +70,7 @@ def test_sed_filter_single_simple_input_file():
                     ],
                 contents="s/e/E/g")
 
-        wrapper.run(node)
+        wrapper.run_docs(node)
         assert str(node.output_data()) == "hEllo"
 
 def test_sed_filter_single_input_file_with_sections():
@@ -89,7 +89,7 @@ def test_sed_filter_single_input_file_with_sections():
                         ],
                 contents="s/e/E/g")
 
-        wrapper.run(node)
+        wrapper.run_docs(node)
         assert node.output_data()['foo'] == 'hEllo'
         assert node.output_data()['bar'] == 'tElEphonE'
 
@@ -109,6 +109,6 @@ def test_sed_filter_multiple_inputs():
                     ],
                 contents="s/e/E/g")
 
-        wrapper.run(node)
+        wrapper.run_docs(node)
         assert node.output_data()['foo.txt'] == 'hEllo'
         assert node.output_data()['bar.txt'] == 'tElEphonE'

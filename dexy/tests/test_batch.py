@@ -30,7 +30,7 @@ def test_batch_with_docs():
             f.write("hello.txt")
 
         wrapper = Wrapper()
-        wrapper.run()
+        wrapper.run_from_new()
 
         batch = dexy.batch.Batch.load_most_recent(wrapper)
         assert batch

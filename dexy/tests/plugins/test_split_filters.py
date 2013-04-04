@@ -14,7 +14,7 @@ def test_split_html_filter():
         """
 
         node = Doc("subdir/example.html|splithtml", wrapper, [], contents=contents)
-        wrapper.run(node)
+        wrapper.run_docs(node)
 
         assert node.children[0].key == "subdir/a-page.html"
         assert node.children[1].key == "subdir/another-page.html"
@@ -54,7 +54,7 @@ def test_split_html_additional_filters():
                 contents=contents,
                 splithtml = { "keep-originals" : False, "additional-doc-filters" : "processtext" },
               )
-        wrapper.run(node)
+        wrapper.run_docs(node)
 
         assert node.children[0].key == "a-page.html|processtext"
         assert node.children[1].key == "another-page.html|processtext"

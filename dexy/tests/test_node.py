@@ -1,12 +1,12 @@
-from dexy.tests.utils import wrap
-from dexy.wrapper import Wrapper
-import time
-import os
-import dexy.doc
-import dexy.node
+from dexy.doc import Doc
 from dexy.node import Node
 from dexy.node import PatternNode
-from dexy.doc import Doc
+from dexy.tests.utils import wrap
+from dexy.wrapper import Wrapper
+import dexy.doc
+import dexy.node
+import os
+import time
 
 def test_create_node():
     with wrap() as wrapper:
@@ -25,11 +25,10 @@ def test_create_node():
         assert node.wrapper == wrapper
         assert node.inputs == []
         assert len(node.hashid) == 32
-        assert isinstance(node.doc_changed, bool)
-        assert isinstance(node.args_changed, bool)
 
 def test_node_arg_caching():
     with wrap() as wrapper:
+        wrapper.nodes = {}
         node = dexy.node.Node("foo", wrapper, [], foo='bar', baz=123)
         wrapper.add_node(node)
 
@@ -39,9 +38,9 @@ def test_node_arg_caching():
         assert node.sorted_arg_string() == '[["baz", 123], ["foo", "bar"]]'
 
         assert os.path.exists(wrapper.artifacts_dir)
-        assert not os.path.exists(wrapper.saved_args_filename())
+        assert not os.path.exists(wrapper.node_argstrings_filename())
         wrapper.save_node_argstrings()
-        assert os.path.exists(wrapper.saved_args_filename())
+        assert os.path.exists(wrapper.node_argstrings_filename())
         wrapper.load_node_argstrings()
         assert not node.check_args_changed()
 
@@ -73,13 +72,13 @@ def test_script_node_caching__slow():
             f.write(SCRIPT_YAML)
 
         wrapper1 = Wrapper()
-        wrapper1.run()
+        wrapper1.run_from_new()
 
         for node in wrapper1.nodes.values():
             assert node.state == 'ran'
 
         wrapper2 = Wrapper()
-        wrapper2.run()
+        wrapper2.run_from_new()
 
         for node in wrapper2.nodes.values():
             assert node.state == 'cached'
@@ -89,7 +88,7 @@ def test_script_node_caching__slow():
             f.write("echo 'new'")
 
         wrapper3 = Wrapper()
-        wrapper3.run()
+        wrapper3.run_from_new()
 
         for node in wrapper1.nodes.values():
             assert node.state == 'ran'
@@ -104,14 +103,14 @@ def test_node_caching__slow():
         with open("doc.txt", "w") as f:
             f.write("1 + 1 = {{ d['hello.py|py'] }}")
 
-        wrapper = Wrapper()
+        wrapper = Wrapper(log_level='DEBUG')
         hello_py = Doc("hello.py|py", wrapper)
         doc_txt = Doc("doc.txt|jinja",
                 wrapper,
                 [hello_py]
                 )
 
-        wrapper.run(doc_txt)
+        wrapper.run_docs(doc_txt)
 
         assert str(doc_txt.output_data()) == "1 + 1 = 3\n"
         assert str(hello_py.output_data()) == "3\n"
@@ -125,7 +124,7 @@ def test_node_caching__slow():
                 wrapper,
                 [hello_py]
                 )
-        wrapper.run(doc_txt)
+        wrapper.run_docs(doc_txt)
 
         assert hello_py.state == 'cached'
         assert doc_txt.state == 'cached'
@@ -134,13 +133,13 @@ def test_node_caching__slow():
         with open("doc.txt", "w") as f:
             f.write("1 + 1 = {{ d['hello.py|py'] }}\n")
 
-        wrapper = Wrapper()
+        wrapper = Wrapper(log_level='DEBUG')
         hello_py = Doc("hello.py|py", wrapper)
         doc_txt = Doc("doc.txt|jinja",
                 wrapper,
                 [hello_py]
                 )
-        wrapper.run(doc_txt)
+        wrapper.run_docs(doc_txt)
 
         assert hello_py.state == 'cached'
         assert doc_txt.state == 'ran'
@@ -149,13 +148,13 @@ def test_node_caching__slow():
         with open("hello.py", "w") as f:
             f.write("print 1+1\n")
 
-        wrapper = Wrapper()
+        wrapper = Wrapper(log_level='DEBUG')
         hello_py = Doc("hello.py|py", wrapper)
         doc_txt = Doc("doc.txt|jinja",
                 wrapper,
                 [hello_py]
                 )
-        wrapper.run(doc_txt)
+        wrapper.run_docs(doc_txt)
 
         assert hello_py.state == 'ran'
         assert doc_txt.state == 'ran'
@@ -199,14 +198,20 @@ def test_pattern_node():
         with open("bar.txt", "w") as f:
             f.write("bar!")
 
-        wrapper = Wrapper()
-        wrapper.setup_batch()
+        wrapper = Wrapper(log_level='DEBUG')
+        wrapper.to_valid()
+
+        wrapper.nodes = {}
+        wrapper.roots = []
+        wrapper.batch = dexy.batch.Batch(wrapper)
+        wrapper.filemap = wrapper.map_files()
 
         node = PatternNode("*.txt", 
                 wrapper,
                 [],
                 foo="bar")
         assert node.args['foo'] == 'bar'
+        wrapper.run_docs(node)
         assert len(node.children) == 2
 
         for child in node.children:
@@ -220,8 +225,13 @@ def test_pattern_node_multiple_filters():
         with open("foo.txt", "w") as f:
             f.write("foo!")
 
-        wrapper = Wrapper()
-        wrapper.setup_batch()
+        wrapper = Wrapper(log_level='DEBUG')
+        wrapper.to_valid()
+
+        wrapper.nodes = {}
+        wrapper.roots = []
+        wrapper.batch = dexy.batch.Batch(wrapper)
+        wrapper.filemap = wrapper.map_files()
 
         node = PatternNode("*.txt|dexy|dexy|dexy", wrapper=wrapper)
         doc = node.children[0]
@@ -234,8 +244,13 @@ def test_pattern_node_one_filter():
         with open("foo.txt", "w") as f:
             f.write("foo!")
 
-        wrapper = Wrapper()
-        wrapper.setup_batch()
+        wrapper = Wrapper(log_level='DEBUG')
+        wrapper.to_valid()
+
+        wrapper.nodes = {}
+        wrapper.roots = []
+        wrapper.batch = dexy.batch.Batch(wrapper)
+        wrapper.filemap = wrapper.map_files()
 
         node = PatternNode("*.txt|dexy", wrapper=wrapper)
         doc = node.children[0]

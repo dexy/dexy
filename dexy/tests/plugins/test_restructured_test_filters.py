@@ -19,7 +19,7 @@ def test_rst2odt():
                 wrapper,
                 [],
                 contents=RST)
-        wrapper.run(node)
+        wrapper.run_docs(node)
         assert node.output_data().filesize() > 8000
 
 def test_rst2xml():
@@ -42,7 +42,7 @@ def test_rest_to_tex():
                 rstbody={"ext" : ".tex"}
                 )
 
-        wrapper.run(node)
+        wrapper.run_docs(node)
         assert str(node.output_data()) == """\
 %
 \\begin{itemize}

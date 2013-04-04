@@ -9,13 +9,13 @@ def test_idio_invalid_input():
         doc = Doc("hello.py|idio",
                 wrapper, [],
                 contents=" ")
-        wrapper.run(doc)
+        wrapper.run_docs(doc)
 
 @raises(dexy.exceptions.UserFeedback)
 def test_idio_bad_file_extension():
     with wrap() as wrapper:
         doc = Doc("hello.xyz|idio", wrapper, [], contents=" ")
-        wrapper.run(doc)
+        wrapper.run_docs(doc)
 
 def test_multiple_sections():
     with wrap() as wrapper:
@@ -33,7 +33,7 @@ x*y
                 [],
                 contents=src)
 
-        wrapper.run(doc)
+        wrapper.run_docs(doc)
 
         assert doc.output_data().keys() == ['1', 'vars', 'multiply']
 
@@ -44,8 +44,7 @@ def test_force_text():
                 [],
                 contents="print 'hello'\n")
 
-        wrapper.run(node)
-        print node.output_data().__class__
+        wrapper.run_docs(node)
         assert str(node.output_data()) == "print 'hello'\n"
 
 def test_force_latex():
@@ -55,6 +54,6 @@ def test_force_latex():
                 [],
                 contents="print 'hello'\n")
 
-        wrapper.run(doc)
+        wrapper.run_docs(doc)
 
         assert "begin{Verbatim}" in str(doc.output_data())

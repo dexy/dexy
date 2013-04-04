@@ -95,7 +95,7 @@ def test_run_version(stdout):
 def test_run_dexy(stdout):
     with tempdir():
         os.makedirs('logs')
-        os.makedirs('artifacts')
+        os.makedirs('.cache')
         dexy.commands.run()
 
 @patch.object(sys, 'argv', ['dexy', 'viewer:ping'])
@@ -136,14 +136,13 @@ def test_conf_command_with_print_option(stdout):
 
 def test_filters_text():
     text = dexy.commands.filters.filters_text()
-    assert "pyg, pygments : Apply Pygments syntax highlighting." in text
+    assert "pyg : Apply Pygments syntax highlighting." in text
 
 def test_filters_text_single_alias():
     text = dexy.commands.filters.filters_text(alias="pyg")
     assert "pyg, pygments" in text
 
-def test_filters_text_versions():
-    raise SkipTest
+def test_filters_text_versions__slow():
     text = dexy.commands.filters.filters_text(versions=True)
     assert "Installed version: Python" in text
 

@@ -19,7 +19,13 @@ def test_text_parser():
             f.write("")
 
         wrapper = Wrapper()
-        wrapper.setup_batch()
+        wrapper.to_valid()
+
+        wrapper.nodes = {}
+        wrapper.roots = []
+        wrapper.batch = dexy.batch.Batch(wrapper)
+        wrapper.filemap = wrapper.map_files()
+
         ast = AbstractSyntaxTree(wrapper)
         parser = TextFile(wrapper, ast)
         parser.parse(".", """
@@ -37,6 +43,11 @@ foo:
 
 def test_parse_inactive():
     with wrap() as wrapper:
+        wrapper.nodes = {}
+        wrapper.roots = []
+        wrapper.batch = dexy.batch.Batch(wrapper)
+        wrapper.filemap = wrapper.map_files()
+
         ast = AbstractSyntaxTree(wrapper)
         parser = Yaml(wrapper, ast)
         parser.parse('.', YAML_WITH_INACTIVE)
@@ -50,6 +61,11 @@ foo:
 
 def test_parse_default():
     with wrap() as wrapper:
+        wrapper.nodes = {}
+        wrapper.roots = []
+        wrapper.batch = dexy.batch.Batch(wrapper)
+        wrapper.filemap = wrapper.map_files()
+
         ast = AbstractSyntaxTree(wrapper)
         parser = Yaml(wrapper, ast)
         parser.parse('.', YAML_WITH_DEFAULT_OFF)
@@ -57,6 +73,11 @@ def test_parse_default():
         assert len(wrapper.nodes) == 0
 
     with wrap() as wrapper:
+        wrapper.nodes = {}
+        wrapper.roots = []
+        wrapper.batch = dexy.batch.Batch(wrapper)
+        wrapper.filemap = wrapper.map_files()
+
         ast = AbstractSyntaxTree(wrapper)
         wrapper.full = True
         parser = Yaml(wrapper, ast)
@@ -71,8 +92,11 @@ def test_yaml_with_defaults():
         with open("s1/s2/hello.txt", "w") as f:
             f.write("hello")
 
-        wrapper = Wrapper()
-        wrapper.setup_batch()
+        wrapper.nodes = {}
+        wrapper.roots = []
+        wrapper.batch = dexy.batch.Batch(wrapper)
+        wrapper.filemap = wrapper.map_files()
+
         ast = AbstractSyntaxTree(wrapper)
         parser = Yaml(wrapper, ast)
         parser.parse('.', YAML_WITH_DEFAULTS)
@@ -92,6 +116,11 @@ def test_invalid_yaml():
 
 def test_yaml_parser():
     with wrap() as wrapper:
+        wrapper.nodes = {}
+        wrapper.roots = []
+        wrapper.batch = dexy.batch.Batch(wrapper)
+        wrapper.filemap = wrapper.map_files()
+
         ast = AbstractSyntaxTree(wrapper)
         parser = Yaml(wrapper, ast)
         parser.parse('.', YAML)
@@ -99,10 +128,15 @@ def test_yaml_parser():
             assert doc.__class__.__name__ == 'BundleNode'
             assert doc.key in ['code', 'wordpress']
 
-        wrapper.run()
+        wrapper.run_docs()
 
 def test_text_parser_blank_lines():
     with wrap() as wrapper:
+        wrapper.nodes = {}
+        wrapper.roots = []
+        wrapper.batch = dexy.batch.Batch(wrapper)
+        wrapper.filemap = wrapper.map_files()
+
         ast = AbstractSyntaxTree(wrapper)
         parser = TextFile(wrapper, ast)
         parser.parse('.', "\n\n")
@@ -112,6 +146,11 @@ def test_text_parser_blank_lines():
 
 def test_text_parser_comments():
     with wrap() as wrapper:
+        wrapper.nodes = {}
+        wrapper.roots = []
+        wrapper.batch = dexy.batch.Batch(wrapper)
+        wrapper.filemap = wrapper.map_files()
+
         ast = AbstractSyntaxTree(wrapper)
         parser = TextFile(wrapper, ast)
         parser.parse('.', """
@@ -125,6 +164,11 @@ def test_text_parser_comments():
 
 def test_text_parser_valid_json():
     with wrap() as wrapper:
+        wrapper.nodes = {}
+        wrapper.roots = []
+        wrapper.batch = dexy.batch.Batch(wrapper)
+        wrapper.filemap = wrapper.map_files()
+
         ast = AbstractSyntaxTree(wrapper)
         parser = TextFile(wrapper, ast)
         parser.parse('.', """
@@ -150,12 +194,20 @@ def test_text_parser_invalid_json():
 
 def test_text_parser_virtual_file():
     with wrap() as wrapper:
+        wrapper.nodes = {}
+        wrapper.roots = []
+        wrapper.batch = dexy.batch.Batch(wrapper)
+        wrapper.filemap = wrapper.map_files()
+
         ast = AbstractSyntaxTree(wrapper)
         parser = TextFile(wrapper, ast)
         parser.parse('.', """
         virtual.txt { "contents" : "hello" }
         """)
         ast.walk()
+
+        wrapper.transition('walked')
+        wrapper.to_checked()
 
         wrapper.run()
         docs = wrapper.roots
@@ -165,6 +217,11 @@ def test_text_parser_virtual_file():
 
 def test_original_parser():
     with wrap() as wrapper:
+        wrapper.nodes = {}
+        wrapper.roots = []
+        wrapper.batch = dexy.batch.Batch(wrapper)
+        wrapper.filemap = wrapper.map_files()
+
         conf = """{
         "*.txt" : {}
         }"""
@@ -177,6 +234,11 @@ def test_original_parser():
 
 def test_original_parser_allinputs():
     with wrap() as wrapper:
+        wrapper.nodes = {}
+        wrapper.roots = []
+        wrapper.batch = dexy.batch.Batch(wrapper)
+        wrapper.filemap = wrapper.map_files()
+
         conf = """{
         "*.txt" : {},
         "hello.txt" : { "contents" : "Hello!" },

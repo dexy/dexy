@@ -12,7 +12,7 @@ def test_canonical_name():
                 contents="hello",
                 canonical_name="yello.abc")
 
-        wrapper.run(doc)
+        wrapper.run_docs(doc)
         assert doc.output_data().name == "yello.abc"
         wrapper.report()
         assert os.path.exists(os.path.join('output', 'yello.abc'))
@@ -20,10 +20,12 @@ def test_canonical_name():
 def test_attempt_write_outside_project_root():
     with wrap() as wrapper:
         try:
-            Doc("../../example.txt",
+            doc = Doc("../../example.txt",
                 wrapper,
                 [],
                 contents = "hello")
+            doc.setup()
+            doc.setup_datas()
             assert False, 'should raise UserFeedback'
         except dexy.exceptions.UserFeedback as e:
             assert 'trying to write' in str(e)
@@ -48,8 +50,10 @@ def test_key_value_data():
 
 def test_key_value_data_sqlite():
     with wrap() as wrapper:
+        wrapper.to_walked()
+        wrapper.to_checked()
         data = dexy.data.KeyValue("doc.sqlite3", ".sqlite3",
-                "doc.sqlite3", "hash1", {}, None, None, wrapper)
+                "doc.sqlite3", "abc000", {}, None, None, wrapper)
         data.setup_storage()
 
         data.append('foo', 'bar')
@@ -62,10 +66,13 @@ def test_key_value_data_sqlite():
 
 def test_generic_data():
     with wrap() as wrapper:
+        wrapper.to_walked()
+        wrapper.to_checked()
+
         CONTENTS = "contents go here"
 
         # Create a GenericData object
-        data = dexy.data.Generic("doc.txt", ".txt", "doc.txt", "hash1",
+        data = dexy.data.Generic("doc.txt", ".txt", "doc.txt", "abc000",
                 {}, None, None, wrapper)
         data.setup_storage()
 

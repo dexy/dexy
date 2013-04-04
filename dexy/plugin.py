@@ -30,8 +30,10 @@ class Plugin(object):
                 self.__class__.class_update_settings(self, settings_from_other_classes)
 
         # Apply raw_kwargs settings
-        settings = dict((k, v) for k, v in raw_kwargs.items() if k in self._instance_settings)
-        self.__class__.class_update_settings(self, settings)
+        hyphen_settings = dict((k, v) for k, v in raw_kwargs.items() if k in self._instance_settings)
+        underscore_settings = dict((k.replace("_", "-"), v) for k, v in raw_kwargs.items() if k.replace("_", "-") in self._instance_settings)
+        self.__class__.class_update_settings(self, hyphen_settings)
+        self.__class__.class_update_settings(self, underscore_settings)
 
     def setting(self, name_hyphen):
         """

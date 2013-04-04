@@ -18,6 +18,36 @@ class Data(dexy.plugin.Plugin):
             'default-storage-type' : ("Type of storage to use if not specified", 'generic'),
             }
 
+    state_transitions = (
+            (None, 'new'),
+            ('new', 'ready')
+            )
+
+    def __init__(self, key, ext, canonical_name, storage_key,
+            args, storage_type, canonical_output, wrapper):
+        self.key = key
+        self.ext = ext
+        self.name = canonical_name
+        self.storage_key = storage_key
+        self.args = args
+        self.storage_type = storage_type
+        self.wrapper = wrapper
+        self.canonical_output = canonical_output
+
+        self.initialize_settings()
+
+        self._data = None
+        self.state = None
+
+        self.transition('new')
+
+    def transition(self, new_state):
+        dexy.utils.transition(self, new_state)
+
+    def setup(self):
+        self.setup_storage()
+        self.transition('ready')
+
     def __repr__(self):
         return "Data('%s')" % (self.key)
 
@@ -42,24 +72,6 @@ class Data(dexy.plugin.Plugin):
     def __str__(self):
         return str(unicode(self))
 
-    def __init__(self, key, ext, canonical_name, storage_key,
-            args, storage_type, canonical_output, wrapper):
-        self.key = key
-        self.ext = ext
-        self.name = canonical_name
-        self.storage_key = storage_key
-        self.args = args
-        self.storage_type = storage_type
-        self.wrapper = wrapper
-        self.canonical_output = canonical_output
-
-        self.initialize_settings()
-
-        self._data = None
-
-        # allow doing custom setup in subclasses
-        self.setup()
-
     def args_to_data_init(self):
         """
         Returns a tuple of attributes in the correct order to pass to create_instance
@@ -71,14 +83,12 @@ class Data(dexy.plugin.Plugin):
     def keys(self):
         return []
 
-    def setup(self):
-        pass
-
     def setup_storage(self):
         self.storage_type = self.storage_type or self.storage_class_alias(self.ext)
         instanceargs = (self.storage_key, self.ext, self.wrapper,)
         self.storage = dexy.storage.Storage.create_instance(self.storage_type, *instanceargs)
         self.storage.assert_location_is_in_project_dir(self.name)
+        self.storage.setup()
 
     def parent_dir(self):
         return posixpath.dirname(self.name)

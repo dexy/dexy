@@ -14,8 +14,7 @@ def run_calibre(ext):
                 calibre = { 'ext' : ext },
                 contents = HTML
                 )
-        wrapper.run(node)
-        print repr(node.output_data())
+        wrapper.run_docs(node)
         assert node.output_data().is_cached()
 
 def test_calibre_mobi():

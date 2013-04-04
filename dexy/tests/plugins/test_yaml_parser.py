@@ -3,6 +3,7 @@ from dexy.parsers.doc import Yaml
 from dexy.tests.utils import wrap
 from dexy.wrapper import Wrapper
 import os
+import dexy.batch
 
 def test_subdir_config_with_bundle():
     with wrap():
@@ -23,15 +24,15 @@ def test_subdir_config_with_bundle():
             f.write("print 'hello'")
 
         wrapper = Wrapper()
-        wrapper.run()
+        wrapper.run_from_new()
         assert "doc:abc/def/hello.py" in wrapper.nodes
 
         wrapper = Wrapper(recurse=False)
-        wrapper.run()
+        wrapper.run_from_new()
         assert not "doc:abc/def/hello.py" in wrapper.nodes
 
         wrapper = Wrapper(recurse=False, configs="abc/def/dexy.yaml")
-        wrapper.run()
+        wrapper.run_from_new()
         assert "doc:abc/def/hello.py" in wrapper.nodes
 
 def test_except_patterndoc():
@@ -39,12 +40,15 @@ def test_except_patterndoc():
         with open("exceptme.abc", "w") as f:
             f.write("hello")
 
-        wrapper = Wrapper()
+        wrapper.nodes = {}
+        wrapper.roots = []
+        wrapper.batch = dexy.batch.Batch(wrapper)
+        wrapper.filemap = wrapper.map_files()
+
         ast = AbstractSyntaxTree(wrapper)
         parser = Yaml(wrapper, ast)
         parser.parse('.', """.abc:\n  - except : 'exceptme.abc' """)
         ast.walk()
-        wrapper.run()
 
         assert len(wrapper.nodes) == 1
 
@@ -54,16 +58,31 @@ def test_except_patterndoc_pattern():
             f.write("hello")
 
         wrapper = Wrapper()
+        wrapper.to_valid()
+
+        wrapper.nodes = {}
+        wrapper.roots = []
+        wrapper.batch = dexy.batch.Batch(wrapper)
+        wrapper.filemap = wrapper.map_files()
+
         ast = AbstractSyntaxTree(wrapper)
         parser = Yaml(wrapper, ast)
         parser.parse('.', """.abc:\n  - except : 'exceptme.*' """)
         ast.walk()
+        wrapper.transition('walked')
+        wrapper.to_checked()
+
         wrapper.run()
 
         assert len(wrapper.nodes) == 1
 
 def test_children_siblings_order():
     with wrap() as wrapper:
+        wrapper.nodes = {}
+        wrapper.roots = []
+        wrapper.batch = dexy.batch.Batch(wrapper)
+        wrapper.filemap = wrapper.map_files()
+
         ast = AbstractSyntaxTree(wrapper)
         parser = Yaml(wrapper, ast)
         parser.parse('.', """
@@ -76,6 +95,9 @@ def test_children_siblings_order():
             - c3
         """)
         ast.walk()
+        wrapper.transition('walked')
+
+        wrapper.to_checked()
 
         wrapper.run()
 
@@ -110,25 +132,44 @@ def test_single_file_doc():
         with open("hello.txt", "w") as f:
             f.write("hello")
 
-        wrapper = Wrapper()
+        wrapper.nodes = {}
+        wrapper.roots = []
+        wrapper.batch = dexy.batch.Batch(wrapper)
+        wrapper.filemap = wrapper.map_files()
+
         ast = AbstractSyntaxTree(wrapper)
         parser = Yaml(wrapper, ast)
         parser.parse('.', "hello.txt")
         ast.walk()
+        wrapper.transition('walked')
+
+        wrapper.to_checked()
 
         wrapper.run()
         assert "doc:hello.txt" in wrapper.nodes
 
 def test_single_bundle_doc():
     with wrap() as wrapper:
+        wrapper.nodes = {}
+        wrapper.roots = []
+        wrapper.batch = dexy.batch.Batch(wrapper)
+        wrapper.filemap = wrapper.map_files()
+
         ast = AbstractSyntaxTree(wrapper)
         parser = Yaml(wrapper, ast)
         parser.parse('.', "hello")
         ast.walk()
+        wrapper.transition('walked')
+        wrapper.to_checked()
         assert "bundle:hello" in wrapper.nodes
 
 def test_single_bundle_doc_with_args():
     with wrap() as wrapper:
+        wrapper.nodes = {}
+        wrapper.roots = []
+        wrapper.batch = dexy.batch.Batch(wrapper)
+        wrapper.filemap = wrapper.map_files()
+
         ast = AbstractSyntaxTree(wrapper)
         parser = Yaml(wrapper, ast)
         parser.parse('.', """
@@ -155,6 +196,11 @@ def test_single_bundle_doc_with_args():
 
 def test_single_bundle_doc_with_args_2():
     with wrap() as wrapper:
+        wrapper.nodes = {}
+        wrapper.roots = []
+        wrapper.batch = dexy.batch.Batch(wrapper)
+        wrapper.filemap = wrapper.map_files()
+
         ast = AbstractSyntaxTree(wrapper)
         parser = Yaml(wrapper, ast)
         parser.parse('.', """

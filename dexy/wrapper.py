@@ -2,8 +2,8 @@ from dexy.exceptions import DeprecatedException
 from dexy.exceptions import InternalDexyProblem
 from dexy.exceptions import UserFeedback
 from dexy.utils import file_exists
-from dexy.utils import s
 from dexy.utils import is_windows
+from dexy.utils import s
 import dexy.batch
 import dexy.doc
 import dexy.parser
@@ -15,6 +15,7 @@ import os
 import posixpath
 import shutil
 import subprocess
+import uuid
 import time
 
 class Wrapper(object):
@@ -24,81 +25,224 @@ class Wrapper(object):
     """
     _required_dirs = ['artifacts_dir', 'log_dir']
 
+    state_transitions = (
+            (None, 'new'),
+            ('new', 'valid'),
+            ('valid', 'valid'),
+            ('valid', 'walked'),
+            ('walked', 'checked'),
+            ('checked', 'running'),
+            ('running', 'error'),
+            ('running', 'ran'),
+            ('valid', 'loaded'),
+            )
+
     def __init__(self, **kwargs):
         self.initialize_attribute_defaults()
         self.update_attributes_from_kwargs(kwargs)
+        self.project_root = os.path.abspath(os.getcwd())
+        self.state = None
+        self.transition('new')
 
+    def validate_state(self, state=None):
+        """
+        Checks that the instance is in the expected state, and validates
+        attributes for the state.
+        """
+        if state:
+            assert self.state == state
+        else:
+            state = self.state
+
+        if state == 'new':
+            assert not self.state_history
+            assert self.project_root
+        elif state == 'valid':
+            pass
+        elif state == 'walked':
+            assert self.batch
+            assert self.nodes
+            assert self.roots
+            assert self.filemap
+            for node in self.nodes.values():
+                assert node.state == 'new'
+        elif state == 'checked':
+            for node in self.nodes.values():
+                assert node.state in ('checked', 'cached', 'inactive',), node.state
+        elif state == 'ran':
+            for node in self.nodes.values():
+                assert node.state in ('ran', 'cached', 'inactive'), node.state
+        else:
+            raise dexy.exceptions.InternalDexyProblem(state)
+
+    def transition(self, new_state):
+        dexy.utils.transition(self, new_state)
+
+    def setup_for_valid(self):
+        self.setup_log()
+
+    def to_valid(self):
+        if not self.dexy_dirs_exist():
+            msg = "Should not attempt to enter 'valid' state unless dexy dirs exist."
+            raise dexy.exceptions.InternalDexyProblem(msg)
+        self.setup_for_valid()
+        self.transition('valid')
+
+    def walk(self):
         self.nodes = {}
         self.roots = []
-        self.project_root = os.path.abspath(os.getcwd())
+        self.batch = dexy.batch.Batch(self)
+        self.filemap = self.map_files()
+        self.ast = self.parse_configs()
+        self.ast.walk()
 
-        if self.dexy_dirs_exist():
-            self.setup_log()
-            self.filemap = self.map_files()
-            self.load_node_argstrings()
-            self.load_runtime_info()
+    def to_walked(self):
+        self.walk()
+        self.transition('walked')
 
-    def pickle_lib(self):
-        return dexy.utils.pickle_lib(self)
+    def this_cache_dir(self):
+        return os.path.join(self.artifacts_dir, "this")
 
-    def saved_args_filename(self):
+    def last_cache_dir(self):
+        return os.path.join(self.artifacts_dir, "last")
+
+    def work_cache_dir(self):
+        return os.path.join(self.artifacts_dir, "work")
+
+    def create_cache_dir_with_sub_dirs(self, cache_dir):
+        os.mkdir(cache_dir)
+        hexes = ['0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f']
+        for c in hexes:
+            for d in hexes:
+                os.mkdir(os.path.join(cache_dir, "%s%s" % (c,d)))
+
+    def map_cache_files(self):
         """
-        Filename under which to save node arg strings.
+        Create a map of all files in cache at start so we can check it quickly
+        as we check each node.
         """
-        return os.path.join(self.artifacts_dir, 'batch.args.pickle')
+        def process_dir(root):
+            dir_files = {}
+            for dirpath, dirnames, filenames in os.walk(root):
+                for filename in filenames:
+                    filepath = os.path.join(dirpath, filename)
+                    dir_files[filepath] = os.stat(filepath)
+            return dir_files
 
-    def save_node_argstrings(self):
+        return {
+                'last' : process_dir(self.last_cache_dir()),
+                'this' : process_dir(self.this_cache_dir())
+                }
+
+    def trash_dir(self):
+        return os.path.join(self.project_root, ".trash")
+
+    def trash(self, d, d_exists=None):
         """
-        Save string representation of node args to check if they have changed.
+        Move the passed file path (if it exists) into the .trash directory.
         """
-        arg_info = {}
+        if d_exists or os.path.exists(d):
+            if not self.is_location_in_project_dir(d):
+                msg = "trying to trash '%s', but this is not in project dir '%s"
+                msgargs = (d, self.project_root)
+                raise dexy.exceptions.InternalDexyProblem(msg % msgargs)
 
-        for node in self.nodes.values():
-            arg_info[node.key_with_class()] = node.sorted_arg_string()
+            trash_dir = self.trash_dir()
 
-        with open(self.saved_args_filename(), 'wb') as f:
-            pickle = self.pickle_lib()
-            pickle.dump(arg_info, f)
+            if not os.path.exists(trash_dir):
+                os.mkdir(trash_dir)
 
-    def load_node_argstrings(self):
+            move_to = os.path.join(trash_dir, str(uuid.uuid4()))
+            shutil.move(d, move_to)
+
+    def forked_empty_trash(self):
+        subprocess.Popen(['rm', '-r', self.trash_dir()])
+
+    def unforked_empty_trash(self):
+        shutil.rmtree(self.trash_dir())
+
+    def consolidate_cache(self):
         """
-        Load saved node arg strings into a hash so nodes can check if their
-        args have changed.
+        Move all cache files from last/ cache to this/ cache and ensure all
+        expected cache files are present.
         """
-        try:
-            with open(self.saved_args_filename(), 'rb') as f:
-                pickle = self.pickle_lib()
-                self.saved_args = pickle.load(f)
-        except IOError:
-            self.saved_args = {}
+        if not self.cache_files['this']:
+            self.create_cache_dir_with_sub_dirs(self.this_cache_dir())
 
-    def runtime_info_filename(self):
-        return os.path.join(self.artifacts_dir, 'batch.runtimeinfo.pickle')
+        for node in self.roots:
+            node.verify_cached()
 
-    def save_runtime_info(self):
-        """
-        Save runtime changes to metadata so they can be reapplied when node has
-        been cached.
-        """
-        info = {}
+        self.trash(self.last_cache_dir())
 
-        for node in self.nodes.values():
-            info[node.key_with_class()] = {
-                    'runtime-args' : node.runtime_args,
-                    'additional-docs' : node.additional_doc_info()
-                    }
+    def check(self):
+        self.cache_files = self.map_cache_files()
+        self.load_node_argstrings()
 
-        with open(self.runtime_info_filename(), 'wb') as f:
-            pickle = self.pickle_lib()
-            pickle.dump(info, f)
+        for node in self.roots:
+            node.check_is_cached()
 
-    def load_runtime_info(self):
-        try:
-            with open(self.runtime_info_filename(), 'rb') as f:
-                pickle = self.pickle_lib()
-                self.prev_batch_runtime_info = pickle.load(f)
-        except IOError:
-            self.prev_batch_runtime_info = {}
+        self.consolidate_cache()
+        self.save_node_argstrings()
+
+    def reset_work_cache_dir(self):
+        # remove work/ dir leftover from previous run (if any) and create a new
+        # work/ dir for this run
+        work_dir = self.work_cache_dir()
+        self.trash(work_dir)
+        self.create_cache_dir_with_sub_dirs(work_dir)
+
+    def to_checked(self):
+        self.reset_work_cache_dir()
+        self.check()
+        self.transition('checked')
+
+    def run(self):
+        self.transition('running')
+
+        self.batch.start_time = time.time()
+
+
+        if self.target:
+            matches = self.roots_matching_target()
+
+        for node in self.roots:
+            if self.target:
+                if not node in matches:
+                    continue
+   
+            for task in node:
+                task()
+
+        self.transition('ran')
+
+        self.batch.end_time = time.time()
+        self.batch.save_to_file()
+
+    def roots_matching_target(self):
+        matches = [n for n in self.roots if n.key == self.target]
+        if not matches:
+            matches = [n for n in self.roots if n.key.startswith(self.target)]
+        if not matches:
+            matches = [n for n in self.nodes.values() if n.key.startswith(self.target)]
+        return matches
+
+    def run_from_new(self):
+        self.to_valid()
+        self.to_walked()
+        self.to_checked()
+        self.run()
+
+    def run_docs(self, *docs):
+        self.to_valid()
+
+        self.roots = docs
+        self.nodes = {}
+        self.filemap = self.map_files()
+        self.batch = dexy.batch.Batch(self)
+        self.transition('walked')
+
+        self.to_checked()
+        self.run()
 
     # Attributes
     def initialize_attribute_defaults(self):
@@ -118,6 +262,38 @@ class Wrapper(object):
                 msg = "invalid kwarg '%s' being passed to wrapper, not defined in defaults dict" 
                 raise InternalDexyProblem(msg % key)
             setattr(self, key, value)
+
+    # Store Args
+    def pickle_lib(self):
+        return dexy.utils.pickle_lib(self)
+
+    def node_argstrings_filename(self):
+        return os.path.join(self.artifacts_dir, 'batch.args.pickle')
+
+    def save_node_argstrings(self):
+        """
+        Save string representation of node args to check if they have changed.
+        """
+        arg_info = {}
+
+        for node in self.nodes.values():
+            arg_info[node.key_with_class()] = node.sorted_arg_string()
+
+        with open(self.node_argstrings_filename(), 'wb') as f:
+            pickle = self.pickle_lib()
+            pickle.dump(arg_info, f)
+
+    def load_node_argstrings(self):
+        """
+        Load saved node arg strings into a hash so nodes can check if their
+        args have changed.
+        """
+        try:
+            with open(self.node_argstrings_filename(), 'rb') as f:
+                pickle = self.pickle_lib()
+                self.saved_args = pickle.load(f)
+        except IOError:
+            self.saved_args = {}
 
     # Dexy Dirs
     def iter_dexy_dirs(self):
@@ -170,14 +346,6 @@ class Wrapper(object):
                 with open(safety_filepath, 'w') as f:
                     f.write("This directory was created by dexy.")
 
-        hexes = ['0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f']
-        for c in hexes:
-            for d in hexes:
-                try:
-                    os.makedirs(os.path.join(self.artifacts_dir, "%s%s" % (c,d)))
-                except OSError:
-                    pass
-
     def remove_dexy_dirs(self):
         if is_windows():
             self.unforked_remove_dexy_dirs()
@@ -201,18 +369,8 @@ class Wrapper(object):
         """
         for dirpath, safety_filepath, dirstat in self.iter_dexy_dirs():
             if dirstat:
-                self.forked_remove_directory(dirpath)
-
-    def forked_remove_directory(self, dirpath):
-        # TODO make a .trash directory and move to a random dir in .trash
-        move_to = "%s-old" % os.path.abspath(dirpath)
-        if not self.is_location_in_project_dir(move_to):
-            msg = "trying to rm '%s', not in project dir '%s"
-            msgargs = (move_to, self.project_root)
-            raise dexy.exceptions.InternalDexyProblem(msg % msgargs)
-        shutil.move(os.path.abspath(dirpath), move_to)
-        # fork a new process to rm x-old files so we don't have to wait
-        subprocess.Popen(['rm', '-r', move_to])
+                self.trash(dirpath, True)
+        self.forked_empty_trash()
 
     def remove_reports_dirs(self, reports=True, keep_empty_dir=False):
         if reports:
@@ -223,29 +381,12 @@ class Wrapper(object):
             for report in reports:
                 report.remove_reports_dir(keep_empty_dir)
 
-    def clean_dexy_dirs(self):
-        """
-        Cleans up files that aren't needed at the start of new runs, like prev
-        run's temporary working directories.
-        """
-        # TODO make sure we are in project dir.
-        dirs = [self.filter_ws()]
-        for d in dirs:
-            if os.path.exists(d):
-                try:
-                    self.forked_remove_directory(d)
-                except OSError:
-                    pass
-
     # Logging
     def log_path(self):
         """
         Returns path to logfile.
         """
         return os.path.join(self.log_dir, self.log_file)
-
-    def filter_ws(self):
-        return os.path.join(self.artifacts_dir, self.workspace)
 
     def setup_log(self):
         """
@@ -330,55 +471,6 @@ class Wrapper(object):
         """
         key = node.key_with_class()
         self.nodes[key] = node
-
-    def setup_batch(self):
-        self.batch = dexy.batch.Batch(self)
-
-    def run(self, *docs):
-        self.assert_dexy_dirs_exist()
-
-        self.setup_batch()
-        self.batch.start_time = time.time()
-
-        self.clean_dexy_dirs()
-
-        if docs:
-            self.nodes = {}
-            for d in docs:
-                for inpt in d.walk_inputs():
-                    self.nodes[inpt.key_with_class()] = inpt
-                self.nodes[d.key_with_class()] = d
-            self.roots = list(docs)
-            run_roots = self.roots
-
-        else:
-            if not self.nodes:
-                ast = self.parse_configs()
-                ast.walk()
-
-            if self.target:
-                run_roots = [n for n in self.roots if n.key == self.target]
-                if not run_roots:
-                    run_roots = [n for n in self.roots if n.key.startswith(self.target)]
-                if not run_roots:
-                    run_roots = [n for n in self.nodes.values() if n.key.startswith(self.target)]
-            else:
-                run_roots = self.roots
-
-        self.save_node_argstrings()
-
-        for root_node in run_roots:
-            root_node.calculate_is_cached()
-
-        for root_node in run_roots:
-            for task in root_node:
-                task()
-
-        self.save_runtime_info()
-
-        self.batch.end_time = time.time()
-        self.batch.state = 'complete'
-        self.batch.save_to_file()
 
     def qualify_key(self, key):
         """
@@ -496,7 +588,7 @@ class Wrapper(object):
             reporters = [i for i in dexy.reporter.Reporter if i.setting('default')]
 
         for reporter in reporters:
-            if self.batch.state == 'complete' or reporter.setting('run-on-failed-batch'):
+            if self.state in reporter.setting('run-for-wrapper-states'):
                 self.log.debug("running reporter %s" % reporter.aliases[0])
                 reporter.run(self)
 

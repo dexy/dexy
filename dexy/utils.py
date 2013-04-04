@@ -10,6 +10,7 @@ import re
 import shutil
 import tempfile
 import yaml
+import time
 
 defaults = {
     'artifacts_dir' : '.cache',
@@ -20,7 +21,7 @@ defaults = {
     'dont_use_cache' : False,
     'dry_run' : False,
     'encoding' : 'utf-8',
-    'exclude' : '.git, .svn, tmp, cache',
+    'exclude' : '.git, .svn, tmp, cache, .trash',
     'exclude_also' : '',
     'full' : False,
     'globals' : '',
@@ -41,8 +42,7 @@ defaults = {
     'strace' : False,
     'target' : False,
     'timing' : True,
-    'uselocals' : False,
-    'workspace' : 'work',
+    'uselocals' : False
 }
 
 log_levels = {
@@ -50,6 +50,29 @@ log_levels = {
     'INFO' : logging.INFO,
     'WARN' : logging.WARN
 }
+
+def transition(obj, new_state):
+    """
+    Attempts to transition this object to the new state, if the transition
+    from current state to new state is valid as per state_transitions list.
+    """
+    attempted_transition = (obj.state, new_state) 
+    if not attempted_transition in obj.__class__.state_transitions:
+        msg = "%s -> %s"
+        raise dexy.exceptions.UnexpectedState(msg % attempted_transition)
+
+    if not hasattr(obj, 'time_entered_current_state'):
+        obj.time_entered_current_state = None
+        obj.state_history = []
+  
+    if obj.time_entered_current_state:
+        transition_time = time.time()
+
+        time_in_prev_state = transition_time - obj.time_entered_current_state
+        obj.state_history.append((obj.state, time_in_prev_state))
+
+    obj.time_entered_current_state = time.time()
+    obj.state = new_state
 
 def pickle_lib(wrapper):
     if wrapper.pickle == 'c':

@@ -25,7 +25,7 @@ def test_casperjs_svg2pdf_filter():
 
         node = Doc("butterfly.svg|svg2pdf", wrapper)
 
-        wrapper.run(node)
+        wrapper.run_docs(node)
 
         assert node.output_data().is_cached()
         assert node.output_data().filesize() > 1000
@@ -39,7 +39,7 @@ def test_casperjs_stdout_filter():
                 casperjs={"add-new-files" : True }
                 )
 
-        wrapper.run(node)
+        wrapper.run_docs(node)
 
         assert 'doc:google.pdf' in wrapper.nodes
 
@@ -51,7 +51,7 @@ def test_casperjs_stdout_filter():
                 urllib.urlopen("http://google.com")
                 raise e
             except IOError:
-                raise SkipTest
+                raise SkipTest("internet not available, skipping test")
             else:
                 raise e
 

@@ -34,7 +34,7 @@ def test_pyg4rst_bad_file_extension():
                 contents=" ",
                 pyg4rst = { 'allow_unknown_ext' : False }
                 )
-        wrapper.run(doc)
+        wrapper.run_docs(doc)
 
 @raises(dexy.exceptions.UserFeedback)
 def test_pygments_bad_file_extension():
@@ -46,4 +46,4 @@ def test_pygments_bad_file_extension():
                 contents=" ",
                 pyg = { 'allow_unknown_ext' : False }
                 )
-        wrapper.run(doc)
+        wrapper.run_docs(doc)

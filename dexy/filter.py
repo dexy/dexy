@@ -88,7 +88,6 @@ class Filter(dexy.plugin.Plugin):
                 self.is_canonical_output(),
                 self.doc.wrapper
                 )
-        self.output_data.setup_storage()
 
     def is_canonical_output(self):
         if self.input_data.canonical_output == True:
@@ -256,7 +255,7 @@ class Filter(dexy.plugin.Plugin):
         The `populate_workspace` method will populate this directory with
         inputs to this filter.
         """
-        ws = self.doc.wrapper.filter_ws()
+        ws = self.doc.wrapper.work_cache_dir()
         return os.path.join(ws, self.storage_key[0:2], self.storage_key)
 
     def parent_work_dir(self):

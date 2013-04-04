@@ -16,7 +16,7 @@ def test_create_doc_with_one_filter():
         assert not f.prev_filter
         assert not f.next_filter
 
-        wrapper.run(doc)
+        wrapper.run_docs(doc)
 
 def test_create_doc_with_two_filters():
     with wrap() as wrapper:
@@ -42,13 +42,13 @@ def test_blank_alias():
 def test_output_is_data():
     with wrap() as wrapper:
         doc = Doc("abc.txt", wrapper, [], contents="these are the contents")
-        wrapper.run(doc)
+        wrapper.run_docs(doc)
         assert isinstance(doc.output_data(), Data)
 
 def test_create_virtual_initial_artifact():
     with wrap() as wrapper:
         doc = Doc("abc.txt", wrapper, [], contents="these are the contents")
-        wrapper.run(doc)
+        wrapper.run_docs(doc)
         assert doc.output_data().__class__.__name__ == "Generic"
 
 def test_create_virtual_initial_artifact_with_dict():
@@ -56,5 +56,5 @@ def test_create_virtual_initial_artifact_with_dict():
         od_contents = OrderedDict()
         od_contents['1'] = "these are the contents"
         doc = Doc("abc.txt", contents = od_contents, wrapper=wrapper)
-        wrapper.run(doc)
+        wrapper.run_docs(doc)
         assert doc.output_data().__class__.__name__ == "Sectioned"

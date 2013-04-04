@@ -31,7 +31,7 @@ class wrap(tempdir):
         wrapper = dexy.wrapper.Wrapper()
         wrapper.create_dexy_dirs()
         wrapper = dexy.wrapper.Wrapper(log_level = 'DEBUG')
-        wrapper.setup_batch()
+        wrapper.to_valid()
         return wrapper
 
     def __exit__(self, type, value, traceback):
@@ -64,7 +64,7 @@ class runfilter(wrap):
                     [],
                     contents = self.doc_contents
                     )
-            wrapper.run(doc)
+            wrapper.run_docs(doc)
         except dexy.exceptions.InactiveFilter:
             raise SkipTest
 

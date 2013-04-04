@@ -12,7 +12,7 @@ def test_filter_args():
                 filterargs={"abc" : 123, "foo" : "baz" }
                 )
 
-        wrapper.run(doc)
+        wrapper.run_docs(doc)
 
         result = str(doc.output_data())
         print str(doc.output_data())

@@ -3,16 +3,16 @@ from dexy.utils import os_to_posix
 import dexy.doc
 import dexy.plugin
 import fnmatch
-import re
 import json
+import re
 
 class Node(dexy.plugin.Plugin):
     """
     base class for Nodes
     """
-    aliases = ['node']
     __metaclass__ = dexy.plugin.PluginMeta
     _settings = {}
+    aliases = ['node']
     state_transitions = (
             ('new', 'cached'),
             ('new', 'checked'),
@@ -42,17 +42,17 @@ class Node(dexy.plugin.Plugin):
         self.hashid = md5_hash(self.key)
 
         self.state = 'new'
-        self.args_changed = self.check_args_changed()
-        self.doc_changed = None
 
         # Class-specific setup.
         self.setup()
 
-        assert_msg = "custom setup method for %s must set doc_changed"
-        assert self.doc_changed is not None, assert_msg % self.key_with_class()
-
     def setup(self):
-        self.doc_changed = self.check_doc_changed()
+        pass
+
+    def verify_cached(self):
+        if self.state == 'cached':
+            for node in self.inputs:
+                node.verify_cached()
    
     def check_doc_changed(self):
         return False
@@ -61,11 +61,7 @@ class Node(dexy.plugin.Plugin):
         return "%s(%s)" % ( self.__class__.__name__, self.key)
 
     def transition(self, new_state):
-        attempted_transition = (self.state, new_state) 
-        if not attempted_transition in self.__class__.state_transitions:
-            msg = "%s -> %s"
-            raise dexy.exceptions.UnexpectedState(msg % attempted_transition)
-        self.state = new_state
+        dexy.utils.transition(self, new_state)
 
     def add_runtime_args(self, args):
         self.args.update(args)
@@ -163,7 +159,7 @@ class Node(dexy.plugin.Plugin):
             new_doc.contents = None
             new_doc.args_changed = False
             assert new_doc.hashid == hashid
-            new_doc.calculate_is_cached()
+            new_doc.check_is_cached()
             new_doc.initial_data.load_data()
             new_doc.output_data().load_data()
             self.add_additional_doc(new_doc)
@@ -176,37 +172,41 @@ class Node(dexy.plugin.Plugin):
         self.wrapper.batch.add_doc(doc)
         self.additional_docs.append(doc)
 
-    def calculate_is_cached(self):
+    def check_cache_elements_present(self):
+        """
+        Verify that all expected cache files are in fact present.
+        """
+        return True
+
+    def check_is_cached(self):
         if self.state == 'new':
             self.log_debug("checking if %s is changed" % self.key)
 
             any_inputs_not_cached = False
             input_nodes = self.inputs + self.children
-
             if hasattr(self, 'parent'):
                 input_nodes.extend(self.parent.inputs)
-
             for node in input_nodes:
-                node.calculate_is_cached()
+                node.check_is_cached()
                 if not node.state == 'cached':
                     self.log_debug("input node %s is not cached" % node.key_with_class())
                     any_inputs_not_cached = True
+            self.wrapper.add_node(self)
+
+            self.args_changed = self.check_args_changed()
+            self.doc_changed = self.check_doc_changed()
+
                 
             self.log_debug("  doc changed %s" % self.doc_changed)
             self.log_debug("  args changed %s" % self.args_changed)
             self.log_debug("  any inputs not cached %s" % any_inputs_not_cached)
+
             is_cached = not self.doc_changed and not self.args_changed and not any_inputs_not_cached
 
-            if is_cached:
+            cache_elements_present = self.check_cache_elements_present()
+
+            if is_cached and cache_elements_present:
                 self.transition('cached')
-
-                # Do once-off stuff for cached tasks.
-                self.wrapper.batch.add_doc(self)
-
-                runtime_info = self.wrapper.prev_batch_runtime_info.get(self.key_with_class())
-                if runtime_info:
-                    self.add_runtime_args(runtime_info['runtime-args'])
-                    self.load_additional_docs(runtime_info['additional-docs'])
             else:
                 self.transition('checked')
 
@@ -269,12 +269,12 @@ class ScriptNode(BundleNode):
             doc.inputs = doc.inputs + siblings
             siblings.append(doc)
 
-        self.doc_changed = self.check_doc_changed()
-
-        for doc in self.inputs:
-            if not self.doc_changed:
-                assert not doc.doc_changed
-            doc.doc_changed = self.doc_changed
+#        self.doc_changed = self.check_doc_changed()
+#
+#        for doc in self.inputs:
+#            if not self.doc_changed:
+#                assert not doc.doc_changed
+#            doc.doc_changed = self.doc_changed
 
 class PatternNode(Node):
     """
@@ -311,5 +311,3 @@ class PatternNode(Node):
                     self.children.append(doc)
                     self.wrapper.add_node(doc)
                     self.wrapper.batch.add_doc(doc)
-
-        self.doc_changed = self.check_doc_changed()

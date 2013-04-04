@@ -8,14 +8,14 @@ RUST = """fn main() {
 }"""
 
 def test_rust_interactive():
-    raise SkipTest()
+    raise SkipTest("Need to get rust interactive filter working.")
     with wrap() as wrapper:
         doc = Doc("example.rs|rusti",
                 wrapper,
                 [],
                 contents = "1+1"
                 )
-        wrapper.run(doc)
+        wrapper.run_docs(doc)
         assert "rusti> 1+1\n2" in str(doc.output_data())
 
 def test_rust():
@@ -25,7 +25,7 @@ def test_rust():
                 [],
                 contents = RUST
                 )
-        wrapper.run(doc)
+        wrapper.run_docs(doc)
         assert str(doc.output_data()) == "hello?\n"
 
 PYTHON_CONTENT = """
@@ -41,7 +41,7 @@ def test_python_filter_record_vars():
                 contents = PYTHON_CONTENT
                 )
 
-        wrapper.run(doc)
+        wrapper.run_docs(doc)
         assert "doc:example.py-vars.json" in wrapper.nodes
 
 def test_matlab_filter():
@@ -84,7 +84,7 @@ ls
                 wrapper,
                 [],
                 contents = src)
-        wrapper.run(doc)
+        wrapper.run_docs(doc)
 
         assert doc.output_data().keys() == ['1', 'touch', 'ls']
 
@@ -104,7 +104,7 @@ x*y
                 [],
                 contents=src)
 
-        wrapper.run(node)
+        wrapper.run_docs(node)
 
         assert node.output_data().keys() == ['1', 'vars', 'multiply']
         assert node.output_data().as_sectioned()['vars'] == """

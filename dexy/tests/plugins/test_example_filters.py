@@ -38,7 +38,7 @@ def test_key_value_example():
                 contents="hello"
                 )
 
-        wrapper.run(doc)
+        wrapper.run_docs(doc)
 
         assert str(doc.output_data()) == "foo: bar"
 
@@ -50,7 +50,7 @@ def test_access_other_documents():
                 [node],
                 contents="hello"
                 )
-        wrapper.run(parent)
+        wrapper.run_docs(parent)
 
         expected_items = [
             "Here is a list of previous docs in this tree (not including test.txt|others).",

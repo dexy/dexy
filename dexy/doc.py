@@ -1,11 +1,12 @@
-import time
 from dexy.common import OrderedDict
 import dexy.exceptions
 import dexy.filter
 import dexy.node
 import os
 import posixpath
+import shutil
 import stat
+import time
 
 class Doc(dexy.node.Node):
     """
@@ -28,6 +29,7 @@ class Doc(dexy.node.Node):
         self.filter_aliases = self.key.split("|")[1:]
         self.filters = []
         self.setup_initial_data()
+        self.in_last_cache = False
 
         for alias in self.filter_aliases:
             f = dexy.filter.Filter.create_instance(alias, self)
@@ -49,7 +51,15 @@ class Doc(dexy.node.Node):
                     next_filter, filter_settings_from_args)
             prev_filter = f
 
+    def setup_datas(self):
+        """
+        Convenience function to ensure all datas are set up. Should not need to be called normally.
+        """
+        for d in self.datas():
+            d.setup()
+
     def setup_initial_data(self):
+        calculated_canonical_name = self.calculate_canonical_name()
         self.canonical_name = self.calculate_canonical_name() or self.name
         storage_key = "%s-000" % self.hashid
 
@@ -70,20 +80,6 @@ class Doc(dexy.node.Node):
                 self.wrapper
                 )
 
-        self.initial_data.setup_storage()
-        self.doc_changed = self.check_doc_changed()
-
-        if self.name in self.wrapper.filemap:
-            # This is a real file on the file system.
-            if self.doc_changed or not self.initial_data.is_cached():
-                self.initial_data.copy_from_file(self.name)
-        else:
-            is_dummy = self.initial_data.is_cached() and self.get_contents() == 'dummy contents'
-            if is_dummy:
-                self.initial_data.load_data()
-            else:
-                self.initial_data.set_data(self.get_contents())
-
     def calculate_canonical_name(self):
         raw_arg_name = self.setting('canonical-name')
     
@@ -95,13 +91,68 @@ class Doc(dexy.node.Node):
             else:
                 return posixpath.join(posixpath.dirname(self.key), raw_arg_name)
 
+    def verify_cached(self):
+        if self.state == 'cached':
+            for node in self.inputs:
+                node.verify_cached()
+            self.wrapper.add_node(self)
+
+            # move cache files to new cache
+            if self.in_last_cache:
+                for d in self.datas():
+                    shutil.move(d.storage.last_data_file(), d.storage.data_file())
+
+            # Do once-off stuff for cached tasks.
+            self.wrapper.batch.add_doc(self)
+
+            runtime_info = self.load_runtime_info()
+            if runtime_info:
+                self.add_runtime_args(runtime_info['runtime-args'])
+                self.load_additional_docs(runtime_info['additional-docs'])
+
+    def datas(self):
+        """
+        Returns all associated `data` objects.
+        """
+        return [self.initial_data] + [f.output_data for f in self.filters]
+
+    def check_cache_elements_present(self):
+        """
+        Returns a boolean to indicate whether all files are present in cache.
+        """
+        for d in self.datas():
+            if d.state == 'new':
+                d.setup()
+
+        for d in self.datas():
+            if self.in_last_cache:
+                # look for all files in last cache
+                return all(d.storage.last_data_file() in self.wrapper.cache_files['last'] for d in self.datas())
+            else:
+                # look for all files in this cache
+                return all(d.storage.data_file() in self.wrapper.cache_files['this'] for d in self.datas())
+
     def check_doc_changed(self):
         if self.name in self.wrapper.filemap:
             live_stat = self.wrapper.filemap[self.name]['stat']
-            cache_stat = self.initial_data.storage.stat()
-            if cache_stat:
-                # we have a file in the cache, compare its mtime to filemap
-                # to determine whether it has changed
+
+            self.initial_data.setup()
+            this_cache = self.wrapper.cache_files['this'].get(self.initial_data.storage.data_file())
+            last_cache = self.wrapper.cache_files['last'].get(self.initial_data.storage.data_file())
+
+            if this_cache or last_cache:
+                # we have a file in the cache from a previous run, compare its
+                # mtime to filemap to determine whether it has changed
+
+                # store whether cache file is in last cache (if so we will need
+                # to move it later)
+                if last_cache:
+                    self.in_last_cache = True
+                    cache_stat = last_cache
+                    assert not this_cache, "should not be in both caches"
+                else:
+                    cache_stat = this_cache
+
                 cache_mtime = cache_stat[stat.ST_MTIME]
                 live_mtime = live_stat[stat.ST_MTIME]
                 msg = "cache mtime %s live mtime %s now %s changed (live gt cache) %s"
@@ -133,17 +184,61 @@ class Doc(dexy.node.Node):
         contents = self.args.get('contents')
         return contents
 
+    # Runtime Info
+    def runtime_info_filename(self):
+        name = "%s.runtimeargs.pickle" % self.hashid
+        return os.path.join(self.initial_data.storage.storage_dir(), name)
+
+    def save_runtime_info(self):
+        """
+        Save runtime changes to metadata so they can be reapplied when node has
+        been cached.
+        """
+
+        info = {
+            'runtime-args' : self.runtime_args,
+            'additional-docs' : self.additional_doc_info()
+            }
+
+        with open(self.runtime_info_filename(), 'wb') as f:
+            pickle = self.wrapper.pickle_lib()
+            pickle.dump(info, f)
+
+    def load_runtime_info(self):
+        try:
+            with open(self.runtime_info_filename(), 'rb') as f:
+                pickle = self.wrapper.pickle_lib()
+                return pickle.load(f)
+        except IOError:
+            pass
+
     def run(self):
         self.start_time = time.time()
+
+        if self.name in self.wrapper.filemap:
+            # This is a real file on the file system.
+            if self.doc_changed or not self.initial_data.is_cached():
+                self.initial_data.copy_from_file(self.name)
+        else:
+            is_dummy = self.initial_data.is_cached() and self.get_contents() == 'dummy contents'
+            if is_dummy:
+                self.initial_data.load_data()
+            else:
+                self.initial_data.set_data(self.get_contents())
+
         for f in self.filters:
+            if f.output_data.state == 'new':
+                f.output_data.setup()
             f.process()
+
         self.finish_time = time.time()
         self.elapsed_time = self.finish_time - self.start_time
         self.wrapper.batch.add_doc(self)
+        self.save_runtime_info()
 
         # Run additional docs
         for doc in self.additional_docs:
-            doc.calculate_is_cached()
+            doc.check_is_cached()
             for task in doc:
                 task()
 

@@ -36,7 +36,7 @@ def run_dexy_in_profiler(wrapper, profile):
 
     import cProfile
     print "running dexy with cProfile, writing profile data to %s" % profile_filename
-    cProfile.runctx("wrapper.run()", None, locals(), profile_filename)
+    cProfile.runctx("wrapper.run_from_new()", None, locals(), profile_filename)
     import pstats
     stat = pstats.Stats(profile_filename)
     stat.sort_stats("cumulative")
@@ -128,7 +128,7 @@ def dexy_command(
             run_dexy_in_strace(wrapper, strace)
             run_reports = False
         else:
-            wrapper.run()
+            wrapper.run_from_new()
             print "dexy run finished in %0.3f" % wrapper.batch.elapsed()
 
     except dexy.exceptions.UserFeedback as e:
