@@ -1,3 +1,12 @@
+scalai:
+    class: PexpectReplFilter
+    prompts : ['scala> ', '     | ']
+    initial-prompt : "[^>]+scala>"
+    help: Runs scala code in the REPL.
+    executable: scala
+    input-extensions: [.scala, .txt]
+    output-extensions: [.txt]
+
 rusti:
     class: PexpectReplFilter
     prompt : 'rusti>'

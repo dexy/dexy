@@ -3,6 +3,34 @@ from dexy.tests.utils import assert_in_output
 from dexy.tests.utils import wrap
 from nose.exc import SkipTest
 
+SCALA = """object HelloWorld {
+    def main(args: Array[String]) {
+      println("Hello, world!")
+    }
+  }
+"""
+
+def test_scala_repl():
+    with wrap() as wrapper:
+        doc = Doc("HelloWorld.scala|scalai",
+                wrapper,
+                [],
+                contents = SCALA
+                )
+        wrapper.run_docs(doc)
+        assert "defined module HelloWorld" in str(doc.output_data())
+
+def test_scalac():
+    with wrap() as wrapper:
+        doc = Doc("HelloWorld.scala|scala",
+                wrapper,
+                [],
+                contents = SCALA
+                )
+        wrapper.run_docs(doc)
+        print str(doc.output_data())
+        assert "Hello, world!\n" == str(doc.output_data())
+
 RUST = """fn main() {
     io::println("hello?");
 }"""

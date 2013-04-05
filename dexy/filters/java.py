@@ -4,6 +4,25 @@ from dexy.filters.process import SubprocessStdoutFilter
 import os
 import platform
 
+class ScalaFilter(SubprocessCompileFilter):
+    """
+    Compiles and runs .scala files.
+    """
+    aliases = ['scala', 'scalac']
+    _settings = {
+            'executable' : 'scalac',
+            'compiler-command-string' : "%(prog)s %(compiler_args)s %(script_file)s",
+            'compiled-extension' : '',
+            'input-extensions' : ['.scala', '.txt'],
+            'output-extensions' : ['.txt']
+            }
+
+    def run_command_string(self):
+        args = self.default_command_string_args()
+        args['compiled_filename'] = self.compiled_filename()
+        print "args are"
+        return "scala %(compiled_filename)s %(args)s" % args
+
 class JythonFilter(SubprocessStdoutFilter):
     """
     jython
