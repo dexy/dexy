@@ -20,7 +20,6 @@ class ScalaFilter(SubprocessCompileFilter):
     def run_command_string(self):
         args = self.default_command_string_args()
         args['compiled_filename'] = self.compiled_filename()
-        print "args are"
         return "scala %(compiled_filename)s %(args)s" % args
 
 class JythonFilter(SubprocessStdoutFilter):
