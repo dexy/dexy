@@ -19,6 +19,7 @@ import dexy.filters.sub
 import dexy.filters.templating
 import dexy.filters.wordpress
 import dexy.filters.yamlargs
+import dexy.filters.org
 
 import dexy.filter
 import os
