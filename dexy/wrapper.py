@@ -188,7 +188,6 @@ class Wrapper(object):
 
         self.batch.start_time = time.time()
 
-
         if self.target:
             matches = self.roots_matching_target()
 

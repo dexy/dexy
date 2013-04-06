@@ -28,6 +28,7 @@ class Filter(dexy.plugin.Plugin):
             'examples' : ("Templates which should be used as examples for this filter.", []),
             'ext' : ('Extension to output.', None),
             'help' : ('Help string for filter, if not already specified as a class docstring.', None),
+            'include-in-workspaces' : ("Allow overriding whether a document should be used when populating workspaces for other documents.", False),
             'input-extensions' : ("List of extensions which this filter can accept as input.", [".*"]),
             'keep-originals' : ('', False),
             'nodoc' : ("Whether filter should be excluded from documentation.", False),
@@ -297,7 +298,7 @@ class Filter(dexy.plugin.Plugin):
         Whether to include the contents of the input file inpt in the workspace
         for this filter.
         """
-        if inpt.args.get('include-in-workspaces'):
+        if inpt.filters and inpt.filters[-1].setting('include-in-workspaces'):
             return True
 
         # TODO only exclude/include files in same parent directory

@@ -106,7 +106,14 @@ class Doc(dexy.node.Node):
             if os.path.exists(self.runtime_info_filename(False)):
                 shutil.move(self.runtime_info_filename(False), self.runtime_info_filename(True))
 
+            self.apply_runtime_info()
             self.transition('consolidated')
+
+    def apply_runtime_info(self):
+            runtime_info = self.load_runtime_info()
+            if runtime_info:
+                self.add_runtime_args(runtime_info['runtime-args'])
+                self.load_additional_docs(runtime_info['additional-docs'])
 
     def datas(self):
         """
@@ -115,7 +122,6 @@ class Doc(dexy.node.Node):
         return [self.initial_data] + [f.output_data for f in self.filters]
 
     def update_all_args(self, new_args):
-        self.args.update(new_args)
         for f in self.filters:
             f.input_data.args.update(new_args)
             f.output_data.args.update(new_args)
@@ -154,7 +160,7 @@ class Doc(dexy.node.Node):
 
                 cache_mtime = cache_stat[stat.ST_MTIME]
                 live_mtime = live_stat[stat.ST_MTIME]
-                msg = "cache mtime %s live mtime %s now %s changed (live gt cache) %s"
+                msg = "    cache mtime %s live mtime %s now %s changed (live gt cache) %s"
                 msgargs = (cache_mtime, live_mtime, time.time(), live_mtime > cache_mtime)
                 self.log_debug(msg % msgargs)
                 return live_mtime > cache_mtime

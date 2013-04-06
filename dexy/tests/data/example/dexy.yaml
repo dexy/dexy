@@ -1,0 +1,21 @@
+docs:
+    - .rst|jinja|rstbody|easyhtml:
+        - code
+    - .rst|jinja|rst|latex:
+        - code
+        - latex
+        - rst: { stylesheet: "pygments,fancyvrb" }
+
+code:
+    - "*|pyg|h"
+    - "*|pyg|l"
+    - "*|idio|h"
+    - "*|idio|l"
+    - .py|py
+    - .py|pycon:
+        - pycon: { add-new-files: True }
+
+latex:
+    - pygments.sty|pyg:
+        - contents: ' '
+        - pyg: { ext: .sty }

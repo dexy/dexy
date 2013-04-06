@@ -1,9 +1,10 @@
-from dexy.utils import defaults
 from dexy.commands.utils import init_wrapper
+from dexy.utils import defaults
 import dexy.exceptions
 import os
 import subprocess
 import sys
+import time
 
 def log_and_print_exception(wrapper, e):
     if hasattr(wrapper, 'log'):
@@ -128,15 +129,13 @@ def dexy_command(
             run_dexy_in_strace(wrapper, strace)
             run_reports = False
         else:
+            start = time.time()
             wrapper.run_from_new()
-            print "dexy run finished in %0.3f" % wrapper.batch.elapsed()
+            elapsed = time.time() - start
+            print "dexy run finished in %0.3f" % elapsed
 
     except dexy.exceptions.UserFeedback as e:
         handle_user_feedback_exception(wrapper, e)
-        if hasattr(wrapper, 'batch'):
-            import time
-            wrapper.batch.end_time = time.time()
-            wrapper.batch.state = 'failed'
     except KeyboardInterrupt:
         handle_keyboard_interrupt()
     except Exception as e:
@@ -144,7 +143,6 @@ def dexy_command(
         raise
 
     if run_reports and hasattr(wrapper, 'batch'):
-        import time
         start_time = time.time()
         wrapper.report()
         print "dexy reports finished in %0.3f" % (time.time() - start_time)

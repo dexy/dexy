@@ -210,10 +210,7 @@ class PygmentsFilter(DexyFilter):
                 raise dexy.commands.UserFeedback(msg % msgargs)
 
             self.output_data.set_data(output)
-
-            # todo add_runtime_args should add to data objects
-            self.doc.add_runtime_args({'include-in-workspaces' : True })
-            self.output_data.args['include-in-workspaces'] = True
+            self.add_runtime_args({'include-in-workspaces' : True })
 
         else:
             lexer = self.create_lexer_instance()

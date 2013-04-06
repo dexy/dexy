@@ -35,7 +35,7 @@ class LatexFilter(SubprocessFilter):
             bibtex_command = None
 
         def run_cmd(command):
-            self.log_info("running %s in %s" % (command, os.path.abspath(wd)))
+            self.log_debug("running %s in %s" % (command, os.path.abspath(wd)))
             proc = subprocess.Popen(command, shell=True,
                                     cwd=wd,
                                     stdout=subprocess.PIPE,
@@ -95,7 +95,7 @@ class TikzPgfFilter(LatexFilter):
         latex_command = "%s -interaction=batchmode %s" % (self.setting('executable'), latex_filename)
 
         def run_cmd(command):
-            self.log_info("about to run %s in %s" % (command, os.path.abspath(wd)))
+            self.log_debug("about to run %s in %s" % (command, os.path.abspath(wd)))
             proc = subprocess.Popen(command, shell=True,
                                     cwd=wd,
                                     stdout=subprocess.PIPE,

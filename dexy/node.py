@@ -60,7 +60,7 @@ class Node(dexy.plugin.Plugin):
         dexy.utils.transition(self, new_state)
 
     def update_all_args(self, new_args):
-        self.args.update(new_args)
+        pass
 
     def add_runtime_args(self, args):
         self.update_all_args(args)
@@ -116,9 +116,9 @@ class Node(dexy.plugin.Plugin):
             self.log_debug("no saved args, will return True for args_changed")
             return True
         else:
-            self.log_debug("saved args '%s' (%s)" % (saved_args, saved_args.__class__))
-            self.log_debug("sorted args '%s' (%s)" % (self.sorted_arg_string(), self.sorted_arg_string().__class__))
-            self.log_debug("unequal: %s" % (saved_args != self.sorted_arg_string()))
+            self.log_debug("    saved args '%s' (%s)" % (saved_args, saved_args.__class__))
+            self.log_debug("    sorted args '%s' (%s)" % (self.sorted_arg_string(), self.sorted_arg_string().__class__))
+            self.log_debug("  args unequal: %s" % (saved_args != self.sorted_arg_string()))
             return saved_args != self.sorted_arg_string()
 
     def sorted_args(self, skip=['contents']):
@@ -205,7 +205,8 @@ class Node(dexy.plugin.Plugin):
             self.log_debug("  doc changed %s" % self.doc_changed)
             self.log_debug("  args changed %s" % self.args_changed)
             self.log_debug("  any inputs not cached %s" % any_inputs_not_cached)
-            self.log_debug("  cache elements present %s" % cache_elements_present)
+            # log the 'not' so we can search for 'True' in logs to find uncached items
+            self.log_debug("  cache elements missing %s" % (not cache_elements_present))
 
             is_cached = not self.doc_changed and not self.args_changed and not any_inputs_not_cached
 
@@ -217,13 +218,6 @@ class Node(dexy.plugin.Plugin):
             # do housekeeping stuff we need to do for every node
             self.wrapper.add_node(self)
             self.wrapper.batch.add_doc(self)
-
-            # do housekeeping stuff just for cached nodes
-            if self.state == 'cached':
-                runtime_info = self.load_runtime_info()
-                if runtime_info:
-                    self.add_runtime_args(runtime_info['runtime-args'])
-                    self.load_additional_docs(runtime_info['additional-docs'])
 
     def load_runtime_info(self):
         pass
