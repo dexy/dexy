@@ -91,8 +91,9 @@ class GenericStorage(Storage):
 
         self.assert_location_is_in_project_dir(filepath)
 
-        if self.data_file_exists() and not filepath == self.data_file():
-            shutil.copyfile(self.data_file(), filepath)
+        this = (self.wrapper.state in ('walked', 'running',))
+        if self.data_file_exists() and not filepath == self.data_file(this):
+            shutil.copyfile(self.data_file(this), filepath)
         else:
             with open(filepath, "wb") as f:
                 f.write(data)
@@ -107,7 +108,8 @@ class GenericStorage(Storage):
         """
         try:
             self.assert_location_is_in_project_dir(filepath)
-            shutil.copyfile(self.data_file(), filepath)
+            this = (self.wrapper.state in ('walked', 'running',))
+            shutil.copyfile(self.data_file(this), filepath)
             return True
         except:
             return False
