@@ -233,13 +233,17 @@ class Node(dexy.plugin.Plugin):
         def next_task():
             if self.state == 'uncached':
                 self.transition('running')
+                self.log_info("about to run '%s'" % self.key_with_class())
                 yield self
                 self.transition('ran')
 
             elif self.state == 'running':
                 raise dexy.exceptions.CircularDependency(self.key)
 
-            elif self.state in ('ran', 'consolidated'):
+            elif self.state in ('consolidated',):
+                self.log_info("using cache for '%s'" % self.key_with_class())
+
+            elif self.state in ('ran',):
                 pass # do nothing
 
             else:

@@ -79,28 +79,24 @@ def test_generic_data():
         # Assign some text contents
         data._data = CONTENTS
         assert data.has_data()
-        assert not data.is_cached()
-        assert not data.filesize()
+        assert not data.is_cached(True)
+        assert not data.filesize(True)
 
         # Save data to disk
         data.save()
         assert data.has_data()
-        assert data.is_cached()
-        assert data.filesize() > 10
+        assert data.is_cached(True)
+        assert data.filesize(True) > 10
 
         # Clear data from memory
         data._data = None
         assert data.has_data()
 
         # Load it again from disk
-        data.load_data()
+        data.load_data(True)
         assert data._data == CONTENTS
 
-        # The convenience methods load from disk if needed.
-        data._data = None
         assert data.as_text() == CONTENTS
-
-        data._data = None
         assert data.as_sectioned()['1'] == CONTENTS
 
 def test_init_data():

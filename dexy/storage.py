@@ -35,11 +35,11 @@ class GenericStorage(Storage):
     """
     aliases = ['generic']
 
-    def data_file(self):
+    def data_file(self, this=True):
         """
         Location of data file in this/ cache dir.
         """
-        return os.path.join(self.storage_dir(), "%s%s" % (self.storage_key, self.ext))
+        return os.path.join(self.storage_dir(this), "%s%s" % (self.storage_key, self.ext))
 
     def last_data_file(self):
         """
@@ -53,8 +53,8 @@ class GenericStorage(Storage):
         """
         return os.path.join(self.storage_dir(True), "%s%s" % (self.storage_key, self.ext))
 
-    def data_file_exists(self):
-        size = self.data_file_size()
+    def data_file_exists(self, this=True):
+        size = self.data_file_size(this)
         return (not size is None)
 
     def stat(self):
@@ -63,10 +63,10 @@ class GenericStorage(Storage):
         except OSError:
             pass
 
-    def data_file_size(self):
+    def data_file_size(self, this=True):
         if not self._size:
             try:
-                self._size = os.path.getsize(self.data_file())
+                self._size = os.path.getsize(self.data_file(this))
             except os.error:
                 pass
         return self._size
@@ -97,8 +97,8 @@ class GenericStorage(Storage):
             with open(filepath, "wb") as f:
                 f.write(data)
 
-    def read_data(self):
-        with open(self.data_file(), "rb") as f:
+    def read_data(self, this=True):
+        with open(self.data_file(this), "rb") as f:
             return f.read()
 
     def copy_file(self, filepath):
@@ -153,8 +153,8 @@ class JsonOrderedStorage(GenericStorage):
     def __getitem__(self, key):
         return self.value(key)
 
-    def read_data(self):
-        with open(self.data_file(), "rb") as f:
+    def read_data(self, this=True):
+        with open(self.data_file(this), "rb") as f:
             numbered_dict = json.load(f)
             return self.convert_numbered_dict_to_ordered_dict(numbered_dict)
 
@@ -194,8 +194,8 @@ class JsonStorage(GenericStorage):
         for k, v in self.data().iteritems():
             yield k, v
 
-    def read_data(self):
-        with open(self.data_file(), "rb") as f:
+    def read_data(self, this=True):
+        with open(self.data_file(this), "rb") as f:
             return json.load(f)
 
     def data(self):
@@ -235,6 +235,9 @@ class Sqlite3Storage(GenericStorage):
         self._append_counter = 0
         if file_exists(self.data_file()):
             self._storage = sqlite3.connect(self.data_file())
+            self._cursor = self._storage.cursor()
+        elif self.wrapper.state not in ('walked', 'running') and file_exists(self.last_data_file()):
+            self._storage = sqlite3.connect(self.last_data_file())
             self._cursor = self._storage.cursor()
         else:
             assert not os.path.exists(self.working_file())

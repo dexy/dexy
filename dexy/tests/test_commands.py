@@ -2,6 +2,7 @@ from StringIO import StringIO
 from dexy.tests.utils import tempdir
 from dexy.tests.utils import wrap
 from dexy.version import DEXY_VERSION
+from dexy.wrapper import Wrapper
 from mock import patch
 from nose.exc import SkipTest
 import dexy.commands
@@ -94,8 +95,8 @@ def test_run_version(stdout):
 @patch('sys.stdout', new_callable=StringIO)
 def test_run_dexy(stdout):
     with tempdir():
-        os.makedirs('logs')
-        os.makedirs('.cache')
+        wrapper = Wrapper()
+        wrapper.create_dexy_dirs()
         dexy.commands.run()
 
 @patch.object(sys, 'argv', ['dexy', 'viewer:ping'])

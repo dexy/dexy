@@ -168,10 +168,21 @@ class Generic(Data):
         self._data = data
         self.save()
 
-    def load_data(self):
+    def load_data(self, this=None):
         try:
-            self._data = self.storage.read_data()
+            if not this:
+                if self.wrapper.state == 'walked':
+                    if os.path.exists(self.storage.data_file(True)):
+                        this = True
+                    elif os.path.exists(self.storage.data_file(False)):
+                        this = False
+                elif self.wrapper.state == 'running':
+                    this = True
+                else:
+                    this = False
+            self._data = self.storage.read_data(this)
         except IOError:
+            print "error occurred in wrapper state %s" % self.wrapper.state
             msg = "no data in file '%s' for %s"
             msgargs = (self.storage.data_file(), self.key)
             raise dexy.exceptions.InternalDexyProblem(msg % msgargs)
@@ -179,11 +190,15 @@ class Generic(Data):
     def has_data(self):
         return self._data or self.is_cached()
 
-    def is_cached(self):
-        return self.storage.data_file_exists()
+    def is_cached(self, this=None):
+        if not this:
+            this = (self.wrapper.state in ('walked', 'running'))
+        return self.storage.data_file_exists(this)
 
-    def filesize(self):
-        return self.storage.data_file_size()
+    def filesize(self, this=None):
+        if not this:
+            this = (self.wrapper.state in ('walked', 'running'))
+        return self.storage.data_file_size(this)
 
     def data(self):
         if not self._data:
@@ -206,7 +221,8 @@ class Generic(Data):
         if self._data and isinstance(self._data, basestring):
             return dexy.utils.parse_json(self._data)
         else:
-            with open(self.storage.data_file(), "r") as f:
+            this = (self.wrapper.state in ('walked', 'running'))
+            with open(self.storage.data_file(this), "r") as f:
                 return dexy.utils.parse_json_from_file(f)
 
     def is_canonical_output(self):
