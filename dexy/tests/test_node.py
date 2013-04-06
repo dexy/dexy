@@ -81,7 +81,7 @@ def test_script_node_caching__slow():
         wrapper2.run_from_new()
 
         for node in wrapper2.nodes.values():
-            assert node.state == 'cached'
+            assert node.state == 'consolidated'
 
         time.sleep(1.1)
         with open("middle.sh", "w") as f:
@@ -126,8 +126,8 @@ def test_node_caching__slow():
                 )
         wrapper.run_docs(doc_txt)
 
-        assert hello_py.state == 'cached'
-        assert doc_txt.state == 'cached'
+        assert hello_py.state == 'consolidated'
+        assert doc_txt.state == 'consolidated'
 
         time.sleep(1.1)
         with open("doc.txt", "w") as f:
@@ -141,7 +141,7 @@ def test_node_caching__slow():
                 )
         wrapper.run_docs(doc_txt)
 
-        assert hello_py.state == 'cached'
+        assert hello_py.state == 'consolidated'
         assert doc_txt.state == 'ran'
 
         time.sleep(1.1)

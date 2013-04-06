@@ -15,8 +15,9 @@ class Node(dexy.plugin.Plugin):
     aliases = ['node']
     state_transitions = (
             ('new', 'cached'),
-            ('new', 'checked'),
-            ('checked', 'running'),
+            ('cached', 'consolidated'),
+            ('new', 'uncached'),
+            ('uncached', 'running'),
             ('running', 'ran'),
             )
 
@@ -48,11 +49,6 @@ class Node(dexy.plugin.Plugin):
 
     def setup(self):
         pass
-
-    def verify_cached(self):
-        if self.state == 'cached':
-            for node in self.inputs:
-                node.verify_cached()
    
     def check_doc_changed(self):
         return False
@@ -63,8 +59,11 @@ class Node(dexy.plugin.Plugin):
     def transition(self, new_state):
         dexy.utils.transition(self, new_state)
 
+    def update_all_args(self, new_args):
+        self.args.update(new_args)
+
     def add_runtime_args(self, args):
-        self.args.update(args)
+        self.update_all_args(args)
         self.runtime_args.update(args)
 
     def arg_value(self, key, default=None):
@@ -96,13 +95,13 @@ class Node(dexy.plugin.Plugin):
                 yield node
 
     def log_debug(self, message):
-        self.wrapper.log.debug("%s %s: %s" % (self.hashid, self.key_with_class(), message))
+        self.wrapper.log.debug("%s %s %s: %s" % (self.wrapper.state, self.hashid, self.key_with_class(), message))
 
     def log_info(self, message):
-        self.wrapper.log.info("%s %s: %s" % (self.hashid, self.key_with_class(), message))
+        self.wrapper.log.info("%s %s %s: %s" % (self.wrapper.state, self.hashid, self.key_with_class(), message))
 
     def log_warn(self, message):
-        self.wrapper.log.warn("%s %s: %s" % (self.hashid, self.key_with_class(), message))
+        self.wrapper.log.warn("%s %s %s: %s" % (self.wrapper.state, self.hashid, self.key_with_class(), message))
 
     def key_with_class(self):
         return "%s:%s" % (self.__class__.aliases[0], self.key)
@@ -158,8 +157,12 @@ class Node(dexy.plugin.Plugin):
                     )
             new_doc.contents = None
             new_doc.args_changed = False
+            new_doc.state = 'cached'
             assert new_doc.hashid == hashid
+
             new_doc.check_is_cached()
+            new_doc.consolidate_cache_files()
+
             new_doc.initial_data.load_data()
             new_doc.output_data().load_data()
             self.add_additional_doc(new_doc)
@@ -178,41 +181,63 @@ class Node(dexy.plugin.Plugin):
         """
         return True
 
+    def input_nodes(self, with_parent_inputs = False):
+        input_nodes = self.inputs + self.children
+        if with_parent_inputs and hasattr(self, 'parent'):
+            input_nodes.extend(self.parent.inputs)
+        return input_nodes
+
     def check_is_cached(self):
         if self.state == 'new':
             self.log_debug("checking if %s is changed" % self.key)
 
             any_inputs_not_cached = False
-            input_nodes = self.inputs + self.children
-            if hasattr(self, 'parent'):
-                input_nodes.extend(self.parent.inputs)
-            for node in input_nodes:
+            for node in self.input_nodes(True):
                 node.check_is_cached()
                 if not node.state == 'cached':
-                    self.log_debug("input node %s is not cached" % node.key_with_class())
+                    self.log_debug("    input node %s is not cached" % node.key_with_class())
                     any_inputs_not_cached = True
-            self.wrapper.add_node(self)
 
             self.args_changed = self.check_args_changed()
             self.doc_changed = self.check_doc_changed()
-
+            cache_elements_present = self.check_cache_elements_present()
                 
             self.log_debug("  doc changed %s" % self.doc_changed)
             self.log_debug("  args changed %s" % self.args_changed)
             self.log_debug("  any inputs not cached %s" % any_inputs_not_cached)
+            self.log_debug("  cache elements present %s" % cache_elements_present)
 
             is_cached = not self.doc_changed and not self.args_changed and not any_inputs_not_cached
-
-            cache_elements_present = self.check_cache_elements_present()
 
             if is_cached and cache_elements_present:
                 self.transition('cached')
             else:
-                self.transition('checked')
+                self.transition('uncached')
+
+            # do housekeeping stuff we need to do for every node
+            self.wrapper.add_node(self)
+            self.wrapper.batch.add_doc(self)
+
+            # do housekeeping stuff just for cached nodes
+            if self.state == 'cached':
+                runtime_info = self.load_runtime_info()
+                if runtime_info:
+                    self.add_runtime_args(runtime_info['runtime-args'])
+                    self.load_additional_docs(runtime_info['additional-docs'])
+
+    def load_runtime_info(self):
+        pass
+
+    def consolidate_cache_files(self):
+        for node in self.input_nodes():
+            node.consolidate_cache_files()
+
+        if self.state == 'cached':
+            self.transition('consolidated')
 
     def __iter__(self):
         def next_task():
-            if self.state in ('checked'):
+            if self.state == 'uncached':
                 self.transition('running')
                 yield self
                 self.transition('ran')
@@ -220,7 +245,7 @@ class Node(dexy.plugin.Plugin):
             elif self.state == 'running':
                 raise dexy.exceptions.CircularDependency(self.key)
 
-            elif self.state in ('ran', 'cached'):
+            elif self.state in ('ran', 'consolidated'):
                 pass # do nothing
 
             else:

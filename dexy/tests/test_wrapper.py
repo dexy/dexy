@@ -78,7 +78,7 @@ def test_ran():
         wrapper = Wrapper()
         wrapper.run_from_new()
         for node in wrapper.roots:
-            assert node.state == 'cached'
+            assert node.state == 'consolidated'
         wrapper.validate_state('ran')
 
 def test_explicit_configs():
@@ -293,9 +293,9 @@ def test_run_target_foo():
         assert wrapper.nodes['bundle:foo'].state == 'ran'
         assert wrapper.nodes['bundle:bar'].state == 'ran'
         assert wrapper.nodes['bundle:baz'].state == 'ran'
-        assert wrapper.nodes['bundle:foob'].state == 'checked'
-        assert wrapper.nodes['bundle:foobar'].state == 'checked'
-        assert wrapper.nodes['bundle:xyz'].state == 'checked'
+        assert wrapper.nodes['bundle:foob'].state == 'uncached'
+        assert wrapper.nodes['bundle:foobar'].state == 'uncached'
+        assert wrapper.nodes['bundle:xyz'].state == 'uncached'
 
 def test_run_target_fo():
     for wrapper in run_yaml_with_target("fo"):

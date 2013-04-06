@@ -29,7 +29,6 @@ class Doc(dexy.node.Node):
         self.filter_aliases = self.key.split("|")[1:]
         self.filters = []
         self.setup_initial_data()
-        self.in_last_cache = False
 
         for alias in self.filter_aliases:
             f = dexy.filter.Filter.create_instance(alias, self)
@@ -56,10 +55,10 @@ class Doc(dexy.node.Node):
         Convenience function to ensure all datas are set up. Should not need to be called normally.
         """
         for d in self.datas():
-            d.setup()
+            if d.state == 'new':
+                d.setup()
 
     def setup_initial_data(self):
-        calculated_canonical_name = self.calculate_canonical_name()
         self.canonical_name = self.calculate_canonical_name() or self.name
         storage_key = "%s-000" % self.hashid
 
@@ -91,24 +90,23 @@ class Doc(dexy.node.Node):
             else:
                 return posixpath.join(posixpath.dirname(self.key), raw_arg_name)
 
-    def verify_cached(self):
+    def consolidate_cache_files(self):
+        for node in self.input_nodes():
+            node.consolidate_cache_files()
+
         if self.state == 'cached':
-            for node in self.inputs:
-                node.verify_cached()
-            self.wrapper.add_node(self)
+            self.setup_datas()
 
             # move cache files to new cache
-            if self.in_last_cache:
-                for d in self.datas():
+            for d in self.datas():
+                if os.path.exists(d.storage.last_data_file()):
                     shutil.move(d.storage.last_data_file(), d.storage.data_file())
+                    self.log_debug("Moving %s from %s to %s" % (d.key, d.storage.last_data_file(), d.storage.data_file()))
 
-            # Do once-off stuff for cached tasks.
-            self.wrapper.batch.add_doc(self)
+            if os.path.exists(self.runtime_info_filename(False)):
+                shutil.move(self.runtime_info_filename(False), self.runtime_info_filename(True))
 
-            runtime_info = self.load_runtime_info()
-            if runtime_info:
-                self.add_runtime_args(runtime_info['runtime-args'])
-                self.load_additional_docs(runtime_info['additional-docs'])
+            self.transition('consolidated')
 
     def datas(self):
         """
@@ -116,42 +114,43 @@ class Doc(dexy.node.Node):
         """
         return [self.initial_data] + [f.output_data for f in self.filters]
 
+    def update_all_args(self, new_args):
+        self.args.update(new_args)
+        for f in self.filters:
+            f.input_data.args.update(new_args)
+            f.output_data.args.update(new_args)
+            f.update_settings(new_args)
+
     def check_cache_elements_present(self):
         """
         Returns a boolean to indicate whether all files are present in cache.
         """
+        # Take this opportunity to ensure Data objects are in `setup` state.
         for d in self.datas():
             if d.state == 'new':
                 d.setup()
 
-        for d in self.datas():
-            if self.in_last_cache:
-                # look for all files in last cache
-                return all(d.storage.last_data_file() in self.wrapper.cache_files['last'] for d in self.datas())
-            else:
-                # look for all files in this cache
-                return all(d.storage.data_file() in self.wrapper.cache_files['this'] for d in self.datas())
+        return all(
+                os.path.exists(d.storage.last_data_file()) or
+                os.path.exists(d.storage.this_data_file())
+                for d in self.datas())
 
     def check_doc_changed(self):
         if self.name in self.wrapper.filemap:
             live_stat = self.wrapper.filemap[self.name]['stat']
 
             self.initial_data.setup()
-            this_cache = self.wrapper.cache_files['this'].get(self.initial_data.storage.data_file())
-            last_cache = self.wrapper.cache_files['last'].get(self.initial_data.storage.data_file())
 
-            if this_cache or last_cache:
+            in_this_cache = os.path.exists(self.initial_data.storage.this_data_file())
+            in_last_cache = os.path.exists(self.initial_data.storage.last_data_file())
+
+            if in_this_cache or in_last_cache:
                 # we have a file in the cache from a previous run, compare its
                 # mtime to filemap to determine whether it has changed
-
-                # store whether cache file is in last cache (if so we will need
-                # to move it later)
-                if last_cache:
-                    self.in_last_cache = True
-                    cache_stat = last_cache
-                    assert not this_cache, "should not be in both caches"
+                if in_this_cache:
+                    cache_stat = os.stat(self.initial_data.storage.this_data_file())
                 else:
-                    cache_stat = this_cache
+                    cache_stat = os.stat(self.initial_data.storage.last_data_file())
 
                 cache_mtime = cache_stat[stat.ST_MTIME]
                 live_mtime = live_stat[stat.ST_MTIME]
@@ -185,9 +184,9 @@ class Doc(dexy.node.Node):
         return contents
 
     # Runtime Info
-    def runtime_info_filename(self):
+    def runtime_info_filename(self, this=True):
         name = "%s.runtimeargs.pickle" % self.hashid
-        return os.path.join(self.initial_data.storage.storage_dir(), name)
+        return os.path.join(self.initial_data.storage.storage_dir(this), name)
 
     def save_runtime_info(self):
         """
@@ -205,12 +204,26 @@ class Doc(dexy.node.Node):
             pickle.dump(info, f)
 
     def load_runtime_info(self):
+        info = None
+
+        # Load from 'this' first
         try:
             with open(self.runtime_info_filename(), 'rb') as f:
                 pickle = self.wrapper.pickle_lib()
-                return pickle.load(f)
+                info = pickle.load(f)
         except IOError:
             pass
+
+        # Load from 'last' if there's nothing in 'this'
+        if not info:
+            try:
+                with open(self.runtime_info_filename(False), 'rb') as f:
+                    pickle = self.wrapper.pickle_lib()
+                    info = pickle.load(f)
+            except IOError:
+                pass
+
+        return info
 
     def run(self):
         self.start_time = time.time()

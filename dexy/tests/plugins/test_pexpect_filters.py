@@ -28,8 +28,7 @@ def test_scalac():
                 contents = SCALA
                 )
         wrapper.run_docs(doc)
-        print str(doc.output_data())
-        assert "Hello, world!\n" == str(doc.output_data())
+        assert str(doc.output_data()) == "Hello, world!\n" 
 
 RUST = """fn main() {
     io::println("hello?");

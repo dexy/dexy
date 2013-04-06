@@ -1,10 +1,10 @@
 from dexy.tests.utils import wrap
-import inspect
+from dexy.tests.utils import s
 import dexy.doc
 import dexy.node
 
 def test_ragel_state_chart_to_image():
-    ragel = inspect.cleandoc("""
+    ragel = s("""
         %%{
           machine hello_and_welcome;
           main := ( 'h' @ { puts "hello world!" }

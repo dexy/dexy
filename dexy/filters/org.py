@@ -10,7 +10,7 @@ class OrgModeFilter(SubprocessFilter):
             'executable' : 'emacs',
             'output' : True,
             'input-extensions' : ['.org', '.txt'],
-            'output-extensions' : ['.txt', '.html', '.tex', '.pdf'],
+            'output-extensions' : ['.txt', '.html', '.tex', '.pdf', '.odt'],
             'command-string' : """%(prog)s --batch %(args)s --eval "(progn \\
 (find-file \\"%(script_file)s\\") \\
 (%(export_command)s 1) \\
@@ -28,6 +28,8 @@ class OrgModeFilter(SubprocessFilter):
             export_command = "org-export-as-latex"
         elif self.ext == '.pdf':
             export_command = "org-export-as-pdf"
+        elif self.ext == '.odt':
+            export_command = "org-export-as-odt"
         else:
             msg = "unsupported extension %s"
             msgargs = (self.ext)

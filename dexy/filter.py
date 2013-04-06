@@ -53,12 +53,11 @@ class Filter(dexy.plugin.Plugin):
         else:
             return self.setting('output-data-type')
 
+    def add_runtime_args(self, new_args):
+        self.doc.add_runtime_args(new_args)
+
     def update_all_args(self, new_args):
         self.doc.add_runtime_args(new_args)
-        for f in self.doc.filters:
-            f.input_data.args.update(new_args)
-            f.output_data.args.update(new_args)
-            f.update_settings(new_args)
 
     def setup(self, key, storage_key, prev_filter, next_filter, custom_settings):
         self.key = key

@@ -9,11 +9,10 @@ def test_yamlargs_with_caching():
                 [],
                 contents = "title: My Title\n---\r\nThis is the content."
                 )
-        doc.setup_datas()
         wrapper.run_docs(doc)
 
         task = wrapper.nodes["doc:example.txt|yamlargs"]
-        assert task.args['title'] == "My Title"
+        assert task.output_data().title() == "My Title"
         assert task.args_changed
 
         wrapper = Wrapper()
@@ -22,10 +21,9 @@ def test_yamlargs_with_caching():
                 [],
                 contents = "title: My Title\n---\r\nThis is the content."
                 )
-        doc.setup_datas()
         wrapper.run_docs(doc)
         task = wrapper.nodes["doc:example.txt|yamlargs"]
-        assert task.args['title'] == "My Title"
+        assert task.output_data().title() == "My Title"
         assert not task.args_changed
 
 def test_yamlargs_no_yaml():

@@ -45,6 +45,12 @@ class GenericStorage(Storage):
         """
         Location of data file in last/ cache dir.
         """
+        return os.path.join(self.storage_dir(False), "%s%s" % (self.storage_key, self.ext))
+
+    def this_data_file(self):
+        """
+        Location of data file in this/ cache dir.
+        """
         return os.path.join(self.storage_dir(True), "%s%s" % (self.storage_key, self.ext))
 
     def data_file_exists(self):
@@ -65,7 +71,13 @@ class GenericStorage(Storage):
                 pass
         return self._size
 
-    def storage_dir(self, this=True):
+    def storage_dir(self, this=None):
+        if this is None:
+            if self.wrapper.state in ('ran'):
+                this = False
+            else:
+                this = True
+
         if this:
             cache_dir = self.wrapper.this_cache_dir()
         else:

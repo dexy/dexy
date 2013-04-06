@@ -76,7 +76,7 @@ def dexy_command(
         artifactsdir=defaults['artifacts_dir'], # location of directory in which to store artifacts
         conf=defaults['config_file'], # name to use for configuration file
         configs=defaults['configs'], # list of doc config files to parse
-        disabletests=defaults['disable_tests'], # Whether to disable the dexy 'test' filter
+        debug=defaults['debug'], # Whether to run dexy in 'debug' mode. Will run with assertions and log extra information.
         dryrun=defaults['dry_run'], # if True, just parse config and print batch info, don't run dexy
         encoding=defaults['encoding'], # Default encoding. Set to 'chardet' to use chardet auto detection.
         exclude=defaults['exclude'], # comma-separated list of directory names to exclude from dexy processing
@@ -90,7 +90,7 @@ def dexy_command(
         logfile=defaults['log_file'], # name of log file
         logformat=defaults['log_format'], # format of log entries
         loglevel=defaults['log_level'], # log level, valid options are DEBUG, INFO, WARN
-        nocache=defaults['dont_use_cache'], # whether to force artifacts to run even if there is a matching file in the cache
+        nocache=defaults['dont_use_cache'], # whether to force dexy not to use files from the cache
         pickle=defaults['pickle'], # library to use for persisting info to disk, may be 'c', 'py', 'json'
         plugins=defaults['plugins'], # additional python packages containing dexy plugins
         profile=defaults['profile'], # whether to run with cProfile. Arg can be a boolean, in which case profile saved to 'dexy.prof', or a filename to save to.

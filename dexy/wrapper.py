@@ -68,10 +68,10 @@ class Wrapper(object):
                 assert node.state == 'new'
         elif state == 'checked':
             for node in self.nodes.values():
-                assert node.state in ('checked', 'cached', 'inactive',), node.state
+                assert node.state in ('uncached', 'consolidated', 'inactive',), node.state
         elif state == 'ran':
             for node in self.nodes.values():
-                assert node.state in ('ran', 'cached', 'inactive'), node.state
+                assert node.state in ('ran', 'consolidated', 'inactive'), node.state
         else:
             raise dexy.exceptions.InternalDexyProblem(state)
 
@@ -116,24 +116,6 @@ class Wrapper(object):
             for d in hexes:
                 os.mkdir(os.path.join(cache_dir, "%s%s" % (c,d)))
 
-    def map_cache_files(self):
-        """
-        Create a map of all files in cache at start so we can check it quickly
-        as we check each node.
-        """
-        def process_dir(root):
-            dir_files = {}
-            for dirpath, dirnames, filenames in os.walk(root):
-                for filename in filenames:
-                    filepath = os.path.join(dirpath, filename)
-                    dir_files[filepath] = os.stat(filepath)
-            return dir_files
-
-        return {
-                'last' : process_dir(self.last_cache_dir()),
-                'this' : process_dir(self.this_cache_dir())
-                }
-
     def trash_dir(self):
         return os.path.join(self.project_root, ".trash")
 
@@ -161,27 +143,30 @@ class Wrapper(object):
     def unforked_empty_trash(self):
         shutil.rmtree(self.trash_dir())
 
+    def check_cache(self):
+        """
+        Check whether all required files are already cached from a previous run
+        """
+        for node in self.roots:
+            node.check_is_cached()
+
     def consolidate_cache(self):
         """
-        Move all cache files from last/ cache to this/ cache and ensure all
-        expected cache files are present.
+        Move all cache files from last/ cache to this/ cache
         """
-        if not self.cache_files['this']:
-            self.create_cache_dir_with_sub_dirs(self.this_cache_dir())
-
         for node in self.roots:
-            node.verify_cached()
+            node.consolidate_cache_files()
 
         self.trash(self.last_cache_dir())
 
     def check(self):
-        self.cache_files = self.map_cache_files()
+        # Load information about arguments from previous batch.
         self.load_node_argstrings()
 
-        for node in self.roots:
-            node.check_is_cached()
-
+        self.check_cache()
         self.consolidate_cache()
+
+        # Save information about this batch's arguments for next time.
         self.save_node_argstrings()
 
     def reset_work_cache_dir(self):
@@ -193,6 +178,8 @@ class Wrapper(object):
 
     def to_checked(self):
         self.reset_work_cache_dir()
+        if not os.path.exists(self.this_cache_dir()):
+            self.create_cache_dir_with_sub_dirs(self.this_cache_dir())
         self.check()
         self.transition('checked')
 
@@ -217,6 +204,7 @@ class Wrapper(object):
 
         self.batch.end_time = time.time()
         self.batch.save_to_file()
+        shutil.move(self.this_cache_dir(), self.last_cache_dir())
 
     def roots_matching_target(self):
         matches = [n for n in self.roots if n.key == self.target]

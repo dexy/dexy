@@ -53,18 +53,30 @@ class runfilter(wrap):
     def __enter__(self):
         self.make_temp_dir()
 
-        try:
-            wrapper = dexy.wrapper.Wrapper()
-            wrapper.create_dexy_dirs()
+        def run_example(doc_key, doc_contents):
             wrapper = dexy.wrapper.Wrapper(log_level = 'DEBUG')
-            doc_key = "subdir/example%s|%s" % (self.ext, self.filter_alias)
             doc = Doc(
                     doc_key,
                     wrapper,
                     [],
-                    contents = self.doc_contents
+                    contents = doc_contents
                     )
             wrapper.run_docs(doc)
+            return doc
+
+        try:
+            wrapper = dexy.wrapper.Wrapper()
+            wrapper.create_dexy_dirs()
+
+            doc_key = "subdir/example%s|%s" % (self.ext, self.filter_alias)
+
+            doc = run_example(doc_key, self.doc_contents)
+
+            # Run several more times to test caching.
+            for i in range(4):
+                d = run_example(doc_key, self.doc_contents)
+                assert d.state == 'consolidated'
+
         except dexy.exceptions.InactiveFilter:
             raise SkipTest
 
