@@ -7,7 +7,8 @@ class NodeGraph(Reporter):
     """
     aliases = ['nodegraph']
     _settings = {
-            'filename' : ("Name of file to write output to.", 'graph.dot')
+            'filename' : ("Name of file to write output to.", 'graph.dot'),
+            "run-for-wrapper-states" : ["ran", "checked", "error"]
             }
 
     def run(self, wrapper):
@@ -42,7 +43,8 @@ class PlainTextGraph(Reporter):
     """
     aliases = ['graph']
     _settings = {
-            'filename' : ("Name of file to write output to (within log directory).", 'graph.txt')
+            'filename' : ("Name of file to write output to (within log directory).", 'graph.txt'),
+            "run-for-wrapper-states" : ["ran", "checked"]
             }
 
     def run(self, wrapper):

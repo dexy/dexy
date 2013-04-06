@@ -60,12 +60,8 @@ def test_wordpress_without_doc_config_file():
                 wrapper=wrapper
                 )
 
-        try:
-            wrapper.run_docs(doc)
-            assert False, 'should raise exception'
-        except dexy.exceptions.UserFeedback as e:
-            assert "wordpress.json" in e.message
-            assert "Filter wp" in e.message
+        wrapper.run_docs(doc)
+        assert wrapper.state == 'error'
 
 def mk_wp_doc(wrapper):
     doc = Doc("hello.txt|wp",

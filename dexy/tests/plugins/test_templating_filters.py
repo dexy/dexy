@@ -2,8 +2,6 @@ from dexy.doc import Doc
 from dexy.filters.templating import TemplateFilter
 from dexy.filters.templating_plugins import TemplatePlugin
 from dexy.tests.utils import wrap
-from nose.tools import raises
-import dexy.exceptions
 
 def test_jinja_indent_function():
     with wrap() as wrapper:
@@ -38,7 +36,6 @@ def test_jinja_kv():
         wrapper.run_docs(node)
         assert str(node.output_data()) == "value of foo is 'bar'"
 
-@raises(dexy.exceptions.UserFeedback)
 def test_jinja_sectioned_invalid_section():
     with wrap() as wrapper:
         doc = Doc("hello.txt|jinja",
@@ -53,6 +50,7 @@ def test_jinja_sectioned_invalid_section():
                 contents = """first line is '{{ d['lines.txt|lines']['3'] }}'"""
                 )
         wrapper.run_docs(doc)
+        assert wrapper.state == 'error'
 
 def test_jinja_sectioned():
     with wrap() as wrapper:
@@ -82,7 +80,6 @@ def test_jinja_json_convert_to_dict():
         wrapper.run_docs(node)
         assert str(node.output_data()) == "foo is 123"
 
-@raises(dexy.exceptions.UserFeedback)
 def test_jinja_json():
     with wrap() as wrapper:
         node = Doc("hello.txt|jinja",
@@ -95,8 +92,8 @@ def test_jinja_json():
                     ],
                 contents = """foo is {{ d['input.json']['foo'] }}""")
         wrapper.run_docs(node)
+        assert wrapper.state == 'error'
 
-@raises(dexy.exceptions.UserFeedback)
 def test_jinja_undefined():
     with wrap() as wrapper:
         node = Doc("template.txt|jinja",
@@ -105,8 +102,8 @@ def test_jinja_undefined():
                 contents = """{{ foo }}""")
 
         wrapper.run_docs(node)
+        assert wrapper.state == 'error'
 
-@raises(dexy.exceptions.UserFeedback)
 def test_jinja_syntax_error():
     with wrap() as wrapper:
         node = Doc("template.txt|jinja",
@@ -116,6 +113,7 @@ def test_jinja_syntax_error():
                 )
 
         wrapper.run_docs(node)
+        assert wrapper.state == 'error'
 
 def test_jinja_filter_inputs():
     with wrap() as wrapper:

@@ -36,7 +36,6 @@ def test_walk_working_dir():
         wrapper.run_docs(node)
 
         files_list = wrapper.nodes['doc:example.sh-sh.txt-files']
-        print files_list.output_data().as_sectioned()
         assert files_list.output_data().as_sectioned()['newfile.txt'] == "hello" + os.linesep
 
 def test_not_present_executable():
@@ -99,11 +98,8 @@ def test_nonzero_exit():
                 [],
                 contents="import sys\nsys.exit(1)"
                 )
-        try:
-            wrapper.run_docs(node)
-            assert False, "should raise error"
-        except dexy.exceptions.UserFeedback:
-            assert True
+        wrapper.run_docs(node)
+        assert wrapper.state == 'error'
 
 def test_ignore_nonzero_exit():
     with wrap() as wrapper:

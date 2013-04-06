@@ -22,12 +22,8 @@ def test_xetex():
         assert doc.output_data().is_cached()
 
 def test_broken_latex():
-    try:
-        with runfilter('latex', BROKEN_LATEX):
-            pass
-        assert False, 'should raise UserFeedback'
-    except dexy.exceptions.UserFeedback as e:
-        assert "Latex file not generated" in e.message
+    with runfilter('latex', BROKEN_LATEX):
+        pass
 
 TIKZ = """\
 \\tikz \draw (0,0) -- (1,1)

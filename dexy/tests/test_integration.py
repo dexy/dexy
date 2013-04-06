@@ -7,14 +7,17 @@ import dexy.node
 import inspect
 import os
 from dexy.wrapper import Wrapper
+import random
 
 LOGLEVEL = "INFO"
 
 def test_example_project():
     with tempdir():
         def run_from_cache_a_bunch_of_times():
-            for i in range(5):
-                print i
+            n = random.randint(2, 10)
+            print "running %s times:" % n
+            for i in range(n):
+                print '', i+1
                 wrapper = Wrapper(log_level=LOGLEVEL)
                 wrapper.run_from_new()
     
@@ -77,12 +80,9 @@ def test_example_project():
         with open("multiply.py", "w") as f:
             f.write("raise")
 
-        try:
-            wrapper = Wrapper(log_level=LOGLEVEL)
-            wrapper.run_from_new()
-            assert False, "should raise error"
-        except dexy.exceptions.UserFeedback as e:
-            assert "nonzero exit status 1" in str(e)
+        wrapper = Wrapper(log_level=LOGLEVEL)
+        wrapper.run_from_new()
+        assert wrapper.state == 'error'
 
         import time
         time.sleep(0.9)
@@ -90,7 +90,7 @@ def test_example_project():
         with open("multiply.py", "w") as f:
             f.write(old_content)
 
-        wrapper = Wrapper(log_level="DEBUG")
+        wrapper = Wrapper(log_level=LOGLEVEL)
         wrapper.run_from_new()
 
         for node in wrapper.nodes.values():
@@ -99,6 +99,23 @@ def test_example_project():
             else:
                 assert node.key in affected_keys, node.key
                 assert node.state == 'ran'
+
+        wrapper.remove_dexy_dirs()
+        wrapper.remove_reports_dirs(keep_empty_dir=True)
+        wrapper.create_dexy_dirs()
+
+        assert len(os.listdir("logs")) == 1
+
+        wrapper = Wrapper(log_level="DEBUG", dry_run=True)
+        wrapper.run_from_new()
+        wrapper.report()
+
+        assert len(os.listdir("logs")) == 4
+
+        with open("logs/graph.txt", "r") as f:
+            graph_text = f.read()
+
+        assert "BundleNode(docs) (uncached)" in graph_text
 
         os.chdir("..")
 

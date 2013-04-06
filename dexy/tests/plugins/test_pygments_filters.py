@@ -4,8 +4,6 @@ from dexy.tests.utils import assert_in_output
 from dexy.tests.utils import assert_output
 from dexy.tests.utils import assert_output_cached
 from dexy.tests.utils import wrap
-from nose.tools import raises
-import dexy.exceptions
 
 def test_pyg4rst():
     o = OrderedDict()
@@ -24,7 +22,6 @@ def test_jpg():
 def test_gif():
     assert_output_cached("pyg|gn", "print 'hello'")
 
-@raises(dexy.exceptions.UserFeedback)
 def test_pyg4rst_bad_file_extension():
     with wrap() as wrapper:
         doc = Doc(
@@ -35,8 +32,8 @@ def test_pyg4rst_bad_file_extension():
                 pyg4rst = { 'allow_unknown_ext' : False }
                 )
         wrapper.run_docs(doc)
+        assert wrapper.state == 'error'
 
-@raises(dexy.exceptions.UserFeedback)
 def test_pygments_bad_file_extension():
     with wrap() as wrapper:
         doc = Doc(
@@ -47,3 +44,4 @@ def test_pygments_bad_file_extension():
                 pyg = { 'allow_unknown_ext' : False }
                 )
         wrapper.run_docs(doc)
+        assert wrapper.state == 'error'

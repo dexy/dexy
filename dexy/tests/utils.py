@@ -72,11 +72,6 @@ class runfilter(wrap):
 
             doc = run_example(doc_key, self.doc_contents)
 
-            # Run several more times to test caching.
-            for i in range(4):
-                d = run_example(doc_key, self.doc_contents)
-                assert d.state == 'consolidated'
-
         except dexy.exceptions.InactiveFilter:
             raise SkipTest
 
@@ -121,9 +116,17 @@ def assert_output_cached(filter_alias, doc_contents, ext=".txt", min_filesize=No
         raise Exception("ext arg to assert_output_cached must start with dot")
 
     with runfilter(filter_alias, doc_contents, ext=ext) as doc:
-        assert doc.output_data().is_cached()
-        if min_filesize:
-            assert doc.output_data().filesize() > min_filesize
+        if doc.wrapper.state == 'ran':
+            assert doc.output_data().is_cached()
+            if min_filesize:
+                assert doc.output_data().filesize() > min_filesize
+        elif doc.wrapper.state == 'error':
+            if isinstance(doc.wrapper.error, dexy.exceptions.InactiveFilter):
+                raise SkipTest()
+            else:
+                raise doc.wrapper.error
+        else:
+            raise Exception("state is '%s'" % doc.wrapper.state)
 
 def assert_in_output(filter_alias, doc_contents, expected_output, ext=".txt"):
     if not ext.startswith("."):

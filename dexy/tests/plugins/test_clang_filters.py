@@ -1,7 +1,6 @@
 from dexy.tests.utils import assert_output
 from dexy.tests.utils import wrap
 from dexy.doc import Doc
-import dexy.exceptions
 
 CPP_HELLO_WORLD = """#include <iostream>
 using namespace std;
@@ -58,15 +57,12 @@ def test_c_filter():
 
 def test_cfussy_filter():
     assert_output('cfussy', C_FUSSY_HELLO_WORLD, "HELLO, world\n", ext=".c")
-    try:
-        with wrap() as wrapper:
-            doc = Doc("hello.c|cfussy",
-                    contents=C_HELLO_WORLD,
-                    wrapper=wrapper)
-            wrapper.run_docs(doc)
-        assert False, 'should raise error'
-    except dexy.exceptions.UserFeedback:
-        assert True
+    with wrap() as wrapper:
+        doc = Doc("hello.c|cfussy",
+                contents=C_HELLO_WORLD,
+                wrapper=wrapper)
+        wrapper.run_docs(doc)
+        assert wrapper.state == 'error'
 
 def test_c_input():
     with wrap() as wrapper:

@@ -15,8 +15,8 @@ import os
 import posixpath
 import shutil
 import subprocess
-import uuid
 import time
+import uuid
 
 class Wrapper(object):
     """
@@ -191,19 +191,31 @@ class Wrapper(object):
         if self.target:
             matches = self.roots_matching_target()
 
-        for node in self.roots:
-            if self.target:
-                if not node in matches:
-                    continue
-   
-            for task in node:
-                task()
+        try:
+            for node in self.roots:
+                if self.target:
+                    if not node in matches:
+                        continue
 
-        self.transition('ran')
-
-        self.batch.end_time = time.time()
-        self.batch.save_to_file()
-        shutil.move(self.this_cache_dir(), self.last_cache_dir())
+                for task in node:
+                    task()
+        except UserFeedback as e:
+            print e.message
+            self.error = e
+            self.transition('error')
+        except InternalDexyProblem as e:
+            print e.message
+            self.error = e
+            self.transition('error')
+        except Exception as e:
+            print e
+            self.error = e
+            self.transition('error')
+        else:
+            self.transition('ran')
+            self.batch.end_time = time.time()
+            self.batch.save_to_file()
+            shutil.move(self.this_cache_dir(), self.last_cache_dir())
 
     def roots_matching_target(self):
         matches = [n for n in self.roots if n.key == self.target]
@@ -217,7 +229,10 @@ class Wrapper(object):
         self.to_valid()
         self.to_walked()
         self.to_checked()
-        self.run()
+        if self.dry_run:
+            print "dry run only"
+        else:
+            self.run()
 
     def run_docs(self, *docs):
         self.to_valid()
