@@ -1,3 +1,11 @@
+stata:
+    class: SubprocessStdoutFilter
+    command-string: '%(prog)s -q -b "%(script_file)s"' # TODO implement .smcl output (replace -b with -s)
+    help: Runs stata files.
+    executable: stata
+    input-extensions: [.stata, .txt]
+    output-extensions: [.log]
+
 scalai:
     class: PexpectReplFilter
     prompts : ['scala> ', '     | ']
