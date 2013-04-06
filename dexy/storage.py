@@ -229,24 +229,31 @@ class Sqlite3Storage(GenericStorage):
         pathargs = (
                 self.wrapper.work_cache_dir(),
                 sk,
-                "%s-tmp%s" % (self.storage_key, self.ext)
+                self.storage_key
                 )
         return os.path.join(*pathargs)
 
     def setup(self):
         self._append_counter = 0
-        if file_exists(self.data_file()):
-            self._storage = sqlite3.connect(self.data_file())
-            self._cursor = self._storage.cursor()
-        elif self.wrapper.state not in ('walked', 'running') and file_exists(self.last_data_file()):
-            self._storage = sqlite3.connect(self.last_data_file())
-            self._cursor = self._storage.cursor()
+        if self.wrapper.state in ('checked', 'running'):
+            if file_exists(self.this_data_file()):
+                self._storage = sqlite3.connect(self.this_data_file())
+                self._cursor = self._storage.cursor()
+            else:
+                assert not os.path.exists(self.working_file())
+                assert os.path.exists(os.path.dirname(self.working_file()))
+                self._storage = sqlite3.connect(self.working_file())
+                self._cursor = self._storage.cursor()
+                self._cursor.execute("CREATE TABLE kvstore (key TEXT, value TEXT)")
         else:
-            assert not os.path.exists(self.working_file())
-            assert os.path.exists(os.path.dirname(self.working_file()))
-            self._storage = sqlite3.connect(self.working_file())
-            self._cursor = self._storage.cursor()
-            self._cursor.execute("CREATE TABLE kvstore (key TEXT, value TEXT)")
+            if file_exists(self.last_data_file()):
+                self._storage = sqlite3.connect(self.last_data_file())
+                self._cursor = self._storage.cursor()
+            elif file_exists(self.this_data_file()):
+                self._storage = sqlite3.connect(self.this_data_file())
+                self._cursor = self._storage.cursor()
+            else:
+                raise Exception("no data")
 
     def append(self, key, value):
         self._cursor.execute("INSERT INTO kvstore VALUES (?, ?)", (str(key), str(value)))
@@ -295,4 +302,5 @@ class Sqlite3Storage(GenericStorage):
     def save(self):
         self.assert_location_is_in_project_dir(self.data_file())
         self._storage.commit()
+        print "Running save. Copying to", self.data_file()
         shutil.copyfile(self.working_file(), self.data_file())
