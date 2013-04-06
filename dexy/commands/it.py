@@ -92,6 +92,7 @@ def dexy_command(
         logformat=defaults['log_format'], # format of log entries
         loglevel=defaults['log_level'], # log level, valid options are DEBUG, INFO, WARN
         nocache=defaults['dont_use_cache'], # whether to force dexy not to use files from the cache
+        noreports=False, # if true, don't run any reports
         pickle=defaults['pickle'], # library to use for persisting info to disk, may be 'c', 'py', 'json'
         plugins=defaults['plugins'], # additional python packages containing dexy plugins
         profile=defaults['profile'], # whether to run with cProfile. Arg can be a boolean, in which case profile saved to 'dexy.prof', or a filename to save to.
@@ -120,7 +121,10 @@ def dexy_command(
     # Don't trap errors yet because error handling uses wrapper instance.
     wrapper = init_wrapper(locals())
 
-    run_reports = True
+    # TODO make this error nicer..
+    wrapper.assert_dexy_dirs_exist()
+
+    run_reports = (not noreports)
 
     try:
         if profile:

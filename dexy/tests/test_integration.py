@@ -27,6 +27,7 @@ def test_example_project():
                     msgargs = (node.key, expected, i, node.state)
                     assert node.state == expected, msg % msgargs
 
+                wrapper.report()
 
         example_src = os.path.join(TEST_DATA_DIR, 'example')
         shutil.copytree(example_src, "example")
@@ -36,6 +37,7 @@ def test_example_project():
         wrapper.create_dexy_dirs()
 
         wrapper.run_from_new()
+        wrapper.report()
 
         for node in wrapper.nodes.values():
             assert node.state == 'ran'
@@ -61,6 +63,7 @@ def test_example_project():
 
         wrapper = Wrapper(log_level=LOGLEVEL)
         wrapper.run_from_new()
+        wrapper.report()
 
         for node in wrapper.nodes.values():
             if node.key in unaffected_keys:
