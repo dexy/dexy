@@ -235,7 +235,7 @@ class Sqlite3Storage(GenericStorage):
 
     def setup(self):
         self._append_counter = 0
-        if self.wrapper.state in ('checked', 'running'):
+        if self.wrapper.state in ('walked', 'checked', 'running'):
             if file_exists(self.this_data_file()):
                 self._storage = sqlite3.connect(self.this_data_file())
                 self._cursor = self._storage.cursor()
@@ -253,7 +253,7 @@ class Sqlite3Storage(GenericStorage):
                 self._storage = sqlite3.connect(self.this_data_file())
                 self._cursor = self._storage.cursor()
             else:
-                raise Exception("no data")
+                raise dexy.exceptions.InternalDexyProblem("no data for %s" % self.storage_key)
 
     def append(self, key, value):
         self._cursor.execute("INSERT INTO kvstore VALUES (?, ?)", (str(key), str(value)))
