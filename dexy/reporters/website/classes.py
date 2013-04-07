@@ -199,6 +199,7 @@ class WebsiteReporter(OutputReporter):
                 'page_title' : self.wrapper.batch.docs["doc:%s" % data.key]['title'],
                 'parent_dir' : parent_dir,
                 'current_dir' : current_dir,
+                's' : data,
                 'source' : data.name,
                 'template_source' : template_path,
                 'wrapper' : self.wrapper,
