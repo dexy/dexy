@@ -13,6 +13,7 @@ class LatexFilter(SubprocessFilter):
     aliases = ['latex', 'pdflatex']
     _settings = {
             'executable' : 'pdflatex',
+            'output' : True,
             'input-extensions' : ['.tex', '.txt'],
             'output-extensions' : ['.pdf'],
             'run-bibtex' : ("Should we run bibtex if a .bib file is an input?", True),

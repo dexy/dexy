@@ -6,6 +6,14 @@ stata:
     input-extensions: [.do, .txt]
     output-extensions: [.log]
 
+statai:
+    class: PexpectReplFilter
+    help: Runs stata files.
+    executable: "stata -q"
+    input-extensions: [.do, .txt]
+    output-extensions: [.log]
+    prompt: '.'
+
 scalai:
     class: PexpectReplFilter
     prompts : ['scala> ', '     | ']

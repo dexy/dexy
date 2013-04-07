@@ -3,10 +3,13 @@ import dexy.filters.archive
 import dexy.filters.boto
 import dexy.filters.deprecated
 import dexy.filters.example
+import dexy.filters.fluid_html
 import dexy.filters.idio
 import dexy.filters.java
 import dexy.filters.latex
+import dexy.filters.lyx
 import dexy.filters.md
+import dexy.filters.org
 import dexy.filters.pexp
 import dexy.filters.phantomjs
 import dexy.filters.pydoc
@@ -14,12 +17,10 @@ import dexy.filters.pyg
 import dexy.filters.rst
 import dexy.filters.split
 import dexy.filters.standard
-import dexy.filters.fluid_html
 import dexy.filters.sub
 import dexy.filters.templating
 import dexy.filters.wordpress
 import dexy.filters.yamlargs
-import dexy.filters.org
 
 import dexy.filter
 import os
