@@ -25,6 +25,7 @@ class PexpectReplFilter(SubprocessFilter):
             'ps2' : ('PS2', None),
             'ps3' : ('PS3', None),
             'ps4' : ('PS4', None),
+            'term' : ('TERM', 'NONE'),
             'initial-prompt' : ("The initial prompt the REPL will display.", None),
             'prompt' : ("Single prompt to match exactly.", None),
             'prompts' : ("List of possible prompts to match exactly.", ['>>>', '...']),
@@ -115,6 +116,8 @@ class PexpectReplFilter(SubprocessFilter):
             ps4 = self.arg_value('PS4')
             self.log_debug("Setting PS4 to %s" % ps4)
             env['PS4'] = ps4
+
+        env['TERM'] = self.setting('term')
 
         timeout = self.setup_timeout()
         initial_timeout = self.setup_initial_timeout()

@@ -556,6 +556,7 @@ irb|rbrepl:
     class: PexpectReplFilter
     help: Runs ruby code in irb.
     executable: irb --simple-prompt
+    term: vt100 # irb prints unwanted output if term is NONE
     check-return-code: False
     initial-prompt: "^>>"
     input-extensions: [".txt", ".rb"]

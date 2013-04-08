@@ -214,6 +214,7 @@ class SubprocessFilter(Filter):
             doc = self.add_doc(doc_key, {})
 
         doc.output_data().setup()
+        doc.output_data().storage.connect()
         wd = self.workspace()
 
         for dirpath, dirnames, filenames in os.walk(wd):

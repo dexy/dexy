@@ -13,7 +13,7 @@ from nose.exc import SkipTest
 
 def test_state_new_after_init():
     wrapper = Wrapper()
-    assert wrapper.state == 'new'
+    wrapper.validate_state('new')
 
 def test_error_if_to_valid_called_without_dirs_setup():
     with tempdir():
@@ -31,7 +31,7 @@ def test_state_valid_after_to_valid():
         wrapper.to_valid()
         wrapper.validate_state('valid')
 
-def test_walk():
+def test_walked():
     with tempdir():
         with open("dexy.yaml", "w") as f:
             f.write("foo.txt")

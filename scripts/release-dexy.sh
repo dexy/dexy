@@ -12,7 +12,8 @@ cd dexy
 
 python setup.py register sdist --formats=gztar,zip upload
 
-cp dist/* ~/dev/dexy-site-new/external-dependencies/
+# Copy .tgz .zip dexy packages to external dependencies directory
+cp dist/* ~/dev/dexy-site/external-dependencies/
 
 cd ..
 

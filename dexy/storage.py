@@ -233,18 +233,26 @@ class Sqlite3Storage(GenericStorage):
                 )
         return os.path.join(*pathargs)
 
-    def setup(self):
+    def connect(self):
         self._append_counter = 0
         if self.wrapper.state in ('walked', 'checked', 'running'):
             if file_exists(self.this_data_file()):
+                self.connected_to = 'existing'
                 self._storage = sqlite3.connect(self.this_data_file())
                 self._cursor = self._storage.cursor()
+            elif file_exists(self.last_data_file()):
+                msg ="Should not only have last data file %s"
+                msgargs=(self.last_data_file())
+                raise dexy.exceptions.InternalDexyProblem(msg % msgargs)
             else:
                 assert not os.path.exists(self.working_file())
                 assert os.path.exists(os.path.dirname(self.working_file()))
+                self.connected_to = 'working'
                 self._storage = sqlite3.connect(self.working_file())
                 self._cursor = self._storage.cursor()
                 self._cursor.execute("CREATE TABLE kvstore (key TEXT, value TEXT)")
+        elif self.wrapper.state == 'walked':
+            raise dexy.exceptions.InternalDexyProblem("connect should not be called in 'walked' state")
         else:
             if file_exists(self.last_data_file()):
                 self._storage = sqlite3.connect(self.last_data_file())
@@ -302,4 +310,6 @@ class Sqlite3Storage(GenericStorage):
     def save(self):
         self.assert_location_is_in_project_dir(self.data_file())
         self._storage.commit()
+        print self.connected_to
+        print "Copying working file %s to data file %s" % (self.working_file(), self.data_file())
         shutil.copyfile(self.working_file(), self.data_file())

@@ -20,16 +20,6 @@ def test_scala_repl():
         wrapper.run_docs(doc)
         assert "defined module HelloWorld" in str(doc.output_data())
 
-def test_scalac():
-    with wrap() as wrapper:
-        doc = Doc("HelloWorld.scala|scala",
-                wrapper,
-                [],
-                contents = SCALA
-                )
-        wrapper.run_docs(doc)
-        assert str(doc.output_data()) == "Hello, world!\n" 
-
 RUST = """fn main() {
     io::println("hello?");
 }"""

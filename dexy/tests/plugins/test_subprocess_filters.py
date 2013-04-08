@@ -7,6 +7,7 @@ from dexy.doc import Doc
 import os
 import shutil
 from dexy.wrapper import Wrapper
+from dexy.tests.plugins.test_pexpect_filters import SCALA
 
 PYIN_CONTENTS = """import sys
 i = 0
@@ -17,6 +18,16 @@ while True:
         break
     print "line %s has %s chars" % (i, len(line))
 """
+
+def test_scalac():
+    with wrap() as wrapper:
+        doc = Doc("HelloWorld.scala|scala",
+                wrapper,
+                [],
+                contents = SCALA
+                )
+        wrapper.run_docs(doc)
+        assert str(doc.output_data()) == "Hello, world!\n" 
 
 def test_python_input():
     with wrap() as wrapper:

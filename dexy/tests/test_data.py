@@ -55,6 +55,7 @@ def test_key_value_data_sqlite():
         data = dexy.data.KeyValue("doc.sqlite3", ".sqlite3",
                 "doc.sqlite3", "abc000", {}, None, None, wrapper)
         data.setup_storage()
+        data.storage.connect()
 
         data.append('foo', 'bar')
         assert len(data.keys()) == 1

@@ -231,7 +231,13 @@ class WebsiteReporter(OutputReporter):
 
         self.create_reports_dir()
 
-        for data in wrapper.batch:
+        for doc in wrapper.nodes.values():
+            if not doc.state in ('ran', 'consolidated'):
+                continue
+            if not hasattr(doc, 'output_data'):
+                continue
+
+            data = doc.output_data()
             self.log_debug("processing data %s" % data.key)
             if data.is_canonical_output():
                 if data.ext == ".html":

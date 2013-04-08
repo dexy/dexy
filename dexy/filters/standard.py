@@ -43,6 +43,7 @@ class KeyValueStoreFilter(DexyFilter):
 
         # Call setup() again since it will have created a new blank database.
         self.output_data.storage.setup()
+        self.output_data.storage.connect()
 
 class HeaderFilter(DexyFilter):
     """

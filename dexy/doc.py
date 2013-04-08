@@ -107,6 +107,10 @@ class Doc(dexy.node.Node):
                 shutil.move(self.runtime_info_filename(False), self.runtime_info_filename(True))
 
             self.apply_runtime_info()
+
+            for d in self.datas():
+                if hasattr(d.storage, 'connect'):
+                    d.storage.connect()
             self.transition('consolidated')
 
     def apply_runtime_info(self):
@@ -248,6 +252,8 @@ class Doc(dexy.node.Node):
         for f in self.filters:
             if f.output_data.state == 'new':
                 f.output_data.setup()
+            if hasattr(f.output_data.storage, 'connect'):
+                f.output_data.storage.connect()
             f.process()
 
         self.finish_time = time.time()

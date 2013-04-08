@@ -34,15 +34,7 @@ class Wrapper(object):
             ('checked', 'running'),
             ('running', 'error'),
             ('running', 'ran'),
-            ('valid', 'loaded'),
             )
-
-    def __init__(self, **kwargs):
-        self.initialize_attribute_defaults()
-        self.update_attributes_from_kwargs(kwargs)
-        self.project_root = os.path.abspath(os.getcwd())
-        self.state = None
-        self.transition('new')
 
     def validate_state(self, state=None):
         """
@@ -75,6 +67,13 @@ class Wrapper(object):
         else:
             raise dexy.exceptions.InternalDexyProblem(state)
 
+    def __init__(self, **kwargs):
+        self.initialize_attribute_defaults()
+        self.update_attributes_from_kwargs(kwargs)
+        self.project_root = os.path.abspath(os.getcwd())
+        self.state = None
+        self.transition('new')
+
     def transition(self, new_state):
         dexy.utils.transition(self, new_state)
 
@@ -100,6 +99,42 @@ class Wrapper(object):
         self.walk()
         self.transition('walked')
 
+    def check(self):
+        # Clean and reset working dirs.
+        self.reset_work_cache_dir()
+        if not os.path.exists(self.this_cache_dir()):
+            self.create_cache_dir_with_sub_dirs(self.this_cache_dir())
+
+        # Load information about arguments from previous batch.
+        self.load_node_argstrings()
+
+        self.check_cache()
+        self.consolidate_cache()
+
+        # Save information about this batch's arguments for next time.
+        self.save_node_argstrings()
+
+    def check_cache(self):
+        """
+        Check whether all required files are already cached from a previous run
+        """
+        for node in self.roots:
+            node.check_is_cached()
+
+    def consolidate_cache(self):
+        """
+        Move all cache files from last/ cache to this/ cache
+        """
+        for node in self.roots:
+            node.consolidate_cache_files()
+
+        self.trash(self.last_cache_dir())
+
+    def to_checked(self):
+        self.check()
+        self.transition('checked')
+
+    # Cache dirs
     def this_cache_dir(self):
         return os.path.join(self.artifacts_dir, "this")
 
@@ -143,45 +178,12 @@ class Wrapper(object):
     def unforked_empty_trash(self):
         shutil.rmtree(self.trash_dir())
 
-    def check_cache(self):
-        """
-        Check whether all required files are already cached from a previous run
-        """
-        for node in self.roots:
-            node.check_is_cached()
-
-    def consolidate_cache(self):
-        """
-        Move all cache files from last/ cache to this/ cache
-        """
-        for node in self.roots:
-            node.consolidate_cache_files()
-
-        self.trash(self.last_cache_dir())
-
-    def check(self):
-        # Load information about arguments from previous batch.
-        self.load_node_argstrings()
-
-        self.check_cache()
-        self.consolidate_cache()
-
-        # Save information about this batch's arguments for next time.
-        self.save_node_argstrings()
-
     def reset_work_cache_dir(self):
         # remove work/ dir leftover from previous run (if any) and create a new
         # work/ dir for this run
         work_dir = self.work_cache_dir()
         self.trash(work_dir)
         self.create_cache_dir_with_sub_dirs(work_dir)
-
-    def to_checked(self):
-        self.reset_work_cache_dir()
-        if not os.path.exists(self.this_cache_dir()):
-            self.create_cache_dir_with_sub_dirs(self.this_cache_dir())
-        self.check()
-        self.transition('checked')
 
     def run(self):
         self.transition('running')
@@ -199,6 +201,7 @@ class Wrapper(object):
 
                 for task in node:
                     task()
+
         except UserFeedback as e:
             print e.message
             self.error = e
@@ -237,6 +240,7 @@ class Wrapper(object):
     def run_docs(self, *docs):
         self.to_valid()
 
+        # do a custom walk() method
         self.roots = docs
         self.nodes = {}
         self.filemap = self.map_files()

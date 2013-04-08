@@ -10,7 +10,7 @@ class OutputReporter(Reporter):
             'dir' : 'output'
             }
 
-    def write_canonical_doc(self, data):
+    def write_canonical_data(self, data):
         fp = os.path.join(self.setting('dir'), data.name)
 
         if fp in self.locations:
@@ -34,9 +34,14 @@ class OutputReporter(Reporter):
         self.locations = {}
 
         self.create_reports_dir()
-        for data in wrapper.batch:
-            if data.is_canonical_output():
-                self.write_canonical_doc(data)
+        for doc in wrapper.nodes.values():
+            if not doc.state in ('ran', 'consolidated'):
+                continue
+            if not hasattr(doc, 'output_data'):
+                continue
+
+            if doc.output_data().is_canonical_output():
+                self.write_canonical_data(doc.output_data())
 
 class LongOutputReporter(Reporter):
     """
@@ -50,8 +55,13 @@ class LongOutputReporter(Reporter):
     def run(self, wrapper):
         self.wrapper=wrapper
         self.create_reports_dir()
-        for doc in wrapper.batch:
-            fp = os.path.join(self.setting('dir'), doc.long_name())
+        for doc in wrapper.nodes.values():
+            if not doc.state in ('ran', 'consolidated'):
+                continue
+            if not hasattr(doc, 'output_data'):
+                continue
+
+            fp = os.path.join(self.setting('dir'), doc.output_data().long_name())
 
             try:
                 os.makedirs(os.path.dirname(fp))
@@ -59,4 +69,4 @@ class LongOutputReporter(Reporter):
                 pass
 
             self.log_debug("  writing %s to %s" % (doc.key, fp))
-            doc.output_to_file(fp)
+            doc.output_data().output_to_file(fp)
