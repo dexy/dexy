@@ -175,11 +175,14 @@ class Wrapper(object):
         self.unforked_empty_trash()
 
     def forked_empty_trash(self):
-        proc = subprocess.Popen(['rm', '-r', self.trash_dir()])
+        proc = subprocess.Popen(['rm', '-rf', self.trash_dir()])
         self.log.info("Removing .trash directory using subprocess, pid is %s" % proc.pid)
 
     def unforked_empty_trash(self):
-        shutil.rmtree(self.trash_dir())
+        try:
+            shutil.rmtree(self.trash_dir())
+        except OSError:
+            pass
 
     def reset_work_cache_dir(self):
         # remove work/ dir leftover from previous run (if any) and create a new
