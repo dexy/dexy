@@ -176,7 +176,8 @@ class Wrapper(object):
 
     def forked_empty_trash(self):
         proc = subprocess.Popen(['rm', '-rf', self.trash_dir()])
-        self.log.info("Removing .trash directory using subprocess, pid is %s" % proc.pid)
+        if hasattr(self, 'log'):
+            self.log.info("Removing .trash directory using subprocess, pid is %s" % proc.pid)
 
     def unforked_empty_trash(self):
         try:
