@@ -2,7 +2,6 @@ from dexy.exceptions import DeprecatedException
 from dexy.exceptions import InternalDexyProblem
 from dexy.exceptions import UserFeedback
 from dexy.utils import file_exists
-from dexy.utils import is_windows
 from dexy.utils import s
 import dexy.batch
 import dexy.doc
@@ -172,8 +171,12 @@ class Wrapper(object):
             move_to = os.path.join(trash_dir, str(uuid.uuid4()))
             shutil.move(d, move_to)
 
+    def empty_trash(self):
+        self.unforked_empty_trash()
+
     def forked_empty_trash(self):
-        subprocess.Popen(['rm', '-r', self.trash_dir()])
+        proc = subprocess.Popen(['rm', '-r', self.trash_dir()])
+        self.log.info("Removing .trash directory using subprocess, pid is %s" % proc.pid)
 
     def unforked_empty_trash(self):
         shutil.rmtree(self.trash_dir())
@@ -219,6 +222,7 @@ class Wrapper(object):
             self.batch.end_time = time.time()
             self.batch.save_to_file()
             shutil.move(self.this_cache_dir(), self.last_cache_dir())
+            self.empty_trash()
 
     def roots_matching_target(self):
         matches = [n for n in self.roots if n.key == self.target]
@@ -353,30 +357,10 @@ class Wrapper(object):
                     f.write("This directory was created by dexy.")
 
     def remove_dexy_dirs(self):
-        if is_windows():
-            self.unforked_remove_dexy_dirs()
-        else:
-            self.forked_remove_dexy_dirs()
-
-    def unforked_remove_dexy_dirs(self):
-        """
-        Removes directories created by dexy. If 'reports' argument is true,
-        also removes directories created by dexy's reports.
-        """
-        for dirpath, safety_filepath, dirstat in self.iter_dexy_dirs():
-            if dirstat:
-                print "removing directory '%s'" % dirpath
-                shutil.rmtree(dirpath)
-
-    def forked_remove_dexy_dirs(self):
-        """
-        Removes directories created by dexy by first moving the files to a new
-        location, then forking the rm process.
-        """
         for dirpath, safety_filepath, dirstat in self.iter_dexy_dirs():
             if dirstat:
                 self.trash(dirpath, True)
-        self.forked_empty_trash()
+        self.empty_trash()
 
     def remove_reports_dirs(self, reports=True, keep_empty_dir=False):
         if reports:
