@@ -95,7 +95,7 @@ def config_args(modargs):
 def import_extra_plugins(kwargs):
     if kwargs.get('plugins'):
         for imp in kwargs.get('plugins').split():
-            print "loading", imp
+            print "loading plugin", imp
             __import__(imp)
 
 def init_wrapper(modargs):

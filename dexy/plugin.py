@@ -92,14 +92,7 @@ class PluginMeta(type):
         if '__metaclass__' in attrs:
             cls.plugins = {}
         if hasattr(cls, 'aliases'):
-            is_dexy_module = cls.__module__.startswith("dexy.")
-            is_official_plugin = cls.__module__ in cls.official_dexy_plugins
-            if not is_dexy_module and not is_official_plugin:
-                prefix = cls.__module__.split("_", 1)[1]
-                aliases = ["%s:%s" % (prefix, a) for a in cls.aliases]
-            else:
-                aliases = cls.aliases
-            cls.register_plugin(aliases, cls, {})
+            cls.register_plugin(cls.aliases, cls, {})
 
     def __iter__(cls, *instanceargs):
         processed = []
