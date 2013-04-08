@@ -59,6 +59,7 @@ def config_args(modargs):
 
     # Update from config file
     if file_exists(config_file):
+        print "found config file", config_file
         with open(config_file, "rb") as f:
             if config_file.endswith(".conf"):
                 try:

@@ -182,9 +182,8 @@ class Generic(Data):
                     this = False
             self._data = self.storage.read_data(this)
         except IOError:
-            print "error occurred in wrapper state %s" % self.wrapper.state
-            msg = "no data in file '%s' for %s"
-            msgargs = (self.storage.data_file(), self.key)
+            msg = "no data in file '%s' for %s (wrapper state %s)"
+            msgargs = (self.storage.data_file(), self.key, self.wrapper.state)
             raise dexy.exceptions.InternalDexyProblem(msg % msgargs)
 
     def has_data(self):

@@ -1,4 +1,3 @@
-from dexy.commands.utils import import_extra_plugins
 from dexy.commands.utils import init_wrapper
 from dexy.commands.utils import template_text
 from dexy.utils import getdoc
@@ -18,7 +17,7 @@ def gen_command(
     """
     Generate a new dexy project in the specified directory, using the template.
     """
-    import_extra_plugins({'plugins' : plugins})
+    wrapper = init_wrapper(locals())
 
     if t and (template == DEFAULT_TEMPLATE):
         template = t
@@ -35,7 +34,6 @@ def gen_command(
     # We run dexy setup. This will respect any dexy.conf file in the template
     # but passing command line options for 'setup' to 'gen' currently not supported.
     os.chdir(d)
-    wrapper = init_wrapper({})
     wrapper.create_dexy_dirs()
     print "Success! Your new dexy project has been created in directory '%s'" % d
     if file_exists("README"):
@@ -59,7 +57,7 @@ def templates_command(
     """
     List templates that can be used to generate new projects.
     """
-    import_extra_plugins({'plugins' : plugins})
+    init_wrapper(locals())
 
     if not simple:
         FMT = "%-40s %s"
