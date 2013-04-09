@@ -184,7 +184,8 @@ class Node(dexy.plugin.Plugin):
     def input_nodes(self, with_parent_inputs = False):
         input_nodes = self.inputs + self.children
         if with_parent_inputs and hasattr(self, 'parent'):
-            input_nodes.extend(self.parent.inputs)
+            if not self in self.parent.inputs:
+                input_nodes.extend(self.parent.inputs)
         return input_nodes
 
     def check_is_cached(self):
@@ -285,10 +286,11 @@ class ScriptNode(BundleNode):
         return any(i.doc_changed for i in self.inputs)
 
     def setup(self):
-        self.script_storage = {}
+        self.script_storage = self.args.get("storage", {})
 
         siblings = []
         for doc in self.inputs:
+            doc.parent = self
             doc.inputs = doc.inputs + siblings
             siblings.append(doc)
 

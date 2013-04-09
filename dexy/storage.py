@@ -310,6 +310,4 @@ class Sqlite3Storage(GenericStorage):
     def save(self):
         self.assert_location_is_in_project_dir(self.data_file())
         self._storage.commit()
-        print self.connected_to
-        print "Copying working file %s to data file %s" % (self.working_file(), self.data_file())
         shutil.copyfile(self.working_file(), self.data_file())

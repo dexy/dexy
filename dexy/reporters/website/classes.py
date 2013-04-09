@@ -246,12 +246,12 @@ class WebsiteReporter(OutputReporter):
 
                     if has_html_header and not data.args.get('ws-template'):
                         self.log_debug("  found html tag in output of %s" % data.key)
-                        self.write_canonical_doc(data)
+                        self.write_canonical_data(data)
                     else:
                         self.apply_and_render_template(data)
                 elif data.ext == '.json' and 'htmlsections' in data.key:
                     self.apply_and_render_template(data)
                 else:
-                    self.write_canonical_doc(data)
+                    self.write_canonical_data(data)
 
         self.log_debug("finished")

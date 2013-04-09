@@ -46,12 +46,17 @@ def serve_command(
             httpd = SocketServer.TCPServer(("", p), Handler)
         except socket.error:
             print "port %s already in use" % p
+            p = None
         else:
             break
 
-    print "serving contents of %s on http://localhost:%s" % (directory, p)
-    print "type ctrl+c to stop"
-    try:
-        httpd.serve_forever()
-    except KeyboardInterrupt:
+    if p:
+        print "serving contents of %s on http://localhost:%s" % (directory, p)
+        print "type ctrl+c to stop"
+        try:
+            httpd.serve_forever()
+        except KeyboardInterrupt:
+            sys.exit(1)
+    else:
+        print "could not find a free port to serve on, tried", ports
         sys.exit(1)
