@@ -12,7 +12,8 @@ statai:
     executable: "stata -q"
     input-extensions: [.do, .txt]
     output-extensions: [.log]
-    prompt: '.'
+    initial-prompt: '.'
+    prompts: ['.', '>']
 
 scalai:
     class: PexpectReplFilter
