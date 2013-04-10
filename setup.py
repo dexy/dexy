@@ -38,12 +38,10 @@ setup(
             'idiopidae>=0.5.4',
             'inflection>=0.0.2',
             'jinja2',
-            'mock',
-            'nose',
             'ordereddict',
             'pexpect',
             'pygments',
-            'python-modargs>=1.6',
+            'python-modargs>=1.7',
             'requests>=0.10.6',
             'zapps>=0.5.1'
             ],
