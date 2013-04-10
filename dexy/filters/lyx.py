@@ -17,7 +17,10 @@ class LyxJinjaFilter(DexyFilter):
         for line in input_text.splitlines():
             if line.startswith("dexy:"):
                 _, clean_line = line.split("dexy:")
-                lines.append("<< d['%s'] >>" % clean_line)
+                if ":" in clean_line:
+                    lines.append("<< d['%s']['%s'] >>" % clean_line.split(":"))
+                else:
+                    lines.append("<< d['%s'] >>" % clean_line)
             else:
                 lines.append(line)
         return "\n".join(lines)
