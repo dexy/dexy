@@ -18,7 +18,8 @@ class LyxJinjaFilter(DexyFilter):
             if line.startswith("dexy:"):
                 _, clean_line = line.split("dexy:")
                 if ":" in clean_line:
-                    lines.append("<< d['%s']['%s'] >>" % clean_line.split(":"))
+                    doc, section = clean_line.split(":")
+                    lines.append("<< d['%s']['%s'] >>" % (doc, section,))
                 else:
                     lines.append("<< d['%s'] >>" % clean_line)
             else:
