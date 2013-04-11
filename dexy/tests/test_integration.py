@@ -9,7 +9,7 @@ import os
 from dexy.wrapper import Wrapper
 import random
 
-LOGLEVEL = "INFO"
+LOGLEVEL = "DEBUG"
 
 def assert_node_state(node, expected, additional_info=''):
     msg = "'%s' not in state '%s',  in state '%s'. %s"
@@ -111,7 +111,7 @@ def test_example_project():
 
         assert len(os.listdir("logs")) == 1
 
-        wrapper = Wrapper(log_level="DEBUG", dry_run=True)
+        wrapper = Wrapper(log_level=LOGLEVEL, dry_run=True)
         wrapper.run_from_new()
         wrapper.report()
 
