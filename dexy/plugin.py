@@ -3,6 +3,7 @@ import inspect
 import os
 import sys
 import yaml
+import importlib
 
 class Plugin(object):
     """
@@ -175,7 +176,7 @@ class PluginMeta(type):
 
                 # load the module
                 if not mod_name in sys.modules:
-                    __import__(mod_name)
+                    importlib.import_module(mod_name)
                 mod = sys.modules[mod_name]
 
                 return mod.__dict__[class_name]

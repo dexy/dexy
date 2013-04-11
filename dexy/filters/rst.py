@@ -2,7 +2,18 @@ from dexy.filter import DexyFilter
 from docutils import core
 import StringIO
 import dexy.exceptions
+import docutils.writers
+import importlib
 import os
+
+def default_template(writer_name):
+    """
+    Set the default template correctly, in case there has been a change in working dir.
+    """
+    writer_class = docutils.writers.get_writer_class(writer_name)
+    mod = importlib.import_module(writer_class.__module__)
+    f = mod.__file__
+    return os.path.abspath(os.path.join(os.path.dirname(f), writer_class.default_template))
 
 class RestructuredTextBase(DexyFilter):
     """
@@ -72,11 +83,14 @@ class RestructuredText(RestructuredTextBase):
                 args = (template, template_ext, self.key, self.ext)
                 raise dexy.exceptions.UserFeedback(msg % args)
 
+        if not 'template' in settings_overrides:
+            settings_overrides['template'] = default_template(writer_name)
+
         try:
             core.publish_file(
                     source_path = self.input_data.storage.data_file(),
                     destination_path = self.output_data.storage.data_file(),
-                    writer_name=self.docutils_writer_name(),
+                    writer_name=writer_name,
                     settings_overrides=settings_overrides
                     )
         except ValueError as e:
@@ -103,9 +117,15 @@ class RstBody(RestructuredTextBase):
         settings_overrides = {}
         settings_overrides['warning_stream'] = warning_stream
 
+        writer_name = self.docutils_writer_name()
+        self.log_debug("about to call publish_parts with writer '%s'" % writer_name)
+
+        if not 'template' in settings_overrides:
+            settings_overrides['template'] = default_template(writer_name)
+
         parts = core.publish_parts(
                 input_text,
-                writer_name=self.docutils_writer_name(),
+                writer_name=writer_name,
                 settings_overrides=settings_overrides
                 )
         if parts.has_key('title') and parts['title']:
@@ -129,9 +149,14 @@ class RstMeta(RestructuredTextBase):
         settings_overrides = {}
         settings_overrides['warning_stream'] = warning_stream
 
+        writer_name = 'html'
+
+        if not 'template' in settings_overrides:
+            settings_overrides['template'] = default_template(writer_name)
+
         parts = core.publish_parts(
                 input_text,
-                writer_name='html',
+                writer_name=writer_name,
                 settings_overrides=settings_overrides
                 )
 
@@ -165,9 +190,14 @@ class RstDocParts(DexyFilter):
         settings_overrides = {}
         settings_overrides['warning_stream'] = warning_stream
 
+        writer_name = self.setting('writer')
+
+        if not 'template' in settings_overrides:
+            settings_overrides['template'] = default_template(writer_name)
+
         parts = core.publish_parts(
                 input_text,
-                writer_name = self.setting('writer'),
+                writer_name=writer_name,
                 settings_overrides=settings_overrides
                 )
 
