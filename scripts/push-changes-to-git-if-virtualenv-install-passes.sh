@@ -7,6 +7,8 @@ echo "Running test script in $TEST_DIR"
 mkdir -p $TEST_DIR
 pushd $TEST_DIR
 
+# TODO test both python 2.6 and 2.7
+#virtualenv --python=python2.6 testenv
 virtualenv testenv
 source testenv/bin/activate
 
@@ -26,8 +28,9 @@ cd dexy-filter-examples
 pip install .
 cd ..
 
-cd dexy
-nosetests
+git clone ~/dev/dexy-viewer $TEST_DIR/dexy-viewer
+cd dexy-viewer
+pip install .
 cd ..
 
 dexy filters
@@ -46,6 +49,14 @@ do
     cd ..
     rm -rf template-gen
 done
+
+cd dexy
+pip install mock
+pip install nose
+nosetests
+cd ..
+
+deactivate
 
 cd dexy
 git push github develop
