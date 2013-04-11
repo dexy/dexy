@@ -37,7 +37,6 @@ class CasperJsSvg2PdfFilter(SubprocessFilter):
         """ % args
 
     def custom_populate_workspace(self):
-        print "running custom_populate_workspace"
         width = self.setting('width')
         height = self.setting('height')
         js = self.script_js(width, height)
@@ -69,7 +68,6 @@ class PhantomJsRenderSubprocessFilter(SubprocessFilter):
             }
 
     def custom_populate_workspace(self):
-        print "running custom_populate_workspace"
         width = self.setting('width')
         height = self.setting('height')
 
