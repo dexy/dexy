@@ -3,15 +3,16 @@ from docutils import core
 import StringIO
 import dexy.exceptions
 import docutils.writers
-import importlib
 import os
+import sys
 
 def default_template(writer_name):
     """
     Set the default template correctly, in case there has been a change in working dir.
     """
     writer_class = docutils.writers.get_writer_class(writer_name)
-    mod = importlib.import_module(writer_class.__module__)
+    __import__(writer_class.__module__)
+    mod = sys.modules[writer_class.__module__]
     f = mod.__file__
     return os.path.abspath(os.path.join(os.path.dirname(f), writer_class.default_template))
 
