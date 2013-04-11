@@ -11,6 +11,11 @@ import random
 
 LOGLEVEL = "INFO"
 
+def assert_node_state(node, expected, additional_info=''):
+    msg = "'%s' not in state '%s',  in state '%s'. %s"
+    msgargs = (node.key, expected, node.state, additional_info)
+    assert node.state == expected, msg % msgargs
+
 def test_example_project():
     with tempdir():
         def run_from_cache_a_bunch_of_times():
@@ -22,10 +27,7 @@ def test_example_project():
                 wrapper.run_from_new()
     
                 for node in wrapper.nodes.values():
-                    expected = 'consolidated'
-                    msg = "'%s' not in state '%s' in iter %s, in state '%s'"
-                    msgargs = (node.key, expected, i, node.state)
-                    assert node.state == expected, msg % msgargs
+                    assert_node_state(node, 'consolidated', "In iter %s" % i)
 
                 wrapper.report()
 
@@ -40,7 +42,7 @@ def test_example_project():
         wrapper.report()
 
         for node in wrapper.nodes.values():
-            assert node.state == 'ran'
+            assert_node_state(node, 'ran')
 
         run_from_cache_a_bunch_of_times()
 
@@ -67,10 +69,10 @@ def test_example_project():
 
         for node in wrapper.nodes.values():
             if node.key in unaffected_keys:
-                assert node.state == 'consolidated'
+                assert_node_state(node, 'consolidated')
             else:
                 assert node.key in affected_keys, node.key
-                assert node.state == 'ran'
+                assert_node_state(node, 'ran')
 
         run_from_cache_a_bunch_of_times()
 
@@ -98,10 +100,10 @@ def test_example_project():
 
         for node in wrapper.nodes.values():
             if node.key in unaffected_keys:
-                assert node.state == 'consolidated'
+                assert_node_state(node, 'consolidated')
             else:
                 assert node.key in affected_keys, node.key
-                assert node.state == 'ran'
+                assert_node_state(node, 'ran')
 
         wrapper.remove_dexy_dirs()
         wrapper.remove_reports_dirs(keep_empty_dir=True)
