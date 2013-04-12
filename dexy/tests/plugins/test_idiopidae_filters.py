@@ -3,6 +3,7 @@ from dexy.tests.utils import wrap
 
 def test_idio_invalid_input():
     with wrap() as wrapper:
+        wrapper.debug = False
         doc = Doc("hello.py|idio",
                 wrapper, [],
                 contents=" ")
@@ -11,6 +12,7 @@ def test_idio_invalid_input():
 
 def test_idio_bad_file_extension():
     with wrap() as wrapper:
+        wrapper.debug = False
         doc = Doc("hello.xyz|idio", wrapper, [], contents=" ")
         wrapper.run_docs(doc)
         assert wrapper.state == 'error'

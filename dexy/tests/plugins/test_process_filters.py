@@ -93,6 +93,7 @@ def test_custom_env_in_args():
 
 def test_nonzero_exit():
     with wrap() as wrapper:
+        wrapper.debug = False
         node = Doc("example.py|py",
                 wrapper,
                 [],

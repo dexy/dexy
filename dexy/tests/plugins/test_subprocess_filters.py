@@ -20,14 +20,7 @@ while True:
 """
 
 def test_scalac():
-    with wrap() as wrapper:
-        doc = Doc("HelloWorld.scala|scala",
-                wrapper,
-                [],
-                contents = SCALA
-                )
-        wrapper.run_docs(doc)
-        assert str(doc.output_data()) == "Hello, world!\n" 
+    assert_output('scala', SCALA, "Hello, world!\n", ext=".scala", basename="HelloWorld")
 
 def test_python_input():
     with wrap() as wrapper:
@@ -48,6 +41,7 @@ line 2 has 4 chars
 """
 
 def test_pandoc_filter_odt():
+    # TODO Why isn't this checking for inactive filters?
     with wrap() as wrapper:
         node = Doc("hello.md|pandoc",
                 wrapper,

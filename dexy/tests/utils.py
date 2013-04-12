@@ -5,7 +5,6 @@ from dexy.utils import char_diff
 from dexy.utils import tempdir
 from mock import MagicMock
 from nose.exc import SkipTest
-import dexy.wrapper
 import os
 import re
 import sys
@@ -15,6 +14,10 @@ import dexy.filters
 import dexy.reporters
 
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
+
+def make_wrapper():
+    from dexy.wrapper import Wrapper
+    return Wrapper(log_level = 'DEBUG', debug=True)
 
 def create_ordered_dict_from_dict(d):
     od = OrderedDict()
@@ -28,9 +31,9 @@ class wrap(tempdir):
     """
     def __enter__(self):
         self.make_temp_dir()
-        wrapper = dexy.wrapper.Wrapper()
+        wrapper = make_wrapper()
         wrapper.create_dexy_dirs()
-        wrapper = dexy.wrapper.Wrapper(log_level = 'DEBUG')
+        wrapper = make_wrapper()
         wrapper.to_valid()
         return wrapper
 
@@ -45,16 +48,17 @@ class runfilter(wrap):
     """
     Create a temporary directory, initialize a doc and a wrapper, and run the doc.
     """
-    def __init__(self, filter_alias, doc_contents, ext=".txt"):
+    def __init__(self, filter_alias, doc_contents, ext=".txt", basename=None):
         self.filter_alias = filter_alias
         self.doc_contents = doc_contents
         self.ext = ext
+        self.basename = basename
 
     def __enter__(self):
         self.make_temp_dir()
 
         def run_example(doc_key, doc_contents):
-            wrapper = dexy.wrapper.Wrapper(log_level = 'DEBUG')
+            wrapper = make_wrapper()
             doc = Doc(
                     doc_key,
                     wrapper,
@@ -65,10 +69,15 @@ class runfilter(wrap):
             return doc
 
         try:
-            wrapper = dexy.wrapper.Wrapper()
+            wrapper = make_wrapper()
             wrapper.create_dexy_dirs()
 
-            doc_key = "subdir/example%s|%s" % (self.ext, self.filter_alias)
+            if self.basename:
+                filename = "%s%s" % (self.basename, self.ext)
+            else:
+                filename = "example%s" % self.ext
+
+            doc_key = "subdir/%s|%s" % (filename, self.filter_alias)
 
             doc = run_example(doc_key, self.doc_contents)
 
@@ -77,7 +86,7 @@ class runfilter(wrap):
 
         return doc
 
-def assert_output(filter_alias, doc_contents, expected_output, ext=".txt"):
+def assert_output(filter_alias, doc_contents, expected_output, ext=".txt", basename=None):
     if not ext.startswith("."):
         raise Exception("ext arg to assert_in_output must start with dot")
 
@@ -86,7 +95,7 @@ def assert_output(filter_alias, doc_contents, expected_output, ext=".txt"):
     if isinstance(doc_contents, dict):
         doc_contents = create_ordered_dict_from_dict(doc_contents)
 
-    with runfilter(filter_alias, doc_contents, ext=ext) as doc:
+    with runfilter(filter_alias, doc_contents, ext=ext, basename=basename) as doc:
         if expected_output:
             try:
                 assert doc.output_data().data() == expected_output

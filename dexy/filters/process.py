@@ -88,8 +88,11 @@ class SubprocessFilter(Filter):
         self.output_data.clear_cache()
 
     def handle_subprocess_proc_return(self, command, exitcode, stderr):
+        self.log_debug("exit code is '%s'" % exitcode)
         if exitcode is None:
             raise dexy.exceptions.InternalDexyProblem("no return code, proc not finished!")
+        elif exitcode == 127:
+            raise dexy.exceptions.InactiveFilter(self)
         elif exitcode != 0 and self.setting('check-return-code'):
             if self.ignore_nonzero_exit():
                 self.log_warn("Nonzero exit status %s" % exitcode)
@@ -342,8 +345,7 @@ class SubprocessCompileFilter(SubprocessFilter):
         proc, stdout = self.run_command(command, env)
 
         # This tests exitcode from the compiled script.
-        if self.setting('check-return-code'):
-            self.handle_subprocess_proc_return(command, proc.returncode, stdout)
+        self.handle_subprocess_proc_return(command, proc.returncode, stdout)
 
         self.output_data.set_data(stdout)
 
@@ -374,14 +376,12 @@ class SubprocessInputFilter(SubprocessFilter):
             doc = inputs[0]
             for section_name, section_text in doc.output_data().as_sectioned().iteritems():
                 proc, stdout = self.run_command(command, self.setup_env(), section_text)
-                if self.setting('check-return-code'):
-                    self.handle_subprocess_proc_return(command, proc.returncode, stdout)
+                self.handle_subprocess_proc_return(command, proc.returncode, stdout)
                 output[section_name] = stdout
         else:
             for doc in inputs:
                 proc, stdout = self.run_command(command, self.setup_env(), unicode(doc.output_data()))
-                if self.setting('check-return-code'):
-                    self.handle_subprocess_proc_return(command, proc.returncode, stdout)
+                self.handle_subprocess_proc_return(command, proc.returncode, stdout)
                 output[doc.key] = stdout
 
         self.output_data.set_data(output)
@@ -412,8 +412,7 @@ class SubprocessInputFileFilter(SubprocessFilter):
         for doc in self.doc.walk_input_docs():
             command = self.command_string_for_input(doc)
             proc, stdout = self.run_command(command, self.setup_env())
-            if self.setting('check-return-code'):
-                self.handle_subprocess_proc_return(command, proc.returncode, stdout)
+            self.handle_subprocess_proc_return(command, proc.returncode, stdout)
             output[doc.key] = stdout
 
         self.output_data.set_data(output)
@@ -444,14 +443,12 @@ class SubprocessCompileInputFilter(SubprocessCompileFilter):
             doc = inputs[0]
             for section_name, section_text in doc.output_data().as_sectioned().iteritems():
                 proc, stdout = self.run_command(command, self.setup_env(), section_text)
-                if self.setting('check-return-code'):
-                    self.handle_subprocess_proc_return(command, proc.returncode, stdout)
+                self.handle_subprocess_proc_return(command, proc.returncode, stdout)
                 output[section_name] = stdout
         else:
             for doc in inputs:
                 proc, stdout = self.run_command(command, self.setup_env(), doc.output_data().as_text())
-                if self.setting('check-return-code'):
-                    self.handle_subprocess_proc_return(command, proc.returncode, stdout)
+                self.handle_subprocess_proc_return(command, proc.returncode, stdout)
                 output[doc.key] = stdout
 
         self.output_data.set_data(output)

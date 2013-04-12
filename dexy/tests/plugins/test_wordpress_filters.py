@@ -55,6 +55,7 @@ def test_api_url_without_php_ending_with_trailing_slash():
 
 def test_wordpress_without_doc_config_file():
     with wrap() as wrapper:
+        wrapper.debug = False
         doc = Doc("hello.txt|wp",
                 contents = "hello, this is a blog post",
                 wrapper=wrapper

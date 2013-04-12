@@ -12,6 +12,7 @@ this is 100 mixed text and numbers
 
 def test_regetron_filter():
     with wrap() as wrapper:
+        wrapper.debug = False
         node = Doc("example.regex|regetron",
                 wrapper,
                 [
@@ -28,14 +29,15 @@ def test_regetron_filter():
                 )
 
         wrapper.run_docs(node)
-
-        assert node.output_data()['input1.txt'] == """\
+        
+        if not wrapper.state == 'error':
+            assert node.output_data()['input1.txt'] == """\
 > ^[a-z\s]+$
 0000: hello
 > 
 
 """
-        assert node.output_data()['input2.txt'] == """\
+            assert node.output_data()['input2.txt'] == """\
 > ^[a-z\s]+$
 0000: this is some text
 0002: nine

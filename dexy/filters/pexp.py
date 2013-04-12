@@ -1,6 +1,7 @@
 from dexy.common import OrderedDict
 from dexy.exceptions import InternalDexyProblem
 from dexy.exceptions import UserFeedback
+from dexy.exceptions import InactiveFilter
 from dexy.filters.process import SubprocessFilter
 import re
 
@@ -129,10 +130,16 @@ class PexpectReplFilter(SubprocessFilter):
         self.log_debug("about to spawn new process '%s' in '%s'" % (executable, wd))
 
         # Spawn the process
-        proc = pexpect.spawn(
-                executable,
-                cwd=wd,
-                env=env)
+        try:
+            proc = pexpect.spawn(
+                    executable,
+                    cwd=wd,
+                    env=env)
+        except pexpect.ExceptionPexpect as e:
+            if "The command was not found" in str(e):
+                raise InactiveFilter(self)
+            else:
+                raise e
 
         self.log_debug("Capturing initial prompt...")
         initial_prompt = self.setting('initial-prompt')

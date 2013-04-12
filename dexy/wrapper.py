@@ -213,14 +213,20 @@ class Wrapper(object):
             print e.message
             self.error = e
             self.transition('error')
+            if self.debug:
+                raise e
         except InternalDexyProblem as e:
             print e.message
             self.error = e
             self.transition('error')
+            if self.debug:
+                raise e
         except Exception as e:
             print e
             self.error = e
             self.transition('error')
+            if self.debug:
+                raise e
         else:
             self.transition('ran')
             self.batch.end_time = time.time()

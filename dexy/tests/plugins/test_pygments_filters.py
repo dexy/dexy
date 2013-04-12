@@ -24,6 +24,7 @@ def test_gif():
 
 def test_pyg4rst_bad_file_extension():
     with wrap() as wrapper:
+        wrapper.debug = False
         doc = Doc(
                 "hello.xyz|pyg4rst",
                 wrapper,
@@ -36,6 +37,7 @@ def test_pyg4rst_bad_file_extension():
 
 def test_pygments_bad_file_extension():
     with wrap() as wrapper:
+        wrapper.debug = False
         doc = Doc(
                 "hello.xyz|pyg",
                 wrapper,

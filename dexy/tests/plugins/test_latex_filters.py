@@ -1,5 +1,7 @@
 from dexy.tests.utils import runfilter
+from dexy.tests.utils import wrap
 import dexy.exceptions
+from dexy.doc import Doc
 
 def test_latex():
     with runfilter('latex', LATEX) as doc:
@@ -22,8 +24,15 @@ def test_xetex():
         assert doc.output_data().is_cached()
 
 def test_broken_latex():
-    with runfilter('latex', BROKEN_LATEX):
-        pass
+    with wrap() as wrapper:
+        wrapper.debug = False
+        node = Doc("example.tex|latex",
+                wrapper,
+                [],
+                contents = BROKEN_LATEX
+                )
+        wrapper.run_docs(node)
+        assert wrapper.state == 'error'
 
 TIKZ = """\
 \\tikz \draw (0,0) -- (1,1)

@@ -182,7 +182,7 @@ class Generic(Data):
                     this = False
             self._data = self.storage.read_data(this)
         except IOError:
-            msg = "no data in file '%s' for %s (wrapper state %s)"
+            msg = "no data in file '%s' for %s (wrapper state '%s')"
             msgargs = (self.storage.data_file(), self.key, self.wrapper.state)
             raise dexy.exceptions.InternalDexyProblem(msg % msgargs)
 

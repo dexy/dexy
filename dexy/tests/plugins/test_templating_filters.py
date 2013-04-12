@@ -38,6 +38,7 @@ def test_jinja_kv():
 
 def test_jinja_sectioned_invalid_section():
     with wrap() as wrapper:
+        wrapper.debug = False
         doc = Doc("hello.txt|jinja",
                 wrapper,
                 [
@@ -82,6 +83,7 @@ def test_jinja_json_convert_to_dict():
 
 def test_jinja_json():
     with wrap() as wrapper:
+        wrapper.debug = False
         node = Doc("hello.txt|jinja",
                 wrapper,
                 [
@@ -96,6 +98,7 @@ def test_jinja_json():
 
 def test_jinja_undefined():
     with wrap() as wrapper:
+        wrapper.debug = False
         node = Doc("template.txt|jinja",
                 wrapper,
                 [],
@@ -106,6 +109,7 @@ def test_jinja_undefined():
 
 def test_jinja_syntax_error():
     with wrap() as wrapper:
+        wrapper.debug = False
         node = Doc("template.txt|jinja",
                 wrapper,
                 [],

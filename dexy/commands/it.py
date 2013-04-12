@@ -77,7 +77,7 @@ def dexy_command(
         artifactsdir=defaults['artifacts_dir'], # location of directory in which to store artifacts
         conf=defaults['config_file'], # name to use for configuration file
         configs=defaults['configs'], # list of doc config files to parse
-        debug=defaults['debug'], # Whether to run dexy in 'debug' mode. Will run with assertions and log extra information.
+        debug=defaults['debug'], # Prints stack traces, other debug stuff.
         dryrun=defaults['dry_run'], # if True, just parse config and print batch info, don't run dexy
         encoding=defaults['encoding'], # Default encoding. Set to 'chardet' to use chardet auto detection.
         exclude=defaults['exclude'], # comma-separated list of directory names to exclude from dexy processing
