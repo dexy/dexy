@@ -26,7 +26,7 @@ class PexpectReplFilter(SubprocessFilter):
             'ps2' : ('PS2', None),
             'ps3' : ('PS3', None),
             'ps4' : ('PS4', None),
-            'term' : ('TERM', 'NONE'),
+            'term' : ('TERM', 'dumb'),
             'initial-prompt' : ("The initial prompt the REPL will display.", None),
             'prompt' : ("Single prompt to match exactly.", None),
             'prompts' : ("List of possible prompts to match exactly.", ['>>>', '...']),
