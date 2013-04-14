@@ -1,4 +1,3 @@
-from dexy.utils import s
 from dexy.version import DEXY_VERSION
 import dexy.utils
 import platform
@@ -14,6 +13,7 @@ class NoFilterOutput(UserFeedback):
 
 class InactiveFilter(UserFeedback):
     def __init__(self, filter_alias_or_instance):
+        from dexy.utils import s
         if isinstance(filter_alias_or_instance, basestring):
             msg = """You are trying to use a filter '%s' which isn't active.
             Some additional software may need to be installed first."""

@@ -4,6 +4,7 @@ import dexy.filters.boto
 import dexy.filters.deprecated
 import dexy.filters.example
 import dexy.filters.fluid_html
+import dexy.filters.git
 import dexy.filters.idio
 import dexy.filters.java
 import dexy.filters.latex

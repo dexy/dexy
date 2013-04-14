@@ -256,7 +256,7 @@ class Wrapper(object):
 
         # do a custom walk() method
         self.roots = docs
-        self.nodes = {}
+        self.nodes = dict((node.key_with_class(), node) for node in self.roots)
         self.filemap = self.map_files()
         self.batch = dexy.batch.Batch(self)
         self.transition('walked')
