@@ -143,15 +143,15 @@ class Wrapper(object):
     def work_cache_dir(self):
         return os.path.join(self.artifacts_dir, "work")
 
+    def trash_dir(self):
+        return os.path.join(self.project_root, ".trash")
+
     def create_cache_dir_with_sub_dirs(self, cache_dir):
         os.mkdir(cache_dir)
         hexes = ['0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f']
         for c in hexes:
             for d in hexes:
                 os.mkdir(os.path.join(cache_dir, "%s%s" % (c,d)))
-
-    def trash_dir(self):
-        return os.path.join(self.project_root, ".trash")
 
     def trash(self, d, d_exists=None):
         """
@@ -172,14 +172,6 @@ class Wrapper(object):
             shutil.move(d, move_to)
 
     def empty_trash(self):
-        self.unforked_empty_trash()
-
-    def forked_empty_trash(self):
-        proc = subprocess.Popen(['rm', '-rf', self.trash_dir()])
-        if hasattr(self, 'log'):
-            self.log.info("Removing .trash directory using subprocess, pid is %s" % proc.pid)
-
-    def unforked_empty_trash(self):
         try:
             shutil.rmtree(self.trash_dir())
         except OSError:

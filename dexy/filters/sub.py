@@ -1,13 +1,55 @@
 from dexy.common import OrderedDict
-from dexy.filters.process import SubprocessInputFilter
 from dexy.filters.process import SubprocessExtToFormatFilter
 from dexy.filters.process import SubprocessFilter
 from dexy.filters.process import SubprocessFormatFlagFilter
+from dexy.filters.process import SubprocessInputFilter
 from dexy.filters.process import SubprocessStdoutFilter
+from dexy.utils import file_exists
 import dexy.exceptions
 import json
 import os
 import shutil
+
+class PdfToCairo(SubprocessFormatFlagFilter):
+    """
+    Converts a PDF file to a SVG image (or other format) using pdftocairo from the poppler library
+    """
+    aliases = ['pdftocairo', 'pdf2cairo', 'pdf2svg', 'pdftosvg']
+    _settings = {
+        'command-string': '%(prog)s %(format)s %(args)s "%(script_file)s" "%(output_file)s"',
+        'executable': 'pdftocairo',
+        'input-extensions' : ['.pdf'],
+        'output-extensions' : ['.svg', '.png', '.jpg', '.ps', '.eps', '.pdf'],
+        'ext-to-format' : {
+            '.png' : '-png',
+            '.jpg' : '-jpeg',
+            '.ps' : '-ps',
+            '.eps' : '-eps',
+            '.pdf' : '-pdf',
+            '.svg' : '-svg'
+            }
+        }
+
+    def process(self):
+        command = self.command_string()
+        proc, stdout = self.run_command(command, self.setup_env())
+        self.handle_subprocess_proc_return(command, proc.returncode, stdout)
+
+        if not self.output_data.is_cached():
+            # Find the first page
+            for pagenum in ('1', '01', '001', '0001',):
+                basename = os.path.join(self.workspace(), self.output_data.name)
+                first_page_file = "%s-%s.png" % (basename, pagenum)
+                if file_exists(first_page_file):
+                    print "Copy from '%s'" % first_page_file
+                    self.output_data.copy_from_file(first_page_file)
+                    break
+
+        assert self.output_data.is_cached()
+
+        if self.setting('add-new-files'):
+            self.log_debug("adding new files found in %s for %s" % (self.workspace(), self.key))
+            self.add_new_files()
 
 class Pdf2ImgSubprocessFilter(SubprocessExtToFormatFilter):
     """
