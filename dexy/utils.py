@@ -9,8 +9,24 @@ import posixpath
 import re
 import shutil
 import tempfile
-import yaml
 import time
+import yaml
+
+is_windows = platform.system() in ('Windows',)
+
+def copy_or_link(data, destination, use_links=True, read_only_links=True):
+    """
+    Copies or makes a hard link. Will copy if on windows or if use_links is
+    False. Hard links are set to read-only if read_only_links is True.
+    """
+    if is_windows or not use_links:
+        data.output_to_file(destination)
+    else:
+        abs_source = os.path.abspath(data.storage.data_file())
+        abs_dest = os.path.abspath(destination)
+        os.link(abs_source, abs_dest)
+        import stat
+        os.chmod(destination, stat.S_IXUSR | stat.S_IRUSR)
 
 defaults = {
     'artifacts_dir' : '.cache',
@@ -84,8 +100,6 @@ def pickle_lib(wrapper):
         msg = "'%s' is not a valid value for pickle" % wrapper.pickle
         raise dexy.exceptions.UserFeedback(msg)
 
-def is_windows():
-    return platform.system() in ('Windows',)
 
 def logging_log_level(log_level):
     try:

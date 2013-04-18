@@ -1,4 +1,5 @@
 from dexy.utils import os_to_posix
+from dexy.utils import copy_or_link
 import dexy.doc
 import dexy.exceptions
 import dexy.plugin
@@ -355,7 +356,8 @@ class Filter(dexy.plugin.Plugin):
             file_dest = os.path.join(self.workspace(), filepath)
 
             try:
-                data.output_to_file(file_dest)
+                copy_or_link(data, file_dest)
+
             except Exception as e:
                 self.log_warn("problem populating working dir with input %s" % data.key)
                 self.log_warn(e)
