@@ -23,8 +23,9 @@ class FluidHtml(DexyFilter):
             self.log_debug("custom js is %s" % js)
 
         args = {
-                'pygments_css' : self.PYGMENTS_CSS,
-                'css_framework' : self.CSS_FRAMEWORK,
+                'pygments_css' : PYGMENTS_CSS,
+                'css_framework' : CSS_FRAMEWORK,
+                'buttons' : CSS_BUTTONS,
                 'custom_css' : css,
                 'custom_js' : js,
                 'content' : input_text
@@ -35,6 +36,7 @@ class FluidHtml(DexyFilter):
         <meta http-equiv="Content-type" content="text/html;charset=UTF-8" />
         <style type="text/css">
             %(css_framework)s
+            %(buttons)s
             %(pygments_css)s
             %(custom_css)s
         </style>
@@ -50,7 +52,10 @@ class FluidHtml(DexyFilter):
 </html>
 """ % args
 
-    PYGMENTS_CSS = """
+
+
+
+PYGMENTS_CSS = """
 .highlight .hll { background-color: #ffffcc }
 .highlight .c { color: #888888 } /* Comment */
 .highlight .err { color: #a61717; background-color: #e3d2d2 } /* Error */
@@ -113,7 +118,7 @@ class FluidHtml(DexyFilter):
 .highlight .il { color: #0000DD; font-weight: bold } /* Literal.Number.Integer.Long */
 """
 
-    CSS_FRAMEWORK = """
+CSS_FRAMEWORK = """
 /*
     Fluid Baseline Grid v1.0.0
     Designed & Built by Josh Hopkins and 40 Horse, http://40horse.com
@@ -313,5 +318,114 @@ Change widths as necessary
   @page {margin: 0.5cm}
   p, h2, h3 {orphans: 3; widows: 3}
   h2, h3{page-break-after: avoid}
+}
+"""
+
+CSS_BUTTONS = """
+/*
+ * Copyright (c) 2013 Thibaut Courouble
+ * http://www.cssflow.com
+ *
+ * Licensed under the MIT License:
+ * http://www.opensource.org/licenses/mit-license.php
+ */
+
+.button {
+  font: 10px/18px 'Lucida Grande', Arial, sans-serif;
+  display: inline-block;
+  vertical-align: top;
+  position: relative;
+  overflow: hidden;
+  min-width: 96px;
+  line-height: 30px;
+  padding: 0 24px;
+  font-size: 14px;
+  color: white;
+  text-align: center;
+  text-decoration: none;
+  text-shadow: 0 1px #154c86;
+  background-color: #247edd;
+  background-clip: padding-box;
+  border: 1px solid;
+  border-color: #1c65b2 #18589c #18589c;
+  border-radius: 4px;
+  -webkit-box-shadow: inset 0 1px rgba(255, 255, 255, 0.4), 0 1px 2px rgba(0, 0, 0, 0.2);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.4), 0 1px 2px rgba(0, 0, 0, 0.2);
+  background-image: -webkit-linear-gradient(top, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.12) 51%, rgba(0, 0, 0, 0.04));
+  background-image: -moz-linear-gradient(top, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.12) 51%, rgba(0, 0, 0, 0.04));
+  background-image: -o-linear-gradient(top, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.12) 51%, rgba(0, 0, 0, 0.04));
+  background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.12) 51%, rgba(0, 0, 0, 0.04));
+}
+.button:before {
+  content: '';
+  position: absolute;
+  top: -25%;
+  bottom: -25%;
+  left: -20%;
+  right: -20%;
+  border-radius: 50%;
+  background: transparent;
+  -webkit-box-shadow: inset 0 0 38px rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0 0 38px rgba(255, 255, 255, 0.5);
+}
+.button:hover {
+  background-color: #1a74d3;
+  text-decoration: none;
+}
+.button:active {
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 -1px #154c86;
+  background: #1f71c8;
+  border-color: #113f70 #154c86 #1c65b2;
+  -webkit-box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px rgba(255, 255, 255, 0.4);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px rgba(255, 255, 255, 0.4);
+  background-image: -webkit-linear-gradient(top, #1a5da5, #3a8be0);
+  background-image: -moz-linear-gradient(top, #1a5da5, #3a8be0);
+  background-image: -o-linear-gradient(top, #1a5da5, #3a8be0);
+  background-image: linear-gradient(to bottom, #1a5da5, #3a8be0);
+}
+.button:active:before {
+  top: -50%;
+  bottom: -125%;
+  left: -15%;
+  right: -15%;
+  -webkit-box-shadow: inset 0 0 96px rgba(0, 0, 0, 0.2);
+  box-shadow: inset 0 0 96px rgba(0, 0, 0, 0.2);
+}
+
+.button-green {
+  text-shadow: 0 1px #0d4d09;
+  background-color: #1ca913;
+  border-color: #147b0e #11640b #11640b;
+}
+.button-green:hover {
+  background-color: #159b0d;
+}
+.button-green:active {
+  text-shadow: 0 -1px #0d4d09;
+  background: #189210;
+  border-color: #093606 #0d4d09 #147b0e;
+  background-image: -webkit-linear-gradient(top, #126d0c, #20c016);
+  background-image: -moz-linear-gradient(top, #126d0c, #20c016);
+  background-image: -o-linear-gradient(top, #126d0c, #20c016);
+  background-image: linear-gradient(to bottom, #126d0c, #20c016);
+}
+
+.button-red {
+  text-shadow: 0 1px #72100d;
+  background-color: #cd1d18;
+  border-color: #9f1713 #891310 #891310;
+}
+.button-red:hover {
+  background-color: #c01511;
+}
+.button-red:active {
+  text-shadow: 0 -1px #72100d;
+  background: #b61a15;
+  border-color: #5b0d0b #72100d #9f1713;
+  background-image: -webkit-linear-gradient(top, #921511, #e4201b);
+  background-image: -moz-linear-gradient(top, #921511, #e4201b);
+  background-image: -o-linear-gradient(top, #921511, #e4201b);
+  background-image: linear-gradient(to bottom, #921511, #e4201b);
 }
 """
