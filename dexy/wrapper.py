@@ -13,7 +13,6 @@ import logging.handlers
 import os
 import posixpath
 import shutil
-import subprocess
 import time
 import uuid
 
@@ -174,8 +173,9 @@ class Wrapper(object):
     def empty_trash(self):
         try:
             shutil.rmtree(self.trash_dir())
-        except OSError:
-            pass
+        except OSError as e:
+            if not "No such file or directory" in str(e):
+                raise e
 
     def reset_work_cache_dir(self):
         # remove work/ dir leftover from previous run (if any) and create a new

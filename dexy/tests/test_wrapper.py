@@ -6,19 +6,15 @@ from dexy.parsers.doc import Yaml
 from dexy.tests.utils import capture_stdout
 from dexy.tests.utils import tempdir
 from dexy.tests.utils import wrap
-from dexy.utils import is_windows
 from dexy.wrapper import Wrapper
 from nose.exc import SkipTest
 import dexy.batch
 import os
-import time
 
 def test_remove_trash_no_trash():
     with tempdir():
         wrapper = Wrapper()
         wrapper.empty_trash()
-        wrapper.forked_empty_trash()
-        wrapper.unforked_empty_trash()
 
 def test_remove_trash_with_trash():
     with tempdir():
@@ -26,26 +22,6 @@ def test_remove_trash_with_trash():
         os.mkdir(".trash")
         assert os.path.exists(".trash")
         wrapper.empty_trash()
-        assert not os.path.exists(".trash")
-
-def test_forked_remove_trash_with_trash():
-    if is_windows():
-        raise SkipTest()
-
-    with tempdir():
-        wrapper = Wrapper()
-        os.mkdir(".trash")
-        assert os.path.exists(".trash")
-        wrapper.forked_empty_trash()
-        time.sleep(0.1)
-        assert not os.path.exists(".trash")
-
-def test_unforked_remove_trash_with_trash():
-    with tempdir():
-        wrapper = Wrapper()
-        os.mkdir(".trash")
-        assert os.path.exists(".trash")
-        wrapper.unforked_empty_trash()
         assert not os.path.exists(".trash")
 
 def test_state_new_after_init():
