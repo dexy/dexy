@@ -196,7 +196,7 @@ class WebsiteReporter(OutputReporter):
                 'nav' : self._navobj.nodes["/%s" % current_dir],
                 'root' : self._navobj.nodes["/"],
                 'navobj' : self._navobj,
-                'page_title' : self.wrapper.batch.docs["doc:%s" % data.key]['title'],
+                'page_title' : data.title(),
                 'parent_dir' : parent_dir,
                 'current_dir' : current_dir,
                 's' : data,
@@ -253,5 +253,7 @@ class WebsiteReporter(OutputReporter):
                     self.apply_and_render_template(data)
                 else:
                     self.write_canonical_data(data)
+            else:
+                self.log_debug("  not canonical output")
 
         self.log_debug("finished")

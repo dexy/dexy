@@ -1,4 +1,5 @@
 {% macro children() -%}
+{% if nav.children -%}
 <h2>Children</h2>
 <ul>
 {% for child in nav.children -%}
@@ -6,9 +7,11 @@
 <li><a href="{{ child.location }}">{{ child.index_page.title() }}</a></li>
 {% endif -%}
 {% endfor -%} </ul>
+{% endif -%}
 {% endmacro -%}
 
 {% macro pagetree() -%}
+{% if nav.children -%}
 <h2>Pagetree</h2>
 <ul class="sitemap">
 {%- for item in nav.children recursive %}
@@ -20,6 +23,7 @@
 {%- endif %}
 {%- endfor %}
 </ul>
+{%- endif %}
 {% endmacro -%}
 
 {% macro sitemap() -%}
