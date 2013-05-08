@@ -3,6 +3,7 @@ from dexy.utils import parse_yaml
 from dexy.utils import file_exists
 from dexy.utils import defaults
 import dexy.wrapper
+import os
 
 RENAME_PARAMS = {
         'artifactsdir' : 'artifacts_dir',
@@ -95,9 +96,18 @@ def config_args(modargs):
 
 def import_extra_plugins(kwargs):
     if kwargs.get('plugins'):
-        for imp in kwargs.get('plugins').split():
-            print "loading plugin", imp
-            __import__(imp)
+        for import_target in kwargs.get('plugins').split():
+            print "loading plugin", import_target
+            # TODO look for files
+            try:
+                __import__(import_target)
+            except ImportError as e:
+                # try looking for file
+                if os.path.exists(import_target):
+                    import imp
+                    imp.load_source("custom_plugins", import_target)
+                else:
+                    raise e
 
 def init_wrapper(modargs):
     kwargs = config_args(modargs)

@@ -44,6 +44,8 @@ class Batch(object):
         args.append(self.wrapper)
         data = dexy.data.Data.create_instance(*args)
         data.setup_storage()
+        if hasattr(data.storage, 'connect'):
+            data.storage.connect()
         return data
 
     def data_for_storage_key(self, storage_key, input_or_output='output'):
