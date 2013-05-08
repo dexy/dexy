@@ -25,8 +25,6 @@ def copy_or_link(data, destination, use_links=True, read_only_links=True):
         abs_source = os.path.abspath(data.storage.data_file())
         abs_dest = os.path.abspath(destination)
         os.link(abs_source, abs_dest)
-        import stat
-        os.chmod(destination, stat.S_IXUSR | stat.S_IRUSR)
 
 defaults = {
     'artifacts_dir' : '.cache',
