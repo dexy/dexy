@@ -151,11 +151,17 @@ class PluginMeta(type):
 
         class_info = (class_or_class_name, settings)
         for alias in aliases:
+            if isinstance(class_or_class_name, type):
+                modname = class_or_class_name.__module__
+                if modname.startswith("dexy_") and not modname in PluginMeta.official_dexy_plugins:
+                    prefix = modname.split(".")[0].replace("dexy_", "")
+                    alias = "%s:%s" % (prefix, alias)
             if cls.plugins.has_key(alias):
-                msg = "Trying to define alias '%s' for %s, already an alias for %s"
-                msg_args = (alias, class_or_class_name, cls.plugins[alias][0],)
-                raise dexy.exceptions.InternalDexyProblem(msg%msg_args)
-            cls.plugins[alias] = class_info
+                    msg = "Trying to define alias '%s' for %s, already an alias for %s"
+                    msg_args = (alias, class_or_class_name, cls.plugins[alias][0],)
+                    print msg%msg_args
+            else:
+                cls.plugins[alias] = class_info
 
         if hasattr(klass, '_other_class_settings') and klass._other_class_settings:
             PluginMeta._store_other_class_settings.update(klass._other_class_settings)
