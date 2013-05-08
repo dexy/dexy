@@ -179,7 +179,11 @@ class Generic(Data):
                 elif self.wrapper.state == 'running':
                     this = True
                 else:
-                    this = False
+                    # Look in both places
+                    if os.path.exists(self.storage.data_file(True)):
+                        this = True
+                    else:
+                        this = False
             self._data = self.storage.read_data(this)
         except IOError:
             msg = "no data in file '%s' for %s (wrapper state '%s')"
