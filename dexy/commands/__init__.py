@@ -33,6 +33,10 @@ from dexy.commands.templates import gen_command
 from dexy.commands.templates import template_command
 from dexy.commands.templates import templates_command
 
+from dexy.commands.watch import AVAILABLE as WATCH_COMMAND_AVAILABLE
+if WATCH_COMMAND_AVAILABLE:
+    from dexy.commands.watch import watch_command
+
 DEFAULT_COMMAND = 'dexy'
 MOD = sys.modules[__name__]
 PROG = 'dexy'
