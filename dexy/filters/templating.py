@@ -67,7 +67,9 @@ class JinjaFilter(TemplateFilter):
             'comment-end-string' : ("Tag to indicate the start of a comment.", "#}"),
             'changetags' : ("Automatically change from { to < based tags for .tex and .wiki files.", True),
             'jinja-path' : ("List of additional directories to pass to jinja loader.", []),
+            'include-in-workspaces' : [".jinja"],
             }
+
     TEX_TAGS = {
             'block_start_string': '<%',
             'block_end_string': '%>',
@@ -79,7 +81,7 @@ class JinjaFilter(TemplateFilter):
 
     def setup_jinja_env(self, loader=None):
         env_attrs = {}
-        skip_settings = ('changetags', 'jinja-path',)
+        skip_settings = ('changetags', 'jinja-path', 'include-in-workspaces',)
 
         for k, v in self.setting_values().iteritems():
             underscore_k = k.replace("-", "_")
