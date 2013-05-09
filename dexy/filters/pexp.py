@@ -4,6 +4,7 @@ from dexy.exceptions import UserFeedback
 from dexy.exceptions import InactiveFilter
 from dexy.filters.process import SubprocessFilter
 import re
+import os
 
 try:
     import pexpect
@@ -125,7 +126,11 @@ class PexpectReplFilter(SubprocessFilter):
 
         self.log_debug("timeout set to '%s'" % timeout)
 
-        wd=self.parent_work_dir()
+        if self.setting('use-wd'):
+            wd = self.parent_work_dir()
+        else:
+            wd = os.getcwd()
+
         executable = self.setting('executable')
         self.log_debug("about to spawn new process '%s' in '%s'" % (executable, wd))
 

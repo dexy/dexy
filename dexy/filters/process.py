@@ -27,6 +27,7 @@ class SubprocessFilter(Filter):
             'initial-timeout' : ('', 10),
             'scriptargs' : ("Arguments to be passed to the executable.", ''),
             'timeout' : ('', 10),
+            'use-wd' : ("Whether to use a custom working directory when running filter.", True),
             'version-command': ( "Command to call to return version of installed software.", None),
             'windows-version-command': ( "Command to call on windows to return version of installed software.", None),
             'walk-working-dir' : ("Automatically register extra files that are found in working dir.", False),
@@ -236,11 +237,12 @@ class SubprocessFilter(Filter):
         return doc
 
     def run_command(self, command, env, input_text=None):
-        ws = self.workspace()
-        if os.path.exists(ws):
-            self.log_debug("already have workspace '%s'" % os.path.abspath(ws))
-        else:
-            self.populate_workspace()
+        if self.setting('use-wd'):
+            ws = self.workspace()
+            if os.path.exists(ws):
+                self.log_debug("already have workspace '%s'" % os.path.abspath(ws))
+            else:
+                self.populate_workspace()
 
         stdout = subprocess.PIPE
 
@@ -254,7 +256,11 @@ class SubprocessFilter(Filter):
         else:
             stderr = subprocess.PIPE
 
-        wd = self.parent_work_dir()
+        if self.setting('use-wd'):
+            wd = self.parent_work_dir()
+        else:
+            wd = os.getcwd()
+
         self.log_debug("about to run '%s' in '%s'" % (command, os.path.abspath(wd)))
         proc = subprocess.Popen(command, shell=True,
                                     cwd=wd,
