@@ -10,6 +10,12 @@ try:
     from watchdog.events import PatternMatchingEventHandler
     AVAILABLE = True
 except ImportError:
+    class PatternMatchingEventHandler:
+        """
+        Dummy class so everything doesn't have to be wrapped in try/catch block.
+        """
+        pass
+
     AVAILABLE = False
 
 class DexyEventHandler(PatternMatchingEventHandler):
