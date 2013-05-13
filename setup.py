@@ -34,6 +34,7 @@ setup(
         install_requires = [
             'PyYAML',
             'chardet',
+            'dexy_viewer',
             'docutils',
             'idiopidae>=0.5.4',
             'inflection>=0.0.2',

@@ -159,7 +159,6 @@ class Filter(dexy.plugin.Plugin):
         """
         import dexy.template
         templates = [dexy.template.Template.create_instance(a) for a in self.setting('examples')]
-        assert all(self.aliases[0] in t.filters_used for t in templates)
         return templates
 
     def filter_specific_settings(self):
