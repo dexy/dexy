@@ -40,6 +40,7 @@ defaults = {
     'globals' : '',
     'hashfunction' : 'md5',
     'ignore_nonzero_exit' : False,
+    'include' : '',
     'log_dir' : 'logs',
     'log_file' : 'dexy.log',
     'log_format' : "%(name)s - %(levelname)s - %(message)s",

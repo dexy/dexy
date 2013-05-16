@@ -358,8 +358,8 @@ class Filter(dexy.plugin.Plugin):
                 copy_or_link(data, file_dest)
 
             except Exception as e:
-                self.log_warn("problem populating working dir with input %s" % data.key)
-                self.log_warn(e)
+                self.log_debug("problem populating working dir with input %s" % data.key)
+                self.log_debug(e)
 
             self._files_workspace_populated_with.add(filepath)
 

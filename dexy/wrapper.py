@@ -431,7 +431,7 @@ class Wrapper(object):
 
         for dirpath, dirnames, filenames in os.walk('.'):
             for x in exclude:
-                if x in dirnames:
+                if x in dirnames and not x in self.include:
                     dirnames.remove(x)
 
             if '.nodexy' in filenames:

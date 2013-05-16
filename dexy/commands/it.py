@@ -87,6 +87,7 @@ def dexy_command(
         help=False, #nodoc
         h=False, #nodoc
         hashfunction=defaults['hashfunction'], # What hash function to use, set to crc32 or adler32 for more speed but less reliability
+        include=defaults['include'], # Locations to include which would normally be excluded.
         logdir=defaults['log_dir'], # location of directory in which to store logs
         logfile=defaults['log_file'], # name of log file
         logformat=defaults['log_format'], # format of log entries
