@@ -11,6 +11,7 @@ import dexy.exceptions
 import jinja2
 import operator
 import os
+import posixpath
 
 class Navigation(object):
     def __init__(self):
@@ -22,7 +23,10 @@ class Navigation(object):
 
     def populate_lookup_table(self, batch):
         for data in batch:
-            parent_dir = "/" + os.path.dirname(data.name)
+            if not data.output_name():
+                continue
+
+            parent_dir = "/" + os.path.dirname(data.output_name())
             if not self.lookup_table.has_key(parent_dir):
                 self.lookup_table[parent_dir] = {'docs' : []}
 
@@ -175,7 +179,7 @@ class WebsiteReporter(OutputReporter):
         else:
             content = data
             
-        current_dir = data.parent_dir()
+        current_dir = posixpath.dirname(data.output_name())
         parent_dir = os.path.split(current_dir)[0]
 
         env_data = {}
@@ -200,7 +204,7 @@ class WebsiteReporter(OutputReporter):
                 'parent_dir' : parent_dir,
                 'current_dir' : current_dir,
                 's' : data,
-                'source' : data.name,
+                'source' : data.output_name(),
                 'template_source' : template_path,
                 'wrapper' : self.wrapper,
                 'year' : datetime.now().year
@@ -209,7 +213,7 @@ class WebsiteReporter(OutputReporter):
         if self.wrapper.globals:
             env_data.update(dict_from_string(self.wrapper.globals))
 
-        fp = os.path.join(self.setting('dir'), data.name).replace(".json", ".html")
+        fp = os.path.join(self.setting('dir'), data.output_name()).replace(".json", ".html")
 
         parent_dir = os.path.dirname(fp)
         try:
@@ -238,6 +242,10 @@ class WebsiteReporter(OutputReporter):
                 continue
 
             data = doc.output_data()
+
+            if not data.output_name():
+                continue
+
             self.log_debug("processing data %s" % data.key)
             if data.is_canonical_output():
                 if data.ext == ".html":

@@ -11,23 +11,26 @@ class OutputReporter(Reporter):
             }
 
     def write_canonical_data(self, data):
-        fp = os.path.join(self.setting('dir'), data.name)
+        output_name = data.output_name()
 
-        if fp in self.locations:
-            self.log_warn("WARNING overwriting file %s" % fp)
-        else:
-            self.locations[fp] = []
-        self.locations[fp].append(data.key)
+        if output_name:
+            fp = os.path.join(self.setting('dir'), output_name)
 
-        parent_dir = os.path.dirname(fp)
-        try:
-            os.makedirs(parent_dir)
-        except os.error:
-            pass
+            if fp in self.locations:
+                self.log_warn("WARNING overwriting file %s" % fp)
+            else:
+                self.locations[fp] = []
+            self.locations[fp].append(data.key)
 
-        self.log_debug("  writing %s to %s" % (data.key, fp))
+            parent_dir = os.path.dirname(fp)
+            try:
+                os.makedirs(parent_dir)
+            except os.error:
+                pass
 
-        data.output_to_file(fp)
+            self.log_debug("  writing %s to %s" % (data.key, fp))
+
+            data.output_to_file(fp)
 
     def run(self, wrapper):
         self.wrapper=wrapper

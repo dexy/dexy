@@ -45,6 +45,7 @@ defaults = {
     'log_file' : 'dexy.log',
     'log_format' : "%(name)s - %(levelname)s - %(message)s",
     'log_level' : "INFO",
+    'output_root' : '.',
     'pickle' : 'c',
     'plugins': '',
     'profile' : False,

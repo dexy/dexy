@@ -18,7 +18,8 @@ RENAME_PARAMS = {
         'logformat' : 'log_format',
         'loglevel' : 'log_level',
         'logdir' : 'log_dir',
-        'nocache' : 'dont_use_cache'
+        'nocache' : 'dont_use_cache',
+        'outputroot' : 'output_root'
         }
 
 def default_config():

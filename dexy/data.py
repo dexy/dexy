@@ -41,6 +41,14 @@ class Data(dexy.plugin.Plugin):
 
         self.transition('new')
 
+    def output_name(self):
+        """
+        Canonical name to output to, relative to output root. Returns 'none' if
+        artifact not in output_root.
+        """
+        if self.wrapper.output_root in self.name:
+            return os.path.relpath(self.name, self.wrapper.output_root)
+
     def transition(self, new_state):
         dexy.utils.transition(self, new_state)
 
