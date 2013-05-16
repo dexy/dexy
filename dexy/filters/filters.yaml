@@ -5,6 +5,15 @@ pdftotext|pdf2text:
     input-extensions: ['.pdf']
     output-extensions: ['.txt']
 
+epstopdf|eps2pdf:
+    class: SubprocessFilter
+    executable: epstopdf
+    output: True
+    command-string: '%(prog)s "%(script_file)s"'
+    help: "Uses epstopdf to convert .eps files to .pdf"
+    input-extensions: ['.eps']
+    output-extensions: ['.pdf']
+
 stata:
     class: SubprocessFilter
     command-string: '%(prog)s -q -b do "%(script_file)s"' # TODO implement .smcl output (replace -b with -s)
