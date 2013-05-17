@@ -116,6 +116,8 @@ class SubprocessFilter(Filter):
 
         env.update(self.setting('env'))
 
+        env['DEXY_ROOT'] = os.path.abspath(".")
+
         # Add parameters in wrapper's env dict
         if self.is_part_of_script_bundle():
             for key, value in self.script_storage().iteritems():
