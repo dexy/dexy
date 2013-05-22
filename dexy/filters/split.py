@@ -9,6 +9,7 @@ class HtmlSectionsFilter(DexyFilter):
     """
     aliases = ['htmlsections']
     _settings = {
+            'examples' : ['htmlsections'],
             'output' : True,
             'output-data-type' : 'sectioned',
             'output-extensions' : ['.json']

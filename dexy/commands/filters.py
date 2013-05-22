@@ -105,15 +105,19 @@ def filters_text(
         text = []
 
         text.append("Available filters:")
-        for filtr in dexy.filter.Filter:
+        for filter_instance in dexy.filter.Filter:
             if showall:
                 skip = False
             else:
-                skip = filtr.setting('nodoc') or not filtr.aliases or (filtr.alias == '-')
+                no_aliases = not filter_instance.setting('aliases')
+                no_doc = filter_instance.setting('nodoc')
+                not_dexy = not filter_instance.__class__.__module__.startswith("dexy.")
+                exclude = filter_instance.alias in ('-')
+                skip = no_aliases or no_doc or not_dexy or exclude
 
             if (versions or showmissing or showall) and not skip:
-                if hasattr(filtr, 'version'):
-                    version = filtr.version()
+                if hasattr(filter_instance, 'version'):
+                    version = filter_instance.version()
                 else:
                     version = None
                 no_version_info_available = (version is None)
@@ -128,10 +132,10 @@ def filters_text(
                 else:
                     if not (showmissing or showall):
                         skip = True
-                    version_message = "'%s' failed, filter may not be available." % filtr.version_command()
+                    version_message = "'%s' failed, filter may not be available." % filter_instance.version_command()
 
             if not skip:
-                filter_help = "  " + filtr.alias + " : " + filtr.setting('help').splitlines()[0]
+                filter_help = "  " + filter_instance.alias + " : " + filter_instance.setting('help').splitlines()[0]
                 if (versions or showmissing or (showall and not version)):
                     filter_help += " %s" % version_message
                 text.append(filter_help)
