@@ -585,6 +585,7 @@ pycon|pyrepl:
     help: Runs python code in python's REPL.
     check-return-code: False
     executable: 'python'
+    initial-prompt : ">>>"
     input-extensions: [".txt", ".py"]
     output-extensions: [".pycon"]
     version-command: 'python --version'
