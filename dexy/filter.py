@@ -141,7 +141,7 @@ class Filter(dexy.plugin.Plugin):
                 else:
                     if set(i_output).isdisjoint(set(next_filter_accepts)):
                         msg = "Filter %s can't go after filter %s, no file extensions in common."
-                        raise dexy.exceptions.UserFeedback(msg % (self.next_filter_alias, self.filter_alias))
+                        raise dexy.exceptions.UserFeedback(msg % (self.next_filter.alias, self.alias))
 
                     for e in i_output:
                         if e in next_filter_accepts:
