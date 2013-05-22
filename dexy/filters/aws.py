@@ -22,7 +22,7 @@ class BotoUploadFilter(ApiFilter):
     "AWS" : {
         "AWS_ACCESS_KEY_ID" : "AKIA...",
         "AWS_SECRET_ACCESS_KEY" : "hY6cw...",
-        "bucket-name" : "my-unique-bucket-name"
+        "AWS_BUCKET_NAME" : "my-unique-bucket-name"
     }
 
     You can also have a .dexyapis file in the directory in which you run Dexy,
