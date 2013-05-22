@@ -124,6 +124,9 @@ class WordPressFilter(ApiFilter):
                 )
 
         for key, value in post_info.iteritems():
+            if key in ('date_modified_gmt', 'dateCreated', 'date_modified', 'date_created_gmt',):
+                post_info[key] = value.value
+
             if not key == "description":
                 self.log_debug("%s: %s" % (key, value))
 
