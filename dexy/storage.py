@@ -35,11 +35,19 @@ class GenericStorage(Storage):
     """
     aliases = ['generic']
 
-    def data_file(self, this=True):
+    def data_file(self, read=True):
         """
-        Location of data file in this/ cache dir.
+        Location of data file.
         """
-        return os.path.join(self.storage_dir(this), "%s%s" % (self.storage_key, self.ext))
+        if read:
+            if os.path.exists(self.this_data_file()):
+                return self.this_data_file()
+            elif os.path.exists(self.last_data_file()):
+                return self.last_data_file()
+            else:
+                return self.this_data_file()
+        else:
+            return self.this_data_file()
 
     def last_data_file(self):
         """
@@ -53,30 +61,21 @@ class GenericStorage(Storage):
         """
         return os.path.join(self.storage_dir(True), "%s%s" % (self.storage_key, self.ext))
 
-    def data_file_exists(self, this=True):
-        size = self.data_file_size(this)
-        return (not size is None)
+    def data_file_exists(self, this):
+        if this:
+            return os.path.exists(self.this_data_file())
+        else:
+            return os.path.exists(self.last_data_file())
 
-    def stat(self):
-        try:
-            return os.stat(self.data_file())
-        except OSError:
-            pass
-
-    def data_file_size(self, this=True):
-        if not self._size:
-            try:
-                self._size = os.path.getsize(self.data_file(this))
-            except os.error:
-                pass
-        return self._size
+    def data_file_size(self, this):
+        if this:
+            return os.path.getsize(self.this_data_file())
+        else:
+            return os.path.getsize(self.last_data_file())
 
     def storage_dir(self, this=None):
         if this is None:
-            if self.wrapper.state in ('ran'):
-                this = False
-            else:
-                this = True
+            this = (self.wrapper.state in ('walked', 'running'))
 
         if this:
             cache_dir = self.wrapper.this_cache_dir()
@@ -87,19 +86,18 @@ class GenericStorage(Storage):
 
     def write_data(self, data, filepath=None):
         if not filepath:
-            filepath = self.data_file()
+            filepath = self.data_file(read=False)
 
         self.assert_location_is_in_project_dir(filepath)
 
-        this = (self.wrapper.state in ('walked', 'running',))
-        if self.data_file_exists() and not filepath == self.data_file(this):
-            shutil.copyfile(self.data_file(this), filepath)
+        if os.path.exists(self.this_data_file()) and not filepath == self.this_data_file():
+            shutil.copyfile(self.this_data_file(), filepath)
         else:
             with open(filepath, "wb") as f:
                 f.write(data)
 
-    def read_data(self, this=True):
-        with open(self.data_file(this), "rb") as f:
+    def read_data(self):
+        with open(self.data_file(read=True), "rb") as f:
             return f.read()
 
     def copy_file(self, filepath):
@@ -215,7 +213,7 @@ class JsonStorage(GenericStorage):
             json.dump(data, f)
 
     def save(self):
-        with open(self.data_file(), "wb") as f:
+        with open(self.data_file(read=False), "wb") as f:
             json.dump(self._data, f)
 
 class Sqlite3Storage(GenericStorage):
@@ -308,6 +306,6 @@ class Sqlite3Storage(GenericStorage):
             yield k, v
 
     def save(self):
-        self.assert_location_is_in_project_dir(self.data_file())
+        self.assert_location_is_in_project_dir(self.data_file(read=False))
         self._storage.commit()
-        shutil.copyfile(self.working_file(), self.data_file())
+        shutil.copyfile(self.working_file(), self.data_file(read=False))

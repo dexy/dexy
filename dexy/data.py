@@ -178,21 +178,7 @@ class Generic(Data):
 
     def load_data(self, this=None):
         try:
-            if not this:
-                if self.wrapper.state == 'walked':
-                    if os.path.exists(self.storage.data_file(True)):
-                        this = True
-                    elif os.path.exists(self.storage.data_file(False)):
-                        this = False
-                elif self.wrapper.state == 'running':
-                    this = True
-                else:
-                    # Look in both places
-                    if os.path.exists(self.storage.data_file(True)):
-                        this = True
-                    else:
-                        this = False
-            self._data = self.storage.read_data(this)
+            self._data = self.storage.read_data()
         except IOError:
             msg = "no data in file '%s' for %s (wrapper state '%s')"
             msgargs = (self.storage.data_file(), self.key, self.wrapper.state)
@@ -202,12 +188,12 @@ class Generic(Data):
         return self._data or self.is_cached()
 
     def is_cached(self, this=None):
-        if not this:
+        if this is None:
             this = (self.wrapper.state in ('walked', 'running'))
         return self.storage.data_file_exists(this)
 
     def filesize(self, this=None):
-        if not this:
+        if this is None:
             this = (self.wrapper.state in ('walked', 'running'))
         return self.storage.data_file_size(this)
 
@@ -231,9 +217,10 @@ class Generic(Data):
         """
         if self._data and isinstance(self._data, basestring):
             return dexy.utils.parse_json(self._data)
+        elif self._data and not isinstance(self._data, basestring):
+            raise Exception(self._data.__class__.__name__)
         else:
-            this = (self.wrapper.state in ('walked', 'running'))
-            with open(self.storage.data_file(this), "r") as f:
+            with open(self.storage.data_file(), "r") as f:
                 return dexy.utils.parse_json_from_file(f)
 
     def is_canonical_output(self):

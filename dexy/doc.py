@@ -100,8 +100,8 @@ class Doc(dexy.node.Node):
             # move cache files to new cache
             for d in self.datas():
                 if os.path.exists(d.storage.last_data_file()):
-                    shutil.move(d.storage.last_data_file(), d.storage.data_file())
-                    self.log_debug("Moving %s from %s to %s" % (d.key, d.storage.last_data_file(), d.storage.data_file()))
+                    shutil.move(d.storage.last_data_file(), d.storage.this_data_file())
+                    self.log_debug("Moving %s from %s to %s" % (d.key, d.storage.last_data_file(), d.storage.this_data_file()))
 
             if os.path.exists(self.runtime_info_filename(False)):
                 shutil.move(self.runtime_info_filename(False), self.runtime_info_filename(True))

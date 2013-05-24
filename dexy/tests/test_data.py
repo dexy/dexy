@@ -81,7 +81,6 @@ def test_generic_data():
         data._data = CONTENTS
         assert data.has_data()
         assert not data.is_cached(True)
-        assert not data.filesize(True)
 
         # Save data to disk
         data.save()
@@ -91,7 +90,6 @@ def test_generic_data():
 
         # Clear data from memory
         data._data = None
-        assert data.has_data()
 
         # Load it again from disk
         data.load_data(True)
