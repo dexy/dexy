@@ -3,6 +3,7 @@ import inspect
 import os
 import sys
 import yaml
+import inflection
 
 class Plugin(object):
     """
@@ -11,8 +12,11 @@ class Plugin(object):
     def is_active(self):
         return True
 
+    def name(self):
+        return inflection.titleize(self.setting('aliases')[0])
+
     def help(self):
-        return inspect.getdoc(self.__class__)
+        return self.setting('help')
 
     def initialize_settings(self, **raw_kwargs):
         self._instance_settings = {}
@@ -95,16 +99,19 @@ class PluginMeta(type):
             cls.register_plugin(cls.aliases, cls, {})
 
     def __iter__(cls, *instanceargs):
-        processed = []
+        processed_aliases = set()
         for alias in sorted(cls.plugins):
-            value = cls.plugins[alias]
-            if not value in processed:
-                try:
-                    instance = cls.create_instance(alias, *instanceargs)
-                    yield(instance)
-                except dexy.exceptions.InactiveFilter:
-                    pass
-                processed.append(value)
+            if alias in processed_aliases:
+                continue
+
+            try:
+                instance = cls.create_instance(alias, *instanceargs)
+                yield(instance)
+                for alias in instance.aliases:
+                    processed_aliases.add(alias)
+
+            except dexy.exceptions.InactiveFilter:
+                pass
 
     def standardize_alias(cls, alias):
         obj = cls.plugins[alias]
@@ -148,6 +155,8 @@ class PluginMeta(type):
 
         if not settings.has_key('help'):
             settings['help'] = ("Helpstring for filter.", inspect.getdoc(klass))
+
+        settings['aliases'] = ('aliases', aliases)
 
         class_info = (class_or_class_name, settings)
         for alias in aliases:
@@ -231,12 +240,8 @@ class PluginMeta(type):
         class_or_class_name, settings = cls.plugins[alias]
         klass = cls.get_reference_to_class(class_or_class_name)
 
-        if not klass.aliases:
-            klass.aliases.append(alias)
-
         instance = klass(*instanceargs, **instancekwargs)
         instance.alias = alias
-
 
         if not hasattr(instance, '_instance_settings'):
             instance.initialize_settings()

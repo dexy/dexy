@@ -5,7 +5,6 @@ from pygments import highlight
 from pygments.formatters import TerminalFormatter
 from pygments.lexers import PythonLexer
 import dexy.filter
-from dexy.utils import getdoc
 
 def filter_command(
         alias="", # If a filter alias is specified, more detailed help for that filter is printed.
