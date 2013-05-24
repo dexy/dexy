@@ -5,11 +5,13 @@ from dexy.data import KeyValue
 from dexy.data import Sectioned
 from dexy.utils import defaults
 from operator import attrgetter
+import dexy.exceptions
 import json
 
 def grep_command(
         __cli_options=False, # nodoc
-        expr=None, # The expression to search for
+        expr="", # The expression to search for
+        key="", # The exact document key to search for
         keyexpr="", # Only search for keys matching this expression, implies keys=True
         keys=False, # if True, try to list the keys in any found files
         keylimit=10, # maximum number of matching keys to print
@@ -79,7 +81,13 @@ def grep_command(
     if not batch:
         print "you need to run dexy first"
     else:
-        matches = sorted([data for data in batch if expr in data.key], key=attrgetter('key'))
+        if expr:
+            matches = sorted([data for data in batch if expr in data.key], key=attrgetter('key'))
+        elif key:
+            matches = sorted([data for data in batch if key == data.key], key=attrgetter('key'))
+        else:
+            raise dexy.exceptions.UserFeedback("Must specify either expr or key")
+
         n = len(matches)
         if n > limit:
             print_matches(matches[0:limit])

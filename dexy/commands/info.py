@@ -1,6 +1,8 @@
+from dexy.batch import Batch
 from dexy.commands.utils import init_wrapper
 from dexy.utils import defaults
-from dexy.batch import Batch
+from operator import attrgetter
+import dexy.exceptions
 
 INFO_ATTRS = [
         'name',
@@ -23,16 +25,22 @@ STORAGE_METHODS = [
         ]
 def info_command(
         __cli_options=False,
-        expr=None, # The doc key to query. Use dexy grep to search doc keys.
+        expr="", # The doc key to query. Use dexy grep to search doc keys.
+        key="", # The doc key to match exactly. Use dexy grep to search doc keys.
         artifactsdir=defaults['artifacts_dir'], # location of directory in which to store artifacts
         logdir=defaults['log_dir'] # location of directory in which to store logs
         ):
     wrapper = init_wrapper(locals())
     batch = Batch.load_most_recent(wrapper)
 
-    matches = [data for data in batch if expr in data.key]
+    if expr:
+        matches = sorted([data for data in batch if expr in data.key], key=attrgetter('key'))
+        print "search expr:", expr
+    elif key:
+        matches = sorted([data for data in batch if key == data.key], key=attrgetter('key'))
+    else:
+        raise dexy.exceptions.UserFeedback("Must specify either expr or key")
 
-    print "search expr:", expr
 
     for match in matches:
         print
