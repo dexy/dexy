@@ -580,23 +580,6 @@ kshint:
     trim-prompt: "\\d*(\\$|#)"
     ps1: "\\$ "
 
-pycon|pyrepl:
-    class: PexpectReplFilter
-    help: Runs python code in python's REPL.
-    check-return-code: False
-    executable: 'python'
-    initial-prompt : ">>>"
-    input-extensions: [".txt", ".py"]
-    output-extensions: [".pycon"]
-    version-command: 'python --version'
-    save-vars-to-json-cmd: |
-        import json
-        with open("%s-vars.json", "w") as dexy__vars_file:
-            dexy__x = {}
-            for dexy__k, dexy__v in locals().items():
-                dexy__x[dexy__k] = str(dexy__v)
-            json.dump(dexy__x, dexy__vars_file)
-
 phpint:
     class: PexpectReplFilter
     help: Runs PHP in interpeter mode.

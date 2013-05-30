@@ -291,3 +291,27 @@ class ClojureInteractiveFilter(PexpectReplFilter):
                 current_line = [l]
         input_lines.append("\n".join(current_line))
         return input_lines
+
+class PythonConsole(PexpectReplFilter):
+    """
+    Runs python code in python's REPL.
+    """
+
+    aliases = ['pycon', 'pyrepl']
+    _settings = {
+            'check-return-code' : False,
+            'executable' : 'python',
+            'initial-prompt' : '>>>',
+            'input-extensions' : [".txt", ".py"],
+            'output-extensions' : ['.pycon'],
+            'version-command' : 'python --version',
+            'save-vars-to-json-cmd' : """import json
+with open("%s-vars.json", "w") as dexy__vars_file:
+    dexy__x = {}
+    for dexy__k, dexy__v in locals().items():
+        try:
+            dexy__x[dexy__k] = json.dumps(dexy__v)
+        except Exception:
+            pass
+    json.dump(dexy__x, dexy__vars_file)"""}
+
