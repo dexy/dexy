@@ -345,3 +345,31 @@ class Sed(SubprocessInputFilter):
 
     def command_string(self):
         return "%s -f %s" % (self.setting('executable'), self.work_input_filename())
+
+class Taverna(SubprocessStdoutFilter):
+    """
+    Runs workflows in Taverna via command line tool.
+    """
+    aliases = ['taverna']
+    _settings = {
+            'executable' : 'taverna',
+            'add-new-files' : True,
+            'input-extensions' : ['.t2flow'],
+            'output-extensions' : ['.txt'],
+            'taverna-home' : ("Location of taverna home directory.", "$TAVERNA_HOME"),
+            'x-max' : ("Java -Xmx setting", '300m'),
+            'x-perm-max' : ("Java -XX:MaxPermSize setting", '140m'),
+            }
+
+    def command_string(self):
+        assert self.setting('taverna-home')
+
+        return """java -Xmx%(x-max)s -XX:MaxPermSize=%(x-perm-max)s \\
+                -Draven.profile=file://%(taverna-home)s/conf/current-profile.xml \\
+                -Dtaverna.startup=%(taverna-home)s \\
+                -Djava.system.class.loader=net.sf.taverna.raven.prelauncher.BootstrapClassLoader \\
+                -Draven.launcher.app.main=net.sf.taverna.t2.commandline.CommandLineLauncher \\
+                -Draven.launcher.show_splashscreen=false \\
+                -Djava.awt.headless=true \\
+                -jar "%(taverna-home)s/lib/"prelauncher-*.jar \\
+                %(script_file)s""" % self.command_string_args()

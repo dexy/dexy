@@ -9,6 +9,14 @@ import shutil
 from dexy.wrapper import Wrapper
 from dexy.tests.plugins.test_pexpect_filters import SCALA
 
+def test_taverna():
+    with wrap() as wrapper:
+        orig = os.path.join(TEST_DATA_DIR, 'simple_python_example_285475.t2flow')
+        shutil.copyfile(orig, 'simple-python.t2flow')
+        node = Doc("simple-python.t2flow|taverna",
+                wrapper)
+        wrapper.run_docs(node)
+
 PYIN_CONTENTS = """import sys
 i = 0
 while True:
