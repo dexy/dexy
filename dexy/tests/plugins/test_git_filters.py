@@ -16,20 +16,37 @@ PATH_TO_LOCAL_REPO = os.path.expanduser("~/dev/testrepo")
 
 try:
     import pygit2
-    SKIP = not os.path.exists(PATH_TO_LOCAL_REPO)
+    import urllib
+
+    no_local_repo = not os.path.exists(PATH_TO_LOCAL_REPO)
+
+    try:
+        urllib.urlopen("http://google.com")
+        no_internet = False
+    except IOError:
+        no_internet = True
+
+    if no_local_repo:
+        SKIP = (True, "No local repo at %s." % PATH_TO_LOCAL_REPO)
+    elif no_internet:
+        SKIP = (True, "Internet not available.")
+    else:
+        SKIP = (False, None)
+
 except ImportError:
-    SKIP = True
+    SKIP = (True, "pygit2 not installed")
 
 def skip():
-    if SKIP:
-        raise SkipTest("The pygit2 package was not found.")
+    if SKIP[0]:
+        raise SkipTest(SKIP[1])
+
+skip()
 
 def test_run_gitrepo():
     with runfilter("repo", REMOTE_REPO_HTTPS) as doc:
         assert len(doc.wrapper.nodes) > 20
 
 def test_generate_commit_info():
-    skip()
     repo, remote = repo_from_url(REMOTE_REPO_HTTPS)
 
     refs = repo.listall_references()
@@ -58,20 +75,17 @@ def test_git_log_remote():
             "Rename")
 
 def test_repo_from_url():
-    skip()
     repo, remote = repo_from_url(REMOTE_REPO_HTTPS)
     assert remote.name == 'origin'
     assert remote.url == REMOTE_REPO_HTTPS
 
 def test_repo_from_path():
-    skip()
     repo, remote = repo_from_path(PATH_TO_LOCAL_REPO)
     assert ".git" in repo.path
     assert isinstance(repo.head, pygit2.Commit)
     assert "README" in repo.head.message
 
 def test_repo_from_invalid_path():
-    skip()
     with tempdir():
         try:
             repo, remote = repo_from_path(".")
