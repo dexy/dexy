@@ -110,7 +110,7 @@ class Filter(dexy.plugin.Plugin):
         # Check that we can handle input extension
         if set([prev_ext, ".*"]).isdisjoint(set(i_accept)):
             msg = "Filter '%s' in '%s' can't handle file extension %s, supported extensions are %s"
-            params = (self.filter_alias, self.key, prev_ext, ", ".join(i_accept))
+            params = (self.alias, self.key, prev_ext, ", ".join(i_accept))
             raise dexy.exceptions.UserFeedback(msg % params)
 
         # Figure out output extension
@@ -123,7 +123,7 @@ class Filter(dexy.plugin.Plugin):
             # Make sure it's a valid one
             if (not ext in i_output) and (not ".*" in i_output):
                 msg = "You have requested file extension %s in %s but filter %s can't generate that."
-                raise dexy.exceptions.UserFeedback(msg % (ext, self.key, self.filter_alias))
+                raise dexy.exceptions.UserFeedback(msg % (ext, self.key, self.alias))
 
             self.ext = ext
 

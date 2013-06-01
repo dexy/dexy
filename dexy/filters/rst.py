@@ -17,8 +17,7 @@ def default_template(writer_name):
     return os.path.abspath(os.path.join(os.path.dirname(f), writer_class.default_template))
 
 class RestructuredTextBase(DexyFilter):
-    """
-    Base class for ReST filters using the docutils library.
+    """ Base class for ReST filters using the docutils library.
     """
     aliases = []
 
@@ -112,6 +111,9 @@ class RstBody(RestructuredTextBase):
     Returns just the body part of an ReST document.
     """
     aliases = ['rstbody']
+    _settings = {
+            'output-extensions' : ['.html', '.tex']
+            }
 
     def process_text(self, input_text):
         warning_stream = StringIO.StringIO()
@@ -124,11 +126,15 @@ class RstBody(RestructuredTextBase):
         if not 'template' in settings_overrides:
             settings_overrides['template'] = default_template(writer_name)
 
-        parts = core.publish_parts(
+        try:
+            parts = core.publish_parts(
                 input_text,
                 writer_name=writer_name,
                 settings_overrides=settings_overrides
                 )
+        except AttributeError as e:
+            raise dexy.exceptions.InternalDexyProblem(str(e))
+
         if parts.has_key('title') and parts['title']:
             self.update_all_args({'title' : parts['title']})
 

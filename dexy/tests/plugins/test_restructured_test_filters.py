@@ -3,6 +3,28 @@ from dexy.tests.utils import assert_in_output
 from dexy.tests.utils import wrap
 from dexy.doc import Doc
 
+rst_meta = """
+==========
+Main Title
+==========
+
+---
+Foo
+---
+
+Here's some content.
+"""
+def test_rst_meta():
+    with wrap() as wrapper:
+        node = Doc("example.rst|rstmeta",
+                wrapper, 
+                [],
+                contents = rst_meta
+                )
+        wrapper.run_docs(node)
+
+        print node.output_data().args
+
 RST = """
 * a bullet point using "*"
 
@@ -81,3 +103,37 @@ def test_rest_to_html():
 """
 
     assert_output('rstbody', RST, expected)
+
+def test_rstbody_latex():
+    expected = """%
+\\begin{itemize}
+
+\item a bullet point using ``*''
+%
+\\begin{itemize}
+
+\item a sub-list using ``-''
+%
+\\begin{itemize}
+
+\item yet another sub-list
+
+\end{itemize}
+
+\item another item
+
+\end{itemize}
+
+\end{itemize}
+"""
+
+    with wrap() as wrapper:
+        node = Doc("example.rst|rstbody",
+                wrapper, 
+                [],
+                rstbody = { 'ext' : '.tex' },
+                contents = RST
+                )
+        wrapper.run_docs(node)
+        output = unicode(node.output_data())
+        assert output == expected
