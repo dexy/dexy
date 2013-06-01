@@ -1,4 +1,9 @@
 from dexy.tests.utils import wrap
+import dexy.filter
+
+def test_filter_iter():
+    for instance in dexy.filter.Filter:
+        print instance, instance.setting('aliases')
 
 def test_filter_args():
     with wrap() as wrapper:
@@ -15,7 +20,6 @@ def test_filter_args():
         wrapper.run_docs(doc)
 
         result = str(doc.output_data())
-        print str(doc.output_data())
 
         assert "Here are the filter settings:" in result
         assert "abc: 123" in result
