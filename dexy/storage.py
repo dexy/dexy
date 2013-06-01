@@ -93,8 +93,11 @@ class GenericStorage(Storage):
         if os.path.exists(self.this_data_file()) and not filepath == self.this_data_file():
             shutil.copyfile(self.this_data_file(), filepath)
         else:
-            with open(filepath, "wb") as f:
-                f.write(data)
+             with open(filepath, "wb") as f:
+                 if not isinstance(data, unicode):
+                     f.write(data)
+                 else:
+                     f.write(unicode(data).encode("utf-8"))
 
     def read_data(self):
         with open(self.data_file(read=True), "rb") as f:
