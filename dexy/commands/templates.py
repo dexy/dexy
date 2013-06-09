@@ -81,7 +81,7 @@ def templates_command(
             else:
                 print ''
     
-    if i == 1:
+    if i < 5:
         print "Run '[sudo] pip install dexy-templates' to install some more templates."
 
     if not simple:
