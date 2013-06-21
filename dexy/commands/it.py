@@ -19,7 +19,8 @@ def handle_user_feedback_exception(wrapper, e):
         wrapper.log.error("A problem has occurred with one of your documents:")
         wrapper.log.error(e.message)
     sys.stderr.write("Oops, there's a problem processing one of your documents. Here is the error message:" + os.linesep)
-    sys.stderr.write(e.message)
+    for line in e.message.splitlines():
+        sys.stderr.write("  " + line + "\n")
     if not e.message.endswith(os.linesep) or e.message.endswith("\n"):
         sys.stderr.write(os.linesep)
 

@@ -1,4 +1,6 @@
 from datetime import datetime
+from dexy.exceptions import UserFeedback
+from dexy.utils import levenshtein
 from dexy.version import DEXY_VERSION
 from pygments.styles import get_all_styles
 import calendar
@@ -13,7 +15,6 @@ import os
 import pygments
 import pygments.formatters
 import re
-from dexy.exceptions import UserFeedback
 
 class TemplatePlugin(dexy.plugin.Plugin):
     __metaclass__ = dexy.plugin.PluginMeta
@@ -342,9 +343,22 @@ class D(object):
         if self._map_relative_refs.has_key(relative_ref):
             return self._map_relative_refs[relative_ref]
         else:
-            msg = """no document named %s is available to %s, all available
-            doc keys have been written to log with WARN level"""
+            msg = "No document named '%s'\nis available as an input to '%s'.\n"
+
+            closest_match_lev = 15 # if more than this, not worth mentioning
+            closest_match = None
+
             for k in sorted(self._map_relative_refs):
+                lev = levenshtein(k, relative_ref)
+                if lev < closest_match_lev:
+                    closest_match = k
+                    closest_match_lev = lev
                 self._artifact.log_warn(k)
+
+            msg += "There are %s input documents available, their keys have been written to dexy's log.\n" % len(self._map_relative_refs)
+           
+            if closest_match:
+                msg += "Did you mean '%s'?" % closest_match
+
             msgargs = (relative_ref, self._artifact.key)
             raise dexy.exceptions.UserFeedback(msg % msgargs)
