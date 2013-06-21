@@ -13,6 +13,7 @@ import os
 import pygments
 import pygments.formatters
 import re
+from dexy.exceptions import UserFeedback
 
 class TemplatePlugin(dexy.plugin.Plugin):
     __metaclass__ = dexy.plugin.PluginMeta
@@ -47,6 +48,26 @@ class PrettyPrintHtml(TemplatePlugin):
     def prettify_html(klass, html):
         soup = BeautifulSoup(unicode(html))
         return soup.prettify()
+
+class Debug(TemplatePlugin):
+    """
+    Adds debug() and throw() methods to templates.
+    """
+    aliases = ['debug']
+
+    def debug(self, debug_text):
+        print "template debug: %s" % debug_text
+        return debug_text
+
+    def throw(self, err_message):
+        raise UserFeedback("template throw: " + err_message)
+
+    def run(self):
+        return {
+                'debug' : self.debug,
+                'throw' : self.throw,
+                'raise' : self.throw
+                }
 
 class Bibtex(TemplatePlugin):
     """
