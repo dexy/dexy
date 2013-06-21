@@ -51,16 +51,16 @@ class PrettyPrintHtml(TemplatePlugin):
 
 class Debug(TemplatePlugin):
     """
-    Adds debug() and throw() methods to templates.
+    Adds debug() and throw() [a.k.a. raise()] methods to templates.
     """
     aliases = ['debug']
 
     def debug(self, debug_text):
-        print "template debug: %s" % debug_text
+        print "template debug from '%s': %s" % (self.filter_instance.key, debug_text)
         return debug_text
 
     def throw(self, err_message):
-        raise UserFeedback("template throw: " + err_message)
+        raise UserFeedback("template throw from '%s': %s" % (self.filter_instance.key, err_message))
 
     def run(self):
         return {
@@ -334,6 +334,9 @@ class D(object):
     def __init__(self, doc, map_relative_refs):
         self._artifact = doc
         self._map_relative_refs = map_relative_refs
+
+    def keys(self):
+        return self._map_relative_refs.keys()
 
     def __getitem__(self, relative_ref):
         if self._map_relative_refs.has_key(relative_ref):

@@ -1,9 +1,9 @@
 from dexy.filter import DexyFilter
 from dexy.filters.templating_plugins import TemplatePlugin
 from jinja2 import FileSystemLoader
+from jinja2.exceptions import TemplateNotFound
 from jinja2.exceptions import TemplateSyntaxError
 from jinja2.exceptions import UndefinedError
-from jinja2.exceptions import TemplateNotFound
 import dexy.exceptions
 import jinja2
 import os
@@ -150,7 +150,8 @@ class JinjaFilter(TemplateFilter):
                     if undefined_object in line:
                         result.append("line %04d: %s" % (i+1, line))
             else:
-                raise dexy.exceptions.InternalDexyProblem("don't know how to match pattern: %s" % e.message)
+                self.log_debug("Tried to automatically find where the error was in the template, but couldn't.")
+
         else:
             result.append("line %04d: %s" % (e.lineno, input_lines[e.lineno-1]))
 
