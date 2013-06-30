@@ -109,7 +109,7 @@ class GenericStorage(Storage):
         """
         try:
             self.assert_location_is_in_project_dir(filepath)
-            this = (self.wrapper.state in ('walked', 'running',))
+            this = (self.wrapper.state in ('walked', 'running', 'ran',))
             shutil.copyfile(self.data_file(this), filepath)
             return True
         except:
