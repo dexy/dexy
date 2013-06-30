@@ -23,7 +23,7 @@ class RestructuredTextBase(DexyFilter):
 
     _settings = {
             "input-extensions" : [".rst", ".txt"],
-            'output-extensions' : [".html", ".tex", ".xml"],
+            'output-extensions' : [".html", ".tex", ".xml", ".odt"],
             'output' : True,
             'writer' : ("Specify rst writer to use (not required: dexy will attempt to determine automatically from filename if not specified).", None),
             'stylesheet' : ("Stylesheet arg to pass to rst", None),
@@ -39,6 +39,8 @@ class RestructuredTextBase(DexyFilter):
             return 'latex2e'
         elif self.ext == ".xml":
             return 'docutils_xml'
+        elif self.ext == ".odt":
+            return 'odf_odt'
         else:
             raise Exception("unsupported extension %s" % self.ext)
 

@@ -2,6 +2,7 @@ import dexy.filters.api
 import dexy.filters.archive
 import dexy.filters.aws
 import dexy.filters.deprecated
+import dexy.filters.easy
 import dexy.filters.example
 import dexy.filters.fluid_html
 import dexy.filters.git

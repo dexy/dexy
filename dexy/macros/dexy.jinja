@@ -46,7 +46,7 @@
 
 {{ d[basename + '|h'][section] | indent(4, true) }}
 
-{% elif ext == '.pdf' %}
+{% elif ext in ('.pdf', '.tex') %}
 .. raw:: latex
 
 {{ d[basename + '|l'][section] | indent(4, true) }}
