@@ -1,7 +1,12 @@
 from dexy.filter import DexyFilter
-import IPython.nbformat.current
 import dexy.exceptions
 import json
+
+try:
+    import IPython.nbformat.current
+    AVAILABLE = True
+except ImportError:
+    AVAILABLE = False
 
 class IPythonNotebook(DexyFilter):
     """
@@ -14,6 +19,9 @@ class IPythonNotebook(DexyFilter):
             'output-data-type' : 'keyvalue',
             'output-extensions' : ['.sqlite3', '.json']
             }
+
+    def is_active(self):
+        return AVAILABLE
 
     def process(self):
         assert self.output_data.state == 'ready'
