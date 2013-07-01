@@ -79,7 +79,7 @@ class IPythonNotebook(DexyFilter):
                     del cell_output['output_type']
 
                     if cell_output_type == 'stream':
-                        assert sorted(cell_output.keys()) == [u"stream", u"text"]
+                        assert sorted(cell_output.keys()) == [u"stream", u"text"], "stream output keys"
                         d = self.add_doc(
                                 "%s-output-%s.txt" % (cell_key, k),
                                 cell_output['text'],
@@ -88,22 +88,41 @@ class IPythonNotebook(DexyFilter):
                         documents.append(d.key)
 
                     elif cell_output_type == 'pyout':
-                        # [u'html', u'prompt_number', u'text']
-                        # print cell_output['text'].data
-                        # print cell_output['html'].data
-                        pass
+                        for fmt, contents in cell_output.iteritems():
+                            if fmt == "text":
+                                print "TODO figure out how to process text for pyout:", contents
+                            elif fmt == "html":
+                                print "TODO figure out how to process html for pyout:", contents
+                            elif fmt == "prompt_number":
+                                print "TODO figure out how to process prompt_number for pyout:", contents
+                            else:
+                                raise Exception("unexpected format in pyout %s" % fmt)
+
+                    elif cell_output_type == 'pyerr':
+                        for fmt, contents in cell_output.iteritems():
+                            if fmt == "ename":
+                                print "TODO figure out how to process ename for pyerr:", contents
+                            elif fmt == "evalue":
+                                print "TODO figure out how to process evalue for pyerr:", contents
+                            elif fmt == "traceback":
+                                print "TODO figure out how to process traceback for pyerr:", contents
+                            else:
+                                raise Exception("unexpected format in pyerr %s" % fmt)
 
                     elif cell_output_type == 'display_data':
-                        assert len(cell_output) == 1, cell_output.keys()
-                        output_format = cell_output.keys()[0]
-                        if output_format == 'png':
-                            d = self.add_doc(
-                                    "%s-output-%s.%s" % (cell_key, k, output_format),
-                                    base64.decodestring(cell_output[output_format])
-                                    )
-                            documents.append(d.key)
-                        else:
-                            raise Exception("unexpected output format %s" % output_format)
+                        for fmt, contents in cell_output.iteritems():
+                            if fmt == "png":
+                                d = self.add_doc(
+                                        "%s-output-%s.%s" % (cell_key, k, fmt),
+                                        base64.decodestring(contents)
+                                        )
+                                documents.append(d.key)
+                            elif fmt == 'text':
+                                # e.g. <matplotlib.figure.Figure at 0x108356ed0>
+                                print "TODO figure out how to process:", contents
+                            else:
+                                raise Exception("unexpected format in display_data %s" % fmt)
+
                     else:
                         raise Exception("unexpected output type %s" % cell_output_type)
             else:
