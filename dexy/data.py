@@ -1,13 +1,13 @@
 from dexy.common import OrderedDict
-import dexy.plugin
 import chardet
+import dexy.plugin
 import dexy.storage
 import dexy.utils
 import dexy.wrapper
+import inflection
 import os
 import posixpath
 import shutil
-import inflection
 
 class Data(dexy.plugin.Plugin):
     """
@@ -106,6 +106,9 @@ class Data(dexy.plugin.Plugin):
             return "%s%s" % (self.key.replace("|", "-"), self.ext)
         else:
             return self.name
+
+    def rootname(self):
+        return os.path.splitext(self.name)[0]
 
     def basename(self):
         return posixpath.basename(self.name)
