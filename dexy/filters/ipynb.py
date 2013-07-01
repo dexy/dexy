@@ -42,23 +42,20 @@ class IPythonNotebook(DexyFilter):
         for j, cell in enumerate(worksheet['cells']):
             # could also do: cell_key = "%s--%0.3d" % (self.input_data.rootname(), j)
             cell_key = "%s--%s" % (self.input_data.rootname(), j)
-
             cell_type = cell['cell_type']
+
             if cell_type == 'heading':
-                cells.append((cell_type, cell,))
                 # TODO implement
                 # keys are [u'source', u'cell_type', u'level', u'metadata']
                 pass
 
             elif cell_type == 'markdown':
-                cells.append((cell_type, cell,))
                 d = self.add_doc("%s.md" % cell_key, cell['source'], {'output':False})
                 documents.append(d.key)
                 d = self.add_doc("%s.md|pyg|h" % cell_key, cell['source'])
                 d = self.add_doc("%s.md|pyg|l" % cell_key, cell['source'])
 
             elif cell_type == 'code':
-                cells.append((cell_type, cell,))
                 # keys are [u'cell_type', u'language', u'outputs', u'collapsed', u'prompt_number', u'input', u'metadata']
 
                 # map languages to file extensions to create new doc(s) for each cell
@@ -118,6 +115,7 @@ class IPythonNotebook(DexyFilter):
                                         base64.decodestring(contents)
                                         )
                                 documents.append(d.key)
+                                cell.outputs[k]['png'] = d.key
                             elif fmt == 'text':
                                 # e.g. <matplotlib.figure.Figure at 0x108356ed0>
                                 print "TODO figure out how to process:", contents
@@ -128,6 +126,8 @@ class IPythonNotebook(DexyFilter):
                         raise Exception("unexpected output type %s" % cell_output_type)
             else:
                 raise Exception("unexpected cell type '%s'" % cell_type)
+
+            cells.append((cell_type, cell,))
 
         output["nbformat"] = nb_fmt_string
         output["cells"] = cells
