@@ -1,5 +1,6 @@
-from dexy.utils import os_to_posix
 from dexy.utils import copy_or_link
+from dexy.utils import os_to_posix
+from operator import attrgetter
 import dexy.doc
 import dexy.exceptions
 import dexy.plugin
@@ -38,6 +39,7 @@ class Filter(dexy.plugin.Plugin):
             'output-extensions' : ("List of extensions which this filter can produce as output.", [".*"]),
             'preserve-prior-data-class' : ('', False),
             'require-output' : ("Should dexy raise an exception if no output is produced by this filter?", True),
+            'tags' : ("Tags which describe the filter.", []),
             'variables' : ('', {}),
             'vars' : ('', {}),
             'workspace-exclude-filters' : ("Filters whose output should be excluded from workspace.", ['pyg'])
@@ -93,6 +95,8 @@ class Filter(dexy.plugin.Plugin):
     def is_canonical_output(self):
         if self.input_data.canonical_output == True:
             return True
+        elif (self.input_data.args.get('output', None) == False):
+            return False
         elif self.setting('output'):
             return True
         else:
@@ -439,3 +443,27 @@ class AliasFilter(DexyFilter):
 
     def calculate_canonical_name(self):
         return self.input_data.name
+
+def filters_by_tag():
+    """
+    Returns a dict with tags as keys and lists of corresponding filter instances as values.
+    """
+    tags_filters = {}
+    for filter_instance in Filter:
+        if filter_instance.setting('nodoc'):
+            continue
+
+        for tag in filter_instance.setting('tags'):
+            if not tags_filters.has_key(tag):
+                tags_filters[tag] = []
+            tags_filters[tag].append(filter_instance)
+
+    return tags_filters
+
+def filter_aliases_by_tag():
+    tags_filters = filters_by_tag()
+    tags = sorted(tags_filters.keys())
+    return [(tag,
+            [(filter_instance.alias, filter_instance.setting('help'))
+                for filter_instance in sorted(tags_filters[tag], key=attrgetter('alias'))])
+            for tag in tags]
