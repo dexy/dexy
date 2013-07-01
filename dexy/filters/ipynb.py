@@ -16,16 +16,14 @@ class IPythonNotebook(DexyFilter):
 
     _settings = {
             'input-extensions' : ['.ipynb', '.json', '.py'],
-            'output-data-type' : 'keyvalue',
-            'output-extensions' : ['.sqlite3', '.json']
+            'output-extensions' : ['.json']
             }
 
     def is_active(self):
         return AVAILABLE
 
     def process(self):
-        assert self.output_data.state == 'ready'
-
+        output = {}
         nb = None
 
         # load the notebook into memory
@@ -34,6 +32,7 @@ class IPythonNotebook(DexyFilter):
             nb = IPython.nbformat.current.read(f, nb_fmt)
 
         nb_fmt_string = "%s.%s" % (nb['nbformat'], nb['nbformat_minor']) # 3.0 currently
+        output['nbformat'] = nb_fmt_string
 
         worksheet = nb['worksheets'][0]
 
@@ -43,21 +42,23 @@ class IPythonNotebook(DexyFilter):
         for j, cell in enumerate(worksheet['cells']):
             # could also do: cell_key = "%s--%0.3d" % (self.input_data.rootname(), j)
             cell_key = "%s--%s" % (self.input_data.rootname(), j)
-            cells.append(cell_key)
 
             cell_type = cell['cell_type']
             if cell_type == 'heading':
+                cells.append((cell_type, cell,))
                 # TODO implement
                 # keys are [u'source', u'cell_type', u'level', u'metadata']
                 pass
 
             elif cell_type == 'markdown':
+                cells.append((cell_type, cell,))
                 d = self.add_doc("%s.md" % cell_key, cell['source'], {'output':False})
                 documents.append(d.key)
                 d = self.add_doc("%s.md|pyg|h" % cell_key, cell['source'])
                 d = self.add_doc("%s.md|pyg|l" % cell_key, cell['source'])
 
             elif cell_type == 'code':
+                cells.append((cell_type, cell,))
                 # keys are [u'cell_type', u'language', u'outputs', u'collapsed', u'prompt_number', u'input', u'metadata']
 
                 # map languages to file extensions to create new doc(s) for each cell
@@ -128,9 +129,10 @@ class IPythonNotebook(DexyFilter):
             else:
                 raise Exception("unexpected cell type '%s'" % cell_type)
 
-        self.output_data.append("nbformat", nb_fmt_string)
-        self.output_data.append("cells", json.dumps(cells))
-        self.output_data.append("documents", json.dumps(documents))
+        output["nbformat"] = nb_fmt_string
+        output["cells"] = cells
+        output["documents"] = documents
         for k, v in nb['metadata'].iteritems():
-            self.output_data.append(k, v)
-        self.output_data.save()
+            output[k] = v
+
+        self.output_data.set_data(json.dumps(output))
