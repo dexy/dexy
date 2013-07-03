@@ -1,3 +1,4 @@
+import dexy.filters.ansi
 import dexy.filters.api
 import dexy.filters.archive
 import dexy.filters.aws
@@ -17,6 +18,7 @@ import dexy.filters.pexp
 import dexy.filters.phantomjs
 import dexy.filters.pydoc
 import dexy.filters.pyg
+import dexy.filters.pyn
 import dexy.filters.rst
 import dexy.filters.split
 import dexy.filters.standard

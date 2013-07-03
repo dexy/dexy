@@ -3,6 +3,7 @@ from pygments import highlight
 from pygments.formatters.html import HtmlFormatter
 from pygments.formatters.latex import LatexFormatter
 from pygments.lexers import get_lexer_for_filename
+import json
 
 try:
     from lxml import etree
@@ -37,6 +38,16 @@ class XmlSectionFilter(DexyFilter):
         self.output_data.append("%s:tag" % element_key, element.tag)
         self.output_data.append("%s:source" % element_key, source)
         self.output_data.append("%s:inner-html" % element_key, inner_html)
+
+        safe_attrib = {}
+        for k, v in element.attrib.iteritems():
+            try:
+                json.dumps(v)
+                safe_attrib[k] = v
+            except TypeError:
+                pass
+
+        self.output_data.append("%s:attrib" % element_key, json.dumps(safe_attrib))
 
         if self.setting('pygments'):
             self.output_data.append("%s:html-source" % element_key, highlight(source, self.lexer, self.html_formatter))
