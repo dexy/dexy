@@ -41,6 +41,7 @@ setup(
             'jinja2',
             'ordereddict',
             'pexpect',
+            'ply>=3.4',
             'pygments',
             'python-modargs>=1.7',
             'requests>=0.10.6',
