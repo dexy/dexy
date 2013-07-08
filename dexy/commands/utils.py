@@ -97,17 +97,15 @@ def config_args(modargs):
 def import_extra_plugins(kwargs):
     if kwargs.get('plugins'):
         for import_target in kwargs.get('plugins').split():
-            print "loading plugin", import_target
-            # TODO look for files
             try:
                 __import__(import_target)
-            except ImportError as e:
-                # try looking for file
+            except ImportError:
                 if os.path.exists(import_target):
                     import imp
                     imp.load_source("custom_plugins", import_target)
                 else:
-                    raise e
+                    msg = "Could not find installed python package or local python file named '%s'" % import_target
+                    raise dexy.exceptions.UserFeedback(msg)
 
 def init_wrapper(modargs):
     kwargs = config_args(modargs)

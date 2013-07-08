@@ -1,5 +1,6 @@
 from datetime import datetime
 from dexy.exceptions import UserFeedback
+from dexy.plugin import TemplatePlugin
 from dexy.utils import levenshtein
 from dexy.version import DEXY_VERSION
 from pygments.styles import get_all_styles
@@ -15,21 +16,6 @@ import os
 import pygments
 import pygments.formatters
 import re
-
-class TemplatePlugin(dexy.plugin.Plugin):
-    __metaclass__ = dexy.plugin.PluginMeta
-    aliases = []
-    _settings = {}
-
-    def is_active(klass):
-        return True
-
-    def __init__(self, filter_instance=None):
-        if filter_instance:
-            self.filter_instance = filter_instance
-
-    def run(self):
-        return {}
 
 try:
     from bs4 import BeautifulSoup

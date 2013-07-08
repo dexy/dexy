@@ -18,7 +18,7 @@ def handle_user_feedback_exception(wrapper, e):
     if hasattr(wrapper, 'log'):
         wrapper.log.error("A problem has occurred with one of your documents:")
         wrapper.log.error(e.message)
-    sys.stderr.write("Oops, there's a problem processing one of your documents. Here is the error message:" + os.linesep)
+    sys.stderr.write("ERROR: Oops, there's a problem processing one of your documents. Here is the error message:" + os.linesep)
     for line in e.message.splitlines():
         sys.stderr.write("  " + line + "\n")
     if not e.message.endswith(os.linesep) or e.message.endswith("\n"):
@@ -139,7 +139,7 @@ def dexy_command(
             start = time.time()
             wrapper.run_from_new()
             elapsed = time.time() - start
-            print "dexy run finished in %0.3f" % elapsed
+            print "dexy run finished in %0.3f%s" % (elapsed, wrapper.state_message())
 
     except dexy.exceptions.UserFeedback as e:
         handle_user_feedback_exception(wrapper, e)

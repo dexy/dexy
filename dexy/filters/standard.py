@@ -75,7 +75,7 @@ class HeaderFilter(DexyFilter):
 
         if not matched_key:
             msg = "no %s input found for %s" 
-            msgargs = (self.KEY_NAME, self.key)
+            msgargs = (self.setting('key-name'), self.key)
             raise dexy.exceptions.UserFeedback(msg % msgargs)
 
         return docs_d[matched_key].output_data()

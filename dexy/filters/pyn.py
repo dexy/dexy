@@ -7,6 +7,9 @@ except ImportError:
     AVAILABLE = False
 
 class PynlinerFilter(DexyFilter):
+    """
+    Filter which exposes pynliner for inlining CSS styles into HTML.
+    """
     aliases = ['pyn', 'pynliner']
 
     def is_active(self):

@@ -12,6 +12,7 @@ import sys
 # make sure plugins are loaded
 import dexy.filters
 import dexy.reporters
+import dexy.parsers
 
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 

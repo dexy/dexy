@@ -7,6 +7,9 @@ import shutil
 import sys
 
 class Template(dexy.plugin.Plugin):
+    """
+    Parent class for templates.
+    """
     __metaclass__ = dexy.plugin.PluginMeta
     _settings = {
             'contents-dir' : ("Directory containing contents of template.", None),

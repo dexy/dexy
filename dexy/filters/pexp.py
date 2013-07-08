@@ -247,12 +247,13 @@ except ImportError:
 
 class IpythonPexpectReplFilter(PexpectReplFilter):
     """
-    Runs python code in ipython.
+    Runs python code in the IPython console.
     """
     aliases = ['ipython']
     _settings = {
             'executable' : 'ipython --classic',
             'check-return-code' : False,
+            'tags' : ['python', 'repl', 'code'],
             'input-extensions' : [".txt", ".py"],
             'output-extensions' : [".pycon"],
             'version-command' : 'ipython -Version'
@@ -269,6 +270,7 @@ class ClojureInteractiveFilter(PexpectReplFilter):
     _settings = {
             'check-return-code' : False,
             'executable' : 'clojure -r',
+            'tags' : ['code', 'clojure', 'repl'],
             'input-extensions' : [".clj", ".txt"],
             'output-extensions' : [".txt"],
             'prompt' : "user=> "
@@ -300,6 +302,7 @@ class PythonConsole(PexpectReplFilter):
     aliases = ['pycon', 'pyrepl']
     _settings = {
             'check-return-code' : False,
+            'tags' : ['repl', 'python', 'code'],
             'executable' : 'python',
             'initial-prompt' : '>>>',
             'input-extensions' : [".txt", ".py"],

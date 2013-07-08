@@ -59,11 +59,11 @@ class Node(dexy.plugin.Plugin):
     def transition(self, new_state):
         dexy.utils.transition(self, new_state)
 
-    def update_all_args(self, new_args):
+    def update_all_settings(self, new_args):
         pass
 
     def add_runtime_args(self, args):
-        self.update_all_args(args)
+        self.update_all_settings(args)
         self.runtime_args.update(args)
 
     def arg_value(self, key, default=None):
@@ -152,7 +152,6 @@ class Node(dexy.plugin.Plugin):
             new_doc = dexy.doc.Doc(doc_key,
                     self.wrapper,
                     [],
-                    contents='dummy contents',
                     **doc_settings
                     )
             new_doc.contents = None
@@ -286,7 +285,7 @@ class ScriptNode(BundleNode):
         return any(i.doc_changed for i in self.inputs)
 
     def setup(self):
-        self.script_storage = self.args.get("storage", {})
+        self.script_storage = {}
 
         siblings = []
         for doc in self.inputs:

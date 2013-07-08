@@ -68,7 +68,7 @@
             {% for doc in batch -%}
             <hr />
             <h3 style="padding-top: 60px;" id="{{ doc.websafe_key() }}">{{ doc.key }} &nbsp;&nbsp;&nbsp; <a href="#top">&uarr;</a></h3>
-            {% set args = printable_args(doc.args) -%}
+            {% set args = printable_args(doc.setting_values()) -%}
             {% if len(args) > 0 -%}
             <h4>Arguments</h4>
 <pre><code>{% for k, v in args.iteritems() -%}

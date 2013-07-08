@@ -9,3 +9,6 @@ logs/
 build
 dist
 cover/
+.bugs.done
+.coverage
+bugs

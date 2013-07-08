@@ -3,7 +3,7 @@ from dexy.filter import DexyFilter
 class FluidHtml(DexyFilter):
     """
     Wraps your text in HTML header/footer which includes Baseline CSS resets.
-    Easy way to add styles (includes Python syntax highlighting).
+    Easy way to add styles (includes Pygments syntax highlighting).
     """
     aliases = ['easyhtml']
     _settings = {

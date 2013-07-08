@@ -86,26 +86,10 @@ class IPythonNotebook(DexyFilter):
                         documents.append(d.key)
 
                     elif cell_output_type == 'pyout':
-                        for fmt, contents in cell_output.iteritems():
-                            if fmt == "text":
-                                print "TODO figure out how to process text for pyout:", contents
-                            elif fmt == "html":
-                                print "TODO figure out how to process html for pyout:", contents
-                            elif fmt == "prompt_number":
-                                print "TODO figure out how to process prompt_number for pyout:", contents
-                            else:
-                                raise Exception("unexpected format in pyout %s" % fmt)
+                        pass
 
                     elif cell_output_type == 'pyerr':
-                        for fmt, contents in cell_output.iteritems():
-                            if fmt == "ename":
-                                print "TODO figure out how to process ename for pyerr:", contents
-                            elif fmt == "evalue":
-                                print "TODO figure out how to process evalue for pyerr:", contents
-                            elif fmt == "traceback":
-                                print "TODO figure out how to process traceback for pyerr:", contents
-                            else:
-                                raise Exception("unexpected format in pyerr %s" % fmt)
+                        pass
 
                     elif cell_output_type == 'display_data':
                         for fmt, contents in cell_output.iteritems():
@@ -117,8 +101,8 @@ class IPythonNotebook(DexyFilter):
                                 documents.append(d.key)
                                 cell.outputs[k]['png'] = d.key
                             elif fmt == 'text':
-                                # e.g. <matplotlib.figure.Figure at 0x108356ed0>
-                                print "TODO figure out how to process:", contents
+                                pass
+
                             else:
                                 raise Exception("unexpected format in display_data %s" % fmt)
 

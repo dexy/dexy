@@ -1,13 +1,13 @@
 from datetime import datetime
-from dexy.filters.templating_plugins import TemplatePlugin
 from dexy.reporters.output import OutputReporter
+from dexy.utils import dict_from_string
+from dexy.utils import file_exists
 from dexy.utils import iter_paths
 from dexy.utils import reverse_iter_paths
-from dexy.utils import file_exists
-from dexy.utils import dict_from_string
 from jinja2 import Environment
 from jinja2 import FileSystemLoader
 import dexy.exceptions
+import dexy.filters.templating_plugins
 import jinja2
 import operator
 import os
@@ -185,7 +185,7 @@ class WebsiteReporter(OutputReporter):
         env_data = {}
 
         for alias in self.setting('plugins'):
-            plugin = TemplatePlugin.create_instance(alias)
+            plugin = dexy.filters.templating_plugins.TemplatePlugin.create_instance(alias)
             env_data.update(plugin.run())
 
         navigation = {
@@ -252,7 +252,10 @@ class WebsiteReporter(OutputReporter):
                     fragments = ('<html', '<body', '<head')
                     has_html_header = any(html_fragment in unicode(data) for html_fragment in fragments)
 
-                    if has_html_header and not data.args.get('ws-template'):
+                    if data.args.get('ws-template') == False:
+                        self.log_debug("  ws-template is False for %s" % data.key)
+                        self.write_canonical_data(data)
+                    elif has_html_header and not data.args.get('ws-template'):
                         self.log_debug("  found html tag in output of %s" % data.key)
                         self.write_canonical_data(data)
                     else:

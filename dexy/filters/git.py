@@ -1,4 +1,4 @@
-from dexy.exceptions import UserFeedback
+from dexy.exceptions import UserFeedback, InternalDexyProblem
 from dexy.filter import DexyFilter
 import os
 import tempfile
@@ -106,6 +106,9 @@ class GitBase(DexyFilter):
         return self.work(repo, remote, ref)
 
 class GitBaseKeyValue(GitBase):
+    """
+    A filter using key-value storage to manage content from a git repo.
+    """
     _settings = {
             'output-data-type' : 'keyvalue',
             'output-extensions' : ['.sqlite3', '.json']
@@ -157,7 +160,7 @@ class GitRepo(GitBase):
                 elif obj.__class__.__name__ == 'Tree':
                     process_tree(obj, os.path.join(parent_dir, entry.name))
                 else:
-                    raise dexy.exceptions.InternalDexyProblem(obj.__class__.__name__)
+                    raise InternalDexyProblem(obj.__class__.__name__)
 
         process_tree(tree, parent_dir)
         # TODO return something more meaningful like a list of the files added.

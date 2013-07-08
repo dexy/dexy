@@ -20,7 +20,7 @@ def test_batch():
 
 def test_batch_with_docs():
     with tempdir():
-        wrapper = Wrapper()
+        wrapper = Wrapper(log_level='DEBUG', debug=True)
         wrapper.create_dexy_dirs()
 
         with open("hello.txt", "w") as f:
@@ -36,5 +36,5 @@ def test_batch_with_docs():
         assert batch
 
         for doc_key in batch.docs:
-            assert batch.doc_input_data(doc_key)
-            assert batch.doc_output_data(doc_key)
+            assert batch.input_data(doc_key)
+            assert batch.output_data(doc_key)

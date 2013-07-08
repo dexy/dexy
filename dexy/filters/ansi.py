@@ -1,5 +1,6 @@
+from dexy.common import OrderedDict
 from dexy.filter import DexyFilter
-from dexy.filters.templating_plugins import TemplatePlugin
+from dexy.plugin import TemplatePlugin
 
 # https://pypi.python.org/pypi/ansi2html
 # https://github.com/ralphbean/ansi2html
@@ -11,6 +12,9 @@ except ImportError:
     AVAILABLE = False
 
 class Ansi2HTMLTemplatePlugin(TemplatePlugin):
+    """
+    Expose ansi2html within templates.
+    """
     aliases = ['ansi2html']
 
     def is_active(self):
@@ -24,10 +28,13 @@ class Ansi2HTMLTemplatePlugin(TemplatePlugin):
         return { 'ansi2html' : self.convert }
 
 class Ansi2HTMLFilter(DexyFilter):
+    """
+    Filter for ansi2html converter.
+    """
     aliases = ['ansi2html']
     _settings = {
             'output-extensions' : ['.html'],
-            'input-extensions' : ['.txt'],
+            'input-extensions' : ['.txt', '.sh-session'],
             'pre' : ("Whether to wrap in <pre> tags.", True),
             'font-size' : ("CSS font size to be used.", "normal")
             }
@@ -35,10 +42,14 @@ class Ansi2HTMLFilter(DexyFilter):
     def is_active(self):
         return AVAILABLE
 
-    def process_text(self, input_text):
+    def process_dict(self, input_dict):
         conv = Ansi2HTMLConverter(inline=True, font_size=self.setting('font-size'))
         if self.setting('pre'):
             s = "<pre>\n%s</pre>\n"
         else:
             s = "%s\n"
-        return s % conv.convert(input_text, full=False)
+
+        output_dict = OrderedDict()
+        for k, v in input_dict.iteritems():
+            output_dict[k] = s % conv.convert(v, full=False)
+        return output_dict

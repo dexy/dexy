@@ -13,6 +13,7 @@ import logging.handlers
 import os
 import posixpath
 import shutil
+import sys
 import time
 import uuid
 
@@ -62,6 +63,8 @@ class Wrapper(object):
         elif state == 'ran':
             for node in self.nodes.values():
                 assert node.state in ('ran', 'consolidated', 'inactive'), node.state
+        elif state == 'error':
+            pass
         else:
             raise dexy.exceptions.InternalDexyProblem(state)
 
@@ -71,6 +74,15 @@ class Wrapper(object):
         self.project_root = os.path.abspath(os.getcwd())
         self.state = None
         self.transition('new')
+
+    def state_message(self):
+        """
+        A message to print at end of dexy run depending on the final wrapper state.
+        """
+        if self.state == 'error':
+            return " WITH ERRORS"
+        else:
+            return ""
 
     def transition(self, new_state):
         dexy.utils.transition(self, new_state)
@@ -201,24 +213,14 @@ class Wrapper(object):
                 for task in node:
                     task()
 
-        except UserFeedback as e:
-            print e.message
-            self.error = e
-            self.transition('error')
-            if self.debug:
-                raise e
-        except InternalDexyProblem as e:
-            print e.message
-            self.error = e
-            self.transition('error')
-            if self.debug:
-                raise e
         except Exception as e:
-            print e
             self.error = e
             self.transition('error')
             if self.debug:
                 raise e
+            else:
+                sys.stderr.write("ERROR while running %s: %s\n" % (node.key, str(e)))
+
         else:
             self.transition('ran')
             self.batch.end_time = time.time()

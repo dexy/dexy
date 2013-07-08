@@ -18,6 +18,7 @@ class PdfToCairo(SubprocessFormatFlagFilter):
     _settings = {
         'command-string': '%(prog)s %(format)s %(args)s "%(script_file)s" "%(output_file)s"',
         'executable': 'pdftocairo',
+        'tags' : ['pdf', 'image'],
         'input-extensions' : ['.pdf'],
         'output-extensions' : ['.svg', '.png', '.jpg', '.ps', '.eps', '.pdf'],
         'ext-to-format' : {
@@ -64,6 +65,7 @@ class Pdf2ImgSubprocessFilter(SubprocessExtToFormatFilter):
             'page' : ("Which page of the PDF to return as an image", 1),
             'executable' : 'gs',
             'version-command' : 'gs --version',
+            'tags' : ['pdf', 'gs'],
             'input-extensions' : ['.pdf'],
             'output-extensions' : ['.png'],
             'ext-to-format' : {
@@ -97,6 +99,7 @@ class RIntBatchSectionsFilter(SubprocessFilter):
     _settings = {
             'add-new-files' : True,
             'executable' : 'R CMD BATCH --quiet --no-timing',
+            'tags' : ['rstats', 'repl', 'stats'],
             'input-extensions' : ['.txt', '.r', '.R'],
             'output-extensions' : [".Rout", '.txt'],
             'version-command' : "R --version",
@@ -150,7 +153,8 @@ class EmbedFonts(SubprocessFilter):
     _settings = {
             'input-extensions' : [".pdf"],
             'output-extensions' : [".pdf"],
-            'executable' : 'ps2pdf'
+            'executable' : 'ps2pdf',
+            'tags' : ['pdf'],
             }
 
     def preprocess_command_string(self):
@@ -183,6 +187,7 @@ class AbcFilter(SubprocessFormatFlagFilter):
             'command-string' : '%(prog)s %(args)s %(format)s -O %(output_file)s %(script_file)s',
             'add-new-files' : False,
             'output' : True,
+            'tags' : ['music'],
             'examples' : ['abc'],
             'executable' : 'abcm2ps',
             'input-extensions' : ['.abc'],
@@ -222,6 +227,7 @@ class AbcMultipleFormatsFilter(SubprocessFilter):
             'input-extensions' : ['.abc'],
             'output-extensions' : ['.json'],
             'executable' : 'abcm2ps',
+            'tags' : ['music'],
             'add-new-files' : False
             }
 
@@ -287,6 +293,7 @@ class ManPage(SubprocessStdoutFilter):
 
     _settings = {
             'executable' : 'man',
+            'tags' : ['utils'],
             'version-command' : 'man --version',
             'input-extensions' : [".txt"],
             'output-extensions' : [".json"]
@@ -314,6 +321,7 @@ class ApplySed(SubprocessInputFilter):
     aliases = ['used']
     _settings = {
             'executable' : 'sed',
+            'tags' : ['utils'],
             'output-data-type' : 'generic',
             }
 
@@ -339,6 +347,7 @@ class Sed(SubprocessInputFilter):
     aliases = ['sed']
     _settings = {
             'executable' : 'sed',
+            'tags' : ['utils'],
             'input-extensions' : ['.sed'],
             'output-extensions' : ['.sed', '.txt'],
             }
@@ -353,6 +362,7 @@ class Taverna(SubprocessStdoutFilter):
     aliases = ['taverna']
     _settings = {
             'executable' : 'taverna',
+            'tags' : ['repro', 'workflow'],
             'add-new-files' : True,
             'input-extensions' : ['.t2flow'],
             'output-extensions' : ['.txt'],

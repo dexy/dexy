@@ -56,8 +56,15 @@ class LatexFilter(SubprocessFilter):
             run_cmd(latex_command)
 
         if not file_exists(os.path.join(wd, self.output_data.basename())):
-            msg = "Latex file not generated. Look for information in latex log in %s directory."
-            msgargs = os.path.abspath(wd)
+            log_file_path = os.path.join(wd, self.output_data.basename().replace(".pdf", ".log"))
+
+            if file_exists(log_file_path):
+                msg = "Latex file not generated. Look for information in latex log %s"
+                msgargs = log_file_path
+            else:
+                msg = "Latex file not generated. Look for information in latex log in %s directory."
+                msgargs = os.path.abspath(wd)
+
             raise dexy.exceptions.UserFeedback(msg % msgargs)
 
         if self.setting('add-new-files'):

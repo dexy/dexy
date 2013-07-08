@@ -14,23 +14,23 @@ class SubprocessFilter(Filter):
     """
     aliases = []
     _settings = {
-            'path-extensions' : ("strings to extend path with", []),
-            'write-stderr-to-stdout' : ("Should stderr be piped to stdout?", True),
-            'check-return-code' : ("Whether to look for nonzero return code.", True),
-            'record-vars' : ("Whether to add code that will automatically record values of variables.", False),
-            'env' : ("Dictionary of key-value pairs to be added to environment for runs.", {}),
             'args' : ("Arguments to be passed to the executable.", ''),
+            'check-return-code' : ("Whether to look for nonzero return code.", True),
             'clargs' : ("Arguments to be passed to the executable (same as 'args').", ''),
-            'command-string' : ("The full command string.",
-                """%(prog)s %(args)s "%(script_file)s" %(scriptargs)s "%(output_file)s" """),
+            'command-string' : ("The full command string.", """%(prog)s %(args)s "%(script_file)s" %(scriptargs)s "%(output_file)s" """),
+            'env' : ("Dictionary of key-value pairs to be added to environment for runs.", {}),
             'executable' : ('The executable to be run', None),
             'initial-timeout' : ('', 10),
+            'path-extensions' : ("strings to extend path with", []),
+            'record-vars' : ("Whether to add code that will automatically record values of variables.", False),
             'scriptargs' : ("Arguments to be passed to the executable.", ''),
+            'tags' : [],
             'timeout' : ('', 10),
             'use-wd' : ("Whether to use a custom working directory when running filter.", True),
             'version-command': ( "Command to call to return version of installed software.", None),
-            'windows-version-command': ( "Command to call on windows to return version of installed software.", None),
             'walk-working-dir' : ("Automatically register extra files that are found in working dir.", False),
+            'windows-version-command': ( "Command to call on windows to return version of installed software.", None),
+            'write-stderr-to-stdout' : ("Should stderr be piped to stdout?", True),
             }
 
     def version_command(klass):
@@ -510,6 +510,9 @@ class SubprocessExtToFormatFilter(SubprocessFilter):
         return args
 
 class SubprocessStdoutTextFilter(SubprocessStdoutFilter):
+    """
+    Subprocess filter in which input needs to be passed directly on the command line.
+    """
     _settings = {
             'command-string' : "%(prog)s %(args)s \"%(text)s\"",
             'input-extensions' : ['.txt'],

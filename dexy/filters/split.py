@@ -61,11 +61,12 @@ class SplitHtmlFilter(DexyFilter):
                     section_url = section_label.split(" ")[0]
 
                     filename = "%s.html" % section_url
+
                     filepath = os.path.join(self.output_data.parent_dir(), filename)
                     pages[section_label] = filename
 
                     new_page = self.add_doc(filepath, header + sections[i+1] + footer)
-                    new_page.args['title'] = section_label
+                    new_page.update_setting('title', section_label)
 
                     self.log_debug("added key %s to %s ; links to file %s" %
                               (filepath, self.key, new_page.name))

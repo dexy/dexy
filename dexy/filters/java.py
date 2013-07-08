@@ -11,6 +11,7 @@ class Scala(SubprocessCompileFilter):
     aliases = ['scala']
     _settings = {
             'executable' : 'scalac',
+            'tags' : ['code', 'scala', 'compiled', 'jvm'],
             'compiler-command-string' : "%(prog)s %(compiler_args)s %(script_file)s",
             'compiled-extension' : '',
             'input-extensions' : ['.scala', '.txt'],
@@ -28,6 +29,7 @@ class CompileScala(Scala):
     """
     aliases = ['scalac']
     _settings = {
+            'tags' : ['code', 'scala', 'compiled', 'jvm'],
             'output-extensions' : ['.class']
             }
 
@@ -45,6 +47,7 @@ class JythonFilter(SubprocessStdoutFilter):
     aliases = ['jython']
     _settings = {
             'executable' : 'jython',
+            'tags' : ['code', 'jython', 'jvm'],
             'input-extensions' : [".py", ".txt"],
             'output-extensions' : [".txt"],
             'version-command' : "jython --version"
@@ -69,6 +72,7 @@ class JythonInteractiveFilter(PexpectReplFilter):
     aliases = ['jythoni']
     _settings = {
             'check-return-code' : False,
+            'tags' : ['code', 'jython', 'jvm', 'repl'],
             'executable' : 'jython -i',
             'initial-timeout' : 30,
             'input-extensions' : [".py", ".txt"],
@@ -94,6 +98,7 @@ class JavaFilter(SubprocessCompileFilter):
     _settings = {
             'check-return-code' : True,
             'classpath' : ("Custom entries in classpath.", []),
+            'tags' : ['code', 'java', 'jvm', 'compiled'],
             'executable' : 'javac',
             'input-extensions' : ['.java'],
             'output-extensions' : ['.txt'],
@@ -181,6 +186,7 @@ class JavacFilter(JavaFilter):
             'executable' : 'javac',
             'input-extensions' : ['.java'],
             'output-extensions' : ['.class'],
+            'tags' : ['code', 'java', 'jvm', 'compiled'],
             'version-command' : 'java -version'
             }
 

@@ -23,7 +23,7 @@ def test_rst_meta():
                 )
         wrapper.run_docs(node)
 
-        print node.output_data().args
+        print node.output_data()
 
 RST = """
 * a bullet point using "*"

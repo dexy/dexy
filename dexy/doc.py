@@ -3,7 +3,6 @@ import dexy.exceptions
 import dexy.filter
 import dexy.node
 import os
-import posixpath
 import shutil
 import stat
 import time
@@ -14,16 +13,22 @@ class Doc(dexy.node.Node):
     """
     aliases = ['doc']
     _settings = {
+            'contents' : ("Custom contents for a virtual document.", None),
+            'data-class-alias' : ("data class alias", None),
             'shortcut' : ( """A way to refer to this document without having to
             use the full document key.""", None ),
-            'canonical-name' : ("""What the final output name (including path)
-                of this document should be.""", None),
-            'title' : ("""Title for this document.""", None),
+            'title' : ("Title for this document.", None),
+            'output-name' : ("""A custom name for this document when output in reports
+            (may include path or start with / to indicate absolute custom path).""", None),
             'output' : ("""Whether to output this document to reports such as
                 output/ and output-site/.""", None)
             }
 
     def setup(self):
+        self.update_settings(self.args)
+        if self.setting('output-name') and '%' in self.setting('output-name'):
+            self.update_settings({'output-name' : self.setting('output-name') % self.args})
+
         self.name = self.key.split("|")[0]
         self.ext = os.path.splitext(self.name)[1]
         self.filter_aliases = self.key.split("|")[1:]
@@ -59,36 +64,32 @@ class Doc(dexy.node.Node):
                 d.setup()
 
     def setup_initial_data(self):
-        self.canonical_name = self.calculate_canonical_name() or self.name
         storage_key = "%s-000" % self.hashid
 
         if self.setting('output') is not None:
             canonical_output = self.setting('output')
         else:
-            canonical_output = len(self.filter_aliases) == 0
+            if len(self.filter_aliases) == 0:
+                canonical_output = True
+            else:
+                canonical_output = None
+
+        settings = {
+                'canonical-name' : self.name,
+                'canonical-output' : canonical_output,
+                'shortcut' : self.setting('shortcut'),
+                'output-name' : self.setting('output-name'),
+                'title' : self.setting('title')
+                }
 
         self.initial_data = dexy.data.Data.create_instance(
                 self.data_class_alias(),
-                self.name,
-                self.ext,
-                self.canonical_name,
+                self.name, # key
+                self.ext, #ext
                 storage_key,
-                self.setting_values(),
-                None,
-                canonical_output,
+                settings,
                 self.wrapper
                 )
-
-    def calculate_canonical_name(self):
-        raw_arg_name = self.setting('canonical-name')
-    
-        if raw_arg_name:
-            raw_arg_name = raw_arg_name % self.args
-
-            if "/" in raw_arg_name:
-                return raw_arg_name
-            else:
-                return posixpath.join(posixpath.dirname(self.key), raw_arg_name)
 
     def consolidate_cache_files(self):
         for node in self.input_nodes():
@@ -125,11 +126,14 @@ class Doc(dexy.node.Node):
         """
         return [self.initial_data] + [f.output_data for f in self.filters]
 
-    def update_all_args(self, new_args):
+    def update_setting(self, key, value):
+        self.update_all_settings({key : value})
+
+    def update_all_settings(self, new_settings):
         for f in self.filters:
-            f.input_data.args.update(new_args)
-            f.output_data.args.update(new_args)
-            f.update_settings(new_args)
+            f.input_data.update_settings(new_settings)
+            f.output_data.update_settings(new_settings)
+            f.update_settings(new_settings)
 
     def check_cache_elements_present(self):
         """
@@ -176,7 +180,7 @@ class Doc(dexy.node.Node):
             return False
 
     def data_class_alias(self):
-        data_class_alias = self.args.get('data-class-alias')
+        data_class_alias = self.setting('data-class-alias')
 
         if data_class_alias:
             return data_class_alias
@@ -190,7 +194,7 @@ class Doc(dexy.node.Node):
                 return 'generic'
 
     def get_contents(self):
-        contents = self.args.get('contents')
+        contents = self.setting('contents')
         return contents
 
     # Runtime Info
@@ -278,10 +282,11 @@ class Doc(dexy.node.Node):
 
     def batch_info(self):
         return {
-                'title' : self.output_data().title(),
                 'input-data' : self.initial_data.args_to_data_init(),
                 'output-data' : self.output_data().args_to_data_init(),
                 'filters-data' : [f.output_data.args_to_data_init() for f in self.filters],
+                # below are convenience attributes, not strictly necessary for dexy to run
+                'title' : self.output_data().title(),
                 'start_time' : self.start_time,
                 'finish_time' : self.finish_time,
                 'elapsed' : self.elapsed_time

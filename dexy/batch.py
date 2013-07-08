@@ -6,39 +6,53 @@ class Batch(object):
     def __init__(self, wrapper):
         self.wrapper = wrapper
         self.docs = {}
-        self.docs_by_storage_key = {}
-        self.uuid = str(uuid.uuid4())
+        self.doc_keys = {}
         self.filters_used = []
-        self.filter_elapsed_time = 0.0
+        self.uuid = str(uuid.uuid4())
 
     def __repr__(self):
         return "Batch(%s)" % self.uuid
 
     def __iter__(self):
         for doc_key in self.docs:
-            yield self.doc_output_data(doc_key)
+            yield self.output_data(doc_key)
 
     def add_doc(self, doc):
+        """
+        Adds a new doc to the batch of docs.
+        """
         if hasattr(doc, 'batch_info'):
+            doc_key = doc.key_with_class()
+            storage_key = doc.output_data().storage_key
+            self.doc_keys[storage_key] = doc_key
+
+            # Store doc info.
             doc_info = doc.batch_info()
-            self.docs[doc.key_with_class()] = doc_info
-            self.docs_by_storage_key[doc.output_data().storage_key] = doc_info
+            self.docs[doc_key] = doc_info
 
             self.filters_used.extend(doc.filter_aliases)
 
-    def doc_filter_data(self, doc_key, filter_index):
-        if not doc_key in self.docs:
-            msg = "can't find doc key '%s' in docs" % doc_key
-            raise dexy.exceptions.InternalDexyProblem(msg)
-        doc_info = self.docs[doc_key]["filters-data"][filter_index]
-        args = []
-        args.extend(doc_info)
-        args.append(self.wrapper)
-        data = dexy.data.Data.create_instance(*args)
-        data.setup_storage()
-        return data
+    def output_data(self, doc_key):
+        return self.data(doc_key, 'output')
 
-    def data_for_doc_info(self, doc_info):
+    def input_data(self, doc_key):
+        return self.data(doc_key, 'input')
+
+    def doc_info(self, doc_key):
+        return self.docs[doc_key]
+   
+    def doc_key(self, storage_key):
+        return self.doc_keys[storage_key]
+
+    def data(self, doc_key, input_or_output='output'):
+        doc_info = self.doc_info(doc_key)["%s-data" % input_or_output]
+        return self._data_for_doc_info(doc_info)
+
+    def data_for_storage_key(self, storage_key, input_or_output='output'):
+        doc_key = self.doc_key(storage_key)
+        return self.data(doc_key, input_or_output)
+
+    def _data_for_doc_info(self, doc_info):
         args = []
         args.extend(doc_info)
         args.append(self.wrapper)
@@ -47,20 +61,6 @@ class Batch(object):
         if hasattr(data.storage, 'connect'):
             data.storage.connect()
         return data
-
-    def data_for_storage_key(self, storage_key, input_or_output='output'):
-        doc_info = self.docs_by_storage_key[storage_key]["%s-data" % input_or_output]
-        return self.data_for_doc_info(doc_info)
-
-    def doc_data(self, doc_key, input_or_output='output'):
-        doc_info = self.docs[doc_key]["%s-data" % input_or_output]
-        return self.data_for_doc_info(doc_info)
-
-    def doc_output_data(self, doc_key):
-        return self.doc_data(doc_key, 'output')
-
-    def doc_input_data(self, doc_key):
-        return self.doc_data(doc_key, 'input')
 
     def elapsed(self):
         return self.end_time - self.start_time
@@ -78,7 +78,7 @@ class Batch(object):
         return os.path.join(self.wrapper.artifacts_dir, 'batches')
 
     def to_dict(self):
-        attr_names = ['docs', 'docs_by_storage_key', 'uuid', 'filters_used']
+        attr_names = ['docs', 'doc_keys', 'filters_used', 'uuid']
         return dict((k, getattr(self, k),) for k in attr_names)
 
     def save_to_file(self):

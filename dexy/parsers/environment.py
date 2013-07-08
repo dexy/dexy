@@ -2,6 +2,9 @@ from dexy.parser import Parser
 from dexy.utils import parse_json
 
 class Environment(Parser):
+    """
+    Parent class for environment parsers.
+    """
     @classmethod
     def parse_environment_from_text(klass, text):
         pass

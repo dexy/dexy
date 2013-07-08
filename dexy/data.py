@@ -1,4 +1,5 @@
 from dexy.common import OrderedDict
+from dexy.exceptions import InternalDexyProblem
 import chardet
 import dexy.plugin
 import dexy.storage
@@ -15,7 +16,12 @@ class Data(dexy.plugin.Plugin):
     """
     __metaclass__ = dexy.plugin.PluginMeta
     _settings = {
-            'default-storage-type' : ("Type of storage to use if not specified", 'generic'),
+            'shortcut' : ("A shortcut to refer to a file.", None),
+            'storage-type' : ("Type of storage to use.", 'generic'),
+            'canonical-output' : ("Whether this data type is canonical output.", None),
+            'canonical-name' : ("The default name.", None),
+            'output-name' : ("A custom name which overrides default name.", None),
+            'title' : ("A custom title.", None),
             }
 
     state_transitions = (
@@ -23,21 +29,22 @@ class Data(dexy.plugin.Plugin):
             ('new', 'ready')
             )
 
-    def __init__(self, key, ext, canonical_name, storage_key,
-            args, storage_type, canonical_output, wrapper):
+    def __init__(self, key, ext, storage_key, settings, wrapper):
         self.key = key
         self.ext = ext
-        self.name = canonical_name
         self.storage_key = storage_key
-        self.args = args
-        self.storage_type = storage_type
-        self.wrapper = wrapper
-        self.canonical_output = canonical_output
 
-        self.initialize_settings()
+        self.wrapper = wrapper
+        self.initialize_settings(**settings)
 
         self._data = None
         self.state = None
+        self.name = self.setting('canonical-name')
+        if not self.name:
+            msg = "Document must provide canonical-name setting to data."
+            raise InternalDexyProblem(msg)
+        elif self.name.startswith("("):
+            raise Exception()
 
         self.transition('new')
 
@@ -46,9 +53,27 @@ class Data(dexy.plugin.Plugin):
         Canonical name to output to, relative to output root. Returns 'none' if
         artifact not in output_root.
         """
-        if self.wrapper.output_root in self.name:
-            return os.path.relpath(self.name, self.wrapper.output_root)
+        output_root = self.wrapper.output_root
+        def relativize(path):
+            if output_root == ".":
+                return path
+            elif output_root in path:
+                return os.path.relpath(path, self.wrapper.output_root)
 
+        output_name = self.setting('output-name')
+        if output_name:
+            if "/" in output_name:
+                if output_root in output_name:
+                    return relativize(output_name)
+                else:
+                    self.storage.assert_location_is_in_project_dir(output_name)
+                    return output_name
+            else:
+                output_dir = os.path.dirname(relativize(self.name))
+                return os.path.join(output_dir, output_name)
+        else:
+            return relativize(self.name)
+        
     def transition(self, new_state):
         dexy.utils.transition(self, new_state)
 
@@ -60,7 +85,7 @@ class Data(dexy.plugin.Plugin):
         return "Data('%s')" % (self.key)
 
     def storage_class_alias(self, file_ext):
-        return self.setting('default-storage-type')
+        return self.setting('storage-type')
 
     def __unicode__(self):
         if isinstance(self.data(), unicode):
@@ -84,28 +109,30 @@ class Data(dexy.plugin.Plugin):
         """
         Returns a tuple of attributes in the correct order to pass to create_instance
         """
-        return (self.alias, self.key, self.ext, self.name,
-                self.storage_key, self.args, self.storage_type,
-                self.canonical_output,)
+        return (self.alias, self.key, self.ext, self.storage_key, self.setting_values())
     
     def keys(self):
         return []
 
     def setup_storage(self):
-        self.storage_type = self.storage_type or self.storage_class_alias(self.ext)
+        storage_type = self.storage_class_alias(self.ext)
         instanceargs = (self.storage_key, self.ext, self.wrapper,)
-        self.storage = dexy.storage.Storage.create_instance(self.storage_type, *instanceargs)
+        self.storage = dexy.storage.Storage.create_instance(storage_type, *instanceargs)
         self.storage.assert_location_is_in_project_dir(self.name)
+        self.storage.assert_location_is_in_project_dir(self.output_name())
         self.storage.setup()
 
     def parent_dir(self):
         return posixpath.dirname(self.name)
 
+    def parent_output_dir(self):
+        return posixpath.dirname(self.output_name())
+
     def long_name(self):
         if "|" in self.key:
             return "%s%s" % (self.key.replace("|", "-"), self.ext)
         else:
-            return self.name
+            return self.setting('canonical-name')
 
     def rootname(self):
         return os.path.splitext(self.name)[0]
@@ -132,7 +159,7 @@ class Data(dexy.plugin.Plugin):
         else:
             title_from_name = inflection.titleize(self.baserootname())
 
-        return self.args.get('title') or title_from_name
+        return self.setting('title') or title_from_name
 
     def relative_path_to(self, relative_to):
         return posixpath.relpath(relative_to, self.parent_dir())
@@ -146,8 +173,8 @@ class Data(dexy.plugin.Plugin):
                 "/%s" % self.long_name(),
                 "title:%s" % self.title()
         ]
-        if self.args.get('shortcut'):
-            refs.append(self.args.get('shortcut'))
+        if self.setting('shortcut'):
+            refs.append(self.setting('shortcut'))
         return refs
 
     # Define functions that might get called on expectation of a string...
@@ -160,7 +187,7 @@ class Data(dexy.plugin.Plugin):
 
 class Generic(Data):
     """
-    Data type representing generic binary or text-based data.
+    Data type representing generic binary or text-based data in a single blob.
     """
     aliases = ['generic']
 
@@ -227,7 +254,7 @@ class Generic(Data):
                 return dexy.utils.parse_json_from_file(f)
 
     def is_canonical_output(self):
-        return self.canonical_output
+        return self.setting('canonical-output')
 
     def is_index_page(self):
         return self.name.endswith("index.html")
@@ -262,7 +289,7 @@ class Sectioned(Generic):
     aliases = ['sectioned']
 
     _settings = {
-            'default-storage-type' : 'jsonordered'
+            'storage-type' : 'jsonordered'
             }
 
     def __unicode__(self):
@@ -296,7 +323,7 @@ class KeyValue(Generic):
     """
     aliases  = ['keyvalue']
     _settings = {
-            'default-storage-type' : 'sqlite3'
+            'storage-type' : 'sqlite3'
             }
 
     def storage_class_alias(self, file_ext):
@@ -305,7 +332,7 @@ class KeyValue(Generic):
         elif file_ext == '.json':
             return 'json'
         else:
-            return self.setting('default-storage-type')
+            return self.setting('storage-type')
 
     def __unicode__(self):
         return self.as_text()

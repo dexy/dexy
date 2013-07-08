@@ -8,20 +8,28 @@ class WidgetBase(dexy.plugin.Plugin):
             }
 
 class Widget(WidgetBase):
+    """
+    Widget class.
+    """
     aliases = ['widget']
 
 class SubWidget(Widget):
+    """
+    Subwidget class.
+    """
     aliases = ['sub']
     _settings = {
             'foo' : 'baz'
             }
 
 class Fruit(dexy.plugin.Plugin):
+    '''fruit class'''
     __metaclass__ = dexy.plugin.PluginMeta
     aliases = ['fruit']
     _settings = {}
 
 class Starch(dexy.plugin.Plugin):
+    '''starch class'''
     __metaclass__ = dexy.plugin.PluginMeta
     aliases = ['starch']
     _settings = {}

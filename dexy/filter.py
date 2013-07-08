@@ -80,22 +80,29 @@ class Filter(dexy.plugin.Plugin):
 
         self.set_extension()
 
+        settings = self.input_data.setting_values()
+
+        del settings['storage-type']
+        del settings['aliases']
+        
+        settings.update({
+                'canonical-name' : self.calculate_canonical_name(),
+                'canonical-output' : self.is_canonical_output()
+                })
+
         self.output_data = dexy.data.Data.create_instance(
                 self.data_class_alias(self.ext),
                 self.key,
                 self.ext,
-                self.calculate_canonical_name(),
                 self.storage_key,
-                self.doc.setting_values(),
-                None,
-                self.is_canonical_output(),
+                settings,
                 self.doc.wrapper
                 )
 
     def is_canonical_output(self):
-        if self.input_data.canonical_output == True:
+        if self.input_data.setting('canonical-output') == True:
             return True
-        elif (self.input_data.args.get('output', None) == False):
+        elif (self.input_data.setting('canonical-output') == False):
             return False
         elif self.setting('output'):
             return True
@@ -189,7 +196,7 @@ class Filter(dexy.plugin.Plugin):
         pass
 
     def calculate_canonical_name(self):
-        name_without_ext = posixpath.splitext(self.doc.canonical_name)[0]
+        name_without_ext = posixpath.splitext(self.doc.name)[0]
         return "%s%s" % (name_without_ext, self.ext)
 
     def output_filepath(self):

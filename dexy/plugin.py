@@ -154,7 +154,12 @@ class PluginMeta(type):
         klass = cls.get_reference_to_class(class_or_class_name)
 
         if not settings.has_key('help'):
-            settings['help'] = ("Helpstring for filter.", inspect.getdoc(klass))
+            docstring = inspect.getdoc(klass)
+            if not docstring:
+                msg = "No help setting and no docstring for %s"
+                args = (klass)
+                raise dexy.exceptions.InternalDexyProblem(msg % args)
+            settings['help'] = ("Helpstring for filter.", docstring)
 
         settings['aliases'] = ('aliases', aliases)
 
@@ -165,11 +170,7 @@ class PluginMeta(type):
                 if modname.startswith("dexy_") and not modname in PluginMeta.official_dexy_plugins:
                     prefix = modname.split(".")[0].replace("dexy_", "")
                     alias = "%s:%s" % (prefix, alias)
-            if cls.plugins.has_key(alias):
-                    msg = "Trying to define alias '%s' for %s, already an alias for %s"
-                    msg_args = (alias, class_or_class_name, cls.plugins[alias][0],)
-                    print msg%msg_args
-            else:
+            if not cls.plugins.has_key(alias):
                 cls.plugins[alias] = class_info
 
         if hasattr(klass, '_other_class_settings') and klass._other_class_settings:
@@ -261,3 +262,21 @@ class Command(Plugin):
     aliases = []
     DEFAULT_COMMAND = None
     NAMESPACE = None
+
+class TemplatePlugin(Plugin):
+    """
+    Parent class for template plugins.
+    """
+    __metaclass__ = PluginMeta
+    aliases = []
+    _settings = {}
+
+    def is_active(klass):
+        return True
+
+    def __init__(self, filter_instance=None):
+        if filter_instance:
+            self.filter_instance = filter_instance
+
+    def run(self):
+        return {}
