@@ -1,10 +1,11 @@
 from dexy.common import OrderedDict
-from dexy.filter import DexyFilter
+from dexy.exceptions import UserFeedback
 import ply.lex as lex
 import ply.yacc as yacc
 
 sections = OrderedDict()
 level = 0
+remove_leading_empty_anonymous_section = None
 
 def append_text(code):
     """
@@ -39,9 +40,9 @@ def start_new_section(position, lineno, new_level, name=None):
         clean_completed_section()
 
     if name:
-        # Remove empty anonymous section if it exists.
-        if len(sections) == 1 and current_section_empty():
-            del sections[u'1']
+        if remove_leading_empty_anonymous_section:
+            if len(sections) == 1 and current_section_empty():
+                del sections[u'1']
     else:
         # Generate anonymous section name.
         name = unicode(len(sections)+1)
@@ -318,6 +319,9 @@ def p_words(p):
     else:
         raise Exception("unexpected length %s" % len(p))
 
+def p_error(p):
+    raise UserFeedback("invalid idiopidae")
+
 def tokenize(lexer, text):
     """
     For debugging. Returns array of strings with info on each token.
@@ -344,16 +348,32 @@ def parse_input(text, log):
 
     lexer = lex.lex(errorlog=log)
 
-    parser = yacc.yacc(debuglog=log)
+    parser = yacc.yacc(debug=0, debuglog=log, tabmodule="foo", outputdir='logs')
     parser.parse(text, lexer=lexer)
 
     return sections
 
-class Id(DexyFilter):
+from dexy.filters.pyg import PygmentsFilter
+from pygments import highlight
+
+class Id(PygmentsFilter):
     """
     Id filter.
     """
-    aliases = ['id']
+    aliases = ['idio', 'id']
+    _settings = {
+            'remove-leading-empty-anonymous-section' : ("If a document starts with empty section named '1', remove it.", False),
+            'output-data-type' : 'sectioned',
+            'output-extensions' : PygmentsFilter.MARKUP_OUTPUT_EXTENSIONS + PygmentsFilter.IMAGE_OUTPUT_EXTENSIONS + [".txt"]
+            }
 
-    def process_text_to_dict(self, input_text):
-        return parse_input(input_text, self.doc.wrapper.log)
+    def process(self):
+        global remove_leading_empty_anonymous_section
+        lexer = self.create_lexer_instance()
+        formatter = self.create_formatter_instance()
+        output = OrderedDict()
+        input_text = self.input_data.as_text()
+        remove_leading_empty_anonymous_section = self.setting('remove-leading-empty-anonymous-section')
+        for k, v in parse_input(input_text, self.doc.wrapper.log).iteritems():
+            output[k] = highlight(v['contents'], lexer, formatter)
+        self.output_data.set_data(output)

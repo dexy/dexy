@@ -9,7 +9,7 @@ import os
 from dexy.wrapper import Wrapper
 import random
 
-LOGLEVEL = "DEBUG"
+LOGLEVEL = "WARN"
 
 def assert_node_state(node, expected, additional_info=''):
     msg = "'%s' not in state '%s',  in state '%s'. %s"

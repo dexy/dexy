@@ -20,7 +20,6 @@ setup(
             "Topic :: Text Processing :: Markup :: HTML",
             "Topic :: Text Processing :: Markup :: LaTeX"
             ],
-        dependency_links = [ "http://dexy.it/external-dependencies/" ],
         description='Document Automation',
         entry_points = {
             'pygments.lexers' : [
@@ -36,7 +35,6 @@ setup(
             'chardet',
             'dexy_viewer',
             'docutils',
-            'idiopidae>=0.5.4',
             'inflection>=0.0.2',
             'jinja2',
             'ordereddict',
@@ -44,12 +42,10 @@ setup(
             'ply>=3.4',
             'pygments',
             'python-modargs>=1.7',
-            'requests>=0.10.6',
-            'zapps>=0.5.1'
+            'requests>=0.10.6'
             ],
         name='dexy',
         packages=find_packages(),
         url='http://dexy.it',
         version=DEXY_VERSION
         )
-

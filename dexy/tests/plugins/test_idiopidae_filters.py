@@ -6,7 +6,7 @@ def test_idio_invalid_input():
         wrapper.debug = False
         doc = Doc("hello.py|idio",
                 wrapper, [],
-                contents=" ")
+                contents="### @ ")
         wrapper.run_docs(doc)
         assert wrapper.state == 'error'
 
@@ -35,6 +35,7 @@ x*y
 
         wrapper.run_docs(doc)
 
+        print doc.output_data().keys()
         assert doc.output_data().keys() == ['1', 'vars', 'multiply']
 
 def test_force_text():

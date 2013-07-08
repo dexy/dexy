@@ -7,7 +7,7 @@ import dexy.filters.easy
 import dexy.filters.example
 import dexy.filters.fluid_html
 import dexy.filters.git
-import dexy.filters.idio
+import dexy.filters.id_filter
 import dexy.filters.ipynb
 import dexy.filters.java
 import dexy.filters.latex

@@ -52,7 +52,7 @@ class PygmentsFilter(DexyFilter):
     """
     aliases = ['pyg', 'pygments']
     IMAGE_OUTPUT_EXTENSIONS = ['.png', '.bmp', '.gif', '.jpg']
-    MARKUP_OUTPUT_EXTENSIONS = [".html", ".tex", ".svg"] # make sure .html is first so it is default output format
+    MARKUP_OUTPUT_EXTENSIONS = [".html", ".tex", ".svg", ".txt"] # make sure .html is first so it is default output format
     LEXER_ERR_MSG = """Pygments doesn't know how to syntax highlight files like '%s' (for '%s').\
     You might need to specify the lexer manually."""
 
