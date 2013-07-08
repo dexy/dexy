@@ -17,6 +17,7 @@ class Data(dexy.plugin.Plugin):
     __metaclass__ = dexy.plugin.PluginMeta
     _settings = {
             'shortcut' : ("A shortcut to refer to a file.", None),
+            'ws-template' : ("custom website template to apply.", None),
             'storage-type' : ("Type of storage to use.", 'generic'),
             'canonical-output' : ("Whether this data type is canonical output.", None),
             'canonical-name' : ("The default name.", None),

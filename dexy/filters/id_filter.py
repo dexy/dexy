@@ -350,6 +350,9 @@ def parse_input(text, log):
     return sections
 
 class Id(DexyFilter):
+    """
+    Id filter.
+    """
     aliases = ['id']
 
     def process_text_to_dict(self, input_text):

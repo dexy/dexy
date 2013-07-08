@@ -14,6 +14,7 @@ class Doc(dexy.node.Node):
     aliases = ['doc']
     _settings = {
             'contents' : ("Custom contents for a virtual document.", None),
+            'ws-template' : ("custom website template to apply.", None),
             'data-class-alias' : ("data class alias", None),
             'shortcut' : ( """A way to refer to this document without having to
             use the full document key.""", None ),

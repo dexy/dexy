@@ -147,7 +147,7 @@ class WebsiteReporter(OutputReporter):
 
     def apply_and_render_template(self, data):
         # Figure out which template to use.
-        ws_template = data.args.get('ws-template')
+        ws_template = data.setting('ws-template')
         if ws_template and not isinstance(ws_template, bool):
             template_file = ws_template
         else:
@@ -252,10 +252,10 @@ class WebsiteReporter(OutputReporter):
                     fragments = ('<html', '<body', '<head')
                     has_html_header = any(html_fragment in unicode(data) for html_fragment in fragments)
 
-                    if data.args.get('ws-template') == False:
+                    if data.setting('ws-template') == False:
                         self.log_debug("  ws-template is False for %s" % data.key)
                         self.write_canonical_data(data)
-                    elif has_html_header and not data.args.get('ws-template'):
+                    elif has_html_header and not data.setting('ws-template'):
                         self.log_debug("  found html tag in output of %s" % data.key)
                         self.write_canonical_data(data)
                     else:
