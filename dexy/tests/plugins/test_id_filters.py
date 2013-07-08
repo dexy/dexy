@@ -6,6 +6,7 @@ from dexy.exceptions import UserFeedback
 def id_parser(wrapper):
     settings = {
             'ply-debug' : False,
+            'ply-optimize' : True,
             'ply-write-tables' : False,
             'remove-leading' : True
             }

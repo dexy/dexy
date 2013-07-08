@@ -10,16 +10,17 @@ class Id(PygmentsFilter):
     Filter for splitting text files into sections based on specially-formatted
     comments. Replacement for idiopidae.
 
-    For more information about the settings starting wiht ply-, see the PLY
+    For more information about the settings starting with ply-, see the PLY
     YACC parser documentation http://www.dabeaz.com/ply/ply.html#ply_nn36
     """
     aliases = ['idio', 'id', 'idiopidae']
     _settings = {
             'remove-leading' : ("If a document starts with empty section named '1', remove it.", False),
             'ply-debug' : ("The 'debug' setting to pass to PLY. A setting of 1 will produce very verbose output.", 0),
+            'ply-optimize' : ("Whether to use optimized mode for the lexer.", 1),
             'ply-write-tables' : ("Whether to generate parser table files (which will be stored in ply-outputdir and named ply-tabmodule).", 1),
-            'ply-outputdir' : ("Location relative to where you run dexy in whihc ply will store table files, unless ply-write-tables set to 0.", 'logs'),
-            'ply-tabmodule' : ("Name of file (.py extension will be added) to be stored in ply-outputdir, unless ply-write-tables set to 0.", 'id_parser_tabfile'),
+            'ply-outputdir' : ("Location relative to where you run dexy in which ply will store table files, ignored if ply-write-tables set to 0.", 'logs'),
+            'ply-tabmodule' : ("Name of file (.py extension will be added) to be stored in ply-outputdir, ignored if ply-write-tables set to 0.", 'id_parser_tabfile'),
             'output-extensions' : PygmentsFilter.MARKUP_OUTPUT_EXTENSIONS + PygmentsFilter.IMAGE_OUTPUT_EXTENSIONS
             }
 
@@ -81,7 +82,7 @@ class IdParser(object):
             kwargs['outputdir'] = self.settings['ply-outputdir']
             kwargs['tabmodule'] = self.settings['ply-tabmodule']
 
-        self.lexer = lex.lex(module=self, errorlog=self.log)
+        self.lexer = lex.lex(module=self, errorlog=self.log, optimize=self.settings['ply-optimize'])
         self.parser = yacc.yacc(module=self, debuglog=self.log, **kwargs)
 
     def append_text(self, code):
