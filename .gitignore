@@ -12,3 +12,4 @@ cover/
 .bugs.done
 .coverage
 bugs
+setup.cfg
