@@ -1,6 +1,6 @@
 from dexy.doc import Doc
 from dexy.tests.utils import wrap
-from dexy.filters.id_filter import IdParser
+from dexy.filters.id import IdParser
 from dexy.exceptions import UserFeedback
 
 def id_parser(wrapper):
@@ -15,6 +15,11 @@ def parse(text):
     with wrap() as wrapper:
         parser = id_parser(wrapper)
         return parser.parse(text)
+
+def token_info(text):
+    with wrap() as wrapper:
+        parser = id_parser(wrapper)
+        return parser.token_info(text)
 
 def test_parse_code():
     output = parse("foo\n")
@@ -32,8 +37,40 @@ def test_parse_comments():
         output = parse(text)
         assert output['foo-bar']['contents'] == 'foo\n'
 
+def test_parse_closed_style_sections():
+    comments = (
+        "/*** @export foo */\n",
+        "/*** @section foo */\n",
+        "<!-- @export foo -->\n",
+        "<!-- @section foo -->\n"
+        )
+
+    for text in comments:
+        output = parse(text)
+        assert output['foo']['contents'] == ''
+
+def test_parse_closed_style_end():
+    comments = (
+        "foo\n/*** @end */\nbar\n",
+        "foo\n<!-- @end -->\nbar\n"
+        )
+    for text in comments:
+        output = parse(text)
+        assert output['1']['contents'] == 'foo\n'
+        assert output['2']['contents'] == 'bar\n'
+
+def test_parse_closed_falsestart():
+    comments = (
+        "<!-- @bob -->\n",
+        "/*** @bob */\n"
+        )
+
+    for text in comments:
+        output = parse(text)
+        assert output['1']['contents'] == text
+
 def test_ignore_faux_comment():
-    for comment in ('3', '/', '%', '##%', '//#', '%#%', '##', '//', '%%'):
+    for comment in ('#', '/', '%', '##%', '//#', '%#%', '##', '//', '%%'):
         text = "%s foo bar\nfoo\n" % comment
         output = parse(text)
         assert output['1']['contents'] == text
@@ -53,13 +90,6 @@ def test_idio_invalid_input():
         doc = Doc("hello.py|idio",
                 wrapper, [],
                 contents="### @ ")
-        wrapper.run_docs(doc)
-        assert wrapper.state == 'error'
-
-def test_idio_bad_file_extension():
-    with wrap() as wrapper:
-        wrapper.debug = False
-        doc = Doc("hello.xyz|idio", wrapper, [], contents=" ")
         wrapper.run_docs(doc)
         assert wrapper.state == 'error'
 

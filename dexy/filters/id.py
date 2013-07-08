@@ -1,7 +1,41 @@
 from dexy.common import OrderedDict
 from dexy.exceptions import UserFeedback
+from dexy.filters.pyg import PygmentsFilter
+from pygments import highlight
 import ply.lex as lex
 import ply.yacc as yacc
+
+class Id(PygmentsFilter):
+    """
+    Filter for splitting text files into sections based on specially-formatted
+    comments. Replacement for idiopidae.
+
+    For more information about the settings starting wiht ply-, see the PLY
+    YACC parser documentation http://www.dabeaz.com/ply/ply.html#ply_nn36
+    """
+    aliases = ['idio', 'id', 'idiopidae']
+    _settings = {
+            'remove-leading' : ("If a document starts with empty section named '1', remove it.", False),
+            'ply-debug' : ("The 'debug' setting to pass to PLY. A setting of 1 will produce very verbose output.", 0),
+            'ply-write-tables' : ("Whether to generate parser table files (which will be stored in ply-outputdir and named ply-tabmodule).", 1),
+            'ply-outputdir' : ("Location relative to where you run dexy in whihc ply will store table files, unless ply-write-tables set to 0.", 'logs'),
+            'ply-tabmodule' : ("Name of file (.py extension will be added) to be stored in ply-outputdir, unless ply-write-tables set to 0.", 'id_parser_tabfile'),
+            'output-extensions' : PygmentsFilter.MARKUP_OUTPUT_EXTENSIONS + PygmentsFilter.IMAGE_OUTPUT_EXTENSIONS
+            }
+
+    def process(self):
+        input_text = self.input_data.as_text()
+        output = OrderedDict()
+
+        id_parser = IdParser(self.setting_values(), self.doc.wrapper.log)
+
+        pyg_lexer = self.create_lexer_instance()
+        pyg_formatter = self.create_formatter_instance()
+
+        for k, v in id_parser.parse(input_text).iteritems():
+            output[k] = highlight(v['contents'], pyg_lexer, pyg_formatter)
+
+        self.output_data.set_data(output)
 
 tokens = (
     'AMP',
@@ -10,6 +44,8 @@ tokens = (
     'COLONS',
     'DBLQUOTE',
     'END',
+    'IDIOCLOSE',
+    'IDIOOPEN',
     'EXP',
     'IDIO',
     'NEWLINE',
@@ -69,17 +105,7 @@ class IdParser(object):
     def set_current_section_contents(self, text):
         self.sections[self.current_section_key()]['contents'] = text
     
-    def clean_completed_section(self):
-        """
-        Cleans trailing newline and any whitespace following trailing newline.
-        """
-        splits = self.current_section_contents().rsplit("\n",1)
-        self.set_current_section_contents(splits[0])
-    
     def start_new_section(self, position, lineno, new_level, name=None):
-        if self.current_section_exists():
-            self.clean_completed_section()
-    
         if name:
             if self.settings['remove-leading']:
                 if len(self.sections) == 1 and self.current_section_empty():
@@ -101,9 +127,45 @@ class IdParser(object):
                 'level' : self.level
                 }
     
+    def change_level(self, new_level):
+        if new_level == self.level:
+            pass
+        elif new_level < self.level:
+            pass
+        elif new_level == self.level + 1:
+            pass
+        elif new_level > (self.level + 1):
+            msg = "attempting to indent more than 1 level to %s from previous level %s"
+            msgargs = (new_level, self.level)
+            raise Exception(msg % msgargs)
+        elif new_level < 0:
+            raise Exception("attepmting to indent to level below 0, does not exist")
+        else:
+            msg = "logic error! new level %s current level %s"
+            msgargs = (new_level, self.level)
+            raise Exception(msg % msgargs)
+    
+        self.level = new_level
+    
     def next_char(self, t):
         return t.lexer.lexdata[t.lexer.lexpos:t.lexer.lexpos+1]
-    
+
+    def lookahead_n(self, t, n):
+        # TODO what if n is too big?
+        return t.lexer.lexdata[t.lexer.lexpos:t.lexer.lexpos+n]
+
+    def lookahead_for(self, t, word):
+        return self.lookahead_n(t, len(word)) == word
+
+    def lookahead_for_any(self, t, words):
+        any_found = False
+        for word in words:
+            if self.lookahead_for(t, word):
+                any_found = True
+                break
+        return any_found
+   
+    # Lexer tokens for idio state
     def t_idio_AT(self, t):
         r'@'
         return t
@@ -125,7 +187,7 @@ class IdParser(object):
         return t
     
     def t_idio_EXP(self, t):
-        r'export'
+        r'export|section'
         return t
     
     def t_idio_END(self, t):
@@ -138,14 +200,22 @@ class IdParser(object):
     
     def t_idio_NEWLINE(self, t):
         r'\r\n|\n|\r'
-        t.lexer.pop_state()
+        if not t.lexer.idio_expect_closing_block:
+            t.lexer.pop_state()
         t.lexer.pop_state()
         return t
-    
+   
+    def t_idio_IDIOCLOSE(self, t):
+        r'(-->)|(\*/)'
+        if not t.lexer.idio_expect_closing_block:
+            raise UserFeedback("Unexpected code %s in an idio block" % t.value)
+        return t
+
     def t_idio_WORD(self, t):
         r'[a-zA-Z-]+'
         return t
     
+    # Lexer tokens and helpers for idiostart state
     def idiostart_incr_comment(self, t):
         if t.lexer.comment_char == t.value:
             t.lexer.comment_char_count += 1
@@ -163,7 +233,7 @@ class IdParser(object):
         return self.idiostart_incr_comment(t)
     
     def t_idiostart_SPACE(self, t):
-        r'\ '
+        r'\ +'
         if t.lexer.comment_char_count != 3:
             return self.idiostart_abort(t)
         else:   
@@ -175,19 +245,33 @@ class IdParser(object):
     def t_idiostart_ABORT(self, t):
         r'[^#/% ]'
         return self.idiostart_abort(t)
-    
-    # INITIAL state tokens
-    
+  
+    # Lexer tokens and helpers for initial state
     def start_idiostart(self, t):
-        t.lexer.comment_char = t.value
-        t.lexer.comment_char_count = 1
-        t.lexer.comment_start_pos = t.lexer.lexpos - 1
-        t.lexer.push_state('idiostart')
+        if self.next_char(t) == '\n':
+            t.type = 'CODE'
+            return t
+        else:
+            t.lexer.comment_char = t.value
+            t.lexer.comment_char_count = 1
+            t.lexer.comment_start_pos = t.lexer.lexpos - 1
+            t.lexer.idio_expect_closing_block = False
+            t.lexer.push_state('idiostart')
+
+    def t_IDIOOPEN(self, t):
+        r'(<!--|/\*\*\*)\ +@'
+        if self.lookahead_for_any(t, ['export', 'section', 'end']):
+            t.lexer.push_state('idio')
+            t.lexer.idio_expect_closing_block = True
+            return t
+        else:
+            t.type = 'CODE'
+            return t
     
     def t_COMMENT(self, t):
         r'\#|%|/'
-        self.start_idiostart(t)
-    
+        return self.start_idiostart(t)
+
     def t_NEWLINE(self, t):
         r'\r\n|\n|\r'
         return t
@@ -257,38 +341,35 @@ class IdParser(object):
                 | exportq
                 | exportql
                 | sectionstart
+                | closedcomment
+                | closedcommentlevels
                 | end '''
         pass
-    
-    def change_level(self, new_level):
-        if new_level == self.level:
-            pass
-        elif new_level == self.level + 1:
-            pass
-        elif new_level > (self.level + 1):
-            print "new level", new_level
-            print "current level", self.level
-            raise Exception("attempting to indent more than 1 level from previous level")
-        elif new_level < 0:
-            raise Exception("attepmting to indent to level below 0, does not exist")
-        elif new_level < self.level:
-            pass
-        else:
-            raise Exception("logic error! new level %s level %s" % (new_level, self.level))
-    
-        self.level = new_level
     
     ## Methods Defining Section Boundaries
     def p_sectionstart(self, p):
         '''sectionstart : IDIO WORD
                         | IDIO COLONS WORD'''
         if len(p) == 3:
+            # no colons, so level is 0
             self.start_new_section(p.lexpos(1), p.lineno(1), 0, p[2])
         elif len(p) == 4:
             self.start_new_section(p.lexpos(1), p.lineno(1), len(p[2]), p[3])
         else:
             raise Exception("unexpected length %s" % len(p))
-    
+   
+    def p_closed_comment(self, p):
+        '''closedcomment : IDIOOPEN EXP WHITESPACE WORD IDIOCLOSE
+                         | IDIOOPEN EXP WHITESPACE WORD WHITESPACE IDIOCLOSE'''
+        assert len(p) in [6,7]
+        self.start_new_section(p.lexpos(1), p.lineno(1), 0, p[4])
+
+    def p_closed_comment_levels(self, p):
+        '''closedcommentlevels : IDIOOPEN EXP WHITESPACE COLONS WORD IDIOCLOSE
+                               | IDIOOPEN EXP WHITESPACE COLONS WORD WHITESPACE IDIOCLOSE'''
+        assert len(p) in [7,8]
+        self.start_new_section(p.lexpos(1), p.lineno(1), len(p[4]), p[5])
+
     ## Old Idiopidae @export syntax
     def p_export(self, p):
         '''export : IDIO AT EXP WHITESPACE words
@@ -309,7 +390,9 @@ class IdParser(object):
         self.start_new_section(p.lexpos(1), p.lineno(1), 0, p[6])
     
     def p_end(self, p):
-        '''end : IDIO AT END'''
+        '''end : IDIO AT END
+               | IDIOOPEN END IDIOCLOSE
+               | IDIOOPEN END WHITESPACE IDIOCLOSE'''
         self.start_new_section(p.lexpos(1), p.lineno(1), self.level)
     
     def p_quote(self, p):
@@ -330,55 +413,34 @@ class IdParser(object):
     def p_error(self, p):
         print p
         raise UserFeedback("invalid idiopidae")
-    
-    def tokenize(lexer, text):
+   
+    def tokenize(self, text):
         """
-        For debugging. Returns array of strings with info on each token.
+        Return array of lexed tokens (for debugging).
         """
-        lexer.input(text)
-        token_info = []
-        while True:
-            tok = lexer.token()
-            if not tok: break      # No more input
-            token_info.append("%03d %-15s %s" % (tok.lexpos, tok.type, tok.value.replace("\n","")))
-        return token_info
-    
-    def parse(self, text):
         self.setup()
+        self.lexer.input(text)
+        tokens = []
+        while True:
+            tok = self.lexer.token()
+            if not tok: break      # No more input
+            tokens.append(tok)
+        return tokens
+   
+    def token_info(self, text):
+        """
+        Returns debugging information about lexed tokens as a string.
+        """
+        def tok_info(tok):
+            return "%03d %-15s %s" % (tok.lexpos, tok.type, tok.value.replace("\n",""))
+        return "\n".join(tok_info(tok) for tok in self.tokenize(text))
+
+    def parse(self, text):
+        """
+        Run the parser on the text passed in, returns OrderedDict structure.
+        """
+        self.setup()
+        if not "\n" in text:
+            print "WARNING no newline in text '%s'" % text
         self.parser.parse(text, lexer=self.lexer)
         return self.sections
-
-from dexy.filters.pyg import PygmentsFilter
-from pygments import highlight
-
-class Id(PygmentsFilter):
-    """
-    Filter for splitting text files into sections based on specially-formatted
-    comments. Replacement for idiopidae.
-
-    For more information about the settings starting wiht ply-, see the PLY
-    YACC parser documentation http://www.dabeaz.com/ply/ply.html#ply_nn36
-    """
-    aliases = ['idio', 'id']
-    _settings = {
-            'remove-leading' : ("If a document starts with empty section named '1', remove it.", False),
-            'ply-debug' : ("The 'debug' setting to pass to PLY. A setting of 1 will produce very verbose output.", 0),
-            'ply-write-tables' : ("Whether to generate parser table files (which will be stored in ply-outputdir and named ply-tabmodule).", 1),
-            'ply-outputdir' : ("Location relative to where you run dexy in whihc ply will store table files, unless ply-write-tables set to 0.", 'logs'),
-            'ply-tabmodule' : ("Name of file (.py extension will be added) to be stored in ply-outputdir, unless ply-write-tables set to 0.", 'id_parser_tabfile'),
-            'output-extensions' : PygmentsFilter.MARKUP_OUTPUT_EXTENSIONS + PygmentsFilter.IMAGE_OUTPUT_EXTENSIONS
-            }
-
-    def process(self):
-        input_text = self.input_data.as_text()
-        output = OrderedDict()
-
-        id_parser = IdParser(self.setting_values(), self.doc.wrapper.log)
-
-        pyg_lexer = self.create_lexer_instance()
-        pyg_formatter = self.create_formatter_instance()
-
-        for k, v in id_parser.parse(input_text).iteritems():
-            output[k] = highlight(v['contents'], pyg_lexer, pyg_formatter)
-
-        self.output_data.set_data(output)
