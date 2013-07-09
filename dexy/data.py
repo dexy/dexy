@@ -119,8 +119,12 @@ class Data(dexy.plugin.Plugin):
         storage_type = self.storage_class_alias(self.ext)
         instanceargs = (self.storage_key, self.ext, self.wrapper,)
         self.storage = dexy.storage.Storage.create_instance(storage_type, *instanceargs)
+
         self.storage.assert_location_is_in_project_dir(self.name)
-        self.storage.assert_location_is_in_project_dir(self.output_name())
+
+        if self.output_name():
+            self.storage.assert_location_is_in_project_dir(self.output_name())
+
         self.storage.setup()
 
     def parent_dir(self):
