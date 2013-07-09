@@ -19,8 +19,9 @@ class Id(PygmentsFilter):
             'ply-debug' : ("The 'debug' setting to pass to PLY. A setting of 1 will produce very verbose output.", 0),
             'ply-optimize' : ("Whether to use optimized mode for the lexer.", 1),
             'ply-write-tables' : ("Whether to generate parser table files (which will be stored in ply-outputdir and named ply-tabmodule).", 1),
-            'ply-outputdir' : ("Location relative to where you run dexy in which ply will store table files, ignored if ply-write-tables set to 0.", 'logs'),
-            'ply-tabmodule' : ("Name of file (.py extension will be added) to be stored in ply-outputdir, ignored if ply-write-tables set to 0.", 'id_parser_tabfile'),
+            'ply-outputdir' : ("Location relative to where you run dexy in which ply will store table files. Defaults to dexy's log directory.", None),
+            'ply-parsetab' : ("Name of parser tabfile (.py extension will be added) to be stored in ply-outputdir if ply-write-tables set to 1.", 'id_parsetab'),
+            'ply-lextab' : ("Name of lexer tabfile (.py extension will be added) to be stored in ply-outputdir if ply-optimize is set to 1.", 'id_lextab'),
             'output-extensions' : PygmentsFilter.MARKUP_OUTPUT_EXTENSIONS + PygmentsFilter.IMAGE_OUTPUT_EXTENSIONS
             }
 
@@ -28,7 +29,11 @@ class Id(PygmentsFilter):
         input_text = self.input_data.as_text()
         output = OrderedDict()
 
-        id_parser = IdParser(self.setting_values(), self.doc.wrapper.log)
+        settings = self.setting_values()
+        if not settings['ply-outputdir']:
+            settings['ply-outputdir'] = self.doc.wrapper.log_dir
+
+        id_parser = IdParser(settings, self.doc.wrapper.log)
 
         pyg_lexer = self.create_lexer_instance()
         pyg_formatter = self.create_formatter_instance()
@@ -73,17 +78,21 @@ class IdParser(object):
         self.level = 0
         self.start_new_section(0, 0, self.level)
 
-        kwargs = {
-                'debug' : self.settings['ply-debug'],
-                'write_tables' : self.settings['ply-write-tables']
+        lexer_kwargs = {
+                'optimize' : self.settings['ply-optimize'],
+                'outputdir' : self.settings['ply-outputdir'],
+                'lextab' : self.settings['ply-lextab']
                 }
 
-        if kwargs['write_tables']:
-            kwargs['outputdir'] = self.settings['ply-outputdir']
-            kwargs['tabmodule'] = self.settings['ply-tabmodule']
+        parser_kwargs = {
+                'debug' : self.settings['ply-debug'],
+                'write_tables' : self.settings['ply-write-tables'],
+                'outputdir' : self.settings['ply-outputdir'],
+                'tabmodule' : self.settings['ply-parsetab']
+                }
 
-        self.lexer = lex.lex(module=self, errorlog=self.log, optimize=self.settings['ply-optimize'])
-        self.parser = yacc.yacc(module=self, debuglog=self.log, **kwargs)
+        self.lexer = lex.lex(module=self, errorlog=self.log, **lexer_kwargs)
+        self.parser = yacc.yacc(module=self, debuglog=self.log, **parser_kwargs)
 
     def append_text(self, code):
         """
