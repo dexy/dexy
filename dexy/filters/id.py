@@ -421,8 +421,9 @@ class IdParser(object):
             raise Exception("unexpected length %s" % len(p))
     
     def p_error(self, p):
-        print p
-        raise UserFeedback("invalid idiopidae")
+        if not p:
+            raise UserFeedback("Reached EOF when parsing file using idioipdae.")
+        raise UserFeedback("Unable to parse at token %s" % p)
    
     def tokenize(self, text):
         """
@@ -450,7 +451,5 @@ class IdParser(object):
         Run the parser on the text passed in, returns OrderedDict structure.
         """
         self.setup()
-        if not "\n" in text:
-            print "WARNING no newline in text '%s'" % text
-        self.parser.parse(text, lexer=self.lexer)
+        self.parser.parse(text + "\n\n", lexer=self.lexer)
         return self.sections
