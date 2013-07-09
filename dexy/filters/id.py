@@ -114,7 +114,10 @@ class IdParser(object):
     
     def set_current_section_contents(self, text):
         self.sections[self.current_section_key()]['contents'] = text
-    
+   
+    def strip_trailing_newline(self):
+        self.set_current_section_contents(self.current_section_contents().rsplit("\n",1)[0])
+
     def start_new_section(self, position, lineno, new_level, name=None):
         if name:
             if self.settings['remove-leading']:
@@ -451,5 +454,10 @@ class IdParser(object):
         Run the parser on the text passed in, returns OrderedDict structure.
         """
         self.setup()
-        self.parser.parse(text + "\n\n", lexer=self.lexer)
+
+        # Parser requires content to end with newline - add one and then strip
+        # from final section.
+        self.parser.parse(text + "\n", lexer=self.lexer)
+        self.strip_trailing_newline()
+
         return self.sections

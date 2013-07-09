@@ -55,11 +55,12 @@ class Data(dexy.plugin.Plugin):
         artifact not in output_root.
         """
         output_root = self.wrapper.output_root
+
         def relativize(path):
             if output_root == ".":
                 return path
-            elif output_root in path:
-                return os.path.relpath(path, self.wrapper.output_root)
+            elif os.path.abspath(output_root) in os.path.abspath(path):
+                return os.path.relpath(path, output_root)
 
         output_name = self.setting('output-name')
         if output_name:

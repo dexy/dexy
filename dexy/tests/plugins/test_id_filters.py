@@ -25,6 +25,10 @@ def token_info(text):
         parser = id_parser(wrapper)
         return parser.token_info(text)
 
+def test_no_trailing_newline():
+    output = parse("}")
+    assert output['1']['contents'] == '}'
+
 def test_parse_code():
     output = parse("foo\n")
     assert output['1']['contents'] == 'foo\n'
