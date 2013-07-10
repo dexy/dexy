@@ -5,7 +5,6 @@ from pygments.formatters import HtmlFormatter
 from pygments.formatters import LatexFormatter
 from pygments.formatters import get_formatter_for_filename
 from pygments.lexers import get_lexer_by_name
-from pygments.lexers import get_lexer_for_filename
 from pygments.lexers.agile import PythonConsoleLexer
 from pygments.lexers.agile import RubyConsoleLexer
 from pygments.lexers.special import TextLexer
@@ -17,6 +16,24 @@ from pygments.lexers.web import XmlLexer
 import dexy.commands
 import dexy.exceptions
 import pygments.lexers.web
+from pygments.lexers import LEXERS as PYGMENTS_LEXERS
+
+pygments_lexer_cache = {}
+
+file_ext_to_lexer_alias_cache = {
+        '.pycon' : 'pycon',
+        '.rbcon' : 'rbcon',
+        '.Rd' : 'latex',
+        '.svg' : 'xml',
+        '.jinja' : 'jinja'
+        }
+
+# Add all pygments standard mappings.
+for module_name, name, aliases, file_extensions, _ in PYGMENTS_LEXERS.itervalues():
+    alias = aliases[0]
+    for ext in file_extensions:
+        ext = ext.lstrip("*")
+        file_ext_to_lexer_alias_cache[ext] = alias
 
 class SyntaxHighlightRstFilter(DexyFilter):
     """
@@ -30,14 +47,7 @@ class SyntaxHighlightRstFilter(DexyFilter):
 
     def process(self):
         n = self.setting('n')
-
-        try:
-            lexer = get_lexer_for_filename(self.input_data.storage.data_file())
-        except pygments.util.ClassNotFound:
-            msg = PygmentsFilter.LEXER_ERR_MSG
-            raise dexy.exceptions.UserFeedback(msg % (self.input_data.name, self.key))
-
-        lexer_alias = lexer.aliases[0]
+        lexer_alias = file_ext_to_lexer_alias_cache[self.input_data.ext]
 
         for section_name, section_input in self.input_data.iteritems():
             with_spaces = StartSpaceFilter.add_spaces_at_start(section_input, n)
@@ -87,6 +97,8 @@ class PygmentsFilter(DexyFilter):
                 'table' or 'inline'.""", None),
             }
 
+    lexer_cache = {}
+
     def data_class_alias(klass, file_ext):
         if file_ext in klass.MARKUP_OUTPUT_EXTENSIONS:
             return 'sectioned'
@@ -131,52 +143,49 @@ class PygmentsFilter(DexyFilter):
                 args[argname] = self.setting(argname)
         return args
 
-    def create_lexer_instance(self):
-        ext = self.prev_ext
-        lexer_args = self.constructor_args('lexer')
-        lexer = None
-
-        # Create a lexer instance.
+    def lexer_alias(self, ext):
         if self.setting('lexer'):
             self.log_debug("custom lexer %s specified" % self.setting('lexer'))
-            lexer = get_lexer_by_name(self.setting('lexer'), **lexer_args)
-        else:
-            is_json_file = ext in ('.json', '.dexy') or self.output_data.name.endswith(".dexy")
-            if ext == '.pycon':
-                lexer_class = PythonConsoleLexer
-            elif ext == '.rbcon':
-                lexer_class = RubyConsoleLexer
-            elif is_json_file and (pygments.__version__ < '1.5'):
-                lexer_class = JavascriptLexer
-            elif is_json_file:
-                lexer_class = pygments.lexers.web.JSONLexer
-            elif ext == '.Rd':
-                lexer_class = TexLexer # does a passable job
-            elif ext == '.svg':
-                lexer_class = XmlLexer
-            elif ext == '.jinja':
-                lexer_class = DjangoLexer
-            elif ext == '.Makefile' or (ext == '' and 'Makefile' in self.input_data.name):
-                lexer_class = MakefileLexer
+            return self.setting('lexer')
+
+        is_json_file = ext in ('.json', '.dexy') or self.output_data.name.endswith(".dexy")
+
+        if is_json_file and (pygments.__version__ < '1.5'):
+            return "javascript"
+        elif is_json_file:
+            return "Json"
+
+        if ext == '.Makefile' or (ext == '' and 'Makefile' in self.input_data.name):
+            return 'makefile'
+
+        try:
+            return file_ext_to_lexer_alias_cache[ext]
+        except KeyError:
+            pass
+
+    def create_lexer_instance(self):
+        ext = self.prev_ext
+        lexer_alias = self.lexer_alias(ext)
+        lexer_args = self.constructor_args('lexer')
+
+        if not lexer_alias:
+            msg = self.LEXER_ERR_MSG
+            msgargs = (self.input_data.name, self.key)
+
+            if self.setting('allow-unknown-ext'):
+                self.log_warn(msg % msgargs)
+                lexer_alias = 'text'
             else:
-                fake_file_name = "input_text%s" % ext
-                try:
-                    lexer = get_lexer_for_filename(fake_file_name, **lexer_args)
+                raise dexy.exceptions.UserFeedback(msg % msgargs)
 
-                except pygments.util.ClassNotFound:
-                    msg = self.LEXER_ERR_MSG
-                    msgargs = (self.input_data.name, self.key)
+        if lexer_alias in pygments_lexer_cache and not lexer_args:
+            return pygments_lexer_cache[lexer_alias]
+        else:
+            lexer = get_lexer_by_name(lexer_alias, **lexer_args)
+            if not lexer_args:
+                pygments_lexer_cache[lexer_alias] = lexer
+            return lexer
 
-                    if self.setting('allow-unknown-ext'):
-                        self.log_warn(msg % msgargs)
-                        lexer_class = TextLexer
-                    else:
-                        raise dexy.exceptions.UserFeedback(msg % msgargs)
-
-            if not lexer:
-                lexer = lexer_class(**lexer_args)
-
-        self.log_debug("using pygments lexer %s with args %s" % (lexer.__class__.__name__, lexer_args))
         return lexer
 
     def create_formatter_instance(self):

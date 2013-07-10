@@ -1,9 +1,11 @@
 from dexy.doc import Doc
 from dexy.tests.utils import wrap
-from dexy.filters.id import IdParser
 from dexy.exceptions import UserFeedback
 from dexy.tests.utils import TEST_DATA_DIR
 import os
+from dexy.filters.id import parser as id_parser
+from dexy.filters.id import lexer as id_lexer
+from dexy.filters.id import start_new_section
 
 def test_force_text():
     with wrap() as wrapper:
@@ -15,32 +17,26 @@ def test_force_text():
         wrapper.run_docs(node)
         assert str(node.output_data()) == "print 'hello'\n"
 
-def id_parser(wrapper):
-    settings = {
-            'ply-debug' : False,
-            'ply-outputdir' : wrapper.log_dir,
-            'ply-optimize' : True,
-            'ply-lextab' : 'id_lextab',
-            'ply-parsetab' : 'id_parsetab',
-            'ply-write-tables' : False,
-            'remove-leading' : True
-            }
-    return IdParser(settings, "test", wrapper.log)
-
 def parse(text):
     with wrap() as wrapper:
-        parser = id_parser(wrapper)
-        return parser.parse(text)
+        id_parser.outputdir = wrapper.log_dir
+        id_parser.errorlog = wrapper.log
+        id_lexer.outputdir = wrapper.log_dir
+        id_lexer.errorlog = wrapper.log
+        id_lexer.remove_leading = True
+        id_parser.write_tables = False
+
+        _lexer = id_lexer.clone()
+        _lexer.sections = []
+        _lexer.level = 0
+        start_new_section(_lexer, 0, 0, _lexer.level)
+        id_parser.parse(text, lexer=_lexer)
+        return _lexer.sections
 
 def token_info(text):
     with wrap() as wrapper:
         parser = id_parser(wrapper)
         return parser.token_info(text)
-
-def test_no_trailing_newline():
-    output = parse("}")
-    assert output[0]['contents'] == '}'
-    assert output[0]['name'] == '1'
 
 def test_parse_code():
     output = parse("foo\n")

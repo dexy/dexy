@@ -10,6 +10,28 @@ class LexError(InternalDexyProblem):
 class ParseError(UserFeedback):
     pass
 
+tokens = (
+    'AMP',
+    'AT',
+    'CODE',
+    'COLONS',
+    'DBLQUOTE',
+    'END',
+    'IDIOCLOSE',
+    'IDIOOPEN',
+    'EXP',
+    'IDIO',
+    'NEWLINE',
+    'SGLQUOTE',
+    'WHITESPACE',
+    'WORD',
+)
+
+states = (
+    ('idiostart', 'exclusive',),
+    ('idio', 'exclusive',),
+)
+
 class Id(PygmentsFilter):
     """
     Filter for splitting text files into sections based on specially-formatted
@@ -39,14 +61,20 @@ class Id(PygmentsFilter):
             self.output_data.save()
             return
 
-        settings = self.setting_values()
+        lexer.outputdir = self.setting('ply-outputdir')
+        lexer.errorlog = self.doc.wrapper.log
+        lexer.remove_leading = self.setting('remove-leading')
+        parser.outputdir = self.setting('ply-outputdir')
+        parser.errorlog = self.doc.wrapper.log
+        parser.write_tables = self.setting('ply-write-tables')
 
-        if not settings['ply-outputdir']:
-            settings['ply-outputdir'] = self.doc.wrapper.log_dir
+        lexer.sections = []
+        lexer.level = 0
+        start_new_section(lexer, 0, 0, lexer.level)
 
-        id_parser = IdParser(settings, self.input_data.key, self.doc.wrapper.log)
-
-        parser_output = id_parser.parse(input_text)
+        parser.parse(input_text + "\n", lexer=lexer)
+        strip_trailing_newline(lexer)
+        parser_output = lexer.sections
 
         pyg_lexer = self.create_lexer_instance()
         pyg_formatter = self.create_formatter_instance()
@@ -55,440 +83,376 @@ class Id(PygmentsFilter):
             self.output_data._data.append(section)
         self.output_data.save()
 
-tokens = (
-    'AMP',
-    'AT',
-    'CODE',
-    'COLONS',
-    'DBLQUOTE',
-    'END',
-    'IDIOCLOSE',
-    'IDIOOPEN',
-    'EXP',
-    'IDIO',
-    'NEWLINE',
-    'SGLQUOTE',
-    'WHITESPACE',
-    'WORD',
-)
+def t_error(t):
+    raise LexError("Problem lexing %s in initial state." % t)
 
-states = (
-    ('idiostart', 'exclusive',),
-    ('idio', 'exclusive',),
-)
+def t_idio_error(t):
+    raise LexError("Problem lexing %s in idio state." % t)
 
-class IdParser(object):
-    tokens = tokens
-    states = states
+def t_idiostart_error(t):
+    raise LexError("Problem lexing %s in idiostart state." % t)
+        
+def append_text(lexer, code):
+    """
+    Append to the currently active section.
+    """
+    set_current_section_contents(lexer, current_section_contents(lexer) + code)
 
-    def __init__(self, settings, key, log):
-        self.settings = settings
-        self.log = log
-        self.key = key
+def current_section_exists(lexer):
+    return len(lexer.sections) > 0
 
-    def setup(self):
-        self.sections = []
-        self.level = 0
-        self.start_new_section(0, 0, self.level)
+def current_section_empty(lexer):
+    return len(current_section_contents(lexer)) == 0
 
-        lexer_kwargs = {
-                'optimize' : self.settings['ply-optimize'],
-                'outputdir' : self.settings['ply-outputdir'],
-                'lextab' : self.settings['ply-lextab']
-                }
+def current_section_contents(lexer):
+    return lexer.sections[-1]['contents']
 
-        parser_kwargs = {
-                'debug' : self.settings['ply-debug'],
-                'write_tables' : self.settings['ply-write-tables'],
-                'outputdir' : self.settings['ply-outputdir'],
-                'tabmodule' : self.settings['ply-parsetab']
-                }
+def set_current_section_contents(lexer, text):
+    lexer.sections[-1]['contents'] = text
 
-        self.lexer = lex.lex(module=self, debuglog=None, errorlog=self.log, **lexer_kwargs)
-        self.parser = yacc.yacc(module=self, debuglog=None, errorlog=self.log, **parser_kwargs)
+def strip_trailing_newline(lexer):
+    set_current_section_contents(lexer, current_section_contents(lexer).rsplit("\n",1)[0])
 
-    def t_error(self, t):
-        raise LexError("Problem lexing %s in initial state." % t)
+def start_new_section(lexer, position, lineno, new_level, name=None):
+    if name:
+        if lexer.remove_leading:
+            if len(lexer.sections) == 1 and current_section_empty(lexer):
+                lexer.sections = []
+    else:
+        # Generate anonymous section name.
+        name = unicode(len(lexer.sections)+1)
 
-    def t_idio_error(self, t):
-        raise LexError("Problem lexing %s in idio state." % t)
+    try:
+        change_level(lexer, new_level)
+    except Exception:
+        print name
+        raise
 
-    def t_idiostart_error(self, t):
-        raise LexError("Problem lexing %s in idiostart state." % t)
-            
-    def append_text(self, code):
-        """
-        Append to the currently active section.
-        """
-        self.set_current_section_contents(self.current_section_contents() + code)
-    
-    def current_section_exists(self):
-        return len(self.sections) > 0
-    
-    def current_section_empty(self):
-        return len(self.current_section_contents()) == 0
-    
-    def current_section_contents(self):
-        return self.sections[-1]['contents']
-    
-    def set_current_section_contents(self, text):
-        self.sections[-1]['contents'] = text
-   
-    def strip_trailing_newline(self):
-        self.set_current_section_contents(self.current_section_contents().rsplit("\n",1)[0])
+    lexer.sections.append({
+            'name' : name.rstrip(),
+            'position' : position,
+            'lineno' : lineno,
+            'contents' : u'',
+            'level' : lexer.level
+            })
 
-    def start_new_section(self, position, lineno, new_level, name=None):
-        if name:
-            if self.settings['remove-leading']:
-                if len(self.sections) == 1 and self.current_section_empty():
-                    self.sections = []
-        else:
-            # Generate anonymous section name.
-            name = unicode(len(self.sections)+1)
-    
-        try:
-            self.change_level(new_level)
-        except Exception:
-            print name
-            raise
-    
-        self.sections.append({
-                'name' : name.rstrip(),
-                'position' : position,
-                'lineno' : lineno,
-                'contents' : u'',
-                'level' : self.level
-                })
-    
-    def change_level(self, new_level):
-        if new_level == self.level:
-            pass
-        elif new_level < self.level:
-            pass
-        elif new_level == self.level + 1:
-            pass
-        elif new_level > (self.level + 1):
-            msg = "attempting to indent more than 1 level to %s from previous level %s"
-            msgargs = (new_level, self.level)
-            raise Exception(msg % msgargs)
-        elif new_level < 0:
-            raise Exception("attepmting to indent to level below 0, does not exist")
-        else:
-            msg = "logic error! new level %s current level %s"
-            msgargs = (new_level, self.level)
-            raise Exception(msg % msgargs)
-    
-        self.level = new_level
-    
-    def next_char(self, t):
-        return t.lexer.lexdata[t.lexer.lexpos:t.lexer.lexpos+1]
+def change_level(lexer, new_level):
+    if new_level == lexer.level:
+        pass
+    elif new_level < lexer.level:
+        pass
+    elif new_level == lexer.level + 1:
+        pass
+    elif new_level > (lexer.level + 1):
+        msg = "attempting to indent more than 1 level to %s from previous level %s"
+        msgargs = (new_level, lexer.level)
+        raise Exception(msg % msgargs)
+    elif new_level < 0:
+        raise Exception("attepmting to indent to level below 0, does not exist")
+    else:
+        msg = "logic error! new level %s current level %s"
+        msgargs = (new_level, lexer.level)
+        raise Exception(msg % msgargs)
 
-    def lookahead_n(self, t, n):
-        # TODO what if n is too big?
-        return t.lexer.lexdata[t.lexer.lexpos:t.lexer.lexpos+n]
+    lexer.level = new_level
 
-    def lookahead_for(self, t, word):
-        return self.lookahead_n(t, len(word)) == word
+def next_char(t):
+    return t.lexer.lexdata[t.lexer.lexpos:t.lexer.lexpos+1]
 
-    def lookahead_for_any(self, t, words):
-        any_found = False
-        for word in words:
-            if self.lookahead_for(t, word):
-                any_found = True
-                break
-        return any_found
-   
-    # Lexer tokens for idio state
-    def t_idio_AT(self, t):
-        r'@'
-        return t
-    
-    def t_idio_AMP(self, t):
-        r'&'
-        return t
-    
-    def t_idio_COLONS(self, t):
-        r':+'
-        return t
-    
-    def t_idio_DBLQUOTE(self, t):
-        r'"'
-        return t
-    
-    def t_idio_SGLQUOTE(self, t):
-        r'\''
-        return t
-    
-    def t_idio_EXP(self, t):
-        r'export|section'
-        return t
-    
-    def t_idio_END(self, t):
-        r'end'
-        return t
-    
-    def t_idio_WHITESPACE(self, t):
-        r'(\ |\t)+'
-        return t
-    
-    def t_idio_NEWLINE(self, t):
-        r'\r\n|\n|\r'
-        if not t.lexer.idio_expect_closing_block:
-            t.lexer.pop_state()
+def lookahead_n(t, n):
+    # TODO what if n is too big?
+    return t.lexer.lexdata[t.lexer.lexpos:t.lexer.lexpos+n]
+
+def lookahead_for(t, word):
+    return lookahead_n(t, len(word)) == word
+
+def lookahead_for_any(t, words):
+    any_found = False
+    for word in words:
+        if lookahead_for(t, word):
+            any_found = True
+            break
+    return any_found
+
+# Lexer tokens for idio state
+def t_idio_AT(t):
+    r'@'
+    return t
+
+def t_idio_AMP(t):
+    r'&'
+    return t
+
+def t_idio_COLONS(t):
+    r':+'
+    return t
+
+def t_idio_DBLQUOTE(t):
+    r'"'
+    return t
+
+def t_idio_SGLQUOTE(t):
+    r'\''
+    return t
+
+def t_idio_EXP(t):
+    r'export|section'
+    return t
+
+def t_idio_END(t):
+    r'end'
+    return t
+
+def t_idio_WHITESPACE(t):
+    r'(\ |\t)+'
+    return t
+
+def t_idio_NEWLINE(t):
+    r'\r\n|\n|\r'
+    if not t.lexer.idio_expect_closing_block:
         t.lexer.pop_state()
-        return t
-   
-    def t_idio_IDIOCLOSE(self, t):
-        r'(-->)|(\*/)'
-        if not t.lexer.idio_expect_closing_block:
-            raise UserFeedback("Unexpected code %s in an idio block" % t.value)
-        return t
+    t.lexer.pop_state()
+    return t
 
-    def t_idio_WORD(self, t):
-        r'[a-zA-Z-]+'
-        return t
-    
-    # Lexer tokens and helpers for idiostart state
-    def idiostart_incr_comment(self, t):
-        if t.lexer.comment_char == t.value:
-            t.lexer.comment_char_count += 1
-        else:
-            return self.idiostart_abort(t)
-    
-    def idiostart_abort(self, t):
+def t_idio_IDIOCLOSE(t):
+    r'(-->)|(\*/)'
+    if not t.lexer.idio_expect_closing_block:
+        raise UserFeedback("Unexpected code %s in an idio block" % t.value)
+    return t
+
+def t_idio_WORD(t):
+    r'[a-zA-Z-]+'
+    return t
+
+# Lexer tokens and helpers for idiostart state
+def idiostart_incr_comment(t):
+    if t.lexer.comment_char == t.value:
+        t.lexer.comment_char_count += 1
+    else:
+        return idiostart_abort(t)
+
+def idiostart_abort(t):
+    t.value = t.lexer.lexdata[t.lexer.comment_start_pos:t.lexer.lexpos]
+    t.type = "CODE"
+    t.lexer.pop_state()
+    return t
+
+def t_idiostart_COMMENT(t):
+    r'\#|%|/'
+    return idiostart_incr_comment(t)
+
+def t_idiostart_SPACE(t):
+    r'\ +'
+    if t.lexer.comment_char_count != 3:
+        return idiostart_abort(t)
+    else:   
+        t.lexer.push_state('idio')
         t.value = t.lexer.lexdata[t.lexer.comment_start_pos:t.lexer.lexpos]
-        t.type = "CODE"
-        t.lexer.pop_state()
+        t.type = 'IDIO'
         return t
-   
-    def t_idiostart_COMMENT(self, t):
-        r'\#|%|/'
-        return self.idiostart_incr_comment(t)
-    
-    def t_idiostart_SPACE(self, t):
-        r'\ +'
-        if t.lexer.comment_char_count != 3:
-            return self.idiostart_abort(t)
-        else:   
-            t.lexer.push_state('idio')
-            t.value = t.lexer.lexdata[t.lexer.comment_start_pos:t.lexer.lexpos]
-            t.type = 'IDIO'
-            return t
-    
-    def t_idiostart_ABORT(self, t):
-        r'[^#/% ]'
-        return self.idiostart_abort(t)
-  
-    # Lexer tokens and helpers for initial state
-    def start_idiostart(self, t):
-        if self.next_char(t) == '\n':
-            t.type = 'CODE'
-            return t
-        else:
-            t.lexer.comment_char = t.value
-            t.lexer.comment_char_count = 1
-            t.lexer.comment_start_pos = t.lexer.lexpos - 1
-            t.lexer.idio_expect_closing_block = False
-            t.lexer.push_state('idiostart')
 
-    def t_IDIOOPEN(self, t):
-        r'(<!--|/\*\*\*)\ +@'
-        if self.lookahead_for_any(t, ['export', 'section', 'end']):
-            t.lexer.push_state('idio')
-            t.lexer.idio_expect_closing_block = True
-            return t
-        else:
-            t.type = 'CODE'
-            return t
-    
-    def t_COMMENT(self, t):
-        r'\#|%|/'
-        return self.start_idiostart(t)
+def t_idiostart_ABORT(t):
+    r'[^#/% ]'
+    return idiostart_abort(t)
 
-    def t_NEWLINE(self, t):
-        r'\r\n|\n|\r'
+# Lexer tokens and helpers for initial state
+def start_idiostart(t):
+    if next_char(t) == '\n':
+        t.type = 'CODE'
         return t
-    
-    def t_WHITESPACE(self, t):
-        r'[\ \t]+'
+    else:
+        t.lexer.comment_char = t.value
+        t.lexer.comment_char_count = 1
+        t.lexer.comment_start_pos = t.lexer.lexpos - 1
+        t.lexer.idio_expect_closing_block = False
+        t.lexer.push_state('idiostart')
+
+def t_IDIOOPEN(t):
+    r'(<!--|/\*\*\*)\ +@'
+    if lookahead_for_any(t, ['export', 'section', 'end']):
+        t.lexer.push_state('idio')
+        t.lexer.idio_expect_closing_block = True
         return t
-    
-    def t_CODE(self, t):
-        r'[^\#/\n\r]+'
+    else:
+        t.type = 'CODE'
         return t
-    
-    def p_main(self, p):
-        '''entries : entries entry
-                   | entry'''
+
+def t_COMMENT(t):
+    r'\#|%|/'
+    return start_idiostart(t)
+
+def t_NEWLINE(t):
+    r'\r\n|\n|\r'
+    return t
+
+def t_WHITESPACE(t):
+    r'[\ \t]+'
+    return t
+
+def t_CODE(t):
+    r'[^\#/\n\r]+'
+    return t
+
+def p_main(p):
+    '''entries : entries entry
+               | entry'''
+    pass
+
+def p_entry(p):
+    '''entry : NEWLINE
+             | codes NEWLINE
+             | sectionfalsestart NEWLINE
+             | codes inlineidio NEWLINE
+             | idioline NEWLINE'''
+    p.lexer.lineno += 1
+    if len(p) == 2:
+        append_text(p.lexer, '\n')
+    elif len(p) == 3:
+        if p[1]:
+            append_text(p.lexer, p[1] + '\n')
         pass
-    
-    def p_entry(self, p):
-        '''entry : NEWLINE
-                 | codes NEWLINE
-                 | sectionfalsestart NEWLINE
-                 | codes inlineidio NEWLINE
-                 | idioline NEWLINE'''
-        p.lexer.lineno += 1
-        if len(p) == 2:
-            self.append_text('\n')
-        elif len(p) == 3:
-            if p[1]:
-                self.append_text(p[1] + '\n')
-            pass
-        elif len(p) == 4:
-            code_content = p[1]
-            self.append_text(code_content + "\n")
-            # TODO Process inlineidio directives @elide &tag
-            # inlineidio_content = p[2]
-        else:
-            raise Exception("unexpected length " + len(p))
-  
-    def p_sectionfalsestart(self, p):
-        '''sectionfalsestart : IDIO words'''
-        p[0] = p[1] + p[2]
-    
-    def p_codes(self, p):
-        '''codes : codes codon
-                 | codon'''
-        if len(p) == 2:
-            p[0] = p[1]
-        elif len(p) == 3:
-            if p[1]:
-                p[0] = p[1] + p[2]
-            else:
-                p[0] = p[2]
-    
-    def p_codon(self, p):
-        '''codon : CODE 
-                 | WHITESPACE'''
+    elif len(p) == 4:
+        code_content = p[1]
+        append_text(p.lexer, code_content + "\n")
+        # TODO Process inlineidio directives @elide &tag
+        # inlineidio_content = p[2]
+    else:
+        raise Exception("unexpected length " + len(p))
+
+def p_sectionfalsestart(p):
+    '''sectionfalsestart : IDIO words'''
+    p[0] = p[1] + p[2]
+
+def p_codes(p):
+    '''codes : codes codon
+             | codon'''
+    if len(p) == 2:
         p[0] = p[1]
-    
-    def p_inlineidio(self, p):
-        '''inlineidio : IDIO AMP WORD'''
+    elif len(p) == 3:
+        if p[1]:
+            p[0] = p[1] + p[2]
+        else:
+            p[0] = p[2]
+
+def p_codon(p):
+    '''codon : CODE 
+             | WHITESPACE'''
+    p[0] = p[1]
+
+def p_inlineidio(p):
+    '''inlineidio : IDIO AMP WORD'''
+    p[0] = p[1] + p[2] + p[3]
+
+def p_idioline(p):
+    '''idioline : idio
+                | idio WHITESPACE
+                | WHITESPACE idio
+                | WHITESPACE idio WHITESPACE'''
+    pass
+
+def p_linecontent(p):
+    '''idio : export
+            | exportq
+            | exportql
+            | sectionstart
+            | closedcomment
+            | closedcommentlevels
+            | end '''
+    pass
+
+## Methods Defining Section Boundaries
+def p_sectionstart(p):
+    '''sectionstart : IDIO quote WORD quote
+                    | IDIO quote COLONS WORD quote'''
+    if len(p) == 5:
+        # no colons, so level is 0
+        start_new_section(p.lexer, p.lexpos(1), p.lineno(1), 0, p[3])
+    elif len(p) == 6:
+        start_new_section(p.lexer, p.lexpos(1), p.lineno(1), len(p[3]), p[4])
+    else:
+        raise Exception("unexpected length %s" % len(p))
+
+def p_closed_comment(p):
+    '''closedcomment : IDIOOPEN EXP WHITESPACE WORD IDIOCLOSE
+                     | IDIOOPEN EXP WHITESPACE WORD WHITESPACE IDIOCLOSE'''
+    assert len(p) in [6,7]
+    start_new_section(p.lexer, p.lexpos(1), p.lineno(1), 0, p[4])
+
+def p_closed_comment_levels(p):
+    '''closedcommentlevels : IDIOOPEN EXP WHITESPACE COLONS WORD IDIOCLOSE
+                           | IDIOOPEN EXP WHITESPACE COLONS WORD WHITESPACE IDIOCLOSE'''
+    assert len(p) in [7,8]
+    start_new_section(p.lexer, p.lexpos(1), p.lineno(1), len(p[4]), p[5])
+
+## Old Idiopidae @export syntax
+def p_export(p):
+    '''export : IDIO AT EXP WHITESPACE words
+              | IDIO AT EXP WHITESPACE words WHITESPACE'''
+    assert len(p) in [6,7]
+    start_new_section(p.lexer, p.lexpos(1), p.lineno(1), 0, p[5])
+
+def p_export_quoted(p):
+    '''exportq : IDIO AT EXP WHITESPACE quote words quote
+               | IDIO AT EXP WHITESPACE quote words quote WHITESPACE'''
+    assert len(p) in [8,9]
+    start_new_section(p.lexer, p.lexpos(1), p.lineno(1), 0, p[6])
+
+def p_export_quoted_with_language(p):
+    '''exportql : IDIO AT EXP WHITESPACE quote words quote WHITESPACE words
+                | IDIO AT EXP WHITESPACE quote words quote WHITESPACE words WHITESPACE'''
+    assert len(p) in [10,11]
+    start_new_section(p.lexer, p.lexpos(1), p.lineno(1), 0, p[6])
+
+def p_end(p):
+    '''end : IDIO AT END
+           | IDIOOPEN END IDIOCLOSE
+           | IDIOOPEN END WHITESPACE IDIOCLOSE'''
+    start_new_section(p.lexer, p.lexpos(1), p.lineno(1), p.lexer.level)
+
+def p_quote(p):
+    '''quote : DBLQUOTE
+             | SGLQUOTE'''
+    p[0] = p[1]
+
+def p_words(p):
+    '''words : words WHITESPACE WORD
+             | WORD'''
+    if len(p) == 4:
         p[0] = p[1] + p[2] + p[3]
-    
-    def p_idioline(self, p):
-        '''idioline : idio
-                    | idio WHITESPACE
-                    | WHITESPACE idio
-                    | WHITESPACE idio WHITESPACE'''
-        pass
-    
-    def p_linecontent(self, p):
-        '''idio : export
-                | exportq
-                | exportql
-                | sectionstart
-                | closedcomment
-                | closedcommentlevels
-                | end '''
-        pass
-    
-    ## Methods Defining Section Boundaries
-    def p_sectionstart(self, p):
-        '''sectionstart : IDIO quote WORD quote
-                        | IDIO quote COLONS WORD quote'''
-        if len(p) == 5:
-            # no colons, so level is 0
-            self.start_new_section(p.lexpos(1), p.lineno(1), 0, p[3])
-        elif len(p) == 6:
-            self.start_new_section(p.lexpos(1), p.lineno(1), len(p[3]), p[4])
-        else:
-            raise Exception("unexpected length %s" % len(p))
-
-    def p_closed_comment(self, p):
-        '''closedcomment : IDIOOPEN EXP WHITESPACE WORD IDIOCLOSE
-                         | IDIOOPEN EXP WHITESPACE WORD WHITESPACE IDIOCLOSE'''
-        assert len(p) in [6,7]
-        self.start_new_section(p.lexpos(1), p.lineno(1), 0, p[4])
-
-    def p_closed_comment_levels(self, p):
-        '''closedcommentlevels : IDIOOPEN EXP WHITESPACE COLONS WORD IDIOCLOSE
-                               | IDIOOPEN EXP WHITESPACE COLONS WORD WHITESPACE IDIOCLOSE'''
-        assert len(p) in [7,8]
-        self.start_new_section(p.lexpos(1), p.lineno(1), len(p[4]), p[5])
-
-    ## Old Idiopidae @export syntax
-    def p_export(self, p):
-        '''export : IDIO AT EXP WHITESPACE words
-                  | IDIO AT EXP WHITESPACE words WHITESPACE'''
-        assert len(p) in [6,7]
-        self.start_new_section(p.lexpos(1), p.lineno(1), 0, p[5])
-    
-    def p_export_quoted(self, p):
-        '''exportq : IDIO AT EXP WHITESPACE quote words quote
-                   | IDIO AT EXP WHITESPACE quote words quote WHITESPACE'''
-        assert len(p) in [8,9]
-        self.start_new_section(p.lexpos(1), p.lineno(1), 0, p[6])
-    
-    def p_export_quoted_with_language(self, p):
-        '''exportql : IDIO AT EXP WHITESPACE quote words quote WHITESPACE words
-                    | IDIO AT EXP WHITESPACE quote words quote WHITESPACE words WHITESPACE'''
-        assert len(p) in [10,11]
-        self.start_new_section(p.lexpos(1), p.lineno(1), 0, p[6])
-    
-    def p_end(self, p):
-        '''end : IDIO AT END
-               | IDIOOPEN END IDIOCLOSE
-               | IDIOOPEN END WHITESPACE IDIOCLOSE'''
-        self.start_new_section(p.lexpos(1), p.lineno(1), self.level)
-    
-    def p_quote(self, p):
-        '''quote : DBLQUOTE
-                 | SGLQUOTE'''
+    elif len(p) == 2:
         p[0] = p[1]
-    
-    def p_words(self, p):
-        '''words : words WHITESPACE WORD
-                 | WORD'''
-        if len(p) == 4:
-            p[0] = p[1] + p[2] + p[3]
-        elif len(p) == 2:
-            p[0] = p[1]
-        else:
-            raise Exception("unexpected length %s" % len(p))
-    
-    def p_error(self, p):
-        if not p:
-            raise ParseError("Reached EOF when parsing file using idioipdae.")
+    else:
+        raise Exception("unexpected length %s" % len(p))
 
-        msg = """Trying to run IdParser on document '%s',
-        got stuck at position %s/line %s at token '%s' (token type %s)"""
-        msgargs = (self.key, p.lexpos, p.lineno, p.value, p.type)
-        # TODO extract relevant section of:
-        # p.lexer.lexdata
-        raise ParseError(msg % msgargs)
-   
-    def tokenize(self, text):
-        """
-        Return array of lexed tokens (for debugging).
-        """
-        self.setup()
-        self.lexer.input(text)
-        tokens = []
-        while True:
-            tok = self.lexer.token()
-            if not tok: break      # No more input
-            tokens.append(tok)
-        return tokens
-   
-    def token_info(self, text):
-        """
-        Returns debugging information about lexed tokens as a string.
-        """
-        def tok_info(tok):
-            return "%03d %-15s %s" % (tok.lexpos, tok.type, tok.value.replace("\n",""))
-        return "\n".join(tok_info(tok) for tok in self.tokenize(text))
+def p_error(p):
+    if not p:
+        raise ParseError("Reached EOF when parsing file using idioipdae.")
 
-    def parse(self, text):
-        """
-        Run the parser on the text passed in, returns OrderedDict structure.
-        """
-        self.setup()
+    msg = """Trying to run IdParser. got stuck at position %s/line %s at token '%s' (token type %s)"""
+    msgargs = (p.lexpos, p.lineno, p.value, p.type)
+    # TODO extract relevant section of:
+    # p.lexer.lexdata
+    raise ParseError(msg % msgargs)
 
-        # Parser requires content to end with newline - add one and then strip
-        # from final section.
-        self.parser.parse(text + "\n", lexer=self.lexer)
-        self.strip_trailing_newline()
+def tokenize(text, lexer):
+    """
+    Return array of lexed tokens (for debugging).
+    """
+    lexer.input(text)
+    tokens = []
+    while True:
+        tok = lexer.token()
+        if not tok: break      # No more input
+        tokens.append(tok)
+    return tokens
 
-        return self.sections
+def token_info(text, lexer):
+    """
+    Returns debugging information about lexed tokens as a string.
+    """
+    def tok_info(tok):
+        return "%03d %-15s %s" % (tok.lexpos, tok.type, tok.value.replace("\n",""))
+    return "\n".join(tok_info(tok) for tok in tokenize(text, lexer))
+
+lexer = lex.lex(optimize=1, lextab="id_lextab")
+parser = yacc.yacc(tabmodule="id_parsetab",debug=0)
