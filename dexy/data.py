@@ -1,4 +1,3 @@
-from dexy.common import OrderedDict
 from dexy.exceptions import InternalDexyProblem
 import chardet
 import dexy.plugin
@@ -191,6 +190,13 @@ class Data(dexy.plugin.Plugin):
     def splitlines(self, arg=None):
         return unicode(self).splitlines(arg)
 
+    def save(self):
+        try:
+            self.storage.save()
+        except Exception as e:
+            print e
+            raise dexy.exceptions.InternalDexyProblem("problem saving %s" % self.key)
+
 class Generic(Data):
     """
     Data type representing generic binary or text-based data in a single blob.
@@ -234,15 +240,27 @@ class Generic(Data):
         return self.storage.data_file_size(this)
 
     def data(self):
-        if not self._data:
+        if (not self._data) or self._data == [{}]:
             self.load_data()
         return self._data
 
     def as_text(self):
         return unicode(self)
 
-    def as_sectioned(self):
-        return {'1' : self.data()}
+    def keys(self):
+        return ['1']
+
+    def __getitem__(self, key):
+        if key == '1':
+            return self.data()
+        else:
+            return self.data()[key]
+
+    def iteritems(self):
+        yield ('1', self.data())
+
+    def items(self):
+        return [('1', self.data(),)]
 
     def json_as_dict(self):
         return self.from_json()
@@ -288,6 +306,28 @@ class Generic(Data):
         if not self.storage.copy_file(filepath):
             self.storage.write_data(self.data(), filepath)
 
+class SectionValue(object):
+    def __init__(self, data, parent, parentindex):
+        assert isinstance(data, dict)
+        self.data = data
+        self.parent = parent
+        self.parentindex = parentindex
+
+    def __unicode__(self):
+        return unicode(self.data['contents'])
+
+    def __str__(self):
+        return str(self.data['contents'])
+
+    def __getitem__(self, key):
+        return self.data[key]
+
+    def __setitem__(self, key, value):
+        self.parent.data()[self.parentindex+1][key] = value
+
+    def splitlines(self):
+        return unicode(self).splitlines()
+
 class Sectioned(Generic):
     """
     Data in sections which must be kept in order.
@@ -295,33 +335,76 @@ class Sectioned(Generic):
     aliases = ['sectioned']
 
     _settings = {
-            'storage-type' : 'jsonordered'
+            'storage-type' : 'jsonsectioned'
             }
 
     def __unicode__(self):
-        return u"\n".join(unicode(v) for v in self.data().values())
+        return u"\n".join(unicode(v) for v in self.values())
 
     def __str__(self):
-        return "\n".join(str(v) for v in self.data().values())
+        return "\n".join(str(v) for v in self.values())
 
-    def as_sectioned(self):
-        return self.data()
+    def __len__(self):
+        return len(self.data())-1
+
+    def setup(self):
+        self.setup_storage()
+        self._data = [{}]
+        self.transition('ready')
+
+    def __setitem__(self, key, value):
+        section_dict = {"name" : key, "contents" : value}
+        self._data.append(section_dict)
+
+    def __delitem__(self, key):
+        index = self.keyindex(key)
+        self.data().pop(index+1)
 
     def keys(self):
-        return self.data().keys()
+        return [a['name'] for a in self.data()[1:]]
+
+    def values(self):
+        return [SectionValue(a, self, i) for i, a in enumerate(self.data()[1:])]
 
     def output_to_file(self, filepath):
         """
-        Write canonical output to a file.
+        Write canonical (not structured) output to a file.
         """
         with open(filepath, "wb") as f:
             f.write(unicode(self).encode("utf-8"))
 
+    def keyindex(self, key):
+        try:
+            return self.keys().index(key)
+        except ValueError:
+            return -1
+
     def value(self, key):
-        return self.data()[key]
+        index = self.keyindex(key)
+        if index > -1:
+            return self.values()[index]
+        else:
+            try:
+                return self.data()[0][key]
+            except KeyError:
+                msg = "No value for %s available in sections or metadata."
+                msgargs = (key)
+                raise dexy.exceptions.UserFeedback(msg % msgargs)
 
     def __getitem__(self, key):
-        return self.value(key)
+        try:
+            return self.data()[key+1]
+        except TypeError:
+            return self.value(key)
+
+    def iteritems(self):
+        keys = self.keys()
+        values = self.values()
+        for i in range(len(self)):
+            yield (keys[i], values[i])
+
+    def items(self):
+        return [(key, value) for (key, value) in self.iteritems()]
 
 class KeyValue(Generic):
     """
@@ -348,15 +431,6 @@ class KeyValue(Generic):
         for k, v in self.storage:
             text.append(u"%s: %s" % (k, v))
         return u"\n".join(text)
-
-    def as_sectioned(self):
-        od = OrderedDict()
-        for k, v in self.storage:
-            od[k] = v
-        return od
-
-    def data(self):
-        return self.as_sectioned()
 
     def value(self, key):
         return self.storage[key]

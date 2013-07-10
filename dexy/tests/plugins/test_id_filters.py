@@ -2,6 +2,18 @@ from dexy.doc import Doc
 from dexy.tests.utils import wrap
 from dexy.filters.id import IdParser
 from dexy.exceptions import UserFeedback
+from dexy.tests.utils import TEST_DATA_DIR
+import os
+
+def test_force_text():
+    with wrap() as wrapper:
+        node = Doc("example.py|idio|t",
+                wrapper,
+                [],
+                contents="print 'hello'\n")
+
+        wrapper.run_docs(node)
+        assert str(node.output_data()) == "print 'hello'\n"
 
 def id_parser(wrapper):
     settings = {
@@ -13,7 +25,7 @@ def id_parser(wrapper):
             'ply-write-tables' : False,
             'remove-leading' : True
             }
-    return IdParser(settings, wrapper.log)
+    return IdParser(settings, "test", wrapper.log)
 
 def parse(text):
     with wrap() as wrapper:
@@ -27,23 +39,26 @@ def token_info(text):
 
 def test_no_trailing_newline():
     output = parse("}")
-    assert output['1']['contents'] == '}'
+    assert output[0]['contents'] == '}'
+    assert output[0]['name'] == '1'
 
 def test_parse_code():
     output = parse("foo\n")
-    assert output['1']['contents'] == 'foo\n'
+    assert output[0]['contents'] == 'foo\n'
 
 def test_parse_oldstyle_comments():
     for comment in ('###', '///', '%%%'):
         text = "%s @export foo\nfoo\n" % comment
         output = parse(text)
-        assert output['foo']['contents'] == 'foo\n'
+        assert output[0]['name'] == 'foo'
+        assert output[0]['contents'] == 'foo\n'
 
 def test_parse_comments():
     for comment in ('###', '///', '%%%'):
-        text = "%s foo-bar\nfoo\n" % comment
+        text = "%s 'foo-bar'\nfoo\n" % comment
         output = parse(text)
-        assert output['foo-bar']['contents'] == 'foo\n'
+        assert output[0]['name'] == 'foo-bar'
+        assert output[0]['contents'] == 'foo\n'
 
 def test_parse_closed_style_sections():
     comments = (
@@ -55,7 +70,8 @@ def test_parse_closed_style_sections():
 
     for text in comments:
         output = parse(text)
-        assert output['foo']['contents'] == ''
+        assert output[0]['contents'] == ''
+        assert output[0]['name'] == 'foo'
 
 def test_parse_closed_style_end():
     comments = (
@@ -64,8 +80,10 @@ def test_parse_closed_style_end():
         )
     for text in comments:
         output = parse(text)
-        assert output['1']['contents'] == 'foo\n'
-        assert output['2']['contents'] == 'bar\n'
+        assert output[0]['contents'] == 'foo\n'
+        assert output[1]['contents'] == 'bar\n'
+        assert output[0]['name'] == '1'
+        assert output[1]['name'] == '2'
 
 def test_parse_closed_falsestart():
     comments = (
@@ -75,17 +93,17 @@ def test_parse_closed_falsestart():
 
     for text in comments:
         output = parse(text)
-        assert output['1']['contents'] == text
+        assert output[0]['contents'] == text
 
 def test_ignore_faux_comment():
     for comment in ('#', '/', '%', '##%', '//#', '%#%', '##', '//', '%%'):
         text = "%s foo bar\nfoo\n" % comment
         output = parse(text)
-        assert output['1']['contents'] == text
+        assert output[0]['contents'] == text
 
 def test_malformatted_comment_throws_error():
     for comment in ('###', '///', '%%%'):
-        text = "%s foo bar\nfoo\n" % comment
+        text = "%s 'foo bar'\nfoo\n" % comment
         try:
             parse(text)
             assert False, "Should not get here."
@@ -118,19 +136,7 @@ x*y
                 contents=src)
 
         wrapper.run_docs(doc)
-
-        print doc.output_data().keys()
         assert doc.output_data().keys() == ['1', 'vars', 'multiply']
-
-def test_force_text():
-    with wrap() as wrapper:
-        node = Doc("example.py|idio|t",
-                wrapper,
-                [],
-                contents="print 'hello'\n")
-
-        wrapper.run_docs(node)
-        assert str(node.output_data()) == "print 'hello'\n"
 
 def test_force_latex():
     with wrap() as wrapper:
@@ -142,3 +148,8 @@ def test_force_latex():
         wrapper.run_docs(doc)
 
         assert "begin{Verbatim}" in str(doc.output_data())
+
+def test_parse_docutils_latex():
+    with open(os.path.join(TEST_DATA_DIR, "doc.tex"), "r") as f:
+        latex = f.read()
+    parse(latex)

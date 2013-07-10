@@ -1,9 +1,14 @@
-from dexy.common import OrderedDict
-from dexy.exceptions import UserFeedback
+from dexy.exceptions import UserFeedback, InternalDexyProblem
 from dexy.filters.pyg import PygmentsFilter
 from pygments import highlight
 import ply.lex as lex
 import ply.yacc as yacc
+
+class LexError(InternalDexyProblem):
+    pass
+
+class ParseError(UserFeedback):
+    pass
 
 class Id(PygmentsFilter):
     """
@@ -13,8 +18,9 @@ class Id(PygmentsFilter):
     For more information about the settings starting with ply-, see the PLY
     YACC parser documentation http://www.dabeaz.com/ply/ply.html#ply_nn36
     """
-    aliases = ['idio', 'id', 'idiopidae']
+    aliases = ['idio', 'id', 'idiopidae', 'htmlsections']
     _settings = {
+            'skip-extensions' : ("Because |idio gets applied to *.*, need to make it easy to skip non-textual files.", (".odt")),
             'remove-leading' : ("If a document starts with empty section named '1', remove it.", False),
             'ply-debug' : ("The 'debug' setting to pass to PLY. A setting of 1 will produce very verbose output.", 0),
             'ply-optimize' : ("Whether to use optimized mode for the lexer.", 1),
@@ -26,22 +32,28 @@ class Id(PygmentsFilter):
             }
 
     def process(self):
-        input_text = self.input_data.as_text()
-        output = OrderedDict()
+        try:
+            input_text = unicode(self.input_data)
+        except UnicodeDecodeError:
+            self.output_data['1'] = "non textual"
+            self.output_data.save()
+            return
 
         settings = self.setting_values()
+
         if not settings['ply-outputdir']:
             settings['ply-outputdir'] = self.doc.wrapper.log_dir
 
-        id_parser = IdParser(settings, self.doc.wrapper.log)
+        id_parser = IdParser(settings, self.input_data.key, self.doc.wrapper.log)
+
+        parser_output = id_parser.parse(input_text)
 
         pyg_lexer = self.create_lexer_instance()
         pyg_formatter = self.create_formatter_instance()
-
-        for k, v in id_parser.parse(input_text).iteritems():
-            output[k] = highlight(v['contents'], pyg_lexer, pyg_formatter)
-
-        self.output_data.set_data(output)
+        for section in parser_output:
+            section['contents'] = highlight(section['contents'], pyg_lexer, pyg_formatter)
+            self.output_data._data.append(section)
+        self.output_data.save()
 
 tokens = (
     'AMP',
@@ -69,12 +81,13 @@ class IdParser(object):
     tokens = tokens
     states = states
 
-    def __init__(self, settings, log):
+    def __init__(self, settings, key, log):
         self.settings = settings
         self.log = log
+        self.key = key
 
     def setup(self):
-        self.sections = OrderedDict()
+        self.sections = []
         self.level = 0
         self.start_new_section(0, 0, self.level)
 
@@ -91,9 +104,18 @@ class IdParser(object):
                 'tabmodule' : self.settings['ply-parsetab']
                 }
 
-        self.lexer = lex.lex(module=self, errorlog=self.log, **lexer_kwargs)
-        self.parser = yacc.yacc(module=self, debuglog=self.log, **parser_kwargs)
+        self.lexer = lex.lex(module=self, debuglog=None, errorlog=self.log, **lexer_kwargs)
+        self.parser = yacc.yacc(module=self, debuglog=None, errorlog=self.log, **parser_kwargs)
 
+    def t_error(self, t):
+        raise LexError("Problem lexing %s in initial state." % t)
+
+    def t_idio_error(self, t):
+        raise LexError("Problem lexing %s in idio state." % t)
+
+    def t_idiostart_error(self, t):
+        raise LexError("Problem lexing %s in idiostart state." % t)
+            
     def append_text(self, code):
         """
         Append to the currently active section.
@@ -103,17 +125,14 @@ class IdParser(object):
     def current_section_exists(self):
         return len(self.sections) > 0
     
-    def current_section_key(self):
-        return self.sections.keys()[-1]
-    
-    def current_section_contents(self):
-        return self.sections[self.current_section_key()]['contents']
-    
     def current_section_empty(self):
         return len(self.current_section_contents()) == 0
     
+    def current_section_contents(self):
+        return self.sections[-1]['contents']
+    
     def set_current_section_contents(self, text):
-        self.sections[self.current_section_key()]['contents'] = text
+        self.sections[-1]['contents'] = text
    
     def strip_trailing_newline(self):
         self.set_current_section_contents(self.current_section_contents().rsplit("\n",1)[0])
@@ -122,23 +141,24 @@ class IdParser(object):
         if name:
             if self.settings['remove-leading']:
                 if len(self.sections) == 1 and self.current_section_empty():
-                    del self.sections[u'1']
+                    self.sections = []
         else:
             # Generate anonymous section name.
             name = unicode(len(self.sections)+1)
     
         try:
             self.change_level(new_level)
-        except Exception as e:
+        except Exception:
             print name
-            raise e
+            raise
     
-        self.sections[name.rstrip()] = {
+        self.sections.append({
+                'name' : name.rstrip(),
                 'position' : position,
                 'lineno' : lineno,
                 'contents' : u'',
                 'level' : self.level
-                }
+                })
     
     def change_level(self, new_level):
         if new_level == self.level:
@@ -305,6 +325,7 @@ class IdParser(object):
     def p_entry(self, p):
         '''entry : NEWLINE
                  | codes NEWLINE
+                 | sectionfalsestart NEWLINE
                  | codes inlineidio NEWLINE
                  | idioline NEWLINE'''
         p.lexer.lineno += 1
@@ -321,6 +342,10 @@ class IdParser(object):
             # inlineidio_content = p[2]
         else:
             raise Exception("unexpected length " + len(p))
+  
+    def p_sectionfalsestart(self, p):
+        '''sectionfalsestart : IDIO words'''
+        p[0] = p[1] + p[2]
     
     def p_codes(self, p):
         '''codes : codes codon
@@ -361,16 +386,16 @@ class IdParser(object):
     
     ## Methods Defining Section Boundaries
     def p_sectionstart(self, p):
-        '''sectionstart : IDIO WORD
-                        | IDIO COLONS WORD'''
-        if len(p) == 3:
+        '''sectionstart : IDIO quote WORD quote
+                        | IDIO quote COLONS WORD quote'''
+        if len(p) == 5:
             # no colons, so level is 0
-            self.start_new_section(p.lexpos(1), p.lineno(1), 0, p[2])
-        elif len(p) == 4:
-            self.start_new_section(p.lexpos(1), p.lineno(1), len(p[2]), p[3])
+            self.start_new_section(p.lexpos(1), p.lineno(1), 0, p[3])
+        elif len(p) == 6:
+            self.start_new_section(p.lexpos(1), p.lineno(1), len(p[3]), p[4])
         else:
             raise Exception("unexpected length %s" % len(p))
-   
+
     def p_closed_comment(self, p):
         '''closedcomment : IDIOOPEN EXP WHITESPACE WORD IDIOCLOSE
                          | IDIOOPEN EXP WHITESPACE WORD WHITESPACE IDIOCLOSE'''
@@ -425,8 +450,14 @@ class IdParser(object):
     
     def p_error(self, p):
         if not p:
-            raise UserFeedback("Reached EOF when parsing file using idioipdae.")
-        raise UserFeedback("Unable to parse at token %s" % p)
+            raise ParseError("Reached EOF when parsing file using idioipdae.")
+
+        msg = """Trying to run IdParser on document '%s',
+        got stuck at position %s/line %s at token '%s' (token type %s)"""
+        msgargs = (self.key, p.lexpos, p.lineno, p.value, p.type)
+        # TODO extract relevant section of:
+        # p.lexer.lexdata
+        raise ParseError(msg % msgargs)
    
     def tokenize(self, text):
         """

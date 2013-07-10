@@ -1,4 +1,3 @@
-from dexy.common import OrderedDict
 from dexy.filter import DexyFilter
 import copy
 import dexy.exceptions
@@ -123,7 +122,8 @@ class StartSpaceFilter(DexyFilter):
     """
     aliases = ['ss', 'startspace']
     _settings = {
-            'n' : ("Number of spaces to prepend to each line.", 1)
+            'n' : ("Number of spaces to prepend to each line.", 1),
+            'output-data-type' : 'sectioned'
             }
 
     @classmethod
@@ -131,12 +131,11 @@ class StartSpaceFilter(DexyFilter):
         spaces = " " * n
         return "\n".join("%s%s" % (spaces, line) for line in text.splitlines())
 
-    def process_dict(self, input_dict):
-        result = OrderedDict()
+    def process(self):
         n = self.setting('n')
-        for section_name, section_text in input_dict.iteritems():
-            result[section_name] = self.add_spaces_at_start(section_text, n)
-        return result
+        for section_name, section_input in self.input_data.iteritems():
+            self.output_data[section_name] = self.add_spaces_at_start(section_input, n)
+        self.output_data.save()
 
 class SectionsByLineFilter(DexyFilter):
     """
@@ -147,11 +146,11 @@ class SectionsByLineFilter(DexyFilter):
             'output-data-type' : 'sectioned'
             }
 
-    def process_text_to_dict(self, input_text):
-        data_dict = OrderedDict()
+    def process(self):
+        input_text = unicode(self.input_data)
         for i, line in enumerate(input_text.splitlines()):
-            data_dict["%s" % (i+1)] = line
-        return data_dict
+            self.output_data["%s" % (i+1)] = line
+        self.output_data.save()
 
 class PrettyPrintJsonFilter(DexyFilter):
     """
@@ -176,7 +175,7 @@ class JoinFilter(DexyFilter):
     aliases = ['join']
 
     def process(self):
-        joined_data = "\n".join(self.input_data.as_sectioned().values())
+        joined_data = "\n".join(unicode(v) for v in self.input_data.values())
         self.output_data.set_data(joined_data)
 
 class HeadFilter(DexyFilter):

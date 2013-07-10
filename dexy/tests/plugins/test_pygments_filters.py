@@ -1,4 +1,3 @@
-from dexy.common import OrderedDict
 from dexy.doc import Doc
 from dexy.tests.utils import assert_in_output
 from dexy.tests.utils import assert_output
@@ -6,7 +5,7 @@ from dexy.tests.utils import assert_output_cached
 from dexy.tests.utils import wrap
 
 def test_pyg4rst():
-    o = OrderedDict()
+    o = {}
     o['1'] = ".. code:: python\n\n  print 'hello'"
     assert_output("pyg4rst", "print 'hello'", o, ext=".py")
 

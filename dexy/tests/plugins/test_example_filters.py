@@ -6,12 +6,6 @@ from dexy.tests.utils import wrap
 def test_process_text_filter():
     assert_output("processtext", "hello", "Dexy processed the text 'hello'")
 
-def test_process_text_to_dict_filter():
-    assert_output("processtexttodict", "hello", {'1': "Dexy processed the text 'hello'"})
-
-def test_process_dict_filter():
-    assert_output("processdict", {'1': 'hello'}, {'1': "Dexy processed the text 'hello'"})
-
 def test_process_method():
     assert_output("process", "hello", "Dexy processed the text 'hello'")
 

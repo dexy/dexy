@@ -1,4 +1,3 @@
-from dexy.common import OrderedDict
 from dexy.exceptions import InternalDexyProblem
 from dexy.exceptions import UserFeedback
 from dexy.exceptions import InactiveFilter
@@ -77,10 +76,12 @@ class PexpectReplFilter(SubprocessFilter):
     def strip_newlines(self, line):
         return line.replace(" \r", "")
 
-    def section_output(self, input_dict):
+    def section_output(self):
         """
         Runs the code in sections and returns an iterator so we can do custom stuff.
         """
+        input_sections = self.input_data.items()
+
         # If we want to automatically record values of local variables in the
         # script we are running, we add a section at the end of script
         do_record_vars = self.setting('record-vars')
@@ -90,7 +91,7 @@ class PexpectReplFilter(SubprocessFilter):
 
             section_text = self.setting('save-vars-to-json-cmd') % self.input_data.basename()
             self.log_debug("Adding save-vars-to-json-cmd code:\n%s" % section_text)
-            input_dict['dexy--save-vars'] = section_text
+            input_sections.append(('dexy--save-vars', section_text))
             if not self.setting('add-new-files'):
                 docstr = self._instance_settings['add-new-files'][0]
                 self._instance_settings['add-new-files'] = (docstr, ".json")
@@ -144,7 +145,7 @@ class PexpectReplFilter(SubprocessFilter):
             if "The command was not found" in str(e):
                 raise InactiveFilter(self)
             else:
-                raise e
+                raise
 
         self.log_debug("Capturing initial prompt...")
         initial_prompt = self.setting('initial-prompt')
@@ -175,7 +176,7 @@ class PexpectReplFilter(SubprocessFilter):
         self.log_debug(u"Initial prompt captured!")
         self.log_debug(unicode(start))
 
-        for section_key, section_text in input_dict.items():
+        for section_key, section_text in input_sections:
             section_transcript = start
             start = ""
 
@@ -229,15 +230,11 @@ class PexpectReplFilter(SubprocessFilter):
     def process(self):
         self.log_debug("about to populate_workspace")
         self.populate_workspace()
-        output = OrderedDict()
 
-        for section_key, section_transcript in self.section_output(self.input_data.as_sectioned()):
-            self.log_debug("Processing section %s" % section_key)
-            section_output = self.strip_trailing_prompts(section_transcript)
+        for section_name, section_transcript in self.section_output():
+            self.output_data[section_name] = self.strip_trailing_prompts(section_transcript)
 
-            output[section_key] = section_output
-
-        self.output_data.set_data(output)
+        self.output_data.save()
 
 try:
     import IPython

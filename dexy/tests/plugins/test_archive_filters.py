@@ -31,7 +31,8 @@ def test_zip_archive_filter():
         wrapper.run_docs(doc)
         wrapper.report()
 
-        assert os.path.exists("output/archive.zip")
+        path_exists = os.path.exists("output/archive.zip")
+        assert path_exists
         z = zipfile.ZipFile("output/archive.zip", "r")
         names = z.namelist()
         assert "archive/hello.py" in names

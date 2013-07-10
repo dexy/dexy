@@ -331,9 +331,7 @@ class Filter(dexy.plugin.Plugin):
 
         self._files_workspace_populated_with = set()
 
-        if os.path.exists(wd):
-            import shutil
-            shutil.rmtree(wd)
+        self.doc.wrapper.trash(wd)
 
         try:
             os.makedirs(wd)
@@ -415,27 +413,13 @@ class DexyFilter(Filter):
     """
     aliases = ['dexy']
 
-    def data_class_alias(self, file_ext):
-        if hasattr(self, 'process_dict'):
-            return 'sectioned'
-        elif hasattr(self, 'process_text_to_dict'):
-            return 'sectioned'
-        else:
-            return self.setting('output-data-type')
+    def data_class_alias(self, ext):
+        return self.setting('output-data-type')
 
     def process(self):
-        if hasattr(self, "process_text_to_dict"):
-            output = self.process_text_to_dict(unicode(self.input_data))
-            self.output_data.set_data(output)
-
-        elif hasattr(self, "process_dict"):
-            output = self.process_dict(self.input_data.as_sectioned())
-            self.output_data.set_data(output)
-
-        elif hasattr(self, "process_text"):
+        if hasattr(self, "process_text"):
             output = self.process_text(unicode(self.input_data))
             self.output_data.set_data(output)
-
         else:
             self.output_data.copy_from_file(self.input_data.storage.data_file())
 

@@ -1,7 +1,6 @@
 """
 DexyFilters written to be examples of how to write filters.
 """
-from dexy.common import OrderedDict
 from dexy.doc import Doc
 from dexy.filter import DexyFilter
 import os
@@ -75,10 +74,9 @@ class ConvertDict(Example):
     """
     aliases = ['dict']
 
-    def process_text_to_dict(self, input_text):
-        ordered_dict = OrderedDict()
-        ordered_dict['1'] = input_text
-        return ordered_dict
+    def process(self, input_text):
+        self.output_data['1'] = unicode(self.input_data)
+        self.output_data.save()
 
 class ExampleProcessTextMethod(Example):
     """
@@ -88,29 +86,6 @@ class ExampleProcessTextMethod(Example):
 
     def process_text(self, input_text):
         return "Dexy processed the text '%s'" % input_text
-
-class ExampleProcessDictMethod(Example):
-    """
-    Uses process_dict method
-    """
-    aliases = ['processdict']
-
-    def process_dict(self, input_dict):
-        output_dict = OrderedDict()
-        for k, v in input_dict.iteritems():
-            output_dict[k] = "Dexy processed the text '%s'" % v
-        return output_dict
-
-class ExampleProcessTextToDictMethod(Example):
-    """
-    Uses process_text_do_dict method
-    """
-    aliases = ['processtexttodict']
-
-    def process_text_to_dict(self, input_text):
-        output_dict = OrderedDict()
-        output_dict['1'] = "Dexy processed the text '%s'" % input_text
-        return output_dict
 
 class ExampleProcessMethod(Example):
     """
@@ -136,7 +111,7 @@ class ExampleProcessMethodManualWrite(Example):
 
 class ExampleProcessWithDictMethod(Example):
     """
-    A filter implementing a process method which uses OrderedDict to store sectional data.
+    A filter implementing a process method which stores sectional data.
     """
     aliases = ['processwithdict']
     _settings = {
@@ -144,9 +119,8 @@ class ExampleProcessWithDictMethod(Example):
             }
 
     def process(self):
-        output_dict = OrderedDict()
-        output_dict['1'] = "Dexy processed the text '%s'" % self.input_data
-        self.output_data.set_data(output_dict)
+        self.output_data['1'] = "Dexy processed the text '%s'" % self.input_data
+        self.output_data.save()
 
 class AbcExtension(Example):
     """

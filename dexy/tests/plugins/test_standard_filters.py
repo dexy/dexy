@@ -1,7 +1,7 @@
-from dexy.common import OrderedDict
 from dexy.doc import Doc
 from dexy.tests.utils import assert_output
 from dexy.tests.utils import wrap
+import json
 import os
 
 def test_header_footer_filters():
@@ -22,10 +22,10 @@ def test_header_footer_filters():
         assert str(node.output_data()) == "This is a header.\nThese are main contents.\nThis is a footer."
 
 def test_join_filter():
-    contents = OrderedDict()
-    contents['1'] = "section one"
-    contents['2'] = "section two"
-
+    contents = json.loads("""[{},
+    {"name" : "1", "contents" : "section one" },
+    {"name" : "2", "contents" : "section two" }
+    ]""")
     assert_output("join", contents, "section one\nsection two")
 
 def test_head_filter():
@@ -38,10 +38,9 @@ def test_word_wrap_filter():
         assert str(node.output_data()) == "this\nis a\nline\nof\ntext"
 
 def test_lines_filter():
-    expected = OrderedDict()
+    expected = {}
     expected['1'] = "line one"
     expected['2'] = "line two"
-
     assert_output("lines", "line one\nline two", expected)
 
 def test_ppjson_filter():
@@ -52,7 +51,7 @@ def test_ppjson_filter():
             )
 
 def test_start_space_filter():
-    o = OrderedDict()
+    o = {}
     o['1'] = " abc\n def"
     assert_output("startspace", "abc\ndef", o)
 

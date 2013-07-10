@@ -46,7 +46,7 @@ class MarkdownFilter(DexyFilter):
             if "markdown.Extension" in e.message:
                 raise dexy.exceptions.UserFeedback("There's a problem with the markdown extensions you specified.")
             else:
-                raise e
+                raise
         except KeyError as e:
             raise dexy.exceptions.UserFeedback("Couldn't find a markdown extension option matching '%s'" % e.message)
 

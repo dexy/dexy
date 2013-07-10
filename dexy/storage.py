@@ -1,6 +1,5 @@
-from dexy.common import OrderedDict
+from dexy.exceptions import UserFeedback
 from dexy.utils import file_exists
-from dexy.utils import s
 import dexy.exceptions
 import dexy.plugin
 import os
@@ -117,38 +116,11 @@ class GenericStorage(Storage):
 
 # Sectioned Data
 import json
-class JsonOrderedStorage(GenericStorage):
+class JsonSectionedStorage(GenericStorage):
     """
-    Storage for ordered sectional data using JSON.
+    Storage for sectional data using JSON.
     """
-    aliases = ['jsonordered']
-    MAX_DATA_DICT_DECIMALS = 5
-    MAX_DATA_DICT_LENGTH = 10 ** MAX_DATA_DICT_DECIMALS
-
-    @classmethod
-    def convert_numbered_dict_to_ordered_dict(klass, numbered_dict):
-        ordered_dict = OrderedDict()
-        for x in sorted(numbered_dict.keys()):
-            k = x.split(":", 1)[1]
-            ordered_dict[k] = numbered_dict[x]
-        return ordered_dict
-
-    @classmethod
-    def convert_ordered_dict_to_numbered_dict(klass, ordered_dict):
-        if len(ordered_dict) >= klass.MAX_DATA_DICT_LENGTH:
-            msg = s("""Your data dict has %s items, which is greater
-            than the arbitrary limit of %s items.  You can increase this limit
-            by changing MAX_DATA_DICT_DECIMALS.""")
-            msgargs = (len(ordered_dict), klass.MAX_DATA_DICT_LENGTH)
-            raise dexy.exceptions.InternalDexyProblem(msg % msgargs)
-
-        data_dict = {}
-        i = -1
-        for k, v in ordered_dict.iteritems():
-            i += 1
-            fmt = "%%0%sd:%%s" % klass.MAX_DATA_DICT_DECIMALS
-            data_dict[fmt % (i, k)] = v
-        return data_dict
+    aliases = ['jsonsectioned']
 
     def value(self, key):
         return self.data()[key]
@@ -158,8 +130,11 @@ class JsonOrderedStorage(GenericStorage):
 
     def read_data(self, this=True):
         with open(self.data_file(this), "rb") as f:
-            numbered_dict = json.load(f)
-            return self.convert_numbered_dict_to_ordered_dict(numbered_dict)
+            data = json.load(f)
+            if hasattr(data, 'keys'):
+                msg = "Data storage format has changed. Please clear your dexy cache by running dexy with '-r' option."
+                raise UserFeedback(msg)
+            return data
 
     def write_data(self, data, filepath=None):
         if not filepath:
@@ -168,8 +143,7 @@ class JsonOrderedStorage(GenericStorage):
         self.assert_location_is_in_project_dir(filepath)
 
         with open(filepath, "wb") as f:
-            numbered_dict = self.convert_ordered_dict_to_numbered_dict(data)
-            json.dump(numbered_dict, f)
+            json.dump(data, f)
 
 # Key Value Data
 class JsonStorage(GenericStorage):

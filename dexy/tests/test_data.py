@@ -50,7 +50,6 @@ def test_key_value_data():
         assert data.value('foo') == 'bar'
         assert data.storage['foo'] == 'bar'
         assert data.as_text() == "foo: bar"
-        data.as_sectioned()['foo'] == 'bar'
 
 def test_key_value_data_sqlite():
     with wrap() as wrapper:
@@ -106,7 +105,6 @@ def test_generic_data():
         assert data._data == CONTENTS
 
         assert data.as_text() == CONTENTS
-        assert data.as_sectioned()['1'] == CONTENTS
 
 def test_init_data():
     with wrap() as wrapper:

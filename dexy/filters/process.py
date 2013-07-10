@@ -1,4 +1,3 @@
-from dexy.common import OrderedDict
 from dexy.filter import Filter
 import dexy.exceptions
 import fnmatch
@@ -378,21 +377,18 @@ class SubprocessInputFilter(SubprocessFilter):
 
         inputs = list(self.doc.walk_input_docs())
 
-        output = OrderedDict()
-
         if len(inputs) == 1:
             doc = inputs[0]
-            for section_name, section_text in doc.output_data().as_sectioned().iteritems():
-                proc, stdout = self.run_command(command, self.setup_env(), section_text)
-                self.handle_subprocess_proc_return(command, proc.returncode, stdout)
-                output[section_name] = stdout
+            for section_name, section_input in doc.output_data().iteritems():
+                proc, stdout = self.run_command(command, self.setup_env(), unicode(section_input))
+                self.output_data[section_name] = stdout
         else:
             for doc in inputs:
                 proc, stdout = self.run_command(command, self.setup_env(), unicode(doc.output_data()))
                 self.handle_subprocess_proc_return(command, proc.returncode, stdout)
-                output[doc.key] = stdout
+                self.output_data[doc.key] = stdout
 
-        self.output_data.set_data(output)
+        self.output_data.save()
 
 class SubprocessInputFileFilter(SubprocessFilter):
     """
@@ -415,15 +411,14 @@ class SubprocessInputFileFilter(SubprocessFilter):
 
     def process(self):
         self.populate_workspace()
-        output = OrderedDict()
 
         for doc in self.doc.walk_input_docs():
             command = self.command_string_for_input(doc)
             proc, stdout = self.run_command(command, self.setup_env())
             self.handle_subprocess_proc_return(command, proc.returncode, stdout)
-            output[doc.key] = stdout
+            self.output_data[doc.key] = stdout
 
-        self.output_data.set_data(output)
+        self.output_data.save()
 
 class SubprocessCompileInputFilter(SubprocessCompileFilter):
     """
@@ -445,21 +440,19 @@ class SubprocessCompileInputFilter(SubprocessCompileFilter):
 
         inputs = list(self.doc.walk_input_docs())
 
-        output = OrderedDict()
-
         if len(inputs) == 1:
             doc = inputs[0]
-            for section_name, section_text in doc.output_data().as_sectioned().iteritems():
-                proc, stdout = self.run_command(command, self.setup_env(), section_text)
+            for section_name, section_input in doc.output_data().iteritems():
+                proc, stdout = self.run_command(command, self.setup_env(), section_input)
                 self.handle_subprocess_proc_return(command, proc.returncode, stdout)
-                output[section_name] = stdout
+                self.output_data[section_name] = stdout
         else:
             for doc in inputs:
-                proc, stdout = self.run_command(command, self.setup_env(), doc.output_data().as_text())
+                proc, stdout = self.run_command(command, self.setup_env(), unicode(doc.output_data()))
                 self.handle_subprocess_proc_return(command, proc.returncode, stdout)
-                output[doc.key] = stdout
+                self.output_data[doc.key] = stdout
 
-        self.output_data.set_data(output)
+        self.output_data.save()
 
 class SubprocessFormatFlagFilter(SubprocessFilter):
     """

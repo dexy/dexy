@@ -1,4 +1,3 @@
-from dexy.common import OrderedDict
 import dexy.exceptions
 import dexy.filter
 import dexy.node
@@ -187,9 +186,8 @@ class Doc(dexy.node.Node):
             return data_class_alias
         else:
             contents = self.get_contents()
-            if isinstance(contents, OrderedDict):
-                return 'sectioned'
-            elif isinstance(contents, dict):
+            # TODO test for ordered dict type?
+            if isinstance(contents, dict):
                 return 'keyvalue'
             else:
                 return 'generic'

@@ -59,9 +59,9 @@ class BotoUploadFilter(ApiFilter):
                 username = getpass.getuser()
                 bucket_name = "dexy-%s" % username
                 return bucket_name
-            except dexy.exceptions.UserFeedback as e:
+            except dexy.exceptions.UserFeedback:
                 print "Can't automatically determine username. Please specify AWS_BUCKET_NAME for upload to S3."
-                raise e
+                raise
         bucket_name = datetime.now().strftime(bucket_name)
         self.log_debug("S3 bucket name is %s" % bucket_name)
         return bucket_name

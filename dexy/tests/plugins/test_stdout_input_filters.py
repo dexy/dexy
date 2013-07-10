@@ -1,6 +1,6 @@
-from dexy.common import OrderedDict
 from dexy.doc import Doc
 from dexy.tests.utils import wrap
+import json
 
 REGETRON_INPUT_1 = "hello\n"
 REGETRON_INPUT_2 = """\
@@ -76,6 +76,11 @@ def test_sed_filter_single_simple_input_file():
         assert str(node.output_data()) == "hEllo"
 
 def test_sed_filter_single_input_file_with_sections():
+    contents = json.loads("""[{},
+    { "name" : "foo", "contents" : "hello" },
+    { "name" : "bar", "contents" : "telephone" }
+    ]""")
+
     with wrap() as wrapper:
         node = Doc("example.sed|sed",
                 wrapper,
@@ -83,17 +88,15 @@ def test_sed_filter_single_input_file_with_sections():
                     Doc("input.txt",
                         wrapper,
                         [],
-                        contents=OrderedDict([
-                            ('foo', 'hello'),
-                            ('bar', 'telephone')
-                            ]),
+                        contents=contents,
+                        data_class_alias='sectioned'
                         )
                         ],
                 contents="s/e/E/g")
 
         wrapper.run_docs(node)
-        assert node.output_data()['foo'] == 'hEllo'
-        assert node.output_data()['bar'] == 'tElEphonE'
+        assert str(node.output_data()['foo']) == 'hEllo'
+        assert str(node.output_data()['bar']) == 'tElEphonE'
 
 def test_sed_filter_multiple_inputs():
     with wrap() as wrapper:
@@ -112,5 +115,5 @@ def test_sed_filter_multiple_inputs():
                 contents="s/e/E/g")
 
         wrapper.run_docs(node)
-        assert node.output_data()['foo.txt'] == 'hEllo'
-        assert node.output_data()['bar.txt'] == 'tElEphonE'
+        assert str(node.output_data()['foo.txt']) == 'hEllo'
+        assert str(node.output_data()['bar.txt']) == 'tElEphonE'

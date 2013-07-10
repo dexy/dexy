@@ -1,32 +1,6 @@
-from dexy.common import OrderedDict
 from dexy.filter import DexyFilter
 import os
 import re
-
-class HtmlSectionsFilter(DexyFilter):
-    """
-    Split content according to HTML comments.
-    """
-    aliases = ['htmlsections']
-    _settings = {
-            'examples' : ['htmlsections'],
-            'output' : True,
-            'output-data-type' : 'sectioned',
-            'output-extensions' : ['.json']
-            }
-
-    def process(self):
-        output = OrderedDict()
-
-        sections = re.split("<!-- section \"(.+)\" -->\n", unicode(self.input_data))
-
-        for i in range(1, len(sections), 2):
-            section_name = sections[i]
-            section_content = sections[i+1]
-            if not section_name == 'end':
-                output[section_name] = section_content
-
-        self.output_data.set_data(output)
 
 class SplitHtmlFilter(DexyFilter):
     """
@@ -51,7 +25,7 @@ class SplitHtmlFilter(DexyFilter):
             sections = re.split("<!-- split \"(.+)\" -->\n", body)
             header = sections[0]
 
-            pages = OrderedDict()
+            pages = {}
             index_content = None
             for i in range(1, len(sections), 2):
                 if sections[i] == 'index':

@@ -164,30 +164,35 @@ class Wrapper(object):
             for d in hexes:
                 os.mkdir(os.path.join(cache_dir, "%s%s" % (c,d)))
 
-    def trash(self, d, d_exists=None):
+    def trash(self, d):
         """
         Move the passed file path (if it exists) into the .trash directory.
         """
-        if d_exists or os.path.exists(d):
-            if not self.is_location_in_project_dir(d):
-                msg = "trying to trash '%s', but this is not in project dir '%s"
-                msgargs = (d, self.project_root)
-                raise dexy.exceptions.InternalDexyProblem(msg % msgargs)
+        if not self.is_location_in_project_dir(d):
+            msg = "trying to trash '%s', but this is not in project dir '%s"
+            msgargs = (d, self.project_root)
+            raise dexy.exceptions.InternalDexyProblem(msg % msgargs)
 
-            trash_dir = self.trash_dir()
+        trash_dir = self.trash_dir()
 
-            if not os.path.exists(trash_dir):
-                os.mkdir(trash_dir)
+        try:
+            os.mkdir(trash_dir)
+        except OSError:
+            pass
 
-            move_to = os.path.join(trash_dir, str(uuid.uuid4()))
+        move_to = os.path.join(trash_dir, str(uuid.uuid4()))
+
+        try:
             shutil.move(d, move_to)
+        except IOError:
+            pass
 
     def empty_trash(self):
         try:
             shutil.rmtree(self.trash_dir())
         except OSError as e:
             if not "No such file or directory" in str(e):
-                raise e
+                raise
 
     def reset_work_cache_dir(self):
         # remove work/ dir leftover from previous run (if any) and create a new
@@ -217,7 +222,7 @@ class Wrapper(object):
             self.error = e
             self.transition('error')
             if self.debug:
-                raise e
+                raise
             else:
                 sys.stderr.write("ERROR while running %s: %s\n" % (node.key, str(e)))
 
@@ -363,7 +368,7 @@ class Wrapper(object):
     def remove_dexy_dirs(self):
         for dirpath, safety_filepath, dirstat in self.iter_dexy_dirs():
             if dirstat:
-                self.trash(dirpath, True)
+                self.trash(dirpath)
         self.empty_trash()
 
     def remove_reports_dirs(self, reports=True, keep_empty_dir=False):

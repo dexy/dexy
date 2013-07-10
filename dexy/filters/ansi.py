@@ -1,4 +1,3 @@
-from dexy.common import OrderedDict
 from dexy.filter import DexyFilter
 from dexy.plugin import TemplatePlugin
 
@@ -42,14 +41,14 @@ class Ansi2HTMLFilter(DexyFilter):
     def is_active(self):
         return AVAILABLE
 
-    def process_dict(self, input_dict):
+    def process(self):
         conv = Ansi2HTMLConverter(inline=True, font_size=self.setting('font-size'))
         if self.setting('pre'):
             s = "<pre>\n%s</pre>\n"
         else:
             s = "%s\n"
 
-        output_dict = OrderedDict()
-        for k, v in input_dict.iteritems():
-            output_dict[k] = s % conv.convert(v, full=False)
-        return output_dict
+        for k, v in self.input_data.iteritems():
+            self.output_data[k] = s % conv.convert(v, full=False)
+        self.output_data.save()
+

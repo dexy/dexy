@@ -1,5 +1,4 @@
 from StringIO import StringIO
-from dexy.common import OrderedDict
 from dexy.doc import Doc
 from dexy.utils import char_diff
 from dexy.utils import tempdir
@@ -8,6 +7,7 @@ from nose.exc import SkipTest
 import os
 import re
 import sys
+from dexy.data import Sectioned
 
 # make sure plugins are loaded
 import dexy.filters
@@ -19,12 +19,6 @@ TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 def make_wrapper():
     from dexy.wrapper import Wrapper
     return Wrapper(log_level = 'DEBUG', debug=True)
-
-def create_ordered_dict_from_dict(d):
-    od = OrderedDict()
-    for k, v in d.iteritems():
-        od[k] = v
-    return od
 
 class wrap(tempdir):
     """
@@ -60,11 +54,18 @@ class runfilter(wrap):
 
         def run_example(doc_key, doc_contents):
             wrapper = make_wrapper()
+
+            if isinstance(doc_contents, basestring):
+                data_class_alias = 'generic'
+            else:
+                data_class_alias = 'sectioned'
+
             doc = Doc(
                     doc_key,
                     wrapper,
                     [],
-                    contents = doc_contents
+                    contents = doc_contents,
+                    data_class_alias = data_class_alias
                     )
             wrapper.run_docs(doc)
             return doc
@@ -91,25 +92,25 @@ def assert_output(filter_alias, doc_contents, expected_output, ext=".txt", basen
     if not ext.startswith("."):
         raise Exception("ext arg to assert_in_output must start with dot")
 
-    if isinstance(expected_output, dict):
-        expected_output = create_ordered_dict_from_dict(expected_output)
     if isinstance(doc_contents, dict):
-        doc_contents = create_ordered_dict_from_dict(doc_contents)
+        raise Exception("doc contents can't be dict")
 
     with runfilter(filter_alias, doc_contents, ext=ext, basename=basename) as doc:
-        if expected_output:
-            try:
-                assert doc.output_data().data() == expected_output
-            except AssertionError as e:
-                if not isinstance(expected_output, OrderedDict):
-                    print char_diff(unicode(doc.output_data()), expected_output)
-                else:
-                    print "Output: %s" % doc.output_data().data()
-                    print "Expected: %s" % expected_output
-
-                raise e
+        actual_output_data = doc.output_data()
+        if isinstance(actual_output_data, Sectioned):
+            for section_name, expected_section_contents in expected_output.iteritems():
+                try:
+                    actual_section_contents = unicode(actual_output_data[section_name])
+                    assert actual_section_contents == expected_section_contents
+                except AssertionError:
+                    print "Sections %s are not the same" % section_name
+                    print char_diff(actual_section_contents, expected_section_contents)
         else:
-            raise Exception("Output is '%s'" % doc.output_data().data())
+            actual_output_data = unicode(doc.output_data())
+            try:
+                assert actual_output_data == expected_output
+            except AssertionError:
+                print char_diff(actual_output_data, expected_output)
 
 def assert_output_matches(filter_alias, doc_contents, expected_regex, ext=".txt"):
     if not ext.startswith("."):

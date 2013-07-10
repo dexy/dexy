@@ -19,4 +19,3 @@ class FilenameFilter(Deprecated):
     remove the 'dexy--' prefix from filenames in your scripts.
     """
     aliases = ['fn']
-

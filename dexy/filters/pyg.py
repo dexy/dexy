@@ -1,4 +1,3 @@
-from dexy.common import OrderedDict
 from dexy.filter import DexyFilter
 from dexy.filters.standard import StartSpaceFilter
 from pygments import highlight
@@ -25,12 +24,12 @@ class SyntaxHighlightRstFilter(DexyFilter):
     """
     aliases = ['pyg4rst']
     _settings = {
-            'n' : ("Number of chars to indent.", 2)
+            'n' : ("Number of chars to indent.", 2),
+            'output-data-type' : 'sectioned'
             }
 
-    def process_dict(self, input_dict):
+    def process(self):
         n = self.setting('n')
-        result = OrderedDict()
 
         try:
             lexer = get_lexer_for_filename(self.input_data.storage.data_file())
@@ -40,11 +39,10 @@ class SyntaxHighlightRstFilter(DexyFilter):
 
         lexer_alias = lexer.aliases[0]
 
-        for section_name, section_text in input_dict.iteritems():
-            with_spaces = StartSpaceFilter.add_spaces_at_start(section_text, n)
-            result[section_name] = ".. code:: %s\n\n%s" % (lexer_alias, with_spaces)
-
-        return result
+        for section_name, section_input in self.input_data.iteritems():
+            with_spaces = StartSpaceFilter.add_spaces_at_start(section_input, n)
+            section_output = ".. code:: %s\n\n%s" % (lexer_alias, with_spaces)
+            self.output_data[section_name] = section_output
 
 class PygmentsFilter(DexyFilter):
     """
@@ -217,9 +215,9 @@ class PygmentsFilter(DexyFilter):
 
             if self.ext in self.IMAGE_OUTPUT_EXTENSIONS:
                 # Place each section into an image.
-                for k, v in self.input_data.as_sectioned().iteritems():
+                for k, v in self.input_data.iteritems():
                     formatter = self.create_formatter_instance()
-                    output_for_section = highlight(v.decode("utf-8"), lexer, formatter)
+                    output_for_section = highlight(unicode(v).decode("utf-8"), lexer, formatter)
                     new_doc_name = "%s--%s%s" % (self.doc.key.replace("|", "--"), k, self.ext)
                     self.add_doc(new_doc_name, output_for_section)
 
@@ -231,14 +229,15 @@ class PygmentsFilter(DexyFilter):
 
             else:
                 formatter = self.create_formatter_instance()
-                output_dict = OrderedDict()
-                for k, v in self.input_data.as_sectioned().iteritems():
+                for section_name, section_input in self.input_data.iteritems():
                     try:
-                        output_dict[k] = highlight(v.decode("utf-8"), lexer, formatter)
+                        section_output = highlight(unicode(section_input).decode("utf-8"), lexer, formatter)
                     except UnicodeDecodeError:
                         if self.setting('allow-unprintable-input'):
-                            input_text = self.setting('unprintable-input-text')
-                            output_dict[k] = highlight(input_text, lexer, formatter)
+                            section_input = self.setting('unprintable-input-text')
+                            section_output = highlight(section_input, lexer, formatter)
                         else:
                             raise
-                self.output_data.set_data(output_dict)
+                    self.output_data[section_name] = section_output
+                self.output_data.save()
+

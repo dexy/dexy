@@ -1,5 +1,4 @@
 import dexy.filter
-import os
 import inspect
 
 def fcmds_command(
@@ -58,7 +57,7 @@ def fcmd_command(
                     print e.message
                     print inspect.getargspec(instance_method.__func__)
                     print inspect.getdoc(instance_method.__func__)
-                    raise e
+                    raise
 
         else:
             msg = "expected %s to be an instance method of %s"

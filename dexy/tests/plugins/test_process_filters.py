@@ -3,7 +3,6 @@ from dexy.filters.process import SubprocessFilter
 from dexy.tests.utils import wrap
 import dexy.exceptions
 import os
-from nose.exc import SkipTest
 
 def test_add_new_files():
     with wrap() as wrapper:
@@ -36,7 +35,7 @@ def test_walk_working_dir():
         wrapper.run_docs(node)
 
         files_list = wrapper.nodes['doc:example.sh-sh.txt-files']
-        assert files_list.output_data().as_sectioned()['newfile.txt'] == "hello" + os.linesep
+        assert files_list.output_data()['newfile.txt'] == "hello" + os.linesep
 
 def test_not_present_executable():
     # TODO modify test so we try to run this

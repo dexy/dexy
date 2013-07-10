@@ -108,5 +108,5 @@ def test_clang_multiple_inputs():
                 wrapper=wrapper)
 
         wrapper.run_docs(node)
-        assert node.output_data()['input1.txt'] == 'hello, c'
-        assert node.output_data()['input2.txt'] == 'more data'
+        assert unicode(node.output_data()['input1.txt']) == u'hello, c'
+        assert unicode(node.output_data()['input2.txt']) == u'more data'

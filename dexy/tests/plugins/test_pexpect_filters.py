@@ -3,6 +3,23 @@ from dexy.tests.utils import assert_in_output
 from dexy.tests.utils import wrap
 from nose.exc import SkipTest
 
+def test_shint_filter():
+    with wrap() as wrapper:
+        src = """
+### @export "touch"
+touch newfile.txt
+
+### @export "ls"
+ls
+"""
+        doc = Doc("example.sh|idio|shint|pyg",
+                wrapper,
+                [],
+                contents = src)
+        wrapper.run_docs(doc)
+
+        assert doc.output_data().keys() == ['1', 'touch', 'ls']
+
 SCALA = """object HelloWorld {
     def main(args: Array[String]) {
       println("Hello, world!")
@@ -88,23 +105,6 @@ def test_ipython_filter():
 def test_r_filter():
     assert_in_output('r', '1+1', '> 1+1')
 
-def test_shint_filter():
-    with wrap() as wrapper:
-        src = """
-### @export "touch"
-touch newfile.txt
-
-### @export "ls"
-ls
-"""
-        doc = Doc("example.sh|idio|shint|pyg",
-                wrapper,
-                [],
-                contents = src)
-        wrapper.run_docs(doc)
-
-        assert doc.output_data().keys() == ['1', 'touch', 'ls']
-
 def test_pycon_filter():
     with wrap() as wrapper:
         src = """
@@ -124,11 +124,11 @@ x*y
         wrapper.run_docs(node)
 
         assert node.output_data().keys() == ['1', 'vars', 'multiply']
-        assert node.output_data().as_sectioned()['vars'] == """
+        assert str(node.output_data()['vars']) == """
 >>> x = 6
 >>> y = 7"""
 
-        assert node.output_data().as_sectioned()['multiply'] == """
+        assert str(node.output_data()['multiply']) == """
 >>> x*y
 42"""
 

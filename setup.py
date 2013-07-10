@@ -37,7 +37,6 @@ setup(
             'docutils',
             'inflection>=0.0.2',
             'jinja2',
-            'ordereddict',
             'pexpect',
             'ply>=3.4',
             'pygments',

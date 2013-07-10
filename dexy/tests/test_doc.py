@@ -1,4 +1,3 @@
-from dexy.common import OrderedDict
 from dexy.data import Data
 from dexy.doc import Doc
 from dexy.exceptions import UserFeedback
@@ -50,11 +49,3 @@ def test_create_virtual_initial_artifact():
         doc = Doc("abc.txt", wrapper, [], contents="these are the contents")
         wrapper.run_docs(doc)
         assert doc.output_data().__class__.__name__ == "Generic"
-
-def test_create_virtual_initial_artifact_with_dict():
-    with wrap() as wrapper:
-        od_contents = OrderedDict()
-        od_contents['1'] = "these are the contents"
-        doc = Doc("abc.txt", contents = od_contents, wrapper=wrapper)
-        wrapper.run_docs(doc)
-        assert doc.output_data().__class__.__name__ == "Sectioned"

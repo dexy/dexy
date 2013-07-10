@@ -1,4 +1,3 @@
-from dexy.common import OrderedDict
 from dexy.filters.process import SubprocessExtToFormatFilter
 from dexy.filters.process import SubprocessFilter
 from dexy.filters.process import SubprocessFormatFlagFilter
@@ -118,7 +117,7 @@ class RIntBatchSectionsFilter(SubprocessFilter):
         work_filepath = os.path.join(wd, args['script_file'])
 
         with open(work_filepath, "wb") as f:
-            f.write(section_text)
+            f.write(unicode(section_text))
 
         command = self.setting('command-string') %  args
         return command, args['output_file']
@@ -127,15 +126,13 @@ class RIntBatchSectionsFilter(SubprocessFilter):
         self.populate_workspace()
         wd = self.parent_work_dir()
 
-        result = OrderedDict()
-
-        for section_name, section_text in self.input_data.as_sectioned().iteritems():
+        for section_name, section_text in self.input_data.iteritems():
             command, outfile = self.command_string(section_name, section_text, wd)
             proc, stdout = self.run_command(command, self.setup_env())
             self.handle_subprocess_proc_return(command, proc.returncode, stdout)
 
             with open(os.path.join(wd, outfile), "rb") as f:
-                result[section_name] = f.read()
+                self.output_data[section_name] = f.read()
 
         if self.setting('walk-working-dir'):
             self.walk_working_directory()
@@ -143,7 +140,7 @@ class RIntBatchSectionsFilter(SubprocessFilter):
         if self.setting('add-new-files'):
             self.add_new_files()
 
-        self.output_data.set_data(result)
+        self.output_data.save()
 
 class EmbedFonts(SubprocessFilter):
     """

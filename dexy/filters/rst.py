@@ -98,13 +98,13 @@ class RestructuredText(RestructuredTextBase):
         except ValueError as e:
             if "Invalid placeholder in string" in e.message and 'template' in settings_overrides:
                 self.log_warn("you are using template '%s'. is this correct?" % settings_overrides['template'])
-            raise e
+            raise
         except Exception as e:
             self.log_warn("An error occurred while generating reStructuredText.")
             self.log_warn("source file %s" % (self.input_data.storage.data_file()))
             self.log_warn("settings for rst: %r" % settings_overrides)
             self.log_warn("rst writer: %s" % writer_name)
-            raise e
+            raise
 
         self.log_debug("docutils warnings:\n%s\n" % warning_stream.getvalue())
 
