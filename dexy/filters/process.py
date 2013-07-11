@@ -143,7 +143,9 @@ class SubprocessFilter(Filter):
         exclude = self.setting('exclude-add-new-files')
 
         new_files_added = 0
-        for dirpath, dirnames, filenames in os.walk(wd):
+        for dirpath, subdirs, filenames in os.walk(wd):
+            subdirs[:] = [d for d in subdirs if d not in exclude]
+
             for filename in filenames:
                 filepath = os.path.normpath(os.path.join(dirpath, filename))
                 relpath = os.path.relpath(filepath, wd)
@@ -183,18 +185,6 @@ class SubprocessFilter(Filter):
 
 
                 skip_because_excluded = False
-                if exclude:
-                    if isinstance(exclude, list):
-                        for exclude_item in exclude:
-                            if exclude_item in filepath:
-                                skip_because_excluded = True
-                                break
-                    elif isinstance(exclude, basestring):
-                        skip_because_excluded = exclude in filepath
-                    else:
-                        msg = "unexpected exclude type %s (%s)"
-                        msgargs = (exclude.__class__.__name__, exclude)
-                        raise dexy.exceptions.InternalDexyProblem(msg % msgargs)
 
                 if (not already_have_file) and is_valid_file_extension and not skip_because_excluded:
                     with open(filepath, 'rb') as f:

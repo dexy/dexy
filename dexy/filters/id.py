@@ -454,5 +454,12 @@ def token_info(text, lexer):
         return "%03d %-15s %s" % (tok.lexpos, tok.type, tok.value.replace("\n",""))
     return "\n".join(tok_info(tok) for tok in tokenize(text, lexer))
 
-lexer = lex.lex(optimize=1, lextab="id_lextab")
-parser = yacc.yacc(tabmodule="id_parsetab",debug=0)
+import os
+if os.path.exists("logs"):
+    outputdir="logs"
+    lexer = lex.lex(optimize=1, lextab="id_lextab", outputdir=outputdir)
+    parser = yacc.yacc(tabmodule="id_parsetab",debug=0, outputdir=outputdir)
+else:
+    lexer = lex.lex(optimize=0)
+    parser = yacc.yacc(write_tables=0, debug=0)
+

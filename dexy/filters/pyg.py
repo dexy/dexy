@@ -153,7 +153,7 @@ class PygmentsFilter(DexyFilter):
         if is_json_file and (pygments.__version__ < '1.5'):
             return "javascript"
         elif is_json_file:
-            return "Json"
+            return "json"
 
         if ext == '.Makefile' or (ext == '' and 'Makefile' in self.input_data.name):
             return 'makefile'

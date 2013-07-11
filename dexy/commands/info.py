@@ -7,8 +7,7 @@ import dexy.exceptions
 INFO_ATTRS = [
         'name',
         'ext',
-        'key',
-        'storage_type'
+        'key'
         ]
 INFO_METHODS = [
         'title',
