@@ -68,13 +68,14 @@ class Id(PygmentsFilter):
         parser.errorlog = self.doc.wrapper.log
         parser.write_tables = self.setting('ply-write-tables')
 
-        lexer.sections = []
-        lexer.level = 0
-        start_new_section(lexer, 0, 0, lexer.level)
+        _lexer = lexer.clone()
+        _lexer.sections = []
+        _lexer.level = 0
+        start_new_section(_lexer, 0, 0, _lexer.level)
 
-        parser.parse(input_text + "\n", lexer=lexer)
-        strip_trailing_newline(lexer)
-        parser_output = lexer.sections
+        parser.parse(input_text + "\n", lexer=_lexer)
+        strip_trailing_newline(_lexer)
+        parser_output = _lexer.sections
 
         pyg_lexer = self.create_lexer_instance()
         pyg_formatter = self.create_formatter_instance()
@@ -84,13 +85,13 @@ class Id(PygmentsFilter):
         self.output_data.save()
 
 def t_error(t):
-    raise LexError("Problem lexing %s in initial state." % t)
+    raise LexError("Problem lexing at position %s." % t.lexpos)
 
 def t_idio_error(t):
-    raise LexError("Problem lexing %s in idio state." % t)
+    raise LexError("Problem lexing at position %s." % t.lexpos)
 
 def t_idiostart_error(t):
-    raise LexError("Problem lexing %s in idiostart state." % t)
+    raise LexError("Problem lexing at position %s." % t.lexpos)
         
 def append_text(lexer, code):
     """
@@ -209,9 +210,7 @@ def t_idio_WHITESPACE(t):
 
 def t_idio_NEWLINE(t):
     r'\r\n|\n|\r'
-    if not t.lexer.idio_expect_closing_block:
-        t.lexer.pop_state()
-    t.lexer.pop_state()
+    exit_idio_state(t)
     return t
 
 def t_idio_IDIOCLOSE(t):
@@ -223,6 +222,17 @@ def t_idio_IDIOCLOSE(t):
 def t_idio_WORD(t):
     r'[a-zA-Z-]+'
     return t
+
+def t_idio_OTHER(t):
+    r'\#|_|\*'
+    t.type = 'CODE'
+    exit_idio_state(t)
+    return t
+
+def exit_idio_state(t):
+    if not t.lexer.idio_expect_closing_block:
+        t.lexer.pop_state()
+    t.lexer.pop_state()
 
 # Lexer tokens and helpers for idiostart state
 def idiostart_incr_comment(t):
@@ -301,7 +311,7 @@ def p_main(p):
 def p_entry(p):
     '''entry : NEWLINE
              | codes NEWLINE
-             | sectionfalsestart NEWLINE
+             | falsestart NEWLINE
              | codes inlineidio NEWLINE
              | idioline NEWLINE'''
     p.lexer.lineno += 1
@@ -320,8 +330,20 @@ def p_entry(p):
         raise Exception("unexpected length " + len(p))
 
 def p_sectionfalsestart(p):
-    '''sectionfalsestart : IDIO words'''
+    '''falsestart : IDIO words
+                  | codes IDIO anythings '''
     p[0] = p[1] + p[2]
+
+def p_anythings(p):
+    '''anythings : anythings anything
+                 | anything'''
+    p[0] = ''.join(p[1:len(p)])
+
+def p_anything(p):
+    '''anything : WORD
+                | WHITESPACE
+                | CODE'''
+    p[0] = p[1]
 
 def p_codes(p):
     '''codes : codes codon
@@ -430,8 +452,19 @@ def p_error(p):
 
     msg = """Trying to run IdParser. got stuck at position %s/line %s at token '%s' (token type %s)"""
     msgargs = (p.lexpos, p.lineno, p.value, p.type)
-    # TODO extract relevant section of:
-    # p.lexer.lexdata
+
+    lines = p.lexer.lexdata.splitlines()
+
+    context = []
+    for i in range(p.lineno-2, p.lineno+1):
+        if i > 0 and i < len(lines):
+            if i == p.lineno-1:
+                this = ">>"
+            else:
+                this = "  "
+            context.append("%03d %3s %s" % (i+1, this, lines[i]))
+    print "\n".join(context)
+
     raise ParseError(msg % msgargs)
 
 def tokenize(text, lexer):
@@ -462,4 +495,3 @@ if os.path.exists("logs"):
 else:
     lexer = lex.lex(optimize=0)
     parser = yacc.yacc(write_tables=0, debug=0)
-

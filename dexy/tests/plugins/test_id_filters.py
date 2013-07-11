@@ -5,7 +5,7 @@ from dexy.tests.utils import TEST_DATA_DIR
 import os
 from dexy.filters.id import parser as id_parser
 from dexy.filters.id import lexer as id_lexer
-from dexy.filters.id import start_new_section
+from dexy.filters.id import start_new_section, token_info
 
 def test_force_text():
     with wrap() as wrapper:
@@ -17,7 +17,7 @@ def test_force_text():
         wrapper.run_docs(node)
         assert str(node.output_data()) == "print 'hello'\n"
 
-def parse(text):
+def setup_parser():
     with wrap() as wrapper:
         id_parser.outputdir = wrapper.log_dir
         id_parser.errorlog = wrapper.log
@@ -25,18 +25,20 @@ def parse(text):
         id_lexer.errorlog = wrapper.log
         id_lexer.remove_leading = True
         id_parser.write_tables = False
-
         _lexer = id_lexer.clone()
         _lexer.sections = []
         _lexer.level = 0
         start_new_section(_lexer, 0, 0, _lexer.level)
+        yield(id_parser, _lexer)
+
+def parse(text):
+    for id_parser, _lexer in setup_parser():
         id_parser.parse(text, lexer=_lexer)
         return _lexer.sections
 
-def token_info(text):
-    with wrap() as wrapper:
-        parser = id_parser(wrapper)
-        return parser.token_info(text)
+def tokens(text):
+    for id_parser, _lexer in setup_parser():
+        return token_info(text, _lexer)
 
 def test_parse_code():
     output = parse("foo\n")

@@ -34,6 +34,7 @@ class Ansi2HTMLFilter(DexyFilter):
     _settings = {
             'output-extensions' : ['.html'],
             'input-extensions' : ['.txt', '.sh-session'],
+            'output-data-type' : 'sectioned',
             'pre' : ("Whether to wrap in <pre> tags.", True),
             'font-size' : ("CSS font size to be used.", "normal")
             }
@@ -49,6 +50,6 @@ class Ansi2HTMLFilter(DexyFilter):
             s = "%s\n"
 
         for k, v in self.input_data.iteritems():
-            self.output_data[k] = s % conv.convert(v, full=False)
+            self.output_data[k] = s % conv.convert(unicode(v), full=False)
         self.output_data.save()
 
