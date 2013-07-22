@@ -60,10 +60,18 @@ def test_parse_comments():
 
 def test_parse_closed_style_sections():
     comments = (
+        "/*** @export foo*/\n",
         "/*** @export foo */\n",
         "/*** @section foo */\n",
+        "/*** @export 'foo'*/\n",
+        "/*** @export 'foo' */\n",
+        "/*** @export 'foo' python*/\n",
+        "/*** @export 'foo' python */\n",
+        """/*** @export "foo" python*/\n""",
         "<!-- @export foo -->\n",
         "<!-- @section foo -->\n"
+        "<!-- section foo -->\n"
+        "<!-- section 'foo' -->\n"
         )
 
     for text in comments:
@@ -74,10 +82,12 @@ def test_parse_closed_style_sections():
 def test_parse_closed_style_end():
     comments = (
         "foo\n/*** @end */\nbar\n",
-        "foo\n<!-- @end -->\nbar\n"
+        "foo\n<!-- @end -->\nbar\n",
+        "foo\n<!-- section 'end' -->\nbar\n"
         )
     for text in comments:
         output = parse(text)
+        print output
         assert output[0]['contents'] == 'foo\n'
         assert output[1]['contents'] == 'bar\n'
         assert output[0]['name'] == '1'
@@ -94,8 +104,8 @@ def test_parse_closed_falsestart():
         assert output[0]['contents'] == text
 
 def test_ignore_faux_comment():
-    for comment in ('#', '/', '%', '##%', '//#', '%#%', '##', '//', '%%'):
-        text = "%s foo bar\nfoo\n" % comment
+    for comment in ('#', '/', '%', '##%', '//#', '%#%', '##', '//', '%%', '///'):
+        text = "  %s foo bar\nfoo\n" % comment
         output = parse(text)
         assert output[0]['contents'] == text
 

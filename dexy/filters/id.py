@@ -278,7 +278,7 @@ def start_idiostart(t):
         t.lexer.push_state('idiostart')
 
 def t_IDIOOPEN(t):
-    r'(<!--|/\*\*\*)\ +@'
+    r'(<!--|/\*\*\*)\ +@?'
     if lookahead_for_any(t, ['export', 'section', 'end']):
         t.lexer.push_state('idio')
         t.lexer.idio_expect_closing_block = True
@@ -331,8 +331,9 @@ def p_entry(p):
 
 def p_sectionfalsestart(p):
     '''falsestart : IDIO words
-                  | codes IDIO anythings '''
-    p[0] = p[1] + p[2]
+                  | codes IDIO anythings
+                  | WHITESPACE IDIO anythings '''
+    p[0] = "".join(p[1:])
 
 def p_anythings(p):
     '''anythings : anythings anything
@@ -379,6 +380,8 @@ def p_linecontent(p):
             | sectionstart
             | closedcomment
             | closedcommentlevels
+            | closedcommentq
+            | closedcommentql
             | end '''
     pass
 
@@ -406,6 +409,18 @@ def p_closed_comment_levels(p):
     assert len(p) in [7,8]
     start_new_section(p.lexer, p.lexpos(1), p.lineno(1), len(p[4]), p[5])
 
+def p_closed_comment_quoted(p):
+    '''closedcommentq : IDIOOPEN EXP WHITESPACE quote words quote IDIOCLOSE
+                      | IDIOOPEN EXP WHITESPACE quote words quote WHITESPACE IDIOCLOSE'''
+    assert len(p) in [8,9]
+    start_new_section(p.lexer, p.lexpos(1), p.lineno(1), 0, p[5])
+
+def p_closed_comment_quoted_with_language(p):
+    '''closedcommentql : IDIOOPEN EXP WHITESPACE quote words quote WHITESPACE WORD IDIOCLOSE
+                       | IDIOOPEN EXP WHITESPACE quote words quote WHITESPACE WORD WHITESPACE IDIOCLOSE'''
+    assert len(p) in [10,11]
+    start_new_section(p.lexer, p.lexpos(1), p.lineno(1), 0, p[5])
+
 ## Old Idiopidae @export syntax
 def p_export(p):
     '''export : IDIO AT EXP WHITESPACE words
@@ -428,7 +443,8 @@ def p_export_quoted_with_language(p):
 def p_end(p):
     '''end : IDIO AT END
            | IDIOOPEN END IDIOCLOSE
-           | IDIOOPEN END WHITESPACE IDIOCLOSE'''
+           | IDIOOPEN END WHITESPACE IDIOCLOSE
+           | IDIOOPEN EXP WHITESPACE quote END quote WHITESPACE IDIOCLOSE'''
     start_new_section(p.lexer, p.lexpos(1), p.lineno(1), p.lexer.level)
 
 def p_quote(p):
