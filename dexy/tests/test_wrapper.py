@@ -7,7 +7,6 @@ from dexy.tests.utils import capture_stdout
 from dexy.tests.utils import tempdir
 from dexy.tests.utils import wrap
 from dexy.wrapper import Wrapper
-from nose.exc import SkipTest
 import dexy.batch
 import os
 
@@ -323,18 +322,16 @@ def test_run_target_fo():
 
 def test_run_target_bar():
     for wrapper in run_yaml_with_target("bar"):
-        raise SkipTest("TODO implement matching non-root nodes")
-        assert wrapper.nodes['bundle:foo'].state == 'checked'
+        assert wrapper.nodes['bundle:foo'].state == 'uncached'
         assert wrapper.nodes['bundle:bar'].state == 'ran'
-        assert wrapper.nodes['bundle:baz'].state == 'checked'
-        assert wrapper.nodes['bundle:foob'].state == 'checked'
-        assert wrapper.nodes['bundle:foobar'].state == 'checked'
+        assert wrapper.nodes['bundle:baz'].state == 'uncached'
+        assert wrapper.nodes['bundle:foob'].state == 'uncached'
+        assert wrapper.nodes['bundle:foobar'].state == 'uncached'
 
 def test_run_target_ba():
-    raise SkipTest("TODO implement matching non-root nodes")
     for wrapper in run_yaml_with_target("ba"):
-        assert wrapper.nodes['bundle:foo'].state == 'new'
+        assert wrapper.nodes['bundle:foo'].state == 'uncached'
         assert wrapper.nodes['bundle:bar'].state == 'ran'
         assert wrapper.nodes['bundle:baz'].state == 'ran'
-        assert wrapper.nodes['bundle:foob'].state == 'new'
-        assert wrapper.nodes['bundle:foobar'].state == 'new'
+        assert wrapper.nodes['bundle:foob'].state == 'uncached'
+        assert wrapper.nodes['bundle:foobar'].state == 'uncached'

@@ -159,7 +159,9 @@ def it_command(**kwargs):
     # so you can type 'dexy it' if you want to
     dexy_command(kwargs)
 
-def targets_command(**kwargs):
+def targets_command(
+        full=False, # Whether to just print likely pretty target names, or all names.
+        **kwargs):
     """
     Prints a list of available targets, which can be run via "dexy -target name".
     """
@@ -167,5 +169,19 @@ def targets_command(**kwargs):
     wrapper.assert_dexy_dirs_exist()
     wrapper.to_valid()
     wrapper.to_walked()
-    for root in sorted(wrapper.roots, key=attrgetter('key')):
-        print root.key
+
+    print "Targets you can pass to -target option:"
+    for doc in sorted(wrapper.bundle_docs(), key=attrgetter('key')):
+        print "  ", doc.key
+
+    if full:
+        print
+        print "These targets are also available, with lower priority:"
+        for doc in sorted(wrapper.non_bundle_docs(), key=attrgetter('key')):
+            print "  ", doc.key
+        print
+        print """Target names can be matched exactly or with the first few characters,
+in which case all matching targets will be run."""
+    else:
+        print
+        print "Run this command with --full option for additional available target names."

@@ -208,13 +208,11 @@ class Wrapper(object):
 
         if self.target:
             matches = self.roots_matching_target()
+        else:
+            matches = self.roots
 
         try:
-            for node in self.roots:
-                if self.target:
-                    if not node in matches:
-                        continue
-
+            for node in matches:
                 for task in node:
                     task()
 
@@ -233,12 +231,28 @@ class Wrapper(object):
             shutil.move(self.this_cache_dir(), self.last_cache_dir())
             self.empty_trash()
 
+    def bundle_docs(self):
+        from dexy.node import BundleNode
+        return [n for n in self.nodes.values() if isinstance(n, BundleNode)]
+
+    def non_bundle_docs(self):
+        from dexy.node import BundleNode
+        return [n for n in self.nodes.values() if not isinstance(n, BundleNode)]
+
     def roots_matching_target(self):
-        matches = [n for n in self.roots if n.key == self.target]
+        # First priority is to match any named bundles.
+        matches = [n for n in self.bundle_docs() if n.key == self.target]
         if not matches:
-            matches = [n for n in self.roots if n.key.startswith(self.target)]
+            # Second priority is exact matches of any document key.
+            matches = [n for n in self.non_bundle_docs() if n.key == self.target]
         if not matches:
+            # Third priority is partial matches of any document key.
             matches = [n for n in self.nodes.values() if n.key.startswith(self.target)]
+
+        if not matches:
+            raise dexy.exceptions.UserFeedback("No matches found for '%s'" % self.target)
+
+        self.log.debug("Documents matching target '%s' are: %s" % (self.target, ", ".join(m.key_with_class() for m in matches)))
         return matches
 
     def run_from_new(self):
