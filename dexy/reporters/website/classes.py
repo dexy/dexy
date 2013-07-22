@@ -226,6 +226,11 @@ class WebsiteReporter(OutputReporter):
 
     def run(self, wrapper):
         self.wrapper=wrapper
+
+        if self.wrapper.target:
+            self.log_warn("Not running website reporter because a target has been specified.")
+            return
+
         self.keys_to_outfiles = []
         self.locations = {}
 

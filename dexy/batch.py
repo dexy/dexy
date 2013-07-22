@@ -15,6 +15,8 @@ class Batch(object):
 
     def __iter__(self):
         for doc_key in self.docs:
+            if self.docs[doc_key]['state'] in ('uncached',):
+                continue
             yield self.output_data(doc_key)
 
     def add_doc(self, doc):

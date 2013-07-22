@@ -288,5 +288,6 @@ class Doc(dexy.node.Node):
                 'title' : self.output_data().title(),
                 'start_time' : self.start_time,
                 'finish_time' : self.finish_time,
-                'elapsed' : self.elapsed_time
+                'elapsed' : self.elapsed_time,
+                'state' : self.state
                 }
