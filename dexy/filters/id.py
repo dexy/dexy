@@ -42,6 +42,7 @@ class Id(PygmentsFilter):
     """
     aliases = ['idio', 'id', 'idiopidae', 'htmlsections']
     _settings = {
+            'highlight' : ("Whether to apply syntax highlighting to sectional output.", None),
             'skip-extensions' : ("Because |idio gets applied to *.*, need to make it easy to skip non-textual files.", (".odt")),
             'remove-leading' : ("If a document starts with empty section named '1', remove it.", False),
             'ply-debug' : ("The 'debug' setting to pass to PLY. A setting of 1 will produce very verbose output.", 0),
@@ -79,8 +80,18 @@ class Id(PygmentsFilter):
 
         pyg_lexer = self.create_lexer_instance()
         pyg_formatter = self.create_formatter_instance()
+
+        # TODO fix file extension if highlight is set to false
+        do_highlight = self.setting('highlight')
+        if do_highlight is None:
+            if self.alias in ('htmlsections',):
+                do_highlight = False
+            else:
+                do_highlight = True
+
         for section in parser_output:
-            section['contents'] = highlight(section['contents'], pyg_lexer, pyg_formatter)
+            if do_highlight:
+                section['contents'] = highlight(section['contents'], pyg_lexer, pyg_formatter)
             self.output_data._data.append(section)
         self.output_data.save()
 
