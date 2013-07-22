@@ -26,6 +26,7 @@ from dexy.commands.grep import grep_command
 from dexy.commands.info import info_command
 from dexy.commands.it import dexy_command
 from dexy.commands.it import it_command
+from dexy.commands.it import targets_command
 from dexy.commands.reporters import reporters_command
 from dexy.commands.reporters import reporters_command as reports_command
 from dexy.commands.serve import serve_command

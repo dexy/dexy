@@ -1,5 +1,6 @@
 from dexy.commands.utils import init_wrapper
 from dexy.utils import defaults
+from operator import attrgetter
 import dexy.exceptions
 import os
 import subprocess
@@ -157,3 +158,14 @@ def dexy_command(
 def it_command(**kwargs):
     # so you can type 'dexy it' if you want to
     dexy_command(kwargs)
+
+def targets_command(**kwargs):
+    """
+    Prints a list of available targets, which can be run via "dexy -target name".
+    """
+    wrapper = init_wrapper(locals())
+    wrapper.assert_dexy_dirs_exist()
+    wrapper.to_valid()
+    wrapper.to_walked()
+    for root in sorted(wrapper.roots, key=attrgetter('key')):
+        print root.key
