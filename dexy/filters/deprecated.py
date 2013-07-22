@@ -13,9 +13,12 @@ class Deprecated(DexyFilter):
 
 class FilenameFilter(Deprecated):
     """
-    The filename (fn) filter has been removed from dexy. Dexy should now
-    automatically detect new files that are created by your scripts. You should
-    remove '|fn' from your config and anywhere documents are referenced, and
-    remove the 'dexy--' prefix from filenames in your scripts.
+    The filename (fn) filter has been removed from dexy, it is no longer needed.
+    
+    Dexy should now automatically detect new files that are created by your
+    scripts if the add-new-files setting is true (which it is by default in
+    many filters). You should remove '|fn' from your config and anywhere
+    documents are referenced, and remove the 'dexy--' prefix from filenames in
+    your scripts.
     """
     aliases = ['fn']
