@@ -4,17 +4,17 @@ import StringIO
 import dexy.exceptions
 import docutils.writers
 import os
-import sys
 
 def default_template(writer_name):
     """
     Set the default template correctly, in case there has been a change in working dir.
     """
     writer_class = docutils.writers.get_writer_class(writer_name)
-    __import__(writer_class.__module__)
-    mod = sys.modules[writer_class.__module__]
-    f = mod.__file__
-    return os.path.abspath(os.path.join(os.path.dirname(f), writer_class.default_template))
+
+    if os.path.isdir(writer_class.default_template_path):
+        return os.path.abspath(os.path.join(writer_class.default_template_path, writer_class.default_template))
+    else:
+        return os.path.abspath(writer_class.default_template_path)
 
 class RestructuredTextBase(DexyFilter):
     """ Base class for ReST filters using the docutils library.
