@@ -26,13 +26,19 @@ class Doc(dexy.node.Node):
 
     def setup(self):
         self.update_settings(self.args)
-        if self.setting('output-name') and '%' in self.setting('output-name'):
-            self.update_settings({'output-name' : self.setting('output-name') % self.args})
 
         self.name = self.key.split("|")[0]
         self.ext = os.path.splitext(self.name)[1]
         self.filter_aliases = self.key.split("|")[1:]
         self.filters = []
+
+        name_args = self.setting_values()
+        name_args['name'] = self.name
+
+        # TODO fix
+        if self.setting('output-name') and '%' in self.setting('output-name'):
+            self.update_settings({'output-name' : self.setting('output-name') % name_args})
+
         self.setup_initial_data()
 
         for alias in self.filter_aliases:
