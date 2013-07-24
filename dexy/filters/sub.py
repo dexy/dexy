@@ -9,6 +9,27 @@ import json
 import os
 import shutil
 
+class TidyCheck(SubprocessFilter):
+    """
+    Runs tidy and raises an exception if invalid HTML, does not alter valid HTML.
+    """
+    aliases = ['tidycheck']
+    _settings = {
+        'tags' : ['html'],
+        'executable' : 'tidy',
+        'command-string' : '%(prog)s -errors -quiet "%(script_file)s"',
+        'input-extensions' : ['.html'],
+        'output-extensions' : ['.txt']
+        }
+
+    def process(self):
+        command = self.command_string()
+        proc, stdout = self.run_command(command, self.setup_env())
+        self.handle_subprocess_proc_return(command, proc.returncode, stdout)
+
+        # If we get here, just return original input.
+        self.output_data.copy_from_file(self.input_data.storage.data_file())
+
 class PdfToCairo(SubprocessFormatFlagFilter):
     """
     Converts a PDF file to a SVG image (or other format) using pdftocairo from the poppler library

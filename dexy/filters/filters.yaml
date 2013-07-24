@@ -17,6 +17,26 @@ pdftotext|pdf2text:
     input-extensions: ['.pdf']
     output-extensions: ['.txt']
 
+tidy|htmltidy:
+    class: SubprocessFilter
+    command-string: '%(prog)s -quiet -output "%(output_file)s" "%(script_file)s"'
+    tags : [html]
+    executable: tidy
+    help: "Uses tidy to clean and validate HTML."
+    input-extensions: ['.html']
+    output-extensions: ['.html']
+
+tidyerrors:
+    class: SubprocessStdoutFilter
+    tags : [html]
+    executable: tidy
+    write-stderr-to-stdout: True
+    check-return-code: False
+    command-string: '%(prog)s -errors -quiet "%(script_file)s"'
+    help: "Uses tidy to print HTML errors."
+    input-extensions: ['.html']
+    output-extensions: ['.txt']
+
 epstopdf|eps2pdf:
     class: SubprocessFilter
     tags : [pdf]
