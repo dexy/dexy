@@ -243,7 +243,7 @@ class SubprocessFilter(Filter):
             stdin = None
 
         if self.setting('write-stderr-to-stdout'):
-            stderr = stdout
+            stderr = subprocess.STDOUT
         else:
             stderr = subprocess.PIPE
 
@@ -265,11 +265,9 @@ class SubprocessFilter(Filter):
 
         stdout, stderr = proc.communicate(input_text)
         self.log_debug(u"stdout is '%s'" % stdout.decode('utf-8'))
-        self.log_debug(u"stderr is '%s'" % stderr.decode('utf-8'))
 
-        if self.setting('write-stderr-to-stdout') and not stdout:
-            # TODO Fix. hack since stderr not returning anything :-(
-            return (proc, stderr)
+        if stderr:
+            self.log_debug(u"stderr is '%s'" % stderr.decode('utf-8'))
 
         return (proc, stdout)
 
