@@ -9,6 +9,7 @@ import dexy.filters.fluid_html
 import dexy.filters.git
 import dexy.filters.id
 import dexy.filters.ipynb
+import dexy.filters.ipynbcasper
 import dexy.filters.java
 import dexy.filters.latex
 import dexy.filters.lyx
