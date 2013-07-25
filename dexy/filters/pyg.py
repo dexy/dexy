@@ -95,6 +95,7 @@ class PygmentsFilter(DexyFilter):
                 including header/footer tags.""", None),
             'linenos' : ("""Whether to include line numbers. May be set to
                 'table' or 'inline'.""", None),
+            'line-numbers' : ("""Alternative name for 'linenos'.""", None),
             }
 
     lexer_cache = {}
@@ -189,6 +190,9 @@ class PygmentsFilter(DexyFilter):
         return lexer
 
     def create_formatter_instance(self):
+        if self.setting('line-numbers') and not self.setting('linenos'):
+            self.update_settings({'linenos' : self.setting('line-numbers')})
+
         formatter_args = self.constructor_args('formatter', {
             'lineanchors' : self.output_data.web_safe_document_key() })
         self.log_debug("creating pygments formatter with args %s" % (formatter_args))

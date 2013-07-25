@@ -46,3 +46,39 @@ def test_pygments_bad_file_extension():
                 )
         wrapper.run_docs(doc)
         assert wrapper.state == 'error'
+
+def test_pygments_line_numbering():
+    with wrap() as wrapper:
+        doc = Doc(
+                "hello.py|pyg",
+                wrapper,
+                [],
+                contents=" ",
+                pyg = { 'linenos' : True }
+                )
+        wrapper.run_docs(doc)
+        assert "<pre>1</pre>" in str(doc.output_data())
+
+def test_pygments_line_numbering_latex():
+    with wrap() as wrapper:
+        doc = Doc(
+                "hello.py|pyg|l",
+                wrapper,
+                [],
+                contents=" ",
+                pyg = { 'linenos' : True }
+                )
+        wrapper.run_docs(doc)
+        assert "firstnumber=1" in str(doc.output_data())
+
+def test_pygments_line_numbering_latex_alt():
+    with wrap() as wrapper:
+        doc = Doc(
+                "hello.py|pyg|l",
+                wrapper,
+                [],
+                contents=" ",
+                pyg = { 'line-numbers' : True }
+                )
+        wrapper.run_docs(doc)
+        assert "firstnumber=1" in str(doc.output_data())
