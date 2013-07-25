@@ -32,28 +32,18 @@ class IPythonCasper(SubprocessFilter):
     def is_active(self):
         return AVAILABLE
 
-    default_js = """
-        var casper = require('casper').create({
-             viewportSize : {width : %(width)s, height: %(height)s }
-        });
-
-        casper.start("http://localhost:%(port)s", function() {
-            this.waitForSelector("#notebook_list");
-        });
-
-        casper.then(function() {
-            this.capture('notebook-list.png');
-        });
-
-        casper.run();
-        """
-
     def configure_casper_script(self, wd):
         scriptfile = os.path.join(wd, self.setting('script'))
 
-        # Write default script if necessary.
-        if self.setting('script') == 'default.js' and not os.path.exists(scriptfile):
-            js = self.default_js
+        if not os.path.exists(scriptfile):
+            # look for a matching default script
+            filepath = os.path.join(os.path.dirname(__file__), "ipynbcasper", self.setting('script'))
+            if os.path.exists(filepath):
+                with open(filepath, "r") as f:
+                    js = f.read()
+            else:
+                raise UserFeedback("No script file named '%s' found." % self.setting('script'))
+
         else:
             with open(scriptfile, "r") as f:
                 js = f.read()
