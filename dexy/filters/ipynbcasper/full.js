@@ -69,6 +69,12 @@ function openNotebook(name, href) {
     });
 
     casper.then(function() {
+        // wait for css/mathjax to finish loading
+        // TODO figure out how to do this correctly
+        this.wait(1000);
+    });
+
+    casper.then(function() {
         cells = this.getElementsInfo('#notebook-container .cell');
 
         for (var j = 0; j < cells.length; j++) {
@@ -79,12 +85,11 @@ function openNotebook(name, href) {
         // Iterate over a second time to take screenshots - need to do in
         // separate loop to ensure that runCurrentCell finishes.
         for (j = 0; j < cells.length; j++) {
-            console.log(j);
-            var cell_image_name = name + "--" + j + ".png";
+            var cell_image_name = name + "--" + j + "%(ext)s";
             this.captureSelector(cell_image_name, cellSelector(j));
         }
 
-        this.capture(name + ".png");
+        this.capture(name + "%(ext)s");
     });
 }
 
