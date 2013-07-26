@@ -3,6 +3,7 @@ from dexy.filters.process import SubprocessFilter
 import os
 import re
 import subprocess
+import json
 
 try:
     import IPython.nbformat.current
@@ -37,8 +38,9 @@ class IPythonCasper(SubprocessFilter):
     def is_active(self):
         return AVAILABLE
 
-    def configure_casper_script(self, wd, port):
+    def configure_casper_script(self, wd, port, cellmetas):
         scriptfile = os.path.join(wd, self.setting('script'))
+        cellmetafile = os.path.join(wd, "%s-cellmetas.js" % self.input_data.baserootname())
 
         default_scripts_dir = os.path.join(os.path.dirname(__file__), "ipynbcasper")
 
@@ -63,12 +65,16 @@ class IPythonCasper(SubprocessFilter):
                 'width' : self.setting('width'),
                 'height' : self.setting('height'),
                 'port' : port,
+                'name' : self.input_data.baserootname(),
                 'ext' : self.setting('image-ext'),
                 'cell_timeout' : self.setting('cell-timeout')
                 }
 
         with open(scriptfile, "w") as f:
             f.write(js % args)
+
+        with open(cellmetafile, "w") as f:
+            json.dump(cellmetas, f)
 
     def launch_ipython(self, env):
         command = ['ipython', 'notebook', '--no-browser']
@@ -120,6 +126,13 @@ class IPythonCasper(SubprocessFilter):
         env = self.setup_env()
         wd = self.parent_work_dir()
 
+        with open(self.input_data.storage.data_file(), "r") as f:
+            nb = json.load(f)
+
+        cellmetas = []
+        for cell in nb['worksheets'][0]['cells']:
+            cellmetas.append(cell['metadata'])
+
         ws = self.workspace()
         if os.path.exists(ws):
             self.log_debug("already have workspace '%s'" % os.path.abspath(ws))
@@ -130,7 +143,7 @@ class IPythonCasper(SubprocessFilter):
         ipython_proc, port = self.launch_ipython(env)
 
         try:
-            self.configure_casper_script(wd, port)
+            self.configure_casper_script(wd, port, cellmetas)
     
             ## run casper script
             command = self.command_string()

@@ -8,7 +8,7 @@ casper.start("http://localhost:%(port)s", function() {
 });
 
 casper.then(function() {
-    this.capture('notebook-list%(ext)s');
+    this.capture('%(name)s-notebook-list%(ext)s');
 });
 
 casper.run();
