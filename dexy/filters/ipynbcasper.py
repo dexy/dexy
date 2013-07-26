@@ -1,7 +1,7 @@
 from dexy.exceptions import UserFeedback
-import re
 from dexy.filters.process import SubprocessFilter
 import os
+import re
 import subprocess
 
 try:
@@ -17,20 +17,21 @@ class IPythonCasper(SubprocessFilter):
     aliases = ['ipynbcasper']
 
     _settings = {
-            'input-extensions' : ['.ipynb'],
-            'output-extensions' : ['.txt'],
-            'args' : '--web-security=false --ignore-ssl-errors=true',
-            'timeout' : ("Timeout for the casperjs subprocess.", 10000),
-            'image-ext' : ("File extension of images to capture.", ".png"),
-            'script' : ("Canonical name of input document to use as casper script.", "default.js"),
             'add-new-files' : True,
-            "width" : ("Width of page to capture.", 800),
-            "height" : ("Height of page to capture.", 5000),
-            'executable' : 'casperjs',
+            'args' : '--web-security=false --ignore-ssl-errors=true',
             'cell-timeout' : ("Timeout (in microseconds) for running individual notebook cells.", 5000),
-            'version-command' : 'casperjs --version',
+            'command-string' : "%(prog)s %(args)s %(script)s",
+            'executable' : 'casperjs',
+            'height' : ('Height of page to capture.', 5000),
+            'image-ext' : ("File extension of images to capture.", ".png"),
+            'input-extensions' : ['.ipynb'],
             'ipython-args' : ("Additional args to pass to ipython notebook command (list of string args).", None),
-            "command-string" : "%(prog)s %(args)s %(script)s",
+            'ipython-dir' : ("Directory in which to launch ipython, defaults to temp working dir.", None),
+            'output-extensions' : ['.txt'],
+            'script' : ("Canonical name of input document to use as casper script.", "default.js"),
+            'timeout' : ("Timeout for the casperjs subprocess.", 10000),
+            'version-command' : 'casperjs --version',
+            'width' : ('Width of page to capture.', 800),
             }
 
     def is_active(self):
@@ -69,11 +70,16 @@ class IPythonCasper(SubprocessFilter):
         with open(scriptfile, "w") as f:
             f.write(js % args)
 
-    def launch_ipython(self, wd, env):
+    def launch_ipython(self, env):
         command = ['ipython', 'notebook', '--no-browser']
         command.extend(self.parse_additional_ipython_args())
 
-        self.log_debug("About to run ipython command: '%s'" % ' '.join(command))
+        if self.setting('ipython-dir'):
+            wd = self.setting('ipython-dir')
+        else:
+            wd = self.parent_work_dir()
+
+        self.log_debug("About to run ipython command: '%s' in '%s'" % (' '.join(command), wd))
         proc = subprocess.Popen(command, shell=False,
                                     cwd=wd,
                                     stdin=None,
@@ -121,7 +127,7 @@ class IPythonCasper(SubprocessFilter):
             self.populate_workspace()
 
         # launch ipython notebook
-        ipython_proc, port = self.launch_ipython(wd, env)
+        ipython_proc, port = self.launch_ipython(env)
 
         try:
             self.configure_casper_script(wd, port)
