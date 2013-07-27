@@ -84,8 +84,8 @@ def config_args(modargs):
                 conf_args = parse_json(f.read())
             else:
                 raise dexy.exceptions.UserFeedback("Don't know how to load config from '%s'" % config_file)
-
-            kwargs.update(conf_args)
+            if conf_args:
+                kwargs.update(conf_args)
 
     if cliargs: # cliargs may be False
         for k in cliargs.keys(): kwargs[k] = modargs[k]
