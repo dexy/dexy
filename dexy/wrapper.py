@@ -214,6 +214,7 @@ class Wrapper(object):
         try:
             for node in matches:
                 for task in node:
+                    self.current_task = task
                     task()
 
         except Exception as e:
@@ -222,7 +223,7 @@ class Wrapper(object):
             if self.debug:
                 raise
             else:
-                sys.stderr.write("ERROR while running %s: %s\n" % (node.key, str(e)))
+                sys.stderr.write("ERROR while running %s: %s\n" % (self.current_task.key, str(e)))
 
         else:
             self.transition('ran')

@@ -265,6 +265,7 @@ class Node(dexy.plugin.Plugin):
         """
         for child in self.children:
             for task in child:
+                self.wrapper.current_task = task
                 task()
 
 class BundleNode(Node):
