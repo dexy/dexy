@@ -104,8 +104,9 @@ def import_extra_plugins(kwargs):
                     import imp
                     imp.load_source("custom_plugins", import_target)
                 else:
-                    msg = "Could not find installed python package or local python file named '%s'" % import_target
-                    raise dexy.exceptions.UserFeedback(msg)
+                    if not import_target == 'dexyplugin.py':
+                        msg = "Could not find installed python package or local python file named '%s'" % import_target
+                        raise dexy.exceptions.UserFeedback(msg)
 
 def init_wrapper(modargs):
     kwargs = config_args(modargs)

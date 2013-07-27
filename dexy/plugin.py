@@ -170,8 +170,8 @@ class PluginMeta(type):
                 if modname.startswith("dexy_") and not modname in PluginMeta.official_dexy_plugins:
                     prefix = modname.split(".")[0].replace("dexy_", "")
                     alias = "%s:%s" % (prefix, alias)
-            if not cls.plugins.has_key(alias):
-                cls.plugins[alias] = class_info
+
+            cls.plugins[alias] = class_info
 
         if hasattr(klass, '_other_class_settings') and klass._other_class_settings:
             PluginMeta._store_other_class_settings.update(klass._other_class_settings)
