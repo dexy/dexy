@@ -13,8 +13,9 @@ class Reporter(dexy.plugin.Plugin):
     _settings = {
             "default" : ("Whether to run this report by default. Should be False for reports with side effects.", True),
             "dir" : ("Top-level directory in which report will be stored", None),
+            'no-delete' : ("List of elements not to delete when resetting report dir (only effective if report dir is cleaned element-wise).", ['.git', '.nojekyll']),
             "run-for-wrapper-states" : ("List of states in which this report can be run.", ["ran"]),
-            "readme-filename" : ("Name of README file.", "README"),
+            "readme-filename" : ("Name of README file. Set to None to not have a dexy boilerplate warning README.", "README"),
             "safety-filename" : ("Name of a file which will be created in generated dir, and checked before generated dir is removed.", ".dexy-generated"),
             }
     _UNSET = []
@@ -38,7 +39,8 @@ class Reporter(dexy.plugin.Plugin):
         return os.path.join(self.setting('dir'), self.setting('safety-filename'))
 
     def readme_filepath(self):
-        return os.path.join(self.setting('dir'), self.setting('readme-filename'))
+        if self.setting('readme-filename'):
+            return os.path.join(self.setting('dir'), self.setting('readme-filename'))
 
     def write_safety_file(self):
         with open(self.safety_filepath(), "w") as f:
@@ -62,7 +64,8 @@ class Reporter(dexy.plugin.Plugin):
             os.mkdir(self.setting('dir'))
 
         self.write_safety_file()
-        self.write_readme_file()
+        if self.readme_filepath():
+            self.write_readme_file()
 
     def remove_reports_dir(self, keep_empty_dir=False):
         if not self.setting('dir'):
@@ -77,11 +80,12 @@ class Reporter(dexy.plugin.Plugin):
                 # Does not remove the base directory, useful if you are running
                 # a process (like 'dexy serve') from inside that directory
                 for f in os.listdir(self.setting('dir')):
-                    path = os.path.join(self.setting('dir'), f)
-                    if os.path.isdir(path):
-                        shutil.rmtree(path)
-                    else:
-                        os.remove(path)
+                    if not f in self.setting('no-delete'):
+                        path = os.path.join(self.setting('dir'), f)
+                        if os.path.isdir(path):
+                            shutil.rmtree(path)
+                        else:
+                            os.remove(path)
                 self.write_safety_file()
             else:
                 shutil.rmtree(self.setting('dir'))
