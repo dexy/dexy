@@ -239,7 +239,7 @@ class Sqlite3Storage(GenericStorage):
                 raise dexy.exceptions.InternalDexyProblem("no data for %s" % self.storage_key)
 
     def append(self, key, value):
-        self._cursor.execute("INSERT INTO kvstore VALUES (?, ?)", (str(key), str(value)))
+        self._cursor.execute("INSERT INTO kvstore VALUES (?, ?)", (key, value))
         self._append_counter += 1
         if self._append_counter > 1000:
             self.wrapper.log.debug("intermediate commit to sqlite db, resetting append counter to 0")
