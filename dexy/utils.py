@@ -47,7 +47,7 @@ defaults = {
     'log_level' : "INFO",
     'output_root' : '.',
     'pickle' : 'c',
-    'plugins': 'dexyplugin.py',
+    'plugins': 'dexyplugins.py dexyplugin.py dexyplugins.yaml dexyplugin.yaml',
     'profile' : False,
     'recurse' : True,
     'reports' : '',

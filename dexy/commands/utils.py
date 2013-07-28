@@ -4,6 +4,7 @@ from dexy.utils import file_exists
 from dexy.utils import defaults
 import dexy.wrapper
 import os
+import yaml
 
 RENAME_PARAMS = {
         'artifactsdir' : 'artifacts_dir',
@@ -94,19 +95,69 @@ def config_args(modargs):
 
     return kwargs
 
+def import_plugins_from_local_yaml_file(import_target):
+    if os.path.exists(import_target):
+        with open(import_target, 'rb') as f:
+            yaml_content = yaml.safe_load(f.read())
+
+        for alias, info_dict in yaml_content.iteritems():
+            if ":" in alias:
+                prefix, alias = alias.split(":")
+            else:
+                prefix = 'filter'
+
+            plugin_classes = {
+                'filter' : dexy.filter.Filter,
+                'reporter' : dexy.reporter.Reporter
+            }
+
+            if not prefix in plugin_classes:
+                msg = "'%s' not found, available aliases are %s"
+                args = (prefix, ", ".join(plugin_classes.keys()))
+                raise dexy.exceptions.UserFeedback(msg % args)
+
+            cls = plugin_classes[prefix]
+
+            if alias in cls.plugins:
+                existing_plugin = cls.plugins[alias]
+                plugin_settings = existing_plugin[1]
+                plugin_settings.update(info_dict)
+                cls.plugins[alias] = (existing_plugin[0], plugin_settings)
+            else:
+                cls.register_plugins_from_yaml_content({alias : info_dict})
+
+    else:
+        # Don't raise exception if default files don't exist.
+        if not import_target in ('dexyplugin.yaml', 'dexyplugins.yaml',):
+            msg = "Could not find YAML file named '%s'" % import_target
+            raise dexy.exceptions.UserFeedback(msg)
+
+def import_plugins_from_local_python_file(import_target):
+    if os.path.exists(import_target):
+        import imp
+        imp.load_source("custom_plugins", import_target)
+    else:
+        # Don't raise exception if default files don't exist.
+        if not import_target in ('dexyplugin.py', 'dexyplugins.py',):
+            msg = "Could not find python file named '%s'" % import_target
+            raise dexy.exceptions.UserFeedback(msg)
+
+def import_plugins_from_python_package(import_target):
+    try:
+        __import__(import_target)
+    except ImportError:
+        msg = "Could not find installed python package named '%s'" % import_target
+        raise dexy.exceptions.UserFeedback(msg)
+
 def import_extra_plugins(kwargs):
     if kwargs.get('plugins'):
         for import_target in kwargs.get('plugins').split():
-            try:
-                __import__(import_target)
-            except ImportError:
-                if os.path.exists(import_target):
-                    import imp
-                    imp.load_source("custom_plugins", import_target)
-                else:
-                    if not import_target == 'dexyplugin.py':
-                        msg = "Could not find installed python package or local python file named '%s'" % import_target
-                        raise dexy.exceptions.UserFeedback(msg)
+            if import_target.endswith('.yaml'):
+                import_plugins_from_local_yaml_file(import_target)
+            elif import_target.endswith('.py'):
+                import_plugins_from_local_python_file(import_target)
+            else:
+                import_plugins_from_python_package(import_target)
 
 def init_wrapper(modargs):
     kwargs = config_args(modargs)
