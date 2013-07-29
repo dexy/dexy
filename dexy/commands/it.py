@@ -32,18 +32,27 @@ def handle_keyboard_interrupt():
     sys.exit(1)
 
 def run_dexy_in_profiler(wrapper, profile):
+    # profile may be a boolean or the name of a file to use
     if isinstance(profile, bool):
-        profile_filename = 'dexy.prof'
+        profile_filename = os.path.join(wrapper.artifacts_dir, "dexy.prof")
     else:
         profile_filename = profile
 
+    # run dexy in profiler
     import cProfile
     print "running dexy with cProfile, writing profile data to %s" % profile_filename
     cProfile.runctx("wrapper.run_from_new()", None, locals(), profile_filename)
+
+    # print report
     import pstats
-    stat = pstats.Stats(profile_filename)
-    stat.sort_stats("cumulative")
-    stat.print_stats(25)
+    stats_output_file = os.path.join(wrapper.artifacts_dir, "profile-report.txt")
+
+    with open(stats_output_file, 'w') as f:
+        stat = pstats.Stats(profile_filename, stream=f)
+        stat.sort_stats("cumulative")
+        stat.print_stats()
+
+    print "Report is in %s, profile data is in %s." % (stats_output_file, profile_filename)
 
 def run_dexy_in_strace(wrapper, strace):
     if isinstance(strace, bool):

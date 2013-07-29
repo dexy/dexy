@@ -109,15 +109,15 @@ def test_example_project():
         wrapper.remove_reports_dirs(keep_empty_dir=True)
         wrapper.create_dexy_dirs()
 
-        assert len(os.listdir("logs")) == 1
+        assert len(os.listdir(".cache")) == 1
 
         wrapper = Wrapper(log_level=LOGLEVEL, dry_run=True)
         wrapper.run_from_new()
         wrapper.report()
 
-        assert len(os.listdir("logs")) == 4
+        assert len(os.listdir(".cache")) == 6
 
-        with open("logs/graph.txt", "r") as f:
+        with open(".cache/reports/graph.txt", "r") as f:
             graph_text = f.read()
 
         assert "BundleNode(docs) (uncached)" in graph_text

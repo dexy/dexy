@@ -4,7 +4,7 @@ from dexy.utils import defaults
 def reset_command(
         __cli_options=False,
         artifactsdir=defaults['artifacts_dir'], # location of directory in which to store artifacts
-        logdir=defaults['log_dir']# location of directory in which to store logs
+        logdir=defaults['log_dir']# DEPRECATED location of directory in which to store logs
         ):
     """
     Empty the artifacts and logs directories.
@@ -17,7 +17,7 @@ def reset_command(
 def cleanup_command(
         __cli_options=False,
         artifactsdir=defaults['artifacts_dir'], # location of directory in which to store artifacts
-        logdir=defaults['log_dir'], # location of directory in which to store logs
+        logdir=defaults['log_dir'], # DEPRECATED location of directory in which to store logs
         reports=True # Also remove report generated dirs
         ):
     """

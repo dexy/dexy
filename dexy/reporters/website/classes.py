@@ -145,9 +145,9 @@ class WebsiteReporter(OutputReporter):
             "default" : False
             }
 
-    def apply_and_render_template(self, data):
+    def apply_and_render_template(self, doc):
         # Figure out which template to use.
-        ws_template = data.setting('ws-template')
+        ws_template = doc.setting('ws-template')
         if ws_template and not isinstance(ws_template, bool):
             template_file = ws_template
         else:
@@ -155,15 +155,15 @@ class WebsiteReporter(OutputReporter):
 
         # Look for a file named template_file in nearest parent dir to document.
         template_path = None
-        for subpath in reverse_iter_paths(data.name):
+        for subpath in reverse_iter_paths(doc.name):
             template_path = os.path.join(subpath, template_file)
             if file_exists(template_path):
                 break
 
         if not template_path:
-            raise dexy.exceptions.UserFeedback("no template path for %s" % data.key)
+            raise dexy.exceptions.UserFeedback("no template path for %s" % doc.key)
         else:
-            self.log_debug("  using template %s for %s" % (template_path, data.key))
+            self.log_debug("  using template %s for %s" % (template_path, doc.key))
 
         # Populate template environment
         env = Environment(undefined=jinja2.StrictUndefined)
@@ -174,12 +174,7 @@ class WebsiteReporter(OutputReporter):
         self.log_debug("  loading template at %s" % template_path)
         template = env.get_template(template_path)
 
-        if data.ext == '.html':
-            content = unicode(data)
-        else:
-            content = data
-            
-        current_dir = posixpath.dirname(data.output_name())
+        current_dir = posixpath.dirname(doc.output_data().output_name())
         parent_dir = os.path.split(current_dir)[0]
 
         env_data = {}
@@ -194,17 +189,17 @@ class WebsiteReporter(OutputReporter):
         env_data.update({
                 'attrgetter' : operator.attrgetter,
                 'itemgetter' : operator.itemgetter,
-                'content' : content,
+                'content' : doc.output_data(),
                 'locals' : locals,
                 'navigation' : navigation,
                 'nav' : self._navobj.nodes["/%s" % current_dir],
                 'root' : self._navobj.nodes["/"],
                 'navobj' : self._navobj,
-                'page_title' : data.title(),
+                'page_title' : doc.output_data().title(),
                 'parent_dir' : parent_dir,
                 'current_dir' : current_dir,
-                's' : data,
-                'source' : data.output_name(),
+                's' : doc.output_data(),
+                'source' : doc.output_data().output_name(),
                 'template_source' : template_path,
                 'wrapper' : self.wrapper,
                 'year' : datetime.now().year
@@ -213,7 +208,7 @@ class WebsiteReporter(OutputReporter):
         if self.wrapper.globals:
             env_data.update(dict_from_string(self.wrapper.globals))
 
-        fp = os.path.join(self.setting('dir'), data.output_name()).replace(".json", ".html")
+        fp = os.path.join(self.setting('dir'), doc.output_data().output_name()).replace(".json", ".html")
 
         parent_dir = os.path.dirname(fp)
         try:
@@ -245,30 +240,27 @@ class WebsiteReporter(OutputReporter):
                 continue
             if not hasattr(doc, 'output_data'):
                 continue
-
-            data = doc.output_data()
-
-            if not data.output_name():
+            if not doc.output_data().output_name():
                 continue
 
-            self.log_debug("processing data %s" % data.key)
-            if data.is_canonical_output():
-                if data.ext == ".html":
+            self.log_debug("processing data %s" % doc.key)
+            if doc.output_data().is_canonical_output():
+                if doc.ext == ".html":
                     fragments = ('<html', '<body', '<head')
-                    has_html_header = any(html_fragment in unicode(data) for html_fragment in fragments)
+                    has_html_header = any(html_fragment in unicode(doc.output_data()) for html_fragment in fragments)
 
-                    if data.setting('ws-template') == False:
-                        self.log_debug("  ws-template is False for %s" % data.key)
-                        self.write_canonical_data(data)
-                    elif has_html_header and not data.setting('ws-template'):
-                        self.log_debug("  found html tag in output of %s" % data.key)
-                        self.write_canonical_data(data)
+                    if doc.setting('ws-template') == False:
+                        self.log_debug("  ws-template is False for %s" % doc.key)
+                        self.write_canonical_data(doc)
+                    elif has_html_header and not doc.setting('ws-template'):
+                        self.log_debug("  found html tag in output of %s" % doc.key)
+                        self.write_canonical_data(doc)
                     else:
-                        self.apply_and_render_template(data)
-                elif data.ext == '.json' and 'htmlsections' in data.key:
-                    self.apply_and_render_template(data)
+                        self.apply_and_render_template(doc)
+                elif doc.ext == '.json' and 'htmlsections' in doc.key:
+                    self.apply_and_render_template(doc)
                 else:
-                    self.write_canonical_data(data)
+                    self.write_canonical_data(doc)
             else:
                 self.log_debug("  not canonical output")
 

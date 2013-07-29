@@ -16,15 +16,12 @@ is_windows = platform.system() in ('Windows',)
 
 def copy_or_link(data, destination, use_links=True, read_only_links=True):
     """
-    Copies or makes a hard link. Will copy if on windows or if use_links is
-    False. Hard links are set to read-only if read_only_links is True.
+    Copies or makes a hard link. Will copy if on windows or if use_links is False.
     """
     if is_windows or not use_links:
         data.output_to_file(destination)
     else:
-        abs_source = os.path.abspath(data.storage.data_file())
-        abs_dest = os.path.abspath(destination)
-        os.link(abs_source, abs_dest)
+        os.link(data.storage.data_file(), destination)
 
 defaults = {
     'artifacts_dir' : '.cache',
@@ -41,7 +38,7 @@ defaults = {
     'hashfunction' : 'md5',
     'ignore_nonzero_exit' : False,
     'include' : '',
-    'log_dir' : 'logs',
+    'log_dir' : '.cache',
     'log_file' : 'dexy.log',
     'log_format' : "%(name)s - %(levelname)s - %(message)s",
     'log_level' : "INFO",

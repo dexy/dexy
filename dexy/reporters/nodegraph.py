@@ -1,5 +1,4 @@
 from dexy.reporter import Reporter
-import os
 
 class NodeGraph(Reporter):
     """
@@ -7,11 +6,13 @@ class NodeGraph(Reporter):
     """
     aliases = ['nodegraph']
     _settings = {
-            'filename' : ("Name of file to write output to.", 'graph.dot'),
+            'in-cache-dir' : True,
+            'filename' : 'graph.dot',
             "run-for-wrapper-states" : ["ran", "checked", "error"]
             }
 
     def run(self, wrapper):
+        self.wrapper = wrapper
         def print_children(node, indent=0):
             content = []
             content.append(node.key)
@@ -33,8 +34,8 @@ class NodeGraph(Reporter):
             graph.extend(print_inputs(node))
         graph.append("}")
 
-        filename = os.path.join(wrapper.log_dir, self.setting('filename'))
-        with open(filename, "w") as f:
+        self.create_cache_reports_dir()
+        with open(self.report_file(), "w") as f:
             f.write("\n".join(graph))
 
 class PlainTextGraph(Reporter):
@@ -43,11 +44,14 @@ class PlainTextGraph(Reporter):
     """
     aliases = ['graph']
     _settings = {
-            'filename' : ("Name of file to write output to (within log directory).", 'graph.txt'),
+            'in-cache-dir' : True,
+            'filename' : 'graph.txt',
             "run-for-wrapper-states" : ["ran", "checked"]
             }
 
     def run(self, wrapper):
+        self.wrapper = wrapper
+
         def print_inputs(node, indent=0):
             content = []
 
@@ -62,7 +66,6 @@ class PlainTextGraph(Reporter):
         for node in wrapper.roots:
             graph.extend(print_inputs(node))
 
-        filename = os.path.join(wrapper.log_dir, self.setting('filename'))
-
-        with open(filename, "w") as f:
+        self.create_cache_reports_dir()
+        with open(self.report_file(), "w") as f:
             f.write("\n".join(graph) + "\n")

@@ -17,7 +17,7 @@ class RunReporter(Reporter):
             }
 
     def run(self, wrapper):
-        latest_report_dir = os.path.join(wrapper.log_dir, 'run-latest')
+        latest_report_dir = os.path.join(wrapper.artifacts_dir, 'run-latest')
 
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
         report_dir = os.path.join(wrapper.log_dir, "run-%s" % timestamp)

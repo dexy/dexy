@@ -10,8 +10,8 @@ class OutputReporter(Reporter):
             'dir' : 'output'
             }
 
-    def write_canonical_data(self, data):
-        output_name = data.output_name()
+    def write_canonical_data(self, doc):
+        output_name = doc.output_data().output_name()
 
         if output_name:
             fp = os.path.join(self.setting('dir'), output_name)
@@ -20,7 +20,7 @@ class OutputReporter(Reporter):
                 self.log_warn("WARNING overwriting file %s" % fp)
             else:
                 self.locations[fp] = []
-            self.locations[fp].append(data.key)
+            self.locations[fp].append(doc.key)
 
             parent_dir = os.path.dirname(fp)
             try:
@@ -28,9 +28,9 @@ class OutputReporter(Reporter):
             except os.error:
                 pass
 
-            self.log_debug("  writing %s to %s" % (data.key, fp))
+            self.log_debug("  writing %s to %s" % (doc.key, fp))
 
-            data.output_to_file(fp)
+            doc.output_data().output_to_file(fp)
 
     def run(self, wrapper):
         self.wrapper=wrapper
@@ -44,7 +44,7 @@ class OutputReporter(Reporter):
                 continue
 
             if doc.output_data().is_canonical_output():
-                self.write_canonical_data(doc.output_data())
+                self.write_canonical_data(doc)
 
 class LongOutputReporter(Reporter):
     """
@@ -52,6 +52,7 @@ class LongOutputReporter(Reporter):
     """
     aliases = ['long']
     _settings = {
+            'default' : False,
             'dir' : 'output-long'
             }
 

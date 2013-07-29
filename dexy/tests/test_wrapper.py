@@ -157,9 +157,8 @@ def test_init_wrapper_if_dexy_dirs_exist():
         assert wrapper.project_root
         wrapper.to_walked()
         assert 'hello.txt' in wrapper.filemap
-        assert 'dexy.log' in os.listdir('logs')
-        assert 'logs' in wrapper.exclude_dirs()
-        assert not 'logs/dexy.log' in wrapper.filemap
+        assert 'dexy.log' in os.listdir('.cache')
+        assert not '.cache/dexy.log' in wrapper.filemap
 
 def test_nodexy_files():
     with tempdir():

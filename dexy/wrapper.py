@@ -22,7 +22,7 @@ class Wrapper(object):
     Class that manages run configuration and state and provides utilities such
     as logging and setting up/tearing down workspace on file system.
     """
-    _required_dirs = ['artifacts_dir', 'log_dir']
+    _required_dirs = ['artifacts_dir']
 
     state_transitions = (
             (None, 'new'),
@@ -400,7 +400,7 @@ class Wrapper(object):
         """
         Returns path to logfile.
         """
-        return os.path.join(self.log_dir, self.log_file)
+        return os.path.join(self.artifacts_dir, self.log_file)
 
     def setup_log(self):
         """
@@ -607,4 +607,4 @@ class Wrapper(object):
                 reporter.run(self)
 
     def is_location_in_project_dir(self, filepath):
-        return os.path.abspath(self.project_root) in os.path.abspath(filepath)
+        return self.project_root in os.path.abspath(filepath)
