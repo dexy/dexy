@@ -99,10 +99,13 @@ def t_error(t):
     raise LexError("Problem lexing at position %s." % t.lexpos)
 
 def t_idio_error(t):
-    raise LexError("Problem lexing at position %s." % t.lexpos)
+    print "comment '%s'" % t.lexer.lexdata[t.lexer.comment_start_pos:]
+    print "all '%s'" % t.lexer.lexdata
+    print "char '%s'" % t.lexer.lexdata[t.lexpos-1:t.lexer.lexpos]
+    raise LexError("Problem lexing in 'idio' state at position %s." % t.lexpos)
 
 def t_idiostart_error(t):
-    raise LexError("Problem lexing at position %s." % t.lexpos)
+    raise LexError("Problem lexing in 'idiostart' state at position %s." % t.lexpos)
         
 def append_text(lexer, code):
     """
@@ -235,7 +238,7 @@ def t_idio_WORD(t):
     return t
 
 def t_idio_OTHER(t):
-    r'\#|_|\*'
+    r'.'
     t.type = 'CODE'
     exit_idio_state(t)
     return t

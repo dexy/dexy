@@ -87,7 +87,6 @@ def test_parse_closed_style_end():
         )
     for text in comments:
         output = parse(text)
-        print output
         assert output[0]['contents'] == 'foo\n'
         assert output[1]['contents'] == 'bar\n'
         assert output[0]['name'] == '1'
@@ -109,14 +108,20 @@ def test_ignore_faux_comment():
         output = parse(text)
         assert output[0]['contents'] == text
 
+def test_accidental_comment_in_string():
+    for comment in ('###",', '%%%",', '"###",', '"%%%"', '"### (%%%)",'):
+        text = "foo bar %s\n" % comment
+        output = parse(text)
+        assert output[0]['contents'] == text
+
 def test_malformatted_comment_throws_error():
     for comment in ('###', '///', '%%%'):
         text = "%s 'foo bar'\nfoo\n" % comment
         try:
             parse(text)
             assert False, "Should not get here."
-        except UserFeedback as e:
-            print e
+        except UserFeedback:
+            pass
 
 def test_idio_invalid_input():
     with wrap() as wrapper:
