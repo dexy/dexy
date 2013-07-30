@@ -131,6 +131,9 @@ def dexy_command(
     if r or reset:
         dexy.commands.dirs.reset_command(artifactsdir=artifactsdir, logdir=logdir)
 
+    if silent:
+        print "sorry, -silent option not implemented yet https://github.com/ananelson/dexy/issues/33"
+
     # Don't trap errors yet because error handling uses wrapper instance.
     wrapper = init_wrapper(locals())
 

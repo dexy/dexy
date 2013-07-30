@@ -94,7 +94,8 @@ class Reporter(dexy.plugin.Plugin):
         if self.readme_filepath():
             self.write_readme_file()
 
-    def remove_reports_dir(self, keep_empty_dir=False):
+    def remove_reports_dir(self, wrapper, keep_empty_dir=False):
+        self.wrapper = wrapper
         if not self.report_dir():
             return False
 

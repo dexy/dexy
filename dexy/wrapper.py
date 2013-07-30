@@ -35,6 +35,12 @@ class Wrapper(object):
             ('running', 'ran'),
             )
 
+    def printmsg(self, msg):
+        if self.silent:
+            self.log.warn(msg)
+        else:
+            print msg
+
     def validate_state(self, state=None):
         """
         Checks that the instance is in the expected state, and validates
@@ -261,7 +267,7 @@ class Wrapper(object):
         self.to_walked()
         self.to_checked()
         if self.dry_run:
-            print "dry run only"
+            self.printmsg("dry run only")
         else:
             self.run()
 
@@ -369,6 +375,8 @@ class Wrapper(object):
             msg = "You need to run 'dexy setup' in this directory first."
             raise UserFeedback(msg)
 
+        self.deprecate_logs_directory()
+
     def create_dexy_dirs(self):
         """
         Creates the directories needed for dexy to run. Does not complain if
@@ -379,6 +387,31 @@ class Wrapper(object):
                 os.mkdir(dirpath)
                 with open(safety_filepath, 'w') as f:
                     f.write("This directory was created by dexy.")
+
+    def deprecate_logs_directory(self):
+        log_dir = 'logs'
+        if self.log_dir != self.artifacts_dir:
+            # user has set a custom log dir
+            log_dir = self.log_dir
+
+        safety_file = os.path.join(log_dir, self.safety_filename)
+        deprecation_notice_file = os.path.join(log_dir, "WHERE-ARE-THE-LOGS.txt")
+
+        if os.path.exists(log_dir) and os.path.exists(safety_file) and not os.path.exists(deprecation_notice_file):
+            deprecation_notice = """\
+            Dexy no longer has a separate '{log_dir}' directory for the log file.
+            The logfile can now be found at: {log_path}\n""".format(
+                    log_path = self.log_path(),
+                    log_dir = log_dir)
+            
+            deprecation_notice = "\n".join(l.strip() for l in deprecation_notice.splitlines())
+            self.printmsg("Deprecating %s/ directory" % log_dir)
+            self.printmsg(deprecation_notice)
+            self.printmsg("You can remove the %s/ directory" % log_dir)
+
+            with open(deprecation_notice_file, 'w') as f:
+                f.write(deprecation_notice + "\n\nYou can remove this directory.\n")
+            self.trash(os.path.join(log_dir, "dexy.log"))
 
     def remove_dexy_dirs(self):
         for dirpath, safety_filepath, dirstat in self.iter_dexy_dirs():
@@ -393,7 +426,7 @@ class Wrapper(object):
                 reports=dexy.reporter.Reporter
 
             for report in reports:
-                report.remove_reports_dir(keep_empty_dir)
+                report.remove_reports_dir(self, keep_empty_dir)
 
     # Logging
     def log_path(self):
@@ -576,7 +609,7 @@ class Wrapper(object):
         # warn if we don't find any configs
         if len(config_files) == 0:
             msg = "didn't find any document config files (like %s)"
-            print msg % (", ".join(parser_aliases))
+            self.printmsg(msg % (", ".join(parser_aliases)))
 
         # parse each config file and add to ast
         ast = dexy.parser.AbstractSyntaxTree(self)

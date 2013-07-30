@@ -1,7 +1,6 @@
 from dexy.reporter import Reporter
 from jinja2 import Environment
 from jinja2 import FileSystemLoader
-import datetime
 import operator
 import os
 import random
@@ -13,22 +12,21 @@ class RunReporter(Reporter):
     """
     aliases = ['run']
     _settings = {
+            'in-cache-dir' : True,
+            'dir' : 'run',
+            'filename' : 'index.html',
             'default' : True
             }
 
     def run(self, wrapper):
-        latest_report_dir = os.path.join(wrapper.artifacts_dir, 'run-latest')
-
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
-        report_dir = os.path.join(wrapper.log_dir, "run-%s" % timestamp)
-        report_filename = os.path.join(report_dir, 'index.html')
-
-        # Remove any existing directory (unlikely)
-        shutil.rmtree(report_dir, ignore_errors=True)
+        self.wrapper = wrapper
+        self.remove_reports_dir(wrapper)
 
         # Copy template files (e.g. .css files)
+        # TODO don't need to copy this each time - can just overwrite index.html
         template_dir = os.path.join(os.path.dirname(__file__), 'files')
-        shutil.copytree(template_dir, report_dir)
+        shutil.copytree(template_dir, self.report_dir())
+        self.write_safety_file()
 
         env_data = {}
 
@@ -73,9 +71,4 @@ class RunReporter(Reporter):
         env.loader = FileSystemLoader(os.path.dirname(__file__))
         template = env.get_template('template.html')
 
-        template.stream(env_data).dump(report_filename, encoding="utf-8")
-
-        # Copy this to run-latest
-        # TODO symlink instead?
-        shutil.rmtree(latest_report_dir, ignore_errors=True)
-        shutil.copytree(report_dir, latest_report_dir)
+        template.stream(env_data).dump(self.report_file(), encoding="utf-8")
