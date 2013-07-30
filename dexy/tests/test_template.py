@@ -8,7 +8,8 @@ def test_run():
         assert not os.path.exists("dexy.rst")
 
 def test_dexy():
-    for batch in DefaultTemplate().dexy():
+    for wrapper in DefaultTemplate().dexy():
+        batch = wrapper.batch
         assert 'jinja' in batch.filters_used
         assert "doc:hello.txt|jinja" in batch.docs
         assert "doc:dexy.rst|jinja|rst2html" in batch.docs
