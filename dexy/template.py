@@ -101,35 +101,35 @@ class Template(dexy.plugin.Plugin):
 
             try:
                 wrapper.run()
-            except Exception as e:
+            except (Exception, SystemExit,) as e:
                 error = str(e)
                 template_dir = os.path.abspath(".")
                 msg = "%s\npushd %s" % (error, template_dir)
                 raise dexy.exceptions.TemplateException(msg)
 
-            yield(wrapper.batch)
+            yield(wrapper)
 
     def validate(self):
         """
         Runs dexy and validates filter list.
         """
-        for batch in self.dexy(False):
-            filters_used = batch.filters_used
+        for wrapper in self.dexy(False):
+            filters_used = wrapper.batch.filters_used
 
-        for f in self.__class__.filters_used:
-            msg = "filter %s not used by %s" % (f, self.__class__.__name__)
-            assert f in filters_used, msg
+            for f in self.__class__.filters_used:
+                msg = "filter %s not used by %s" % (f, self.__class__.__name__)
+                assert f in filters_used, msg
+    
+            for f in filters_used:
+                if not f.startswith('-') and not f in self.__class__.filters_used:
+                    msg = s("""filter %(filter)s used by %(template)s
+                            but not listed in klass.filters_used,
+                            adjust list to: filters_used = [%(list)s]""")
+                    msgargs = {
+                            'filter' : f,
+                            'template' : self.__class__.__name__,
+                            'list'  : ", ".join("'%s'" % f for f in filters_used)
+                            }
+                    print msg % msgargs
 
-        for f in filters_used:
-            if not f.startswith('-') and not f in self.__class__.filters_used:
-                msg = s("""filter %(filter)s used by %(template)s
-                        but not listed in klass.filters_used,
-                        adjust list to: filters_used = [%(list)s]""")
-                msgargs = {
-                        'filter' : f,
-                        'template' : self.__class__.__name__,
-                        'list'  : ", ".join("'%s'" % f for f in filters_used)
-                        }
-                print msg % msgargs
-
-        return True
+            return wrapper.state == 'ran'

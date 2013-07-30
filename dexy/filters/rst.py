@@ -86,7 +86,8 @@ class RestructuredText(RestructuredTextBase):
                 raise dexy.exceptions.UserFeedback(msg % args)
 
         if not 'template' in settings_overrides:
-            settings_overrides['template'] = default_template(writer_name)
+            if hasattr(writer_name, 'default_template'):
+                settings_overrides['template'] = default_template(writer_name)
 
         try:
             core.publish_file(
