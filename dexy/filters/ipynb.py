@@ -16,7 +16,7 @@ class IPythonNotebook(DexyFilter):
 
     _settings = {
             'input-extensions' : ['.ipynb', '.json', '.py'],
-            'output-extensions' : ['.json']
+            'output-extensions' : ['.json'],
             }
 
     def is_active(self):
@@ -101,6 +101,10 @@ class IPythonNotebook(DexyFilter):
                                 documents.append(d.key)
                                 cell.outputs[k]['png'] = d.key
                             elif fmt == 'text':
+                                pass
+                            elif fmt == 'metadata':
+                                pass
+                            elif fmt == 'latex':
                                 pass
 
                             else:
