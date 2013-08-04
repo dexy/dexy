@@ -10,6 +10,55 @@ from dexy.wrapper import Wrapper
 import dexy.batch
 import os
 
+def test_deprecated_dot_dexy_file():
+    with tempdir():
+        with open(".dexy", 'w') as f:
+            f.write("{}")
+        wrapper = Wrapper()
+        try:
+            wrapper.assert_dexy_dirs_exist()
+        except UserFeedback as e:
+            assert "this format is no longer supported" in str(e)
+
+def test_cache_and_dexy_dirs_present():
+    with tempdir():
+        os.mkdir(".dexy")
+        os.mkdir(".cache")
+        with open(".dexy/.dexy-generated", 'w') as f:
+            f.write("")
+        with open(".cache/.dexy-generated", 'w') as f:
+            f.write("")
+
+        wrapper = Wrapper()
+
+        try:
+            wrapper.assert_dexy_dirs_exist()
+        except UserFeedback as e:
+            assert "Please remove '.cache'" in str(e)
+
+        os.remove(".cache/.dexy-generated")
+        wrapper.assert_dexy_dirs_exist()
+
+        # Cache still exists but dexy just ignores it.
+        assert os.path.exists(".cache")
+
+        # Dexy uses .dexy dir
+        assert os.path.exists(".dexy")
+
+def test_move_cache_dir():
+    with capture_stdout() as stdout:
+        with tempdir():
+            os.mkdir(".cache")
+            with open(".cache/.dexy-generated", 'w') as f:
+                f.write("")
+    
+            wrapper = Wrapper()
+            wrapper.assert_dexy_dirs_exist()
+    
+            assert "Moving directory '.cache'" in stdout.getvalue()
+            assert not os.path.exists(".cache")
+            assert os.path.exists(".dexy")
+
 def test_remove_trash_no_trash():
     with tempdir():
         wrapper = Wrapper()

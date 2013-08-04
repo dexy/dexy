@@ -14,6 +14,7 @@ import os
 import posixpath
 import shutil
 import sys
+import textwrap
 import time
 import uuid
 
@@ -375,6 +376,9 @@ class Wrapper(object):
         Raise a UserFeedback error if user has tried to run dexy without
         setting up necessary directories first.
         """
+        self.detect_dot_dexy_files()
+        self.update_cache_directory()
+
         if not self.dexy_dirs_exist():
             msg = "You need to run 'dexy setup' in this directory first."
             raise UserFeedback(msg)
@@ -391,6 +395,34 @@ class Wrapper(object):
                 os.mkdir(dirpath)
                 with open(safety_filepath, 'w') as f:
                     f.write("This directory was created by dexy.")
+
+    def detect_dot_dexy_files(self):
+        if os.path.exists(".dexy") and os.path.isfile(".dexy"):
+            msg = """\
+            You have a file named '.dexy' in your project, this format is no longer supported.
+            See http://dexy.it/guide/getting-started.html for updated tutorials.
+            Please rename or remove this file to proceed."""
+            raise dexy.exceptions.UserFeedback(textwrap.dedent(msg))
+
+    def update_cache_directory(self):
+        """
+        Move .cache directories to be .dexy directories.
+        """
+        old_cache_dir = ".cache"
+        safety_file = os.path.join(old_cache_dir, self.safety_filename)
+
+        if os.path.exists(old_cache_dir) and os.path.isdir(old_cache_dir) and os.path.exists(safety_file):
+            if os.path.exists(self.artifacts_dir):
+                if os.path.isdir(self.artifacts_dir):
+                    msg = "You have a dexy '%s' directory and a '%s' directory. Please remove '%s' or at least '%s'."
+                    msgargs = (old_cache_dir, self.artifacts_dir, old_cache_dir, safety_file)
+                    raise dexy.exceptions.UserFeedback(msg % msgargs)
+                else:
+                    msg = "'%s' is not a dir!" % (self.artifacts_dir,)
+                    raise dexy.exceptions.InternalDexyProblem(msg)
+
+            print "Moving directory '%s' to new location '%s'" % (old_cache_dir, self.artifacts_dir)
+            shutil.move(old_cache_dir, self.artifacts_dir)
 
     def deprecate_logs_directory(self):
         log_dir = 'logs'
