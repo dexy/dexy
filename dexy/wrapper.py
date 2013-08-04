@@ -246,6 +246,10 @@ class Wrapper(object):
         from dexy.node import BundleNode
         return [n for n in self.nodes.values() if not isinstance(n, BundleNode)]
 
+    def documents(self):
+        from dexy.doc import Doc
+        return [n for n in self.nodes.values() if isinstance(n, Doc)]
+
     def roots_matching_target(self):
         # First priority is to match any named bundles.
         matches = [n for n in self.bundle_docs() if n.key == self.target]

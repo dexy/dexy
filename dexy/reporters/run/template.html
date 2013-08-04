@@ -43,15 +43,13 @@
             <h1>Dexy Run Report</h1>
 
             <h2>Tree</h2>
-            <p>Click to Expand</p>
-            {% for node in wrapper.nodes.values() -%}
-            {% for line in print_children(node) -%}
-            {{ line }}
-            {% endfor -%}
+            <p>Click on Document Keys to Expand/Collapse Sections</p>
+            {% for node in wrapper.roots -%}
+            {{ print_children(node) }}
             {% endfor -%}
 
             <h2>Timing</h2>
-            <p>The total elapsed time was {{ "%0.2f" % batch.elapsed() }} ({{ "%0.2f" % (float(batch.elapsed())/60)}} minutes).</p>
+            <p>The total elapsed time was {{ "%0.2f" % batch.elapsed() }} seconds ({{ "%0.2f" % (float(batch.elapsed())/60)}} minutes).</p>
 
             {% if False -%}
             <h3>Slowest Tasks</h3>
@@ -65,13 +63,14 @@
             {% endif -%}
 
             <h2>Documents</h2>
-            {% for doc in batch -%}
+            {% for doc in wrapper.documents() -%}
             <hr />
-            <h3 style="padding-top: 60px;" id="{{ doc.websafe_key() }}">{{ doc.key }} &nbsp;&nbsp;&nbsp; <a href="#top">&uarr;</a></h3>
+            <h3 style="padding-top: 60px;" id="{{ doc.output_data().websafe_key() }}">{{ doc.key }} &nbsp;&nbsp;&nbsp; <a href="#top">&uarr;</a></h3>
             {% set args = printable_args(doc.setting_values()) -%}
             {% if len(args) > 0 -%}
             <h4>Arguments</h4>
-<pre><code>{% for k, v in args.iteritems() -%}
+<pre><code>{% for k in sorted(args) -%}
+{% set v = args[k] -%}
 {% if isinstance(v, dict) -%}
 {{ k }}:
 {% for kk, vv in v.iteritems() -%}
@@ -97,16 +96,20 @@
             {% endif %}
 
             <br />
-            {% if False -%}
+
             <h4>Artifacts</h4>
             <table style="width: 800px; border: thin solid black; border-collapse: collapse;">
-                <tr><th>Key</th><th>Link</th><th>Elapsed</th><th>Run Type</th><th>Sections</th><th>wd</th></tr>
-                {% for a in doc.children -%}
+                <tr>
+                    <th>Key</th><th>Link</th><th>Elapsed</th><th>Sections</th>
+                    {% if wrapper.state == 'error' -%}
+                    <th>wd</th>
+                    {% endif -%}
+                </tr>
+                {% for a in doc.filters -%}
                 <tr>
                     <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">{{ a.key }}</td>
-                    <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;"><a href="../../{{ a.output_data.storage.data_file() }}">{{ a.output_data.storage.data_file() }}</a></td>
-                    <td style="padding-left: 10px; padding-right: 10px; border:thin solid black; text-align:center;">{{ "%0.4f" % a.elapsed }}</td>
-                    <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">{{ a.content_source }}</td>
+                    <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;"><a href="../../../{{ a.output_data.storage.data_file() }}">{{ a.output_data.storage.data_file() }}</a></td>
+                    <td style="padding-left: 10px; padding-right: 10px; border:thin solid black; text-align:center;">{{ "%0.4f" % (a.elapsed or 0) }}</td>
                     <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">
                         {% if hasattr(a.output_data, 'keys') -%}
                         {% for counter, k in enumerate(a.output_data.keys()) -%}
@@ -116,26 +119,21 @@
                         {% endfor -%}
                         {% endif -%}
                     </td>
+                    {% if wrapper.state == 'error' -%}
                     <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">
-                        <a href="../../{{ a.wd() }}">wd</a>
+                        <a href="../../../{{ a.workspace() }}">wd</a>
                     </td>
+                    {% endif -%}
                 </tr>
                 {% endfor -%}
             </table>
-            {% endif %}
-            <br />
-            {% if False -%}
-            {% for a in doc.children -%}
-            {% if a.stdout -%}
-            <p><b>{{ a.key }} stdout</b></p>
-            {{ a.stdout }}
-            {% endif -%}
-            {% endfor -%}
-            {% endif -%}
-            <br />
+
             {% endfor %}
 
         </div> <!-- /container -->
+
+        <br />
+        <br />
 
         <!-- Le javascript
         ================================================== -->

@@ -1,10 +1,20 @@
 from dexy.reporter import Reporter
+from dexy.doc import Doc
 from jinja2 import Environment
 from jinja2 import FileSystemLoader
 import operator
 import os
 import random
 import shutil
+
+def link_to_doc(node):
+    return """&nbsp;<a href="#%s">&darr; doc info</a>""" % node.output_data().websafe_key()
+
+def link_to_doc_if_doc(node):
+    if isinstance(node, Doc):
+        return link_to_doc(node)
+    else:
+        return ""
 
 class RunReporter(Reporter):
     """
@@ -37,6 +47,7 @@ class RunReporter(Reporter):
         env_data['isinstance'] = isinstance
         env_data['len'] = len
         env_data['sorted'] = sorted
+        env_data['dir'] = dir
 
         env_data['wrapper'] = wrapper
         env_data['batch'] = wrapper.batch
@@ -50,18 +61,20 @@ class RunReporter(Reporter):
             rand_id = random.randint(10000000,99999999)
             spaces = " " * 4 * indent
             nbspaces = "&nbsp;" * 4 * indent
-            content = []
-            if node.__class__.__name__ == 'Doc':
-                link_if_doc = """&nbsp;<a href="#%s">&darr; doc info</a>""" % node.output_data().websafe_key()
-            else:
-                link_if_doc = ""
-            content.append("""%s<div data-toggle="collapse" data-target="#%s">%s%s%s</div>""" % (spaces, rand_id, nbspaces, node.key_with_class(), link_if_doc))
-            content.append("""  %s<div id="%s" class="collapse">""" % (spaces, rand_id))
-            for child in node.children:
+            content = ""
+
+            node_div = """%s<div data-toggle="collapse" data-target="#%s">%s%s%s</div>"""
+            node_div_args = (spaces, rand_id, nbspaces,
+                    node.key_with_class(), link_to_doc_if_doc(node),)
+
+            content += node_div % node_div_args
+            content += """  %s<div id="%s" class="collapse">""" % (spaces, rand_id)
+
+            for child in list(node.inputs) + node.children:
                 if not "Artifact" in child.__class__.__name__:
-                    for line in print_children(child, indent+1):
-                        content.append(line)
-            content.append("  %s</div>" % spaces)
+                    content += print_children(child, indent+1)
+
+            content += "  %s</div>" % spaces
             return content 
 
         env_data['print_children'] = print_children
