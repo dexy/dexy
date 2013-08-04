@@ -138,6 +138,11 @@ class PluginMeta(type):
             if ":" in alias:
                 _, alias = alias.split(":")
 
+            if not info_dict.has_key('class'):
+                import json
+                msg = "invalid info dict for %s: %s" % (alias, json.dumps(info_dict))
+                raise dexy.exceptions.InternalDexyProblem(msg)
+
             class_name = info_dict['class']
             del info_dict['class']
             cls.register_plugin(alias.split("|"), class_name, info_dict)
