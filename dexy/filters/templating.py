@@ -142,7 +142,7 @@ class JinjaFilter(TemplateFilter):
                         result.append("line %04d: %s" % (i+1, line))
                         match_lines.append(i)
                 if len(match_lines) == 0:
-                    raise dexy.exceptions.InternalDexyProblem("Tried to find source of: %s. Could not find match for '%s'" % (e.message, undefined_object))
+                    self.log_info("Tried to automatically find source of error: %s. Could not find match for '%s'" % (e.message, undefined_object))
 
             elif match_is_undefined:
                 undefined_object = match_is_undefined.groups()[0]
