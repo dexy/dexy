@@ -23,7 +23,7 @@ def repo_from_url(url, remote_name="origin"):
     """
     Initializes a pygit Repository instance from a remote repo at 'url'
     """
-    tempdir = tempfile.mkdtemp() # TODO move to .cache/persistent/tempdir
+    tempdir = tempfile.mkdtemp() # TODO move to .dexy/persistent/tempdir
     repo = pygit2.init_repository(tempdir, False)
     remote = repo.create_remote(remote_name, url)
     remote.fetch()

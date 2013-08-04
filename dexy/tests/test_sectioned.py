@@ -29,8 +29,8 @@ def test_create_new_sectioned_dat():
 
 def test_load_json():
     with wrap() as wrapper:
-        os.makedirs(".cache/this/de")
-        with open(".cache/this/de/def123.txt", "w") as f:
+        os.makedirs(".dexy/this/de")
+        with open(".dexy/this/de/def123.txt", "w") as f:
             f.write("""
             [
                 { "foo" : "bar" },

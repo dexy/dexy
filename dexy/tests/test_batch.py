@@ -13,7 +13,7 @@ def test_batch():
         os.makedirs(batch.batch_dir())
 
         batch.save_to_file()
-        assert batch.filename() in os.listdir(".cache/batches")
+        assert batch.filename() in os.listdir(".dexy/batches")
 
         wrapper = Wrapper()
         batch = dexy.batch.Batch.load_most_recent(wrapper)

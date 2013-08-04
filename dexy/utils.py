@@ -24,7 +24,7 @@ def copy_or_link(data, destination, use_links=True, read_only_links=True):
         os.link(data.storage.data_file(), destination)
 
 defaults = {
-    'artifacts_dir' : '.cache',
+    'artifacts_dir' : '.dexy',
     'config_file' : 'dexy.conf',
     'configs' : '',
     'debug' : False,
@@ -38,7 +38,7 @@ defaults = {
     'hashfunction' : 'md5',
     'ignore_nonzero_exit' : False,
     'include' : '',
-    'log_dir' : '.cache',
+    'log_dir' : '.dexy',
     'log_file' : 'dexy.log',
     'log_format' : "%(name)s - %(levelname)s - %(message)s",
     'log_level' : "INFO",

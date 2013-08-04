@@ -157,8 +157,8 @@ def test_init_wrapper_if_dexy_dirs_exist():
         assert wrapper.project_root
         wrapper.to_walked()
         assert 'hello.txt' in wrapper.filemap
-        assert 'dexy.log' in os.listdir('.cache')
-        assert not '.cache/dexy.log' in wrapper.filemap
+        assert 'dexy.log' in os.listdir('.dexy')
+        assert not '.dexy/dexy.log' in wrapper.filemap
 
 def test_nodexy_files():
     with tempdir():
@@ -262,7 +262,7 @@ def test_kwargs_override_config_file():
 
 def test_wrapper_init():
     wrapper = Wrapper()
-    assert wrapper.artifacts_dir == '.cache'
+    assert wrapper.artifacts_dir == '.dexy'
 
 YAML = """foo:
     - bar

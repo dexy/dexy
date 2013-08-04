@@ -518,10 +518,10 @@ def token_info(text, lexer):
     return "\n".join(tok_info(tok) for tok in tokenize(text, lexer))
 
 # This is outside of the wrapper system so we aren't aware of user-specified
-# artifacts directory. Just use .cache if it's there and don't write files if not.
+# artifacts directory. Just use .dexy if it's there and don't write files if not.
 import os
-if os.path.exists(".cache"):
-    outputdir=".cache"
+if os.path.exists(".dexy"):
+    outputdir=".dexy"
     lexer = lex.lex(optimize=1, lextab="id_lextab", outputdir=outputdir)
     parser = yacc.yacc(tabmodule="id_parsetab",debug=0, outputdir=outputdir)
 else:
