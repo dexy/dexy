@@ -38,15 +38,25 @@ class PythonDocumentationFilter(DexyFilter):
             except TypeError:
                 # ... if it can't, convert it to a string to avoid problems.
                 self.add_source_for_key(key, str(item))
+            except UnicodeDecodeError:
+                print "skipping", item
 
     def add_source_for_key(self, key, source):
         """
         Appends source code + syntax highlighted source code to persistent store.
         """
-        self.output_data.append("%s:value" % key, source)
+        try:
+            self.output_data.append("%s:value" % key, json.dumps(source))
+        except Exception as e:
+            print "skipping", key, e
+
         if not (type(source) == str or type(source) == unicode):
             source = inspect.getsource(source)
-        self.output_data.append("%s:source" % key, source)
+
+        try:
+            self.output_data.append("%s:source" % key, str(source))
+        except Exception as e:
+            print "skipping", key, e
 
     def process_members(self, package_name, mod):
         """
@@ -60,7 +70,7 @@ class PythonDocumentationFilter(DexyFilter):
                 key = "%s.%s" % (m.__module__, k)
                 self.fetch_item_content(key, m)
 
-            elif inspect.isclass(m) and m.__module__.startswith(package_name):
+            elif inspect.isclass(m) and m.__module__ and m.__module__.startswith(package_name):
                 key = "%s.%s" % (mod.__name__, k)
                 try:
                     item_content = inspect.getsource(m)
