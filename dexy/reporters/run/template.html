@@ -105,6 +105,26 @@
                     <th>wd</th>
                     {% endif -%}
                 </tr>
+
+                <tr>
+                    <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">{{ doc.initial_data.key }}</td>
+                    <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;"><a href="../../../{{ doc.initial_data.storage.data_file() }}">{{ doc.initial_data.storage.data_file() }}</a></td>
+                    <td style="padding-left: 10px; padding-right: 10px; border:thin solid black; text-align:center;"></td>
+                    <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">
+                        {% if hasattr(doc.initial_data, 'keys') -%}
+                        {% for counter, k in enumerate(doc.initial_data.keys()) -%}
+                        {% if counter < 10 -%}
+                        {{ k }}<br />
+                        {% endif -%}
+                        {% endfor -%}
+                        {% endif -%}
+                    </td>
+                    {% if wrapper.state == 'error' -%}
+                    <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">
+                    </td>
+                    {% endif -%}
+                </tr>
+
                 {% for a in doc.filters -%}
                 <tr>
                     <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">{{ a.key }}</td>

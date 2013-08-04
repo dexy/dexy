@@ -259,11 +259,14 @@ class Doc(dexy.node.Node):
                 self.initial_data.set_data(self.get_contents())
 
         for f in self.filters:
+            f.start_time = time.time()
             if f.output_data.state == 'new':
                 f.output_data.setup()
             if hasattr(f.output_data.storage, 'connect'):
                 f.output_data.storage.connect()
             f.process()
+            f.finish_time = time.time()
+            f.elapsed = f.finish_time - f.start_time
 
         self.finish_time = time.time()
         self.elapsed_time = self.finish_time - self.start_time
