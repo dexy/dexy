@@ -169,19 +169,6 @@ class Data(dexy.plugin.Plugin):
     def relative_path_to(self, relative_to):
         return posixpath.relpath(relative_to, self.parent_dir())
 
-    def relative_refs(self, relative_to_file):
-        doc_dir = posixpath.dirname(relative_to_file)
-        refs = [
-                posixpath.relpath(self.key, doc_dir),
-                posixpath.relpath(self.long_name(), doc_dir),
-                "/%s" % self.key,
-                "/%s" % self.long_name(),
-                "title:%s" % self.title()
-        ]
-        if self.setting('shortcut'):
-            refs.append(self.setting('shortcut'))
-        return refs
-
     # Define functions that might get called on expectation of a string...
 
     def strip(self):

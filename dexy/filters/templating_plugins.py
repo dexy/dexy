@@ -298,53 +298,109 @@ class Inputs(TemplatePlugin):
     def input_tasks(self):
         return self.filter_instance.doc.walk_input_docs()
 
-    def a(self, relative_ref):
-        return self.map_relative_refs[relative_ref]
-
     def run(self):
         self.map_relative_refs = {}
 
+        input_docs = {}
         for doc in self.input_tasks():
-            for ref in doc.output_data().relative_refs(self.filter_instance.output_data.name):
-                self.map_relative_refs[ref] = doc.output_data()
+            input_docs[doc.key] = doc
+
+        d = D(self.filter_instance.doc, input_docs)
 
         return {
-            'a' : self.a,
+            'a' : d,
             'args' : self.filter_instance.doc.args,
-            'd' : D(self.filter_instance.doc, self.map_relative_refs),
+            'd' : d,
             'f' : self.filter_instance,
             's' : self.filter_instance.output_data,
             'w' : self.filter_instance.doc.wrapper
             }
 
 class D(object):
-    def __init__(self, doc, map_relative_refs):
+    def __init__(self, doc, input_docs):
         self._artifact = doc
-        self._map_relative_refs = map_relative_refs
+        self._parent_dir = doc.output_data().parent_dir()
+        self._input_docs = input_docs.values()
+        self._input_doc_keys = [d.key for d in self._input_docs]
+        self._input_doc_names = [d.output_data().long_name() for d in self._input_docs]
+        self._input_doc_titles = ["title:%s" % d.output_data().title() for d in self._input_docs]
 
-    def keys(self):
-        return self._map_relative_refs.keys()
+        self._ref_cache = {}
 
-    def __getitem__(self, relative_ref):
-        if self._map_relative_refs.has_key(relative_ref):
-            return self._map_relative_refs[relative_ref]
+    def key_or_name_index(self, ref):
+        if ref in self._input_doc_keys:
+            return self._input_doc_keys.index(ref)
+        elif ref in self._input_doc_names:
+            return self._input_doc_names.index(ref)
+
+    def matching_keys(self, ref):
+        return [(i, k) for (i, k) in enumerate(self._input_doc_keys) if k.startswith(ref)]
+
+    def unique_matching_key(self, ref):
+        """
+        If the reference unambiguously identifies a single key, return it.
+        """
+        matching_keys = self.matching_keys(ref)
+        if len(matching_keys) == 1:
+            return matching_keys[0]
+
+    def title_index(self, ref):
+        if ref in self._input_doc_titles:
+            return self._input_doc_titles[ref]
+
+    def __getitem__(self, ref):
+        try:
+            return self._ref_cache[ref]
+        except KeyError:
+            pass
+
+        doc = None
+        path_to_ref = None
+        index = None
+
+        if ref.startswith("/"):
+            path_to_ref = ref.lstrip("/")
+            index = self.key_or_name_index(path_to_ref)
+
+        elif ref.startswith('title:'):
+            index = self.title_index(ref)
+
+        else:
+            if self._parent_dir:
+                path_to_ref = os.path.normpath(os.path.join(self._parent_dir, ref))
+            else:
+                path_to_ref = ref
+
+            index = self.key_or_name_index(path_to_ref)
+
+        if index is not None:
+            doc = self._input_docs[index]
+        else:
+            matching_key = self.unique_matching_key(ref)
+            if matching_key:
+                doc = self._input_docs[matching_key[0]]
+
+        if doc:
+            # store this reference in cache for next time
+            self._ref_cache[ref] = doc.output_data()
+            return doc.output_data()
         else:
             msg = "No document named '%s'\nis available as an input to '%s'.\n"
 
             closest_match_lev = 15 # if more than this, not worth mentioning
             closest_match = None
 
-            for k in sorted(self._map_relative_refs):
-                lev = levenshtein(k, relative_ref)
+            for k in sorted(self._input_doc_keys):
+                lev = levenshtein(k, path_to_ref)
                 if lev < closest_match_lev:
                     closest_match = k
                     closest_match_lev = lev
                 self._artifact.log_warn(k)
 
-            msg += "There are %s input documents available, their keys have been written to dexy's log.\n" % len(self._map_relative_refs)
+            msg += "There are %s input documents available, their keys have been written to dexy's log.\n" % len(self._input_doc_keys)
            
             if closest_match:
                 msg += "Did you mean '%s'?" % closest_match
 
-            msgargs = (relative_ref, self._artifact.key)
+            msgargs = (ref, self._artifact.key)
             raise dexy.exceptions.UserFeedback(msg % msgargs)
