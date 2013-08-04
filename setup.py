@@ -31,6 +31,7 @@ setup(
             },
         include_package_data = True,
         install_requires = [
+            'Markdown',
             'PyYAML',
             'chardet',
             'dexy_viewer',

@@ -1,9 +1,30 @@
+julia:
+    class: SubprocessStdoutFilter
+    executable: julia
+    help: Runs julia (.jl) files.
+    input-extensions: [.jl, .txt]
+    output-extensions: [.txt]
+    command-string: "%(prog)s -q --no-history --no-startup %(script_file)s %(scriptargs)s"
+    version-command: "julia -v"
+
+jlcon:
+    class: PexpectReplFilter
+    executable: "julia -q --no-history --no-startup"
+    prompt: "julia>"
+    initial-prompt: "julia>"
+    help: Runs julia (.jl) files in the repl.
+    input-extensions: [.jl, .txt]
+    output-extensions: [.jlcon]
+    version-command: "julia -v"
+    send-line-ending: "\r\n"
+    trim-prompt: "julia>"
+
 vistrails:
     help: Executes vistrails (.vt) workflows and adds any generated files to the dexy run.
     nodoc: True
     class: SubprocessStdoutFilter
     tags: [workflow, repro]
-#    executable: "python /usr/local/lib/vistrails/vistrails.py"
+    executable: vistrails
     input-extensions: ['.vt']
     output-extensions: ['.txt']
     command-string: "%(prog)s --nosplash --noninteractive --verbose=2 --noSingleInstance --dumpcells=foo --workflowgraph=foo --evolutiongraph=foo --pdf --executeworkflows %(script_file)s %(scriptargs)s"

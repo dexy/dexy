@@ -20,6 +20,7 @@ class PexpectReplFilter(SubprocessFilter):
     """
     _settings = {
             'trim-prompt' : ("The closing prompt to be trimmed off.", '>>>'),
+            'send-line-ending' : ("Line ending to transmit at the end of each input line.", "\n"),
             'line-ending' : ("The line ending returned by REPL.", "\n"),
             'save-vars-to-json-cmd' : ("Command to be run to save variables to a JSON file.", None),
             'ps1' : ('PS1', None),
@@ -184,7 +185,7 @@ class PexpectReplFilter(SubprocessFilter):
             for l in lines:
                 self.log_debug(u"Sending '%s'" % l)
                 section_transcript += start
-                proc.send(l.rstrip() + "\n")
+                proc.send(l.rstrip() + self.setting('send-line-ending'))
                 try:
                     if self.setting('prompt-regex'):
                         proc.expect(search_terms, timeout=timeout)
@@ -199,6 +200,8 @@ class PexpectReplFilter(SubprocessFilter):
                     self.log_debug("EOF occurred!")
                     raise DexyEOFException()
                 except pexpect.TIMEOUT as e:
+                    for c in proc.before:
+                        print ord(c), ":", c
                     msg = "pexpect timeout error. failed at matching prompt within %s seconds. " % timeout
                     msg += "received '%s', tried to match with '%s'" % (proc.before, search_terms)
                     msg += "something may have gone wrong, or you may need to set a longer timeout"
