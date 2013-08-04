@@ -68,25 +68,26 @@ def filters_text(
             tup = instance._instance_settings[k]
             text.append(SETTING_STRING % (k, tup[0], tup[1]))
 
-        templates = instance.templates()
-        if len(templates) > 0:
+        examples = instance.setting('examples')
+        if len(examples) > 0:
             text.append("")
-            text.append("Templates which use this filter:")
-            for t in templates:
+            text.append("Examples for this filter:")
+            for alias in examples:
+                template = dexy.template.Template.create_instance(alias)
                 text.append("")
-                text.append("  %s" % t.aliases[0])
-                text.append("            %s" % dexy.utils.getdoc(t.__class__))
+                text.append("  %s" % alias)
+                text.append("            %s" % dexy.utils.getdoc(template.__class__))
 
             if example:
-                for t in templates:
-                    aliases = [k for k, v in dexy.template.Template.plugins.iteritems() if v == t]
-                    if t.__module__ == "dexy_filter_examples":
-                        text.append('')
-                        text.append("Running example: %s" % s(t.__doc__))
-                        text.append('')
-                        text.append('')
-                        text.append(template_text(alias=aliases[0]))
-                        text.append('')
+                for alias in examples:
+                    template = dexy.template.Template.create_instance(alias)
+                    text.append('')
+                    text.append("Running example: %s" % s(template.__doc__))
+                    text.append('')
+                    text.append('')
+                    text.append(template_text(alias=alias))
+                    text.append('')
+
         text.append("")
         text.append("For online docs see http://dexy.it/docs/filters/%s" % alias)
         if source:

@@ -169,17 +169,15 @@ def init_wrapper(modargs):
 def template_text(
         alias=None
     ):
-    template = dexy.template.Template.aliases[alias]
-    for batch in template.dexy():
+    template = dexy.template.Template.create_instance(alias)
+    for wrapper in template.dexy(True):
         man_doc_key = 'doc:dexy.rst|jinja|rst2man'
-        if man_doc_key in batch.lookup_table:
-            man_doc = batch.nodes[man_doc_key].output_data().storage.data_file()
+        if man_doc_key in wrapper.nodes:
+            man_doc = wrapper.nodes[man_doc_key].output_data().storage.data_file()
 
-            command = "man %s" % man_doc
             import subprocess
             proc = subprocess.Popen(
-                       command,
-                       shell=True,
+                       ["man", man_doc],
                        stdout=subprocess.PIPE,
                        stderr=subprocess.STDOUT
                    )
