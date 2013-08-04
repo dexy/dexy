@@ -31,13 +31,13 @@ def test_regetron_filter():
         wrapper.run_docs(node)
         
         if not wrapper.state == 'error':
-            assert node.output_data()['input1.txt'] == """\
+            assert str(node.output_data()['input1.txt']) == """\
 > ^[a-z\s]+$
 0000: hello
 > 
 
 """
-            assert node.output_data()['input2.txt'] == """\
+            assert str(node.output_data()['input2.txt']) == """\
 > ^[a-z\s]+$
 0000: this is some text
 0002: nine
