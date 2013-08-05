@@ -6037,3 +6037,8 @@ a.badge:hover {
 .affix {
   position: fixed;
 }
+
+/* custom */
+.small {
+  font-size: 85%;
+}

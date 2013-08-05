@@ -390,12 +390,13 @@ class D(object):
             closest_match_lev = 15 # if more than this, not worth mentioning
             closest_match = None
 
+            self._artifact.log_warn("Listing documents which are available:")
             for k in sorted(self._input_doc_keys):
                 lev = levenshtein(k, path_to_ref)
                 if lev < closest_match_lev:
                     closest_match = k
                     closest_match_lev = lev
-                self._artifact.log_warn(k)
+                self._artifact.log_warn("  %s" % k)
 
             msg += "There are %s input documents available, their keys have been written to dexy's log.\n" % len(self._input_doc_keys)
            

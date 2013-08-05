@@ -41,7 +41,8 @@ class RunReporter(Reporter):
 
         # Copy the log so it can be viewed in HTML
         self.wrapper.flush_logs()
-        log_file = open(self.wrapper.log_path(), 'r')
+        with open(self.wrapper.log_path(), 'r') as f:
+            log_contents = f.read()
 
         env_data = {}
 
@@ -56,7 +57,7 @@ class RunReporter(Reporter):
 
         env_data['wrapper'] = wrapper
         env_data['batch'] = wrapper.batch
-        env_data['log_file'] = log_file
+        env_data['log_contents'] = log_contents
 
         env_data['enumerate'] = enumerate
 

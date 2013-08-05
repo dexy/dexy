@@ -95,13 +95,13 @@ class Node(dexy.plugin.Plugin):
                 yield node
 
     def log_debug(self, message):
-        self.wrapper.log.debug("%s %s %s: %s" % (self.wrapper.state, self.hashid, self.key_with_class(), message))
+        self.wrapper.log.debug("(state:%s) %s %s: %s" % (self.wrapper.state, self.hashid, self.key_with_class(), message))
 
     def log_info(self, message):
-        self.wrapper.log.info("%s %s %s: %s" % (self.wrapper.state, self.hashid, self.key_with_class(), message))
+        self.wrapper.log.info("(state:%s) %s %s: %s" % (self.wrapper.state, self.hashid, self.key_with_class(), message))
 
     def log_warn(self, message):
-        self.wrapper.log.warn("%s %s %s: %s" % (self.wrapper.state, self.hashid, self.key_with_class(), message))
+        self.wrapper.log.warn("(state:%s) %s %s: %s" % (self.wrapper.state, self.hashid, self.key_with_class(), message))
 
     def key_with_class(self):
         return "%s:%s" % (self.__class__.aliases[0], self.key)
@@ -233,7 +233,7 @@ class Node(dexy.plugin.Plugin):
         def next_task():
             if self.state == 'uncached':
                 self.transition('running')
-                self.log_info("about to run '%s'" % self.key_with_class())
+                self.log_info("running...")
                 yield self
                 self.transition('ran')
 
@@ -241,7 +241,7 @@ class Node(dexy.plugin.Plugin):
                 raise dexy.exceptions.CircularDependency(self.key)
 
             elif self.state in ('consolidated',):
-                self.log_info("using cache for '%s'" % self.key_with_class())
+                self.log_info("using cache for self and any children")
 
             elif self.state in ('ran',):
                 pass # do nothing

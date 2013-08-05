@@ -111,7 +111,7 @@
 
                 <tr>
                     <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">{{ doc.initial_data.key }}</td>
-                    <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;"><a href="../../../{{ doc.initial_data.storage.data_file() }}">{{ doc.initial_data.storage.data_file() }}</a></td>
+                    <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;"><a title="{{ doc.initial_data.storage.data_file() }}" href="../../../{{ doc.initial_data.storage.data_file() }}">{{ doc.initial_data.basename() }}</a></td>
                     <td style="padding-left: 10px; padding-right: 10px; border:thin solid black; text-align:center;"></td>
                     <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">
                         {% if hasattr(doc.initial_data, 'keys') -%}
@@ -131,7 +131,7 @@
                 {% for a in doc.filters -%}
                 <tr>
                     <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">{{ a.key }}</td>
-                    <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;"><a href="../../../{{ a.output_data.storage.data_file() }}">{{ a.output_data.storage.data_file() }}</a></td>
+                    <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;"><a title="{{ a.output_data.storage.data_file() }}" href="../../../{{ a.output_data.storage.data_file() }}">{{ a.output_data.basename() }}</a></td>
                     <td style="padding-left: 10px; padding-right: 10px; border:thin solid black; text-align:center;">{{ "%0.4f" % (a.elapsed or 0) }}</td>
                     <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">
                         {% if hasattr(a.output_data, 'keys') and a.output_data.has_data() -%}
@@ -153,12 +153,19 @@
                 {% endfor -%}
             </table>
 
+            <h4>Logs</h4>
+            <p>
+            To find entries in the <a href="#logs">logs</a> for this doc, search for
+            <code><a onclick="window.find('{{ doc.hashid }}')">{{ doc.hashid }}</a></code> or
+            <code><a onclick="window.find('{{ doc.key_with_class() }}:')">{{ doc.key_with_class() }}:</a></code>.
+            </p>
+            <p>Run dexy again with <code>--loglevel DEBUG</code> if you need more detail in the logs.</p>
             {% endfor %}
 
 
         <h3 id="log">Log <a href="#top">&uarr;</a></h3>
-<pre>
-{{ log_file.read() }}
+<pre class="small">
+{{ log_contents }}
 </pre>
 
         </div> <!-- /container -->
