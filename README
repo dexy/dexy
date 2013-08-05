@@ -2,7 +2,7 @@ Dexy is software for document automation. http://dexy.it
 
 Dexy's source code is available from http://github.com/ananelson/dexy
 
-The 'master' branch contains the most recent release of Dexy (or rather it will after 0.7.0 comes out...)
+The 'master' branch contains the most recent release of Dexy.
 The 'develop' branch contains the most recent development version of Dexy.
 
 Dexy is tested on Python 2.6-Python 2.7.
