@@ -39,10 +39,13 @@ class RunReporter(Reporter):
         shutil.copytree(template_dir, self.report_dir())
         self.write_safety_file()
 
-        # Copy the log so it can be viewed in HTML
+        # If not too large, copy the log so it can be viewed in HTML
         self.wrapper.flush_logs()
-        with open(self.wrapper.log_path(), 'r') as f:
-            log_contents = f.read()
+        if os.path.getsize(self.wrapper.log_path()) < 500000:
+            with open(self.wrapper.log_path(), 'r') as f:
+                log_contents = f.read()
+        else:
+            log_contents = "Log file is too large to include in HTML. Look in %s" % self.wrapper.log_path()
 
         env_data = {}
 
