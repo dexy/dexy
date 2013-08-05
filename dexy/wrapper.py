@@ -230,7 +230,9 @@ class Wrapper(object):
             if self.debug:
                 raise
             else:
-                sys.stderr.write("ERROR while running %s: %s\n" % (self.current_task.key, str(e)))
+                msg = "ERROR while running %s: %s\n" % (self.current_task.key, str(e))
+                sys.stderr.write(msg)
+                self.log.warn(msg)
 
         else:
             self.transition('ran')
@@ -411,7 +413,25 @@ class Wrapper(object):
         old_cache_dir = ".cache"
         safety_file = os.path.join(old_cache_dir, self.safety_filename)
 
-        if os.path.exists(old_cache_dir) and os.path.isdir(old_cache_dir) and os.path.exists(safety_file):
+        if self.artifacts_dir == old_cache_dir:
+            msg = """\
+            You may have a dexy.conf file present in which you specify
+            'artifactsdir: .cache'
+            
+            Dexy's defaults have changed and the .cache directory is being
+            renamed to .dexy
+
+            The easiest way to never see this message again is to remove this
+            line from your dexy.conf file (You should remove any entries in
+            dexy.conf which you don't specifically want to customize.)
+            
+            If you really want the artifacts directory to be at .cache then you
+            can leave your config in place and this message will disappear in a
+            future dexy version.
+            """
+            print textwrap.dedent(msg)
+
+        elif os.path.exists(old_cache_dir) and os.path.isdir(old_cache_dir) and os.path.exists(safety_file):
             if os.path.exists(self.artifacts_dir):
                 if os.path.isdir(self.artifacts_dir):
                     msg = "You have a dexy '%s' directory and a '%s' directory. Please remove '%s' or at least '%s'."
@@ -488,6 +508,10 @@ class Wrapper(object):
         self.log.setLevel(log_level)
         self.log.addHandler(handler)
         self.log.info("starting logging for dexy")
+        self.log_handler = handler
+
+    def flush_logs(self):
+        self.log_handler.flush()
 
     # Project files
     def exclude_dirs(self):

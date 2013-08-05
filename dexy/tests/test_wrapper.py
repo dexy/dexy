@@ -59,6 +59,22 @@ def test_move_cache_dir():
             assert not os.path.exists(".cache")
             assert os.path.exists(".dexy")
 
+def test_old_cache_dir_with_settings():
+    with capture_stdout() as stdout:
+        with tempdir():
+            os.mkdir(".cache")
+
+            with open(".cache/.dexy-generated", 'w') as f:
+                f.write("")
+    
+            wrapper = Wrapper(artifacts_dir = ".cache")
+            wrapper.assert_dexy_dirs_exist()
+
+            assert os.path.exists(".cache")
+            assert not os.path.exists(".dexy")
+    
+            assert "You may have a dexy.conf file" in stdout.getvalue()
+
 def test_remove_trash_no_trash():
     with tempdir():
         wrapper = Wrapper()

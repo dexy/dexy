@@ -9,6 +9,8 @@ class Batch(object):
         self.doc_keys = {}
         self.filters_used = []
         self.uuid = str(uuid.uuid4())
+        self.start_time = None
+        self.end_time = None
 
     def __repr__(self):
         return "Batch(%s)" % self.uuid
@@ -65,7 +67,10 @@ class Batch(object):
         return data
 
     def elapsed(self):
-        return self.end_time - self.start_time
+        if self.end_time and self.start_time:
+            return self.end_time - self.start_time
+        else:
+            return 0
 
     def filename(self):
         return "%s.pickle" % self.uuid

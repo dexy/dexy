@@ -214,7 +214,8 @@ class Generic(Data):
             raise dexy.exceptions.InternalDexyProblem(msg % msgargs)
 
     def has_data(self):
-        return self._data or self.is_cached()
+        has_loaded_data = (self._data) and (self._data != [{}])
+        return has_loaded_data or self.is_cached()
 
     def is_cached(self, this=None):
         if this is None:
