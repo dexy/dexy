@@ -32,7 +32,7 @@ def repo_from_url(url, remote_name="origin"):
 def generate_commit_info(commit):
     # Currently this is diffing with nothing, so the 'diff' is a full printout
     # of the current contents of the repo.
-    diff = commit.tree.diff()
+    diff = commit.tree.diff_to_tree()
 
     patches = []
     for i, patch in enumerate(diff):
@@ -148,12 +148,13 @@ class GitRepo(GitBase):
     def work(self, repo, remote, ref):
         parent_dir = self.output_data.parent_dir()
 
-        commit = repo[ref.oid]
+        print dir(ref)
+        commit = repo[ref.target]
         tree = commit.tree
 
         def process_tree(tree, add_to_dir):
             for entry in tree:
-                obj = entry.to_object()
+                obj = repo[entry.oid]
                 if obj.__class__.__name__ == 'Blob':
                     doc_key = os.path.join(add_to_dir, entry.name)
                     self.add_doc(doc_key, obj.data)
@@ -175,7 +176,7 @@ class GitCommit(GitBaseKeyValue):
     aliases = ['gitcommit']
 
     def work(self, repo, remote, ref):
-        commit = repo[ref.oid]
+        commit = repo[ref.target]
         commit_info = generate_commit_info(commit)
 
         for k, v in commit_info.iteritems():
@@ -192,6 +193,6 @@ class GitLog(GitBase):
 
     def work(self, repo, remote, ref):
         log = ""
-        for commit in repo.walk(ref.oid, pygit2.GIT_SORT_TIME):
+        for commit in repo.walk(ref.target, pygit2.GIT_SORT_TIME):
             log += "%s: %s\n" % (commit.hex, commit.message.strip())
         return log
