@@ -64,20 +64,24 @@ class RunReporter(Reporter):
         def printable_args(args):
             return dict((k, v) for k, v in args.iteritems() if not k in ('contents', 'wrapper'))
 
-        def print_children(node, indent=0):
+        def print_children(node, indent=0, extra=""):
             rand_id = random.randint(10000000,99999999)
             spaces = " " * 4 * indent
             nbspaces = "&nbsp;" * 4 * indent
             content = ""
 
-            node_div = """%s<div data-toggle="collapse" data-target="#%s">%s%s%s</div>"""
-            node_div_args = (spaces, rand_id, nbspaces,
+            node_div = """%s<div data-toggle="collapse" data-target="#%s">%s%s%s%s</div>"""
+            node_div_args = (spaces, rand_id, nbspaces, extra,
                     node.key_with_class(), link_to_doc_if_doc(node),)
 
             content += node_div % node_div_args
             content += """  %s<div id="%s" class="collapse">""" % (spaces, rand_id)
 
-            for child in list(node.inputs) + node.children:
+            for child in list(node.inputs):
+                if not "Artifact" in child.__class__.__name__:
+                    content += print_children(child, indent+1, "&rarr;")
+
+            for child in node.children:
                 if not "Artifact" in child.__class__.__name__:
                     content += print_children(child, indent+1)
 
