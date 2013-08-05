@@ -31,6 +31,9 @@
                     <a class="brand" href="#">Dexy Run Report</a>
                     <div class="nav-collapse collapse">
                         <ul class="nav">
+                            <li><a href="#log">Log</a></li>
+                        </ul>
+                        <ul class="nav">
                             <li><a href="http://dexy.it">Dexy Website</a></li>
                         </ul>
                     </div><!--/.nav-collapse -->
@@ -122,7 +125,7 @@
                     {% if wrapper.state == 'error' -%}
                     <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">
                     </td>
-                    {% endif -%}
+                    {% endif -%},
                 </tr>
 
                 {% for a in doc.filters -%}
@@ -131,10 +134,12 @@
                     <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;"><a href="../../../{{ a.output_data.storage.data_file() }}">{{ a.output_data.storage.data_file() }}</a></td>
                     <td style="padding-left: 10px; padding-right: 10px; border:thin solid black; text-align:center;">{{ "%0.4f" % (a.elapsed or 0) }}</td>
                     <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">
-                        {% if hasattr(a.output_data, 'keys') -%}
+                        {% if hasattr(a.output_data, 'keys') and a.output_data.has_data() -%}
                         {% for counter, k in enumerate(a.output_data.keys()) -%}
                         {% if counter < 10 -%}
                         {{ k }}<br />
+                        {% elif counter == 10 -%}
+                        ...<br />
                         {% endif -%}
                         {% endfor -%}
                         {% endif -%}
@@ -149,6 +154,12 @@
             </table>
 
             {% endfor %}
+
+
+        <h3 id="log">Log <a href="#top">&uarr;</a></h3>
+<pre>
+{{ log_file.read() }}
+</pre>
 
         </div> <!-- /container -->
 

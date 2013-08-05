@@ -25,7 +25,8 @@ class RunReporter(Reporter):
             'in-cache-dir' : True,
             'dir' : 'run',
             'filename' : 'index.html',
-            'default' : True
+            'default' : True,
+            "run-for-wrapper-states" : ["ran", "error"]
             }
 
     def run(self, wrapper):
@@ -37,6 +38,10 @@ class RunReporter(Reporter):
         template_dir = os.path.join(os.path.dirname(__file__), 'files')
         shutil.copytree(template_dir, self.report_dir())
         self.write_safety_file()
+
+        # Copy the log so it can be viewed in HTML
+        self.wrapper.flush_logs()
+        log_file = open(self.wrapper.log_path(), 'r')
 
         env_data = {}
 
@@ -51,6 +56,7 @@ class RunReporter(Reporter):
 
         env_data['wrapper'] = wrapper
         env_data['batch'] = wrapper.batch
+        env_data['log_file'] = log_file
 
         env_data['enumerate'] = enumerate
 
