@@ -243,9 +243,12 @@ class WebsiteReporter(OutputReporter):
             if not doc.output_data().output_name():
                 continue
 
-            self.log_debug("processing data %s" % doc.key)
-            if doc.output_data().is_canonical_output():
-                if doc.ext == ".html":
+            canonical = doc.output_data().is_canonical_output()
+
+            output_ext = doc.output_data().ext
+            self.log_debug("processing %s (canonical %s)" % (doc.key, canonical))
+            if canonical:
+                if output_ext == ".html":
                     fragments = ('<html', '<body', '<head')
                     has_html_header = any(html_fragment in unicode(doc.output_data()) for html_fragment in fragments)
 
@@ -257,11 +260,9 @@ class WebsiteReporter(OutputReporter):
                         self.write_canonical_data(doc)
                     else:
                         self.apply_and_render_template(doc)
-                elif doc.ext == '.json' and 'htmlsections' in doc.key:
+                elif output_ext == '.json' and 'htmlsections' in doc.key:
                     self.apply_and_render_template(doc)
                 else:
                     self.write_canonical_data(doc)
-            else:
-                self.log_debug("  not canonical output")
 
         self.log_debug("finished")
