@@ -5,10 +5,16 @@ def test_split_html_filter():
     with wrap() as wrapper:
         contents="""
         <p>This is at the top.</p>
+        <!-- split "index" -->
+        index page content only
         <!-- split "a-page" -->
         some content on a page
         <!-- split "another-page" -->
+        This is information about "another-page" which should appear on the index page.
+        <!-- content -->
         some content on another page
+        <!-- footer -->
+        footer on index page only
         <!-- endsplit -->
         bottom
         """
@@ -22,12 +28,15 @@ def test_split_html_filter():
         od = str(node.output_data())
 
         assert "<p>This is at the top.</p>" in od
+        assert 'index page content only' in od
         assert '<a href="a-page.html">' in od
         assert '<a href="another-page.html">' in od
+        assert "This is information about \"another-page\"" in od
         assert "bottom" in od
 
         od = str(node.children[0].output_data())
         assert "<p>This is at the top.</p>" in od
+        assert not 'index page content only' in od
         assert "some content on a page" in od
         assert "bottom" in od
 
