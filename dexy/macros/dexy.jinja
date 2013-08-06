@@ -73,6 +73,12 @@
 
 {{ highlight(contents, lexer, 'latex') | indent(4, true) }}
 
+{% elif ext == '.man' %}
+
+::
+
+{{ contents | indent(4, true) }}
+
 {% else %}
 .. warning::
 
