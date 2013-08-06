@@ -42,6 +42,7 @@ class Id(PygmentsFilter):
     """
     aliases = ['idio', 'id', 'idiopidae', 'htmlsections']
     _settings = {
+            'examples' : ['htmlsections'],
             'highlight' : ("Whether to apply syntax highlighting to sectional output.", None),
             'skip-extensions' : ("Because |idio gets applied to *.*, need to make it easy to skip non-textual files.", (".odt")),
             'remove-leading' : ("If a document starts with empty section named '1', remove it.", False),

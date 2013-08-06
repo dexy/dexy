@@ -65,6 +65,7 @@ class PygmentsFilter(DexyFilter):
     You might need to specify the lexer manually."""
 
     _settings = {
+            'examples' : ['pygments', 'pygments-image', 'pygments-stylesheets'],
             'input-extensions' : [".*"],
             'output-extensions' : MARKUP_OUTPUT_EXTENSIONS + IMAGE_OUTPUT_EXTENSIONS + ['.css', '.sty'],
 
@@ -87,10 +88,11 @@ class PygmentsFilter(DexyFilter):
 
             'formatter-settings' : (
                 """List of all settings which will be passed to the formatter
-                constructor.""", ['style', 'full', 'linenos']
+                constructor.""", ['style', 'full', 'linenos', 'noclasses']
             ),
 
             'style' : ( "Formatter style to output.", 'default'),
+            'noclasses' : ( "If set to true, token <span> tags will not use CSS classes, but inline styles.", None),
             'full' : ("""Pygments formatter option: output a 'full' document
                 including header/footer tags.""", None),
             'linenos' : ("""Whether to include line numbers. May be set to

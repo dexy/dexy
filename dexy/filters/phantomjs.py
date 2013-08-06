@@ -58,6 +58,7 @@ class PhantomJsRenderSubprocessFilter(SubprocessFilter):
     aliases = ['phrender']
     _settings = {
             'add-new-files' : True,
+            'examples' : ['phrender'],
             'executable' :  'phantomjs',
             "width" : ("Width of page to capture.", 1024),
             "height" : ("Height of page to capture.", 768),

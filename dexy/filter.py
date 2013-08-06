@@ -413,9 +413,6 @@ class DexyFilter(Filter):
     """
     aliases = ['dexy']
 
-    def data_class_alias(self, ext):
-        return self.setting('output-data-type')
-
     def process(self):
         if hasattr(self, "process_text"):
             output = self.process_text(unicode(self.input_data))

@@ -31,18 +31,22 @@ setup(
             },
         include_package_data = True,
         install_requires = [
-            'Markdown',
+            # for internal dexy use or ubiquitous filters
             'PyYAML',
             'chardet',
-            'dexy_viewer',
-            'docutils',
-            'inflection>=0.0.2',
-            'jinja2',
             'pexpect',
-            'ply>=3.4',
-            'pygments',
             'python-modargs>=1.7',
-            'requests>=0.10.6'
+            'requests>=0.10.6',
+            'inflection>=0.0.2',
+            'ply>=3.4',
+            'jinja2',
+            'pygments',
+            # dexy utilities
+            'dexy_viewer', ## TODO version
+            'dexy_filter_examples', ## TODO Version
+            # for convenience of running additional filters
+            'Markdown',
+            'docutils'
             ],
         name='dexy',
         packages=find_packages(),

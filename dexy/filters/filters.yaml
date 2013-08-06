@@ -1,4 +1,5 @@
 julia:
+    examples: [julia]
     class: SubprocessStdoutFilter
     executable: julia
     help: Runs julia (.jl) files.
@@ -8,6 +9,7 @@ julia:
     version-command: "julia -v"
 
 jlcon:
+    examples: [julia]
     class: PexpectReplFilter
     executable: "julia -q --no-history --no-startup"
     prompt: "julia>"
@@ -655,6 +657,7 @@ cppinput:
 # TODO handle EOF errors if people have 'quit' in their script
 matlabint:
     class: PexpectReplFilter
+    examples: ['matlab']
     help: Runs matlab in REPL.
     tags: [code, repl, stats, matlab]
     initial-timeout: 30

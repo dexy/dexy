@@ -18,6 +18,7 @@ class MarkdownFilter(DexyFilter):
     """
     aliases = ['markdown']
     _settings = {
+            'examples' : ['markdown'],
             'input-extensions' : ['.*'],
             'output-extensions' : ['.html'],
             'extensions' : ("Which Markdown extensions to enable.", { 'toc' : {} }),
