@@ -1,4 +1,16 @@
+ditaa:
+    added-in-version: "0.9.9.6"
+    examples: [ditaa]
+    class: SubprocessFilter
+    executable: ditaa
+    help: Runs ditaa to generate images from ascii art.
+    output: True
+    input-extensions: [.txt]
+    output-extensions: [.png]
+    command-string: "%(prog)s  %(args)s %(script_file)s"
+
 julia:
+    added-in-version: "0.9.9.5"
     examples: [julia]
     class: SubprocessStdoutFilter
     executable: julia
@@ -9,6 +21,7 @@ julia:
     version-command: "julia -v"
 
 jlcon:
+    added-in-version: "0.9.9.5"
     examples: [julia]
     class: PexpectReplFilter
     executable: "julia -q --no-history --no-startup"

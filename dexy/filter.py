@@ -22,6 +22,7 @@ class Filter(dexy.plugin.Plugin):
             'help', 'nodoc'
             ]
     _settings = {
+            'added-in-version' : ("Dexy version when this filter was first available.", ''),
             'add-new-files' : ("""Whether to add new files that have been
                 created as side effects of running this filter.""", False),
             'exclude-add-new-files' : ("""Patterns to exclude when adding new
@@ -29,6 +30,7 @@ class Filter(dexy.plugin.Plugin):
             'additional-doc-filters' : ('', {}),
             'examples' : ("Templates which should be used as examples for this filter.", []),
             'ext' : ('Extension to output.', None),
+            'extension-map' : ("Dictionary mapping input extensions to default output extensions.", None),
             'help' : ('Help string for filter, if not already specified as a class docstring.', None),
             'include-in-workspaces' : ("Allow overriding whether a document should be used when populating workspaces for other documents.", False),
             'input-extensions' : ("List of extensions which this filter can accept as input.", [".*"]),
@@ -144,25 +146,40 @@ class Filter(dexy.plugin.Plugin):
         else:
             # User has not specified desired extension, and we don't output wildcards,
             # figure out extension based on next filter in sequence, if any.
+            ext_from_map = None
+            if self.setting('extension-map'):
+                ext_from_map = self.setting('extension-map')[prev_ext]
+
+            next_filter_accepts = [".*"]
             if self.next_filter:
                 next_filter_accepts = self.next_filter.setting('input-extensions')
 
-                if ".*" in next_filter_accepts:
-                    self.ext = i_output[0]
+            if ".*" in next_filter_accepts:
+                if ext_from_map:
+                    self.ext = ext_from_map
                 else:
-                    if set(i_output).isdisjoint(set(next_filter_accepts)):
-                        msg = "Filter %s can't go after filter %s, no file extensions in common."
-                        raise dexy.exceptions.UserFeedback(msg % (self.next_filter.alias, self.alias))
+                    self.ext = i_output[0]
 
-                    for e in i_output:
-                        if e in next_filter_accepts:
-                            self.ext = e
+            elif ext_from_map:
+                if not ext_from_map in next_filter_accepts:
+                    msg = "Filter %s wants to output %s but %s doesn't accept this format."
+                    msgargs = (self.alias, ext_from_map, self.next_filter.alias)
+                    raise dexy.exceptions.UserFeedback(msg % msgargs)
 
-                    if not self.ext:
-                        msg = "no file extension found but checked already for disjointed, should not be here"
-                        raise dexy.exceptions.InternalDexyProblem(msg)
+                self.ext = ext_from_map
+
             else:
-                self.ext = i_output[0]
+                if set(i_output).isdisjoint(set(next_filter_accepts)):
+                    msg = "Filter %s can't go after filter %s, no file extensions in common."
+                    raise dexy.exceptions.UserFeedback(msg % (self.next_filter.alias, self.alias))
+
+                for e in i_output:
+                    if e in next_filter_accepts:
+                        self.ext = e
+
+                if not self.ext:
+                    msg = "no file extension found but checked already for disjointed, should not be here"
+                    raise dexy.exceptions.InternalDexyProblem(msg)
 
     def templates(self):
         """
