@@ -109,6 +109,9 @@ class Node(object):
         self.docs = []
         self.index_page = None
 
+    def __lt__(self, other):
+        return self.location < other.location
+
     def __repr__(self):
         return "Node(%s)" % self.location
 
