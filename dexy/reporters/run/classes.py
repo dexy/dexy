@@ -6,6 +6,7 @@ import operator
 import os
 import random
 import shutil
+import codecs
 
 def link_to_doc(node):
     return """&nbsp;<a href="#%s">&darr; doc info</a>""" % node.output_data().websafe_key()
@@ -42,7 +43,7 @@ class RunReporter(Reporter):
         # If not too large, copy the log so it can be viewed in HTML
         self.wrapper.flush_logs()
         if os.path.getsize(self.wrapper.log_path()) < 500000:
-            with open(self.wrapper.log_path(), 'r') as f:
+            with codecs.open(self.wrapper.log_path(), 'r', encoding='UTF-8') as f:
                 log_contents = f.read()
         else:
             log_contents = "Log file is too large to include in HTML. Look in %s" % self.wrapper.log_path()
