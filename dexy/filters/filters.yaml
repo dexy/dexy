@@ -1,3 +1,13 @@
+go:
+    added-in-version: "0.9.9.6"
+    help: "Runs 'go run' command on an input .go file. http://golang.org/"
+    examples: [go]
+    class: SubprocessStdoutFilter
+    executable: go
+    command-string: "%(prog)s run %(args)s %(script_file)s"
+    input-extensions: [.go, .txt]
+    output-extensions: [.txt]
+    
 ditaa:
     added-in-version: "0.9.9.6"
     examples: [ditaa]
