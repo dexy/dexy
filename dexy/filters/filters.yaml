@@ -64,6 +64,7 @@ pdftotext|pdf2text:
     output-extensions: ['.txt']
 
 tidy|htmltidy:
+    examples: [tidy]
     class: SubprocessFilter
     command-string: '%(prog)s -quiet -output "%(output_file)s" "%(script_file)s"'
     tags : [html]
@@ -73,6 +74,7 @@ tidy|htmltidy:
     output-extensions: ['.html']
 
 tidyerrors:
+    examples: [tidy]
     class: SubprocessStdoutFilter
     tags : [html]
     executable: tidy

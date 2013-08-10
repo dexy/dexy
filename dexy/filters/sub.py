@@ -15,6 +15,7 @@ class TidyCheck(SubprocessFilter):
     """
     aliases = ['tidycheck']
     _settings = {
+        'examples' : ['tidy'],
         'tags' : ['html'],
         'executable' : 'tidy',
         'command-string' : '%(prog)s -errors -quiet "%(script_file)s"',
