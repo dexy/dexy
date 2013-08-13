@@ -546,9 +546,19 @@ py|pyout:
     output-extensions: [.txt]
     version-command: python --version
 
-sh|bash:
+sh:
     class: SubprocessStdoutFilter
-    help: Runs bash scripts and returns stdout.
+    help: Runs bash scripts using 'sh' and returns stdout.
+    examples: [bash]
+    tags: [shell, code]
+    executable: 'sh -e'
+    input-extensions: [".sh", ".bash", ".txt", ""]
+    output-extensions: [".txt"]
+
+bash:
+    class: SubprocessStdoutFilter
+    help: Runs bash scripts using 'bash' and returns stdout.
+    examples: [bash]
     tags: [shell, code]
     executable: 'bash -e'
     input-extensions: [".sh", ".bash", ".txt", ""]
@@ -753,6 +763,7 @@ shint|bashint:
     class: PexpectReplFilter
     tags: [code, repl, shell]
     help: Runs bash. use to run bash scripts.
+    examples: [bash]
     executable: bash --norc -i
     input-extensions: [.txt, .sh]
     output-extensions: [.sh-session]
