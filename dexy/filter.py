@@ -189,11 +189,6 @@ class Filter(dexy.plugin.Plugin):
         templates = [dexy.template.Template.create_instance(a) for a in self.setting('examples')]
         return templates
 
-    def filter_specific_settings(self):
-        nodoc = self.nodoc_settings
-        base = dexy.filter.Filter._settings
-        return dict((k, v) for k, v in self._settings.iteritems() if not k in nodoc and not k in base)
-
     def key_with_class(self):
         return "%s:%s" % (self.__class__.__name__, self.key)
 
