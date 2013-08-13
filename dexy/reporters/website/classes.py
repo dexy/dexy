@@ -143,7 +143,7 @@ class WebsiteReporter(OutputReporter):
             "default-template" : ("Path to the default template to apply.", "_template.html"),
             "plugins" : (
                     "List of TemplatingPlugins to make available in environment.",
-                    ["inflection", "builtins"]
+                    ["inflection", "builtins", "pygments"]
                 ),
             "default" : False
             }

@@ -231,7 +231,7 @@ class PygmentsStylesheet(TemplatePlugin):
 
     def run(self):
         pygments_stylesheets = {}
-        if self.filter_instance.doc.args.has_key('pygments'):
+        if hasattr(self, 'filter_instance') and self.filter_instance.doc.args.has_key('pygments'):
             formatter_args = self.filter_instance.doc.args['pygments']
         else:
             formatter_args = {}
@@ -245,7 +245,7 @@ class PygmentsStylesheet(TemplatePlugin):
                 for fn in pygments_formatter.filenames:
                     ext = fn.split(".")[1]
                     if ext == 'htm':
-                        ext = 'css' # swap the more intuitive '.css' for the unlikely '.htm'
+                        ext = 'css'
                     key = "%s.%s" % (style_name, ext)
                     pygments_stylesheets[key] = style_info
         return {'pygments' : pygments_stylesheets, 'highlight' : self.highlight }
