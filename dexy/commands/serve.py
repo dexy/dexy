@@ -23,7 +23,7 @@ class SimpleHTTPAuthRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
         """
         if self.headers.getheader('Authorization') == None:
             self.send_response(401)
-            self.send_header('WWW-Authenticate', 'Basic realm="Dexy"')
+            self.send_header('WWW-Authenticate', 'Basic realm="%s"' % self.__class__.realm)
             self.send_header('Content-type', 'text/html')
             self.end_headers()
             self.wfile.write("no authorization received")
