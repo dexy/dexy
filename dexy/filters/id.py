@@ -330,7 +330,6 @@ def p_entry(p):
              | codes inlineidio NEWLINE
              | idioline NEWLINE'''
     p.lexer.lineno += 1
-    print "processing entry", p[1:]
     if len(p) == 2:
         append_text(p.lexer, p[1])
     elif len(p) == 3:
