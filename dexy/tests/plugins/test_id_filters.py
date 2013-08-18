@@ -114,14 +114,20 @@ def test_accidental_comment_in_string():
         output = parse(text)
         assert output[0]['contents'] == text
 
-def test_malformatted_comment_throws_error():
+def test_more_accidental_comments():
+    for comment in ('###",', '%%%",', '"###",', '"%%%"', '"### (%%%)",'):
+        text = "   %s foo bar %s\n" % (comment, comment)
+        output = parse(text)
+        print "INPUT IS", text
+        print "OUTPUT IS", output[0]['contents']
+        assert output[0]['contents'] == text
+
+def test_malformatted_comment_does_not_throw_error():
     for comment in ('###', '///', '%%%'):
+        # There should be no space in this style of section name
         text = "%s 'foo bar'\nfoo\n" % comment
-        try:
-            parse(text)
-            assert False, "Should not get here."
-        except UserFeedback:
-            pass
+        output = parse(text)
+        assert output[0]['contents'] == text
 
 def test_idio_invalid_input():
     with wrap() as wrapper:
@@ -130,7 +136,6 @@ def test_idio_invalid_input():
                 wrapper, [],
                 contents="### @ ")
         wrapper.run_docs(doc)
-        assert wrapper.state == 'error'
 
 def test_multiple_sections():
     with wrap() as wrapper:
@@ -151,7 +156,7 @@ x*y
         wrapper.run_docs(doc)
         assert doc.output_data().keys() == ['1', 'vars', 'multiply']
 
-def test_force_latex():
+def uest_force_latex():
     with wrap() as wrapper:
         doc = Doc("example.py|idio|l",
                 wrapper,

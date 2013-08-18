@@ -325,13 +325,14 @@ def p_main(p):
 
 def p_entry(p):
     '''entry : NEWLINE
+             | falsestart
              | codes NEWLINE
-             | falsestart NEWLINE
              | codes inlineidio NEWLINE
              | idioline NEWLINE'''
     p.lexer.lineno += 1
+    print "processing entry", p[1:]
     if len(p) == 2:
-        append_text(p.lexer, '\n')
+        append_text(p.lexer, p[1])
     elif len(p) == 3:
         if p[1]:
             append_text(p.lexer, p[1] + '\n')
@@ -345,9 +346,12 @@ def p_entry(p):
         raise Exception("unexpected length " + len(p))
 
 def p_sectionfalsestart(p):
-    '''falsestart : IDIO words
-                  | codes IDIO anythings
-                  | WHITESPACE IDIO anythings '''
+    '''falsestart : IDIO words NEWLINE
+                  | IDIO words IDIO NEWLINE
+                  | IDIO quote words quote NEWLINE
+                  | codes IDIO anythings NEWLINE
+                  | WHITESPACE IDIO anythings IDIO NEWLINE
+                  | WHITESPACE IDIO anythings NEWLINE'''
     p[0] = "".join(p[1:])
 
 def p_anythings(p):
@@ -481,22 +485,18 @@ def p_error(p):
     if not p:
         raise ParseError("Reached EOF when parsing file using idioipdae.")
 
-    msg = """Trying to run IdParser. got stuck at position %s/line %s at token '%s' (token type %s)"""
-    msgargs = (p.lexpos, p.lineno, p.value, p.type)
-
     lines = p.lexer.lexdata.splitlines()
+    this_line = lines[p.lineno-1]
 
-    context = []
-    for i in range(p.lineno-2, p.lineno+1):
-        if i > 0 and i < len(lines):
-            if i == p.lineno-1:
-                this = ">>"
-            else:
-                this = "  "
-            context.append("%03d %3s %s" % (i+1, this, lines[i]))
-    print "\n".join(context)
+    # Add whole line.
+    append_text(p.lexer, this_line+"\n")
 
-    raise ParseError(msg % msgargs)
+    # Forward input to end of line
+    while 1:
+        tok = yacc.token()
+        if not tok or tok.type == 'NEWLINE': break
+
+    yacc.restart()
 
 def tokenize(text, lexer):
     """
@@ -520,6 +520,7 @@ def token_info(text, lexer):
 
 # This is outside of the wrapper system so we aren't aware of user-specified
 # artifacts directory. Just use .dexy if it's there and don't write files if not.
+
 import os
 if os.path.exists(".dexy"):
     outputdir=".dexy"
