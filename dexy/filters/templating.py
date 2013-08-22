@@ -79,6 +79,15 @@ class JinjaFilter(TemplateFilter):
             'comment_end_string': '#>'
             }
 
+    LYX_TAGS = {
+            'block_start_string': '<%',
+            'block_end_string': '%>',
+            'variable_start_string': '<<',
+            'variable_end_string': '>>',
+            'comment_start_string': '<<#',
+            'comment_end_string': '#>>'
+            }
+
     def setup_jinja_env(self, loader=None):
         env_attrs = {}
         skip_settings = ('changetags', 'jinja-path', 'include-in-workspaces',)
@@ -91,8 +100,14 @@ class JinjaFilter(TemplateFilter):
         env_attrs['undefined'] = jinja2.StrictUndefined
 
         if self.ext in (".tex", ".wiki") and self.setting('changetags'):
-            self.log_debug("Changing tags to latex/wiki format.")
-            for underscore_k, v in self.TEX_TAGS.iteritems():
+            if 'lyxjinja' in self.doc.filter_aliases:
+                tags = self.LYX_TAGS
+            else:
+                tags = self.TEX_TAGS
+
+            self.log_debug("Changing tags to latex/wiki format: %s" % ' '.join(tags))
+
+            for underscore_k, v in tags.iteritems():
                 hyphen_k = underscore_k.replace("_", "-")
                 if env_attrs[underscore_k] == self.__class__._settings[hyphen_k][1]:
                     self.log_debug("setting %s to %s" % (underscore_k, v))
