@@ -64,8 +64,9 @@ class Reporter(dexy.plugin.Plugin):
         return os.path.join(self.report_dir(), self.setting('safety-filename'))
 
     def readme_filepath(self):
-        if self.setting('readme-filename'):
-            return os.path.join(self.report_dir(), self.setting('readme-filename'))
+        readme_filename = self.setting('readme-filename')
+        if readme_filename and readme_filename != 'None':
+            return os.path.join(self.report_dir(), readme_filename)
 
     def write_safety_file(self):
         with open(self.safety_filepath(), "w") as f:
