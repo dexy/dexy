@@ -35,6 +35,8 @@ class Filter(dexy.plugin.Plugin):
             'include-in-workspaces' : ("Allow overriding whether a document should be used when populating workspaces for other documents.", False),
             'input-extensions' : ("List of extensions which this filter can accept as input.", [".*"]),
             'keep-originals' : ('', False),
+            'mkdir' : ("A directory which should be created in working dir.", None),
+            'mkdirs' : ("A list of directories which should be created in working dir.", []),
             'nodoc' : ("Whether filter should be excluded from documentation.", False),
             'output' : ("Whether to output results of this filter by default by reporters such as 'output' or 'website'.", False),
             'output-data-type' : ("Alias of data type to use to store filter output.", "generic"),
@@ -333,6 +335,22 @@ class Filter(dexy.plugin.Plugin):
         # include anything left over
         return True
 
+    def makedirs(self):
+        mkdirs = self.setting('mkdirs')
+
+        # mkdir should be a string, but handle either string or list
+        mkdir = self.setting('mkdir')
+        if mkdir:
+            if isinstance(mkdir, basestring):
+                mkdirs.append(mkdir)
+            else:
+                mkdirs.extend(mkdir)
+
+        for d in mkdirs:
+            dirpath = os.path.join(self.workspace(), d)
+            self.log_debug("Creating directory %s" % dirpath)
+            os.makedirs(dirpath)
+
     def populate_workspace(self):
         """
         Populates the workspace directory with inputs to the filter, under
@@ -352,6 +370,8 @@ class Filter(dexy.plugin.Plugin):
             msg = "workspace '%s' for filter '%s' already exists"
             msgargs = (os.path.abspath(wd), self.key,)
             raise dexy.exceptions.InternalDexyProblem(msg % msgargs)
+
+        self.makedirs()
 
         for inpt in self.doc.walk_input_docs():
             if not self.include_input_in_workspace(inpt):
