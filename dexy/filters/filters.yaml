@@ -1,3 +1,24 @@
+make:
+    added-in-version: "0.9.9.6"
+    class: SubprocessStdoutFilter
+    help: Runs make tasks.
+    task: ["Default make task to run.", ""]
+    executable: make
+    input-extensions: ['.*']
+    output-extensions: [.txt]
+    version-command: make --version
+
+fortran|f95:
+    added-in-version: "0.9.9.6"
+    class: SubprocessCompileFilter
+    help: "Compiles and executes fortran code."
+    input-extensions: [.f, .F, .FOR, .for, .f77, .f90, .f95, .f03, .fpp, .FPP]
+    output-extensions: [.txt]
+    executable: gfortran
+    mkdir: include
+    version-command: "gfortran --version"
+    compiler-command-string: "%(prog)s %(compiler_args)s -o %(compiled_filename)s %(script_file)s"
+
 go:
     added-in-version: "0.9.9.6"
     help: "Runs 'go run' command on an input .go file. http://golang.org/"
