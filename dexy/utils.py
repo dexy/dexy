@@ -31,7 +31,7 @@ defaults = {
     'dont_use_cache' : False,
     'dry_run' : False,
     'encoding' : 'utf-8',
-    'exclude' : '.git, .svn, tmp, cache, .trash',
+    'exclude' : '.git, .svn, tmp, cache, .trash, .ipynb_checkpoints',
     'exclude_also' : '',
     'full' : False,
     'globals' : '',
