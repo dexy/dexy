@@ -10,6 +10,27 @@ from dexy.wrapper import Wrapper
 from dexy.tests.plugins.test_pexpect_filters import SCALA
 from nose.exc import SkipTest
 
+C_HELLO_WORLD = """#include <stdio.h>
+
+int main()
+{
+    printf("HELLO, world\\n");
+}
+"""
+
+def test_mkdirs():
+    with wrap() as wrapper:
+        doc = Doc("hello.c|c",
+                wrapper,
+                contents = C_HELLO_WORLD,
+                c = {'mkdir' : 'foo', 'mkdirs' : ['bar', 'baz']}
+                )
+        wrapper.run_docs(doc)
+        dirs = os.listdir(doc.filters[-1].workspace())
+        assert 'foo' in dirs
+        assert 'bar' in dirs
+        assert 'baz' in dirs
+
 def test_taverna():
     raise SkipTest()
     with wrap() as wrapper:

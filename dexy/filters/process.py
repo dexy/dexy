@@ -305,6 +305,8 @@ class SubprocessCompileFilter(SubprocessFilter):
     _settings = {
             'add-new-files' : False,
             'check-return-code' : False,
+            'mkdir' : ("A directory which should be created in working dir.", None),
+            'mkdirs' : ("A list of directories which should be created in working dir.", []),
             'compiled-extension' : ("Extension which compiled files end with.", ".o"),
             'compiler-command-string' : (
                 "Command string to call compiler.",
@@ -331,6 +333,21 @@ class SubprocessCompileFilter(SubprocessFilter):
 
     def process(self):
         env = self.setup_env()
+
+        mkdirs = self.setting('mkdirs')
+
+        # mkdir should be a string, but handle either string or list
+        mkdir = self.setting('mkdir')
+        if mkdir:
+            if isinstance(mkdir, basestring):
+                mkdirs.append(mkdir)
+            else:
+                mkdirs.extend(mkdir)
+
+        for d in mkdirs:
+            dirpath = os.path.join(self.workspace(), d)
+            self.log_debug("Creating directory %s" % dirpath)
+            os.makedirs(dirpath)
 
         # Compile the code
         command = self.compile_command_string()
