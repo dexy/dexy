@@ -94,7 +94,12 @@ class IPythonCasper(SubprocessFilter):
                                     env=env)
 
         self.log_debug("Reading from stderr of ipython command...")
+        count = 0
         while True:
+            count += 1
+            if count > 100:
+                raise Exception("IPython notebook failed to start.")
+
             line = proc.stderr.readline()
             self.log_debug(line)
 
@@ -104,6 +109,9 @@ class IPythonCasper(SubprocessFilter):
 
             if "Use Control-C to stop this server" in line:
                 break
+
+            if "ImportError" in line:
+                raise Exception(line)
 
         # TODO if process is not running => throw exception
         return proc, port
