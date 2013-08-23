@@ -29,7 +29,7 @@ class IPythonCasper(SubprocessFilter):
             'ipython-args' : ("Additional args to pass to ipython notebook command (list of string args).", None),
             'ipython-dir' : ("Directory in which to launch ipython, defaults to temp working dir.", None),
             'output-extensions' : ['.txt'],
-            'script' : ("Canonical name of input document to use as casper script.", "default.js"),
+            'script' : ("Canonical name of input document to use as casper script.", "full.js"),
             'timeout' : ("Timeout for the casperjs subprocess.", 10000),
             'version-command' : 'casperjs --version',
             'width' : ('Width of page to capture.', 800),
