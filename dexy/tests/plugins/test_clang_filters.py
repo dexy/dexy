@@ -2,6 +2,11 @@ from dexy.tests.utils import assert_output
 from dexy.tests.utils import wrap
 from dexy.doc import Doc
 
+FORTRAN_HELLO_WORLD = """program hello
+   print *, "Hello World!"
+end program hello
+"""
+
 CPP_HELLO_WORLD = """#include <iostream>
 using namespace std;
 
@@ -44,6 +49,8 @@ int main()
     }
 }
 """
+def test_fortran_filter():
+    assert_output('fortran', FORTRAN_HELLO_WORLD, "Hello, world!", ext=".f")
 
 def test_cpp_filter():
     assert_output('cpp', CPP_HELLO_WORLD, "Hello, world!", ext=".cpp")
