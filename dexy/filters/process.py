@@ -87,11 +87,11 @@ class SubprocessFilter(Filter):
     def clear_cache(self):
         self.output_data.clear_cache()
 
-    def handle_subprocess_proc_return(self, command, exitcode, stderr):
+    def handle_subprocess_proc_return(self, command, exitcode, stderr, compiled=False):
         self.log_debug("exit code is '%s'" % exitcode)
         if exitcode is None:
             raise dexy.exceptions.InternalDexyProblem("no return code, proc not finished!")
-        elif exitcode == 127:
+        elif exitcode == 127 and not compiled:
             raise dexy.exceptions.InactiveFilter(self)
         elif exitcode != 0 and self.setting('check-return-code'):
             if self.ignore_nonzero_exit():
@@ -344,7 +344,7 @@ class SubprocessCompileFilter(SubprocessFilter):
         proc, stdout = self.run_command(command, env)
 
         # This tests exitcode from the compiled script.
-        self.handle_subprocess_proc_return(command, proc.returncode, stdout)
+        self.handle_subprocess_proc_return(command, proc.returncode, stdout, compiled=True)
 
         self.output_data.set_data(stdout)
 
