@@ -3,6 +3,7 @@ from dexy.filters.api import ApiFilter
 import dexy.exceptions
 import getpass
 import os
+import urllib
 
 try:
     import boto
@@ -87,4 +88,5 @@ class BotoUploadFilter(ApiFilter):
         self.log_debug("Uploading contents of %s" % self.input_data.storage.data_file())
         k.set_contents_from_filename(self.input_data.storage.data_file())
         k.set_acl('public-read')
-        self.output_data.set_data("https://s3.amazonaws.com/%s/%s" % (self.bucket_name(), k.key))
+        url = "https://s3.amazonaws.com/%s/%s" % (self.bucket_name(), urllib.quote(k.key,))
+        self.output_data.set_data(url)
