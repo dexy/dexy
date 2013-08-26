@@ -229,6 +229,9 @@ class Node(dexy.plugin.Plugin):
         if self.state == 'cached':
             self.transition('consolidated')
 
+    def __lt__(self, other):
+        return self.key < other.key
+
     def __iter__(self):
         def next_task():
             if self.state == 'uncached':
