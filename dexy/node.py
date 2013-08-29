@@ -255,6 +255,7 @@ class Node(dexy.plugin.Plugin):
         return next_task()
 
     def __call__(self, *args, **kw):
+        self.wrapper.current_task = self
         for inpt in self.inputs:
             for task in inpt:
                 task()
