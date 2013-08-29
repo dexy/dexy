@@ -255,14 +255,18 @@ class Filter(dexy.plugin.Plugin):
             self.doc.add_additional_doc(doc)
             return doc
 
-        if isinstance(additional_doc_filters, dict):
-            filters = additional_doc_filters.get(doc_ext, '')
-        elif isinstance(additional_doc_filters, basestring):
+        if isinstance(additional_doc_filters, basestring):
             filters = additional_doc_filters
         elif isinstance(additional_doc_filters, list):
-            for filters in additional_doc_filters:
-                create_doc(doc_name, filters, doc_contents)
+            for f in additional_doc_filters:
+                create_doc(doc_name, f, doc_contents)
             filters = ''
+        elif isinstance(additional_doc_filters, dict):
+            filters = additional_doc_filters.get(doc_ext, '')
+            if isinstance(filters, list):
+                for f in filters:
+                    create_doc(doc_name, f, doc_contents)
+                filters = ''
         else:
             msg = "received unexpected additional_doc_filters arg class %s"
             msgargs = additional_doc_filters.__class__.__name__
