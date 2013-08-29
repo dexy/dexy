@@ -248,6 +248,10 @@ class Filter(dexy.plugin.Plugin):
                     contents=contents,
                     **args
                     )
+
+            doc.output_data().setup()
+            doc.output_data().storage.connect()
+
             self.doc.add_additional_doc(doc)
             return doc
 
@@ -257,9 +261,8 @@ class Filter(dexy.plugin.Plugin):
             filters = additional_doc_filters
         elif isinstance(additional_doc_filters, list):
             for filters in additional_doc_filters:
-                doc = create_doc(doc_name, filters, doc_contents)
-            # make filters empty so we don't make more docs later
-            filters = []
+                create_doc(doc_name, filters, doc_contents)
+            filters = ''
         else:
             msg = "received unexpected additional_doc_filters arg class %s"
             msgargs = additional_doc_filters.__class__.__name__

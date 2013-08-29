@@ -28,6 +28,9 @@ class Storage(dexy.plugin.Plugin):
     def setup(self):
         pass
 
+    def connect(self):
+        pass
+
 class GenericStorage(Storage):
     """
     Default type of storage where content is stored in files.
