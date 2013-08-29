@@ -109,6 +109,7 @@
                     {% endif -%}
                 </tr>
 
+                {% if hasattr(doc.initial_data, 'storage') -%}
                 <tr>
                     <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">{{ doc.initial_data.key }}</td>
                     <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;"><a title="{{ doc.initial_data.storage.data_file() }}" href="../../../{{ doc.initial_data.storage.data_file() }}">{{ doc.initial_data.basename() }}</a></td>
@@ -127,8 +128,10 @@
                     </td>
                     {% endif -%},
                 </tr>
+                {% endif %}
 
                 {% for a in doc.filters -%}
+                {% if hasattr(a.output_data, 'storage') -%}
                 <tr>
                     <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;">{{ a.key }}</td>
                     <td style="padding-left: 10px; padding-right: 10px; border:thin solid black;"><a title="{{ a.output_data.storage.data_file() }}" href="../../../{{ a.output_data.storage.data_file() }}">{{ a.output_data.basename() }}</a></td>
@@ -150,6 +153,7 @@
                     </td>
                     {% endif -%}
                 </tr>
+                {% endif -%}
                 {% endfor -%}
             </table>
 
