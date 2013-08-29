@@ -74,6 +74,7 @@ function openNotebook(name, href) {
         this.wait(1000);
     });
 
+    /// @export "cells-loop"
     casper.then(function() {
         cells = this.getElementsInfo('#notebook-container .cell');
 
@@ -88,9 +89,13 @@ function openNotebook(name, href) {
             var cell_image_name = name + "--" + j + "%(ext)s";
             this.captureSelector(cell_image_name, cellSelector(j));
         }
-
-        this.capture(name + "%(ext)s");
     });
+
+    /// @export "capture-notebook"
+    casper.then(function() {
+        this.captureSelector(name + "%(ext)s", "#notebook-container");
+    });
+    /// @end
 }
 
 casper.then(function() {

@@ -19,16 +19,19 @@ class IPythonCasper(SubprocessFilter):
 
     _settings = {
             'add-new-files' : True,
+            'added-in-version' : "0.9.9.6",
+            'examples' : ['ipynbcasper'],
             'args' : '--web-security=false --ignore-ssl-errors=true',
             'cell-timeout' : ("Timeout (in microseconds) for running individual notebook cells.", 5000),
-            'command-string' : "%(prog)s %(args)s %(script)s",
+            'command-string' : "%(prog)s %(test)s %(args)s %(script)s",
+            'test' : ("Whether to run casperjs as 'test' mode.", False),
             'executable' : 'casperjs',
             'height' : ('Height of page to capture.', 5000),
             'image-ext' : ("File extension of images to capture.", ".png"),
             'input-extensions' : ['.ipynb'],
             'ipython-args' : ("Additional args to pass to ipython notebook command (list of string args).", None),
             'ipython-dir' : ("Directory in which to launch ipython, defaults to temp working dir.", None),
-            'output-extensions' : ['.txt'],
+            'output-extensions' : ['.json', '.txt'],
             'script' : ("Canonical name of input document to use as casper script.", "full.js"),
             'timeout' : ("Timeout for the casperjs subprocess.", 10000),
             'version-command' : 'casperjs --version',
@@ -37,6 +40,14 @@ class IPythonCasper(SubprocessFilter):
 
     def is_active(self):
         return AVAILABLE
+
+    def command_string_args(self):
+        args = self.default_command_string_args()
+        if self.setting('test'):
+            args['test'] = 'test'
+        else:
+            args['test'] = ''
+        return args
 
     def configure_casper_script(self, wd, port, cellmetas):
         scriptfile = os.path.join(wd, self.setting('script'))
@@ -132,14 +143,20 @@ class IPythonCasper(SubprocessFilter):
 
     def process(self):
         env = self.setup_env()
+
         wd = self.parent_work_dir()
 
         with open(self.input_data.storage.data_file(), "r") as f:
             nb = json.load(f)
 
-        cellmetas = []
+        stdout = None
+        output = {}
+        output['cellmetas'] = []
+        output['cellimages'] = []
+        output['images-by-name'] = {}
+
         for cell in nb['worksheets'][0]['cells']:
-            cellmetas.append(cell['metadata'])
+            output['cellmetas'].append(cell['metadata'])
 
         ws = self.workspace()
         if os.path.exists(ws):
@@ -151,7 +168,7 @@ class IPythonCasper(SubprocessFilter):
         ipython_proc, port = self.launch_ipython(env)
 
         try:
-            self.configure_casper_script(wd, port, cellmetas)
+            self.configure_casper_script(wd, port, output['cellmetas'])
     
             ## run casper script
             command = self.command_string()
@@ -162,7 +179,25 @@ class IPythonCasper(SubprocessFilter):
             # shut down ipython notebook
             os.kill(ipython_proc.pid, 9)
 
-        self.output_data.set_data(stdout)
 
         if self.setting('add-new-files'):
             self.add_new_files()
+
+        docname = self.doc.output_data().baserootname()
+        i = 0
+        for doc in sorted(self.doc.children):
+            m = re.match("%s--([0-9]+)" % docname, doc.key)
+            if m:
+                assert i == int(m.groups()[0])
+                output['cellimages'].append(doc.key)
+                cellmeta_for_image = output['cellmetas'][i]
+                if cellmeta_for_image.has_key('name'):
+                    cellname = cellmeta_for_image['name']
+                    output['images-by-name'][cellname] = doc.key
+                i += 1
+
+        if self.ext == ".txt":
+            self.output_data.set_data(stdout)
+        else:
+            self.output_data.set_data(json.dumps(output))
+
