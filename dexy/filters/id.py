@@ -235,7 +235,7 @@ def t_idio_IDIOCLOSE(t):
     return t
 
 def t_idio_WORD(t):
-    r'[a-zA-Z-_]+'
+    r'[0-9a-zA-Z-_]+'
     return t
 
 def t_idio_OTHER(t):

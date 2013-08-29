@@ -60,24 +60,24 @@ def test_parse_comments():
 
 def test_parse_closed_style_sections():
     comments = (
-        "/*** @export foo*/\n",
-        "/*** @export foo */\n",
-        "/*** @section foo */\n",
-        "/*** @export 'foo'*/\n",
-        "/*** @export 'foo' */\n",
-        "/*** @export 'foo' python*/\n",
-        "/*** @export 'foo' python */\n",
-        """/*** @export "foo" python*/\n""",
-        "<!-- @export foo -->\n",
-        "<!-- @section foo -->\n"
-        "<!-- section foo -->\n"
-        "<!-- section 'foo' -->\n"
+        "/*** @export foo1*/\n",
+        "/*** @export foo1 */\n",
+        "/*** @section foo1 */\n",
+        "/*** @export 'foo1'*/\n",
+        "/*** @export 'foo1' */\n",
+        "/*** @export 'foo1' python*/\n",
+        "/*** @export 'foo1' python */\n",
+        """/*** @export "foo1" python*/\n""",
+        "<!-- @export foo1 -->\n",
+        "<!-- @section foo1 -->\n"
+        "<!-- section foo1 -->\n"
+        "<!-- section 'foo1' -->\n"
         )
 
     for text in comments:
         output = parse(text)
         assert output[0]['contents'] == ''
-        assert output[0]['name'] == 'foo'
+        assert output[0]['name'] == 'foo1'
 
 def test_parse_closed_style_end():
     comments = (
