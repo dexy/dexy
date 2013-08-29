@@ -8,6 +8,7 @@ import inflection
 import os
 import posixpath
 import shutil
+import urllib
 
 class Data(dexy.plugin.Plugin):
     """
@@ -47,6 +48,12 @@ class Data(dexy.plugin.Plugin):
             raise Exception()
 
         self.transition('new')
+
+    def url_quoted_name(self):
+        """
+        Applies urllib's quote method to name.
+        """
+        return urllib.quote(self.name)
 
     def output_name(self):
         """
