@@ -81,11 +81,14 @@ class PygmentsFilter(DexyFilter):
                 True),
             'unprintable-input-text' : ("""Dummy text to use instead of
                 unprintable binary input.""", 'not printable'),
+            'lexer-args' : (
+                "Dictionary of custom arguments to be passed directly to the lexer.",
+                {}
+                ),
             'lexer-settings' : (
                 "List of all settings which will be passed to the lexer constructor.",
                 []
             ),
-
             'formatter-settings' : (
                 """List of all settings which will be passed to the formatter
                 constructor.""", ['style', 'full', 'linenos', 'noclasses']
@@ -170,6 +173,7 @@ class PygmentsFilter(DexyFilter):
         ext = self.prev_ext
         lexer_alias = self.lexer_alias(ext)
         lexer_args = self.constructor_args('lexer')
+        lexer_args.update(self.setting('lexer-args'))
 
         if not lexer_alias:
             msg = self.LEXER_ERR_MSG
