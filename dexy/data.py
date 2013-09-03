@@ -203,7 +203,8 @@ class Generic(Data):
             self.storage.write_data(self._data.encode("utf-8"))
         else:
             if self._data == None:
-                raise dexy.exceptions.InternalDexyProblem("no data for %s" % self.key)
+                msg = "No data found for '%s', did you reference a file that doesn't exist?"
+                raise dexy.exceptions.UserFeedback(msg % self.key)
             self.storage.write_data(self._data)
 
     def set_data(self, data):
