@@ -65,6 +65,7 @@ class Node(dexy.plugin.Plugin):
     def add_runtime_args(self, args):
         self.update_all_settings(args)
         self.runtime_args.update(args)
+        self.wrapper.batch.update_doc_info(self)
 
     def arg_value(self, key, default=None):
         return self.args.get(key, default) or self.args.get(key.replace("-", "_"), default)

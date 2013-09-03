@@ -29,12 +29,11 @@ class Batch(object):
             doc_key = doc.key_with_class()
             storage_key = doc.output_data().storage_key
             self.doc_keys[storage_key] = doc_key
-
-            # Store doc info.
-            doc_info = doc.batch_info()
-            self.docs[doc_key] = doc_info
-
+            self.update_doc_info(doc)
             self.filters_used.extend(doc.filter_aliases)
+
+    def update_doc_info(self, doc):
+        self.docs[doc.key_with_class()] = doc.batch_info()
 
     def output_data(self, doc_key):
         return self.data(doc_key, 'output')
@@ -58,7 +57,7 @@ class Batch(object):
 
     def _data_for_doc_info(self, doc_info):
         args = []
-        args.extend(doc_info)
+        args.extend(doc_info) # do this because doc_info is a tuple, need a list
         args.append(self.wrapper)
         data = dexy.data.Data.create_instance(*args)
         data.setup_storage()

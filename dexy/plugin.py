@@ -55,7 +55,7 @@ class Plugin(object):
                 value = self._instance_settings[name_underscore][1]
             else:
                 if name_underscore == name_hyphen:
-                    msg = "no setting named %s" % name_hyphen
+                    msg = "No setting named '%s'" % name_hyphen
                 else:
                     msg = "no setting named '%s' or '%s'"
                     msg = msg % (name_hyphen, name_underscore)
