@@ -43,11 +43,17 @@ class Debug(TemplatePlugin):
     aliases = ['debug']
 
     def debug(self, debug_text):
-        print "template debug from '%s': %s" % (self.filter_instance.key, debug_text)
+        if hasattr(self, 'filter_instance'):
+            print "template debug from '%s': %s" % (self.filter_instance.key, debug_text)
+        else:
+            print "template debug: %s" % (debug_text)
         return debug_text
 
     def throw(self, err_message):
-        raise UserFeedback("template throw from '%s': %s" % (self.filter_instance.key, err_message))
+        if hasattr(self, 'filter_instance'):
+            raise UserFeedback("template throw from '%s': %s" % (self.filter_instance.key, err_message))
+        else:
+            raise UserFeedback("template throw: %s" % (err_message))
 
     def run(self):
         return {
