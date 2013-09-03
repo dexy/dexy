@@ -37,6 +37,7 @@ class Data(dexy.plugin.Plugin):
 
         self.wrapper = wrapper
         self.initialize_settings(**settings)
+        self.update_settings(settings)
 
         self._data = None
         self.state = None
