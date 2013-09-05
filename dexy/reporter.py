@@ -18,7 +18,7 @@ class Reporter(dexy.plugin.Plugin):
             "in-cache-dir" : ("Whether to write reports in the cache directory (instead of project root).", False),
             'no-delete' : ("List of elements not to delete when resetting report dir (only effective if report dir is cleaned element-wise).", ['.git', '.nojekyll']),
             'plugins' : ("List of template plugin aliases which should be included in jinja environment.",
-                ['loadyaml', 'debug', 'inflection', 'builtins', 'operator']
+                ['debug', 'inflection', 'builtins', 'operator']
                 ),
             "run-for-wrapper-states" : ("List of states in which this report can be run.", ["ran"]),
             "readme-filename" : ("Name of README file. Set to None to not have a dexy boilerplate warning README.", "README"),

@@ -12,6 +12,7 @@ import dexy.exceptions
 import dexy.plugin
 import inflection
 import json
+import operator
 import os
 import pygments
 import pygments.formatters
@@ -22,6 +23,17 @@ try:
     BS4_AVAILABLE = True
 except ImportError:
     BS4_AVAILABLE = False
+
+class Operator(TemplatePlugin):
+    """
+    Exposes features of the operator module.
+    """
+    aliases = ['operator']
+    def run(self):
+        return {
+                'attrgetter' : operator.attrgetter,
+                'itemgetter' : operator.itemgetter
+                }
 
 class PrettyPrintHtml(TemplatePlugin):
     """
@@ -35,6 +47,22 @@ class PrettyPrintHtml(TemplatePlugin):
     def prettify_html(klass, html):
         soup = BeautifulSoup(unicode(html))
         return soup.prettify()
+
+class LoadYaml(TemplatePlugin):
+    """
+    Loads YAML from a file.
+    """
+    aliases = ['loadyaml']
+
+    def load_yaml(self, filename):
+        import yaml
+        with open(filename, 'rb') as f:
+            return yaml.safe_load(f.read())
+
+    def run(self):
+        return {
+                'load_yaml' : self.load_yaml
+                }
 
 class Debug(TemplatePlugin):
     """
@@ -103,6 +131,19 @@ class JavadocToRst(TemplatePlugin):
         for x in klass.ESCAPE:
             javadoc = javadoc.replace(x, "\\%s" % x)
         return javadoc
+
+class PrettyPrint(TemplatePlugin):
+    """
+    Exposes pprint (really pformat).
+    """
+    aliases = ['pp', 'pprint']
+
+    def run(self):
+        import pprint
+        return {
+            'pprint' : pprint.pformat,
+            'pformat' : pprint.pformat
+         }
 
 class PrettyPrintJson(TemplatePlugin):
     """
