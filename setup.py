@@ -43,7 +43,6 @@ setup(
             'pygments',
             # dexy utilities
             'dexy_viewer', ## TODO version
-            'dexy_filter_examples', ## TODO Version
             # for convenience of running additional filters
             'Markdown',
             'docutils'
