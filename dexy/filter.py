@@ -22,31 +22,75 @@ class Filter(dexy.plugin.Plugin):
             'help', 'nodoc'
             ]
     _settings = {
-            'added-in-version' : ("Dexy version when this filter was first available.", ''),
-            'add-new-files' : ("""Whether to add new files that have been
-                created as side effects of running this filter.""", False),
-            'exclude-add-new-files' : ("""Patterns to exclude when adding new
-                side effect files.""" , ''),
-            'additional-doc-filters' : ('', {}),
-            'examples' : ("Templates which should be used as examples for this filter.", []),
-            'ext' : ('Extension to output.', None),
-            'extension-map' : ("Dictionary mapping input extensions to default output extensions.", None),
-            'help' : ('Help string for filter, if not already specified as a class docstring.', None),
-            'include-in-workspaces' : ("Allow overriding whether a document should be used when populating workspaces for other documents.", False),
-            'input-extensions' : ("List of extensions which this filter can accept as input.", [".*"]),
-            'keep-originals' : ('', False),
-            'mkdir' : ("A directory which should be created in working dir.", None),
-            'mkdirs' : ("A list of directories which should be created in working dir.", []),
-            'nodoc' : ("Whether filter should be excluded from documentation.", False),
-            'output' : ("Whether to output results of this filter by default by reporters such as 'output' or 'website'.", False),
-            'output-data-type' : ("Alias of data type to use to store filter output.", "generic"),
-            'output-extensions' : ("List of extensions which this filter can produce as output.", [".*"]),
-            'preserve-prior-data-class' : ('', False),
-            'require-output' : ("Should dexy raise an exception if no output is produced by this filter?", True),
-            'tags' : ("Tags which describe the filter.", []),
-            'variables' : ('', {}),
-            'vars' : ('', {}),
-            'workspace-exclude-filters' : ("Filters whose output should be excluded from workspace.", ['pyg'])
+            'added-in-version' : (
+                "Dexy version when this filter was first available.",
+                ''),
+            'add-new-files' : (
+                "Whether to add new files that have been created as side effects of running this filter.",
+                False),
+            'exclude-add-new-files' : (
+                "Patterns to exclude when adding new side effect files." ,
+                ''),
+            'additional-doc-filters' : (
+                "Filters to apply to additional documents created as side effects.",
+                {}),
+            'examples' : (
+                "Templates which should be used as examples for this filter.",
+                []),
+            'ext' : (
+                'File extension to output.',
+                None),
+            'extension-map' : (
+                "Dictionary mapping input extensions to default output extensions.",
+                None),
+            'help' : (
+                'Help string for filter, if not already specified as a class docstring.',
+                None),
+            'include-in-workspaces' : (
+                "Allow overriding whether a document should be used when populating workspaces for other documents.",
+                False),
+            'input-extensions' : (
+                "List of extensions which this filter can accept as input.",
+                [".*"]),
+            'keep-originals' : (
+                "Whether, if additional-doc-filters are specified, the original unmodified docs should also be added.",
+                False),
+            'mkdir' : (
+                "A directory which should be created in working dir.",
+                None),
+            'mkdirs' : (
+                "A list of directories which should be created in working dir.",
+                []),
+            'nodoc' : (
+                "Whether filter should be excluded from documentation.",
+                False),
+            'output' : (
+                "Whether to output results of this filter by default by reporters such as 'output' or 'website'.",
+                False),
+            'output-data-type' : (
+                "Alias of data type to use to store filter output.",
+                "generic"),
+            'output-extensions' : (
+                "List of extensions which this filter can produce as output.",
+                [".*"]),
+            'preserve-prior-data-class' : (
+                "Whether output data class should be set to match the input data class.",
+                False),
+            'require-output' : (
+                "Should dexy raise an exception if no output is produced by this filter?",
+                True),
+            'tags' : (
+                "Tags which describe the filter.",
+                []),
+            'variables' : (
+                'A dictionary of variable names and values to make available to this filter.',
+                {}),
+            'vars' : (
+                'A dictionary of variable names and values to make available to this filter.',
+                {}),
+            'workspace-exclude-filters' : (
+                "Filters whose output should be excluded from workspace.",
+                ['pyg'])
             }
 
     def __init__(self, doc=None):
