@@ -1,5 +1,10 @@
 from dexy.tests.utils import tempdir
-from dexy_filter_examples import Cowsay
+from nose.exc import SkipTest
+
+try:
+    from dexy_filter_examples import Cowsay
+except ImportError:
+    raise SkipText()
 
 def test_cowsay():
     with tempdir():
