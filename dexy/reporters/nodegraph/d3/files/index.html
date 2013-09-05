@@ -1,0 +1,40 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+    "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <title>Documents</title>
+
+    <style>
+        g.node {
+            font-family: Verdana, Helvetica;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        circle.node-dot {
+            fill: lightsalmon;
+            stroke: red;
+            stroke-width: 1px;
+        }
+
+        path.link {
+            fill: none;
+            stroke: gray;
+        }
+    </style>
+</head>
+<body>
+
+<div id="tree-container"></div>
+
+<script type="text/javascript" src="jquery-1.6.2.min.js"></script>
+<script type="text/javascript" src="d3.min.js"></script>
+<script type="text/javascript" src="d3tree.js"></script>
+
+<script>
+    $(function(){
+        buildTree("#tree-container");
+    });
+</script>
+
+</body>
+</html>
