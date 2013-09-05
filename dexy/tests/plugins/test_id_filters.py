@@ -67,6 +67,7 @@ def test_parse_closed_style_sections():
         "/*** @export 'foo1' */\n",
         "/*** @export 'foo1' python*/\n",
         "/*** @export 'foo1' python */\n",
+        """/*** @export "foo1" css */\n""",
         """/*** @export "foo1" python*/\n""",
         "<!-- @export foo1 -->\n",
         "<!-- @section foo1 -->\n"
@@ -171,3 +172,15 @@ def test_parse_docutils_latex():
     with open(os.path.join(TEST_DATA_DIR, "doc.tex"), "r") as f:
         latex = f.read()
     parse(latex)
+
+def test_parse_php_mixed_tags():
+    with open(os.path.join(TEST_DATA_DIR, "example.php"), "r") as f:
+        php = f.read()
+
+    output = parse(php)
+    section_names = [info['name'] for info in output]
+
+    assert "head" in section_names
+    assert "assign-variables" in section_names
+    assert "compare" in section_names
+    assert "display-variables" in section_names
