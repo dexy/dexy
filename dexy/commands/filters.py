@@ -67,7 +67,11 @@ def filters_text(
             text.append("")
             text.append("Examples for this filter:")
             for alias in examples:
-                template = dexy.template.Template.create_instance(alias)
+                try:
+                    template = dexy.template.Template.create_instance(alias)
+                except Exception:
+                    continue
+
                 text.append("")
                 text.append("  %s" % alias)
                 text.append("            %s" % dexy.utils.getdoc(template.__class__))
