@@ -4,7 +4,7 @@ from nose.exc import SkipTest
 try:
     from dexy_filter_examples import Cowsay
 except ImportError:
-    raise SkipText()
+    raise SkipTest()
 
 def test_cowsay():
     with tempdir():
