@@ -2,6 +2,7 @@ from dexy.utils import file_exists
 import dexy.plugin
 import os
 import shutil
+import sys
 
 class Reporter(dexy.plugin.Plugin):
     """
@@ -16,6 +17,9 @@ class Reporter(dexy.plugin.Plugin):
             'filename' : ("Name of file to generate (only used if report only generates a single file).", None),
             "in-cache-dir" : ("Whether to write reports in the cache directory (instead of project root).", False),
             'no-delete' : ("List of elements not to delete when resetting report dir (only effective if report dir is cleaned element-wise).", ['.git', '.nojekyll']),
+            'plugins' : ("List of template plugin aliases which should be included in jinja environment.",
+                ['loadyaml', 'debug', 'inflection', 'builtins', 'operator']
+                ),
             "run-for-wrapper-states" : ("List of states in which this report can be run.", ["ran"]),
             "readme-filename" : ("Name of README file. Set to None to not have a dexy boilerplate warning README.", "README"),
             "safety-filename" : ("Name of a file which will be created in generated dir, and checked before generated dir is removed.", ".dexy-generated"),
@@ -24,6 +28,36 @@ class Reporter(dexy.plugin.Plugin):
 
     def is_active(self):
         return True
+
+    def copy_template_files(self):
+        # Copy template files (e.g. .css files)
+        # TODO shouldn't need to copy this each time - can just overwrite files which change
+        class_file = sys.modules[self.__module__].__file__
+        template_parent_dir = os.path.dirname(class_file)
+        template_dir = os.path.join(template_parent_dir, 'files')
+        shutil.copytree(template_dir, self.report_dir())
+        self.write_safety_file()
+
+    def run_plugins(self):
+        env = {}
+        for alias in self.setting('plugins'):
+            from dexy.filters.templating_plugins import TemplatePlugin
+            plugin = TemplatePlugin.create_instance(alias)
+            self.log_debug("Running template plugin %s" % plugin.__class__.__name__)
+
+            try:
+                new_env_vars = plugin.run()
+            except Exception:
+                print "error occurred processing template plugin '%s'" % alias
+                raise
+
+            if any(v in env.keys() for v in new_env_vars):
+                new_keys = ", ".join(sorted(new_env_vars))
+                existing_keys = ", ".join(sorted(env))
+                msg = "plugin class '%s' is trying to add new keys '%s', already have '%s'"
+                raise dexy.exceptions.InternalDexyProblem(msg % (plugin.__class__.__name__, new_keys, existing_keys))
+            env.update(new_env_vars)
+        return env
 
     def cache_reports_dir(self):
         return os.path.join(self.wrapper.artifacts_dir, "reports")

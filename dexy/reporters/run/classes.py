@@ -33,12 +33,7 @@ class RunReporter(Reporter):
     def run(self, wrapper):
         self.wrapper = wrapper
         self.remove_reports_dir(wrapper)
-
-        # Copy template files (e.g. .css files)
-        # TODO don't need to copy this each time - can just overwrite index.html
-        template_dir = os.path.join(os.path.dirname(__file__), 'files')
-        shutil.copytree(template_dir, self.report_dir())
-        self.write_safety_file()
+        self.copy_template_files()
 
         # If not too large, copy the log so it can be viewed in HTML
         self.wrapper.flush_logs()
@@ -48,22 +43,12 @@ class RunReporter(Reporter):
         else:
             log_contents = "Log file is too large to include in HTML. Look in %s" % self.wrapper.log_path()
 
-        env_data = {}
+        env_data = self.run_plugins()
 
-        env_data['attrgetter'] = operator.attrgetter
-        env_data['dict'] = dict
-        env_data['float'] = float
-        env_data['hasattr'] = hasattr
-        env_data['isinstance'] = isinstance
-        env_data['len'] = len
-        env_data['sorted'] = sorted
-        env_data['dir'] = dir
-
+        # add additional env elements - should these also be in plugins?
         env_data['wrapper'] = wrapper
         env_data['batch'] = wrapper.batch
         env_data['log_contents'] = log_contents
-
-        env_data['enumerate'] = enumerate
 
         def printable_args(args):
             return dict((k, v) for k, v in args.iteritems() if not k in ('contents', 'wrapper'))

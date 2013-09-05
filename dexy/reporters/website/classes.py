@@ -141,10 +141,6 @@ class WebsiteReporter(OutputReporter):
     _settings = {
             "dir" : "output-site",
             "default-template" : ("Path to the default template to apply.", "_template.html"),
-            "plugins" : (
-                    "List of TemplatingPlugins to make available in environment.",
-                    ["inflection", "builtins", "pygments"]
-                ),
             "default" : False
             }
 
@@ -180,18 +176,12 @@ class WebsiteReporter(OutputReporter):
         current_dir = posixpath.dirname(doc.output_data().output_name())
         parent_dir = os.path.split(current_dir)[0]
 
-        env_data = {}
-
-        for alias in self.setting('plugins'):
-            plugin = dexy.filters.templating_plugins.TemplatePlugin.create_instance(alias)
-            env_data.update(plugin.run())
+        env_data = self.run_plugins()
 
         navigation = {
                 }
 
         env_data.update({
-                'attrgetter' : operator.attrgetter,
-                'itemgetter' : operator.itemgetter,
                 'content' : doc.output_data(),
                 'locals' : locals,
                 'navigation' : navigation,
