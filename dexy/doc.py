@@ -14,7 +14,7 @@ class Doc(dexy.node.Node):
     _settings = {
             'contents' : ("Custom contents for a virtual document.", None),
             'ws-template' : ("custom website template to apply.", None),
-            'data-class-alias' : ("data class alias", None),
+            'data-class' : ("data class alias", None),
             'shortcut' : ( """A way to refer to this document without having to
             use the full document key.""", None ),
             'title' : ("Title for this document.", None),
@@ -136,9 +136,10 @@ class Doc(dexy.node.Node):
         self.update_all_settings({key : value})
 
     def update_all_settings(self, new_settings):
+        for data in self.datas():
+            data.update_settings(new_settings)
+
         for f in self.filters:
-            f.input_data.update_settings(new_settings)
-            f.output_data.update_settings(new_settings)
             f.update_settings(new_settings)
 
     def check_cache_elements_present(self):
@@ -186,7 +187,7 @@ class Doc(dexy.node.Node):
             return False
 
     def data_class_alias(self):
-        data_class_alias = self.setting('data-class-alias')
+        data_class_alias = self.setting('data-class')
 
         if data_class_alias:
             return data_class_alias
