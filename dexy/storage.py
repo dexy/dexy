@@ -207,7 +207,7 @@ class Sqlite3Storage(GenericStorage):
         pathargs = (
                 self.wrapper.work_cache_dir(),
                 sk,
-                self.storage_key
+                "%s.sqlite3" % self.storage_key,
                 )
         return os.path.join(*pathargs)
 
