@@ -100,6 +100,7 @@ class WordPressFilter(ApiFilter):
                 self.log_debug("%s: %s" % (key, value))
 
         if post_id:
+            self.log_debug("Making editPost API call.")
             self.api().metaWeblog.editPost(
                     post_id,
                     self.read_param('username'),
@@ -108,6 +109,7 @@ class WordPressFilter(ApiFilter):
                     publish
                     )
         else:
+            self.log_debug("Making newPost API call.")
             post_id = self.api().metaWeblog.newPost(
                     self.setting('blog-id'),
                     self.read_param('username'),
@@ -117,6 +119,7 @@ class WordPressFilter(ApiFilter):
                     )
             document_config['postid'] = post_id
 
+        self.log_debug("Making getPost API call.")
         post_info = self.api().metaWeblog.getPost(
                 post_id,
                 self.read_param('username'),
