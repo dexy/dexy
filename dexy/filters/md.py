@@ -58,6 +58,8 @@ class MarkdownSlidesFilter(MarkdownFilter):
 
     _settings = {
             'extensions' : { 'nl2br' : {} },
+            'added-in-version': "0.9.9.6",
+            'examples' : ['slides'],
             'split' : (
                 "String to use to split slides.",
                 "\n\n\n" # e.g. 2 blank lines.
