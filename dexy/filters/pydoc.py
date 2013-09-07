@@ -1,16 +1,23 @@
+from dexy.exceptions import InternalDexyProblem
 from dexy.filter import DexyFilter
+import imp
 import inspect
 import json
+import os
 import pkgutil
 import sys
 
 class PythonDocumentationFilter(DexyFilter):
     """
-    Returns doc info for named python modules.
+    Returns introspected python data in key-value storage format.
+
+    Where input is a .txt file, this is assumed to be the name of an installed python module.
+
+    Where input is a .py file, the file itself is loaded and parsed.
     """
     aliases = ["pydoc"]
     _settings = {
-            'input-extensions' : ['.txt'],
+            'input-extensions' : ['.txt', '.py'],
             'output-data-type' : 'keyvalue',
             'output-extensions' : ['.sqlite3', '.json']
             }
@@ -63,15 +70,31 @@ class PythonDocumentationFilter(DexyFilter):
         Process all members of the package or module passed.
         """
         name = mod.__name__
+        if name == 'dummy':
+            name = None
 
         for k, m in inspect.getmembers(mod):
-            self.log_debug("in %s processing element %s" % (mod.__name__, k))
-            if not inspect.isclass(m) and hasattr(m, '__module__') and m.__module__ and m.__module__.startswith(package_name):
-                key = "%s.%s" % (m.__module__, k)
+            self.log_debug("in mod '%s' processing element '%s'" % (name, k))
+
+            is_class = inspect.isclass(m)
+            has_module = hasattr(m, '__module__')
+            module_exists = has_module and m.__module__
+            module_matches = module_exists and m.__module__.startswith(package_name)
+
+            if not is_class and module_matches:
+                if (m.__module__ is None) or (m.__module__ == 'dummy'):
+                    key = k
+                else:
+                    key = "%s.%s" % (m.__module__, k)
+
                 self.fetch_item_content(key, m)
 
-            elif inspect.isclass(m) and m.__module__ and m.__module__.startswith(package_name):
-                key = "%s.%s" % (mod.__name__, k)
+            elif is_class and module_matches:
+                if name:
+                    key = "%s.%s" % (name, k)
+                else:
+                    key = k
+
                 try:
                     item_content = inspect.getsource(m)
                     self.output_data.append("%s:doc" % key, inspect.getdoc(m))
@@ -83,13 +106,21 @@ class PythonDocumentationFilter(DexyFilter):
 
                 try:
                     for ck, cm in inspect.getmembers(m):
-                        key = "%s.%s.%s" % (name, k, ck)
+                        if name:
+                            key = "%s.%s.%s" % (name, k, ck)
+                        else:
+                            key = "%s.%s" % (k, ck)
+    
                         self.fetch_item_content(key, cm)
                 except AttributeError:
                     pass
 
             else:
-                key = "%s.%s" % (name, k)
+                if name:
+                    key = "%s.%s" % (name, k)
+                else:
+                    key = k
+
                 self.fetch_item_content(key, m)
 
     def process_module(self, package_name, name):
@@ -111,10 +142,7 @@ class PythonDocumentationFilter(DexyFilter):
         except (ImportError, TypeError) as e:
             self.log_debug(e)
 
-    def process(self):
-        """
-        input_text should be a list of installed python libraries to document.
-        """
+    def process_python_module(self):
         package_names = str(self.input_data).split()
         packages = [__import__(package_name) for package_name in package_names]
 
@@ -132,5 +160,35 @@ class PythonDocumentationFilter(DexyFilter):
                         self.process_module(package_name, name)
             else:
                 self.process_module(package.__name__, package.__name__)
+
+    def process_python_file(self):
+        wd = self.parent_work_dir()
+        ws = self.workspace()
+
+        self.populate_workspace()
+        target = os.path.join(ws, self.input_data.name)
+        sys.path.append(wd)
+        sys.path.append(ws)
+        self.log_debug("Importing python content from %s" % target)
+        try:
+            mod = imp.load_source("dummy", target)
+            self.process_members("", mod)
+        except Exception as e:
+            msg = "Could not process %s because %s"
+            msgargs = (self.input_data.name, e)
+            self.log_warn(msg % msgargs)
+
+    def process(self):
+        """
+        input_text should be a list of installed python libraries to document.
+        """
+        # TODO These should not load into active workspace, should fork a new
+        # python process for better isolation.
+        if self.prev_ext == '.txt':
+            self.process_python_module()
+        elif self.prev_ext == '.py':
+            self.process_python_file()
+        else:
+            raise InternalDexyProblem("Should not have ext %s" % self.prev_ext)
 
         self.output_data.save()
