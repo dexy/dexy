@@ -162,7 +162,7 @@ class capture_stdout():
         sys.stdout = self.old_stdout
         self.my_stdout.close()
 
-class divert_stderr():
+class capture_stderr():
     def __enter__(self):
         self.old_stderr = sys.stderr
         self.my_stderr = StringIO()

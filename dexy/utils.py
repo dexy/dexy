@@ -250,11 +250,15 @@ def parse_yaml(input_text):
     try:
         return yaml.safe_load(input_text)
     except (yaml.scanner.ScannerError, yaml.parser.ParserError) as e:
-        msg = inspect.cleandoc("""Was unable to parse the YAML you supplied.
-        Here is information from the YAML parser:""")
-        msg += "\n"
-        msg += str(e)
-        raise dexy.exceptions.UserFeedback(msg)
+        if "found character '\\t'" in str(e):
+            msg = "You appear to have hard tabs in your yaml, this is not supported. Please change to using soft tabs instead (your text editor should have this option)."
+            raise dexy.exceptions.UserFeedback(msg)
+        else:
+            msg = inspect.cleandoc("""Was unable to parse the YAML you supplied.
+            Here is information from the YAML parser:""")
+            msg += "\n"
+            msg += str(e)
+            raise dexy.exceptions.UserFeedback(msg)
 
 def parse_yamls(input_text):
     """

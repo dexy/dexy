@@ -1,9 +1,27 @@
+from dexy.exceptions import UserFeedback
 from dexy.parser import AbstractSyntaxTree
 from dexy.parsers.doc import Yaml
+from dexy.tests.utils import capture_stderr
 from dexy.tests.utils import wrap
 from dexy.wrapper import Wrapper
-import os
 import dexy.batch
+import os
+
+def test_hard_tabs_in_config():
+    with wrap():
+        with capture_stderr() as stderr:
+            os.makedirs("abc/def")
+            with open("abc/def/dexy.yaml", "w") as f:
+                f.write("""foo:\t- .txt""")
+
+            wrapper = Wrapper()
+
+            try:
+                wrapper.run_from_new()
+            except UserFeedback as e:
+                assert "hard tabs" in str(e)
+
+            assert "abc/def/dexy.yaml" in stderr.getvalue()
 
 def test_subdir_config_with_bundle():
     with wrap():
