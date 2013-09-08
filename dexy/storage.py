@@ -1,4 +1,5 @@
 from dexy.exceptions import UserFeedback
+from dexy.exceptions import InternalDexyProblem
 from dexy.utils import file_exists
 import dexy.exceptions
 import dexy.plugin
@@ -286,6 +287,13 @@ class Sqlite3Storage(GenericStorage):
             yield k, v
 
     def save(self):
-        self.assert_location_is_in_project_dir(self.data_file(read=False))
-        self._storage.commit()
-        shutil.copyfile(self.working_file(), self.data_file(read=False))
+        if self.connected_to == 'existing':
+            assert os.path.exists(self.data_file(read=False))
+        elif self.connected_to == 'working':
+            self.assert_location_is_in_project_dir(self.data_file(read=False))
+            self._storage.commit()
+            shutil.copyfile(self.working_file(), self.data_file(read=False))
+        else:
+            msg = "Unexpected 'connected_to' value %s"
+            msgargs = self.connected_to
+            raise InternalDexyProblem(msg % msgargs)
