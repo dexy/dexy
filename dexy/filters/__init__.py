@@ -18,6 +18,7 @@ import dexy.filters.org
 import dexy.filters.pexp
 import dexy.filters.phantomjs
 import dexy.filters.pydoc
+import dexy.filters.pytest
 import dexy.filters.pyg
 import dexy.filters.pyn
 import dexy.filters.rst
