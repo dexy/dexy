@@ -189,8 +189,8 @@ class Data(dexy.plugin.Plugin):
         try:
             self.storage.save()
         except Exception as e:
-            print e
-            raise dexy.exceptions.InternalDexyProblem("problem saving %s" % self.key)
+            msg = "Problem saving '%s': %s" % (self.key, str(e))
+            raise dexy.exceptions.InternalDexyProblem(msg)
 
 class Generic(Data):
     """
@@ -451,5 +451,5 @@ class KeyValue(Generic):
         try:
             self.storage.save()
         except Exception as e:
-            print e
-            raise dexy.exceptions.InternalDexyProblem("problem saving %s" % self.key)
+            msg = "Problem saving '%s': %s" % (self.key, str(e))
+            raise dexy.exceptions.InternalDexyProblem(msg)
