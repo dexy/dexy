@@ -1,4 +1,5 @@
 from dexy.exceptions import InternalDexyProblem
+from dexy.exceptions import UserFeedback
 from dexy.filter import DexyFilter
 import imp
 import inspect
@@ -6,8 +7,54 @@ import json
 import os
 import pkgutil
 import sys
+import sqlite3
 
-class PythonDocumentationFilter(DexyFilter):
+class PythonIntrospection(DexyFilter):
+    """
+    Base class for classes which use python introspection.
+    """
+    import_err_msg = "Could not import '%s' received err: %s"
+    aliases = []
+    _settings = {
+            'error-on-import-fail' : (
+                "Should an exception be raised if importing a specified module or file fails?",
+                False
+                ),
+            'input-extensions' : ['.txt', '.py'],
+            'output-data-type' : 'keyvalue',
+            'output-extensions' : ['.sqlite3', '.json']
+            }
+
+    def add_workspace_to_sys_path(self):
+        sys.path.append(self.parent_work_dir())
+        sys.path.append(self.workspace())
+
+    def handle_fail(self, name, e):
+        msg = self.import_err_msg % (name, e)
+        if self.setting('error-on-import-fail'):
+            raise UserFeedback(msg)
+        else:
+            self.log_debug(e)
+
+    def load_module(self, name):
+        try:
+            __import__(name)
+            return sys.modules[name]
+        except (ImportError, TypeError) as e:
+            handle_fail(name, e)
+
+    def load_source_file(self):
+        self.populate_workspace()
+        self.add_workspace_to_sys_path()
+
+        name = self.input_data.name
+        target = os.path.join(self.workspace(), name)
+        try:
+            return imp.load_source("dummy", target)
+        except ImportError as e:
+            handle_fail(name, e)
+
+class Pydoc(PythonIntrospection):
     """
     Returns introspected python data in key-value storage format.
 
@@ -16,178 +63,108 @@ class PythonDocumentationFilter(DexyFilter):
     Where input is a .py file, the file itself is loaded and parsed.
     """
     aliases = ["pydoc"]
-    _settings = {
-            'input-extensions' : ['.txt', '.py'],
-            'output-data-type' : 'keyvalue',
-            'output-extensions' : ['.sqlite3', '.json']
-            }
 
-    def fetch_item_content(self, key, item):
-        is_method = inspect.ismethod(item)
-        is_function = inspect.isfunction(item)
-        if is_method or is_function:
-            # Get source code
-            try:
-                source = inspect.getsource(item)
-            except IOError:
-                source = ""
-
-            self.add_source_for_key(key, source)
-
-            self.output_data.append("%s:doc" % key, inspect.getdoc(item))
-            self.output_data.append("%s:comments" % key, inspect.getcomments(item))
-
-        else: # not a function or a method
-            try:
-                # If this can be JSON-serialized, leave it alone...
-                json.dumps(item)
-                self.add_source_for_key(key, item)
-            except TypeError:
-                # ... if it can't, convert it to a string to avoid problems.
-                self.add_source_for_key(key, str(item))
-            except UnicodeDecodeError:
-                print "skipping", item
-
-    def add_source_for_key(self, key, source):
-        """
-        Appends source code + syntax highlighted source code to persistent store.
-        """
-        try:
-            self.output_data.append("%s:value" % key, json.dumps(source))
-        except Exception as e:
-            print "skipping", key, e
-
-        if not (type(source) == str or type(source) == unicode):
-            source = inspect.getsource(source)
+    def append_item_content(self, key, item):
+        self.log_debug("appending content for %s" % key)
 
         try:
-            self.output_data.append("%s:source" % key, str(source))
-        except Exception as e:
-            print "skipping", key, e
+            source = inspect.getsource(item)
+            self.output_data.append("%s:source" % key, source)
+        except (TypeError, IOError, sqlite3.ProgrammingError):
+            pass
 
-    def process_members(self, package_name, mod):
-        """
-        Process all members of the package or module passed.
-        """
-        name = mod.__name__
-        if name == 'dummy':
-            name = None
+        try:
+            doc = inspect.getdoc(item)
+            self.output_data.append("%s:doc" % key, doc)
+        except (TypeError, IOError, sqlite3.ProgrammingError):
+            pass
+
+        try:
+            comment = inspect.getcomments(item)
+            self.output_data.append("%s:comments" % key, comment)
+        except (TypeError, IOError, sqlite3.ProgrammingError):
+            pass
+
+        try:
+            value = json.dumps(item)
+            self.output_data.append("%s:value" % key, value)
+        except TypeError:
+            pass
+
+    def is_defined_in_module(self, mod, mod_name, item):
+        if mod_name and hasattr(item, '__module__'):
+            return item.__module__.startswith(mod_name)
+        else:
+            return True
+
+    def process_members(self, mod):
+        mod_name = mod.__name__
+
+        if mod_name == 'dummy':
+            mod_name = None
 
         for k, m in inspect.getmembers(mod):
-            self.log_debug("in mod '%s' processing element '%s'" % (name, k))
+            if mod_name:
+                key = "%s.%s" % (mod_name, k)
+            else:
+                key = k
 
             is_class = inspect.isclass(m)
-            has_module = hasattr(m, '__module__')
-            module_exists = has_module and m.__module__
-            module_matches = module_exists and m.__module__.startswith(package_name)
+            is_def = self.is_defined_in_module(mod, mod_name, m)
 
-            if not is_class and module_matches:
-                if (m.__module__ is None) or (m.__module__ == 'dummy'):
-                    key = k
-                else:
-                    key = "%s.%s" % (m.__module__, k)
+            if not is_def:
+                # this is something imported, not defined in the module
+                # so we don't want to document it here
+                self.log_debug("skipping %s for module %s" % (k, mod_name))
+                continue
 
-                self.fetch_item_content(key, m)
-
-            elif is_class and module_matches:
-                if name:
-                    key = "%s.%s" % (name, k)
-                else:
-                    key = k
-
-                try:
-                    item_content = inspect.getsource(m)
-                    self.output_data.append("%s:doc" % key, inspect.getdoc(m))
-                    self.output_data.append("%s:comments" % key, inspect.getcomments(m))
-                    self.add_source_for_key(key, item_content)
-                except IOError:
-                    self.log_debug("can't get source for %s" % key)
-                    self.add_source_for_key(key, "")
-
-                try:
-                    for ck, cm in inspect.getmembers(m):
-                        if name:
-                            key = "%s.%s.%s" % (name, k, ck)
-                        else:
-                            key = "%s.%s" % (k, ck)
-    
-                        self.fetch_item_content(key, cm)
-                except AttributeError:
-                    pass
+            if not is_class:
+                self.append_item_content(key, m)
 
             else:
-                if name:
-                    key = "%s.%s" % (name, k)
-                else:
-                    key = k
-
-                self.fetch_item_content(key, m)
+                self.append_item_content(key, m)
+                for ck, cm in inspect.getmembers(m):
+                    self.append_item_content("%s.%s" % (key, ck), cm)
 
     def process_module(self, package_name, name):
-        try:
-            self.log_debug("Trying to import %s" % name)
-            __import__(name)
-            mod = sys.modules[name]
-            self.log_debug("Success importing %s" % name)
+        self.log_debug("processing module %s" % name)
+        mod = self.load_module(name)
+        self.append_item_content(name, mod)
+        self.process_members(mod)
 
-            try:
-                module_source = inspect.getsource(mod)
-                json.dumps(module_source)
-                self.add_source_for_key(name, inspect.getsource(mod))
-            except (UnicodeDecodeError, IOError, TypeError):
-                self.log_debug("Unable to load module source for %s" % name)
+    def process_package(self, package):
+        """
+        Iterates over all modules included in the package and processes them.
+        """
+        self.log_debug("processing package %s" % package)
+        package_name = package.__name__
 
-            self.process_members(package_name, mod)
+        # Process top level package
+        self.process_module(package_name, package_name)
 
-        except (ImportError, TypeError) as e:
-            self.log_debug(e)
+        # Process sub-packages and modules
+        if hasattr(package, '__path__'):
+            path = package.__path__
+            prefix = "%s." % package_name
+            for loader, name, ispkg in pkgutil.walk_packages(path, prefix=prefix):
+                self.process_module(package_name, name)
 
-    def process_python_module(self):
+    def process_packages(self):
         package_names = str(self.input_data).split()
-        packages = [__import__(package_name) for package_name in package_names]
+        packages = [__import__(name) for name in package_names]
 
         for package in packages:
-            self.log_debug("processing package %s" % package)
-            package_name = package.__name__
-            prefix = package.__name__ + "."
+            self.process_package(package)
 
-            self.process_members(package_name, package)
-
-            if hasattr(package, '__path__'):
-                for module_loader, name, ispkg in pkgutil.walk_packages(package.__path__, prefix=prefix):
-                    self.log_debug("in package %s processing module %s" % (package_name, name))
-                    if not name.endswith("__main__"):
-                        self.process_module(package_name, name)
-            else:
-                self.process_module(package.__name__, package.__name__)
-
-    def process_python_file(self):
-        wd = self.parent_work_dir()
-        ws = self.workspace()
-
-        self.populate_workspace()
-        target = os.path.join(ws, self.input_data.name)
-        sys.path.append(wd)
-        sys.path.append(ws)
-        self.log_debug("Importing python content from %s" % target)
-        try:
-            mod = imp.load_source("dummy", target)
-            self.process_members("", mod)
-        except Exception as e:
-            msg = "Could not process %s because %s"
-            msgargs = (self.input_data.name, e)
-            self.log_warn(msg % msgargs)
+    def process_file(self):
+        mod = self.load_source_file()
+        self.process_members(mod)
 
     def process(self):
-        """
-        input_text should be a list of installed python libraries to document.
-        """
-        # TODO These should not load into active workspace, should fork a new
-        # python process for better isolation.
         if self.prev_ext == '.txt':
-            self.process_python_module()
+            self.process_packages()
         elif self.prev_ext == '.py':
-            self.process_python_file()
+            self.process_file()
         else:
             raise InternalDexyProblem("Should not have ext %s" % self.prev_ext)
 

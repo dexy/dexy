@@ -7,9 +7,11 @@ def test_pydoc_filter_on_module_names():
         wrapper.run_docs(doc)
         data = doc.output_data()
         assert len(data.keys()) > 100
-        assert data['math.e:value'].startswith(u"2.71828")
+        assert data['math.e:value'].startswith("2.71828")
 
 python_file_content = """
+import math
+
 # Comment for foo
 def foo():
     '''
@@ -35,9 +37,7 @@ def test_pydoc_filter_on_python_files():
         keys = data.keys()
 
         assert 'bar:source' in keys
-        assert 'bar:value' in keys
         assert 'foo:source' in keys
-        assert 'foo:value' in keys
         
         assert data['foo:doc'] == "docstring for foo"
         assert data['foo:comments'] == "# Comment for foo\n"
