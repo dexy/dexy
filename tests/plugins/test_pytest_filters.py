@@ -13,5 +13,8 @@ def test_pytest_filter():
         data = doc.output_data()
 
         testname = "test_viewer.basic_test"
+        assert data[testname + ':doc'] == "docstring for test"
+        assert data[testname + ':name'] == "basic_test"
+        assert data[testname + ':comments'] == "# comment before test\n"
         assert bool(data[testname + ':passed'])
         assert "def basic_test():" in data[testname + ':source']
