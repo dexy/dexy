@@ -11,6 +11,7 @@ import warnings
 import dexy.filters
 import dexy.reporters
 import dexy.parsers
+import dexy.datas
 
 # import all commands
 from dexy.commands.cite import cite_command
