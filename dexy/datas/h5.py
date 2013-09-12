@@ -15,8 +15,22 @@ class H5(Generic):
             'storage-type' : 'h5storage'
             }
 
-    def walk_groups(self):
-        return self.data().walk_groups()
+    def root(self):
+        return self.data().root
+
+    def walk_groups(self, path=None):
+        if path:
+            return self.data().walk_groups(path)
+        else:
+            return self.data().walk_groups()
+
+    def walk_nodes(self, path=None, node_type=None):
+        if path and node_type:
+            return self.data().walk_nodes(path, node_type)
+        elif path:
+            return self.data().walk_nodes(path)
+        else:
+            return self.data().walk_nodes()
 
 class H5Storage(GenericStorage):
     """
@@ -26,3 +40,21 @@ class H5Storage(GenericStorage):
 
     def read_data(self):
         return tables.open_file(self.data_file(read=True), "r")
+
+# Set custom exit hook so messages about closing files don't get printed to
+# stderr, per http://www.pytables.org/moin/UserDocuments/AtexitHooks
+def my_close_open_files(verbose):
+    open_files = tables.file._open_files
+    are_open_files = len(open_files) > 0
+    if verbose and are_open_files:
+        print >> sys.stderr, "Closing remaining open files:",
+    for fileh in open_files.keys():
+        if verbose:
+            print >> sys.stderr, "%s..." % (open_files[fileh].filename,),
+        open_files[fileh].close()
+        if verbose:
+            print >> sys.stderr, "done",
+    if verbose and are_open_files:
+        print >> sys.stderr
+import sys, atexit
+atexit.register(my_close_open_files, False)
