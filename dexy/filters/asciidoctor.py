@@ -1,4 +1,6 @@
 from dexy.filters.process import SubprocessExtToFormatFilter
+from dexy.exceptions import UserFeedback
+from dexy.exceptions import InternalDexyProblem
 import os
 
 class Asciidoctor(SubprocessExtToFormatFilter):
@@ -8,6 +10,7 @@ class Asciidoctor(SubprocessExtToFormatFilter):
     aliases = ['asciidoctor']
     _settings = {
             'tags' : ['asciidoc', 'html'],
+            'examples' : ['asciidoctor'],
             'output' : True,
             'version-command' : "asciidoctor --version",
             'executable' : 'asciidoctor',
@@ -29,7 +32,18 @@ class Asciidoctor(SubprocessExtToFormatFilter):
         stylesheet = self.setting('stylesheet')
         if stylesheet:
             stylesdir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'asciidoctor'))
+
+            if not os.path.exists(stylesdir):
+                msg = "Asciidoctor stylesheet directory not found at '%s'"
+                raise InternalDexyProblem(msg % stylesdir)
+
             args['ss'] = "-a stylesheet=%s -a stylesdir=%s" % (stylesheet, stylesdir)
+
+            if not os.path.exists(os.path.join(stylesdir, stylesheet)):
+                msg = "No stylesheet file named '%s' was found in directory '%s'. Files found: %s"
+                stylesheets = os.listdir(stylesdir)
+                raise UserFeedback(msg % (stylesheet, stylesdir, ", ".join(stylesheets)))
+
         else:
             args['ss'] = ''
         return args

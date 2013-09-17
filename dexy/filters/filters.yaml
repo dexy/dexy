@@ -409,6 +409,7 @@ lyx:
     command-string: '%(prog)s %(format)s %(args)s "%(script_file)s"'
 
 asciidoc:
+    examples: [asciidoc]
     class: SubprocessExtToFormatFilter
     help: Converts ASCIIDOC input to various output formats.
     tags: [asciidoc, html]
