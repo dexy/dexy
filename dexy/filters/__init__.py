@@ -1,6 +1,7 @@
 import dexy.filters.ansi
 import dexy.filters.api
 import dexy.filters.archive
+import dexy.filters.asciidoctor
 import dexy.filters.aws
 import dexy.filters.deprecated
 import dexy.filters.easy

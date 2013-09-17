@@ -412,6 +412,7 @@ asciidoc:
     class: SubprocessExtToFormatFilter
     help: Converts ASCIIDOC input to various output formats.
     tags: [asciidoc, html]
+    output: True
     version-command: asciidoc --version
     executable: asciidoc
     input-extensions: [.*]
