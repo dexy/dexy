@@ -56,7 +56,9 @@ class SyntaxHighlightRstFilter(DexyFilter):
 
 class PygmentsFilter(DexyFilter):
     """
-    Apply Pygments syntax highlighting. Image formats require PIL.
+    Apply Pygments <http://pygments.org/> syntax highlighting.
+    
+    Image output formats require PIL to be installed.
     """
     aliases = ['pyg', 'pygments']
     IMAGE_OUTPUT_EXTENSIONS = ['.png', '.bmp', '.gif', '.jpg']
