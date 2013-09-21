@@ -256,11 +256,10 @@ class Node(dexy.plugin.Plugin):
         return next_task()
 
     def __call__(self, *args, **kw):
-        self.wrapper.current_task = self
         for inpt in self.inputs:
             for task in inpt:
                 task()
-
+        self.wrapper.current_task = self
         self.run()
 
     def run(self):
@@ -270,7 +269,6 @@ class Node(dexy.plugin.Plugin):
         """
         for child in self.children:
             for task in child:
-                self.wrapper.current_task = task
                 task()
 
 class BundleNode(Node):
