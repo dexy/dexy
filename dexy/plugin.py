@@ -169,7 +169,7 @@ class PluginMeta(type):
                 msg = "No help setting and no docstring for %s"
                 args = (klass)
                 raise dexy.exceptions.InternalDexyProblem(msg % args)
-            settings['help'] = ("Helpstring for filter.", docstring)
+            settings['help'] = ("Helpstring for plugin.", docstring)
 
         settings['aliases'] = ('aliases', aliases)
 
