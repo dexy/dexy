@@ -5,8 +5,9 @@ from dexy.utils import file_exists
 
 class ApiFilter(dexy.filter.DexyFilter):
     """
-    Base class for filters which post content to a remote API, such as a blog, CMS
-    or helpdesk app. Provides standard formats and locations for storing
+    Base class for filters which post content to a remote API.
+    
+    This class provides standard formats and locations for storing
     configuration and authentication information.
 
     Need to read config for the API in general, such as the base URL and an API
