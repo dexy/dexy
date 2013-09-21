@@ -15,6 +15,9 @@ class H5(Generic):
             'storage-type' : 'h5storage'
             }
 
+    def is_active(self):
+        return AVAILABLE
+
     def root(self):
         return self.data().root
 
@@ -37,6 +40,9 @@ class H5Storage(GenericStorage):
     Storage backend representing HDF5 files.
     """
     aliases = ['h5storage']
+
+    def is_active(self):
+        return AVAILABLE
 
     def read_data(self):
         return tables.open_file(self.data_file(read=True), "r")
