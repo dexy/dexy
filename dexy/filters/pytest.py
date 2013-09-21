@@ -2,13 +2,18 @@ from dexy.filters.pydoc import PythonIntrospection
 import dexy.exceptions
 import inspect
 import json
-import nose
 import os
 import pkgutil
 import shutil
 import subprocess
 import sys
 import StringIO
+
+try:
+    import nose
+    AVAILABLE = True
+except ImportError:
+    AVAILABLE = False
 
 class PythonTest(PythonIntrospection):
     """
@@ -41,6 +46,9 @@ class PythonTest(PythonIntrospection):
                 "Need to fake out argv since sys.argv will be args for dexy, not nose.",
                 ['nosetests'])
             }
+
+    def is_active(self):
+        return AVAILABLE
 
     def load_tests_from_dir(self, module_name):
         self.log_debug("Loading module '%s' to find its tests." % module_name)
