@@ -19,8 +19,6 @@ INFO_METHODS = [
         'web_safe_document_key'
         ]
 STORAGE_METHODS = [
-        'data_file',
-        'data_file_exists'
         ]
 def info_command(
         __cli_options=False,
@@ -54,8 +52,9 @@ def info_command(
         for fname in sorted(INFO_METHODS):
             print "      %s(): %s" % (fname, getattr(match, fname)())
         print
-    
-        print "    storage methods:"
-        for fname in sorted(STORAGE_METHODS):
-            print "      %s(): %s" % (fname, getattr(match.storage, fname)())
-        print
+
+        if STORAGE_METHODS:
+            print "    storage methods:"
+            for fname in sorted(STORAGE_METHODS):
+                print "      %s(): %s" % (fname, getattr(match.storage, fname)())
+            print
