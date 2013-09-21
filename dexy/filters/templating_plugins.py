@@ -17,12 +17,37 @@ import os
 import pygments
 import pygments.formatters
 import re
+import time
+import markdown
 
 try:
     from bs4 import BeautifulSoup
     BS4_AVAILABLE = True
 except ImportError:
     BS4_AVAILABLE = False
+
+class Markdown(TemplatePlugin):
+    """
+    Exposes markdown.
+    """
+    aliases = ['md', 'markdown']
+
+    def run(self):
+        md = markdown.Markdown()
+        return {
+                'markdown' : md.convert,
+                'md' : md.convert
+                }
+
+class Time(TemplatePlugin):
+    """
+    Exposes time module.
+    """
+    aliases = ['time']
+    def run(self):
+        return {
+                'time' : time
+                }
 
 class Operator(TemplatePlugin):
     """
@@ -70,12 +95,16 @@ class Debug(TemplatePlugin):
     """
     aliases = ['debug']
 
-    def debug(self, debug_text):
+    def debug(self, debug_text, echo=True):
         if hasattr(self, 'filter_instance'):
             print "template debug from '%s': %s" % (self.filter_instance.key, debug_text)
         else:
             print "template debug: %s" % (debug_text)
-        return debug_text
+
+        if echo:
+            return debug_text
+        else:
+            return ""
 
     def throw(self, err_message):
         if hasattr(self, 'filter_instance'):
