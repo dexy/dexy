@@ -41,7 +41,7 @@ class PythonIntrospection(DexyFilter):
             __import__(name)
             return sys.modules[name]
         except (ImportError, TypeError) as e:
-            handle_fail(name, e)
+            self.handle_fail(name, e)
 
     def load_source_file(self):
         self.populate_workspace()
@@ -52,7 +52,7 @@ class PythonIntrospection(DexyFilter):
         try:
             return imp.load_source("dummy", target)
         except ImportError as e:
-            handle_fail(name, e)
+            self.handle_fail(name, e)
 
 class Pydoc(PythonIntrospection):
     """
@@ -130,7 +130,10 @@ class Pydoc(PythonIntrospection):
         self.log_debug("processing module %s" % name)
         mod = self.load_module(name)
         self.append_item_content(name, mod)
-        self.process_members(mod)
+        if mod:
+            self.process_members(mod)
+        else:
+            self.log_warn("no mod from %s" % name)
 
     def process_package(self, package):
         """
@@ -158,7 +161,8 @@ class Pydoc(PythonIntrospection):
 
     def process_file(self):
         mod = self.load_source_file()
-        self.process_members(mod)
+        if mod:
+            self.process_members(mod)
 
     def process(self):
         if self.prev_ext == '.txt':
