@@ -75,11 +75,14 @@ class PythonTest(PythonIntrospection):
             if inspect.ismethod(member) or inspect.isfunction(member):
                 qualified_test_name = "%s.%s" % (test.context.__name__, member.__name__)
                 source = inspect.getsource(member.__code__)
-                doc = inspect.cleandoc(member.func_doc)
+
+                if member.func_doc:
+                    doc = inspect.cleandoc(member.func_doc)
+                    self.output_data.append("%s:doc" % qualified_test_name, doc)
+
                 comments = inspect.getcomments(member.__code__)
 
                 self.output_data.append("%s:source" % qualified_test_name, source)
-                self.output_data.append("%s:doc" % qualified_test_name, doc)
                 self.output_data.append("%s:name" % qualified_test_name, member.func_name)
                 self.output_data.append("%s:comments" % qualified_test_name, comments)
                 self.output_data.append("%s:passed" % qualified_test_name, str(test_passed))
