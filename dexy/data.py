@@ -27,7 +27,8 @@ class Data(dexy.plugin.Plugin):
 
     state_transitions = (
             (None, 'new'),
-            ('new', 'ready')
+            ('new', 'ready'),
+            ('ready', 'ready')
             )
 
     def __init__(self, key, ext, storage_key, settings, wrapper):
@@ -49,6 +50,9 @@ class Data(dexy.plugin.Plugin):
             raise Exception()
 
         self.transition('new')
+
+    def __lt__(self, other):
+        return self.output_name() < other.output_name()
 
     def url_quoted_name(self):
         """
@@ -278,7 +282,7 @@ class Generic(Data):
         return self.setting('canonical-output')
 
     def is_index_page(self):
-        return self.name.endswith("index.html")
+        return self.output_name().endswith("index.html")
 
     def websafe_key(self):
         return self.key
