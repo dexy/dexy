@@ -13,7 +13,8 @@ class Template(dexy.plugin.Plugin):
     __metaclass__ = dexy.plugin.PluginMeta
     _settings = {
             'contents-dir' : ("Directory containing contents of template.", None),
-            'nodoc' : ("Whether to not document this template.", False)
+            'nodoc' : ("Whether to not document this template.", False),
+            'copy-output-dir' : ("", False)
             }
     aliases = []
     filters_used = []
