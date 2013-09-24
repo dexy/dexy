@@ -23,6 +23,7 @@ import dexy.filters.pytest
 import dexy.filters.pyg
 import dexy.filters.pyn
 import dexy.filters.rst
+import dexy.filters.sanitize
 import dexy.filters.split
 import dexy.filters.standard
 import dexy.filters.sub
