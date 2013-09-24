@@ -1,4 +1,5 @@
 from dexy.filter import DexyFilter
+import inflection
 import re
 
 try:
@@ -28,8 +29,14 @@ class SoupSections(DexyFilter):
                 if self.current_section_text:
                     self.append_current_section()
 
+                name = tag.text
+
+                if not tag.attrs.has_key('id'):
+                    tag.attrs['id'] = inflection.parameterize(name)
+
+                self.current_section_anchor = tag.attrs['id']
                 self.current_section_text = [unicode(tag)]
-                self.current_section_name = tag.text
+                self.current_section_name = name
                 self.current_section_level = int(m.groups()[0])
 
             else:
@@ -40,7 +47,8 @@ class SoupSections(DexyFilter):
         section_dict = {
                 "name" : self.current_section_name,
                 "contents" : "\n".join(self.current_section_text),
-                "level" : self.current_section_level
+                "level" : self.current_section_level,
+                "id" : self.current_section_anchor
                 }
         self.output_data._data.append(section_dict)
 
@@ -51,6 +59,7 @@ class SoupSections(DexyFilter):
         self.current_section_text = []
         self.current_section_name = self.setting('initial-section-name')
         self.current_section_level = 1
+        self.current_section_anchor = None
 
         first = body.find(True)
 
