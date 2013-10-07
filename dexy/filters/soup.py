@@ -16,6 +16,7 @@ class SoupSections(DexyFilter):
 
     _settings = {
             'output-data-type' : 'sectioned',
+            'html-parser' : ("Name of html parser BeautifulSoup should use.", 'html.parser'),
             'initial-section-name' : ("Name to use for the initial section which currently holds all the contents.", u"Actual Document Contents"),
             }
 
@@ -32,7 +33,7 @@ class SoupSections(DexyFilter):
         self.output_data._data.append(section_dict)
 
     def process(self):
-        soup = BeautifulSoup(unicode(self.input_data))
+        soup = BeautifulSoup(unicode(self.input_data), self.setting('html-parser'))
 
         for tag in soup.find_all(re.compile("^h[0-6]")):
             name = tag.text
