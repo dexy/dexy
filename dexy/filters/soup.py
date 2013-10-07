@@ -16,37 +16,16 @@ class SoupSections(DexyFilter):
 
     _settings = {
             'output-data-type' : 'sectioned',
-            'initial-section-name' : ("Name to use for a section which appears before any header tags.", u"Initial Anonymous Section"),
+            'initial-section-name' : ("Name to use for the initial section which currently holds all the contents.", u"Actual Document Contents"),
             }
 
     def is_active(self):
         return BS4_AVAILABLE
 
-    def process_tag(self, tag):
-        if hasattr(tag, 'name'):
-            m = re.match("^h([0-6])$", tag.name)
-            if m:
-                if self.current_section_text:
-                    self.append_current_section()
-
-                name = tag.text
-
-                if not tag.attrs.has_key('id'):
-                    tag.attrs['id'] = inflection.parameterize(name)
-
-                self.current_section_anchor = tag.attrs['id']
-                self.current_section_text = [unicode(tag)]
-                self.current_section_name = name
-                self.current_section_level = int(m.groups()[0])
-
-            else:
-                self.current_section_text.append(unicode(tag))
-
-
     def append_current_section(self):
         section_dict = {
                 "name" : self.current_section_name,
-                "contents" : "\n".join(self.current_section_text),
+                "contents" : self.current_section_text,
                 "level" : self.current_section_level,
                 "id" : self.current_section_anchor
                 }
@@ -54,20 +33,25 @@ class SoupSections(DexyFilter):
 
     def process(self):
         soup = BeautifulSoup(unicode(self.input_data))
-        body = soup("body")[0]
 
-        self.current_section_text = []
+        for tag in soup.find_all(re.compile("^h[0-6]")):
+            name = tag.text
+            m = re.match("^h([0-6])$", tag.name)
+
+            if not tag.attrs.has_key('id'):
+                tag.attrs['id'] = inflection.parameterize(name)
+
+            self.current_section_anchor = tag.attrs['id']
+            self.current_section_text = None
+            self.current_section_name = name
+            self.current_section_level = int(m.groups()[0])
+
+            self.append_current_section()
+
+        self.current_section_text = unicode(soup)
         self.current_section_name = self.setting('initial-section-name')
         self.current_section_level = 1
         self.current_section_anchor = None
-
-        first = body.find(True)
-
-        self.process_tag(first)
-
-        # Iterate over all top-level elements.
-        for tag in first.next_siblings:
-            self.process_tag(tag)
 
         self.append_current_section()
 
