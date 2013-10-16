@@ -54,6 +54,25 @@ class SyntaxHighlightRstFilter(DexyFilter):
             section_output = ".. code:: %s\n\n%s" % (lexer_alias, with_spaces)
             self.output_data[section_name] = section_output
 
+class SyntaxHighlightAsciidoctor(DexyFilter):
+    """
+    Surrounds code with highlighting instructions for Asciidoctor
+    """
+    aliases = ['asciisyn']
+    _settings = {
+            'output-data-type' : 'sectioned'
+            }
+
+    def process(self):
+        if self.prev_filter.alias == 'idio':
+            lexer_alias = file_ext_to_lexer_alias_cache[self.prev_filter.prev_ext]
+        else:
+            lexer_alias = file_ext_to_lexer_alias_cache[self.input_data.ext]
+
+        for section_name, section_input in self.input_data.iteritems():
+            section_output = "[source,%s]\n----\n%s\n----\n" % (lexer_alias, section_input)
+            self.output_data[section_name] = section_output
+
 class PygmentsFilter(DexyFilter):
     """
     Apply Pygments <http://pygments.org/> syntax highlighting.
@@ -204,6 +223,7 @@ class PygmentsFilter(DexyFilter):
         formatter_args = self.constructor_args('formatter', {
             'lineanchors' : self.output_data.web_safe_document_key() })
         self.log_debug("creating pygments formatter with args %s" % (formatter_args))
+
         return get_formatter_for_filename(self.output_data.name, **formatter_args)
 
     def process(self):
