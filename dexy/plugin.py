@@ -30,6 +30,17 @@ class PluginMeta(cashew.PluginMeta):
         else:
             return alias 
 
+    def adjust_alias(cls, alias):
+        """
+        All of '-' or '-foo' or '---' should map to '-' which is a registered alias.
+
+        This way we can always create unique names by including arbitrary
+        distinguishing content after a '-'.
+        """
+        if alias.startswith('-'):
+            alias = '-'
+        return alias
+
 class Command(Plugin):
     """
     Parent class for custom dexy commands.
