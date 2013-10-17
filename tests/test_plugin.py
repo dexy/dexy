@@ -1,6 +1,9 @@
 import dexy.plugin
 
 class WidgetBase(dexy.plugin.Plugin):
+    """
+    Example of plugin.
+    """
     __metaclass__ = dexy.plugin.PluginMeta
     _settings = {
             'foo' : ("Default value for foo", "bar"),

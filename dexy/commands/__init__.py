@@ -1,5 +1,6 @@
 from dexy.version import DEXY_VERSION
 from modargs import args
+import cashew.exceptions
 import dexy.exceptions
 import dexy.wrapper
 import logging
@@ -7,11 +8,7 @@ import os
 import sys
 import warnings
 
-# ensure all built-in plugins are registered
-import dexy.filters
-import dexy.reporters
-import dexy.parsers
-import dexy.datas
+import dexy.load_plugins
 
 # import all commands
 from dexy.commands.cite import cite_command
@@ -54,7 +51,7 @@ def resolve_argv():
 
         try:
             cmd = dexy.plugin.Command.create_instance(alias)
-        except dexy.exceptions.NoPlugin:
+        except cashew.exceptions.NoPlugin:
             msg = "No command '%s' available. Run `dexy help` to see list of available commands.\n"
             msgargs = (alias)
             sys.stderr.write(msg % msgargs)
