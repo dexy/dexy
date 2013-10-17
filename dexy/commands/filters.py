@@ -2,9 +2,13 @@ import inspect
 from dexy.commands.utils import template_text
 from dexy.utils import s
 from pygments import highlight
-from pygments.formatters import TerminalFormatter
 from pygments.lexers import PythonLexer
 import dexy.filter
+
+try:
+    from pygments.formatters import TerminalFormatter
+except ImportError:
+    pass
 
 def filter_command(
         alias="", # If a filter alias is specified, more detailed help for that filter is printed.
