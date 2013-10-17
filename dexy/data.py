@@ -255,7 +255,13 @@ class Generic(Data):
         if key == '1':
             return self.data()
         else:
-            return self.data()[key]
+            try:
+                return self.data()[key]
+            except TypeError:
+                if self.ext == '.json':
+                    return self.from_json()[key]
+                else:
+                    raise
 
     def iteritems(self):
         yield ('1', self.data())
@@ -282,7 +288,7 @@ class Generic(Data):
         return self.setting('canonical-output')
 
     def is_index_page(self):
-        return self.output_name().endswith("index.html")
+        return self.output_name() and self.output_name().endswith("index.html")
 
     def websafe_key(self):
         return self.key
@@ -340,10 +346,10 @@ class Sectioned(Generic):
             }
 
     def __unicode__(self):
-        return u"\n".join(unicode(v) for v in self.values())
+        return u"\n".join(unicode(v) for v in self.values() if v.data['contents'])
 
     def __str__(self):
-        return "\n".join(str(v) for v in self.values())
+        return "\n".join(str(v) for v in self.values() if v.data['contents'])
 
     def __len__(self):
         return len(self.data())-1
