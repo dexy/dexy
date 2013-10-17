@@ -34,6 +34,9 @@ class Filter(dexy.plugin.Plugin):
             'additional-doc-filters' : (
                 "Filters to apply to additional documents created as side effects.",
                 {}),
+            'additional-doc-settings' : (
+                "Settings to apply to additional documents created as side effects.",
+                {}),
             'examples' : (
                 "Templates which should be used as examples for this filter.",
                 []),
