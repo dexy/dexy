@@ -287,7 +287,6 @@ class Filter(dexy.plugin.Plugin):
             # figure out which settings to apply based on file extension
             for pattern, settings in additional_doc_settings:
                 if doc_ext == pattern or pattern == ".*":
-                    print "found match with pattern", pattern
                     break
         elif isinstance(additional_doc_settings, dict):
             settings = additional_doc_settings
