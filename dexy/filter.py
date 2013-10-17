@@ -274,6 +274,11 @@ class Filter(dexy.plugin.Plugin):
         additional_doc_filters = self.setting('additional-doc-filters')
         self.log_debug("additional-doc-filters are %s" % additional_doc_filters)
 
+        additional_doc_settings = self.setting('additional-doc-settings')
+        if doc_args:
+            additional_doc_settings.update(doc_args)
+        self.log_debug("additional-doc-settings are %s" % additional_doc_settings)
+
         doc_ext = os.path.splitext(doc_name)[1]
 
         def create_doc(name, filters, contents, args=None):
@@ -303,24 +308,25 @@ class Filter(dexy.plugin.Plugin):
             filters = additional_doc_filters
         elif isinstance(additional_doc_filters, list):
             for f in additional_doc_filters:
-                create_doc(doc_name, f, doc_contents)
+                create_doc(doc_name, f, doc_contents, additional_doc_settings)
             filters = ''
         elif isinstance(additional_doc_filters, dict):
             filters = additional_doc_filters.get(doc_ext, '')
             if isinstance(filters, list):
                 for f in filters:
-                    create_doc(doc_name, f, doc_contents)
+                    create_doc(doc_name, f, doc_contents, additional_doc_settings)
                 filters = ''
         else:
             msg = "received unexpected additional_doc_filters arg class %s"
             msgargs = additional_doc_filters.__class__.__name__
             raise dexy.exceptions.InternalDexyProblem(msg % msgargs)
 
+
         if len(filters) == 0 or self.setting('keep-originals'):
-            doc = create_doc(doc_name, '', doc_contents, doc_args)
+            doc = create_doc(doc_name, '', doc_contents, additional_doc_settings)
 
         if len(filters) > 0:
-            doc = create_doc(doc_name, filters, doc_contents, doc_args)
+            doc = create_doc(doc_name, filters, doc_contents, additional_doc_settings)
 
         return doc
 
