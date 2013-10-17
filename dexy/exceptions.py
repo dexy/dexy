@@ -1,12 +1,7 @@
 from dexy.version import DEXY_VERSION
 import dexy.utils
 import platform
-
-class UserFeedback(Exception):
-    pass
-
-class NoPlugin(UserFeedback):
-    pass
+from cashew.exceptions import UserFeedback
 
 class NoFilterOutput(UserFeedback):
     pass
