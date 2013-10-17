@@ -274,15 +274,32 @@ class Filter(dexy.plugin.Plugin):
         if not posixpath.sep in doc_name:
             doc_name = posixpath.join(self.input_data.parent_dir(), doc_name)
 
+        doc_ext = os.path.splitext(doc_name)[1]
+
         additional_doc_filters = self.setting('additional-doc-filters')
         self.log_debug("additional-doc-filters are %s" % additional_doc_filters)
 
+        
         additional_doc_settings = self.setting('additional-doc-settings')
-        if doc_args:
-            additional_doc_settings.update(doc_args)
-        self.log_debug("additional-doc-settings are %s" % additional_doc_settings)
 
-        doc_ext = os.path.splitext(doc_name)[1]
+        settings = None
+        if isinstance(additional_doc_settings, list):
+            # figure out which settings to apply based on file extension
+            for pattern, settings in additional_doc_settings:
+                if doc_ext == pattern or pattern == ".*":
+                    print "found match with pattern", pattern
+                    break
+        elif isinstance(additional_doc_settings, dict):
+            settings = additional_doc_settings
+
+        else:
+            raise Exception("Unexpected type %s" % type(settings))
+
+        if doc_args:
+            settings.update(doc_args)
+
+        self.log_debug("additional-doc-settings are %s" % settings)
+
 
         def create_doc(name, filters, contents, args=None):
             if filters:
@@ -311,13 +328,13 @@ class Filter(dexy.plugin.Plugin):
             filters = additional_doc_filters
         elif isinstance(additional_doc_filters, list):
             for f in additional_doc_filters:
-                create_doc(doc_name, f, doc_contents, additional_doc_settings)
+                create_doc(doc_name, f, doc_contents, settings)
             filters = ''
         elif isinstance(additional_doc_filters, dict):
             filters = additional_doc_filters.get(doc_ext, '')
             if isinstance(filters, list):
                 for f in filters:
-                    create_doc(doc_name, f, doc_contents, additional_doc_settings)
+                    create_doc(doc_name, f, doc_contents, settings)
                 filters = ''
         else:
             msg = "received unexpected additional_doc_filters arg class %s"
@@ -326,10 +343,10 @@ class Filter(dexy.plugin.Plugin):
 
 
         if len(filters) == 0 or self.setting('keep-originals'):
-            doc = create_doc(doc_name, '', doc_contents, additional_doc_settings)
+            doc = create_doc(doc_name, '', doc_contents, settings)
 
         if len(filters) > 0:
-            doc = create_doc(doc_name, filters, doc_contents, additional_doc_settings)
+            doc = create_doc(doc_name, filters, doc_contents, settings)
 
         return doc
 
