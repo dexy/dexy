@@ -33,7 +33,7 @@ setup(
         install_requires = [
             # for internal dexy use or ubiquitous filters
             'PyYAML',
-            'cashew>=0.1',
+            'cashew>=0.2.0',
             'chardet',
             'pexpect',
             'python-modargs>=1.7',
