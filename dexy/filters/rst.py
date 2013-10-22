@@ -115,6 +115,7 @@ class RstBody(RestructuredTextBase):
     """
     aliases = ['rstbody']
     _settings = {
+            'set-title' : ("Whether to set document title.", True),
             'output-extensions' : ['.html', '.tex']
             }
 
@@ -138,7 +139,7 @@ class RstBody(RestructuredTextBase):
         except AttributeError as e:
             raise dexy.exceptions.InternalDexyProblem(str(e))
 
-        if parts.has_key('title') and parts['title']:
+        if self.setting('set-title') and parts.has_key('title') and parts['title']:
             self.update_all_args({'title' : parts['title']})
 
         self.log_debug("docutils warnings:\n%s\n" % warning_stream.getvalue())
@@ -169,6 +170,7 @@ class RstMeta(RestructuredTextBase):
                 writer_name=writer_name,
                 settings_overrides=settings_overrides
                 )
+
 
         biblio_keys = ['subtitle', 'version', 'title', 'docinfo', 'author',
                 'authors', 'organization', 'status', 'date', 'copyright',
