@@ -38,8 +38,11 @@ class FluidHtml(DexyFilter):
             %(css_framework)s
             %(buttons)s
             %(pygments_css)s
+
+            /* custom css */
             %(custom_css)s
         </style>
+        <!-- custom js -->
         %(custom_js)s
     </head>
     <body>
