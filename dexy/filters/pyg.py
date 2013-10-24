@@ -64,7 +64,7 @@ class SyntaxHighlightAsciidoctor(DexyFilter):
             }
 
     def process(self):
-        if self.prev_filter.alias == 'idio':
+        if self.prev_filter and self.prev_filter.alias == 'idio':
             lexer_alias = file_ext_to_lexer_alias_cache[self.prev_filter.prev_ext]
         else:
             lexer_alias = file_ext_to_lexer_alias_cache[self.input_data.ext]
