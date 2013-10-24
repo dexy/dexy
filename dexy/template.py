@@ -108,6 +108,11 @@ class Template(dexy.plugin.Plugin):
                 msg = "%s\npushd %s" % (error, template_dir)
                 raise dexy.exceptions.TemplateException(msg)
 
+            if wrapper.state == 'error':
+                template_dir = os.path.abspath(".")
+                msg = "pushd %s" % (template_dir)
+                raise dexy.exceptions.TemplateException(msg)
+
             yield(wrapper)
 
     def validate(self):
