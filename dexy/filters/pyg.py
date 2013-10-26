@@ -54,6 +54,8 @@ class SyntaxHighlightRstFilter(DexyFilter):
             section_output = ".. code:: %s\n\n%s" % (lexer_alias, with_spaces)
             self.output_data[section_name] = section_output
 
+        self.output_data.save()
+
 class SyntaxHighlightAsciidoctor(DexyFilter):
     """
     Surrounds code with highlighting instructions for Asciidoctor
@@ -72,6 +74,8 @@ class SyntaxHighlightAsciidoctor(DexyFilter):
         for section_name, section_input in self.input_data.iteritems():
             section_output = "[source,%s]\n----\n%s\n----\n" % (lexer_alias, section_input)
             self.output_data[section_name] = section_output
+
+        self.output_data.save()
 
 class PygmentsFilter(DexyFilter):
     """
