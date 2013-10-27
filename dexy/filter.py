@@ -99,6 +99,17 @@ class Filter(dexy.plugin.Plugin):
     def __init__(self, doc=None):
         self.doc = doc
 
+    def filter_commands(self):
+        """
+        Return dictionary of filter command canonical names and method objects.
+        """
+        fcmds = {}
+        for m in dir(self):
+            if m.startswith("docmd_"):
+                key = m.replace("docmd_", "")
+                fcmds[key] = getattr(self, m)
+        return fcmds
+
     def final_ext(self):
         return self.doc.output_data().ext
 

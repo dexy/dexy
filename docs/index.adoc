@@ -55,7 +55,9 @@ can be called as follows:
 
 {{ d['commands.sh|idio|shint|asciisyn']['ping'] }}
 
-So, if necessary the `resolve_argv` command calls `resolve_plugin_command` to
+{{ d['/tests/test_commands.py|idio|asciisyn']['viewer-ping'] }}
+
+If necessary the `resolve_argv` command calls `resolve_plugin_command` to
 look in dexy plugins for the requested command:
 
 {{ src('dexy/commands/__init__.py', 'resolve_plugin_command') }}
@@ -71,15 +73,11 @@ there's a problem:
 
 {{ src('dexy/commands/__init__.py', 'parse_and_run_cmd') }}
 
-The `help` and `version` commands are defined in the `__init__.py` file also:
+The `help` and `version` commands are also defined in the `__init__.py` file:
 
 {{ src('dexy/commands/__init__.py', 'help_command') }}
 
 {{ src('dexy/commands/__init__.py', 'version_command') }}
-
-And it calls `load_plugins` to ensure that all dexy plugins have been loaded:
-
-{{ d['/dexy/commands/__init__.py|idio|asciisyn']['load-plugins'] }}
 
 === cite.py
 
@@ -104,3 +102,49 @@ generates an example file for you containing all the default dexy options:
 
 {{ d['commands.sh|idio|shint|asciisyn']['conf'] }}
 
+If a config file already exists, or if you use the `-p` flag, then config
+options are written to stdout instead of written to a file.
+
+{{ d['/tests/test_commands.py|idio|asciisyn']['conf'] }}
+
+=== dirs.py
+
+These commands expose methods for creating and removing dexy's working directories.
+
+The `setup` and `cleanup` command create and remove working directories respectively:
+
+{{ src('dexy/commands/dirs.py', 'setup_command') }}
+
+{{ src('dexy/commands/dirs.py', 'cleanup_command') }}
+
+The `reset` command cleans out any working files and leaves you with a fresh setup:
+
+{{ src('dexy/commands/dirs.py', 'reset_command') }}
+
+=== fcmds.py
+
+Filter commands are intended to be a way for filters to expose some information
+to users. For example, filter commands could provide a way for an API to list
+available methods.
+
+{{ src('dexy/commands/fcmds.py', 'fcmds_command') }}
+
+The `fcmds_command` lists filter commands:
+
+{{ d['commands.sh|idio|shint|asciisyn']['fcmds'] }}
+
+To run a filter command you need to pass the alias and the command name:
+
+{{ d['commands.sh|idio|shint|asciisyn']['run-fcmd'] }}
+
+{{ src('dexy/commands/fcmds.py', 'fcmd_command') }}
+
+=== filters.py
+
+The filters module contains dexy's command line reference for filters.
+
+{{ src('dexy/commands/filters.py', 'filters_command') }}
+
+{{ src('dexy/commands/filters.py', 'help_for_filter') }}
+
+{{ src('dexy/commands/filters.py', 'list_filters') }}

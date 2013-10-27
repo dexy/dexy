@@ -1,150 +1,111 @@
-import inspect
 from dexy.commands.utils import template_text
-from dexy.utils import s
 from pygments import highlight
+import pygments.formatters
 from pygments.lexers import PythonLexer
 import dexy.filter
+import inspect
 
-try:
-    from pygments.formatters import TerminalFormatter
-except ImportError:
-    pass
-
-def filter_command(
-        alias="", # If a filter alias is specified, more detailed help for that filter is printed.
-        example=False, # Whether to run examples
-        nocolor=False, # When source = True, whether to omit syntax highlighting
-        showall=False, # Whether to show all filters, including those which need missing software, implies versions=True
-        showmissing=False, # Whether to just show filters missing external software, implies versions=True
-        space=False, # Whether to add extra spacing to the output for extra readability
-        source=False, # Whether to include syntax-highlighted source code when displaying an indvidual filter
-        versions=False # Whether to check the installed version of external software required by filters, slower
-        ):
-    """
-    Information about available dexy filters.
-    """
-    print filters_text(**locals())
+extra_nodoc_aliseas = ('-',)
 
 def filters_command(
-        alias="", # If a filter alias is specified, more detailed help for that filter is printed.
-        example=False, # Whether to run examples
-        nocolor=False, # When source = True, whether to omit syntax highlighting
-        showall=False, # Whether to show all filters, including those which need missing software, implies versions=True
-        showmissing=False, # Whether to just show filters missing external software, implies versions=True
-        space=False, # Whether to add extra spacing to the output for extra readability
-        source=False, # Whether to include syntax-highlighted source code when displaying an indvidual filter
-        versions=False # Whether to check the installed version of external software required by filters, slower
+        alias="", # Print docs for this filter.
+        example=False, # Whether to run included examples (slower).
+        nocolor=False, # Skip syntax highlighting if showing source code.
+        source=False, # Print source code of filter.
+        versions=False # Print the installed version of external software (slower).
         ):
     """
-    Information about available dexy filters.
+    Prints list of available filters or docs for a particular filter.
     """
-    print filters_text(**locals())
-
-def filters_text(
-        alias="", # If a filter alias is specified, more detailed help for that filter is printed.
-        example=False, # Whether to run examples
-        nocolor=False, # When source = True, whether to omit syntax highlighting
-        showall=False, # Whether to show all filters, including those which need missing software, implies versions=True
-        showmissing=False, # Whether to just show filters missing external software, implies versions=True
-        space=False, # Whether to add extra spacing to the output for extra readability
-        source=False, # Whether to include syntax-highlighted source code when displaying an indvidual filter
-        versions=False # Whether to check the installed version of external software required by filters, slower
-        ):
-
-    SETTING_STRING = "  %s: %s (default value: %s)"
-    if len(alias) > 0:
-        # We want help on a particular filter
-        instance = dexy.filter.Filter.create_instance(alias)
-        text = []
-        text.append("aliases: %s" % ", ".join(instance.aliases))
-        text.append("")
-        text.append(inspect.getdoc(instance.__class__))
-        text.append("")
-        text.append("settings:")
-        for k in sorted(instance._instance_settings):
-            if not k in dexy.filter.Filter.nodoc_settings:
-                tup = instance._instance_settings[k]
-                text.append(SETTING_STRING % (k, tup[0], tup[1]))
-
-        examples = instance.setting('examples')
-        if len(examples) > 0:
-            text.append("")
-            text.append("Examples for this filter:")
-            for alias in examples:
-                try:
-                    template = dexy.template.Template.create_instance(alias)
-                except Exception:
-                    continue
-
-                text.append("")
-                text.append("  %s" % alias)
-                text.append("            %s" % dexy.utils.getdoc(template.__class__))
-
-            if example:
-                for alias in examples:
-                    template = dexy.template.Template.create_instance(alias)
-                    text.append('')
-                    text.append("Running example: %s" % s(template.__doc__))
-                    text.append('')
-                    text.append('')
-                    text.append(template_text(alias=alias))
-                    text.append('')
-
-        text.append("")
-        text.append("For online docs see http://dexy.it/docs/filters/%s" % alias)
-        if source:
-            text.append("")
-            source_code = inspect.getsource(instance.__class__)
-            if nocolor:
-                text.append(source_code)
-            else:
-                formatter = TerminalFormatter()
-                lexer = PythonLexer()
-                text.append(highlight(source_code, lexer, formatter))
-        return "\n".join(text)
-
+    if alias:
+        help_for_filter(alias, example, source, nocolor)
     else:
-        text = []
+        list_filters(versions)
 
-        text.append("Available filters:")
+def help_for_filter(alias, run_example, show_source, nocolor):
+    instance = dexy.filter.Filter.create_instance(alias)
+
+    print "aliases: %s" % ", ".join(instance.aliases)
+    print ''
+    print inspect.getdoc(instance.__class__)
+    print ''
+
+    print('settings:')
+    for k in sorted(instance._instance_settings):
+        if not k in dexy.filter.Filter.nodoc_settings:
+            tup = instance._instance_settings[k]
+            setting_s = "  %s: %s (default value: %s)"
+            print setting_s % (k, inspect.cleandoc(tup[0]).replace("\n", " "), tup[1])
+
+    examples = instance.setting('examples')
+    example_templates = dict((alias, dexy.template.Template.create_instance(alias))
+                                    for alias in examples)
+
+    if examples:
+        print ''
+        print "Examples for this filter:"
+        for alias in examples:
+            template = example_templates[alias]
+            print ''
+            print "  %s" % alias
+            print "            %s" % inspect.getdoc(template.__class__)
+
+        if run_example:
+            for alias in examples:
+                template = example_templates[alias]
+                print ''
+                print "Running example: %s" % template.setting('help')
+                print ''
+                print ''
+                print template_text(template)
+
+    print ''
+    print "For online docs see http://dexy.it/docs/filters/%s" % alias
+
+    if show_source:
+        print ''
+        source_code = inspect.getsource(instance.__class__)
+        if nocolor:
+            print source_code
+        else:
+            formatter = pygments.formatters.TerminalFormatter()
+            lexer = PythonLexer()
+            print highlight(source_code, lexer, formatter)
+
+def list_filters(versions):
+        print "Installed filters:"
         for filter_instance in dexy.filter.Filter:
-            if showall:
-                skip = False
-            else:
-                no_aliases = not filter_instance.setting('aliases')
-                no_doc = filter_instance.setting('nodoc')
-                not_dexy = not filter_instance.__class__.__module__.startswith("dexy.")
-                exclude = filter_instance.alias in ('-')
-                skip = no_aliases or no_doc or not_dexy or exclude
+            # Should we show this filter?
+            no_aliases = not filter_instance.setting('aliases')
+            no_doc = filter_instance.setting('nodoc')
+            not_dexy = not filter_instance.__class__.__module__.startswith("dexy.")
+            exclude = filter_instance.alias in extra_nodoc_aliseas
 
-            if (versions or showmissing or showall) and not skip:
+            if no_aliases or no_doc or not_dexy or exclude:
+                continue
+
+            # generate version message
+            if versions:
                 if hasattr(filter_instance, 'version'):
                     version = filter_instance.version()
+                    if version:
+                        version_message = "Installed version: %s" % version
+                    else:
+                        msg = "'%s' failed, filter may not be available."
+                        msgargs = filter_instance.version_command()
+                        version_message = msg % msgargs
                 else:
-                    version = None
-                no_version_info_available = (version is None)
-                if no_version_info_available:
                     version_message = ""
-                    if showmissing:
-                        skip = True
-                elif version:
-                    version_message = "Installed version: %s" % version
-                    if showmissing:
-                        skip = True
-                else:
-                    if not (showmissing or showall):
-                        skip = True
-                    version_message = "'%s' failed, filter may not be available." % filter_instance.version_command()
 
-            if not skip:
-                filter_help = "  " + filter_instance.alias + " : " + filter_instance.setting('help').splitlines()[0]
-                if (versions or showmissing or (showall and not version)):
-                    filter_help += " %s" % version_message
-                text.append(filter_help)
 
-        text.append("\nFor more information about a particular filter, use the -alias flag and specify the filter alias.")
-        if space:
-            sep = "\n\n"
-        else:
-            sep = "\n"
-        return sep.join(text)
+            filter_help = "  " + filter_instance.alias + \
+                    " : " + filter_instance.setting('help').splitlines()[0]
+
+            if versions and version_message:
+                filter_help += " %s" % version_message
+
+            print filter_help
+
+        print ''
+        print inspect.cleandoc("""For more information about a particular filter,
+        use the -alias flag and specify the filter alias.""")

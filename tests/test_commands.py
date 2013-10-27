@@ -108,7 +108,7 @@ def test_viewer_command(stdout):
     dexy.commands.run()
     assert "pong" in stdout.getvalue()
 
-### "dexy-conf"
+### "conf"
 @patch.object(sys, 'argv', ['dexy', 'conf'])
 @patch('sys.stdout', new_callable=StringIO)
 def test_conf_command(stdout):
@@ -136,6 +136,7 @@ def test_conf_command_with_print_option(stdout):
         assert not os.path.exists("dexy.conf")
         assert "artifactsdir" in stdout.getvalue()
 
+### "filters"
 def test_filters_text():
     text = dexy.commands.filters.filters_text()
     assert "pyg : Apply Pygments" in text

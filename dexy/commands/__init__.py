@@ -21,8 +21,8 @@ from dexy.commands.dirs import reset_command
 from dexy.commands.dirs import setup_command
 from dexy.commands.fcmds import fcmd_command
 from dexy.commands.fcmds import fcmds_command
-from dexy.commands.filters import filter_command
 from dexy.commands.filters import filters_command
+from dexy.commands.filters import filters_command as filter_command
 from dexy.commands.grep import grep_command
 from dexy.commands.info import info_command
 from dexy.commands.it import dexy_command
@@ -129,7 +129,7 @@ def help_command(
         f=False, # If a filter alias is specified, help for that filter is printed.
         on=False # The dexy command to get help on.
     ):
-    # TODO list plugin commands too when -on not specified
+    # TODO list commands defined in plugins too
     if f:
         filter_command(f, example)
     elif filters:
@@ -137,10 +137,12 @@ def help_command(
     elif reports:
         reports_command()
     else:
-        args.help_command(prog, dexy_cmd_mod, dexy_default_cmd, on)
-
-def help_text(on=False):
-    return args.help_text(prog, dexy_cmd_mod, dexy_default_cmd, on)
+        try:
+            args.help_command(prog, dexy_cmd_mod, dexy_default_cmd, on)
+        except KeyError:
+            sys.stderr.write("Could not find help on '%s'." % on)
+            sys.stderr.write(os.linesep)
+            sys.exit(1)
 
 def version_command():
     """

@@ -166,10 +166,7 @@ def init_wrapper(modargs):
     kwargs = skip_params(kwargs)
     return dexy.wrapper.Wrapper(**kwargs)
 
-def template_text(
-        alias=None
-    ):
-    template = dexy.template.Template.create_instance(alias)
+def template_text(template):
     for wrapper in template.dexy(True):
         man_doc_key = 'doc:dexy.rst|jinja|rst2man'
         if man_doc_key in wrapper.nodes:
