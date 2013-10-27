@@ -19,8 +19,8 @@ def grep_command(
         limit=10, # maximum number of matching records to print
         contents=False, # print out the contents of each matched file
         lines=False, # maximum number of lines of content to print
-        artifactsdir=defaults['artifacts_dir'], # location of directory in which to store artifacts
-        logdir=defaults['log_dir'] # location of directory in which to store logs
+        artifactsdir=defaults['artifacts_dir'], # Where dexy stores working files.
+        logdir=defaults['log_dir'] # DEPRECATED
         ):
     """
     Search documents and sections.
@@ -33,9 +33,11 @@ def grep_command(
         sys.exit(1)
     else:
         if expr:
-            matches = sorted([data for data in batch if expr in data.key], key=attrgetter('key'))
+            matches = sorted([data for data in batch if expr in data.key],
+                    key=attrgetter('key'))
         elif key:
-            matches = sorted([data for data in batch if key == data.key], key=attrgetter('key'))
+            matches = sorted([data for data in batch if key == data.key],
+                    key=attrgetter('key'))
         else:
             raise dexy.exceptions.UserFeedback("Must specify either expr or key")
 
@@ -61,14 +63,14 @@ def print_match(match, keys, keyexpr, contents, keylimit, lines):
             for section_name, section_contents in match.data().iteritems():
                 print "  section: %s" % section_name
                 print
-                print_contents(section_contents)
+                print_contents(section_contents, lines)
                 print
         elif isinstance(match, KeyValue):
             pass
         elif isinstance(match, Generic):
             try:
                 json.dumps(unicode(match))
-                print_contents(unicode(match))
+                print_contents(unicode(match), lines)
             except UnicodeDecodeError:
                 print "  not printable"
 
@@ -83,7 +85,7 @@ def print_keys(pkeys, keylimit, lines):
     if n > keylimit:
         print "  only printed first %s of %s total keys" % (keylimit, n)
 
-def print_contents(text):
+def print_contents(text, lines):
     text_lines = text.splitlines()
     for i, line in enumerate(text_lines):
         if lines and i > lines-1:

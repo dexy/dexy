@@ -152,7 +152,19 @@ The filters module contains dexy's command line reference for filters.
 === grep.py
 
 The grep interface is a way to search on the command line for dexy docs and
-keys within docs.  The dexy viewer plugin presents similar information in a
-web-based interface.
+keys within docs.  (The dexy viewer plugin presents similar information in a
+web-based interface.)
 
+{{ src('dexy/commands/grep.py', 'grep_command') }}
 
+The grep command calls `print_match` for each match:
+
+{{ src('dexy/commands/grep.py', 'print_match') }}
+
+Where it reaches a document which has keys, it may also print the keys (depending on options):
+
+{{ src('dexy/commands/grep.py', 'print_keys') }}
+
+And contents of files may also be printed:
+
+{{ src('dexy/commands/grep.py', 'print_contents') }}
