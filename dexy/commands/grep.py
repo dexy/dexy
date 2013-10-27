@@ -23,61 +23,10 @@ def grep_command(
         logdir=defaults['log_dir'] # location of directory in which to store logs
         ):
     """
-    Search for a Dexy document in the previously run batch. Prints out document
-    keys which include the expression.
+    Search documents and sections.
     """
     wrapper = init_wrapper(locals())
     batch = Batch.load_most_recent(wrapper)
-
-    def print_keys(pkeys):
-        n = len(pkeys)
-        if n > keylimit:
-            pkeys = pkeys[0:keylimit]
-        
-        for key in pkeys:
-            print '  ', key
-
-        if n > keylimit:
-            print "  only printed first %s of %s total keys" % (keylimit, n)
-
-    def print_contents(text):
-        text_lines = text.splitlines()
-        for i, line in enumerate(text_lines):
-            if lines and i > lines-1:
-                continue
-            print "  ", line
-
-        if lines and lines < len(text_lines):
-            print "   only printed first %s of %s total lines" % (lines, len(text_lines))
-
-    def print_match(match):
-        print match.key, "\tcache key:", match.storage_key
-
-        if hasattr(match, 'keys'):
-            if keyexpr:
-                print_keys([key for key in match.keys() if keyexpr in key])
-            elif keys:
-                print_keys(match.keys())
-
-        if contents:
-            if isinstance(match, Sectioned):
-                for section_name, section_contents in match.data().iteritems():
-                    print "  section: %s" % section_name
-                    print
-                    print_contents(section_contents)
-                    print
-            elif isinstance(match, KeyValue):
-                pass
-            elif isinstance(match, Generic):
-                try:
-                    json.dumps(unicode(match))
-                    print_contents(unicode(match))
-                except UnicodeDecodeError:
-                    print "  not printable"
-
-    def print_matches(matches):
-        for match in matches:
-            print_match(match)
    
     if not batch:
         print "you need to run dexy first"
@@ -92,7 +41,54 @@ def grep_command(
 
         n = len(matches)
         if n > limit:
-            print_matches(matches[0:limit])
-            print "only printed first %s of %s total matches" % (limit, n)
-        else:
-            print_matches(matches)
+            print "only printing first %s of %s total matches" % (limit, n)
+            matches = matches[0:limit]
+
+        for match in matches:
+            print_match(matches, keys, keyexpr, contents, keylimit, lines)
+
+def print_match(match, keys, keyexpr, contents, keylimit, lines):
+    print match.key, "\tcache key:", match.storage_key
+
+    if hasattr(match, 'keys'):
+        if keyexpr:
+            print_keys([key for key in match.keys() if keyexpr in key], keylimit, lines)
+        elif keys:
+            print_keys(match.keys(), keylimit, lines)
+
+    if contents:
+        if isinstance(match, Sectioned):
+            for section_name, section_contents in match.data().iteritems():
+                print "  section: %s" % section_name
+                print
+                print_contents(section_contents)
+                print
+        elif isinstance(match, KeyValue):
+            pass
+        elif isinstance(match, Generic):
+            try:
+                json.dumps(unicode(match))
+                print_contents(unicode(match))
+            except UnicodeDecodeError:
+                print "  not printable"
+
+def print_keys(pkeys, keylimit, lines):
+    n = len(pkeys)
+    if n > keylimit:
+        pkeys = pkeys[0:keylimit]
+    
+    for key in pkeys:
+        print '  ', key
+
+    if n > keylimit:
+        print "  only printed first %s of %s total keys" % (keylimit, n)
+
+def print_contents(text):
+    text_lines = text.splitlines()
+    for i, line in enumerate(text_lines):
+        if lines and i > lines-1:
+            continue
+        print "  ", line
+
+    if lines and lines < len(text_lines):
+        print "   only printed first %s of %s total lines" % (lines, len(text_lines))

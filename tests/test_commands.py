@@ -45,9 +45,6 @@ def test_grep_without_expr(stderr):
         assert e.message == 1
         assert 'Must specify either expr or key' in stderr.getvalue()
 
-def test_help_text():
-    assert "Available commands" in dexy.commands.help_text()
-
 @patch.object(sys, 'argv', ['dexy'])
 @patch('sys.stderr', new_callable=StringIO)
 def test_run_with_userfeedback_exception(stderr):
@@ -137,27 +134,38 @@ def test_conf_command_with_print_option(stdout):
         assert "artifactsdir" in stdout.getvalue()
 
 ### "filters"
-def test_filters_text():
-    text = dexy.commands.filters.filters_text()
-    assert "pyg : Apply Pygments" in text
+@patch.object(sys, 'argv', ['dexy', 'filters'])
+@patch('sys.stdout', new_callable=StringIO)
+def test_filters_cmd(stdout):
+    dexy.commands.run()
+    assert "pyg : Apply Pygments" in stdout.getvalue()
 
-def test_filters_text_single_alias():
-    text = dexy.commands.filters.filters_text(alias="pyg")
-    assert "pyg, pygments" in text
+@patch.object(sys, 'argv', ['dexy', 'filters', '-alias', 'pyg'])
+@patch('sys.stdout', new_callable=StringIO)
+def test_filters_cmd_alias(stdout):
+    dexy.commands.run()
+    assert "pyg, pygments" in stdout.getvalue()
 
-def test_filters_text_versions__slow():
-    raise SkipTest()
-    text = dexy.commands.filters.filters_text(versions=True)
-    assert "Installed version: Python" in text
+@patch.object(sys, 'argv', ['dexy', 'filters', '-versions'])
+@patch('sys.stdout', new_callable=StringIO)
+def test_filters_text_versions__slow(stdout):
+    dexy.commands.run()
+    assert "Installed version: Python" in stdout.getvalue()
 
-def test_filters_text_single_alias_source():
-    text = dexy.commands.filters.filters_text(alias="pyg", source=True)
+@patch.object(sys, 'argv', ['dexy', 'filters', '-alias', 'pyg', '-source'])
+@patch('sys.stdout', new_callable=StringIO)
+def test_filters_text_single_alias_source(stdout):
+    dexy.commands.run()
+    text = stdout.getvalue()
     assert "pyg, pygments" in text
     assert "class" in text
     assert "PygmentsFilter" in text
     assert not "class PygmentsFilter" in text
 
-def test_filters_text_single_alias_source_nocolor():
-    text = dexy.commands.filters.filters_text(alias="pyg", source=True, nocolor=True)
+@patch.object(sys, 'argv', ['dexy', 'filters', '-alias', 'pyg', '-source', '-nocolor'])
+@patch('sys.stdout', new_callable=StringIO)
+def test_filters_text_single_alias_source_nocolor(stdout):
+    dexy.commands.run()
+    text = stdout.getvalue()
     assert "pyg, pygments" in text
     assert "class PygmentsFilter" in text

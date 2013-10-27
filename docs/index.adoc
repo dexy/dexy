@@ -148,3 +148,11 @@ The filters module contains dexy's command line reference for filters.
 {{ src('dexy/commands/filters.py', 'help_for_filter') }}
 
 {{ src('dexy/commands/filters.py', 'list_filters') }}
+
+=== grep.py
+
+The grep interface is a way to search on the command line for dexy docs and
+keys within docs.  The dexy viewer plugin presents similar information in a
+web-based interface.
+
+
