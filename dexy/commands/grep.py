@@ -7,6 +7,7 @@ from dexy.utils import defaults
 from operator import attrgetter
 import dexy.exceptions
 import json
+import sys
 
 def grep_command(
         __cli_options=False, # nodoc
@@ -80,6 +81,7 @@ def grep_command(
    
     if not batch:
         print "you need to run dexy first"
+        sys.exit(1)
     else:
         if expr:
             matches = sorted([data for data in batch if expr in data.key], key=attrgetter('key'))

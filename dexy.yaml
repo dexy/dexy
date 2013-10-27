@@ -1,0 +1,6 @@
+docs/*.adoc|jinja|asciidoctor:
+    - docs/*.sh|idio|shint|asciisyn
+    - .py|idio|asciisyn:
+        - idio: { ext : '.txt' }
+    - .py|pydoc:
+        - except: "filters/__init__|setup"

@@ -1,10 +1,11 @@
 from StringIO import StringIO
-from tests.utils import tempdir
-from tests.utils import wrap
 from dexy.version import DEXY_VERSION
 from dexy.wrapper import Wrapper
 from mock import patch
 from nose.exc import SkipTest
+from nose.tools import raises
+from tests.utils import tempdir
+from tests.utils import wrap
 import dexy.commands
 import os
 import sys
@@ -29,19 +30,20 @@ def test_setup_with_dexy_conf_file():
         assert os.path.isdir("custom")
         assert not os.path.exists("artifacts")
 
+@raises(SystemExit)
 @patch.object(sys, 'argv', ['dexy', 'grep', '-expr', 'hello'])
 def test_grep():
     with wrap():
         dexy.commands.run()
 
 @patch.object(sys, 'argv', ['dexy', 'grep'])
-@patch('sys.stdout', new_callable=StringIO)
-def test_grep_without_expr(stdout):
+@patch('sys.stderr', new_callable=StringIO)
+def test_grep_without_expr(stderr):
     try:
         dexy.commands.run()
     except SystemExit as e:
         assert e.message == 1
-        assert 'Option -expr' in stdout.getvalue()
+        assert 'Must specify either expr or key' in stderr.getvalue()
 
 def test_help_text():
     assert "Available commands" in dexy.commands.help_text()
@@ -99,15 +101,14 @@ def test_run_dexy(stdout):
         wrapper.create_dexy_dirs()
         dexy.commands.run()
 
+### "viewer-ping"
 @patch.object(sys, 'argv', ['dexy', 'viewer:ping'])
 @patch('sys.stdout', new_callable=StringIO)
 def test_viewer_command(stdout):
-    try:
-        dexy.commands.run()
-        assert "pong" in stdout.getvalue()
-    except SystemExit:
-        raise SkipTest
+    dexy.commands.run()
+    assert "pong" in stdout.getvalue()
 
+### "dexy-conf"
 @patch.object(sys, 'argv', ['dexy', 'conf'])
 @patch('sys.stdout', new_callable=StringIO)
 def test_conf_command(stdout):

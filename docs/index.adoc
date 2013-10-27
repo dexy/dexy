@@ -1,0 +1,106 @@
+= Dexy Developer Documentation
+:toc:
+:source-highlighter: pygments
+
+{% macro src(fn, section, language="python") %}
+[source,{{ language }}]
+----
+{{ d['/' + fn + '|pydoc'][section + ":source"] }}
+----
+{% endmacro %}
+
+
+== Welcome
+
+This is internal developer documentation for dexy. Its primary purpose is to
+help improve the quality of dexy code.
+
+== Command Line Interface
+
+The command line interface for dexy is driven by
+https://pypi.python.org/pypi/python-modargs[python-modargs].
+
+=== init.py
+
+Any function ending with `_command` is automatically exposed as a command. To
+keep modules to a manageable size, the various dexy commands are defined in
+different modules, but all are imported into `dexy.commands` in the
+`__init__.py` file so they can be available to modargs within a single module:
+
+{{ d['/dexy/commands/__init__.py|idio|asciisyn']['import-all-commands'] }}
+
+The `run` method in `dexy.commands` is listed in `setup.py` as a console script entry point:
+
+{{ d['/setup.py|idio|asciisyn']['entry-points'] }}
+
+And this is the first method which will be called whenever a user enters a `dexy` command:
+
+{{ src('dexy/commands/__init__.py', 'run') }}
+
+The `capture_warnings` method just hides irrelevant warning messages from dexy users:
+
+{{ src('dexy/commands/__init__.py', 'capture_warnings') }}
+
+Dexy can load a lot of different libraries as it runs various filters, and
+deprecation messages and similar warnings are confusing and annoying for end
+users.
+
+The `resolve_argv` method is called next:
+
+{{ src('dexy/commands/__init__.py', 'resolve_argv') }}
+
+It's possible for additional commands to be added to dexy via the plugin
+system.  For example, the `dexy-viewer` plugin defines a `ping` command which
+can be called as follows:
+
+{{ d['commands.sh|idio|shint|asciisyn']['ping'] }}
+
+So, if necessary the `resolve_argv` command calls `resolve_plugin_command` to
+look in dexy plugins for the requested command:
+
+{{ src('dexy/commands/__init__.py', 'resolve_plugin_command') }}
+
+Returning to the `run` command we started with:
+
+{{ src('dexy/commands/__init__.py', 'run') }}
+
+The parsed arguments, module object and a default command are passed to
+`parse_and_run_cmd` which delegates to the modargs command of the same name,
+and wraps the call with error handling to provide nicer error messages if
+there's a problem:
+
+{{ src('dexy/commands/__init__.py', 'parse_and_run_cmd') }}
+
+The `help` and `version` commands are defined in the `__init__.py` file also:
+
+{{ src('dexy/commands/__init__.py', 'help_command') }}
+
+{{ src('dexy/commands/__init__.py', 'version_command') }}
+
+And it calls `load_plugins` to ensure that all dexy plugins have been loaded:
+
+{{ d['/dexy/commands/__init__.py|idio|asciisyn']['load-plugins'] }}
+
+=== cite.py
+
+The `dexy cite` command prints out an academic citation for dexy.
+
+{{ src('dexy/commands/cite.py', 'cite_command') }}
+
+{{ d['commands.sh|idio|shint|asciisyn']['cite'] }}
+
+Currently the bibtex format is supported:
+
+{{ src('dexy/commands/cite.py', 'bibtex_text') }}
+
+=== conf.py
+
+The main dexy command has a lot of command line options, and for convenience
+you can save the option values in a `dexy.conf` file in your project so you
+don't have to remember and type them all the time. The `dexy conf` command
+generates an example file for you containing all the default dexy options:
+
+{{ src('dexy/commands/conf.py', 'conf_command') }}
+
+{{ d['commands.sh|idio|shint|asciisyn']['conf'] }}
+

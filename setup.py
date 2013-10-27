@@ -21,14 +21,16 @@ setup(
             "Topic :: Text Processing :: Markup :: LaTeX"
             ],
         description='Document Automation',
+        ### "entry-points"
         entry_points = {
-            'pygments.lexers' : [
-                'rst+django = dexy.filters.utils:RstDjangoLexer'
-                ],
             'console_scripts' : [
                 'dexy = dexy.commands:run'
+                ],
+            'pygments.lexers' : [
+                'rst+django = dexy.filters.utils:RstDjangoLexer'
                 ]
             },
+        ### @end
         include_package_data = True,
         install_requires = [
             # for internal dexy use or ubiquitous filters

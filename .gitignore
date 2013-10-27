@@ -13,3 +13,4 @@ cover/
 .coverage
 bugs
 setup.cfg
+.dexy

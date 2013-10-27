@@ -48,8 +48,8 @@ class Command(Plugin):
     __metaclass__ = PluginMeta
     _settings = {}
     aliases = []
-    DEFAULT_COMMAND = None
-    NAMESPACE = None
+    default_cmd = None
+    namespace = None
 
 class TemplatePlugin(Plugin):
     """

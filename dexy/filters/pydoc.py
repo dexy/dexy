@@ -8,6 +8,7 @@ import os
 import pkgutil
 import sys
 import sqlite3
+from unittest.case import SkipTest
 
 class PythonIntrospection(DexyFilter):
     """
@@ -51,7 +52,7 @@ class PythonIntrospection(DexyFilter):
         target = os.path.join(self.workspace(), name)
         try:
             return imp.load_source("dummy", target)
-        except ImportError as e:
+        except (ImportError, SkipTest) as e:
             self.handle_fail(name, e)
 
 class Pydoc(PythonIntrospection):

@@ -2,8 +2,10 @@ from dexy.version import DEXY_VERSION
 import datetime
 import dexy.exceptions
 
+# TODO list available citation types
+
 def cite_command(
-        fmt='bibtex'
+        fmt='bibtex' # desired format of citation
         ):
     """
     How to cite dexy in papers.
@@ -11,7 +13,8 @@ def cite_command(
     if fmt == 'bibtex':
         cite_bibtex()
     else:
-        raise dexy.exceptions.UserFeedback("Don't know how to provide citation in '%s' format" % fmt)
+        msg = "Don't know how to provide citation in '%s' format"
+        raise dexy.exceptions.UserFeedback(msg % fmt)
 
 def bibtex_text():
     args = {

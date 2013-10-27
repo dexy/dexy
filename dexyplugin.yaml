@@ -1,0 +1,4 @@
+reporter:output:
+    help: Store output in separate gh-pages branch.
+    readme-filename: None
+    dir: ../dexy-dev-docs
