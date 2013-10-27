@@ -1,5 +1,7 @@
 from StringIO import StringIO
+from dexy.data import Sectioned
 from dexy.doc import Doc
+from dexy.exceptions import InactivePlugin
 from dexy.utils import char_diff
 from dexy.utils import tempdir
 from mock import MagicMock
@@ -7,12 +9,8 @@ from nose.exc import SkipTest
 import os
 import re
 import sys
-from dexy.data import Sectioned
 
-# make sure plugins are loaded
-import dexy.filters
-import dexy.reporters
-import dexy.parsers
+import dexy.load_plugins
 
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
@@ -34,10 +32,10 @@ class wrap(tempdir):
 
     def __exit__(self, type, value, traceback):
         self.remove_temp_dir()
-        if isinstance(value, dexy.exceptions.InactiveFilter):
+        if isinstance(value, InactivePlugin):
             print value.message
             raise SkipTest
-            return True # swallow InactiveFilter error
+            return True # swallow InactivePlugin error
 
 class runfilter(wrap):
     """
@@ -83,7 +81,7 @@ class runfilter(wrap):
 
             doc = run_example(doc_key, self.doc_contents)
 
-        except dexy.exceptions.InactiveFilter:
+        except InactivePlugin:
             raise SkipTest
 
         return doc
@@ -132,7 +130,7 @@ def assert_output_cached(filter_alias, doc_contents, ext=".txt", min_filesize=No
             if min_filesize:
                 assert doc.output_data().filesize() > min_filesize
         elif doc.wrapper.state == 'error':
-            if isinstance(doc.wrapper.error, dexy.exceptions.InactiveFilter):
+            if isinstance(doc.wrapper.error, InactivePlugin):
                 raise SkipTest()
             else:
                 raise doc.wrapper.error

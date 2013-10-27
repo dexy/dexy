@@ -54,7 +54,25 @@ class SplitHtmlFilter(DexyFilter):
                     pages[section_label] = (section_description, filename,)
 
                     new_page = self.add_doc(filepath, header + section_content + footer)
-                    new_page.update_setting('title', section_label)
+                    new_page.update_setting('title', re.sub("\s+\(.+\)\s*(<.*>\s*)*", "", section_label))
+                    print "title is '%s'" % new_page.setting('title')
+
+                    apply_ws_to_content = self.doc.safe_setting("apply-ws-to-content")
+                    apply_ws_to_content_variable_start_string = self.doc.safe_setting("apply-ws-to-content-variable-start-string")
+                    apply_ws_to_content_variable_end_string = self.doc.safe_setting("apply-ws-to-content-variable-end-string")
+                    apply_ws_to_content_block_start_string = self.doc.safe_setting("apply-ws-to-content-block-start-string")
+                    apply_ws_to_content_block_end_string = self.doc.safe_setting("apply-ws-to-content-block-end-string")
+
+                    if apply_ws_to_content:
+                        new_page.update_setting('apply-ws-to-content', apply_ws_to_content)
+                    if apply_ws_to_content_variable_start_string:
+                        new_page.update_setting('apply-ws-to-content-variable-start-string', apply_ws_to_content_variable_start_string)
+                    if apply_ws_to_content_variable_end_string:
+                        new_page.update_setting('apply-ws-to-content-variable-end-string', apply_ws_to_content_variable_end_string)
+                    if apply_ws_to_content_block_start_string:
+                        new_page.update_setting('apply-ws-to-content-block-start-string', apply_ws_to_content_block_start_string)
+                    if apply_ws_to_content_block_end_string:
+                        new_page.update_setting('apply-ws-to-content-block-end-string', apply_ws_to_content_block_end_string)
 
                     self.log_debug("added key %s to %s ; links to file %s" %
                               (filepath, self.key, new_page.name))

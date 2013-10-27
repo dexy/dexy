@@ -4,6 +4,13 @@ import json
 import logging
 import markdown
 
+#safe_mode_docstring = """Whether to escape, remove or replace HTML blocks.
+#
+#Set to True or 'escape' to escape HTML, 'remove' to remove HTML, 'replace' to replace with replacement-text.
+#"""
+#            'safe-mode' : (safe_mode_docstring, False),
+#            'replacement-text' : ("Text to replace HTML blocks if safe-mode is 'replace'.", None),
+
 class MarkdownFilter(DexyFilter):
     """
     Runs a Markdown processor to convert markdown to HTML.

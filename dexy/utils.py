@@ -28,6 +28,7 @@ defaults = {
     'config_file' : 'dexy.conf',
     'configs' : '',
     'debug' : False,
+    'directory' : ".",
     'dont_use_cache' : False,
     'dry_run' : False,
     'encoding' : 'utf-8',
@@ -54,7 +55,8 @@ defaults = {
     'strace' : False,
     'target' : False,
     'timing' : True,
-    'uselocals' : False
+    'uselocals' : False,
+    'writeanywhere' : False
 }
 
 log_levels = {

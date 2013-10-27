@@ -375,8 +375,6 @@ class Inputs(TemplatePlugin):
         return self.filter_instance.doc.walk_input_docs()
 
     def run(self):
-        self.map_relative_refs = {}
-
         input_docs = {}
         for doc in self.input_tasks():
             input_docs[doc.key] = doc

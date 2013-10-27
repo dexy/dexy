@@ -136,6 +136,8 @@ class Doc(dexy.node.Node):
         self.update_all_settings({key : value})
 
     def update_all_settings(self, new_settings):
+        self.update_settings(new_settings)
+
         for data in self.datas():
             data.update_settings(new_settings)
 
@@ -246,6 +248,11 @@ class Doc(dexy.node.Node):
         return info
 
     def run(self):
+        if self.wrapper.directory != '.':
+            if not self.wrapper.directory in self.name:
+                print "skipping", self.name, "not in", self.wrapper.directory
+                return
+
         self.start_time = time.time()
 
         if self.name in self.wrapper.filemap:
@@ -279,6 +286,16 @@ class Doc(dexy.node.Node):
             doc.check_is_cached()
             for task in doc:
                 task()
+
+    def add_to_lookup_nodes(self):
+        self.wrapper.add_node_to_lookup_nodes(self.key, self)
+        self.wrapper.add_node_to_lookup_nodes(self.output_data().output_name(), self)
+        self.wrapper.add_node_to_lookup_nodes(self.output_data().title(), self)
+
+    def add_to_lookup_sections(self):
+        # TODO we don't want this for all docs, just docs it makes sense to link to.
+        for section_name in self.output_data().keys():
+            self.wrapper.add_node_to_lookup_sections(section_name, self)
 
     def output_data(self):
         """

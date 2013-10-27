@@ -2,24 +2,10 @@ from dexy.version import DEXY_VERSION
 import dexy.utils
 import platform
 from cashew.exceptions import UserFeedback
+from cashew.exceptions import InactivePlugin
 
 class NoFilterOutput(UserFeedback):
     pass
-
-class InactiveFilter(UserFeedback):
-    def __init__(self, filter_alias_or_instance):
-        from dexy.utils import s
-        if isinstance(filter_alias_or_instance, basestring):
-            msg = """You are trying to use a filter '%s' which isn't active.
-            Some additional software may need to be installed first."""
-            self.message = s(msg % filter_alias_or_instance)
-        else:
-            self.message = "You are trying to use a filter '%s' which isn't active." % filter_alias_or_instance.alias
-            executable = filter_alias_or_instance.setting('executable')
-            if executable:
-                self.message += " The software '%s' is required." % executable
-            else:
-                self.message += " Some additional software may need to be installed first."
 
 class CircularDependency(UserFeedback):
     pass

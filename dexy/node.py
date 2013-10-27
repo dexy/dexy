@@ -241,14 +241,14 @@ class Node(dexy.plugin.Plugin):
                 yield self
                 self.transition('ran')
 
-            elif self.state == 'running':
-                raise dexy.exceptions.CircularDependency(self.key)
-
             elif self.state in ('consolidated',):
                 self.log_info("using cache for self and any children")
 
             elif self.state in ('ran',):
-                pass # do nothing
+                self.log_info("already ran in this batch")
+
+            elif self.state == 'running':
+                raise dexy.exceptions.CircularDependency(self.key)
 
             else:
                 raise dexy.exceptions.UnexpectedState("%s in %s" % (self.state, self.key))
@@ -261,6 +261,13 @@ class Node(dexy.plugin.Plugin):
                 task()
         self.wrapper.current_task = self
         self.run()
+        self.wrapper.current_task = None
+
+    def add_to_lookup_nodes(self):
+        pass
+
+    def add_to_lookup_sections(self):
+        pass
 
     def run(self):
         """

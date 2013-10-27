@@ -10,6 +10,27 @@ import os
 import re
 import traceback
 
+class PassThroughWhitelistUndefined(jinja2.StrictUndefined):
+    call_whitelist = ('link', 'section',)
+
+    def wrap_arg(self, arg):
+        if isinstance(arg, basestring):
+            return "'%s'" % unicode(arg)
+        else:
+            return unicode(arg)
+
+    def __call__(self, *args, **kwargs):
+        name = self._undefined_name
+
+        if name in self.call_whitelist:
+            msgargs = {
+                    'name' : name,
+                    'argstring' : ",".join(self.wrap_arg(a) for a in args)
+                    }
+            return "{{ %(name)s(%(argstring)s) }}" % msgargs
+        else:
+            self._fail_with_undefined_error(*args, **kwargs)
+
 class TemplateFilter(DexyFilter):
     """
     Base class for templating system filters such as JinjaFilter. Templating
@@ -97,7 +118,7 @@ class JinjaFilter(TemplateFilter):
             if k in self.__class__._settings and not k in skip_settings:
                 env_attrs[underscore_k] = v
 
-        env_attrs['undefined'] = jinja2.StrictUndefined
+        env_attrs['undefined'] = PassThroughWhitelistUndefined
 
         if self.ext in (".tex", ".wiki") and self.setting('changetags'):
             if 'lyxjinja' in self.doc.filter_aliases:

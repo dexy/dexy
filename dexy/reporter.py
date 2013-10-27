@@ -8,7 +8,6 @@ class Reporter(dexy.plugin.Plugin):
     """
     Base class for types of reporter.
     """
-    aliases = []
     __metaclass__ = dexy.plugin.PluginMeta
 
     _settings = {
@@ -24,7 +23,6 @@ class Reporter(dexy.plugin.Plugin):
             "readme-filename" : ("Name of README file. Set to None to not have a dexy boilerplate warning README.", "README"),
             "safety-filename" : ("Name of a file which will be created in generated dir, and checked before generated dir is removed.", ".dexy-generated"),
             }
-    _UNSET = []
 
     def is_active(self):
         return True

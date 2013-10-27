@@ -1,6 +1,6 @@
 from dexy.exceptions import InternalDexyProblem
 from dexy.exceptions import UserFeedback
-from dexy.exceptions import InactiveFilter
+from dexy.exceptions import InactivePlugin
 from dexy.filters.process import SubprocessFilter
 import re
 import os
@@ -144,7 +144,7 @@ class PexpectReplFilter(SubprocessFilter):
                     env=env)
         except pexpect.ExceptionPexpect as e:
             if "The command was not found" in str(e):
-                raise InactiveFilter(self)
+                raise InactivePlugin(self)
             else:
                 raise
 

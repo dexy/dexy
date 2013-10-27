@@ -72,7 +72,7 @@ def resolve_argv():
 def parse_and_run_cmd(argv, module, default_command):
     try:
         args.parse_and_run_command(argv, module, default_command)
-    except dexy.exceptions.UserFeedback as e:
+    except (dexy.exceptions.UserFeedback, cashew.exceptions.UserFeedback) as e:
         sys.stderr.write("Oops, there's a problem running your command. Here is the error message:" + os.linesep)
         err_msg = str(e)
         if err_msg:

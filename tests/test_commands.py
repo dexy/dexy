@@ -144,6 +144,7 @@ def test_filters_text_single_alias():
     assert "pyg, pygments" in text
 
 def test_filters_text_versions__slow():
+    raise SkipTest()
     text = dexy.commands.filters.filters_text(versions=True)
     assert "Installed version: Python" in text
 

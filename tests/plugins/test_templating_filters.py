@@ -2,6 +2,50 @@ from dexy.doc import Doc
 from dexy.filters.templating import TemplateFilter
 from dexy.filters.templating_plugins import TemplatePlugin
 from tests.utils import wrap
+from dexy.exceptions import UserFeedback
+
+def test_jinja_pass_through():
+    with wrap() as wrapper:
+        with open("_template.html", "w") as f:
+            f.write("{{ content }}")
+
+        wrapper.reports = 'ws'
+        contents = u"{{ link('input.txt') }}"
+        doc = Doc("lines.html|jinja",
+                    wrapper,
+                    [
+                        Doc("input.txt",
+                            wrapper,
+                            [],
+                            contents = "nothing to see here"
+                            )
+                        ],
+                    contents=contents,
+                    apply_ws_to_content = True
+                    )
+        wrapper.run_docs(doc)
+        assert unicode(doc.output_data()) == contents
+
+        wrapper.report()
+
+        with open("output-site/lines.html", 'r') as f:
+            lines_html = f.read()
+            assert lines_html == """<a href="/input.txt">Input</a>"""
+
+def test_jinja_pass_through_fails_if_not_whitelisted():
+    with wrap() as wrapper:
+        contents = u"{{ linxxx('foo') }}"
+        doc = Doc("lines.txt|jinja",
+                    wrapper,
+                    [],
+                    contents=contents
+                    )
+
+        try:
+            wrapper.run_docs(doc)
+        except UserFeedback as e:
+            assert "a UndefinedError problem" in str(e)
+            assert "'linxxx' is undefined" in str(e)
 
 def test_jinja_indent_function():
     with wrap() as wrapper:
@@ -67,7 +111,7 @@ def test_jinja_sectioned():
         wrapper.run_docs(node)
         assert str(node.output_data()) == "first line is 'line one'"
 
-def test_jinja_json_convert_to_dict():
+def test_jinja_json():
     with wrap() as wrapper:
         node = Doc("hello.txt|jinja",
                 wrapper,
@@ -77,24 +121,9 @@ def test_jinja_json_convert_to_dict():
                         contents = """{"foo":123}"""
                         )
                     ],
-                contents = """foo is {{ d['input.json'].json_as_dict()['foo'] }}""")
-        wrapper.run_docs(node)
-        assert str(node.output_data()) == "foo is 123"
-
-def test_jinja_json():
-    with wrap() as wrapper:
-        wrapper.debug = False
-        node = Doc("hello.txt|jinja",
-                wrapper,
-                [
-                    Doc("input.json",
-                        wrapper,
-                        [],
-                        contents = """{"foo":123}""")
-                    ],
                 contents = """foo is {{ d['input.json']['foo'] }}""")
         wrapper.run_docs(node)
-        assert wrapper.state == 'error'
+        assert str(node.output_data()) == "foo is 123"
 
 def test_jinja_undefined():
     with wrap() as wrapper:
@@ -196,7 +225,6 @@ def test_jinja_filter_custom_delims():
                 )
 
         wrapper.run_docs(node)
-        print node.output_data()
         assert node.output_data().as_text() == "1 + 1 is 2"
 
 def test_jinja_filter_set_vars():

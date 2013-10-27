@@ -89,6 +89,7 @@ def dexy_command(
         conf=defaults['config_file'], # name to use for configuration file
         configs=defaults['configs'], # list of doc config files to parse
         debug=defaults['debug'], # Prints stack traces, other debug stuff.
+        directory=defaults['directory'], # Allow processing just a subdirectory.
         dryrun=defaults['dry_run'], # if True, just parse config and print batch info, don't run dexy
         encoding=defaults['encoding'], # Default encoding. Set to 'chardet' to use chardet auto detection.
         exclude=defaults['exclude'], # comma-separated list of directory names to exclude from dexy processing
@@ -117,7 +118,8 @@ def dexy_command(
         strace=defaults['strace'], # Run dexy using strace (VERY slow)
         uselocals=defaults['uselocals'], # use cached local copies of remote URLs, faster but might not be up to date, 304 from server will override this setting
         target=defaults['target'], # Which target to run. By default all targets are run, this allows you to run only 1 bundle (and its dependencies).
-        version=False # For people who type -version out of habit
+        version=False, # For people who type -version out of habit
+        writeanywhere=defaults['writeanywhere'] # Whether dexy can write files outside of the dexy project root.
     ):
     """
     Runs Dexy.

@@ -1,46 +1,6 @@
 from tests.utils import runfilter
-
-nested_html = """<div>
-<h1>First</h1>
-<div>
-<h2>Second</h2>
-</div>
-</div>"""
-
-expected = u"""<html><body><div>
-<h1 id="first">First</h1>
-<div>
-<h2 id="second">Second</h2>
-</div>
-</div></body></html>"""
-
-md = """# foo
-
-This is the foo section.
-
-# bar
-
-This is the bar section.
-
-## barbaz
-
-This is the barbaz section.
-
-"""
-
-html = """
-<p>Text before the first section</p>
-<H1>The First Named Section</H1>
-<p>Some content in the first section.</p>
-<h2>Nested In First Section</h2>
-<p>Content in the nested section.</p>
-<ul>
-<li>list item the first</li>
-<li>list item the second</li>
-</ul>
-<h1>The 2nd Section</h1>
-<p>foo.</p>
-"""
+from tests.utils import TEST_DATA_DIR
+import os
 
 def test_nested_html():
     with runfilter('soups', nested_html) as doc:
@@ -88,3 +48,45 @@ def test_soup_sections_filter():
 def test_no_blank_anonymous_first_section():
     with runfilter('soups', "<h1>first</h1><p>foo</p><h1>second</h1>", ext=".html") as doc:
         assert doc.output_data().keys() == [u'first', u'second', u'Actual Document Contents']
+
+nested_html = """<div>
+<h1>First</h1>
+<div>
+<h2>Second</h2>
+</div>
+</div>"""
+
+expected = u"""<div>
+<h1 id="first">First</h1>
+<div>
+<h2 id="second">Second</h2>
+</div>
+</div>"""
+
+md = """# foo
+
+This is the foo section.
+
+# bar
+
+This is the bar section.
+
+## barbaz
+
+This is the barbaz section.
+
+"""
+
+html = """
+<p>Text before the first section</p>
+<H1>The First Named Section</H1>
+<p>Some content in the first section.</p>
+<h2>Nested In First Section</h2>
+<p>Content in the nested section.</p>
+<ul>
+<li>list item the first</li>
+<li>list item the second</li>
+</ul>
+<h1>The 2nd Section</h1>
+<p>foo.</p>
+"""

@@ -236,7 +236,7 @@ class PygmentsFilter(DexyFilter):
                 import PIL
             except ImportError:
                 print "python imaging library is required by pygments to create image output"
-                raise dexy.exceptions.InactiveFilter('pyg')
+                raise dexy.exceptions.InactivePlugin('pyg')
 
         ext = self.prev_ext
         if ext in [".css", ".sty"] and self.ext == ext:

@@ -79,7 +79,11 @@ class Wrapper(object):
         self.initialize_attribute_defaults()
         self.update_attributes_from_kwargs(kwargs)
         self.project_root = os.path.abspath(os.getcwd())
+        self.project_root_ts = "%s%s" % (self.project_root, os.sep)
         self.state = None
+        self.current_task = None
+        self.lookup_nodes = {} # map of shortcuts/keys to all nodes which can match
+        self.lookup_sections = {} # map of section names to nodes
         self.transition('new')
 
     def state_message(self):
@@ -221,7 +225,6 @@ class Wrapper(object):
         try:
             for node in matches:
                 for task in node:
-                    self.current_task = task
                     task()
 
         except Exception as e:
@@ -230,16 +233,26 @@ class Wrapper(object):
             if self.debug:
                 raise
             else:
-                msg = "ERROR while running %s: %s\n" % (self.current_task.key, str(e))
+                if self.current_task:
+                    msg = "ERROR while running %s: %s\n" % (self.current_task.key, str(e))
+                else:
+                    msg = "ERROR: %s\n" % str(e)
                 sys.stderr.write(msg)
                 self.log.warn(msg)
 
         else:
-            self.transition('ran')
-            self.batch.end_time = time.time()
-            self.batch.save_to_file()
-            shutil.move(self.this_cache_dir(), self.last_cache_dir())
-            self.empty_trash()
+            self.after_successful_run()
+
+    def after_successful_run(self):
+        self.transition('ran')
+        self.batch.end_time = time.time()
+        self.batch.save_to_file()
+        shutil.move(self.this_cache_dir(), self.last_cache_dir())
+        self.empty_trash()
+
+        for node in self.nodes.values():
+            node.add_to_lookup_sections()
+            node.add_to_lookup_nodes()
 
     def bundle_docs(self):
         from dexy.node import BundleNode
@@ -579,6 +592,18 @@ class Wrapper(object):
         key = node.key_with_class()
         self.nodes[key] = node
 
+    def add_node_to_lookup_nodes(self, key, node):
+        if not key in self.lookup_nodes:
+            self.lookup_nodes[key] = []
+        if not node in self.lookup_nodes[key]:
+            self.lookup_nodes[key].append(node)
+
+    def add_node_to_lookup_sections(self, key, node):
+        if not key in self.lookup_sections:
+            self.lookup_sections[key] = []
+        if not node in self.lookup_sections[key]:
+            self.lookup_sections[key].append(node)
+
     def qualify_key(self, key):
         """
         A full node key is of the form alias:pattern where alias indicates
@@ -677,8 +702,13 @@ class Wrapper(object):
         for config_file, dirname, alias in config_files:
             with open(config_file, "r") as f:
                 config_text = f.read()
-            parser = dexy.parser.Parser.create_instance(alias, self, ast)
-            parser.parse(dirname, config_text)
+
+            try:
+                parser = dexy.parser.Parser.create_instance(alias, self, ast)
+                parser.parse(dirname, config_text)
+            except UserFeedback:
+                sys.stderr.write("Problem occurred while parsing %s\n" % config_file)
+                raise
 
         return ast
 
@@ -700,4 +730,4 @@ class Wrapper(object):
                 reporter.run(self)
 
     def is_location_in_project_dir(self, filepath):
-        return self.project_root in os.path.abspath(filepath)
+        return self.writeanywhere or (self.project_root_ts in os.path.abspath(filepath))

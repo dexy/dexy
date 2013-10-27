@@ -92,7 +92,7 @@ class SubprocessFilter(Filter):
         if exitcode is None:
             raise dexy.exceptions.InternalDexyProblem("no return code, proc not finished!")
         elif exitcode == 127 and not compiled:
-            raise dexy.exceptions.InactiveFilter(self)
+            raise dexy.exceptions.InactivePlugin(self)
         elif exitcode != 0 and self.setting('check-return-code'):
             if self.ignore_nonzero_exit():
                 self.log_warn("Nonzero exit status %s" % exitcode)

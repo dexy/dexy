@@ -38,6 +38,8 @@ class OutputReporter(Reporter):
 
         self.create_reports_dir()
         for doc in wrapper.nodes.values():
+            if not doc.key_with_class() in wrapper.batch.docs:
+                continue
             if not doc.state in ('ran', 'consolidated'):
                 continue
             if not hasattr(doc, 'output_data'):
@@ -60,6 +62,8 @@ class LongOutputReporter(Reporter):
         self.wrapper=wrapper
         self.create_reports_dir()
         for doc in wrapper.nodes.values():
+            if not doc.key_with_class() in wrapper.batch.docs:
+                continue
             if not doc.state in ('ran', 'consolidated'):
                 continue
             if not hasattr(doc, 'output_data'):
