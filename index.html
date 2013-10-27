@@ -439,6 +439,7 @@ span.icon > [class^="icon-"], span.icon > [class*=" icon-"] { cursor: default; }
 <li><a href="#_dirs_py">dirs.py</a></li>
 <li><a href="#_fcmds_py">fcmds.py</a></li>
 <li><a href="#_filters_py">filters.py</a></li>
+<li><a href="#_grep_py">grep.py</a></li>
 </ul>
 </li>
 </ul>
@@ -1164,12 +1165,131 @@ available methods.</p>
 </div>
 </div>
 </div>
+<div class="sect2">
+<h3 id="_grep_py">grep.py</h3>
+<div class="paragraph">
+<p>The grep interface is a way to search on the command line for dexy docs and
+keys within docs.  (The dexy viewer plugin presents similar information in a
+web-based interface.)</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="pygments highlight"><code class="python language-python"><span class="tok-k">def</span> <span class="tok-nf">grep_command</span><span class="tok-p">(</span>
+        <span class="tok-n">__cli_options</span><span class="tok-o">=</span><span class="tok-bp">False</span><span class="tok-p">,</span> <span class="tok-c"># nodoc</span>
+        <span class="tok-n">expr</span><span class="tok-o">=</span><span class="tok-s">&quot;&quot;</span><span class="tok-p">,</span> <span class="tok-c"># The expression to search for</span>
+        <span class="tok-n">key</span><span class="tok-o">=</span><span class="tok-s">&quot;&quot;</span><span class="tok-p">,</span> <span class="tok-c"># The exact document key to search for</span>
+        <span class="tok-n">keyexpr</span><span class="tok-o">=</span><span class="tok-s">&quot;&quot;</span><span class="tok-p">,</span> <span class="tok-c"># Only search for keys matching this expression, implies keys=True</span>
+        <span class="tok-n">keys</span><span class="tok-o">=</span><span class="tok-bp">False</span><span class="tok-p">,</span> <span class="tok-c"># if True, try to list the keys in any found files</span>
+        <span class="tok-n">keylimit</span><span class="tok-o">=</span><span class="tok-mi">10</span><span class="tok-p">,</span> <span class="tok-c"># maximum number of matching keys to print</span>
+        <span class="tok-n">limit</span><span class="tok-o">=</span><span class="tok-mi">10</span><span class="tok-p">,</span> <span class="tok-c"># maximum number of matching records to print</span>
+        <span class="tok-n">contents</span><span class="tok-o">=</span><span class="tok-bp">False</span><span class="tok-p">,</span> <span class="tok-c"># print out the contents of each matched file</span>
+        <span class="tok-n">lines</span><span class="tok-o">=</span><span class="tok-bp">False</span><span class="tok-p">,</span> <span class="tok-c"># maximum number of lines of content to print</span>
+        <span class="tok-n">artifactsdir</span><span class="tok-o">=</span><span class="tok-n">defaults</span><span class="tok-p">[</span><span class="tok-s">&#39;artifacts_dir&#39;</span><span class="tok-p">],</span> <span class="tok-c"># Where dexy stores working files.</span>
+        <span class="tok-n">logdir</span><span class="tok-o">=</span><span class="tok-n">defaults</span><span class="tok-p">[</span><span class="tok-s">&#39;log_dir&#39;</span><span class="tok-p">]</span> <span class="tok-c"># DEPRECATED</span>
+        <span class="tok-p">):</span>
+    <span class="tok-sd">&quot;&quot;&quot;</span>
+<span class="tok-sd">    Search documents and sections.</span>
+<span class="tok-sd">    &quot;&quot;&quot;</span>
+    <span class="tok-n">wrapper</span> <span class="tok-o">=</span> <span class="tok-n">init_wrapper</span><span class="tok-p">(</span><span class="tok-nb">locals</span><span class="tok-p">())</span>
+    <span class="tok-n">batch</span> <span class="tok-o">=</span> <span class="tok-n">Batch</span><span class="tok-o">.</span><span class="tok-n">load_most_recent</span><span class="tok-p">(</span><span class="tok-n">wrapper</span><span class="tok-p">)</span>
+
+    <span class="tok-k">if</span> <span class="tok-ow">not</span> <span class="tok-n">batch</span><span class="tok-p">:</span>
+        <span class="tok-k">print</span> <span class="tok-s">&quot;you need to run dexy first&quot;</span>
+        <span class="tok-n">sys</span><span class="tok-o">.</span><span class="tok-n">exit</span><span class="tok-p">(</span><span class="tok-mi">1</span><span class="tok-p">)</span>
+    <span class="tok-k">else</span><span class="tok-p">:</span>
+        <span class="tok-k">if</span> <span class="tok-n">expr</span><span class="tok-p">:</span>
+            <span class="tok-n">matches</span> <span class="tok-o">=</span> <span class="tok-nb">sorted</span><span class="tok-p">([</span><span class="tok-n">data</span> <span class="tok-k">for</span> <span class="tok-n">data</span> <span class="tok-ow">in</span> <span class="tok-n">batch</span> <span class="tok-k">if</span> <span class="tok-n">expr</span> <span class="tok-ow">in</span> <span class="tok-n">data</span><span class="tok-o">.</span><span class="tok-n">key</span><span class="tok-p">],</span>
+                    <span class="tok-n">key</span><span class="tok-o">=</span><span class="tok-n">attrgetter</span><span class="tok-p">(</span><span class="tok-s">&#39;key&#39;</span><span class="tok-p">))</span>
+        <span class="tok-k">elif</span> <span class="tok-n">key</span><span class="tok-p">:</span>
+            <span class="tok-n">matches</span> <span class="tok-o">=</span> <span class="tok-nb">sorted</span><span class="tok-p">([</span><span class="tok-n">data</span> <span class="tok-k">for</span> <span class="tok-n">data</span> <span class="tok-ow">in</span> <span class="tok-n">batch</span> <span class="tok-k">if</span> <span class="tok-n">key</span> <span class="tok-o">==</span> <span class="tok-n">data</span><span class="tok-o">.</span><span class="tok-n">key</span><span class="tok-p">],</span>
+                    <span class="tok-n">key</span><span class="tok-o">=</span><span class="tok-n">attrgetter</span><span class="tok-p">(</span><span class="tok-s">&#39;key&#39;</span><span class="tok-p">))</span>
+        <span class="tok-k">else</span><span class="tok-p">:</span>
+            <span class="tok-k">raise</span> <span class="tok-n">dexy</span><span class="tok-o">.</span><span class="tok-n">exceptions</span><span class="tok-o">.</span><span class="tok-n">UserFeedback</span><span class="tok-p">(</span><span class="tok-s">&quot;Must specify either expr or key&quot;</span><span class="tok-p">)</span>
+
+        <span class="tok-n">n</span> <span class="tok-o">=</span> <span class="tok-nb">len</span><span class="tok-p">(</span><span class="tok-n">matches</span><span class="tok-p">)</span>
+        <span class="tok-k">if</span> <span class="tok-n">n</span> <span class="tok-o">&gt;</span> <span class="tok-n">limit</span><span class="tok-p">:</span>
+            <span class="tok-k">print</span> <span class="tok-s">&quot;only printing first </span><span class="tok-si">%s</span><span class="tok-s"> of </span><span class="tok-si">%s</span><span class="tok-s"> total matches&quot;</span> <span class="tok-o">%</span> <span class="tok-p">(</span><span class="tok-n">limit</span><span class="tok-p">,</span> <span class="tok-n">n</span><span class="tok-p">)</span>
+            <span class="tok-n">matches</span> <span class="tok-o">=</span> <span class="tok-n">matches</span><span class="tok-p">[</span><span class="tok-mi">0</span><span class="tok-p">:</span><span class="tok-n">limit</span><span class="tok-p">]</span>
+
+        <span class="tok-k">for</span> <span class="tok-n">match</span> <span class="tok-ow">in</span> <span class="tok-n">matches</span><span class="tok-p">:</span>
+            <span class="tok-n">print_match</span><span class="tok-p">(</span><span class="tok-n">matches</span><span class="tok-p">,</span> <span class="tok-n">keys</span><span class="tok-p">,</span> <span class="tok-n">keyexpr</span><span class="tok-p">,</span> <span class="tok-n">contents</span><span class="tok-p">,</span> <span class="tok-n">keylimit</span><span class="tok-p">,</span> <span class="tok-n">lines</span><span class="tok-p">)</span>
+</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The grep command calls <code>print_match</code> for each match:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="pygments highlight"><code class="python language-python"><span class="tok-k">def</span> <span class="tok-nf">print_match</span><span class="tok-p">(</span><span class="tok-n">match</span><span class="tok-p">,</span> <span class="tok-n">keys</span><span class="tok-p">,</span> <span class="tok-n">keyexpr</span><span class="tok-p">,</span> <span class="tok-n">contents</span><span class="tok-p">,</span> <span class="tok-n">keylimit</span><span class="tok-p">,</span> <span class="tok-n">lines</span><span class="tok-p">):</span>
+    <span class="tok-k">print</span> <span class="tok-n">match</span><span class="tok-o">.</span><span class="tok-n">key</span><span class="tok-p">,</span> <span class="tok-s">&quot;</span><span class="tok-se">\t</span><span class="tok-s">cache key:&quot;</span><span class="tok-p">,</span> <span class="tok-n">match</span><span class="tok-o">.</span><span class="tok-n">storage_key</span>
+
+    <span class="tok-k">if</span> <span class="tok-nb">hasattr</span><span class="tok-p">(</span><span class="tok-n">match</span><span class="tok-p">,</span> <span class="tok-s">&#39;keys&#39;</span><span class="tok-p">):</span>
+        <span class="tok-k">if</span> <span class="tok-n">keyexpr</span><span class="tok-p">:</span>
+            <span class="tok-n">print_keys</span><span class="tok-p">([</span><span class="tok-n">key</span> <span class="tok-k">for</span> <span class="tok-n">key</span> <span class="tok-ow">in</span> <span class="tok-n">match</span><span class="tok-o">.</span><span class="tok-n">keys</span><span class="tok-p">()</span> <span class="tok-k">if</span> <span class="tok-n">keyexpr</span> <span class="tok-ow">in</span> <span class="tok-n">key</span><span class="tok-p">],</span> <span class="tok-n">keylimit</span><span class="tok-p">,</span> <span class="tok-n">lines</span><span class="tok-p">)</span>
+        <span class="tok-k">elif</span> <span class="tok-n">keys</span><span class="tok-p">:</span>
+            <span class="tok-n">print_keys</span><span class="tok-p">(</span><span class="tok-n">match</span><span class="tok-o">.</span><span class="tok-n">keys</span><span class="tok-p">(),</span> <span class="tok-n">keylimit</span><span class="tok-p">,</span> <span class="tok-n">lines</span><span class="tok-p">)</span>
+
+    <span class="tok-k">if</span> <span class="tok-n">contents</span><span class="tok-p">:</span>
+        <span class="tok-k">if</span> <span class="tok-nb">isinstance</span><span class="tok-p">(</span><span class="tok-n">match</span><span class="tok-p">,</span> <span class="tok-n">Sectioned</span><span class="tok-p">):</span>
+            <span class="tok-k">for</span> <span class="tok-n">section_name</span><span class="tok-p">,</span> <span class="tok-n">section_contents</span> <span class="tok-ow">in</span> <span class="tok-n">match</span><span class="tok-o">.</span><span class="tok-n">data</span><span class="tok-p">()</span><span class="tok-o">.</span><span class="tok-n">iteritems</span><span class="tok-p">():</span>
+                <span class="tok-k">print</span> <span class="tok-s">&quot;  section: </span><span class="tok-si">%s</span><span class="tok-s">&quot;</span> <span class="tok-o">%</span> <span class="tok-n">section_name</span>
+                <span class="tok-k">print</span>
+                <span class="tok-n">print_contents</span><span class="tok-p">(</span><span class="tok-n">section_contents</span><span class="tok-p">,</span> <span class="tok-n">lines</span><span class="tok-p">)</span>
+                <span class="tok-k">print</span>
+        <span class="tok-k">elif</span> <span class="tok-nb">isinstance</span><span class="tok-p">(</span><span class="tok-n">match</span><span class="tok-p">,</span> <span class="tok-n">KeyValue</span><span class="tok-p">):</span>
+            <span class="tok-k">pass</span>
+        <span class="tok-k">elif</span> <span class="tok-nb">isinstance</span><span class="tok-p">(</span><span class="tok-n">match</span><span class="tok-p">,</span> <span class="tok-n">Generic</span><span class="tok-p">):</span>
+            <span class="tok-k">try</span><span class="tok-p">:</span>
+                <span class="tok-n">json</span><span class="tok-o">.</span><span class="tok-n">dumps</span><span class="tok-p">(</span><span class="tok-nb">unicode</span><span class="tok-p">(</span><span class="tok-n">match</span><span class="tok-p">))</span>
+                <span class="tok-n">print_contents</span><span class="tok-p">(</span><span class="tok-nb">unicode</span><span class="tok-p">(</span><span class="tok-n">match</span><span class="tok-p">),</span> <span class="tok-n">lines</span><span class="tok-p">)</span>
+            <span class="tok-k">except</span> <span class="tok-ne">UnicodeDecodeError</span><span class="tok-p">:</span>
+                <span class="tok-k">print</span> <span class="tok-s">&quot;  not printable&quot;</span>
+</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Where it reaches a document which has keys, it may also print the keys (depending on options):</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="pygments highlight"><code class="python language-python"><span class="tok-k">def</span> <span class="tok-nf">print_keys</span><span class="tok-p">(</span><span class="tok-n">pkeys</span><span class="tok-p">,</span> <span class="tok-n">keylimit</span><span class="tok-p">,</span> <span class="tok-n">lines</span><span class="tok-p">):</span>
+    <span class="tok-n">n</span> <span class="tok-o">=</span> <span class="tok-nb">len</span><span class="tok-p">(</span><span class="tok-n">pkeys</span><span class="tok-p">)</span>
+    <span class="tok-k">if</span> <span class="tok-n">n</span> <span class="tok-o">&gt;</span> <span class="tok-n">keylimit</span><span class="tok-p">:</span>
+        <span class="tok-n">pkeys</span> <span class="tok-o">=</span> <span class="tok-n">pkeys</span><span class="tok-p">[</span><span class="tok-mi">0</span><span class="tok-p">:</span><span class="tok-n">keylimit</span><span class="tok-p">]</span>
+
+    <span class="tok-k">for</span> <span class="tok-n">key</span> <span class="tok-ow">in</span> <span class="tok-n">pkeys</span><span class="tok-p">:</span>
+        <span class="tok-k">print</span> <span class="tok-s">&#39;  &#39;</span><span class="tok-p">,</span> <span class="tok-n">key</span>
+
+    <span class="tok-k">if</span> <span class="tok-n">n</span> <span class="tok-o">&gt;</span> <span class="tok-n">keylimit</span><span class="tok-p">:</span>
+        <span class="tok-k">print</span> <span class="tok-s">&quot;  only printed first </span><span class="tok-si">%s</span><span class="tok-s"> of </span><span class="tok-si">%s</span><span class="tok-s"> total keys&quot;</span> <span class="tok-o">%</span> <span class="tok-p">(</span><span class="tok-n">keylimit</span><span class="tok-p">,</span> <span class="tok-n">n</span><span class="tok-p">)</span>
+</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And contents of files may also be printed:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="pygments highlight"><code class="python language-python"><span class="tok-k">def</span> <span class="tok-nf">print_contents</span><span class="tok-p">(</span><span class="tok-n">text</span><span class="tok-p">,</span> <span class="tok-n">lines</span><span class="tok-p">):</span>
+    <span class="tok-n">text_lines</span> <span class="tok-o">=</span> <span class="tok-n">text</span><span class="tok-o">.</span><span class="tok-n">splitlines</span><span class="tok-p">()</span>
+    <span class="tok-k">for</span> <span class="tok-n">i</span><span class="tok-p">,</span> <span class="tok-n">line</span> <span class="tok-ow">in</span> <span class="tok-nb">enumerate</span><span class="tok-p">(</span><span class="tok-n">text_lines</span><span class="tok-p">):</span>
+        <span class="tok-k">if</span> <span class="tok-n">lines</span> <span class="tok-ow">and</span> <span class="tok-n">i</span> <span class="tok-o">&gt;</span> <span class="tok-n">lines</span><span class="tok-o">-</span><span class="tok-mi">1</span><span class="tok-p">:</span>
+            <span class="tok-k">continue</span>
+        <span class="tok-k">print</span> <span class="tok-s">&quot;  &quot;</span><span class="tok-p">,</span> <span class="tok-n">line</span>
+
+    <span class="tok-k">if</span> <span class="tok-n">lines</span> <span class="tok-ow">and</span> <span class="tok-n">lines</span> <span class="tok-o">&lt;</span> <span class="tok-nb">len</span><span class="tok-p">(</span><span class="tok-n">text_lines</span><span class="tok-p">):</span>
+        <span class="tok-k">print</span> <span class="tok-s">&quot;   only printed first </span><span class="tok-si">%s</span><span class="tok-s"> of </span><span class="tok-si">%s</span><span class="tok-s"> total lines&quot;</span> <span class="tok-o">%</span> <span class="tok-p">(</span><span class="tok-n">lines</span><span class="tok-p">,</span> <span class="tok-nb">len</span><span class="tok-p">(</span><span class="tok-n">text_lines</span><span class="tok-p">))</span>
+</code></pre>
+</div>
+</div>
+</div>
 </div>
 </div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2013-10-27 08:53:48 PDT
+Last updated 2013-10-27 09:55:38 PDT
 </div>
 </div>
 </body>
