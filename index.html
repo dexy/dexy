@@ -436,6 +436,9 @@ span.icon > [class^="icon-"], span.icon > [class*=" icon-"] { cursor: default; }
 <li><a href="#_init_py">init.py</a></li>
 <li><a href="#_cite_py">cite.py</a></li>
 <li><a href="#_conf_py">conf.py</a></li>
+<li><a href="#_dirs_py">dirs.py</a></li>
+<li><a href="#_fcmds_py">fcmds.py</a></li>
+<li><a href="#_filters_py">filters.py</a></li>
 </ul>
 </li>
 </ul>
@@ -475,8 +478,8 @@ different modules, but all are imported into <code>dexy.commands</code> in the
 <span class="tok-kn">from</span> <span class="tok-nn">dexy.commands.dirs</span> <span class="tok-kn">import</span> <span class="tok-n">setup_command</span>
 <span class="tok-kn">from</span> <span class="tok-nn">dexy.commands.fcmds</span> <span class="tok-kn">import</span> <span class="tok-n">fcmd_command</span>
 <span class="tok-kn">from</span> <span class="tok-nn">dexy.commands.fcmds</span> <span class="tok-kn">import</span> <span class="tok-n">fcmds_command</span>
-<span class="tok-kn">from</span> <span class="tok-nn">dexy.commands.filters</span> <span class="tok-kn">import</span> <span class="tok-n">filter_command</span>
 <span class="tok-kn">from</span> <span class="tok-nn">dexy.commands.filters</span> <span class="tok-kn">import</span> <span class="tok-n">filters_command</span>
+<span class="tok-kn">from</span> <span class="tok-nn">dexy.commands.filters</span> <span class="tok-kn">import</span> <span class="tok-n">filters_command</span> <span class="tok-k">as</span> <span class="tok-n">filter_command</span>
 <span class="tok-kn">from</span> <span class="tok-nn">dexy.commands.grep</span> <span class="tok-kn">import</span> <span class="tok-n">grep_command</span>
 <span class="tok-kn">from</span> <span class="tok-nn">dexy.commands.info</span> <span class="tok-kn">import</span> <span class="tok-n">info_command</span>
 <span class="tok-kn">from</span> <span class="tok-nn">dexy.commands.it</span> <span class="tok-kn">import</span> <span class="tok-n">dexy_command</span>
@@ -578,8 +581,18 @@ can be called as follows:</p>
 </code></pre>
 </div>
 </div>
+<div class="listingblock">
+<div class="content">
+<pre class="pygments highlight"><code class="python language-python"><span class="tok-nd">@patch.object</span><span class="tok-p">(</span><span class="tok-n">sys</span><span class="tok-p">,</span> <span class="tok-s">&#39;argv&#39;</span><span class="tok-p">,</span> <span class="tok-p">[</span><span class="tok-s">&#39;dexy&#39;</span><span class="tok-p">,</span> <span class="tok-s">&#39;viewer:ping&#39;</span><span class="tok-p">])</span>
+<span class="tok-nd">@patch</span><span class="tok-p">(</span><span class="tok-s">&#39;sys.stdout&#39;</span><span class="tok-p">,</span> <span class="tok-n">new_callable</span><span class="tok-o">=</span><span class="tok-n">StringIO</span><span class="tok-p">)</span>
+<span class="tok-k">def</span> <span class="tok-nf">test_viewer_command</span><span class="tok-p">(</span><span class="tok-n">stdout</span><span class="tok-p">):</span>
+    <span class="tok-n">dexy</span><span class="tok-o">.</span><span class="tok-n">commands</span><span class="tok-o">.</span><span class="tok-n">run</span><span class="tok-p">()</span>
+    <span class="tok-k">assert</span> <span class="tok-s">&quot;pong&quot;</span> <span class="tok-ow">in</span> <span class="tok-n">stdout</span><span class="tok-o">.</span><span class="tok-n">getvalue</span><span class="tok-p">()</span>
+</code></pre>
+</div>
+</div>
 <div class="paragraph">
-<p>So, if necessary the <code>resolve_argv</code> command calls <code>resolve_plugin_command</code> to
+<p>If necessary the <code>resolve_argv</code> command calls <code>resolve_plugin_command</code> to
 look in dexy plugins for the requested command:</p>
 </div>
 <div class="listingblock">
@@ -656,7 +669,7 @@ there&#8217;s a problem:</p>
 </div>
 </div>
 <div class="paragraph">
-<p>The <code>help</code> and <code>version</code> commands are defined in the <code>__init__.py</code> file also:</p>
+<p>The <code>help</code> and <code>version</code> commands are also defined in the <code>__init__.py</code> file:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -667,7 +680,7 @@ there&#8217;s a problem:</p>
         <span class="tok-n">f</span><span class="tok-o">=</span><span class="tok-bp">False</span><span class="tok-p">,</span> <span class="tok-c"># If a filter alias is specified, help for that filter is printed.</span>
         <span class="tok-n">on</span><span class="tok-o">=</span><span class="tok-bp">False</span> <span class="tok-c"># The dexy command to get help on.</span>
     <span class="tok-p">):</span>
-    <span class="tok-c"># TODO list plugin commands too when -on not specified</span>
+    <span class="tok-c"># TODO list commands defined in plugins too</span>
     <span class="tok-k">if</span> <span class="tok-n">f</span><span class="tok-p">:</span>
         <span class="tok-n">filter_command</span><span class="tok-p">(</span><span class="tok-n">f</span><span class="tok-p">,</span> <span class="tok-n">example</span><span class="tok-p">)</span>
     <span class="tok-k">elif</span> <span class="tok-n">filters</span><span class="tok-p">:</span>
@@ -675,7 +688,12 @@ there&#8217;s a problem:</p>
     <span class="tok-k">elif</span> <span class="tok-n">reports</span><span class="tok-p">:</span>
         <span class="tok-n">reports_command</span><span class="tok-p">()</span>
     <span class="tok-k">else</span><span class="tok-p">:</span>
-        <span class="tok-n">args</span><span class="tok-o">.</span><span class="tok-n">help_command</span><span class="tok-p">(</span><span class="tok-n">prog</span><span class="tok-p">,</span> <span class="tok-n">dexy_cmd_mod</span><span class="tok-p">,</span> <span class="tok-n">dexy_default_cmd</span><span class="tok-p">,</span> <span class="tok-n">on</span><span class="tok-p">)</span>
+        <span class="tok-k">try</span><span class="tok-p">:</span>
+            <span class="tok-n">args</span><span class="tok-o">.</span><span class="tok-n">help_command</span><span class="tok-p">(</span><span class="tok-n">prog</span><span class="tok-p">,</span> <span class="tok-n">dexy_cmd_mod</span><span class="tok-p">,</span> <span class="tok-n">dexy_default_cmd</span><span class="tok-p">,</span> <span class="tok-n">on</span><span class="tok-p">)</span>
+        <span class="tok-k">except</span> <span class="tok-ne">KeyError</span><span class="tok-p">:</span>
+            <span class="tok-n">sys</span><span class="tok-o">.</span><span class="tok-n">stderr</span><span class="tok-o">.</span><span class="tok-n">write</span><span class="tok-p">(</span><span class="tok-s">&quot;Could not find help on &#39;</span><span class="tok-si">%s</span><span class="tok-s">&#39;.&quot;</span> <span class="tok-o">%</span> <span class="tok-n">on</span><span class="tok-p">)</span>
+            <span class="tok-n">sys</span><span class="tok-o">.</span><span class="tok-n">stderr</span><span class="tok-o">.</span><span class="tok-n">write</span><span class="tok-p">(</span><span class="tok-n">os</span><span class="tok-o">.</span><span class="tok-n">linesep</span><span class="tok-p">)</span>
+            <span class="tok-n">sys</span><span class="tok-o">.</span><span class="tok-n">exit</span><span class="tok-p">(</span><span class="tok-mi">1</span><span class="tok-p">)</span>
 </code></pre>
 </div>
 </div>
@@ -686,15 +704,6 @@ there&#8217;s a problem:</p>
 <span class="tok-sd">    Print the version number of dexy.</span>
 <span class="tok-sd">    &quot;&quot;&quot;</span>
     <span class="tok-k">print</span> <span class="tok-s">&quot;</span><span class="tok-si">%s</span><span class="tok-s"> version </span><span class="tok-si">%s</span><span class="tok-s">&quot;</span> <span class="tok-o">%</span> <span class="tok-p">(</span><span class="tok-n">prog</span><span class="tok-p">,</span> <span class="tok-n">DEXY_VERSION</span><span class="tok-p">)</span>
-</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>And it calls <code>load_plugins</code> to ensure that all dexy plugins have been loaded:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="pygments highlight"><code class="python language-python"><span class="tok-kn">import</span> <span class="tok-nn">dexy.load_plugins</span>
 </code></pre>
 </div>
 </div>
@@ -810,6 +819,347 @@ generates an example file for you containing all the default dexy options:</p>
 <div class="content">
 <pre class="pygments highlight"><code class="console language-console"><span class="tok-gp">$</span> dexy conf
 <span class="tok-go">Config file has been written to &#39;dexy.conf&#39;</span>
+<span class="tok-gp">$</span> ls
+<span class="tok-go">commands.sh.txt  dexy.conf</span>
+</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If a config file already exists, or if you use the <code>-p</code> flag, then config
+options are written to stdout instead of written to a file.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="pygments highlight"><code class="python language-python"><span class="tok-nd">@patch.object</span><span class="tok-p">(</span><span class="tok-n">sys</span><span class="tok-p">,</span> <span class="tok-s">&#39;argv&#39;</span><span class="tok-p">,</span> <span class="tok-p">[</span><span class="tok-s">&#39;dexy&#39;</span><span class="tok-p">,</span> <span class="tok-s">&#39;conf&#39;</span><span class="tok-p">])</span>
+<span class="tok-nd">@patch</span><span class="tok-p">(</span><span class="tok-s">&#39;sys.stdout&#39;</span><span class="tok-p">,</span> <span class="tok-n">new_callable</span><span class="tok-o">=</span><span class="tok-n">StringIO</span><span class="tok-p">)</span>
+<span class="tok-k">def</span> <span class="tok-nf">test_conf_command</span><span class="tok-p">(</span><span class="tok-n">stdout</span><span class="tok-p">):</span>
+    <span class="tok-k">with</span> <span class="tok-n">tempdir</span><span class="tok-p">():</span>
+        <span class="tok-n">dexy</span><span class="tok-o">.</span><span class="tok-n">commands</span><span class="tok-o">.</span><span class="tok-n">run</span><span class="tok-p">()</span>
+        <span class="tok-k">assert</span> <span class="tok-n">os</span><span class="tok-o">.</span><span class="tok-n">path</span><span class="tok-o">.</span><span class="tok-n">exists</span><span class="tok-p">(</span><span class="tok-s">&quot;dexy.conf&quot;</span><span class="tok-p">)</span>
+        <span class="tok-k">assert</span> <span class="tok-s">&quot;has been written&quot;</span> <span class="tok-ow">in</span> <span class="tok-n">stdout</span><span class="tok-o">.</span><span class="tok-n">getvalue</span><span class="tok-p">()</span>
+
+<span class="tok-nd">@patch.object</span><span class="tok-p">(</span><span class="tok-n">sys</span><span class="tok-p">,</span> <span class="tok-s">&#39;argv&#39;</span><span class="tok-p">,</span> <span class="tok-p">[</span><span class="tok-s">&#39;dexy&#39;</span><span class="tok-p">,</span> <span class="tok-s">&#39;conf&#39;</span><span class="tok-p">])</span>
+<span class="tok-nd">@patch</span><span class="tok-p">(</span><span class="tok-s">&#39;sys.stdout&#39;</span><span class="tok-p">,</span> <span class="tok-n">new_callable</span><span class="tok-o">=</span><span class="tok-n">StringIO</span><span class="tok-p">)</span>
+<span class="tok-k">def</span> <span class="tok-nf">test_conf_command_if_path_exists</span><span class="tok-p">(</span><span class="tok-n">stdout</span><span class="tok-p">):</span>
+    <span class="tok-k">with</span> <span class="tok-n">tempdir</span><span class="tok-p">():</span>
+        <span class="tok-k">with</span> <span class="tok-nb">open</span><span class="tok-p">(</span><span class="tok-s">&quot;dexy.conf&quot;</span><span class="tok-p">,</span> <span class="tok-s">&quot;w&quot;</span><span class="tok-p">)</span> <span class="tok-k">as</span> <span class="tok-n">f</span><span class="tok-p">:</span>
+            <span class="tok-n">f</span><span class="tok-o">.</span><span class="tok-n">write</span><span class="tok-p">(</span><span class="tok-s">&quot;foo&quot;</span><span class="tok-p">)</span>
+        <span class="tok-k">assert</span> <span class="tok-n">os</span><span class="tok-o">.</span><span class="tok-n">path</span><span class="tok-o">.</span><span class="tok-n">exists</span><span class="tok-p">(</span><span class="tok-s">&quot;dexy.conf&quot;</span><span class="tok-p">)</span>
+        <span class="tok-n">dexy</span><span class="tok-o">.</span><span class="tok-n">commands</span><span class="tok-o">.</span><span class="tok-n">run</span><span class="tok-p">()</span>
+        <span class="tok-k">assert</span> <span class="tok-s">&quot;dexy.conf already exists&quot;</span> <span class="tok-ow">in</span> <span class="tok-n">stdout</span><span class="tok-o">.</span><span class="tok-n">getvalue</span><span class="tok-p">()</span>
+        <span class="tok-k">assert</span> <span class="tok-s">&quot;artifactsdir&quot;</span> <span class="tok-ow">in</span> <span class="tok-n">stdout</span><span class="tok-o">.</span><span class="tok-n">getvalue</span><span class="tok-p">()</span>
+
+<span class="tok-nd">@patch.object</span><span class="tok-p">(</span><span class="tok-n">sys</span><span class="tok-p">,</span> <span class="tok-s">&#39;argv&#39;</span><span class="tok-p">,</span> <span class="tok-p">[</span><span class="tok-s">&#39;dexy&#39;</span><span class="tok-p">,</span> <span class="tok-s">&#39;conf&#39;</span><span class="tok-p">,</span> <span class="tok-s">&#39;-p&#39;</span><span class="tok-p">])</span>
+<span class="tok-nd">@patch</span><span class="tok-p">(</span><span class="tok-s">&#39;sys.stdout&#39;</span><span class="tok-p">,</span> <span class="tok-n">new_callable</span><span class="tok-o">=</span><span class="tok-n">StringIO</span><span class="tok-p">)</span>
+<span class="tok-k">def</span> <span class="tok-nf">test_conf_command_with_print_option</span><span class="tok-p">(</span><span class="tok-n">stdout</span><span class="tok-p">):</span>
+    <span class="tok-k">with</span> <span class="tok-n">tempdir</span><span class="tok-p">():</span>
+        <span class="tok-n">dexy</span><span class="tok-o">.</span><span class="tok-n">commands</span><span class="tok-o">.</span><span class="tok-n">run</span><span class="tok-p">()</span>
+        <span class="tok-k">assert</span> <span class="tok-ow">not</span> <span class="tok-n">os</span><span class="tok-o">.</span><span class="tok-n">path</span><span class="tok-o">.</span><span class="tok-n">exists</span><span class="tok-p">(</span><span class="tok-s">&quot;dexy.conf&quot;</span><span class="tok-p">)</span>
+        <span class="tok-k">assert</span> <span class="tok-s">&quot;artifactsdir&quot;</span> <span class="tok-ow">in</span> <span class="tok-n">stdout</span><span class="tok-o">.</span><span class="tok-n">getvalue</span><span class="tok-p">()</span>
+</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_dirs_py">dirs.py</h3>
+<div class="paragraph">
+<p>These commands expose methods for creating and removing dexy&#8217;s working directories.</p>
+</div>
+<div class="paragraph">
+<p>The <code>setup</code> and <code>cleanup</code> command create and remove working directories respectively:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="pygments highlight"><code class="python language-python"><span class="tok-k">def</span> <span class="tok-nf">setup_command</span><span class="tok-p">(</span><span class="tok-n">__cli_options</span><span class="tok-o">=</span><span class="tok-bp">False</span><span class="tok-p">,</span> <span class="tok-o">**</span><span class="tok-n">kwargs</span><span class="tok-p">):</span>
+    <span class="tok-sd">&quot;&quot;&quot;</span>
+<span class="tok-sd">    Create the directories dexy needs to run. This helps make sure you mean to</span>
+<span class="tok-sd">    run dexy in this directory.</span>
+<span class="tok-sd">    &quot;&quot;&quot;</span>
+    <span class="tok-n">wrapper</span> <span class="tok-o">=</span> <span class="tok-n">init_wrapper</span><span class="tok-p">(</span><span class="tok-nb">locals</span><span class="tok-p">())</span>
+    <span class="tok-n">wrapper</span><span class="tok-o">.</span><span class="tok-n">create_dexy_dirs</span><span class="tok-p">()</span>
+</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="pygments highlight"><code class="python language-python"><span class="tok-k">def</span> <span class="tok-nf">cleanup_command</span><span class="tok-p">(</span>
+        <span class="tok-n">__cli_options</span><span class="tok-o">=</span><span class="tok-bp">False</span><span class="tok-p">,</span>
+        <span class="tok-n">artifactsdir</span><span class="tok-o">=</span><span class="tok-n">defaults</span><span class="tok-p">[</span><span class="tok-s">&#39;artifacts_dir&#39;</span><span class="tok-p">],</span> <span class="tok-c"># Where dexy should store working files.</span>
+        <span class="tok-n">logdir</span><span class="tok-o">=</span><span class="tok-n">defaults</span><span class="tok-p">[</span><span class="tok-s">&#39;log_dir&#39;</span><span class="tok-p">],</span> <span class="tok-c"># DEPRECATED</span>
+        <span class="tok-n">reports</span><span class="tok-o">=</span><span class="tok-bp">True</span> <span class="tok-c"># Whether directories generated by reports should also be removed.</span>
+        <span class="tok-p">):</span>
+    <span class="tok-sd">&quot;&quot;&quot;</span>
+<span class="tok-sd">    Remove the directories which dexy created, including working directories</span>
+<span class="tok-sd">    and reports.</span>
+<span class="tok-sd">    &quot;&quot;&quot;</span>
+    <span class="tok-n">wrapper</span> <span class="tok-o">=</span> <span class="tok-n">init_wrapper</span><span class="tok-p">(</span><span class="tok-nb">locals</span><span class="tok-p">())</span>
+    <span class="tok-n">wrapper</span><span class="tok-o">.</span><span class="tok-n">remove_dexy_dirs</span><span class="tok-p">()</span>
+    <span class="tok-n">wrapper</span><span class="tok-o">.</span><span class="tok-n">remove_reports_dirs</span><span class="tok-p">(</span><span class="tok-n">reports</span><span class="tok-p">)</span>
+</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>reset</code> command cleans out any working files and leaves you with a fresh setup:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="pygments highlight"><code class="python language-python"><span class="tok-k">def</span> <span class="tok-nf">reset_command</span><span class="tok-p">(</span>
+        <span class="tok-n">__cli_options</span><span class="tok-o">=</span><span class="tok-bp">False</span><span class="tok-p">,</span>
+        <span class="tok-n">artifactsdir</span><span class="tok-o">=</span><span class="tok-n">defaults</span><span class="tok-p">[</span><span class="tok-s">&#39;artifacts_dir&#39;</span><span class="tok-p">],</span> <span class="tok-c"># Where dexy should store working files.</span>
+        <span class="tok-n">logdir</span><span class="tok-o">=</span><span class="tok-n">defaults</span><span class="tok-p">[</span><span class="tok-s">&#39;log_dir&#39;</span><span class="tok-p">]</span> <span class="tok-c"># DEPRECATED</span>
+        <span class="tok-p">):</span>
+    <span class="tok-sd">&quot;&quot;&quot;</span>
+<span class="tok-sd">    Clean out the contents of dexy&#39;s cache and reports directories.</span>
+<span class="tok-sd">    &quot;&quot;&quot;</span>
+    <span class="tok-n">wrapper</span> <span class="tok-o">=</span> <span class="tok-n">init_wrapper</span><span class="tok-p">(</span><span class="tok-nb">locals</span><span class="tok-p">())</span>
+    <span class="tok-n">wrapper</span><span class="tok-o">.</span><span class="tok-n">remove_dexy_dirs</span><span class="tok-p">()</span>
+    <span class="tok-n">wrapper</span><span class="tok-o">.</span><span class="tok-n">remove_reports_dirs</span><span class="tok-p">(</span><span class="tok-n">keep_empty_dir</span><span class="tok-o">=</span><span class="tok-bp">True</span><span class="tok-p">)</span>
+    <span class="tok-n">wrapper</span><span class="tok-o">.</span><span class="tok-n">create_dexy_dirs</span><span class="tok-p">()</span>
+</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_fcmds_py">fcmds.py</h3>
+<div class="paragraph">
+<p>Filter commands are intended to be a way for filters to expose some information
+to users. For example, filter commands could provide a way for an API to list
+available methods.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="pygments highlight"><code class="python language-python"><span class="tok-k">def</span> <span class="tok-nf">fcmds_command</span><span class="tok-p">(</span>
+        <span class="tok-n">alias</span><span class="tok-o">=</span><span class="tok-bp">False</span> <span class="tok-c"># Only print commands defined by this alias.</span>
+        <span class="tok-p">):</span>
+    <span class="tok-sd">&quot;&quot;&quot;</span>
+<span class="tok-sd">    Prints a list of available filter commands.</span>
+<span class="tok-sd">    &quot;&quot;&quot;</span>
+    <span class="tok-k">if</span> <span class="tok-n">alias</span><span class="tok-p">:</span>
+        <span class="tok-n">filter_instances</span> <span class="tok-o">=</span> <span class="tok-p">[</span><span class="tok-n">dexy</span><span class="tok-o">.</span><span class="tok-n">filter</span><span class="tok-o">.</span><span class="tok-n">Filter</span><span class="tok-o">.</span><span class="tok-n">create_instance</span><span class="tok-p">(</span><span class="tok-n">alias</span><span class="tok-p">)]</span>
+    <span class="tok-k">else</span><span class="tok-p">:</span>
+        <span class="tok-n">filter_instances</span> <span class="tok-o">=</span> <span class="tok-n">dexy</span><span class="tok-o">.</span><span class="tok-n">filter</span><span class="tok-o">.</span><span class="tok-n">Filter</span>
+
+    <span class="tok-k">for</span> <span class="tok-n">filter_instance</span> <span class="tok-ow">in</span> <span class="tok-n">filter_instances</span><span class="tok-p">:</span>
+        <span class="tok-n">cmds</span> <span class="tok-o">=</span> <span class="tok-n">filter_instance</span><span class="tok-o">.</span><span class="tok-n">filter_commands</span><span class="tok-p">()</span>
+        <span class="tok-k">if</span> <span class="tok-n">cmds</span><span class="tok-p">:</span>
+            <span class="tok-k">print</span> <span class="tok-s">&quot;filter alias:&quot;</span><span class="tok-p">,</span> <span class="tok-n">filter_instance</span><span class="tok-o">.</span><span class="tok-n">alias</span>
+            <span class="tok-k">for</span> <span class="tok-n">command_name</span> <span class="tok-ow">in</span> <span class="tok-nb">sorted</span><span class="tok-p">(</span><span class="tok-n">cmds</span><span class="tok-p">):</span>
+                <span class="tok-n">docs</span> <span class="tok-o">=</span> <span class="tok-n">inspect</span><span class="tok-o">.</span><span class="tok-n">getdoc</span><span class="tok-p">(</span><span class="tok-n">cmds</span><span class="tok-p">[</span><span class="tok-n">command_name</span><span class="tok-p">])</span>
+                <span class="tok-k">if</span> <span class="tok-n">docs</span><span class="tok-p">:</span>
+                    <span class="tok-n">doc</span> <span class="tok-o">=</span> <span class="tok-n">docs</span><span class="tok-o">.</span><span class="tok-n">splitlines</span><span class="tok-p">()[</span><span class="tok-mi">0</span><span class="tok-p">]</span>
+                    <span class="tok-k">print</span> <span class="tok-s">&quot;    </span><span class="tok-si">%s</span><span class="tok-s">   # </span><span class="tok-si">%s</span><span class="tok-s">&quot;</span> <span class="tok-o">%</span> <span class="tok-p">(</span><span class="tok-n">command_name</span><span class="tok-p">,</span> <span class="tok-n">doc</span><span class="tok-p">)</span>
+                <span class="tok-k">else</span><span class="tok-p">:</span>
+                    <span class="tok-k">print</span> <span class="tok-s">&quot;    </span><span class="tok-si">%s</span><span class="tok-s">&quot;</span> <span class="tok-o">%</span> <span class="tok-n">command_name</span>
+            <span class="tok-k">print</span> <span class="tok-s">&#39;&#39;</span>
+</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>fcmds_command</code> lists filter commands:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="pygments highlight"><code class="console language-console"><span class="tok-gp">$</span> dexy fcmds
+<span class="tok-go">filter alias: apis</span>
+<span class="tok-go">    create_keyfile</span>
+
+<span class="tok-go">filter alias: botoup</span>
+<span class="tok-go">    create_keyfile</span>
+
+<span class="tok-go">filter alias: htmlsections</span>
+<span class="tok-go">    css   # Prints out CSS for the specified style.</span>
+<span class="tok-go">    sty   # Prints out .sty file (latex) for the specified style.</span>
+
+<span class="tok-go">filter alias: pyg</span>
+<span class="tok-go">    css   # Prints out CSS for the specified style.</span>
+<span class="tok-go">    sty   # Prints out .sty file (latex) for the specified style.</span>
+
+<span class="tok-go">filter alias: wordpress</span>
+<span class="tok-go">    create_keyfile   # Creates a key file for WordPress in the local directory.</span>
+<span class="tok-go">    list_categories   # List available blog post categories.</span>
+<span class="tok-go">    list_methods   # List API methods exposed by WordPress API.</span>
+
+<span class="tok-gp">$</span> dexy fcmds -alias pyg
+<span class="tok-go">filter alias: pyg</span>
+<span class="tok-go">    css   # Prints out CSS for the specified style.</span>
+<span class="tok-go">    sty   # Prints out .sty file (latex) for the specified style.</span>
+</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To run a filter command you need to pass the alias and the command name:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="pygments highlight"><code class="console language-console"><span class="tok-gp">$</span> dexy fcmd -alias pyg -cmd css | head
+<span class="tok-go">.hll { background-color: #ffffcc }</span>
+<span class="tok-go">.c { color: #408080; font-style: italic } /* Comment */</span>
+<span class="tok-go">.err { border: 1px solid #FF0000 } /* Error */</span>
+<span class="tok-go">.k { color: #008000; font-weight: bold } /* Keyword */</span>
+<span class="tok-go">.o { color: #666666 } /* Operator */</span>
+<span class="tok-go">.cm { color: #408080; font-style: italic } /* Comment.Multiline */</span>
+<span class="tok-go">.cp { color: #BC7A00 } /* Comment.Preproc */</span>
+<span class="tok-go">.c1 { color: #408080; font-style: italic } /* Comment.Single */</span>
+<span class="tok-go">.cs { color: #408080; font-style: italic } /* Comment.Special */</span>
+<span class="tok-go">.gd { color: #A00000 } /* Generic.Deleted */</span>
+</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="pygments highlight"><code class="python language-python"><span class="tok-k">def</span> <span class="tok-nf">fcmd_command</span><span class="tok-p">(</span>
+        <span class="tok-n">alias</span><span class="tok-o">=</span><span class="tok-bp">None</span><span class="tok-p">,</span> <span class="tok-c"># The alias of the filter which defines the custom command</span>
+        <span class="tok-n">cmd</span><span class="tok-o">=</span><span class="tok-bp">None</span><span class="tok-p">,</span> <span class="tok-c"># The name of the command to run</span>
+        <span class="tok-o">**</span><span class="tok-n">kwargs</span> <span class="tok-c"># Additional arguments to be passed to the command</span>
+        <span class="tok-p">):</span>
+    <span class="tok-sd">&quot;&quot;&quot;</span>
+<span class="tok-sd">    Run a filter command.</span>
+<span class="tok-sd">    &quot;&quot;&quot;</span>
+    <span class="tok-n">filter_instance</span> <span class="tok-o">=</span> <span class="tok-n">dexy</span><span class="tok-o">.</span><span class="tok-n">filter</span><span class="tok-o">.</span><span class="tok-n">Filter</span><span class="tok-o">.</span><span class="tok-n">create_instance</span><span class="tok-p">(</span><span class="tok-n">alias</span><span class="tok-p">)</span>
+    <span class="tok-n">cmd_name</span> <span class="tok-o">=</span> <span class="tok-s">&quot;docmd_</span><span class="tok-si">%s</span><span class="tok-s">&quot;</span> <span class="tok-o">%</span> <span class="tok-n">cmd</span>
+
+    <span class="tok-k">if</span> <span class="tok-ow">not</span> <span class="tok-n">cmd_name</span> <span class="tok-ow">in</span> <span class="tok-nb">dir</span><span class="tok-p">(</span><span class="tok-n">filter_instance</span><span class="tok-p">):</span>
+        <span class="tok-n">msg</span> <span class="tok-o">=</span> <span class="tok-s">&quot;</span><span class="tok-si">%s</span><span class="tok-s"> is not a valid command. There is no method </span><span class="tok-si">%s</span><span class="tok-s"> defined in </span><span class="tok-si">%s</span><span class="tok-s">&quot;</span>
+        <span class="tok-n">msgargs</span> <span class="tok-o">=</span> <span class="tok-p">(</span><span class="tok-n">cmd</span><span class="tok-p">,</span> <span class="tok-n">cmd_name</span><span class="tok-p">,</span> <span class="tok-n">filter_instance</span><span class="tok-o">.</span><span class="tok-n">__class__</span><span class="tok-o">.</span><span class="tok-n">__name__</span><span class="tok-p">)</span>
+        <span class="tok-k">raise</span> <span class="tok-n">dexy</span><span class="tok-o">.</span><span class="tok-n">exceptions</span><span class="tok-o">.</span><span class="tok-n">UserFeedback</span><span class="tok-p">(</span><span class="tok-n">msg</span> <span class="tok-o">%</span> <span class="tok-n">msgargs</span><span class="tok-p">)</span>
+
+    <span class="tok-k">else</span><span class="tok-p">:</span>
+        <span class="tok-n">instance_method</span> <span class="tok-o">=</span> <span class="tok-nb">getattr</span><span class="tok-p">(</span><span class="tok-n">filter_instance</span><span class="tok-p">,</span> <span class="tok-n">cmd_name</span><span class="tok-p">)</span>
+        <span class="tok-c"># TODO use try/catch instead of inspect.ismethod</span>
+        <span class="tok-k">if</span> <span class="tok-n">inspect</span><span class="tok-o">.</span><span class="tok-n">ismethod</span><span class="tok-p">(</span><span class="tok-n">instance_method</span><span class="tok-p">):</span>
+            <span class="tok-k">try</span><span class="tok-p">:</span>
+                <span class="tok-n">instance_method</span><span class="tok-o">.</span><span class="tok-n">__func__</span><span class="tok-p">(</span><span class="tok-n">filter_instance</span><span class="tok-p">,</span> <span class="tok-o">**</span><span class="tok-n">kwargs</span><span class="tok-p">)</span>
+            <span class="tok-k">except</span> <span class="tok-ne">TypeError</span> <span class="tok-k">as</span> <span class="tok-n">e</span><span class="tok-p">:</span>
+                <span class="tok-k">print</span> <span class="tok-n">e</span><span class="tok-o">.</span><span class="tok-n">message</span>
+                <span class="tok-k">print</span> <span class="tok-n">inspect</span><span class="tok-o">.</span><span class="tok-n">getargspec</span><span class="tok-p">(</span><span class="tok-n">instance_method</span><span class="tok-o">.</span><span class="tok-n">__func__</span><span class="tok-p">)</span>
+                <span class="tok-k">print</span> <span class="tok-n">inspect</span><span class="tok-o">.</span><span class="tok-n">getdoc</span><span class="tok-p">(</span><span class="tok-n">instance_method</span><span class="tok-o">.</span><span class="tok-n">__func__</span><span class="tok-p">)</span>
+                <span class="tok-k">raise</span>
+
+        <span class="tok-k">else</span><span class="tok-p">:</span>
+            <span class="tok-n">msg</span> <span class="tok-o">=</span> <span class="tok-s">&quot;expected </span><span class="tok-si">%s</span><span class="tok-s"> to be an instance method of </span><span class="tok-si">%s</span><span class="tok-s">&quot;</span>
+            <span class="tok-n">msgargs</span> <span class="tok-o">=</span> <span class="tok-p">(</span><span class="tok-n">cmd_name</span><span class="tok-p">,</span> <span class="tok-n">filter_instance</span><span class="tok-o">.</span><span class="tok-n">__class__</span><span class="tok-o">.</span><span class="tok-n">__name__</span><span class="tok-p">)</span>
+            <span class="tok-k">raise</span> <span class="tok-n">dexy</span><span class="tok-o">.</span><span class="tok-n">exceptions</span><span class="tok-o">.</span><span class="tok-n">InternalDexyProblem</span><span class="tok-p">(</span><span class="tok-n">msg</span> <span class="tok-o">%</span> <span class="tok-n">msgargs</span><span class="tok-p">)</span>
+</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_filters_py">filters.py</h3>
+<div class="paragraph">
+<p>The filters module contains dexy&#8217;s command line reference for filters.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="pygments highlight"><code class="python language-python"><span class="tok-k">def</span> <span class="tok-nf">filters_command</span><span class="tok-p">(</span>
+        <span class="tok-n">alias</span><span class="tok-o">=</span><span class="tok-s">&quot;&quot;</span><span class="tok-p">,</span> <span class="tok-c"># Print docs for this filter.</span>
+        <span class="tok-n">example</span><span class="tok-o">=</span><span class="tok-bp">False</span><span class="tok-p">,</span> <span class="tok-c"># Whether to run included examples (slower).</span>
+        <span class="tok-n">nocolor</span><span class="tok-o">=</span><span class="tok-bp">False</span><span class="tok-p">,</span> <span class="tok-c"># Skip syntax highlighting if showing source code.</span>
+        <span class="tok-n">source</span><span class="tok-o">=</span><span class="tok-bp">False</span><span class="tok-p">,</span> <span class="tok-c"># Print source code of filter.</span>
+        <span class="tok-n">versions</span><span class="tok-o">=</span><span class="tok-bp">False</span> <span class="tok-c"># Print the installed version of external software (slower).</span>
+        <span class="tok-p">):</span>
+    <span class="tok-sd">&quot;&quot;&quot;</span>
+<span class="tok-sd">    Prints list of available filters or docs for a particular filter.</span>
+<span class="tok-sd">    &quot;&quot;&quot;</span>
+    <span class="tok-k">if</span> <span class="tok-n">alias</span><span class="tok-p">:</span>
+        <span class="tok-n">help_for_filter</span><span class="tok-p">(</span><span class="tok-n">alias</span><span class="tok-p">,</span> <span class="tok-n">example</span><span class="tok-p">,</span> <span class="tok-n">source</span><span class="tok-p">,</span> <span class="tok-n">nocolor</span><span class="tok-p">)</span>
+    <span class="tok-k">else</span><span class="tok-p">:</span>
+        <span class="tok-n">list_filters</span><span class="tok-p">(</span><span class="tok-n">versions</span><span class="tok-p">)</span>
+</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="pygments highlight"><code class="python language-python"><span class="tok-k">def</span> <span class="tok-nf">help_for_filter</span><span class="tok-p">(</span><span class="tok-n">alias</span><span class="tok-p">,</span> <span class="tok-n">run_example</span><span class="tok-p">,</span> <span class="tok-n">show_source</span><span class="tok-p">,</span> <span class="tok-n">nocolor</span><span class="tok-p">):</span>
+    <span class="tok-n">instance</span> <span class="tok-o">=</span> <span class="tok-n">dexy</span><span class="tok-o">.</span><span class="tok-n">filter</span><span class="tok-o">.</span><span class="tok-n">Filter</span><span class="tok-o">.</span><span class="tok-n">create_instance</span><span class="tok-p">(</span><span class="tok-n">alias</span><span class="tok-p">)</span>
+
+    <span class="tok-k">print</span> <span class="tok-s">&quot;aliases: </span><span class="tok-si">%s</span><span class="tok-s">&quot;</span> <span class="tok-o">%</span> <span class="tok-s">&quot;, &quot;</span><span class="tok-o">.</span><span class="tok-n">join</span><span class="tok-p">(</span><span class="tok-n">instance</span><span class="tok-o">.</span><span class="tok-n">aliases</span><span class="tok-p">)</span>
+    <span class="tok-k">print</span> <span class="tok-s">&#39;&#39;</span>
+    <span class="tok-k">print</span> <span class="tok-n">inspect</span><span class="tok-o">.</span><span class="tok-n">getdoc</span><span class="tok-p">(</span><span class="tok-n">instance</span><span class="tok-o">.</span><span class="tok-n">__class__</span><span class="tok-p">)</span>
+    <span class="tok-k">print</span> <span class="tok-s">&#39;&#39;</span>
+
+    <span class="tok-k">print</span><span class="tok-p">(</span><span class="tok-s">&#39;settings:&#39;</span><span class="tok-p">)</span>
+    <span class="tok-k">for</span> <span class="tok-n">k</span> <span class="tok-ow">in</span> <span class="tok-nb">sorted</span><span class="tok-p">(</span><span class="tok-n">instance</span><span class="tok-o">.</span><span class="tok-n">_instance_settings</span><span class="tok-p">):</span>
+        <span class="tok-k">if</span> <span class="tok-ow">not</span> <span class="tok-n">k</span> <span class="tok-ow">in</span> <span class="tok-n">dexy</span><span class="tok-o">.</span><span class="tok-n">filter</span><span class="tok-o">.</span><span class="tok-n">Filter</span><span class="tok-o">.</span><span class="tok-n">nodoc_settings</span><span class="tok-p">:</span>
+            <span class="tok-n">tup</span> <span class="tok-o">=</span> <span class="tok-n">instance</span><span class="tok-o">.</span><span class="tok-n">_instance_settings</span><span class="tok-p">[</span><span class="tok-n">k</span><span class="tok-p">]</span>
+            <span class="tok-n">setting_s</span> <span class="tok-o">=</span> <span class="tok-s">&quot;  </span><span class="tok-si">%s</span><span class="tok-s">: </span><span class="tok-si">%s</span><span class="tok-s"> (default value: </span><span class="tok-si">%s</span><span class="tok-s">)&quot;</span>
+            <span class="tok-k">print</span> <span class="tok-n">setting_s</span> <span class="tok-o">%</span> <span class="tok-p">(</span><span class="tok-n">k</span><span class="tok-p">,</span> <span class="tok-n">inspect</span><span class="tok-o">.</span><span class="tok-n">cleandoc</span><span class="tok-p">(</span><span class="tok-n">tup</span><span class="tok-p">[</span><span class="tok-mi">0</span><span class="tok-p">])</span><span class="tok-o">.</span><span class="tok-n">replace</span><span class="tok-p">(</span><span class="tok-s">&quot;</span><span class="tok-se">\n</span><span class="tok-s">&quot;</span><span class="tok-p">,</span> <span class="tok-s">&quot; &quot;</span><span class="tok-p">),</span> <span class="tok-n">tup</span><span class="tok-p">[</span><span class="tok-mi">1</span><span class="tok-p">])</span>
+
+    <span class="tok-n">examples</span> <span class="tok-o">=</span> <span class="tok-n">instance</span><span class="tok-o">.</span><span class="tok-n">setting</span><span class="tok-p">(</span><span class="tok-s">&#39;examples&#39;</span><span class="tok-p">)</span>
+    <span class="tok-n">example_templates</span> <span class="tok-o">=</span> <span class="tok-nb">dict</span><span class="tok-p">((</span><span class="tok-n">alias</span><span class="tok-p">,</span> <span class="tok-n">dexy</span><span class="tok-o">.</span><span class="tok-n">template</span><span class="tok-o">.</span><span class="tok-n">Template</span><span class="tok-o">.</span><span class="tok-n">create_instance</span><span class="tok-p">(</span><span class="tok-n">alias</span><span class="tok-p">))</span>
+                                    <span class="tok-k">for</span> <span class="tok-n">alias</span> <span class="tok-ow">in</span> <span class="tok-n">examples</span><span class="tok-p">)</span>
+
+    <span class="tok-k">if</span> <span class="tok-n">examples</span><span class="tok-p">:</span>
+        <span class="tok-k">print</span> <span class="tok-s">&#39;&#39;</span>
+        <span class="tok-k">print</span> <span class="tok-s">&quot;Examples for this filter:&quot;</span>
+        <span class="tok-k">for</span> <span class="tok-n">alias</span> <span class="tok-ow">in</span> <span class="tok-n">examples</span><span class="tok-p">:</span>
+            <span class="tok-n">template</span> <span class="tok-o">=</span> <span class="tok-n">example_templates</span><span class="tok-p">[</span><span class="tok-n">alias</span><span class="tok-p">]</span>
+            <span class="tok-k">print</span> <span class="tok-s">&#39;&#39;</span>
+            <span class="tok-k">print</span> <span class="tok-s">&quot;  </span><span class="tok-si">%s</span><span class="tok-s">&quot;</span> <span class="tok-o">%</span> <span class="tok-n">alias</span>
+            <span class="tok-k">print</span> <span class="tok-s">&quot;            </span><span class="tok-si">%s</span><span class="tok-s">&quot;</span> <span class="tok-o">%</span> <span class="tok-n">inspect</span><span class="tok-o">.</span><span class="tok-n">getdoc</span><span class="tok-p">(</span><span class="tok-n">template</span><span class="tok-o">.</span><span class="tok-n">__class__</span><span class="tok-p">)</span>
+
+        <span class="tok-k">if</span> <span class="tok-n">run_example</span><span class="tok-p">:</span>
+            <span class="tok-k">for</span> <span class="tok-n">alias</span> <span class="tok-ow">in</span> <span class="tok-n">examples</span><span class="tok-p">:</span>
+                <span class="tok-n">template</span> <span class="tok-o">=</span> <span class="tok-n">example_templates</span><span class="tok-p">[</span><span class="tok-n">alias</span><span class="tok-p">]</span>
+                <span class="tok-k">print</span> <span class="tok-s">&#39;&#39;</span>
+                <span class="tok-k">print</span> <span class="tok-s">&quot;Running example: </span><span class="tok-si">%s</span><span class="tok-s">&quot;</span> <span class="tok-o">%</span> <span class="tok-n">template</span><span class="tok-o">.</span><span class="tok-n">setting</span><span class="tok-p">(</span><span class="tok-s">&#39;help&#39;</span><span class="tok-p">)</span>
+                <span class="tok-k">print</span> <span class="tok-s">&#39;&#39;</span>
+                <span class="tok-k">print</span> <span class="tok-s">&#39;&#39;</span>
+                <span class="tok-k">print</span> <span class="tok-n">template_text</span><span class="tok-p">(</span><span class="tok-n">template</span><span class="tok-p">)</span>
+
+    <span class="tok-k">print</span> <span class="tok-s">&#39;&#39;</span>
+    <span class="tok-k">print</span> <span class="tok-s">&quot;For online docs see http://dexy.it/docs/filters/</span><span class="tok-si">%s</span><span class="tok-s">&quot;</span> <span class="tok-o">%</span> <span class="tok-n">alias</span>
+
+    <span class="tok-k">if</span> <span class="tok-n">show_source</span><span class="tok-p">:</span>
+        <span class="tok-k">print</span> <span class="tok-s">&#39;&#39;</span>
+        <span class="tok-n">source_code</span> <span class="tok-o">=</span> <span class="tok-n">inspect</span><span class="tok-o">.</span><span class="tok-n">getsource</span><span class="tok-p">(</span><span class="tok-n">instance</span><span class="tok-o">.</span><span class="tok-n">__class__</span><span class="tok-p">)</span>
+        <span class="tok-k">if</span> <span class="tok-n">nocolor</span><span class="tok-p">:</span>
+            <span class="tok-k">print</span> <span class="tok-n">source_code</span>
+        <span class="tok-k">else</span><span class="tok-p">:</span>
+            <span class="tok-n">formatter</span> <span class="tok-o">=</span> <span class="tok-n">pygments</span><span class="tok-o">.</span><span class="tok-n">formatters</span><span class="tok-o">.</span><span class="tok-n">TerminalFormatter</span><span class="tok-p">()</span>
+            <span class="tok-n">lexer</span> <span class="tok-o">=</span> <span class="tok-n">PythonLexer</span><span class="tok-p">()</span>
+            <span class="tok-k">print</span> <span class="tok-n">highlight</span><span class="tok-p">(</span><span class="tok-n">source_code</span><span class="tok-p">,</span> <span class="tok-n">lexer</span><span class="tok-p">,</span> <span class="tok-n">formatter</span><span class="tok-p">)</span>
+</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="pygments highlight"><code class="python language-python"><span class="tok-k">def</span> <span class="tok-nf">list_filters</span><span class="tok-p">(</span><span class="tok-n">versions</span><span class="tok-p">):</span>
+        <span class="tok-k">print</span> <span class="tok-s">&quot;Installed filters:&quot;</span>
+        <span class="tok-k">for</span> <span class="tok-n">filter_instance</span> <span class="tok-ow">in</span> <span class="tok-n">dexy</span><span class="tok-o">.</span><span class="tok-n">filter</span><span class="tok-o">.</span><span class="tok-n">Filter</span><span class="tok-p">:</span>
+            <span class="tok-c"># Should we show this filter?</span>
+            <span class="tok-n">no_aliases</span> <span class="tok-o">=</span> <span class="tok-ow">not</span> <span class="tok-n">filter_instance</span><span class="tok-o">.</span><span class="tok-n">setting</span><span class="tok-p">(</span><span class="tok-s">&#39;aliases&#39;</span><span class="tok-p">)</span>
+            <span class="tok-n">no_doc</span> <span class="tok-o">=</span> <span class="tok-n">filter_instance</span><span class="tok-o">.</span><span class="tok-n">setting</span><span class="tok-p">(</span><span class="tok-s">&#39;nodoc&#39;</span><span class="tok-p">)</span>
+            <span class="tok-n">not_dexy</span> <span class="tok-o">=</span> <span class="tok-ow">not</span> <span class="tok-n">filter_instance</span><span class="tok-o">.</span><span class="tok-n">__class__</span><span class="tok-o">.</span><span class="tok-n">__module__</span><span class="tok-o">.</span><span class="tok-n">startswith</span><span class="tok-p">(</span><span class="tok-s">&quot;dexy.&quot;</span><span class="tok-p">)</span>
+            <span class="tok-n">exclude</span> <span class="tok-o">=</span> <span class="tok-n">filter_instance</span><span class="tok-o">.</span><span class="tok-n">alias</span> <span class="tok-ow">in</span> <span class="tok-n">extra_nodoc_aliseas</span>
+
+            <span class="tok-k">if</span> <span class="tok-n">no_aliases</span> <span class="tok-ow">or</span> <span class="tok-n">no_doc</span> <span class="tok-ow">or</span> <span class="tok-n">not_dexy</span> <span class="tok-ow">or</span> <span class="tok-n">exclude</span><span class="tok-p">:</span>
+                <span class="tok-k">continue</span>
+
+            <span class="tok-c"># generate version message</span>
+            <span class="tok-k">if</span> <span class="tok-n">versions</span><span class="tok-p">:</span>
+                <span class="tok-k">if</span> <span class="tok-nb">hasattr</span><span class="tok-p">(</span><span class="tok-n">filter_instance</span><span class="tok-p">,</span> <span class="tok-s">&#39;version&#39;</span><span class="tok-p">):</span>
+                    <span class="tok-n">version</span> <span class="tok-o">=</span> <span class="tok-n">filter_instance</span><span class="tok-o">.</span><span class="tok-n">version</span><span class="tok-p">()</span>
+                    <span class="tok-k">if</span> <span class="tok-n">version</span><span class="tok-p">:</span>
+                        <span class="tok-n">version_message</span> <span class="tok-o">=</span> <span class="tok-s">&quot;Installed version: </span><span class="tok-si">%s</span><span class="tok-s">&quot;</span> <span class="tok-o">%</span> <span class="tok-n">version</span>
+                    <span class="tok-k">else</span><span class="tok-p">:</span>
+                        <span class="tok-n">msg</span> <span class="tok-o">=</span> <span class="tok-s">&quot;&#39;</span><span class="tok-si">%s</span><span class="tok-s">&#39; failed, filter may not be available.&quot;</span>
+                        <span class="tok-n">msgargs</span> <span class="tok-o">=</span> <span class="tok-n">filter_instance</span><span class="tok-o">.</span><span class="tok-n">version_command</span><span class="tok-p">()</span>
+                        <span class="tok-n">version_message</span> <span class="tok-o">=</span> <span class="tok-n">msg</span> <span class="tok-o">%</span> <span class="tok-n">msgargs</span>
+                <span class="tok-k">else</span><span class="tok-p">:</span>
+                    <span class="tok-n">version_message</span> <span class="tok-o">=</span> <span class="tok-s">&quot;&quot;</span>
+
+
+            <span class="tok-n">filter_help</span> <span class="tok-o">=</span> <span class="tok-s">&quot;  &quot;</span> <span class="tok-o">+</span> <span class="tok-n">filter_instance</span><span class="tok-o">.</span><span class="tok-n">alias</span> <span class="tok-o">+</span> \
+                    <span class="tok-s">&quot; : &quot;</span> <span class="tok-o">+</span> <span class="tok-n">filter_instance</span><span class="tok-o">.</span><span class="tok-n">setting</span><span class="tok-p">(</span><span class="tok-s">&#39;help&#39;</span><span class="tok-p">)</span><span class="tok-o">.</span><span class="tok-n">splitlines</span><span class="tok-p">()[</span><span class="tok-mi">0</span><span class="tok-p">]</span>
+
+            <span class="tok-k">if</span> <span class="tok-n">versions</span> <span class="tok-ow">and</span> <span class="tok-n">version_message</span><span class="tok-p">:</span>
+                <span class="tok-n">filter_help</span> <span class="tok-o">+=</span> <span class="tok-s">&quot; </span><span class="tok-si">%s</span><span class="tok-s">&quot;</span> <span class="tok-o">%</span> <span class="tok-n">version_message</span>
+
+            <span class="tok-k">print</span> <span class="tok-n">filter_help</span>
+
+        <span class="tok-k">print</span> <span class="tok-s">&#39;&#39;</span>
+        <span class="tok-k">print</span> <span class="tok-n">inspect</span><span class="tok-o">.</span><span class="tok-n">cleandoc</span><span class="tok-p">(</span><span class="tok-s">&quot;&quot;&quot;For more information about a particular filter,</span>
+<span class="tok-s">        use the -alias flag and specify the filter alias.&quot;&quot;&quot;</span><span class="tok-p">)</span>
 </code></pre>
 </div>
 </div>
@@ -819,7 +1169,7 @@ generates an example file for you containing all the default dexy options:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2013-10-26 23:32:20 PDT
+Last updated 2013-10-27 08:53:48 PDT
 </div>
 </div>
 </body>
