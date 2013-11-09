@@ -8,6 +8,33 @@ try:
 except ImportError:
     BS4_AVAILABLE = False
 
+class Customize(DexyFilter):
+    """
+    Add <script> tags or <link> tags to an HTML file's header. Uses BeautifulSoup parser.
+    """
+    aliases = ['customize']
+
+    _settings = {
+            'scripts' : ("Javascript files to add.", []),
+            'stylesheets' : ("CSS files to add.", [])
+            }
+
+    def is_active(self):
+        return BS4_AVAILABLE
+
+    def process_text(self, input_text):
+        soup = BeautifulSoup(input_text)
+
+        for js in self.setting('scripts'):
+            js_tag = soup.new_tag("script", type="text/javascript", src=js)
+            soup.head.append(js_tag)
+
+        for css in self.setting('stylesheets'):
+            css_tag = soup.new_tag("link", rel="stylesheet", type="text/css", href=css)
+            soup.head.append(css_tag)
+
+        return unicode(soup)
+
 class SoupSections(DexyFilter):
     """
     Split a HTML file into nested sections based on header tags.
