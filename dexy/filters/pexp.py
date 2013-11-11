@@ -16,7 +16,7 @@ class DexyEOFException(UserFeedback):
 
 class PexpectReplFilter(SubprocessFilter):
     """
-    Base class for filters which use pexpect to retrieve output line-by-line based on detecting prompts.
+    Use pexpect to retrieve output line-by-line based on detecting prompts.
     """
     _settings = {
             'trim-prompt' : ("The closing prompt to be trimmed off.", '>>>'),
@@ -235,7 +235,8 @@ class PexpectReplFilter(SubprocessFilter):
         self.populate_workspace()
 
         for section_name, section_transcript in self.section_output():
-            self.output_data[section_name] = self.strip_trailing_prompts(section_transcript)
+            raw = self.strip_trailing_prompts(section_transcript)
+            self.output_data[section_name] = self.doc.wrapper.decode_encoded(raw)
 
         self.output_data.save()
 

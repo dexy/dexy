@@ -36,6 +36,7 @@ class OutputReporter(Reporter):
         self.wrapper=wrapper
         self.locations = {}
 
+        self.remove_reports_dir(self.wrapper, keep_empty_dir=True)
         self.create_reports_dir()
         for doc in wrapper.nodes.values():
             if not doc.key_with_class() in wrapper.batch.docs:

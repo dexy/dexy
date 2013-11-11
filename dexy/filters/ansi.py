@@ -24,11 +24,11 @@ class Ansi2HTMLTemplatePlugin(TemplatePlugin):
         return conv.convert(unicode(doc), full=False)
 
     def run(self):
-        return { 'ansi2html' : self.convert }
+        return { 'ansi2html' : ("The convert method from ansi2html module.", self.convert) }
 
 class Ansi2HTMLFilter(DexyFilter):
     """
-    Filter for ansi2html converter.
+    Generates HTML from ANSI color codes using ansi2html.
     """
     aliases = ['ansi2html']
     _settings = {

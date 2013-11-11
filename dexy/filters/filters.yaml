@@ -178,12 +178,15 @@ rust|rustc:
 php:
     class: SubprocessStdoutFilter
     tags: [code, php]
-    help: Runs php file, note that php code must be included in <?php ... ?> tags.
     executable: php
     check-return-code: False
     version-command: php --version
     input-extensions: [.php, .txt]
     output-extensions: [.html, .txt]
+    help: >
+        Runs php file.
+        
+        Php code must be included in <?php ... ?> tags.
 
 nodejs|node:
     class: SubprocessStdoutFilter
@@ -227,7 +230,7 @@ jirb:
 
 redcloth|textile: 
     class: SubprocessStdoutFilter
-    help: Uses Redcloth to convert textile source to HTML.
+    help: Converts textile to HTML using Redcloth.
     executable: redcloth
     tags: [text, markup]
     input-extensions: ['.txt', '.textile']
@@ -236,7 +239,7 @@ redcloth|textile:
 
 redclothl|latextile: 
     class: SubprocessStdoutFilter
-    help: Uses Redcloth to convert textile source to LaTeX.
+    help: Converts textile to LaTeX using Redcloth.
     tags: [text, markup]
     executable: redcloth -o latex
     input-extensions: ['.txt', '.textile']
@@ -246,7 +249,7 @@ redclothl|latextile:
 rst2odt:
     class: SubprocessFilter
     tags: [text, markup]
-    help: This uses the command line tool rst2odt.
+    help: Runs rst2odt command (docutils).
     version-command: 'rst2pdf.py --version'
     executable: rst2odt.py
     input-extensions: ['.rst', '.txt']
@@ -339,11 +342,10 @@ calibre|ebook:
            - .html
            - .pml
     help: >
-       Invokes ebook-convert command line tool (part of calibre) to generate
-       various output formats (including .mobi for Kindle)
-
+       Runs `ebook-convert` command (part of calibre)
+       
+       Generates various output formats (including .mobi for Kindle)
        http://manual.calibre-ebook.com/cli/ebook-convert.html
-
 
 # TODO Support all these + test them.
 #Output formats: native, json, html, html5, html+lhs, html5+lhs, s5, slidy,
@@ -399,6 +401,7 @@ rdconv:
 
 lyx:
     class: SubprocessExtToFormatFilter
+    help: Runs lyx to generate LaTeX output.
     executable: lyx
     tags: [lyx, pdf, latex]
     version-command: lyx -version
@@ -411,7 +414,7 @@ lyx:
 asciidoc:
     examples: [asciidoc]
     class: SubprocessExtToFormatFilter
-    help: Converts ASCIIDOC input to various output formats.
+    help: Runs asciidoc command.
     tags: [asciidoc, html]
     output: True
     version-command: asciidoc --version
@@ -462,8 +465,7 @@ html2pdf|wkhtmltopdf:
     input-extensions: [.html, .txt]
     output-extensions: [.pdf]
     help: >
-           This filter is deprecated because it's likely that casper.js or
-           phantom.js will convert HTML to PDF more easily than wkhtmltopdf.
+           Deprecated, use casper.js instead.
 
            Renders HTML to PDF using wkhtmltopdf. If the HTML relies on assets
            such as CSS or image files, these should be specified as inputs.
@@ -507,7 +509,7 @@ rlrbd|ragelrubydot:
 
 rageldot:
     class: SubprocessFilter
-    help: Generates state chart in .dot format of ragel state machine. Pass language flag in args.
+    help: Generates state chart in .dot format of ragel state machine.
     tags: [ragel, parser, dot]
     executable: ragel
     version-command: ragel --version
@@ -857,7 +859,7 @@ rst2html:
 
 rst2latex:
     class: SubprocessFilter
-    help: This uses the command line tool rst2latex.
+    help: Runs rst2latex command (docutils).
     tags: [reStructuredText, latex]
     executable: rst2latex.py
     input-extensions: [".rst", ".txt"]
@@ -866,7 +868,7 @@ rst2latex:
 
 rst2xml:
     class: SubprocessFilter
-    help: This uses the command line tool rst2xml.
+    help: Runs rst2xml command (docutils).
     executable: rst2xml.py
     version-command: 'rst2xml.py --version'
     input-extensions: [".rst", ".txt"]
@@ -874,7 +876,7 @@ rst2xml:
 
 rst2beamer:
     class: SubprocessFilter
-    help: Filter for rst2beamer command line tool, requires docutils plus rst2beamer package.
+    help: Runs rst2beamer command (docutils).
     tags: [reStructuredText]
     executable: rst2beamer.py
     input-extensions: [".rst", ".txt"]
@@ -883,7 +885,7 @@ rst2beamer:
 
 rst2man:
     class: SubprocessFilter
-    help: Filter for rst2man command line tool, requires docutils.
+    help: Runs rst2man command (docutils).
     tags: [reStructuredText]
     executable: rst2man.py
     input-extensions: [".rst", ".txt"]

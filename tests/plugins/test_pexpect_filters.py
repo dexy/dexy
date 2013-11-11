@@ -79,6 +79,7 @@ def test_python_filter_record_vars():
         assert "doc:example.py-vars.json" in wrapper.nodes
 
 def test_matlab_filter():
+    raise SkipTest()
     assert_in_output('matlabint', "fprintf (1, 'Hello, world\\n')\n", "< M A T L A B (R) >")
 
 def test_clj_filter():

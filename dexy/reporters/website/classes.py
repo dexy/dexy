@@ -131,12 +131,28 @@ class WebsiteReporter(OutputReporter):
     aliases = ['ws']
     _other_class_settings = {
             'doc' : {
-                'apply-ws-to-content' : ("""If you want to put website-related content (like the link() function) in your content, set this to True so your content gets put through the jinja filter for the website reporter.""", False),
-                'apply-ws-to-content-var-start-string' : ("""If you want to put website-related content (like the link() function) in your content, set this to True so your content gets put through the jinja filter for the website reporter.""", None),
-                'apply-ws-to-content-var-end-string' : ("""If you want to put website-related content (like the link() function) in your content, set this to True so your content gets put through the jinja filter for the website reporter.""", None),
-                'ws-template' : ("""Key of template to apply for rendering in
-                website.  Setting of 'None' will use default template, 'False'
-                will force no template to be used.""",
+                'apply-ws-to-content' : ("""
+                    If you want to put website-related content (like the link()
+                    function) in your content, set this to True so your content
+                    gets put through the jinja filter for the website reporter.
+                    """,
+                    False
+                ),
+                'apply-ws-to-content-var-start-string' : ("""
+                    Provide a custom jinja var-start-string to avoid clashes.
+                    """,
+                    None
+                ),
+                'apply-ws-to-content-var-end-string' : ("""
+                    Provide a custom jinja var-end-string to avoid clashes.
+                    """,
+                    None
+                    ),
+                'ws-template' : ("""
+                    Key of the template to apply for rendering in website.
+                    Setting of 'None' will use default template, 'False' will
+                    force no template to be used.
+                """,
                 None)
                 }
             }

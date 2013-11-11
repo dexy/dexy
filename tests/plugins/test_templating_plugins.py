@@ -13,19 +13,19 @@ def test_base():
 def test_ppjson():
     with run(plugin.PrettyPrintJson) as env:
         assert 'ppjson' in env
-        assert hasattr(env['ppjson'], '__call__')
+        assert hasattr(env['ppjson'][1], '__call__')
 
 def test_python_datetime():
     with run(plugin.PythonDatetime) as env:
-        assert env['cal'].__class__.__name__ == 'Calendar'
+        assert inspect.ismodule(env['cal'][1])
 
 def test_dexy_version():
     with run(plugin.DexyVersion) as env:
-        assert env['DEXY_VERSION']
+        assert env['DEXY_VERSION'][1]
 
 def test_simple_json():
     with run(plugin.SimpleJson) as env:
-        assert inspect.ismodule((env['json']))
+        assert inspect.ismodule(env['json'][1])
 
 def test_python_builtins():
     with run(plugin.PythonBuiltins) as env:
@@ -33,17 +33,17 @@ def test_python_builtins():
 
 def test_pygments():
     with run(plugin.PygmentsStylesheet) as env:
-        assert 'pastie.tex' in env['pygments'].keys()
-        assert 'pastie.css' in env['pygments'].keys()
-        assert 'pastie.html' in env['pygments'].keys()
-        assert hasattr(env['highlight'], '__call__')
+        assert 'pastie.tex' in env['pygments'][1].keys()
+        assert 'pastie.css' in env['pygments'][1].keys()
+        assert 'pastie.html' in env['pygments'][1].keys()
+        assert hasattr(env['highlight'][1], '__call__')
 
 class TestSubdirectory(TemplateFilter):
     """
     test subdir
     """
     aliases = ['testsubdir']
-    TEMPLATE_PLUGINS = [plugin.Subdirectories]
+    _settings = { 'plugins' : ['subdirectories'] }
 
 def test_subdirectories():
     with wrap() as wrapper:
@@ -59,15 +59,15 @@ def test_subdirectories():
         wrapper.run_docs(node)
 
         env = node.filters[-1].run_plugins()
-        assert 's1' in env['subdirectories']
-        assert 's2' in env['subdirectories']
+        assert 's1' in env['subdirectories'][1]
+        assert 's2' in env['subdirectories'][1]
 
 class TestVariables(TemplateFilter):
     """
     test variables
     """
     aliases = ['testvars']
-    TEMPLATE_PLUGINS = [plugin.Variables]
+    _settings = { 'plugins' : ['variables'] }
 
 def test_variables():
     with wrap() as wrapper:
@@ -81,15 +81,15 @@ def test_variables():
         wrapper.run_docs(node)
 
         env = node.filters[-1].run_plugins()
-        assert env['foo'] == 'bar'
-        assert env['x'] == 123.4
+        assert env['foo'][1] == 'bar'
+        assert env['x'][1] == 123.4
 
 class TestGlobals(TemplateFilter):
     """
     test globals
     """
     aliases = ['testglobals']
-    TEMPLATE_PLUGINS = [plugin.Globals]
+    _settings = { 'plugins' : ['globals'] }
 
 def test_globals():
     with wrap() as wrapper:

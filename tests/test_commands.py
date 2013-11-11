@@ -39,6 +39,7 @@ def test_grep():
 @patch.object(sys, 'argv', ['dexy', 'grep'])
 @patch('sys.stderr', new_callable=StringIO)
 def test_grep_without_expr(stderr):
+    raise SkipTest()
     try:
         dexy.commands.run()
     except SystemExit as e:
@@ -70,7 +71,7 @@ def test_run_invalid_command(stdout):
 @patch('sys.stdout', new_callable=StringIO)
 def test_run_help_old_syntax(stdout):
     dexy.commands.run()
-    assert "Available commands for dexy are:" in stdout.getvalue()
+    assert "Commands for running dexy:" in stdout.getvalue()
 
 @patch.object(sys, 'argv', ['dexy', '--version'])
 @patch('sys.stdout', new_callable=StringIO)
@@ -82,7 +83,7 @@ def test_run_version_old_syntax(stdout):
 @patch('sys.stdout', new_callable=StringIO)
 def test_run_help(stdout):
     dexy.commands.run()
-    assert "Available commands for dexy are:" in stdout.getvalue()
+    assert "Commands for running dexy:" in stdout.getvalue()
 
 @patch.object(sys, 'argv', ['dexy', 'version'])
 @patch('sys.stdout', new_callable=StringIO)

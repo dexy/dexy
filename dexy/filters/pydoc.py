@@ -59,11 +59,15 @@ class Pydoc(PythonIntrospection):
     """
     Returns introspected python data in key-value storage format.
 
-    Where input is a .txt file, this is assumed to be the name of an installed python module.
+    Where input is a .txt file, this is assumed to be the name of an installed
+    python module.
 
     Where input is a .py file, the file itself is loaded and parsed.
     """
     aliases = ["pydoc"]
+    _settings = {
+            'additional-dirs' : ("Additional source directories to load, relative to package root. Useful for tests/", [])
+            }
 
     def append_item_content(self, key, item):
         self.log_debug("appending content for %s" % key)

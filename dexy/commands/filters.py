@@ -5,6 +5,7 @@ from pygments.lexers import PythonLexer
 import dexy.filter
 import inspect
 
+
 extra_nodoc_aliseas = ('-',)
 
 def filters_command(
@@ -25,17 +26,39 @@ def filters_command(
 def help_for_filter(alias, run_example, show_source, nocolor):
     instance = dexy.filter.Filter.create_instance(alias)
 
-    print "aliases: %s" % ", ".join(instance.aliases)
     print ''
-    print inspect.getdoc(instance.__class__)
+    print instance.setting('help')
+
+    print ''
+    print "aliases: %s" % ", ".join(instance.setting('aliases'))
+    print "tags: %s" % ", ".join(instance.setting('tags'))
     print ''
 
-    print('settings:')
+    print "Converts from file formats:"
+    for ext in instance.setting('input-extensions'):
+        print "   %s" % ext
+    print ''
+
+    print "Converts to file formats:"
+    for ext in instance.setting('output-extensions'):
+        print "   %s" % ext
+    print ''
+
+    print('Settings:')
     for k in sorted(instance._instance_settings):
-        if not k in dexy.filter.Filter.nodoc_settings:
-            tup = instance._instance_settings[k]
-            setting_s = "  %s: %s (default value: %s)"
-            print setting_s % (k, inspect.cleandoc(tup[0]).replace("\n", " "), tup[1])
+        if k in dexy.filter.Filter.nodoc_settings:
+            continue
+        if k in ('aliases', 'tags'):
+            continue
+
+        tup = instance._instance_settings[k]
+        print "    %s" % k
+
+        for line in inspect.cleandoc(tup[0]).splitlines():
+            print "        %s" % line
+
+        print "        default value: %s" % tup[1]
+        print ''
 
     examples = instance.setting('examples')
     example_templates = dict((alias, dexy.template.Template.create_instance(alias))
@@ -61,6 +84,10 @@ def help_for_filter(alias, run_example, show_source, nocolor):
 
     print ''
     print "For online docs see http://dexy.it/docs/filters/%s" % alias
+    print ''
+    print "If you have suggestions or feedback about this filter,"
+    print "please contact info@dexy.it"
+    print ''
 
     if show_source:
         print ''
@@ -107,5 +134,7 @@ def list_filters(versions):
             print filter_help
 
         print ''
-        print inspect.cleandoc("""For more information about a particular filter,
-        use the -alias flag and specify the filter alias.""")
+        print "For more information about a particular filter,"
+        print "use the -alias flag and specify the filter alias."
+        print ''
+

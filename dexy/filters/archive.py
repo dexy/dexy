@@ -5,7 +5,7 @@ import os
 
 class UnprocessedDirectoryArchiveFilter(DexyFilter):
     """
-    Create a tgz archive containing the original (unprocessed) files in a directory.
+    Create a .tgz archive containing the unprocessed files in a directory.
     """
     aliases = ['tgzdir']
     _settings = {

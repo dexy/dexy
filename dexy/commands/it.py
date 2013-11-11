@@ -7,6 +7,94 @@ import subprocess
 import sys
 import time
 
+def dexy_command(
+        __cli_options=False,
+        artifactsdir=defaults['artifacts_dir'], # location of directory in which to store artifacts
+        conf=defaults['config_file'], # name to use for configuration file
+        configs=defaults['configs'], # list of doc config files to parse
+        debug=defaults['debug'], # Prints stack traces, other debug stuff.
+        directory=defaults['directory'], # Allow processing just a subdirectory.
+        dryrun=defaults['dry_run'], # if True, just parse config and print batch info, don't run dexyT
+        encoding=defaults['encoding'], # Default encoding. Set to 'chardet' to use chardet auto detection.
+        exclude=defaults['exclude'], # comma-separated list of directory names to exclude from dexy processing
+        excludealso=defaults['exclude_also'], # comma-separated list of directory names to exclude from dexy processing
+        full=defaults['full'], # Whether to do a full run including tasks marked default: False
+        globals=defaults['globals'], # global values to make available within dexy documents, should be KEY=VALUE pairs separated by spaces
+        help=False, #nodoc
+        h=False, #nodoc
+        hashfunction=defaults['hashfunction'], # What hash function to use, set to crc32 or adler32 for more speed but less reliability
+        include=defaults['include'], # Locations to include which would normally be excluded.
+        logdir=defaults['log_dir'], # DEPRECATED
+        logfile=defaults['log_file'], # name of log file
+        logformat=defaults['log_format'], # format of log entries
+        loglevel=defaults['log_level'], # log level, valid options are DEBUG, INFO, WARN
+        nocache=defaults['dont_use_cache'], # whether to force dexy not to use files from the cache
+        noreports=False, # if true, don't run any reports
+        outputroot=defaults['output_root'], # Subdirectory to use as root for output
+        pickle=defaults['pickle'], # library to use for persisting info to disk, may be 'c', 'py', 'json'
+        plugins=defaults['plugins'], # additional python packages containing dexy plugins
+        profile=defaults['profile'], # whether to run with cProfile. Arg can be a boolean, in which case profile saved to 'dexy.prof', or a filename to save to.
+        r=False, # whether to clear cache before running dexy
+        recurse=defaults['recurse'], # whether to include doc config files in subdirectories
+        reports=defaults['reports'], # reports to be run after dexy runs, enclose in quotes and separate with spaces
+        reset=False, # whether to clear cache before running dexy
+        silent=defaults['silent'], # Whether to not print any output when running dexy
+        strace=defaults['strace'], # Run dexy using strace (VERY slow)
+        uselocals=defaults['uselocals'], # use cached local copies of remote URLs, faster but might not be up to date, 304 from server will override this setting
+        target=defaults['target'], # Which target to run. By default all targets are run, this allows you to run only 1 bundle (and its dependencies).
+        version=False, # For people who type -version out of habit
+        writeanywhere=defaults['writeanywhere'] # Whether dexy can write files outside of the dexy project root.
+    ):
+    """
+    Runs Dexy.
+    """
+    if h or help:
+        return dexy.commands.help_command()
+
+    if version:
+        return dexy.commands.version_command()
+
+    if r or reset:
+        dexy.commands.dirs.reset_command(artifactsdir=artifactsdir, logdir=logdir)
+
+    if silent:
+        print "sorry, -silent option not implemented yet https://github.com/ananelson/dexy/issues/33"
+
+    wrapper = init_wrapper(locals())
+    wrapper.assert_dexy_dirs_exist()
+    run_reports = (not noreports)
+
+    try:
+        if profile:
+            run_dexy_in_profiler(wrapper, profile)
+
+        elif strace:
+            run_dexy_in_strace(wrapper, strace)
+            run_reports = False
+
+        else:
+            start = time.time()
+            wrapper.run_from_new()
+            elapsed = time.time() - start
+            print "dexy run finished in %0.3f%s" % (elapsed, wrapper.state_message())
+
+    except dexy.exceptions.UserFeedback as e:
+        handle_user_feedback_exception(wrapper, e)
+
+    except KeyboardInterrupt:
+        handle_keyboard_interrupt()
+
+    except Exception as e:
+        log_and_print_exception(wrapper, e)
+        raise
+
+    if run_reports and hasattr(wrapper, 'batch'):
+        start_time = time.time()
+        wrapper.report()
+        print "dexy reports finished in %0.3f" % (time.time() - start_time)
+
+it_command = dexy_command
+
 def log_and_print_exception(wrapper, e):
     if hasattr(wrapper, 'log'):
         wrapper.log.error("An error has occurred.")
@@ -16,6 +104,7 @@ def log_and_print_exception(wrapper, e):
     traceback.print_exc()
 
 def handle_user_feedback_exception(wrapper, e):
+    print "in handle_user_feedback_exception", e, e.message
     if hasattr(wrapper, 'log'):
         wrapper.log.error("A problem has occurred with one of your documents:")
         wrapper.log.error(e.message)
@@ -82,96 +171,6 @@ def run_dexy_in_strace(wrapper, strace):
 
     for command in commands:
         run_command(command)
-
-def dexy_command(
-        __cli_options=False,
-        artifactsdir=defaults['artifacts_dir'], # location of directory in which to store artifacts
-        conf=defaults['config_file'], # name to use for configuration file
-        configs=defaults['configs'], # list of doc config files to parse
-        debug=defaults['debug'], # Prints stack traces, other debug stuff.
-        directory=defaults['directory'], # Allow processing just a subdirectory.
-        dryrun=defaults['dry_run'], # if True, just parse config and print batch info, don't run dexy
-        encoding=defaults['encoding'], # Default encoding. Set to 'chardet' to use chardet auto detection.
-        exclude=defaults['exclude'], # comma-separated list of directory names to exclude from dexy processing
-        excludealso=defaults['exclude_also'], # comma-separated list of directory names to exclude from dexy processing
-        full=defaults['full'], # Whether to do a full run including tasks marked default: False
-        globals=defaults['globals'], # global values to make available within dexy documents, should be KEY=VALUE pairs separated by spaces
-        help=False, #nodoc
-        h=False, #nodoc
-        hashfunction=defaults['hashfunction'], # What hash function to use, set to crc32 or adler32 for more speed but less reliability
-        include=defaults['include'], # Locations to include which would normally be excluded.
-        logdir=defaults['log_dir'], # location of directory in which to store logs
-        logfile=defaults['log_file'], # name of log file
-        logformat=defaults['log_format'], # format of log entries
-        loglevel=defaults['log_level'], # log level, valid options are DEBUG, INFO, WARN
-        nocache=defaults['dont_use_cache'], # whether to force dexy not to use files from the cache
-        noreports=False, # if true, don't run any reports
-        outputroot=defaults['output_root'], # Subdirectory to use as root for output
-        pickle=defaults['pickle'], # library to use for persisting info to disk, may be 'c', 'py', 'json'
-        plugins=defaults['plugins'], # additional python packages containing dexy plugins
-        profile=defaults['profile'], # whether to run with cProfile. Arg can be a boolean, in which case profile saved to 'dexy.prof', or a filename to save to.
-        r=False, # whether to clear cache before running dexy
-        recurse=defaults['recurse'], # whether to include doc config files in subdirectories
-        reports=defaults['reports'], # reports to be run after dexy runs, enclose in quotes and separate with spaces
-        reset=False, # whether to clear cache before running dexy
-        silent=defaults['silent'], # Whether to not print any output when running dexy
-        strace=defaults['strace'], # Run dexy using strace (VERY slow)
-        uselocals=defaults['uselocals'], # use cached local copies of remote URLs, faster but might not be up to date, 304 from server will override this setting
-        target=defaults['target'], # Which target to run. By default all targets are run, this allows you to run only 1 bundle (and its dependencies).
-        version=False, # For people who type -version out of habit
-        writeanywhere=defaults['writeanywhere'] # Whether dexy can write files outside of the dexy project root.
-    ):
-    """
-    Runs Dexy.
-    """
-    if h or help:
-        return dexy.commands.help_command()
-
-    if version:
-        return dexy.commands.version_command()
-
-    if r or reset:
-        dexy.commands.dirs.reset_command(artifactsdir=artifactsdir, logdir=logdir)
-
-    if silent:
-        print "sorry, -silent option not implemented yet https://github.com/ananelson/dexy/issues/33"
-
-    # Don't trap errors yet because error handling uses wrapper instance.
-    wrapper = init_wrapper(locals())
-
-    # TODO make this error nicer..
-    wrapper.assert_dexy_dirs_exist()
-
-    run_reports = (not noreports)
-
-    try:
-        if profile:
-            run_dexy_in_profiler(wrapper, profile)
-        elif strace:
-            run_dexy_in_strace(wrapper, strace)
-            run_reports = False
-        else:
-            start = time.time()
-            wrapper.run_from_new()
-            elapsed = time.time() - start
-            print "dexy run finished in %0.3f%s" % (elapsed, wrapper.state_message())
-
-    except dexy.exceptions.UserFeedback as e:
-        handle_user_feedback_exception(wrapper, e)
-    except KeyboardInterrupt:
-        handle_keyboard_interrupt()
-    except Exception as e:
-        log_and_print_exception(wrapper, e)
-        raise
-
-    if run_reports and hasattr(wrapper, 'batch'):
-        start_time = time.time()
-        wrapper.report()
-        print "dexy reports finished in %0.3f" % (time.time() - start_time)
-
-def it_command(**kwargs):
-    # so you can type 'dexy it' if you want to
-    dexy_command(kwargs)
 
 def targets_command(
         full=False, # Whether to just print likely pretty target names, or all names.

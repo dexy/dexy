@@ -54,4 +54,4 @@ setup(
         packages=find_packages(),
         url='http://dexy.it',
         version=DEXY_VERSION
-        )
+    )

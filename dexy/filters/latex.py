@@ -73,9 +73,9 @@ class LatexFilter(SubprocessFilter):
 
         self.copy_canonical_file()
 
-class TikzPgfFilter(LatexFilter):
+class TikzPdfFilter(LatexFilter):
     """
-    Takes a snippet of Tikz code, wraps it in a LaTeX document, and renders it to PDF.
+    Renders Tikz code to PDF.
     """
     aliases = ['tikz']
 

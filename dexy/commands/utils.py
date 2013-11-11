@@ -1,8 +1,9 @@
+from dexy.utils import defaults
+from dexy.utils import file_exists
 from dexy.utils import parse_json
 from dexy.utils import parse_yaml
-from dexy.utils import file_exists
-from dexy.utils import defaults
 import dexy.wrapper
+import logging
 import os
 import yaml
 
@@ -182,3 +183,10 @@ def template_text(template):
             return stdout
         else:
             return "no example found"
+
+def dummy_wrapper():
+    wrapper = dexy.wrapper.Wrapper()
+    wrapper.log = logging.getLogger('dexy')
+    wrapper.log.addHandler(logging.NullHandler)
+    wrapper.filemap = {}
+    return wrapper

@@ -4,12 +4,14 @@ from dexy.utils import defaults
 from operator import attrgetter
 import dexy.exceptions
 
-INFO_ATTRS = [
+### "info-keys"
+info_attrs = [
         'name',
         'ext',
         'key'
         ]
-INFO_METHODS = [
+
+info_methods = [
         'title',
         'basename',
         'filesize',
@@ -18,43 +20,46 @@ INFO_METHODS = [
         'long_name',
         'web_safe_document_key'
         ]
-STORAGE_METHODS = [
-        ]
+
+storage_methods = []
+### @end
+
 def info_command(
         __cli_options=False,
         expr="", # The doc key to query. Use dexy grep to search doc keys.
         key="", # The doc key to match exactly. Use dexy grep to search doc keys.
-        artifactsdir=defaults['artifacts_dir'], # location of directory in which to store artifacts
-        logdir=defaults['log_dir'] # location of directory in which to store logs
+        artifactsdir=defaults['artifacts_dir'], # Where dexy stores working files.
+        logdir=defaults['log_dir'] # DEPRECATED
         ):
     wrapper = init_wrapper(locals())
     batch = Batch.load_most_recent(wrapper)
 
     if expr:
-        matches = sorted([data for data in batch if expr in data.key], key=attrgetter('key'))
         print "search expr:", expr
+        matches = sorted([data for data in batch if expr in data.key],
+                key=attrgetter('key'))
     elif key:
-        matches = sorted([data for data in batch if key == data.key], key=attrgetter('key'))
+        matches = sorted([data for data in batch if key == data.key],
+                key=attrgetter('key'))
     else:
         raise dexy.exceptions.UserFeedback("Must specify either expr or key")
 
-
     for match in matches:
-        print
+        print ''
         print "  doc key:", match.key
 
         print "    data attributes:"
-        for fname in sorted(INFO_ATTRS):
+        for fname in sorted(info_attrs):
             print "      %s: %s" % (fname, getattr(match, fname))
-        print
+        print ''
     
         print "    data methods:"
-        for fname in sorted(INFO_METHODS):
+        for fname in sorted(info_methods):
             print "      %s(): %s" % (fname, getattr(match, fname)())
-        print
+        print ''
 
-        if STORAGE_METHODS:
+        if storage_methods:
             print "    storage methods:"
-            for fname in sorted(STORAGE_METHODS):
+            for fname in sorted(storage_methods):
                 print "      %s(): %s" % (fname, getattr(match.storage, fname)())
-            print
+            print ''

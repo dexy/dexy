@@ -30,7 +30,9 @@ class ChangeExtensionManuallyFilter(PreserveDataClassFilter):
 
 class KeyValueStoreFilter(DexyFilter):
     """
-    Filter for creating a new key value store on the fly
+    Creates a new key-value store.
+
+    The key-value store will be populated via side effects from other filters.
     """
     aliases = ['kv']
     _settings = {

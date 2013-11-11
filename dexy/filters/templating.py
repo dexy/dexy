@@ -44,7 +44,8 @@ class TemplateFilter(DexyFilter):
             'output' : True,
             'variables' : ("Variables to be made available to document.", {}),
             'vars' : ("Variables to be made available to document.", {}),
-            'plugins' : ("List of plugins for run_plugins to use.", [])
+            'plugins' : ("List of plugins for run_plugins to use.", []),
+            'skip-plugins' : ("List of plugins which run_plugins should not use.", [])
             }
 
     def template_plugins(self):
@@ -52,25 +53,34 @@ class TemplateFilter(DexyFilter):
         Returns a list of plugin classes for run_plugins to use.
         """
         if self.setting('plugins'):
-            return [TemplatePlugin.create_instance(alias, self) for alias in self.setting('plugins')]
+            return [TemplatePlugin.create_instance(alias, self)
+                        for alias in self.setting('plugins')]
         else:
-            return TemplatePlugin.__iter__(self)
+            return [instance for instance in TemplatePlugin.__iter__(self)
+                        if not instance.alias in self.setting('skip-plugins')]
 
     def run_plugins(self):
         env = {}
         for plugin in self.template_plugins():
             self.log_debug("Running template plugin %s" % plugin.__class__.__name__)
             new_env_vars = plugin.run()
+            if new_env_vars is None:
+                msg = "%s did not return any values"
+                raise dexy.exceptions.InternalDexyProblem(msg % plugin.alias)
             if any(v in env.keys() for v in new_env_vars):
                 new_keys = ", ".join(sorted(new_env_vars))
                 existing_keys = ", ".join(sorted(env))
                 msg = "plugin class '%s' is trying to add new keys '%s', already have '%s'"
                 raise dexy.exceptions.InternalDexyProblem(msg % (plugin.__class__.__name__, new_keys, existing_keys))
             env.update(new_env_vars)
+
         return env
 
+    def template_data(self):
+        return dict((k, v[1]) for k, v in self.run_plugins().iteritems())
+
     def process_text(self, input_text):
-        template_data = self.run_plugins()
+        template_data = self.template_data()
         return input_text % template_data
 
 class JinjaFilter(TemplateFilter):
@@ -88,8 +98,14 @@ class JinjaFilter(TemplateFilter):
             'comment-end-string' : ("Tag to indicate the start of a comment.", "#}"),
             'changetags' : ("Automatically change from { to < based tags for .tex and .wiki files.", True),
             'jinja-path' : ("List of additional directories to pass to jinja loader.", []),
-            'include-in-workspaces' : [".jinja"],
+            'workspace-includes' : [".jinja"]
             }
+
+    _not_jinja_settings = (
+            'changetags',
+            'jinja-path',
+            'workspace-includes',
+            )
 
     TEX_TAGS = {
             'block_start_string': '<%',
@@ -111,11 +127,10 @@ class JinjaFilter(TemplateFilter):
 
     def setup_jinja_env(self, loader=None):
         env_attrs = {}
-        skip_settings = ('changetags', 'jinja-path', 'include-in-workspaces',)
 
         for k, v in self.setting_values().iteritems():
             underscore_k = k.replace("-", "_")
-            if k in self.__class__._settings and not k in skip_settings:
+            if k in self.__class__._settings and not k in self._not_jinja_settings:
                 env_attrs[underscore_k] = v
 
         env_attrs['undefined'] = PassThroughWhitelistUndefined
@@ -216,7 +231,7 @@ class JinjaFilter(TemplateFilter):
 
         self.log_debug("initializing template")
 
-        template_data = self.run_plugins()
+        template_data = self.template_data()
         self.log_debug("jinja template data keys are %s" % ", ".join(sorted(template_data)))
 
         try:

@@ -13,8 +13,8 @@ except ImportError:
 
 class XmlSectionFilter(DexyFilter):
     """
-    Stores all elements in the input XML document which have any of the attributes
-    specified in unique-attributes or qualified-attributes.
+    Stores all elements in the input XML document which have any of the
+    attributes specified in unique-attributes or qualified-attributes.
     """
     aliases = ["xxml", "xmlsec"]
     _settings = {

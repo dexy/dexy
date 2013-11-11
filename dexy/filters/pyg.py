@@ -62,11 +62,14 @@ class SyntaxHighlightAsciidoctor(DexyFilter):
     """
     aliases = ['asciisyn']
     _settings = {
+            'lexer' : ("Specify lexer if can't be detected fro mfilename.", None),
             'output-data-type' : 'sectioned'
             }
 
     def process(self):
-        if self.prev_filter and self.prev_filter.alias == 'idio':
+        if self.setting('lexer'):
+            lexer_alias = self.setting('lexer')
+        elif self.prev_filter and self.prev_filter.alias == 'idio':
             lexer_alias = file_ext_to_lexer_alias_cache[self.prev_filter.prev_ext]
         else:
             lexer_alias = file_ext_to_lexer_alias_cache[self.input_data.ext]
@@ -253,7 +256,7 @@ class PygmentsFilter(DexyFilter):
                 raise dexy.commands.UserFeedback(msg % msgargs)
 
             self.output_data.set_data(output)
-            self.add_runtime_args({'include-in-workspaces' : True })
+            self.update_all_args({'override-workspace-exclude-filters' : True })
 
         else:
             lexer = self.create_lexer_instance()
@@ -268,7 +271,7 @@ class PygmentsFilter(DexyFilter):
 
                 # Place entire contents into main file.
                 formatter = self.create_formatter_instance()
-                self.update_all_args({'output' : False })
+                self.update_all_args({'override-workspace-exclude-filters' : True })
                 with open(self.output_filepath(), 'wb') as f:
                     f.write(highlight(self.input_data.as_text(), lexer, formatter))
 

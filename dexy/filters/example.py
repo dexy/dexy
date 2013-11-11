@@ -7,7 +7,7 @@ import os
 
 class Example(DexyFilter):
     """
-    Base class for example filters intended to show filter development features but not be actual usable filters.
+    Examples of how to write filters.
     """
     aliases = []
     NODOC = True
@@ -89,7 +89,7 @@ class ExampleProcessTextMethod(Example):
 
 class ExampleProcessMethod(Example):
     """
-    A filter implementing a process method which stores raw data.
+    Calls `set_data` method to store output.
     """
     aliases = ['process']
 
@@ -99,7 +99,7 @@ class ExampleProcessMethod(Example):
 
 class ExampleProcessMethodManualWrite(Example):
     """
-    A filter implementing a process method which stores raw data by writing directly to the output file.
+    Writes output directly to output file.
     """
     aliases = ['processmanual']
 
@@ -111,7 +111,7 @@ class ExampleProcessMethodManualWrite(Example):
 
 class ExampleProcessWithDictMethod(Example):
     """
-    A filter implementing a process method which stores sectional data.
+    Stores sectional data using `process` method.
     """
     aliases = ['processwithdict']
     _settings = {

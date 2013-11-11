@@ -12,13 +12,14 @@ import dexy.exceptions
 import dexy.plugin
 import inflection
 import json
+import markdown
 import operator
 import os
 import pygments
 import pygments.formatters
 import re
 import time
-import markdown
+import uuid
 
 try:
     from bs4 import BeautifulSoup
@@ -34,10 +35,19 @@ class Markdown(TemplatePlugin):
 
     def run(self):
         md = markdown.Markdown()
+        h = "Function which converts markdown to HTML."
         return {
-                'markdown' : md.convert,
-                'md' : md.convert
+                'markdown' : (h, md.convert),
+                'md' : (h, md.convert)
                 }
+
+class Uuid(TemplatePlugin):
+    """
+    Exposes the UUID module.
+    """
+    aliases = ['uuid']
+    def run(self):
+        return { 'uuid' : ("The Python uuid module. http://docs.python.org/2/library/uuid.html", uuid) }
 
 class Time(TemplatePlugin):
     """
@@ -45,20 +55,20 @@ class Time(TemplatePlugin):
     """
     aliases = ['time']
     def run(self):
-        return {
-                'time' : time
-                }
+        return { 'time' : ("The Python time module.", time) }
 
 class Operator(TemplatePlugin):
     """
     Exposes features of the operator module.
     """
     aliases = ['operator']
+    keys = ['attrgetter', 'itemgetter']
     def run(self):
-        return {
-                'attrgetter' : operator.attrgetter,
-                'itemgetter' : operator.itemgetter
-                }
+        d = {}
+        for k in self.keys:
+            fn = getattr(operator, k)
+            d[k] = ("The %s method from Python's operator module." % k, fn)
+        return d
 
 class PrettyPrintHtml(TemplatePlugin):
     """
@@ -86,7 +96,7 @@ class LoadYaml(TemplatePlugin):
 
     def run(self):
         return {
-                'load_yaml' : self.load_yaml
+                'load_yaml' : ("Safely load YAML from a file.", self.load_yaml,)
                 }
 
 class Debug(TemplatePlugin):
@@ -114,9 +124,9 @@ class Debug(TemplatePlugin):
 
     def run(self):
         return {
-                'debug' : self.debug,
-                'throw' : self.throw,
-                'raise' : self.throw
+                'debug' : ("A debugging method - prints content to command line stdout.", self.debug),
+                'throw' : ("A debugging utility which raises exception with argument.", self.throw),
+                'raise' : ("Alias for `throw`.", self.throw)
                 }
 
 class Bibtex(TemplatePlugin):
@@ -140,10 +150,7 @@ class Inflection(TemplatePlugin):
             }
 
     def run(self):
-        args = {}
-        for method in self.setting('methods'):
-            args[method] = getattr(inflection, method)
-        return args
+        return dict((method, ("The %s method from Python inflection module." % method, getattr(inflection, method),)) for method in self.setting('methods'))
 
 class JavadocToRst(TemplatePlugin):
     """
@@ -170,8 +177,8 @@ class PrettyPrint(TemplatePlugin):
     def run(self):
         import pprint
         return {
-            'pprint' : pprint.pformat,
-            'pformat' : pprint.pformat
+            'pprint' : ("Pretty prints Python objects.", pprint.pformat,),
+            'pformat' : ("Pretty prints Python objects.", pprint.pformat,)
          }
 
 class PrettyPrintJson(TemplatePlugin):
@@ -185,7 +192,7 @@ class PrettyPrintJson(TemplatePlugin):
 
     def run(self):
         return {
-            'ppjson' : self.ppjson
+            'ppjson' : ("Pretty prints valid JSON.", self.ppjson,)
          }
 
 class JinjaFilters(TemplatePlugin):
@@ -241,13 +248,13 @@ class PythonDatetime(TemplatePlugin):
         caldates = list(cal.itermonthdates(year, month))
 
         return {
-            "datetime" : datetime,
-            "calendar" : calendar,
-            "caldates" : caldates,
-            "cal" : cal,
-            "today" : today,
-            "month" : month,
-            "year" : year
+            "datetime" : ("The Python datetime module.", datetime),
+            "calendar" : ("A Calendar instance from Python calendar module.", calendar),
+            "caldates" : ("List of calendar dates in current month.", caldates),
+            "cal" : ("Shortcut for `calendar`.", calendar),
+            "today" : ("Result of datetime.today().", today),
+            "month" : ("Current month.", month),
+            "year" : ("Current year.", year)
             }
 
 class DexyVersion(TemplatePlugin):
@@ -256,7 +263,7 @@ class DexyVersion(TemplatePlugin):
     """
     aliases = ['dexyversion']
     def run(self):
-        return { "DEXY_VERSION" : DEXY_VERSION }
+        return { "DEXY_VERSION" : ("The active dexy version. Currently %s." % DEXY_VERSION, DEXY_VERSION) }
 
 class SimpleJson(TemplatePlugin):
     """
@@ -264,7 +271,7 @@ class SimpleJson(TemplatePlugin):
     """
     aliases = ['json']
     def run(self):
-        return { 'json' : json }
+        return { 'json' : ("The Python json module.", json,) }
 
 class RegularExpressions(TemplatePlugin):
     """
@@ -272,7 +279,10 @@ class RegularExpressions(TemplatePlugin):
     """
     aliases = ['regex']
     def run(self):
-        return { 're_match' : re.match, 're_search' : re.search}
+        return {
+            're_match' : ("The `match` method from Python re module.", re.match,),
+            're_search' : ("The `search` method from Python re module.", re.search,)
+            }
 
 class PythonBuiltins(TemplatePlugin):
     """
@@ -287,7 +297,7 @@ class PythonBuiltins(TemplatePlugin):
         set, slice, sorted, str, sum, tuple, xrange, unicode, zip]
 
     def run(self):
-        return dict((f.__name__, f) for f in self.PYTHON_BUILTINS)
+        return dict((f.__name__, ("The python builtin function %s" % f.__name__, f,)) for f in self.PYTHON_BUILTINS)
 
 class PygmentsStylesheet(TemplatePlugin):
     """
@@ -324,7 +334,10 @@ class PygmentsStylesheet(TemplatePlugin):
                         ext = 'css'
                     key = "%s.%s" % (style_name, ext)
                     pygments_stylesheets[key] = style_info
-        return {'pygments' : pygments_stylesheets, 'highlight' : self.highlight }
+        return {
+            'pygments' : ("Dictionary of pygments stylesheets.", pygments_stylesheets,),
+            'highlight' : ("Syntax highlights contents. Args are (text, lexer_name).", self.highlight)
+            }
 
 class Subdirectories(TemplatePlugin):
     """
@@ -332,12 +345,15 @@ class Subdirectories(TemplatePlugin):
     """
     aliases = ['subdirectories']
     def run(self):
-        # The directory containing the document to be processed.
-        doc_dir = os.path.dirname(self.filter_instance.output_data.name)
+        if hasattr(self.filter_instance, 'output_data'):
+            # The directory containing the document to be processed.
+            doc_dir = os.path.dirname(self.filter_instance.output_data.name)
 
-        # Get a list of subdirectories under this document's directory.
-        subdirectories = [d for d in sorted(os.listdir(os.path.join(os.curdir, doc_dir))) if os.path.isdir(os.path.join(os.curdir, doc_dir, d))]
-        return {'subdirectories' : subdirectories}
+            # Get a list of subdirectories under this document's directory.
+            subdirectories = [d for d in sorted(os.listdir(os.path.join(os.curdir, doc_dir))) if os.path.isdir(os.path.join(os.curdir, doc_dir, d))]
+            return {'subdirectories' : ("List of subdirectories of this document.", subdirectories)}
+        else:
+            return {'subdirectories' : ("List of subdirectories of this document.", [])}
 
 class Variables(TemplatePlugin):
     """
@@ -348,7 +364,16 @@ class Variables(TemplatePlugin):
         variables = {}
         variables.update(self.filter_instance.setting('variables'))
         variables.update(self.filter_instance.setting('vars'))
-        return variables
+
+        formatted_variables = {}
+        for k, v in variables.iteritems():
+            if isinstance(v, tuple):
+                formatted_variables[k] = v
+            elif isinstance(v, list) and len(v) == 2:
+                formatted_variables[k] = v
+            else:
+                formatted_variables[k] = ("User-provided variable.", v)
+        return formatted_variables
 
 class Globals(TemplatePlugin):
     """
@@ -376,18 +401,24 @@ class Inputs(TemplatePlugin):
 
     def run(self):
         input_docs = {}
+
         for doc in self.input_tasks():
             input_docs[doc.key] = doc
 
         d = D(self.filter_instance.doc, input_docs)
 
+        if hasattr(self.filter_instance, 'output_data'):
+            output_data = self.filter_instance.output_data
+        else:
+            output_data = None
+
         return {
-            'a' : d,
-            'args' : self.filter_instance.doc.args,
-            'd' : d,
-            'f' : self.filter_instance,
-            's' : self.filter_instance.output_data,
-            'w' : self.filter_instance.doc.wrapper
+            'a' : ("Another way to reference 'd'. Deprecated.", d),
+            'args' : ("The document args.", self.filter_instance.doc.args),
+            'd' : ("The 'd' object.", d),
+            'f' : ("The filter instance for this document.", self.filter_instance),
+            's' : ("The data instance for this document.", output_data),
+            'w' : ("The wrapper for the dexy run.", self.filter_instance.doc.wrapper)
             }
 
 class D(object):

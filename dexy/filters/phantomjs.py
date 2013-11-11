@@ -4,7 +4,9 @@ import os
 class CasperJsSvg2PdfFilter(SubprocessFilter):
     """
     Converts an SVG file to PDF by running it through casper js.
-    # TODO convert this to phantomjs, no benefit to using casper here (js is not user facing) and more restrictive
+
+    # TODO convert this to phantomjs, no benefit to using casper here (js is
+    # not user facing) and more restrictive
     """
     aliases = ['svg2pdf']
     _settings = {
@@ -52,8 +54,10 @@ class CasperJsSvg2PdfFilter(SubprocessFilter):
 
 class PhantomJsRenderSubprocessFilter(SubprocessFilter):
     """
-    Renders HTML to PNG/PDF using phantom.js. If the HTML relies on local
-    assets such as CSS or image files, these should be specified as inputs.
+    Renders HTML to PNG/PDF using phantom.js.
+    
+    If the HTML relies on local assets such as CSS or image files, these should
+    be specified as inputs.
     """
     aliases = ['phrender']
     _settings = {

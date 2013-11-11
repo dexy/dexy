@@ -1,13 +1,13 @@
-from tests.utils import wrap
-from tests.utils import tempdir
+from dexy.wrapper import Wrapper
 from tests.utils import TEST_DATA_DIR
-import shutil
+from tests.utils import tempdir
+from tests.utils import wrap
 import dexy.doc
 import dexy.node
 import inspect
 import os
-from dexy.wrapper import Wrapper
 import random
+import shutil
 
 LOGLEVEL = "WARN"
 
@@ -23,7 +23,7 @@ def test_example_project():
             print "running %s times:" % n
             for i in range(n):
                 print '', i+1
-                wrapper = Wrapper(log_level=LOGLEVEL)
+                wrapper = Wrapper(log_level=LOGLEVEL, debug=True)
                 wrapper.run_from_new()
     
                 for node in wrapper.nodes.values():

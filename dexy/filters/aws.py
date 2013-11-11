@@ -18,7 +18,8 @@ class BotoUploadFilter(ApiFilter):
 
     You can set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY variables in your
     system environment (the environment that runs the dexy command) or you can
-    set defaults in your ~/.dexyapis file (these will override the environment):
+    set defaults in your ~/.dexyapis file (these will override the
+    environment):
 
     "AWS" : {
         "AWS_ACCESS_KEY_ID" : "AKIA...",

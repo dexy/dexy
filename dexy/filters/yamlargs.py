@@ -4,7 +4,7 @@ import re
 
 class YamlargsFilter(DexyFilter):
     """
-    Strips YAML metadata from top of file and adds this to args for every artifact in current doc.
+    Specify attributes in YAML at top of file.
     """
     aliases = ['yamlargs']
 

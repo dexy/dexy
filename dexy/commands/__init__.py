@@ -1,14 +1,15 @@
 ### "imports"
+from dexy.plugin import Command
 from dexy.version import DEXY_VERSION
 from modargs import args
 import cashew.exceptions
 import dexy.exceptions
 import dexy.wrapper
+import inspect
 import logging
 import os
 import sys
 import warnings
-import inspect
 
 ### "load-plugins"
 import dexy.load_plugins
@@ -19,6 +20,7 @@ from dexy.commands.conf import conf_command
 from dexy.commands.dirs import cleanup_command
 from dexy.commands.dirs import reset_command
 from dexy.commands.dirs import setup_command
+from dexy.commands.env import env_command
 from dexy.commands.fcmds import fcmd_command
 from dexy.commands.fcmds import fcmds_command
 from dexy.commands.filters import filters_command
@@ -28,6 +30,7 @@ from dexy.commands.info import info_command
 from dexy.commands.it import dexy_command
 from dexy.commands.it import it_command
 from dexy.commands.it import targets_command
+from dexy.commands.nodes import nodes_command
 from dexy.commands.reporters import reporters_command
 from dexy.commands.reporters import reporters_command as reports_command
 from dexy.commands.serve import serve_command
@@ -70,11 +73,11 @@ def resolve_argv():
         return sys.argv[1:], dexy_cmd_mod, dexy_default_cmd
 
     else:
-        cmd, subcmd, cmd_mod = resolve_plugin_command(sys.argv[1])
+        cmd, subcmd, cmd_mod = resolve_plugin_cmd(sys.argv[1])
         default_cmd = cmd.default_cmd or cmd.namespace
         return [subcmd] + sys.argv[2:], cmd_mod, default_cmd
 
-def resolve_plugin_command(raw_command_name):
+def resolve_plugin_cmd(raw_command_name):
     """
     Take a command name like viewer:run and return the command method and
     module object.
@@ -123,26 +126,56 @@ def parse_and_run_cmd(argv, module, default_command):
         sys.exit(1)
 
 def help_command(
-        example=False, # Whether to run any live examples, if available.
-        filters=False, # Whether to print the list of available dexy filters.
-        reports=False, # Whether to print the list of available dexy reports.
-        f=False, # If a filter alias is specified, help for that filter is printed.
-        on=False # The dexy command to get help on.
+        all=False, # List all available dexy commands (auto-generated).
+        on=False # Get help on a particular dexy command.
     ):
-    # TODO list commands defined in plugins too
-    if f:
-        filter_command(f, example)
-    elif filters:
-        filters_command()
-    elif reports:
-        reports_command()
+
+    if all and not on:
+        print ""
+        args.help_command(prog, dexy_cmd_mod, dexy_default_cmd, on)
+        print ""
+
+    elif not on:
+        print ""
+        print "For help on the main `dexy` command, run `dexy help -on dexy`."
+        print ""
+        print "The dexy tool includes several different commands:"
+        print "  `dexy help --all` lists all available commands"
+        print "  `dexy help --on XXX` provides help on a specific command"
+        print ""
+        print "Commands for running dexy:"
+        print "  `dexy` runs dexy"
+        print "  `dexy setup` makes directories dexy needs"
+        print "  `dexy cleanup` removes directories dexy has created"
+        print "  `dexy reset` empties and resets dexy's working directories"
+        print ""
+        print "Commands which print lists of dexy features:"
+        print "  `dexy filters` filters like |jinja |py |javac"
+        print "  `dexy env` elements available in document templates"
+        print "  `dexy reports` reporters like `output` and `run`"
+        print "  `dexy nodes` node types and their document settings"
+        print ""
+        print "Commands which print information about your project:"
+        print "  (you need to be in the project dir and have run dexy already)"
+        print "  `dexy grep` search for documents and keys in documents"
+        print "  `dexy info` list metadata about a particular document"
+        print "  `dexy targets` list target names you can run"
+        print ""
+        print "Other commands:"
+        print "  `dexy serve` start a local static web server to view generated docs"
+        print "  `dexy help` you're reading it"
+        print "  `dexy version` print the version of dexy software which is installed"
+        print ""
+
     else:
         try:
             args.help_command(prog, dexy_cmd_mod, dexy_default_cmd, on)
+
         except KeyError:
             sys.stderr.write("Could not find help on '%s'." % on)
             sys.stderr.write(os.linesep)
             sys.exit(1)
+
 
 def version_command():
     """

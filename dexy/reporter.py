@@ -57,6 +57,9 @@ class Reporter(dexy.plugin.Plugin):
             env.update(new_env_vars)
         return env
 
+    def template_data(self):
+        return dict((k, v[1]) for k, v in self.run_plugins().iteritems())
+
     def cache_reports_dir(self):
         return os.path.join(self.wrapper.artifacts_dir, "reports")
 

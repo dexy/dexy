@@ -28,10 +28,12 @@ def cleanup_command(
     wrapper.remove_dexy_dirs()
     wrapper.remove_reports_dirs(reports)
 
-def setup_command(__cli_options=False, **kwargs):
+def setup_command(
+        __cli_options=False,
+        artifactsdir=defaults['artifacts_dir'], # Where dexy should store working files.
+        **kwargs):
     """
-    Create the directories dexy needs to run. This helps make sure you mean to
-    run dexy in this directory.
+    Create the directories dexy needs to run.
     """
     wrapper = init_wrapper(locals())
     wrapper.create_dexy_dirs()

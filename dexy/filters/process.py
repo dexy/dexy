@@ -1,15 +1,14 @@
 from dexy.filter import Filter
+from dexy.utils import file_exists
 import dexy.exceptions
 import fnmatch
-import json
 import os
 import platform
 import subprocess
-from dexy.utils import file_exists
 
 class SubprocessFilter(Filter):
     """
-    Parent class for all filters which use the subprocess module to run external programs.
+    Parent class for all filters which use the subprocess module.
     """
     aliases = []
     _settings = {
@@ -27,7 +26,6 @@ class SubprocessFilter(Filter):
             'timeout' : ('', 10),
             'use-wd' : ("Whether to use a custom working directory when running filter.", True),
             'version-command': ( "Command to call to return version of installed software.", None),
-            'walk-working-dir' : ("Automatically register extra files that are found in working dir.", False),
             'windows-version-command': ( "Command to call on windows to return version of installed software.", None),
             'write-stderr-to-stdout' : ("Should stderr be piped to stdout?", True),
             }
@@ -139,22 +137,33 @@ class SubprocessFilter(Filter):
         wd = self.workspace()
         self.log_debug("adding new files found in %s for %s" % (wd, self.key))
 
-        do_add_new = self.setting('add-new-files')
+        add_new_files = self.setting('add-new-files')
+        if isinstance(add_new_files, basestring):
+            add_new_files = [add_new_files]
+
         exclude = self.setting('exclude-add-new-files')
+
+        if isinstance(exclude, basestring):
+            raise dexy.exceptions.UserFeedback("exclude-add-new-files should be a list, not a string")
 
         new_files_added = 0
         for dirpath, subdirs, filenames in os.walk(wd):
+            # Prune subdirs which match exclude.
             subdirs[:] = [d for d in subdirs if d not in exclude]
 
+            # Iterate over files in directory.
             for filename in filenames:
                 filepath = os.path.normpath(os.path.join(dirpath, filename))
                 relpath = os.path.relpath(filepath, wd)
+                self.log_debug("Processing %s" % filepath)
 
-                already_have_file = (relpath in self._files_workspace_populated_with)
+                if relpath in self._files_workspace_populated_with:
+                    # already have this file
+                    continue
 
-                if isinstance(do_add_new, list):
+                if isinstance(add_new_files, list):
                     is_valid_file_extension = False
-                    for pattern in do_add_new:
+                    for pattern in add_new_files:
                         if "*" in pattern:
                             if fnmatch.fnmatch(relpath, pattern):
                                 is_valid_file_extension = True
@@ -164,66 +173,46 @@ class SubprocessFilter(Filter):
                                 is_valid_file_extension = True
                                 continue
 
-                elif isinstance(do_add_new, basestring):
-                    is_valid_file_extension = False
-                    for pattern in [do_add_new]:
-                        if "*" in pattern:
-                            if fnmatch.fnmatch(relpath, pattern):
-                                is_valid_file_extension = True
-                                continue
-                        else:
-                            if filename.endswith(pattern):
-                                is_valid_file_extension = True
-                                continue
+                    if not is_valid_file_extension:
+                        msg = "Not adding filename %s, does not match patterns: %s"
+                        args = (filepath, ", ".join(add_new_files))
+                        self.log_debug(msg % args)
+                        continue
 
-                elif isinstance(do_add_new, bool):
-                    if not do_add_new:
-                        raise dexy.exceptions.InternalDexyProblem("should not get here")
+                elif isinstance(add_new_files, bool):
+                    if not add_new_files:
+                        msg = "add_new_files method should not be called if setting is False"
+                        raise dexy.exceptions.InternalDexyProblem(msg)
                     is_valid_file_extension = True
+
                 else:
-                    raise dexy.exceptions.InternalDexyProblem("type is %s value is %s" % (do_add_new.__class__, do_add_new))
+                    msg = "add-new-files setting should be list or boolean. Type is %s value is %s"
+                    args = (add_new_files.__class__, add_new_files,)
+                    raise dexy.exceptions.InternalDexyProblem(msg % args)
 
-
+                # Check if should be excluded.
                 skip_because_excluded = False
+                for skip_pattern in exclude:
+                    if skip_pattern in filepath:
+                        msg = "skipping adding new file %s because it matches exclude %s"
+                        args = (filepath, skip_pattern,)
+                        self.log_debug(msg % args)
+                        skip_because_excluded = True
+                        continue
 
-                if (not already_have_file) and is_valid_file_extension and not skip_because_excluded:
-                    with open(filepath, 'rb') as f:
-                        contents = f.read()
-                    self.add_doc(relpath, contents)
-                    new_files_added += 1
+                if skip_because_excluded:
+                    continue
+
+                if not is_valid_file_extension:
+                    raise Exception("Should not get here unless is_valid_file_extension")
+
+                with open(filepath, 'rb') as f:
+                    contents = f.read()
+                self.add_doc(relpath, contents)
+                new_files_added += 1
 
         if new_files_added > 10:
             self.log_warn("%s additional files added" % (new_files_added))
-
-    def walk_working_directory(self, doc=None, section_name=None):
-        """
-        Walk working directory and read contents of multiple files into a
-        single new document.
-        """
-        if not doc:
-            if section_name:
-                doc_key = "%s-%s-files" % (self.output_data.long_name(), section_name)
-            else:
-                doc_key = "%s-files" % self.output_data.long_name()
-
-            doc = self.add_doc(doc_key, {})
-
-        wd = self.workspace()
-
-        for dirpath, dirnames, filenames in os.walk(wd):
-            for filename in filenames:
-                filepath = os.path.join(dirpath, filename)
-                relpath = os.path.relpath(filepath, wd)
-
-                with open(filepath, "rb") as f:
-                    contents = f.read()
-                try:
-                    json.dumps(contents)
-                    doc.output_data().append(relpath, contents)
-                except UnicodeDecodeError:
-                    doc.output_data().append(relpath, 'binary')
-
-        return doc
 
     def run_command(self, command, env, input_text=None):
         if self.setting('use-wd'):
@@ -276,7 +265,7 @@ class SubprocessFilter(Filter):
 
 class SubprocessStdoutFilter(SubprocessFilter):
     """
-    Subclass of SubprocessFilter which runs a command and returns the stdout generated by that command as its output.
+    Runs a command and returns the resulting stdout.
     """
     _settings = {
             'write-stderr-to-stdout' : False,
@@ -290,15 +279,12 @@ class SubprocessStdoutFilter(SubprocessFilter):
         self.handle_subprocess_proc_return(command, proc.returncode, stdout)
         self.output_data.set_data(stdout)
 
-        if self.setting('walk-working-dir'):
-            self.walk_working_directory()
-
         if self.setting('add-new-files'):
             self.add_new_files()
 
 class SubprocessCompileFilter(SubprocessFilter):
     """
-    Base class for filters which need to compile code, then run the compiled executable.
+    Compiles code and runs the compiled executable.
     """
     _settings = {
             'add-new-files' : False,
@@ -354,7 +340,7 @@ class SubprocessCompileFilter(SubprocessFilter):
 
 class SubprocessInputFilter(SubprocessFilter):
     """
-    Filters which run a task in subprocess while also writing content to stdin for that process.
+    Runs code which expects stdin.
     """
     _settings = {
             'output-data-type' : 'sectioned',
@@ -382,7 +368,7 @@ class SubprocessInputFilter(SubprocessFilter):
 
 class SubprocessInputFileFilter(SubprocessFilter):
     """
-    Filters which run one or more input files through the script via filenames.
+    Runs code which expects input files.
     """
     _settings = {
             'output-data-type' : 'sectioned',
@@ -412,7 +398,7 @@ class SubprocessInputFileFilter(SubprocessFilter):
 
 class SubprocessCompileInputFilter(SubprocessCompileFilter):
     """
-    Filters which compile code, then run it with input.
+    Compiles code and runs executable with stdin.
     """
     _settings = {
             'output-data-type' : 'sectioned',
@@ -446,7 +432,9 @@ class SubprocessCompileInputFilter(SubprocessCompileFilter):
 
 class SubprocessFormatFlagFilter(SubprocessFilter):
     """
-    Subprocess filters which have to pass a format flag (like ragel -R for ruby).
+    Special handling of format flags based on file extensions.
+
+    For example, ragel -R for ruby.
     """
     _settings = {
             'ext-to-format' : ("A dict of mappings from file extensions to format flags that need to be passed on the command line, e.g. for ragel with ruby host language .rb => -R", {})
@@ -494,7 +482,7 @@ class SubprocessExtToFormatFilter(SubprocessFilter):
 
 class SubprocessStdoutTextFilter(SubprocessStdoutFilter):
     """
-    Subprocess filter in which input needs to be passed directly on the command line.
+    Runs command with input passed on command line.
     """
     _settings = {
             'command-string' : "%(prog)s %(args)s \"%(text)s\"",

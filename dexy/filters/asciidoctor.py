@@ -1,11 +1,29 @@
-from dexy.filters.process import SubprocessExtToFormatFilter
-from dexy.exceptions import UserFeedback
 from dexy.exceptions import InternalDexyProblem
+from dexy.exceptions import UserFeedback
+from dexy.filters.process import SubprocessExtToFormatFilter
+from dexy.filters.process import SubprocessFilter
 import os
+
+class AsciidoctorFOPDF(SubprocessFilter):
+    """
+    Uses asciidoctor-fopdf to generate PDF.
+    """
+    aliases = ['fopdf']
+
+    _settings = {
+            'fopdf-dir' : ("Absolute path on file system to asciidoctor-fopdf dir.", None)
+            }
+
+    def process(self):
+        # make copy of fopdf-dir (use hardlinks?)
+        # copy working files including dependencies
+        # run fopdf
+        # copy generated PDF
+        pass
 
 class Asciidoctor(SubprocessExtToFormatFilter):
     """
-    Uses asciidoctor command line tool to convert asciidoc input to output formats.
+    Runs `asciidoctor`.
     """
     aliases = ['asciidoctor']
     _settings = {

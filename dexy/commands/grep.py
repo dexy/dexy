@@ -47,7 +47,7 @@ def grep_command(
             matches = matches[0:limit]
 
         for match in matches:
-            print_match(matches, keys, keyexpr, contents, keylimit, lines)
+            print_match(match, keys, keyexpr, contents, keylimit, lines)
 
 def print_match(match, keys, keyexpr, contents, keylimit, lines):
     print match.key, "\tcache key:", match.storage_key

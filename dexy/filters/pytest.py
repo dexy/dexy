@@ -1,13 +1,8 @@
 from dexy.filters.pydoc import PythonIntrospection
+import StringIO
 import dexy.exceptions
 import inspect
-import json
 import os
-import pkgutil
-import shutil
-import subprocess
-import sys
-import StringIO
 
 try:
     import nose
@@ -17,11 +12,12 @@ except ImportError:
 
 class PythonTest(PythonIntrospection):
     """
-    Runs the tests in the specified module(s) (which must be installed on the
-    system) and returns a key-value store with test results and source code.
+    Runs the tests in the specified Python modules.
 
-    Many packages are installed without tests. TODO implement support for
-    running tests in a working directory.
+    Python modules must be installed on the system. Returns a key-value store
+    with test results and source code.
+    
+    Many packages are installed without tests, so this won't work.
     """
     aliases = ['pytest']
     _settings = {

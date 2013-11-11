@@ -8,20 +8,38 @@ import time
 
 class Doc(dexy.node.Node):
     """
-    Node representing a single doc.
+    A single Dexy document.
     """
     aliases = ['doc']
     _settings = {
-            'contents' : ("Custom contents for a virtual document.", None),
-            'ws-template' : ("custom website template to apply.", None),
-            'data-class' : ("data class alias", None),
-            'shortcut' : ( """A way to refer to this document without having to
-            use the full document key.""", None ),
-            'title' : ("Title for this document.", None),
-            'output-name' : ("""A custom name for this document when output in reports
-            (may include path or start with / to indicate absolute custom path).""", None),
-            'output' : ("""Whether to output this document to reports such as
-                output/ and output-site/.""", None)
+            'contents' : (
+                "Custom contents for a virtual document.",
+                None
+                ),
+            'ws-template' : (
+                "custom website template to apply.",
+                None
+                ),
+            'data-class' : (
+                "Alias of custom data class to use.",
+                None
+                ),
+            'shortcut' : (
+                "A nickname for document so you don't have to use full key.",
+                None
+                ),
+            'title' : (
+                "Custom title.",
+                None
+                ),
+            'output-name' : (
+                "Override default canonical name.",
+                None
+                ),
+            'output' : (
+                "Whether document should be included in output/ and output-site/",
+                None
+                )
             }
 
     def setup(self):

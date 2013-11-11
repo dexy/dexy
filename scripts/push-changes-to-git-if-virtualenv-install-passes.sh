@@ -15,48 +15,44 @@ source testenv/bin/activate
 git clone ~/dev/dexy $TEST_DIR/dexy
 cd dexy
 pip install .
+dexy --version
 git remote add github git@github.com:ananelson/dexy.git
 cd ..
 
-git clone ~/dev/dexy-templates $TEST_DIR/dexy-templates
-cd dexy-templates
-pip install .
-cd ..
-
-git clone ~/dev/dexy-filter-examples $TEST_DIR/dexy-filter-examples
-cd dexy-filter-examples
-pip install .
-cd ..
-
-git clone ~/dev/dexy-viewer $TEST_DIR/dexy-viewer
-cd dexy-viewer
-pip install .
-cd ..
-
-dexy filters
-dexy reporters
-dexy templates --validate
-
-for template in `dexy templates --simple`
-do
-    echo ""
-    echo "running template $template"
-    dexy gen -d template-gen --template $template
-    cd template-gen
-    dexy
-    dexy
-    dexy -r
-    cd ..
-    rm -rf template-gen
-done
+#git clone ~/dev/dexy-filter-examples $TEST_DIR/dexy-filter-examples
+#cd dexy-filter-examples
+#pip install .
+#cd ..
+#
+#git clone ~/dev/dexy-templates $TEST_DIR/dexy-templates
+#cd dexy-templates
+#pip install .
+#cd ..
+#
+#dexy filters
+#dexy reporters
+#dexy templates --validate
+#
+#for template in `dexy templates --simple`
+#do
+#    echo ""
+#    echo "running template $template"
+#    dexy gen -d template-gen --template $template
+#    cd template-gen
+#    dexy
+#    dexy
+#    dexy -r
+#    cd ..
+#    rm -rf template-gen
+#done
 
 cd dexy
 pip install mock
 pip install nose
-nosetests
+nosetests --stop
 cd ..
-
-deactivate
-
-cd dexy
-git push github develop
+#
+#deactivate
+#
+#cd dexy
+#git push github develop

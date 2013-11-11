@@ -731,3 +731,14 @@ class Wrapper(object):
 
     def is_location_in_project_dir(self, filepath):
         return self.writeanywhere or (self.project_root_ts in os.path.abspath(filepath))
+
+    def decode_encoded(self, text):
+        if self.encoding == 'chardet':
+            encoding = chardet.detect(text)['encoding']
+            if not encoding:
+                return text.decode("utf-8")
+            else:
+                return text.decode(encoding)
+        else:
+            return text.decode(self.encoding)
+

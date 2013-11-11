@@ -43,7 +43,7 @@ class RunReporter(Reporter):
         else:
             log_contents = "Log file is too large to include in HTML. Look in %s" % self.wrapper.log_path()
 
-        env_data = self.run_plugins()
+        env_data = self.template_data()
 
         # add additional env elements - should these also be in plugins?
         env_data['wrapper'] = wrapper

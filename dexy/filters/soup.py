@@ -10,7 +10,9 @@ except ImportError:
 
 class Customize(DexyFilter):
     """
-    Add <script> tags or <link> tags to an HTML file's header. Uses BeautifulSoup parser.
+    Add <script> tags or <link> tags to an HTML file's header.
+    
+    Uses BeautifulSoup.
     """
     aliases = ['customize']
 

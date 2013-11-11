@@ -4,7 +4,7 @@ import re
 
 class SplitHtmlFilter(DexyFilter):
     """
-    Create multiple HTML pages from a single template, with an automatic index page.
+    Generate index page linking to multiple pages from single source.
 
     The split filter looks for specially formatted HTML comments in your
     document and splits your HTML into separate pages at each split comment.

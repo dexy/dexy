@@ -34,8 +34,9 @@ states = (
 
 class Id(PygmentsFilter):
     """
-    Filter for splitting text files into sections based on specially-formatted
-    comments. Replacement for idiopidae.
+    Splits files into sections based on comments like ### "foo"
+
+    Replacement for idiopidae. Should be fully backwards-compatible.
 
     For more information about the settings starting with ply-, see the PLY
     YACC parser documentation http://www.dabeaz.com/ply/ply.html#ply_nn36

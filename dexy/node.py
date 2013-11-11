@@ -280,15 +280,15 @@ class Node(dexy.plugin.Plugin):
 
 class BundleNode(Node):
     """
-    Node representing a bundle of other nodes.
+    Acts as a wrapper for other nodes.
     """
     aliases = ['bundle']
 
 class ScriptNode(BundleNode):
     """
-    Node representing a bundle of other nodes which must always run in a set
-    order, so if any of the bundle siblings change, the whole bundle should be
-    re-run.
+    Represents a bundle of nodes which need to run in order.
+
+    If any of the bundle siblings change, the whole bundle should be re-run.
     """
     aliases = ['script']
 
@@ -313,8 +313,9 @@ class ScriptNode(BundleNode):
 
 class PatternNode(Node):
     """
-    A node which takes a file matching pattern and creates individual Doc
-    objects for all files that match the pattern.
+    Represents a file matching pattern.
+
+    Creates child Doc objects for each file which matches the pattern.
     """
     aliases = ['pattern']
 

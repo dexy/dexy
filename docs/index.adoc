@@ -168,3 +168,20 @@ Where it reaches a document which has keys, it may also print the keys (dependin
 And contents of files may also be printed:
 
 {{ src('dexy/commands/grep.py', 'print_contents') }}
+
+=== info.py
+
+The info command lets you see where documents are cached and to get
+documentation about their available methods. You should know the doc key you
+want to search for, you can use `dexy grep` to help you search.
+
+The attributes listed in `info_attrs` and the methods listed in `info_methods`
+are displayed.
+
+{{ d['/dexy/commands/info.py|idio|asciisyn']['info-keys'] }}
+
+{{ src('dexy/commands/info.py', 'info_command') }}
+
+=== it.py
+
+This is it! The main command which actually runs dexy.

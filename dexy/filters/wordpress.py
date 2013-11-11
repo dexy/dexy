@@ -10,8 +10,8 @@ class WordPressFilter(ApiFilter):
 
     WordPress has a very confusing API setup since it implements its own API
     methods (under the wp namespace) and also supports the Blogger, metaWeblog
-    and MovableType APIs. Unfortunately the wp namespace methods are incomplete,
-    so you have to mix and match.
+    and MovableType APIs. Unfortunately the wp namespace methods are
+    incomplete, so you have to mix and match.
 
     Uses the WP XMLRPC API where possible:
     http://codex.wordpress.org/XML-RPC_wp

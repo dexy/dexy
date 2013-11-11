@@ -2,9 +2,10 @@ from dexy.filter import DexyFilter
 
 class LyxJinjaFilter(DexyFilter):
     """
-    Filter which converts dexy:foo.txt|bar into << d['foo.txt|bar'] >> so you
-    can compose documents with lyx and process them in dexy. This expects you
-    to do doc.lyx|lyx|lyxjinja|jinja|latex
+    Converts dexy:foo.txt|bar into << d['foo.txt|bar'] >>
+    
+    Makes it easier to compose documents with lyx and process them in dexy.
+    This expects you to do doc.lyx|lyx|lyxjinja|jinja|latex
     """
     aliases = ['lyxjinja']
     _settings = {

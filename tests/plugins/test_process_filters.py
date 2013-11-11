@@ -21,22 +21,6 @@ def test_add_new_files():
         assert str(wrapper.nodes['doc:newfile.txt'].output_data()) == "hello" + os.linesep
         assert str(wrapper.nodes['doc:newfile.txt|markdown'].output_data()) == "<p>hello</p>"
 
-def test_walk_working_dir():
-    with wrap() as wrapper:
-        node = Doc("example.sh|sh",
-                wrapper,
-                [],
-                contents = "echo 'hello' > newfile.txt",
-                sh = {
-                    "walk-working-dir" : True,
-                    }
-                )
-
-        wrapper.run_docs(node)
-
-        files_list = wrapper.nodes['doc:example.sh-sh.txt-files']
-        assert files_list.output_data()['newfile.txt'] == "hello" + os.linesep
-
 def test_not_present_executable():
     # TODO modify test so we try to run this
     dexy.filter.Filter.create_instance('notreal')

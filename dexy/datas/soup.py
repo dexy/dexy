@@ -7,7 +7,7 @@ except ImportError:
 
 class BeautifulSoupData(Generic):
     """
-    docs
+    Allow querying HTML using BeautifulSoup.
     """
     aliases = ['bs4']
 

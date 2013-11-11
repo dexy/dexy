@@ -14,3 +14,5 @@ cover/
 bugs
 setup.cfg
 .dexy
+.trash
+Dockerfile

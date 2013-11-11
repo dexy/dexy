@@ -168,7 +168,7 @@ class TestSimple(TemplatePlugin):
     """
     aliases = ['testtemplate']
     def run(self):
-        return {'aaa' : 1}
+        return {'aaa' : ("docs", 1)}
 
 class TestTemplateFilter(TemplateFilter):
     """

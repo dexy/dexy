@@ -106,14 +106,7 @@ class Data(dexy.plugin.Plugin):
         elif not self.data():
             return unicode(None)
         else:
-            if self.wrapper.encoding == 'chardet':
-                encoding = chardet.detect(self.data())['encoding']
-                if not encoding:
-                    return self.data().decode("utf-8")
-                else:
-                    return self.data().decode(encoding)
-            else:
-                return self.data().decode(self.wrapper.encoding)
+            return self.wrapper.decode_encoded(self.data())
 
     def __str__(self):
         return str(unicode(self))
@@ -321,10 +314,10 @@ class SectionValue(object):
         self.parentindex = parentindex
 
     def __unicode__(self):
-        return unicode(self.data['contents'])
+        return self.data['contents']
 
     def __str__(self):
-        return str(self.data['contents'])
+        return self.data['contents']
 
     def __getitem__(self, key):
         return self.data[key]

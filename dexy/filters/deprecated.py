@@ -13,7 +13,7 @@ class Deprecated(DexyFilter):
 
 class FilenameFilter(Deprecated):
     """
-    The filename (fn) filter has been removed from dexy, it is no longer needed.
+    Deprecated. No longer needed.
     
     Dexy should now automatically detect new files that are created by your
     scripts if the add-new-files setting is true (which it is by default in

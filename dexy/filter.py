@@ -18,6 +18,7 @@ class Filter(dexy.plugin.Plugin):
     __metaclass__ = dexy.plugin.PluginMeta
 
     TAGS = []
+    _class_settings = {'max-docstring-length' : 75}
     nodoc_settings = [
             'help', 'nodoc'
             ]
@@ -26,11 +27,11 @@ class Filter(dexy.plugin.Plugin):
                 "Dexy version when this filter was first available.",
                 ''),
             'add-new-files' : (
-                "Whether to add new files that have been created as side effects of running this filter.",
+                "Boolean or list of extensions/patterns to match.",
                 False),
             'exclude-add-new-files' : (
-                "Patterns to exclude when adding new side effect files." ,
-                ''),
+                "List of directories or patterns to skip even if they match add-new-files.",
+                []),
             'additional-doc-filters' : (
                 "Filters to apply to additional documents created as side effects.",
                 {}),
@@ -49,14 +50,12 @@ class Filter(dexy.plugin.Plugin):
             'help' : (
                 'Help string for filter, if not already specified as a class docstring.',
                 None),
-            'include-in-workspaces' : (
-                "Allow overriding whether a document should be used when populating workspaces for other documents.",
-                False),
             'input-extensions' : (
                 "List of extensions which this filter can accept as input.",
                 [".*"]),
             'keep-originals' : (
-                "Whether, if additional-doc-filters are specified, the original unmodified docs should also be added.",
+                """Whether, if additional-doc-filters are specified, the
+                original unmodified docs should also be added.""",
                 False),
             'mkdir' : (
                 "A directory which should be created in working dir.",
@@ -68,7 +67,8 @@ class Filter(dexy.plugin.Plugin):
                 "Whether filter should be excluded from documentation.",
                 False),
             'output' : (
-                "Whether to output results of this filter by default by reporters such as 'output' or 'website'.",
+                """Whether to output results of this filter by default by
+                reporters such as 'output' or 'website'.""",
                 False),
             'output-data-type' : (
                 "Alias of data type to use to store filter output.",
@@ -93,7 +93,14 @@ class Filter(dexy.plugin.Plugin):
                 {}),
             'workspace-exclude-filters' : (
                 "Filters whose output should be excluded from workspace.",
-                ['pyg'])
+                ['pyg']),
+            'override-workspace-exclude-filters' : (
+                """If True, document will be populated to other workspaces
+                ignoring workspace-exclude-filters.""", False),
+            'workspace-includes' : (
+                """If set to a list of filenames or extensions, only these will
+                be populated to working dir.""",
+                None)
             }
 
     def __init__(self, doc=None):
@@ -334,29 +341,37 @@ class Filter(dexy.plugin.Plugin):
             self.doc.add_additional_doc(doc)
             return doc
 
+        doc = None
+
         if isinstance(additional_doc_filters, basestring):
-            filters = additional_doc_filters
+            doc = create_doc(doc_name,
+                    additional_doc_filters, doc_contents, settings)
+
         elif isinstance(additional_doc_filters, list):
-            for f in additional_doc_filters:
-                create_doc(doc_name, f, doc_contents, settings)
-            filters = ''
+            for f in reversed(additional_doc_filters):
+                doc = create_doc(doc_name, f, doc_contents, settings)
+
         elif isinstance(additional_doc_filters, dict):
-            filters = additional_doc_filters.get(doc_ext, '')
+            filters = additional_doc_filters.get(doc_ext)
             if isinstance(filters, list):
                 for f in filters:
-                    create_doc(doc_name, f, doc_contents, settings)
-                filters = ''
+                    doc = create_doc(doc_name, f, doc_contents, settings)
+            elif isinstance(filters, basestring):
+                doc = create_doc(doc_name, filters, doc_contents, settings)
+            elif filters is None:
+                pass
+            else:
+                msg = "additional_doc_filters values should be list of string. Received %s"
+                msgargs = filters.__class__.__name__
+                raise Exception(msg % msgargs)
+
         else:
-            msg = "received unexpected additional_doc_filters arg class %s"
+            msg = "additional-doc-filters should be string, list or dict. Received %s"
             msgargs = additional_doc_filters.__class__.__name__
             raise dexy.exceptions.InternalDexyProblem(msg % msgargs)
 
-
-        if len(filters) == 0 or self.setting('keep-originals'):
+        if self.setting('keep-originals') or doc is None:
             doc = create_doc(doc_name, '', doc_contents, settings)
-
-        if len(filters) > 0:
-            doc = create_doc(doc_name, filters, doc_contents, settings)
 
         return doc
 
@@ -410,17 +425,39 @@ class Filter(dexy.plugin.Plugin):
         Whether to include the contents of the input file inpt in the workspace
         for this filter.
         """
-        if inpt.filters and inpt.filters[-1].setting('include-in-workspaces'):
+        workspace_includes = self.setting('workspace-includes')
+
+        if workspace_includes is not None:
+            if inpt.ext in workspace_includes:
+                self.log_debug("Including %s because file extension matches." % inpt)
+                return True
+            elif inpt.output_data().basename() in workspace_includes:
+                self.log_debug("Including %s because base name matches." % inpt)
+                return True
+            else:
+                self.log_debug("Excluding %s because does not match workspace-includes" % inpt)
+                return False
+
+        elif not inpt.filters:
+            self.log_debug("Including because %s has no filters." % inpt)
             return True
 
-        # TODO only exclude/include files in same parent directory
-        # TODO exclude/include files by extension
-        exclude_filters = self.setting('workspace-exclude-filters')
-        if exclude_filters and any(a in exclude_filters for a in inpt.filter_aliases):
-            return False
+        elif inpt.filters[-1].setting('override-workspace-exclude-filters'):
+            self.log_debug("Including %s because override-workspace-exclude-filters is set." % inpt)
+            return True
 
-        # include anything left over
-        return True
+        else:
+            workspace_exclude_filters = self.setting('workspace-exclude-filters')
+
+            if workspace_exclude_filters is None:
+                self.log_debug("Including because exclude_filters is None.")
+                return True
+            elif any(a in workspace_exclude_filters for a in inpt.filter_aliases):
+                self.log_debug("Excluding %s because of workspace-exclude-filters" % inpt)
+                return False
+            else:
+                self.log_debug("Including %s because not excluded" % inpt)
+                return True
 
     def makedirs(self):
         mkdirs = self.setting('mkdirs')
