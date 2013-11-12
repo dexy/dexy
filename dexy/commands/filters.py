@@ -83,7 +83,7 @@ def help_for_filter(alias, run_example, show_source, nocolor):
                 print template_text(template)
 
     print ''
-    print "For online docs see http://dexy.it/docs/filters/%s" % alias
+    print "For online docs see http://dexy.it/ref/filters/%s" % alias
     print ''
     print "If you have suggestions or feedback about this filter,"
     print "please contact info@dexy.it"

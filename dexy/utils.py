@@ -326,3 +326,7 @@ def levenshtein(s1, s2):
         else:
           matrix[zz+1][sz+1] = min(matrix[zz+1][sz] + 1, matrix[zz][sz+1] + 1, matrix[zz][sz] + 1)
     return matrix[l2][l1]
+
+def indent(s, spaces=4):
+    return "\n".join("%s%s" % (' ' * spaces, line)
+            for line in s.splitlines())

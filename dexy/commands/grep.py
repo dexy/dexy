@@ -11,20 +11,38 @@ import sys
 
 def grep_command(
         __cli_options=False, # nodoc
-        expr="", # The expression to search for
-        key="", # The exact document key to search for
-        keyexpr="", # Only search for keys matching this expression, implies keys=True
-        keys=False, # if True, try to list the keys in any found files
-        keylimit=10, # maximum number of matching keys to print
-        limit=10, # maximum number of matching records to print
         contents=False, # print out the contents of each matched file
+        expr="", # An expression partially matching document name.
+        key="", # An exact document key
+        keyexpr="", # Only search for keys matching this expression
+        keylimit=10, # Maximum number of matching keys to print
+        keys=False, # List keys in documents
+        limit=10, # Maximum number of matching documents to print
         lines=False, # maximum number of lines of content to print
-        artifactsdir=defaults['artifacts_dir'], # Where dexy stores working files.
-        logdir=defaults['log_dir'] # DEPRECATED
+        **kwargs
         ):
     """
-    Search documents and sections.
+    Search for documents and sections within documents.
+
+    Dexy must have already run successfully.
+
+    You can search for documents based on exact key or inexpect expression. The
+    number of documents returned is controlled by --limit.
+
+    You can print all keys in found documents by requesting --keys, number of
+    results is controlled by --keylimit.
+
+    You can search the section names/keys in found documents by passing a
+    --keyexpr
+
+    You can print contents of documents by requesting --contents, number of
+    lines of content can be controlled by --lines.
+
+    This does not search contents of documents, just document names and
+    internal section names.
     """
+
+    artifactsdir = kwargs.get('artifactsdir', defaults['artifacts_dir'])
     wrapper = init_wrapper(locals())
     batch = Batch.load_most_recent(wrapper)
    

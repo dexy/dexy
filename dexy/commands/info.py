@@ -22,15 +22,24 @@ info_methods = [
         ]
 
 storage_methods = []
-### @end
 
+### "info-com"
 def info_command(
         __cli_options=False,
-        expr="", # The doc key to query. Use dexy grep to search doc keys.
-        key="", # The doc key to match exactly. Use dexy grep to search doc keys.
-        artifactsdir=defaults['artifacts_dir'], # Where dexy stores working files.
-        logdir=defaults['log_dir'] # DEPRECATED
+        expr="", # An expression partially matching document name.
+        key="", # The exact document key.
+        **kwargs
         ):
+    """
+    Prints metadata about a dexy document.
+
+    Dexy must have already run successfully.
+
+    You can specify an exact document key or an expression which matches part
+    of a document name/key. The `dexy grep` command is available to help you
+    search for documents and print document contents.
+    """
+    artifactsdir = kwargs.get('artifactsdir', defaults['artifacts_dir'])
     wrapper = init_wrapper(locals())
     batch = Batch.load_most_recent(wrapper)
 
@@ -47,6 +56,8 @@ def info_command(
     for match in matches:
         print ''
         print "  doc key:", match.key
+        print "  data type:", match.alias
+        print ''
 
         print "    data attributes:"
         for fname in sorted(info_attrs):
@@ -63,3 +74,6 @@ def info_command(
             for fname in sorted(storage_methods):
                 print "      %s(): %s" % (fname, getattr(match.storage, fname)())
             print ''
+
+        print "    For more information about methods available on this data type"
+        print "    run `dexy datas -alias %s`" % match.alias

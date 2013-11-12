@@ -21,6 +21,7 @@ from dexy.commands.dirs import cleanup_command
 from dexy.commands.dirs import reset_command
 from dexy.commands.dirs import setup_command
 from dexy.commands.env import env_command
+from dexy.commands.env import datas_command
 from dexy.commands.fcmds import fcmd_command
 from dexy.commands.fcmds import fcmds_command
 from dexy.commands.filters import filters_command
@@ -151,9 +152,10 @@ def help_command(
         print ""
         print "Commands which print lists of dexy features:"
         print "  `dexy filters` filters like |jinja |py |javac"
-        print "  `dexy env` elements available in document templates"
         print "  `dexy reports` reporters like `output` and `run`"
         print "  `dexy nodes` node types and their document settings"
+        print "  `dexy datas` data types and available methods"
+        print "  `dexy env` elements available in document templates"
         print ""
         print "Commands which print information about your project:"
         print "  (you need to be in the project dir and have run dexy already)"

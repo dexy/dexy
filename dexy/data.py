@@ -1,5 +1,4 @@
 from dexy.exceptions import InternalDexyProblem
-import chardet
 import dexy.plugin
 import dexy.storage
 import dexy.utils
@@ -53,6 +52,224 @@ class Data(dexy.plugin.Plugin):
 
     def __lt__(self, other):
         return self.output_name() < other.output_name()
+        
+    def transition(self, new_state):
+        dexy.utils.transition(self, new_state)
+
+    def setup(self):
+        self.setup_storage()
+        self.transition('ready')
+
+    def __repr__(self):
+        return "Data('%s')" % (self.key)
+
+    def storage_class_alias(self, file_ext):
+        return self.setting('storage-type')
+
+    def __unicode__(self):
+        if isinstance(self.data(), unicode):
+            return self.data()
+        elif not self.data():
+            return unicode(None)
+        else:
+            return self.wrapper.decode_encoded(self.data())
+
+    def __str__(self):
+        return str(unicode(self))
+
+    def args_to_data_init(self):
+        """
+        Returns a tuple of attributes in the correct order to pass to create_instance
+        """
+        return (self.alias, self.key, self.ext, self.storage_key, self.setting_values())
+
+    def setup_storage(self):
+        storage_type = self.storage_class_alias(self.ext)
+        instanceargs = (self.storage_key, self.ext, self.wrapper,)
+        self.storage = dexy.storage.Storage.create_instance(storage_type, *instanceargs)
+
+        self.storage.assert_location_is_in_project_dir(self.name)
+
+        if self.output_name():
+            self.storage.assert_location_is_in_project_dir(self.output_name())
+
+        self.storage.setup()
+
+    def as_text(self):
+        """
+        Deprecated. Just use unicode() or str().
+        """
+        return unicode(self)
+
+    def clear_data(self):
+        self._data = None
+
+    def clear_cache(self):
+        self._size = None
+        try:
+            os.remove(self.storage.data_file())
+        except os.error as e:
+            self.wrapper.log.warn(str(e))
+
+    def copy_from_file(self, filename):
+        shutil.copyfile(filename, self.storage.data_file())
+
+    def output_to_file(self, filepath):
+        """
+        Write canonical output to a file. Parent directory must exist already.
+        """
+        if not self.storage.copy_file(filepath):
+            self.storage.write_data(self.data(), filepath)
+
+    def data(self):
+        if (not self._data) or self._data == [{}]:
+            self.load_data()
+        return self._data
+
+    def has_data(self):
+        has_loaded_data = (self._data) and (self._data != [{}])
+        return has_loaded_data or self.is_cached()
+
+    def save(self):
+        if isinstance(self._data, unicode):
+            self.storage.write_data(self._data.encode("utf-8"))
+        else:
+            if self._data == None:
+                msg = "No data found for '%s', did you reference a file that doesn't exist?"
+                raise dexy.exceptions.UserFeedback(msg % self.key)
+            self.storage.write_data(self._data)
+
+    def set_data(self, data):
+        """
+        Set data to the passed argument and persist data to disk.
+        """
+        self._data = data
+        self.save()
+
+    def load_data(self, this=None):
+        try:
+            self._data = self.storage.read_data()
+        except IOError:
+            msg = "no data in file '%s' for %s (wrapper state '%s')"
+            msgargs = (self.storage.data_file(), self.key, self.wrapper.state)
+            raise dexy.exceptions.InternalDexyProblem(msg % msgargs)
+
+    def is_cached(self, this=None):
+        if this is None:
+            this = (self.wrapper.state in ('walked', 'running'))
+        return self.storage.data_file_exists(this)
+
+    def iteritems(self):
+        yield ('1', self.data())
+
+    def items(self):
+        return [('1', self.data(),)]
+
+    def keys(self):
+        return ['1']
+
+    def __getitem__(self, key):
+        if key == '1':
+            return self.data()
+        else:
+            try:
+                return self.data()[key]
+            except TypeError:
+                if self.ext == '.json':
+                    return self.from_json()[key]
+                else:
+                    raise
+
+    def json_as_dict(self):
+        return self.from_json()
+
+class Generic(Data):
+    """
+    Data type representing generic binary or text-based data in a single blob.
+    """
+    aliases = ['generic']
+
+    def parent_dir(self):
+        """
+        The name of the directory containing the document.
+        """
+        return posixpath.dirname(self.name)
+
+    def parent_output_dir(self):
+        """
+        The name of the directory containing the document based on final output
+        name, which may be specified in a different directory.
+        """
+        return posixpath.dirname(self.output_name())
+
+    def long_name(self):
+        """
+        A unique, but less canonical, name for the document.
+        """
+        if "|" in self.key:
+            return "%s%s" % (self.key.replace("|", "-"), self.ext)
+        else:
+            return self.setting('canonical-name')
+
+    def rootname(self):
+        """
+        Returns the file name, including path, without extension.
+        """
+        return os.path.splitext(self.name)[0]
+
+    def basename(self):
+        """
+        Returns the local file name without path.
+        """
+        return posixpath.basename(self.name)
+
+    def baserootname(self):
+        """
+        Returns local file name without extension or path.
+        """
+        return posixpath.splitext(self.basename())[0]
+
+    def web_safe_document_key(self):
+        """
+        Returns document key with slashes replaced by double hypheens.
+        """
+        return self.long_name().replace("/", "--")
+
+    def title(self):
+        """
+        Canonical title of document.
+
+        Tries to guess from document name if `title` setting not provided.
+        """
+        if self.is_index_page():
+            subdir = posixpath.split(posixpath.dirname(self.name))[-1]
+            if subdir == "/":
+                title_from_name = "Home"
+            else:
+                title_from_name = inflection.titleize(subdir)
+        else:
+            title_from_name = inflection.titleize(self.baserootname())
+
+        return self.setting('title') or title_from_name
+
+    def relative_path_to(self, relative_to):
+        """
+        Returns a relative path from this document to the passed other
+        document.
+        """
+        return posixpath.relpath(relative_to, self.parent_dir())
+
+    def strip(self):
+        """
+        Returns contents stripped of leading and trailing whitespace.
+        """
+        return unicode(self).strip()
+    
+    def splitlines(self, arg=None):
+        """
+        Returns a list of lines split at newlines or custom split.
+        """
+        return unicode(self).splitlines(arg)
 
     def url_quoted_name(self):
         """
@@ -86,188 +303,19 @@ class Data(dexy.plugin.Plugin):
                 return os.path.join(output_dir, output_name)
         else:
             return relativize(self.name)
-        
-    def transition(self, new_state):
-        dexy.utils.transition(self, new_state)
-
-    def setup(self):
-        self.setup_storage()
-        self.transition('ready')
-
-    def __repr__(self):
-        return "Data('%s')" % (self.key)
-
-    def storage_class_alias(self, file_ext):
-        return self.setting('storage-type')
-
-    def __unicode__(self):
-        if isinstance(self.data(), unicode):
-            return self.data()
-        elif not self.data():
-            return unicode(None)
-        else:
-            return self.wrapper.decode_encoded(self.data())
-
-    def __str__(self):
-        return str(unicode(self))
-
-    def args_to_data_init(self):
-        """
-        Returns a tuple of attributes in the correct order to pass to create_instance
-        """
-        return (self.alias, self.key, self.ext, self.storage_key, self.setting_values())
-    
-    def keys(self):
-        return []
-
-    def setup_storage(self):
-        storage_type = self.storage_class_alias(self.ext)
-        instanceargs = (self.storage_key, self.ext, self.wrapper,)
-        self.storage = dexy.storage.Storage.create_instance(storage_type, *instanceargs)
-
-        self.storage.assert_location_is_in_project_dir(self.name)
-
-        if self.output_name():
-            self.storage.assert_location_is_in_project_dir(self.output_name())
-
-        self.storage.setup()
-
-    def parent_dir(self):
-        return posixpath.dirname(self.name)
-
-    def parent_output_dir(self):
-        return posixpath.dirname(self.output_name())
-
-    def long_name(self):
-        if "|" in self.key:
-            return "%s%s" % (self.key.replace("|", "-"), self.ext)
-        else:
-            return self.setting('canonical-name')
-
-    def rootname(self):
-        return os.path.splitext(self.name)[0]
-
-    def basename(self):
-        return posixpath.basename(self.name)
-
-    def baserootname(self):
-        """
-        Returns basename stripped of file extension.
-        """
-        return posixpath.splitext(self.basename())[0]
-
-    def web_safe_document_key(self):
-        return self.long_name().replace("/", "--")
-
-    def title(self):
-        if self.is_index_page():
-            subdir = posixpath.split(posixpath.dirname(self.name))[-1]
-            if subdir == "/":
-                title_from_name = "Home"
-            else:
-                title_from_name = inflection.titleize(subdir)
-        else:
-            title_from_name = inflection.titleize(self.baserootname())
-
-        return self.setting('title') or title_from_name
-
-    def relative_path_to(self, relative_to):
-        return posixpath.relpath(relative_to, self.parent_dir())
-
-    # Define functions that might get called on expectation of a string...
-
-    def strip(self):
-        return unicode(self).strip()
-    
-    def splitlines(self, arg=None):
-        return unicode(self).splitlines(arg)
-
-    def save(self):
-        try:
-            self.storage.save()
-        except Exception as e:
-            msg = "Problem saving '%s': %s" % (self.key, str(e))
-            raise dexy.exceptions.InternalDexyProblem(msg)
-
-class Generic(Data):
-    """
-    Data type representing generic binary or text-based data in a single blob.
-    """
-    aliases = ['generic']
-
-    def save(self):
-        if isinstance(self._data, unicode):
-            self.storage.write_data(self._data.encode("utf-8"))
-        else:
-            if self._data == None:
-                msg = "No data found for '%s', did you reference a file that doesn't exist?"
-                raise dexy.exceptions.UserFeedback(msg % self.key)
-            self.storage.write_data(self._data)
-
-    def set_data(self, data):
-        """
-        Set data to the passed argument and persist data to disk.
-        """
-        self._data = data
-        self.save()
-
-    def load_data(self, this=None):
-        try:
-            self._data = self.storage.read_data()
-        except IOError:
-            msg = "no data in file '%s' for %s (wrapper state '%s')"
-            msgargs = (self.storage.data_file(), self.key, self.wrapper.state)
-            raise dexy.exceptions.InternalDexyProblem(msg % msgargs)
-
-    def has_data(self):
-        has_loaded_data = (self._data) and (self._data != [{}])
-        return has_loaded_data or self.is_cached()
-
-    def is_cached(self, this=None):
-        if this is None:
-            this = (self.wrapper.state in ('walked', 'running'))
-        return self.storage.data_file_exists(this)
 
     def filesize(self, this=None):
+        """
+        Returns size of file stored on disk.
+        """
         if this is None:
             this = (self.wrapper.state in ('walked', 'running'))
         return self.storage.data_file_size(this)
 
-    def data(self):
-        if (not self._data) or self._data == [{}]:
-            self.load_data()
-        return self._data
-
-    def as_text(self):
-        return unicode(self)
-
-    def keys(self):
-        return ['1']
-
-    def __getitem__(self, key):
-        if key == '1':
-            return self.data()
-        else:
-            try:
-                return self.data()[key]
-            except TypeError:
-                if self.ext == '.json':
-                    return self.from_json()[key]
-                else:
-                    raise
-
-    def iteritems(self):
-        yield ('1', self.data())
-
-    def items(self):
-        return [('1', self.data(),)]
-
-    def json_as_dict(self):
-        return self.from_json()
-
     def from_json(self):
         """
-        Attempts to load data using a JSON parser, returning whatever objects are defined in the JSON.
+        Attempts to load data using a JSON parser, returning whatever objects
+        are defined in the JSON.
         """
         if self._data and isinstance(self._data, basestring):
             return dexy.utils.parse_json(self._data)
@@ -278,33 +326,23 @@ class Generic(Data):
                 return dexy.utils.parse_json_from_file(f)
 
     def is_canonical_output(self):
+        """
+        Used by reports to determine if document should be written to output/
+        directory.
+        """
         return self.setting('canonical-output')
 
     def is_index_page(self):
+        """
+        Is this a website index page, i.e. named `index.html`.
+        """
         return self.output_name() and self.output_name().endswith("index.html")
 
     def websafe_key(self):
+        """
+        Returns a web-friendly version of the key.
+        """
         return self.key
-
-    def copy_from_file(self, filename):
-        shutil.copyfile(filename, self.storage.data_file())
-
-    def clear_data(self):
-        self._data = None
-
-    def clear_cache(self):
-        self._size = None
-        try:
-            os.remove(self.storage.data_file())
-        except os.error as e:
-            self.wrapper.log.warn(str(e))
-
-    def output_to_file(self, filepath):
-        """
-        Write canonical output to a file. Parent directory must exist already.
-        """
-        if not self.storage.copy_file(filepath):
-            self.storage.write_data(self.data(), filepath)
 
 class SectionValue(object):
     def __init__(self, data, parent, parentindex):

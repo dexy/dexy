@@ -12,6 +12,9 @@ class BeautifulSoupData(Generic):
     aliases = ['bs4']
 
     def soup(self):
+        """
+        Returns a BeautifulSoup object initialized with contents.
+        """
         if not hasattr(self, '_soup'):
             self._soup = BeautifulSoup(self.data())
         return self._soup
