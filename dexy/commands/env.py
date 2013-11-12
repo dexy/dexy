@@ -44,9 +44,16 @@ def datas_command(
 
     generic_methods = [k for (k, v) in inspect.getmembers(dexy.data.Data) if inspect.ismethod(v)]
 
+    print ""
+
     if not alias:
         for d in dexy.data.Data.__iter__("foo", ".txt", "foo", settings, wrapper):
             print d.alias
+
+        print ""
+        print "For more information about a particular data type,"
+        print "use the -alias flag and specify the data type alias."
+        print ""
     else:
         d = dexy.data.Data.create_instance(alias, "foo", ".txt", "foo", settings, wrapper)
 
