@@ -54,20 +54,27 @@ def info_command(
         raise dexy.exceptions.UserFeedback("Must specify either expr or key")
 
     for match in matches:
-        print ''
-        print "  doc key:", match.key
-        print "  data type:", match.alias
-        print ''
+        print ""
+        print "  Info for Document '%s'" % match.key
+        print ""
+        print "  document output data type:", match.alias
+        print ""
 
-        print "    data attributes:"
+        print "    settings:"
+        for k in sorted(match._instance_settings):
+            if not k in ('aliases', 'help'):
+                print "      %s: %s" % (k, match.setting(k))
+
+        print ""
+        print "    attributes:"
         for fname in sorted(info_attrs):
             print "      %s: %s" % (fname, getattr(match, fname))
-        print ''
+        print ""
     
-        print "    data methods:"
+        print "    methods:"
         for fname in sorted(info_methods):
             print "      %s(): %s" % (fname, getattr(match, fname)())
-        print ''
+        print ""
 
         if storage_methods:
             print "    storage methods:"
@@ -77,3 +84,4 @@ def info_command(
 
         print "    For more information about methods available on this data type"
         print "    run `dexy datas -alias %s`" % match.alias
+        print ""

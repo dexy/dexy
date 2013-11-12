@@ -241,16 +241,20 @@ class Generic(Data):
 
         Tries to guess from document name if `title` setting not provided.
         """
+        if self.setting('title'):
+            return self.setting('title')
+
         if self.is_index_page():
             subdir = posixpath.split(posixpath.dirname(self.name))[-1]
             if subdir == "/":
-                title_from_name = "Home"
+                return "Home"
+            elif subdir:
+                return inflection.titleize(subdir)
             else:
-                title_from_name = inflection.titleize(subdir)
+                return inflection.titleize(self.baserootname())
         else:
-            title_from_name = inflection.titleize(self.baserootname())
+            return inflection.titleize(self.baserootname())
 
-        return self.setting('title') or title_from_name
 
     def relative_path_to(self, relative_to):
         """
