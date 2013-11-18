@@ -20,12 +20,21 @@ import pygments.formatters
 import re
 import time
 import uuid
+import xml.etree.ElementTree as ET
 
 try:
     from bs4 import BeautifulSoup
     BS4_AVAILABLE = True
 except ImportError:
     BS4_AVAILABLE = False
+
+class Etree(TemplatePlugin):
+    """
+    Exposes element tree as ET.
+    """
+    aliases = ['etree']
+    def run(self):
+        return { 'ET' : ("The xml.etree.ElementTree module.", ET,) }
 
 class Markdown(TemplatePlugin):
     """
@@ -74,6 +83,8 @@ class PrettyPrintHtml(TemplatePlugin):
     """
     Uses BeautifulSoup 4 to prettify HTML.
     """
+    aliases = ['bs4']
+
     @classmethod
     def is_active(klass):
         return BS4_AVAILABLE
@@ -82,6 +93,12 @@ class PrettyPrintHtml(TemplatePlugin):
     def prettify_html(klass, html):
         soup = BeautifulSoup(unicode(html))
         return soup.prettify()
+
+    def run(self):
+        return {
+            'prettify_html' : ("Pretty-print HTML using BeautifulSoup", self.prettify_html,),
+            'BeautifulSoup' : ("The BeautifulSoup module.", BeautifulSoup,)
+            }
 
 class LoadYaml(TemplatePlugin):
     """
@@ -279,10 +296,7 @@ class RegularExpressions(TemplatePlugin):
     """
     aliases = ['regex']
     def run(self):
-        return {
-            're_match' : ("The `match` method from Python re module.", re.match,),
-            're_search' : ("The `search` method from Python re module.", re.search,)
-            }
+        return { 're' : ("The Python re module.", re,), }
 
 class PythonBuiltins(TemplatePlugin):
     """
@@ -290,11 +304,12 @@ class PythonBuiltins(TemplatePlugin):
     """
     aliases = ['builtins']
     # Intended to be all builtins that make sense to run within a document.
-    PYTHON_BUILTINS = [abs, all, any, bin, bool, bytearray, callable, chr,
-        cmp, complex, dict, dir, divmod, enumerate, filter, float, format, hex,
-        id, int, isinstance, issubclass, iter, len, list, locals, long, map,
-        hasattr, max, min, oct, ord, pow, range, reduce, repr, reversed, round,
-        set, slice, sorted, str, sum, tuple, xrange, unicode, zip]
+    PYTHON_BUILTINS = [abs, all, any, basestring, bin, bool, bytearray,
+            callable, chr, cmp, complex, dict, dir, divmod, enumerate, filter,
+            float, format, hex, id, int, isinstance, issubclass, iter, len,
+            list, locals, long, map, hasattr, max, min, oct, ord, pow, range,
+            reduce, repr, reversed, round, set, slice, sorted, str, sum, tuple,
+            xrange, unicode, zip]
 
     def run(self):
         return dict((f.__name__, ("The python builtin function %s" % f.__name__, f,)) for f in self.PYTHON_BUILTINS)
