@@ -74,7 +74,8 @@ def templates_command(
         if simple:
             print template.alias
         else:
-            print FMT % (template.alias, getdoc(template.__class__)),
+            first_line_help = template.setting('help').splitlines()[0].strip()
+            print FMT % (template.alias, first_line_help),
             if validate:
                 print " validating...",
                 print template.validate() and "OK" or "ERROR"
