@@ -42,7 +42,7 @@ class SyntaxHighlightRstFilter(DexyFilter):
     aliases = ['pyg4rst']
     _settings = {
             'n' : ("Number of chars to indent.", 2),
-            'output-data-type' : 'sectioned'
+            'data-type' : 'sectioned'
             }
 
     def process(self):
@@ -63,7 +63,7 @@ class SyntaxHighlightAsciidoctor(DexyFilter):
     aliases = ['asciisyn']
     _settings = {
             'lexer' : ("Specify lexer if can't be detected fro mfilename.", None),
-            'output-data-type' : 'sectioned'
+            'data-type' : 'sectioned'
             }
 
     def process(self):
