@@ -22,6 +22,7 @@ from dexy.commands.dirs import reset_command
 from dexy.commands.dirs import setup_command
 from dexy.commands.env import env_command
 from dexy.commands.env import datas_command
+from dexy.commands.env import plugins_command
 from dexy.commands.fcmds import fcmd_command
 from dexy.commands.fcmds import fcmds_command
 from dexy.commands.filters import filters_command

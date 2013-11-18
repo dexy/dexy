@@ -20,6 +20,14 @@ def env_command():
 
         print "%s: %s" % (k, helpstring,)
 
+
+def plugins_command():
+    """
+    Prints list of plugin-able classes.
+    """
+    for plugin_class in sorted(dexy.plugin.Plugin.__subclasses__()):
+        print plugin_class.__name__
+
 from pygments import highlight
 from pygments.lexers import PythonLexer
 import dexy.data
