@@ -234,7 +234,7 @@ class Wrapper(object):
                 raise
             else:
                 if self.current_task:
-                    msg = "ERROR while running %s: %s\n" % (self.current_task.key, str(e))
+                    msg = "ERROR while running %s: %s\n" % (self.current_task.key, unicode(e))
                 else:
                     msg = "ERROR: %s\n" % str(e)
                 sys.stderr.write(msg)

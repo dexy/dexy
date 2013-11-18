@@ -245,7 +245,7 @@ class JinjaFilter(TemplateFilter):
                 os.remove(self.output_filepath())
             except os.error:
                 pass
-            self.handle_jinja_exception(e, str(self.input_data), template_data)
+            self.handle_jinja_exception(e, unicode(self.input_data), template_data)
         except TemplateNotFound as e:
             msg = "Jinja couldn't find the template '%s', make sure this file is an input to %s" 
             msgargs = (e.message, self.doc.key)
