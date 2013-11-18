@@ -45,14 +45,14 @@ def test_parse_code():
     assert output[0]['contents'] == 'foo\n'
 
 def test_parse_oldstyle_comments():
-    for comment in ('###', '///', '%%%'):
+    for comment in ('###', '///', ';;;', '%%%'):
         text = "%s @export foo\nfoo\n" % comment
         output = parse(text)
         assert output[0]['name'] == 'foo'
         assert output[0]['contents'] == 'foo\n'
 
 def test_parse_comments():
-    for comment in ('###', '///', '%%%'):
+    for comment in ('###', '///', ';;;', '%%%'):
         text = "%s 'foo-bar'\nfoo\n" % comment
         output = parse(text)
         assert output[0]['name'] == 'foo-bar'
@@ -104,7 +104,8 @@ def test_parse_closed_falsestart():
         assert output[0]['contents'] == text
 
 def test_ignore_faux_comment():
-    for comment in ('#', '/', '%', '##%', '//#', '%#%', '##', '//', '%%', '///'):
+    for comment in ('#', '/', '%', '##%', '//#', '%#%', '##', '//', '%%',
+            '///', "foo;", "//;", ";#;"):
         text = "  %s foo bar\nfoo\n" % comment
         output = parse(text)
         assert output[0]['contents'] == text

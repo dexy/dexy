@@ -264,7 +264,7 @@ def idiostart_abort(t):
     return t
 
 def t_idiostart_COMMENT(t):
-    r'\#|%|/'
+    r'\#|%|;|/'
     return idiostart_incr_comment(t)
 
 def t_idiostart_SPACE(t):
@@ -278,7 +278,7 @@ def t_idiostart_SPACE(t):
         return t
 
 def t_idiostart_ABORT(t):
-    r'[^#/% ]'
+    r'[^#;/% ]'
     return idiostart_abort(t)
 
 # Lexer tokens and helpers for initial state
@@ -304,7 +304,7 @@ def t_IDIOOPEN(t):
         return t
 
 def t_COMMENT(t):
-    r'\#|%|/'
+    r'\#|%|;|/'
     return start_idiostart(t)
 
 def t_NEWLINE(t):
