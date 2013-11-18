@@ -110,7 +110,7 @@ class GitBaseKeyValue(GitBase):
     A filter using key-value storage to manage content from a git repo.
     """
     _settings = {
-            'output-data-type' : 'keyvalue',
+            'data-type' : 'keyvalue',
             'output-extensions' : ['.sqlite3', '.json']
             }
 

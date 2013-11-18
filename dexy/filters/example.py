@@ -19,7 +19,7 @@ class KeyValueExample(Example):
     aliases = ['keyvalueexample']
 
     _settings = {
-            'output-data-type' : 'keyvalue',
+            'data-type' : 'keyvalue',
             'output-extensions' : ['.sqlite3', '.json']
             }
 
@@ -115,7 +115,7 @@ class ExampleProcessWithDictMethod(Example):
     """
     aliases = ['processwithdict']
     _settings = {
-            'output-data-type' : 'sectioned'
+            'data-type' : 'sectioned'
             }
 
     def process(self):

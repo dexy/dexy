@@ -70,8 +70,8 @@ class Filter(dexy.plugin.Plugin):
                 """Whether to output results of this filter by default by
                 reporters such as 'output' or 'website'.""",
                 False),
-            'output-data-type' : (
-                "Alias of data type to use to store filter output.",
+            'data-type' : (
+                "Alias of custom data class to use to store filter output.",
                 "generic"),
             'output-extensions' : (
                 "List of extensions which this filter can produce as output.",
@@ -124,7 +124,7 @@ class Filter(dexy.plugin.Plugin):
         if self.setting('preserve-prior-data-class'):
             return self.input_data.alias
         else:
-            return self.setting('output-data-type')
+            return self.setting('data-type')
 
     def add_runtime_args(self, new_args):
         self.doc.add_runtime_args(new_args)

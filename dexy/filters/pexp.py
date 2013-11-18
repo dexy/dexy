@@ -33,7 +33,7 @@ class PexpectReplFilter(SubprocessFilter):
             'prompts' : ("List of possible prompts to match exactly.", ['>>>', '...']),
             'prompt-regex' : ("A prompt regex to match.", None),
             'strip-regex' : ("Regex to strip", None),
-            'output-data-type' : 'sectioned',
+            'data-type' : 'sectioned',
             'allow-match-prompt-without-newline' : ("Whether to require a newline before prompt.", False),
             }
 

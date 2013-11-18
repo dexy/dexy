@@ -190,7 +190,7 @@ class RstDocParts(DexyFilter):
     aliases = ['rstdocparts']
     _settings = {
             'input-extensions' : [".rst", ".txt"],
-            'output-data-type' : 'keyvalue',
+            'data-type' : 'keyvalue',
             'output-extensions' : ['.sqlite3', '.json'],
             'writer' : ("Specify rst writer to use.", 'html')
             }

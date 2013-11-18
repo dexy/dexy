@@ -130,7 +130,7 @@ class RIntBatchSectionsFilter(SubprocessFilter):
             'output-extensions' : [".Rout", '.txt'],
             'version-command' : "R --version",
             'write-stderr-to-stdout' : False,
-            'output-data-type' : 'sectioned',
+            'data-type' : 'sectioned',
             'command-string' : """%(prog)s %(args)s "%(script_file)s" %(scriptargs)s "%(output_file)s" """
             }
 
@@ -346,7 +346,7 @@ class ApplySed(SubprocessInputFilter):
     _settings = {
             'executable' : 'sed',
             'tags' : ['utils'],
-            'output-data-type' : 'generic',
+            'data-type' : 'generic',
             }
 
     def process(self):

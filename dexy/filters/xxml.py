@@ -22,7 +22,7 @@ class XmlSectionFilter(DexyFilter):
             'pygments' : ("Whether to apply pygments syntax highlighting", True),
             'unique-attributes' : ("Elements to be added if they have this attribute, to be treated as globally unique.", ["id"]),
             'qualified-attributes' : ("Elements to be added if they have this attribute, to be qualified by element type.", ["name"]),
-            'output-data-type' : 'keyvalue',
+            'data-type' : 'keyvalue',
             'output-extensions' :  [".json", ".sqlite3"]
             }
 

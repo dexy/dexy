@@ -20,8 +20,8 @@ class Doc(dexy.node.Node):
                 "custom website template to apply.",
                 None
                 ),
-            'data-class' : (
-                "Alias of custom data class to use.",
+            'data-type' : (
+                "Alias of custom data class to use to store document content.",
                 None
                 ),
             'shortcut' : (
@@ -207,7 +207,7 @@ class Doc(dexy.node.Node):
             return False
 
     def data_class_alias(self):
-        data_class_alias = self.setting('data-class')
+        data_class_alias = self.setting('data-type')
 
         if data_class_alias:
             return data_class_alias

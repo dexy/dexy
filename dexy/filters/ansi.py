@@ -34,7 +34,7 @@ class Ansi2HTMLFilter(DexyFilter):
     _settings = {
             'output-extensions' : ['.html'],
             'input-extensions' : ['.txt', '.sh-session'],
-            'output-data-type' : 'sectioned',
+            'data-type' : 'sectioned',
             'pre' : ("Whether to wrap in <pre> tags.", True),
             'font-size' : ("CSS font size to be used.", "normal")
             }

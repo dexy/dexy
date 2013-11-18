@@ -44,7 +44,7 @@ class SoupSections(DexyFilter):
     aliases = ['soups']
 
     _settings = {
-            'output-data-type' : 'sectioned',
+            'data-type' : 'sectioned',
             'html-parser' : ("Name of html parser BeautifulSoup should use.", 'html.parser'),
             'initial-section-name' : ("Name to use for the initial section which currently holds all the contents.", u"Actual Document Contents"),
             }

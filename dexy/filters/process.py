@@ -343,7 +343,7 @@ class SubprocessInputFilter(SubprocessFilter):
     Runs code which expects stdin.
     """
     _settings = {
-            'output-data-type' : 'sectioned',
+            'data-type' : 'sectioned',
             'check-return-code' : False,
             'write-stderr-to-stdout' : False
             }
@@ -371,7 +371,7 @@ class SubprocessInputFileFilter(SubprocessFilter):
     Runs code which expects input files.
     """
     _settings = {
-            'output-data-type' : 'sectioned',
+            'data-type' : 'sectioned',
             'check-return-code' : False,
             'write-stderr-to-stdout' : False,
             'command-string' : """%(prog)s %(args)s %(input_text)s "%(script_file)s" """
@@ -401,7 +401,7 @@ class SubprocessCompileInputFilter(SubprocessCompileFilter):
     Compiles code and runs executable with stdin.
     """
     _settings = {
-            'output-data-type' : 'sectioned',
+            'data-type' : 'sectioned',
             'check-return-code' : False,
             'write-stderr-to-stdout' : False
             }

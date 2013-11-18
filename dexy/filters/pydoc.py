@@ -22,7 +22,7 @@ class PythonIntrospection(DexyFilter):
                 False
                 ),
             'input-extensions' : ['.txt', '.py'],
-            'output-data-type' : 'keyvalue',
+            'data-type' : 'keyvalue',
             'output-extensions' : ['.sqlite3', '.json']
             }
 

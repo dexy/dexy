@@ -17,7 +17,7 @@ class PreserveDataClassFilter(DexyFilter):
         if self.setting('preserve-prior-data-class'):
             return self.input_data.alias
         else:
-            return self.setting('output-data-type')
+            return self.setting('data-type')
 
     def calculate_canonical_name(self):
         return self.prev_filter.calculate_canonical_name()
@@ -36,7 +36,7 @@ class KeyValueStoreFilter(DexyFilter):
     """
     aliases = ['kv']
     _settings = {
-            'output-data-type' : 'keyvalue'
+            'data-type' : 'keyvalue'
             }
 
     def process(self):
@@ -125,7 +125,7 @@ class StartSpaceFilter(DexyFilter):
     aliases = ['ss', 'startspace']
     _settings = {
             'n' : ("Number of spaces to prepend to each line.", 1),
-            'output-data-type' : 'sectioned'
+            'data-type' : 'sectioned'
             }
 
     @classmethod
@@ -139,13 +139,13 @@ class StartSpaceFilter(DexyFilter):
             self.output_data[section_name] = self.add_spaces_at_start(section_input, n)
         self.output_data.save()
 
-class SectionsByLineFilter(DexyFilter):
+class SectionsByLine(DexyFilter):
     """
     Returns each line in its own section.
     """
     aliases = ['lines']
     _settings = {
-            'output-data-type' : 'sectioned'
+            'data-type' : 'sectioned'
             }
 
     def process(self):
@@ -153,6 +153,27 @@ class SectionsByLineFilter(DexyFilter):
         for i, line in enumerate(input_text.splitlines()):
             self.output_data["%s" % (i+1)] = line
         self.output_data.save()
+
+class SectionsByWhitespace(DexyFilter):
+    """
+    Del
+    """
+    aliases = ['lines']
+    _settings = {
+            'data-type' : 'sectioned'
+            }
+
+    def process(self):
+        input_text = unicode(self.input_data)
+        for i, section in enumerate(input_text.split("\n\n")):
+            self.output_data["%s" % (i+1)] = line
+        self.output_data.save()
+
+    def parse_section_name(self, section_text):
+        """
+        Parse a section name out of the section text.
+        """
+        return None
 
 class PrettyPrintJsonFilter(DexyFilter):
     """
@@ -178,7 +199,9 @@ class JoinFilter(DexyFilter):
 
     def process(self):
         joined_data = "\n".join(unicode(v) for v in self.input_data.values())
+        print "joined data is", joined_data
         self.output_data.set_data(joined_data)
+        self.output_data.save()
 
 class HeadFilter(DexyFilter):
     """
