@@ -107,10 +107,8 @@ def import_plugins_from_local_yaml_file(import_target):
             else:
                 prefix = 'filter'
 
-            plugin_classes = {
-                'filter' : dexy.filter.Filter,
-                'reporter' : dexy.reporter.Reporter
-            }
+            plugin_classes = dict((plugin_class.__name__.lower(), plugin_class)
+                    for plugin_class in dexy.plugin.Plugin.__subclasses__())
 
             if not prefix in plugin_classes:
                 msg = "'%s' not found, available aliases are %s"
@@ -125,11 +123,11 @@ def import_plugins_from_local_yaml_file(import_target):
                 plugin_settings.update(info_dict)
                 cls.plugins[alias] = (existing_plugin[0], plugin_settings)
             else:
-                cls.register_plugins_from_yaml_content({alias : info_dict})
+                cls.register_plugins_from_dict({alias : info_dict})
 
     else:
         # Don't raise exception if default files don't exist.
-        if not import_target in ('dexyplugin.yaml', 'dexyplugins.yaml',):
+        if not import_target in defaults['plugins']:
             msg = "Could not find YAML file named '%s'" % import_target
             raise dexy.exceptions.UserFeedback(msg)
 
