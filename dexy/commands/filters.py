@@ -61,21 +61,25 @@ def help_for_filter(alias, run_example, show_source, nocolor):
         print ''
 
     examples = instance.setting('examples')
-    example_templates = dict((alias, dexy.template.Template.create_instance(alias))
-                                    for alias in examples)
+    example_templates = {}
+    for alias in examples:
+        try:
+            template_instance = dexy.template.Template.create_instance(alias)
+            example_templates[alias] = template_instance
+        except dexy.exceptions.InactivePlugin:
+            pass
 
     if examples:
         print ''
         print "Examples for this filter:"
-        for alias in examples:
-            template = example_templates[alias]
+        for alias, template in example_templates.iteritems():
             print ''
             print "  %s" % alias
             print "            %s" % inspect.getdoc(template.__class__)
 
         if run_example:
-            for alias in examples:
-                template = example_templates[alias]
+            for alias, template in example_templates.iteritems():
+                print ''
                 print ''
                 print "Running example: %s" % template.setting('help')
                 print ''

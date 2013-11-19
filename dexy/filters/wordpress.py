@@ -88,7 +88,7 @@ class WordPressFilter(ApiFilter):
             print "\t".join(category_info[h] for h in headers)
 
     def upload_page_content(self):
-        input_text = self.input_data.as_text()
+        input_text = unicode(self.input_data)
         document_config = self.read_document_config()
 
         document_config['description'] = input_text
@@ -174,4 +174,4 @@ class WordPressFilter(ApiFilter):
                 self.upload_image_content()
 
         except xmlrpclib.Fault as e:
-            raise dexy.exceptions.UserFeedback(str(e))
+            raise dexy.exceptions.UserFeedback(unicode(e))

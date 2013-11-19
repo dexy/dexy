@@ -23,13 +23,21 @@ class Template(dexy.plugin.Plugin):
         self.initialize_settings()
 
     def template_source_dir(self):
-        template_install_dir = os.path.dirname(sys.modules[self.__module__].__file__)
+        if self.safe_setting('install-dir'):
+            template_install_dir = self.setting('install-dir')
+        else:
+            template_install_dir = os.path.dirname(sys.modules[self.__module__].__file__)
 
         if self.setting('contents-dir'):
             contents_dirname = self.setting('contents-dir')
         else:
+            if self.__class__.aliases:
+                canonical_alias = self.__class__.aliases[0]
+            else:
+                canonical_alias = self.alias
+
             # default is to have contents in directory with same name as alias followed by "-template"
-            contents_dirname = "%s-template" % self.__class__.aliases[0]
+            contents_dirname = "%s-template" % canonical_alias
 
         return os.path.join(template_install_dir, contents_dirname)
 
@@ -103,9 +111,9 @@ class Template(dexy.plugin.Plugin):
             try:
                 wrapper.run()
             except (Exception, SystemExit,) as e:
-                error = str(e)
+                error = unicode(e)
                 template_dir = os.path.abspath(".")
-                msg = "%s\npushd %s" % (error, template_dir)
+                msg = u"%s\npushd %s" % (error, template_dir)
                 raise dexy.exceptions.TemplateException(msg)
 
             if wrapper.state == 'error':

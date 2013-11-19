@@ -202,7 +202,7 @@ class Wrapper(object):
         try:
             shutil.rmtree(self.trash_dir())
         except OSError as e:
-            if not "No such file or directory" in str(e):
+            if not "No such file or directory" in unicode(e):
                 raise
 
     def reset_work_cache_dir(self):
@@ -234,9 +234,9 @@ class Wrapper(object):
                 raise
             else:
                 if self.current_task:
-                    msg = "ERROR while running %s: %s\n" % (self.current_task.key, unicode(e))
+                    msg = u"ERROR while running %s: %s\n" % (self.current_task.key, unicode(e))
                 else:
-                    msg = "ERROR: %s\n" % str(e)
+                    msg = u"ERROR: %s\n" % unicode(e)
                 sys.stderr.write(msg)
                 self.log.warn(msg)
 

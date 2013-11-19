@@ -71,7 +71,7 @@ def test_script_node_caching__slow():
         with open("dexy.yaml", "w") as f:
             f.write(SCRIPT_YAML)
 
-        wrapper1 = Wrapper()
+        wrapper1 = Wrapper(log_level="DEBUG")
         wrapper1.run_from_new()
 
         for node in wrapper1.nodes.values():

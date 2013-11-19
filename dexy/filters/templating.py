@@ -256,5 +256,5 @@ class JinjaFilter(TemplateFilter):
                 os.remove(self.output_filepath())
             except os.error:
                 pass
-            self.log_debug(str(e))
+            self.log_debug(unicode(e))
             raise

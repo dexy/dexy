@@ -53,9 +53,13 @@ class Doc(dexy.node.Node):
         name_args = self.setting_values()
         name_args['name'] = self.name
 
-        # TODO fix
         if self.setting('output-name') and '%' in self.setting('output-name'):
-            self.update_settings({'output-name' : self.setting('output-name') % name_args})
+            try:
+                self.update_settings({'output-name' : self.setting('output-name') % name_args})
+            except KeyError as e:
+                msg = "'%s' is not a valid key. Valid keys are %s"
+                msgargs = (unicode(e), ", ".join(sorted(name_args)))
+                raise dexy.exceptions.UserFeedback(msg % msgargs)
 
         self.setup_initial_data()
 

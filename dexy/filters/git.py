@@ -115,7 +115,7 @@ class GitBaseKeyValue(GitBase):
             }
 
     def process(self):
-        input_text = str(self.input_data)
+        input_text = unicode(self.input_data)
         if self.is_url(input_text):
             repo, remote = repo_from_url(input_text)
         else:

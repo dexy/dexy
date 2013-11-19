@@ -143,7 +143,7 @@ class PexpectReplFilter(SubprocessFilter):
                     cwd=wd,
                     env=env)
         except pexpect.ExceptionPexpect as e:
-            if "The command was not found" in str(e):
+            if "The command was not found" in unicode(e):
                 raise InactivePlugin(self)
             else:
                 raise
@@ -208,9 +208,9 @@ class PexpectReplFilter(SubprocessFilter):
                     self.log_warn(msg)
                     raise UserFeedback(msg)
                 except pexpect.ExceptionPexpect as e:
-                    raise UserFeedback(str(e))
+                    raise UserFeedback(unicode(e))
                 except pexpect.EOF as e:
-                    raise UserFeedback(str(e))
+                    raise UserFeedback(unicode(e))
 
             if self.setting('strip-regex'):
                 section_transcript = re.sub(self.setting('strip-regex'), "", section_transcript)
@@ -236,6 +236,7 @@ class PexpectReplFilter(SubprocessFilter):
 
         for section_name, section_transcript in self.section_output():
             raw = self.strip_trailing_prompts(section_transcript)
+            self.log_debug("About to append section %s" % section_name)
             self.output_data[section_name] = self.doc.wrapper.decode_encoded(raw)
 
         self.output_data.save()

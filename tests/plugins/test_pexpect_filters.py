@@ -28,6 +28,7 @@ SCALA = """object HelloWorld {
 """
 
 def test_scala_repl():
+    raise SkipTest()
     with wrap() as wrapper:
         doc = Doc("HelloWorld.scala|scalai",
                 wrapper,

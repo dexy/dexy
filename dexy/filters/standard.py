@@ -83,7 +83,7 @@ class HeaderFilter(DexyFilter):
 
     def process_text(self, input_text):
         header_data = self.find_input_in_parent_dir("_header")
-        return "%s\n%s" % (header_data.as_text(), input_text)
+        return "%s\n%s" % (unicode(header_data), input_text)
 
 class FooterFilter(HeaderFilter):
     """
@@ -97,7 +97,7 @@ class FooterFilter(HeaderFilter):
 
     def process_text(self, input_text):
         footer_data = self.find_input_in_parent_dir("_footer")
-        return "%s\n%s" % (input_text, footer_data.as_text())
+        return "%s\n%s" % (input_text, unicode(footer_data))
 
 class MarkupTagsFilter(DexyFilter):
     """
@@ -201,7 +201,6 @@ class JoinFilter(DexyFilter):
         joined_data = "\n".join(unicode(v) for v in self.input_data.values())
         print "joined data is", joined_data
         self.output_data.set_data(joined_data)
-        self.output_data.save()
 
 class HeadFilter(DexyFilter):
     """

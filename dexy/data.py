@@ -1,9 +1,11 @@
 from dexy.exceptions import InternalDexyProblem
+from dexy.exceptions import UserFeedback
 import dexy.plugin
 import dexy.storage
 import dexy.utils
 import dexy.wrapper
 import inflection
+import inspect
 import os
 import posixpath
 import shutil
@@ -16,7 +18,6 @@ class Data(dexy.plugin.Plugin):
     __metaclass__ = dexy.plugin.PluginMeta
     _settings = {
             'shortcut' : ("A shortcut to refer to a file.", None),
-            'ws-template' : ("custom website template to apply.", None),
             'storage-type' : ("Type of storage to use.", 'generic'),
             'canonical-output' : ("Whether this data type is canonical output.", None),
             'canonical-name' : ("The default name.", None),
@@ -49,39 +50,22 @@ class Data(dexy.plugin.Plugin):
             raise Exception()
 
         self.transition('new')
-
-    def __lt__(self, other):
-        return self.output_name() < other.output_name()
         
     def transition(self, new_state):
+        """
+        Transition between states in a state machine.
+        """
         dexy.utils.transition(self, new_state)
+
+    def args_to_data_init(self):
+        """
+        Returns tuple of attributes to pass to create_instance.
+        """
+        return (self.alias, self.key, self.ext, self.storage_key, self.setting_values())
 
     def setup(self):
         self.setup_storage()
         self.transition('ready')
-
-    def __repr__(self):
-        return "Data('%s')" % (self.key)
-
-    def storage_class_alias(self, file_ext):
-        return self.setting('storage-type')
-
-    def __unicode__(self):
-        if isinstance(self.data(), unicode):
-            return self.data()
-        elif not self.data():
-            return unicode(None)
-        else:
-            return self.wrapper.decode_encoded(self.data())
-
-    def __str__(self):
-        return str(unicode(self))
-
-    def args_to_data_init(self):
-        """
-        Returns a tuple of attributes in the correct order to pass to create_instance
-        """
-        return (self.alias, self.key, self.ext, self.storage_key, self.setting_values())
 
     def setup_storage(self):
         storage_type = self.storage_class_alias(self.ext)
@@ -95,11 +79,43 @@ class Data(dexy.plugin.Plugin):
 
         self.storage.setup()
 
-    def as_text(self):
+    def storage_class_alias(self, file_ext):
+        return self.setting('storage-type')
+
+    def __repr__(self):
+        return "Data('%s')" % (self.key)
+
+    def __lt__(self, other):
         """
-        Deprecated. Just use unicode() or str().
+        Sort data obejects by their output name.
         """
-        return unicode(self)
+        return self.output_name() < other.output_name()
+
+    def __str__(self):
+        """
+        Attemtps to return ASCII-encoded contents.
+        """
+        try:
+            return unicode(self).encode("ASCII", errors="strict")
+        except UnicodeEncodeError:
+            msg = """You tried to call str() on data object %s containing
+            non-ASCII chars. Please call unicode() and then the `encode` method
+            with a different charset or different value for `errors` arg."""
+            raise UserFeedback(inspect.cleandoc(msg) % self.key)
+
+    def data(self):
+        if (not self._data) or self._data == [{}]:
+            self.load_data()
+        return self._data
+
+    def load_data(self, this=None):
+        try:
+            self._data = self.storage.read_data()
+        except IOError:
+            msg = "no data in file '%s' for %s (wrapper state '%s', data state '%s')"
+            msgargs = (self.storage.data_file(), self.key,
+                    self.wrapper.state, self.state)
+            raise dexy.exceptions.InternalDexyProblem(msg % msgargs)
 
     def clear_data(self):
         self._data = None
@@ -109,7 +125,7 @@ class Data(dexy.plugin.Plugin):
         try:
             os.remove(self.storage.data_file())
         except os.error as e:
-            self.wrapper.log.warn(str(e))
+            self.wrapper.log.warn(unicode(e))
 
     def copy_from_file(self, filename):
         shutil.copyfile(filename, self.storage.data_file())
@@ -120,11 +136,6 @@ class Data(dexy.plugin.Plugin):
         """
         if not self.storage.copy_file(filepath):
             self.storage.write_data(self.data(), filepath)
-
-    def data(self):
-        if (not self._data) or self._data == [{}]:
-            self.load_data()
-        return self._data
 
     def has_data(self):
         has_loaded_data = (self._data) and (self._data != [{}])
@@ -141,53 +152,17 @@ class Data(dexy.plugin.Plugin):
 
     def set_data(self, data):
         """
-        Set data to the passed argument and persist data to disk.
+        Shortcut to set and save data.
         """
         self._data = data
         self.save()
-
-    def load_data(self, this=None):
-        try:
-            self._data = self.storage.read_data()
-        except IOError:
-            msg = "no data in file '%s' for %s (wrapper state '%s')"
-            msgargs = (self.storage.data_file(), self.key, self.wrapper.state)
-            raise dexy.exceptions.InternalDexyProblem(msg % msgargs)
 
     def is_cached(self, this=None):
         if this is None:
             this = (self.wrapper.state in ('walked', 'running'))
         return self.storage.data_file_exists(this)
 
-    def iteritems(self):
-        yield ('1', self.data())
-
-    def items(self):
-        return [('1', self.data(),)]
-
-    def keys(self):
-        return ['1']
-
-    def __getitem__(self, key):
-        if key == '1':
-            return self.data()
-        else:
-            try:
-                return self.data()[key]
-            except TypeError:
-                if self.ext == '.json':
-                    return self.from_json()[key]
-                else:
-                    raise
-
-    def json_as_dict(self):
-        return self.from_json()
-
-class Generic(Data):
-    """
-    Data type representing generic binary or text-based data in a single blob.
-    """
-    aliases = ['generic']
+    # Filename-related Attributes
 
     def parent_dir(self):
         """
@@ -255,7 +230,6 @@ class Generic(Data):
         else:
             return inflection.titleize(self.baserootname())
 
-
     def relative_path_to(self, relative_to):
         """
         Returns a relative path from this document to the passed other
@@ -283,7 +257,7 @@ class Generic(Data):
 
     def output_name(self):
         """
-        Canonical name to output to, relative to output root. Returns 'none' if
+        Canonical name to output to, relative to output root. Returns None if
         artifact not in output_root.
         """
         output_root = self.wrapper.output_root
@@ -316,19 +290,6 @@ class Generic(Data):
             this = (self.wrapper.state in ('walked', 'running'))
         return self.storage.data_file_size(this)
 
-    def from_json(self):
-        """
-        Attempts to load data using a JSON parser, returning whatever objects
-        are defined in the JSON.
-        """
-        if self._data and isinstance(self._data, basestring):
-            return dexy.utils.parse_json(self._data)
-        elif self._data and not isinstance(self._data, basestring):
-            raise Exception(self._data.__class__.__name__)
-        else:
-            with open(self.storage.data_file(), "r") as f:
-                return dexy.utils.parse_json_from_file(f)
-
     def is_canonical_output(self):
         """
         Used by reports to determine if document should be written to output/
@@ -347,6 +308,77 @@ class Generic(Data):
         Returns a web-friendly version of the key.
         """
         return self.key
+
+    # Deprecated methods
+
+    def as_text(self):
+        """
+        DEPRECATED. Instead call unicode.
+        """
+        return unicode(self)
+
+class Generic(Data):
+    """
+    Data type representing generic binary or text-based data in a single blob.
+    """
+    aliases = ['generic']
+
+    def __unicode__(self):
+        if isinstance(self.data(), unicode):
+            return self.data()
+        elif not self.data():
+            return unicode(None)
+        else:
+            return self.wrapper.decode_encoded(self.data())
+
+    def iteritems(self):
+        """
+        Iterable list of sections in document.
+        """
+        yield ('1', self.data())
+
+    def items(self):
+        """
+        List of sections in document.
+        """
+        return [('1', self.data(),)]
+
+    def keys(self):
+        """
+        List of keys (section names) in document.
+        """
+        return ['1']
+
+    def __getitem__(self, key):
+        if key == '1':
+            return self.data()
+        else:
+            try:
+                return self.data()[key]
+            except TypeError:
+                if self.ext == '.json':
+                    return self.from_json()[key]
+                else:
+                    raise
+
+    def from_json(self):
+        """
+        Attempts to load data using a JSON parser, returning whatever objects
+        are defined in the JSON.
+        """
+        if self._data and isinstance(self._data, basestring):
+            return dexy.utils.parse_json(self._data)
+        elif self._data and not isinstance(self._data, basestring):
+            raise Exception(self._data.__class__.__name__)
+        else:
+            with open(self.storage.data_file(), "r") as f:
+                return dexy.utils.parse_json_from_file(f)
+
+    def json_as_dict(self):
+        """
+        DEPRECATED. Instead call from_json
+        """
+        return self.from_json()
 
 class SectionValue(object):
     def __init__(self, data, parent, parentindex):
@@ -370,9 +402,11 @@ class SectionValue(object):
     def splitlines(self):
         return unicode(self).splitlines()
 
-class Sectioned(Generic):
+class Sectioned(Data):
     """
-    Data in sections which must be kept in order.
+    A document with named, ordered sections.
+
+    Sections can also contain arbitrary metadata.
     """
     aliases = ['sectioned']
 
@@ -380,23 +414,30 @@ class Sectioned(Generic):
             'storage-type' : 'jsonsectioned'
             }
 
-    def __unicode__(self):
-        return u"\n".join(unicode(v) for v in self.values() if v.data['contents'])
-
-    def __str__(self):
-        return "\n".join(str(v) for v in self.values() if v.data['contents'])
-
-    def __len__(self):
-        return len(self.data())-1
-
     def setup(self):
         self.setup_storage()
         self._data = [{}]
         self.transition('ready')
 
+    def __unicode__(self):
+        return u"\n".join(unicode(v) for v in self.values() if v != "")
+
+    def __len__(self):
+        """
+        The number of sections.
+        """
+        return len(self.data())-1
+
     def __setitem__(self, key, value):
-        section_dict = {"name" : key, "contents" : value}
-        self._data.append(section_dict)
+        keyindex = self.keyindex(key)
+        if keyindex >= 0:
+            # Existing section.
+            assert self._data[keyindex+1]['name'] == key
+            self._data[keyindex+1]['contents'] = value
+        else:
+            # New section.
+            section_dict = {"name" : key, "contents" : value}
+            self._data.append(section_dict)
 
     def __delitem__(self, key):
         index = self.keyindex(key)
@@ -416,6 +457,9 @@ class Sectioned(Generic):
             f.write(unicode(self).encode("utf-8"))
 
     def keyindex(self, key):
+        if self._data == [{}]:
+            return -1
+
         try:
             return self.keys().index(key)
         except ValueError:
@@ -440,15 +484,18 @@ class Sectioned(Generic):
             return self.value(key)
 
     def iteritems(self):
+        """
+        Iterable list of sections in document.
+        """
         keys = self.keys()
         values = self.values()
-        for i in range(len(self)):
+        for i in range(len(keys)):
             yield (keys[i], values[i])
 
     def items(self):
         return [(key, value) for (key, value) in self.iteritems()]
 
-class KeyValue(Generic):
+class KeyValue(Data):
     """
     Data class for key-value data.
     """
@@ -465,20 +512,16 @@ class KeyValue(Generic):
         else:
             return self.setting('storage-type')
 
-    def __unicode__(self):
-        return self.as_text()
-
-    def as_text(self):
-        text = []
-        for k, v in self.storage:
-            text.append(u"%s: %s" % (k, v))
-        return u"\n".join(text)
-
     def value(self, key):
         return self.storage[key]
 
     def like(self, key):
-        return self.storage.like(key)
+        try:
+            return self.storage.like(key)
+        except AttributeError:
+            msg = "The `like()` method is not implemented for storage type '%s'"
+            msgargs = self.storage.alias
+            raise dexy.exceptions.UserFeedback(msg % msgargs)
 
     def __getitem__(self, key):
         return self.value(key)
@@ -492,9 +535,21 @@ class KeyValue(Generic):
     def keys(self):
         return self.storage.keys()
 
+    def items(self):
+        """
+        List of available keys.
+        """
+        return self.storage.items()
+
+    def iteritems(self):
+        """
+        Iterable list of available keys.
+        """
+        return self.storage.iteritems()
+
     def save(self):
         try:
             self.storage.save()
         except Exception as e:
-            msg = "Problem saving '%s': %s" % (self.key, str(e))
+            msg = u"Problem saving '%s': %s" % (self.key, unicode(e))
             raise dexy.exceptions.InternalDexyProblem(msg)

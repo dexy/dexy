@@ -229,20 +229,20 @@ def parse_json(input_text):
     try:
         return json.loads(input_text)
     except ValueError as e:
-        msg = inspect.cleandoc("""Was unable to parse the JSON you supplied.
+        msg = inspect.cleandoc(u"""Was unable to parse the JSON you supplied.
         Here is information from the JSON parser:""")
-        msg += "\n"
-        msg += str(e)
+        msg += u"\n"
+        msg += unicode(e)
         raise dexy.exceptions.UserFeedback(msg)
 
 def parse_json_from_file(f):
     try:
         return json.load(f)
     except ValueError as e:
-        msg = inspect.cleandoc("""Was unable to parse the JSON you supplied.
+        msg = inspect.cleandoc(u"""Was unable to parse the JSON you supplied.
         Here is information from the JSON parser:""")
-        msg += "\n"
-        msg += str(e)
+        msg += u"\n"
+        msg += unicode(e)
         raise dexy.exceptions.UserFeedback(msg)
 
 def parse_yaml(input_text):
@@ -252,14 +252,14 @@ def parse_yaml(input_text):
     try:
         return yaml.safe_load(input_text)
     except (yaml.scanner.ScannerError, yaml.parser.ParserError) as e:
-        if "found character '\\t'" in str(e):
+        if "found character '\\t'" in unicode(e):
             msg = "You appear to have hard tabs in your yaml, this is not supported. Please change to using soft tabs instead (your text editor should have this option)."
             raise dexy.exceptions.UserFeedback(msg)
         else:
-            msg = inspect.cleandoc("""Was unable to parse the YAML you supplied.
+            msg = inspect.cleandoc(u"""Was unable to parse the YAML you supplied.
             Here is information from the YAML parser:""")
-            msg += "\n"
-            msg += str(e)
+            msg += u"\n"
+            msg += unicode(e)
             raise dexy.exceptions.UserFeedback(msg)
 
 def parse_yamls(input_text):
@@ -269,10 +269,10 @@ def parse_yamls(input_text):
     try:
         return yaml.safe_load_all(input_text)
     except (yaml.scanner.ScannerError, yaml.parser.ParserError) as e:
-        msg = inspect.cleandoc("""Was unable to parse the YAML you supplied.
+        msg = inspect.cleandoc(u"""Was unable to parse the YAML you supplied.
         Here is information from the YAML parser:""")
-        msg += "\n"
-        msg += str(e)
+        msg += u"\n"
+        msg += unicode(e)
         raise dexy.exceptions.UserFeedback(msg)
 
 def printable_for_char(c):

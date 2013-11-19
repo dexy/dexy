@@ -108,16 +108,16 @@ def parse_and_run_cmd(argv, module, default_command):
     try:
         args.parse_and_run_command(argv, module, default_command)
     except (dexy.exceptions.UserFeedback, cashew.exceptions.UserFeedback) as e:
-        msg = """Oops, there's a problem running your command.
+        msg = u"""Oops, there's a problem running your command.
         Here is some more information:"""
         sys.stderr.write(inspect.cleandoc(msg))
         sys.stderr.write(os.linesep)
 
-        err_msg = str(e)
+        err_msg = unicode(e)
         if err_msg:
-            sys.stderr.write("'%s'" % str(e))
+            sys.stderr.write(u"'%s'" % unicode(e))
         else:
-            sys.stderr.write("Sorry, can't get text of error message.")
+            sys.stderr.write(u"Sorry, can't get text of error message.")
 
         sys.stderr.write(os.linesep)
         sys.exit(1)

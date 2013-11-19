@@ -1,26 +1,357 @@
 = Dexy Developer Documentation
-:toc:
+:toc: right
+:toclevels: 5
+:icons: font
 :source-highlighter: pygments
 
-{% macro src(fn, section, language="python") %}
+{% macro src(section, language="python") %}
 [source,{{ language }}]
 ----
-{{ d['/' + fn + '|pydoc'][section + ":source"] }}
+{{ d['modules.txt|pydoc'][section + ":source"] }}
 ----
 {% endmacro %}
 
+{% macro test(testfile, test_name, language="python") %}
+icon:shield[link="#",title="Test of {{ titleize(test_name) }}"]
 
-== Welcome
+[.result]
+====
+[source,{{ language }}]
+----
+{{ d['tests/' + testfile + '|pydoc'][test_name + ":source"] }}
+----
+====
+{% endmacro %}
 
-This is internal developer documentation for dexy. Its primary purpose is to
-help improve the quality of dexy code.
+
+== Introduction
+
+This is developer documentation for Dexy. Its goal is to help you develop
+plugins for dexy or to hack on the dexy core.
+
+It includes sections on dexy's internals, and how to write plugins for dexy.
+
+== Data and Storage
+
+Data objects capture the state of Dexy documents at a given stage in filter
+processing, and Storage objects handle persistence of data objects. A Dexy
+document will have a data object corresponding to its initial state (the
+original file to be processed), plus a data object representing the state after
+each filter is processed. Filter implementations will call methods on data
+classes to append and save data, and to read data from the previous stage in
+processing or other document inputs.
+
+For example, here's the `process` method from the `ExampleProcessMethod` class,
+which reads input from the `input_data` object, representing the previous data
+state, and saving the modified data using the `set_data` method of the
+`output_data` object:
+
+{{ src("dexy.filters.example.ExampleProcessMethod.process") }}
+
+Different data classes can expose methods which users and filters can access to
+write or read data in useful ways, and different storage classes can implement
+different storage options.
+
+=== The data Method
+
+You can directly access stored data via the `data()` method.
+
+{{ src("dexy.data.Data.data") }}
+
+Depending on the data type, the `_data` attribute may store the raw data or a
+data structure containing the actual data, or it may be a pointer to an
+interface to a data source such as a sqlite3 database.
+
+Usually you will not call `data()` directly but will call a method designed to
+work with the stored data in a transparent way, like `str()`, `keys()`, or
+`iter()`.
+
+Different data types in Dexy will implement common methods such as `str()`,
+`keys()` and `iter()` appropriately for the type of data they are wrapping.
+
+=== Data Types
+
+The main role of data types is to provide convenient interfaces to the type of
+data being stored.
+
+The basic data class is `Generic` which is designed to store binary data or
+unstructured text data. In this case the `_data` attribute contains the raw
+binary data or text.
+
+{{ test('test_data.py', 'test_generic_data_stores_string') }}
+
+The next class is `Sectioned` which holds ordered, named sections. These are
+usually named sections in a document. When data is loaded in memory, the
+`_data` attribute holds a list of dictionaries. The first entry contains
+metadata for the document, the subsequent dictionaries contain each section's
+content and metadata.
+
+{{ test('test_data.py', 'test_sectioned_data_stores_list_of_dicts') }}
+
+Another class is `KeyValue` which holds dictionary-type data. Unlike sectioned
+data, there is no requirement for the entries to be kept in order, and there is
+no arbitrary metadata for each section. There are several options for storage
+including JSON data files and Sqlite databases.
+
+The `KeyValue` type cannot be initialized with a dictionary. Instead an empty
+data object needs to be initialized and then the `append` method must be used
+to add keys and values. This ensures that the behavior of the data type is the
+same whether the backend is a JSON file or a sqlite database.
+
+{{ test('test_data.py', 'test_keyvalue_data_stores_dict') }}
+
+Additional classes are available which are intended to provide custom
+interfaces to data. For example the `BeautifulSoupData` type makes it easy to
+apply the BeautifulSoup HTML parser to content, and so in documents you can run
+queries using CSS selectors to extract a part of the document you are
+interested in.
+
+Creating a plugin with a custom data type is a possible alternative to writing
+a filter. With a filter, the results of processing a whole document are cached.
+With a custom data type, you can run code on just a piece of a document you are
+interested in, but the results will not be cached, the calculation will be
+re-run each time the template document is processed. Using custom data types
+mean you put more logic in your template documents.
+
+=== Usage & API
+
+==== Accessing Data Objects
+
+Within a filter, you can access the previous step's output (this step's input)
+using the `input_data` attribute.
+
+The filter output is stored in the `output_data` attribute.
+
+==== Loading and Reading Data
+
+Data will typically be loaded automatically when needed by calling the `data()`
+method, directly or indirectly. Other methods which access data should do so
+via the `data()` method. If necessary, the `data()` method calls the
+`load_data()` method, which in turn calls the storage's `read_data()` since
+knowledge of where the data is stored and how to load it is the responsibility
+of the Storage object.
+
+Here's the `load_data()` method from the base `Data` class:
+
+{{ src("dexy.data.Data.load_data") }}
+
+==== String-Like Access
+
+Where it makes sense, the `__unicode__` method should return the contents of a
+document as a unicode string.
+
+{{ src("dexy.data.Generic.__unicode__") }}
+
+{{ src("dexy.data.Sectioned.__unicode__") }}
+
+The `str` method will convert unicode to ASCII if possible, but it's preferable
+to call `unicode`:
+
+{{ src("dexy.data.Data.__str__") }}
+
+TODO: What is preferred Python str implementation?
+
+==== Dictionary-Like Access
+
+Data types should support dictionary-style access where appropriate.
+
+Although the `Generic` type does not have sections, it implements
+dictionary-style access as though it consists of a single section with name
+`"1"`. This way filters can be written which can process either `Generic` or
+`Sectioned` data as input data.
+
+TODO: Example of filter which makes use of Generic's dummy sections. Pyg filter maybe?
+
+The `iteritems` method should yield key, value tuples.
+
+Generic:
+
+{{ src("dexy.data.Generic.iteritems") }}
+
+Sectioned:
+
+{{ src("dexy.data.Sectioned.iteritems") }}
+
+KeyValue:
+
+{{ src("dexy.data.KeyValue.iteritems") }}
+
+Sqlite3KeyValueStorage:
+
+{{ src("dexy.storage.Sqlite3KeyValueStorage.iteritems") }}
+
+JsonKeyValueStorage:
+
+{{ src("dexy.storage.JsonKeyValueStorage.iteritems") }}
+
+The `items` method should return a list of key, value tuples:
+
+Generic:
+
+{{ src("dexy.data.Generic.items") }}
+
+Sectioned:
+
+{{ src("dexy.data.Sectioned.items") }}
+
+KeyValue:
+
+{{ src("dexy.data.KeyValue.items") }}
+
+Sqlite3KeyValueStorage:
+
+{{ src("dexy.storage.Sqlite3KeyValueStorage.items") }}
+
+JsonKeyValueStorage:
+
+{{ src("dexy.storage.JsonKeyValueStorage.items") }}
+
+The `keys` method should return a list of keys:
+
+Generic:
+
+{{ src("dexy.data.Generic.keys") }}
+
+Sectioned:
+
+{{ src("dexy.data.Sectioned.keys") }}
+
+KeyValue:
+
+{{ src("dexy.data.KeyValue.keys") }}
+
+Sqlite3KeyValueStorage:
+
+{{ src("dexy.storage.Sqlite3KeyValueStorage.keys") }}
+
+JsonKeyValueStorage:
+
+{{ src("dexy.storage.JsonKeyValueStorage.keys") }}
+
+To allow accessing elements using the `[key]` syntax, the `__getitem__` method
+is implemented:
+
+Generic:
+
+{{ src("dexy.data.Generic.__getitem__") }}
+
+Sectioned:
+
+{{ src("dexy.data.Sectioned.__getitem__") }}
+
+KeyValue:
+
+{{ src("dexy.data.KeyValue.__getitem__") }}
+
+Sqlite3KeyValueStorage value method:
+
+{{ src("dexy.storage.Sqlite3KeyValueStorage.value") }}
+
+JsonKeyValueStorage value method:
+
+{{ src("dexy.storage.JsonKeyValueStorage.value") }}
+
+The `__setitem__` method can also be implemented, to allow appending and
+setting elements using the `[key]` syntax:
+
+{{ src("dexy.data.Sectioned.__setitem__") }}
+
+TODO: Implement `__setitem__` for key value data
+
+And the `__delitem__` method allows using the `del` keyword to remove elements:
+
+{{ src("dexy.data.Sectioned.__delitem__") }}
+
+TODO: Implement `__delitem__` for key value data
+
+{{ test('test_data.py', 'test_sectioned_data_setitem_delitem') }}
+
+==== Custom Access Methods
+
+Dictionary-style methods represent a generic interface which works for many
+situations, and so these methods are implemented across several data types.
+
+Some data types will have additional methods for searching or formatting data.
+These can be seen using the `dexy datas` command with `-alias` argument.
+
+The KeyValue data type implements a `like` method for using sqlite like
+queries:
+
+{{ src("dexy.data.KeyValue.like") }}
+
+Here's the corresponding method on the Sqlite3KeyValueStorage class:
+
+{{ src("dexy.storage.Sqlite3KeyValueStorage.like") }}
+
+==== Saving Data
+
+The `save()` method must be called to persist data to disk.
+
+{{ src("dexy.data.Data.save") }}
+
+The `set_data()` shortcut method is also available, it sets data to the
+provided value and then calls save.
+
+{{ src("dexy.data.Data.set_data") }}
+
+==== Exporting Data
+
+The `output_to_file` method writes data to a file. For Generic data this will
+just be the raw data which may either be binary data or a string:
+
+{{ src("dexy.data.Generic.__unicode__") }}
+
+For Sectioned data, this writes the unicode-formatted data, so all sectiones
+are combined into a single document, which is usually what you want for
+final/canonical output at the end of processing:
+
+{{ src("dexy.data.Sectioned.__unicode__") }}
+
+==== Initializing Data Objects
+
+Data objects do some initialization work in `__init__`:
+
+{{ src("dexy.data.Data.__init__") }}
+
+And more in `setup`:
+
+{{ src("dexy.data.Data.setup") }}
+
+The `setup` method can be customized but it should always call the
+`setup_storage` method and transition the state to `ready`:
+
+{{ src("dexy.data.Data.setup_storage") }}
+
+The `storage_class_alias` method is responsible for choosing the correct type
+of storage to use:
+
+{{ src("dexy.data.Data.storage_class_alias") }}
+
+By default this just reads the `storage-type` setting, but some classes may
+automatically determine the class based on file extension.
+
+==== Reporting Using Data Objects
+
+Data objects are designed to be instantiated as standalone objects after a dexy run, so their data can be used for reporting and querying. The `dexy grep` command works by loading data objects directly.
+
+To do this, the arguments needed to initialize a data object are stored in batch metadata.
+
+The `args_to_data_init` method is called when saving batch metadata to provide
+JSON-serializable initialization args for each data instance:
+
+{{ src("dexy.data.Data.args_to_data_init") }}
+
+{% if False %}
+
 
 == Command Line Interface
 
 The command line interface for dexy is driven by
 https://pypi.python.org/pypi/python-modargs[python-modargs].
 
-=== init.py
+=== fix indents
+
+==== init.py
 
 Any function ending with `_command` is automatically exposed as a command. To
 keep modules to a manageable size, the various dexy commands are defined in
@@ -79,7 +410,7 @@ The `help` and `version` commands are also defined in the `__init__.py` file:
 
 {{ src('dexy/commands/__init__.py', 'version_command') }}
 
-=== cite.py
+==== cite.py
 
 The `dexy cite` command prints out an academic citation for dexy.
 
@@ -91,7 +422,7 @@ Currently the bibtex format is supported:
 
 {{ src('dexy/commands/cite.py', 'bibtex_text') }}
 
-=== conf.py
+==== conf.py
 
 The main dexy command has a lot of command line options, and for convenience
 you can save the option values in a `dexy.conf` file in your project so you
@@ -107,7 +438,7 @@ options are written to stdout instead of written to a file.
 
 {{ d['/tests/test_commands.py|idio|asciisyn']['conf'] }}
 
-=== dirs.py
+==== dirs.py
 
 These commands expose methods for creating and removing dexy's working directories.
 
@@ -121,7 +452,7 @@ The `reset` command cleans out any working files and leaves you with a fresh set
 
 {{ src('dexy/commands/dirs.py', 'reset_command') }}
 
-=== fcmds.py
+==== fcmds.py
 
 Filter commands are intended to be a way for filters to expose some information
 to users. For example, filter commands could provide a way for an API to list
@@ -139,7 +470,7 @@ To run a filter command you need to pass the alias and the command name:
 
 {{ src('dexy/commands/fcmds.py', 'fcmd_command') }}
 
-=== filters.py
+==== filters.py
 
 The filters module contains dexy's command line reference for filters.
 
@@ -149,7 +480,7 @@ The filters module contains dexy's command line reference for filters.
 
 {{ src('dexy/commands/filters.py', 'list_filters') }}
 
-=== grep.py
+==== grep.py
 
 The grep interface is a way to search on the command line for dexy docs and
 keys within docs.  (The dexy viewer plugin presents similar information in a
@@ -169,7 +500,7 @@ And contents of files may also be printed:
 
 {{ src('dexy/commands/grep.py', 'print_contents') }}
 
-=== info.py
+==== info.py
 
 The info command lets you see where documents are cached and to get
 documentation about their available methods. You should know the doc key you
@@ -182,6 +513,8 @@ are displayed.
 
 {{ src('dexy/commands/info.py', 'info_command') }}
 
-=== it.py
+==== it.py
 
 This is it! The main command which actually runs dexy.
+
+{% endif %}

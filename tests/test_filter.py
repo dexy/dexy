@@ -28,7 +28,7 @@ def test_filter_args():
 
         wrapper.run_docs(doc)
 
-        result = str(doc.output_data())
+        result = unicode(doc.output_data())
 
         assert "Here are the filter settings:" in result
         assert "abc: 123" in result

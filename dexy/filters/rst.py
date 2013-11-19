@@ -137,7 +137,7 @@ class RstBody(RestructuredTextBase):
                 settings_overrides=settings_overrides
                 )
         except AttributeError as e:
-            raise dexy.exceptions.InternalDexyProblem(str(e))
+            raise dexy.exceptions.InternalDexyProblem(unicode(e))
 
         if self.setting('set-title') and parts.has_key('title') and parts['title']:
             self.update_all_args({'title' : parts['title']})

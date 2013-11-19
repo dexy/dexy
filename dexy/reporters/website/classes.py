@@ -148,12 +148,22 @@ class WebsiteReporter(OutputReporter):
                     """,
                     None
                     ),
-                'ws-template' : ("""
+                'ws-template' : (
+                    """
                     Key of the template to apply for rendering in website.
                     Setting of 'None' will use default template, 'False' will
                     force no template to be used.
-                """,
-                None)
+                    """,
+                    None)
+                },
+            'data' : {
+                'ws-template' : (
+                    """
+                    Key of the template to apply for rendering in website.
+                    Setting of 'None' will use default template, 'False' will
+                    force no template to be used.
+                    """,
+                    None)
                 }
             }
 

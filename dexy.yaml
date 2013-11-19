@@ -1,6 +1,18 @@
-docs/*.adoc|jinja|asciidoctor:
+docs/index.adoc|jinja|asciidoctor|customize:
+    - asciidoctor: { workspace-include: [".png"] }
+    - customize: {
+        scripts: ['jquery.js', 'view-result.js']
+        }
+    - assets
     - docs/*.sh|idio|shint|asciisyn
-    - .py|idio|asciisyn:
+    - setup.py|idio|asciisyn:
         - idio: { ext : '.txt' }
-    - .py|pydoc:
-        - except: "filters/__init__|setup"
+    - dexy/commands/__init__.py|idio|asciisyn:
+        - idio: { ext : '.txt' }
+    - tests/*.py|pydoc
+    - modules.txt|pydoc:
+        - contents: 'dexy'
+
+assets:
+    - docs/*.js
+    - docs/*.css

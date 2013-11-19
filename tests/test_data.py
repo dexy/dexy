@@ -1,8 +1,132 @@
 from dexy.doc import Doc
+from dexy.data import Data
 from tests.utils import wrap
 import dexy.data
 import dexy.exceptions
 import os
+
+def test_sectioned_data_setitem_delitem():
+    with wrap() as wrapper:
+        contents=[
+                {},
+                {
+                    "name" : "Welcome",
+                    "contents" : "This is the first section."
+                }
+            ]
+
+        doc = Doc("hello.txt",
+                wrapper,
+                [],
+                data_type="sectioned",
+                contents=contents
+                )
+
+        wrapper.run_docs(doc)
+        data = doc.output_data()
+
+        assert data.alias == 'sectioned'
+        assert len(data) == 1
+
+        # Add a new section
+        data["Conclusions"] = "This is the final section."
+
+        assert len(data) == 2
+        
+        assert unicode(data['Welcome']) == "This is the first section."
+        assert unicode(data["Conclusions"]) == "This is the final section."
+
+        # Modify an existing section
+        data["Welcome"] = "This is the initial section."
+
+        assert len(data) == 2
+
+        assert unicode(data['Welcome']) == "This is the initial section."
+        assert unicode(data["Conclusions"]) == "This is the final section."
+
+        del data["Conclusions"]
+
+        assert len(data) == 1
+        assert data.keys() == ["Welcome"]
+
+def test_generic_data_unicode():
+    with wrap() as wrapper:
+        doc = Doc("hello.txt",
+                wrapper,
+                [],
+                contents=u"\u2042 we know\n"
+                )
+
+        wrapper.run_docs(doc)
+        data = doc.output_data()
+
+        assert data.alias == 'generic'
+        assert unicode(data) == u"\u2042 we know\n"
+        try:
+            str(data)
+            assert False, "should raise error"
+        except dexy.exceptions.UserFeedback as e:
+            print e
+            assert "non-ASCII" in unicode(e)
+
+def test_generic_data_stores_string():
+    with wrap() as wrapper:
+        doc = Doc("hello.txt",
+                wrapper,
+                [],
+                contents="hello"
+                )
+
+        wrapper.run_docs(doc)
+        data = doc.output_data()
+
+        assert data.alias == 'generic'
+        assert data._data == "hello"
+
+def test_sectioned_data_stores_list_of_dicts():
+    with wrap() as wrapper:
+        contents=[
+                {},
+                {
+                    "name" : "Welcome",
+                    "contents" : "This is the first section."
+                }
+            ]
+
+        doc = Doc("hello.txt",
+                wrapper,
+                [],
+                data_type="sectioned",
+                contents=contents
+                )
+
+        wrapper.run_docs(doc)
+        data = doc.output_data()
+
+        assert data.alias == 'sectioned'
+        assert data._data == contents
+        assert data['Welcome']['contents'] == "This is the first section."
+        assert data[0]['contents'] == "This is the first section."
+
+def test_keyvalue_data_stores_dict():
+    with wrap() as wrapper:
+        doc = Doc("hello.json",
+                wrapper,
+                [],
+                data_type="keyvalue",
+                contents="dummy"
+                )
+
+        wrapper.run_docs(doc)
+        data = doc.output_data()
+
+        assert data.alias == 'keyvalue'
+        assert data.keys() == []
+
+        data.append("foo", 123)
+        data.append("bar", 456)
+
+        assert sorted(data.keys()) == ["bar", "foo"]
 
 def test_canonical_name():
     with wrap() as wrapper:
@@ -49,7 +173,6 @@ def test_key_value_data():
 
         assert data.value('foo') == 'bar'
         assert data.storage['foo'] == 'bar'
-        assert data.as_text() == "foo: bar"
 
 def test_key_value_data_sqlite():
     with wrap() as wrapper:
@@ -68,9 +191,7 @@ def test_key_value_data_sqlite():
         assert len(data.keys()) == 1
 
         assert data.value('foo') == 'bar'
-        assert ["%s: %s" % (k, v) for k, v in data.storage][0] == "foo: bar"
-
-        data.as_text() == "foo: bar"
+        assert ["%s: %s" % (k, v) for k, v in data.storage.iteritems()][0] == "foo: bar"
 
 def test_generic_data():
     with wrap() as wrapper:

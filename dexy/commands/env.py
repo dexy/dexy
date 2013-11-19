@@ -50,7 +50,13 @@ def datas_command(
             'canonical-name' : 'foo'
             }
 
-    generic_methods = [k for (k, v) in inspect.getmembers(dexy.data.Data) if inspect.ismethod(v)]
+    nodoc_methods = ('clear_cache', 'clear_data', 'copy_from_file', 'data', 'has_data',
+            'initialize_settings', 'initialize_settings_from_other_classes',
+            'initialize_settings_from_parents', 'initialize_settings_from_raw_kwargs',
+            'is_active', 'is_cached', 'args_to_data_init', 'json_as_dict', 'as_text',
+            'load_data', 'save', 'setup', 'setup_storage', 'storage_class_alias',
+            'transition'
+            )
 
     print ""
 
@@ -75,7 +81,7 @@ def datas_command(
             if k.startswith('_'):
                 continue
 
-            if inspect.ismethod(v) and not k in generic_methods:
+            if inspect.ismethod(v) and not k in nodoc_methods:
                 print "    %s" % k
 
                 docs = inspect.getdoc(v)

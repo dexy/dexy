@@ -104,7 +104,6 @@ def log_and_print_exception(wrapper, e):
     traceback.print_exc()
 
 def handle_user_feedback_exception(wrapper, e):
-    print "in handle_user_feedback_exception", e, e.message
     if hasattr(wrapper, 'log'):
         wrapper.log.error("A problem has occurred with one of your documents:")
         wrapper.log.error(e.message)

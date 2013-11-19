@@ -150,7 +150,7 @@ class JsonSectionedStorage(GenericStorage):
             json.dump(data, f)
 
 # Key Value Data
-class JsonStorage(GenericStorage):
+class JsonKeyValueStorage(GenericStorage):
     """
     Storage for key value data using JSON.
     """
@@ -171,9 +171,11 @@ class JsonStorage(GenericStorage):
     def __getitem__(self, key):
         return self.value(key)
 
-    def __iter__(self):
-        for k, v in self.data().iteritems():
-            yield k, v
+    def items(self):
+        return self.data().items()
+
+    def iteritems(self):
+        return self.data().iteritems()
 
     def read_data(self, this=True):
         with open(self.data_file(this), "rb") as f:
@@ -197,7 +199,7 @@ class JsonStorage(GenericStorage):
         with open(self.data_file(read=False), "wb") as f:
             json.dump(self._data, f)
 
-class Sqlite3Storage(GenericStorage):
+class Sqlite3KeyValueStorage(GenericStorage):
     """
     Storage of key value storage in sqlite3 database files.
     """
@@ -252,7 +254,15 @@ class Sqlite3Storage(GenericStorage):
 
     def keys(self):
         self._cursor.execute("SELECT key from kvstore")
-        return [str(k[0]) for k in self._cursor.fetchall()]
+        return [unicode(k[0]) for k in self._cursor.fetchall()]
+
+    def iteritems(self):
+        self._cursor.execute("SELECT key, value from kvstore")
+        for k in self._cursor.fetchall():
+            yield (unicode(k[0]), k[1])
+
+    def items(self):
+        return [(key, value) for (key, value) in self.iteritems()]
 
     def value(self, key):
         self._cursor.execute("SELECT value from kvstore where key = ?", (key,))
@@ -278,13 +288,6 @@ class Sqlite3Storage(GenericStorage):
 
     def __getitem__(self, key):
         return self.value(key)
-
-    def __iter__(self):
-        self._cursor = self._storage.cursor()
-        self._cursor.execute("SELECT * from kvstore")
-        rows = self._cursor.fetchall()
-        for k, v in rows:
-            yield k, v
 
     def save(self):
         if self.connected_to == 'existing':

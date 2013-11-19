@@ -492,5 +492,5 @@ class SubprocessStdoutTextFilter(SubprocessStdoutFilter):
 
     def command_string_args(self):
         args = self.default_command_string_args()
-        args['text'] = self.input_data.as_text()
+        args['text'] = unicode(self.input_data)
         return args

@@ -273,7 +273,7 @@ class PygmentsFilter(DexyFilter):
                 formatter = self.create_formatter_instance()
                 self.update_all_args({'override-workspace-exclude-filters' : True })
                 with open(self.output_filepath(), 'wb') as f:
-                    f.write(highlight(self.input_data.as_text(), lexer, formatter))
+                    f.write(highlight(unicode(self.input_data), lexer, formatter))
 
             else:
                 formatter = self.create_formatter_instance()
