@@ -92,16 +92,7 @@ class Data(dexy.plugin.Plugin):
         return self.output_name() < other.output_name()
 
     def __str__(self):
-        """
-        Attemtps to return ASCII-encoded contents.
-        """
-        try:
-            return unicode(self).encode("ASCII", errors="strict")
-        except UnicodeEncodeError:
-            msg = """You tried to call str() on data object %s containing
-            non-ASCII chars. Please call unicode() and then the `encode` method
-            with a different charset or different value for `errors` arg."""
-            raise UserFeedback(inspect.cleandoc(msg) % self.key)
+        return unicode(self).encode("utf-8", errors="strict")
 
     def data(self):
         if (not self._data) or self._data == [{}]:

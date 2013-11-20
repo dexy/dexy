@@ -47,17 +47,20 @@ class Batch(object):
     def doc_key(self, storage_key):
         return self.doc_keys[storage_key]
 
-    def data(self, doc_key, input_or_output='output'):
-        doc_info = self.doc_info(doc_key)["%s-data" % input_or_output]
-        return self._data_for_doc_info(doc_info)
-
     def data_for_storage_key(self, storage_key, input_or_output='output'):
+        """
+        Retrieves a data object given the storage key (based on the the
+        md5sum), rather than the canonical doc key based on the doc name.
+        """
         doc_key = self.doc_key(storage_key)
         return self.data(doc_key, input_or_output)
 
-    def _data_for_doc_info(self, doc_info):
-        args = []
-        args.extend(doc_info) # do this because doc_info is a tuple, need a list
+    def data(self, doc_key, input_or_output='output'):
+        """
+        Retrieves a data object given the doc key.
+        """
+        doc_info = self.doc_info(doc_key)["%s-data" % input_or_output]
+        args = list(doc_info)
         args.append(self.wrapper)
         data = dexy.data.Data.create_instance(*args)
         data.setup_storage()

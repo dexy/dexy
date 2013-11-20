@@ -62,12 +62,9 @@ def test_generic_data_unicode():
 
         assert data.alias == 'generic'
         assert unicode(data) == u"\u2042 we know\n"
-        try:
-            str(data)
-            assert False, "should raise error"
-        except dexy.exceptions.UserFeedback as e:
-            print e
-            assert "non-ASCII" in unicode(e)
+
+        assert isinstance(str(data), str)
+        assert isinstance(unicode(data), unicode)
 
 def test_generic_data_stores_string():
     with wrap() as wrapper:
