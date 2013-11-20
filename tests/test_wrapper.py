@@ -266,7 +266,7 @@ def test_nodexy_files():
 # old
 def test_config_for_directory():
     with wrap() as wrapper:
-        with open("docs.yaml", "w") as f:
+        with open("dexy.yaml", "w") as f:
             f.write(""".abc""")
 
         with open("root.abc", "w") as f:
@@ -290,7 +290,7 @@ def test_config_for_directory():
         with open("s2/s2.def", "w") as f:
             f.write("hello")
 
-        with open(os.path.join('s1', 'docs.yaml'), 'w') as f:
+        with open(os.path.join('s1', 'dexy.yaml'), 'w') as f:
             f.write(""".def|dexy""")
 
         wrapper = Wrapper()

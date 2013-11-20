@@ -682,6 +682,8 @@ class Wrapper(object):
         """
         ast = dexy.parser.AbstractSyntaxTree(self)
 
+        processed_configs = []
+
         for alias in self.parsers.split():
             parser = dexy.parser.Parser.create_instance(alias, self, ast)
 
@@ -697,10 +699,15 @@ class Wrapper(object):
                             config_text = f.read()
 
                         try:
+                            processed_configs.append(filepath)
                             parser.parse(dirname, config_text)
                         except UserFeedback:
                             sys.stderr.write("Problem occurred while parsing %s\n" % config_file)
                             raise
+
+        if len(processed_configs) == 0:
+            msg = "didn't find any document config files (like %s)"
+            self.printmsg(msg % self.parsers)
 
         return ast
 
