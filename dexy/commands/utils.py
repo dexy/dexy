@@ -185,6 +185,6 @@ def template_text(template):
 def dummy_wrapper():
     wrapper = dexy.wrapper.Wrapper()
     wrapper.log = logging.getLogger('dexy')
-    wrapper.log.addHandler(logging.NullHandler)
+    wrapper.log.addHandler(logging.NullHandler())
     wrapper.filemap = {}
     return wrapper
