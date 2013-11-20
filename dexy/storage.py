@@ -126,12 +126,6 @@ class JsonSectionedStorage(GenericStorage):
     """
     aliases = ['jsonsectioned']
 
-    def value(self, key):
-        return self.data()[key]
-
-    def __getitem__(self, key):
-        return self.value(key)
-
     def read_data(self, this=True):
         with open(self.data_file(this), "rb") as f:
             data = json.load(f)
