@@ -114,7 +114,7 @@ def test_keyvalue_data_stores_dict():
                 wrapper,
                 [],
                 data_type="keyvalue",
-                contents="dummy"
+                contents="dummy contents"
                 )
 
         wrapper.run_docs(doc)

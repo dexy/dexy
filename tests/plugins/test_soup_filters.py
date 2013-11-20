@@ -1,6 +1,4 @@
 from tests.utils import runfilter
-from tests.utils import TEST_DATA_DIR
-import os
 
 def test_nested_html():
     with runfilter('soups', nested_html) as doc:

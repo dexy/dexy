@@ -217,9 +217,10 @@ class Doc(dexy.node.Node):
             return data_class_alias
         else:
             contents = self.get_contents()
-            # TODO test for ordered dict type?
             if isinstance(contents, dict):
                 return 'keyvalue'
+            elif isinstance(contents, list):
+                return "sectioned"
             else:
                 return 'generic'
 

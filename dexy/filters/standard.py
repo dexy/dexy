@@ -158,7 +158,7 @@ class SectionsByWhitespace(DexyFilter):
     """
     Del
     """
-    aliases = ['lines']
+    aliases = ['sectionsbywhitespace']
     _settings = {
             'data-type' : 'sectioned'
             }
@@ -166,7 +166,7 @@ class SectionsByWhitespace(DexyFilter):
     def process(self):
         input_text = unicode(self.input_data)
         for i, section in enumerate(input_text.split("\n\n")):
-            self.output_data["%s" % (i+1)] = line
+            self.output_data["%s" % (i+1)] = section
         self.output_data.save()
 
     def parse_section_name(self, section_text):

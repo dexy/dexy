@@ -37,9 +37,10 @@ Data objects capture the state of Dexy documents at a given stage in filter
 processing, and Storage objects handle persistence of data objects. A Dexy
 document will have a data object corresponding to its initial state (the
 original file to be processed), plus a data object representing the state after
-each filter is processed. Filter implementations will call methods on data
-classes to append and save data, and to read data from the previous stage in
-processing or other document inputs.
+each filter is processed. Each data object has a corresponding storage object.
+Filter implementations will call methods on data classes to append and save
+data, and to read data from the previous stage in processing or other document
+inputs.
 
 For example, here's the `process` method from the `ExampleProcessMethod` class,
 which reads input from the `input_data` object, representing the previous data

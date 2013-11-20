@@ -83,7 +83,7 @@ class Data(dexy.plugin.Plugin):
         return self.setting('storage-type')
 
     def __repr__(self):
-        return "Data('%s')" % (self.key)
+        return "%s('%s')" % (self.__class__.__name__, self.key)
 
     def __lt__(self, other):
         """
@@ -140,15 +140,6 @@ class Data(dexy.plugin.Plugin):
     def has_data(self):
         has_loaded_data = (self._data) and (self._data != [{}])
         return has_loaded_data or self.is_cached()
-
-    def save(self):
-        if isinstance(self._data, unicode):
-            self.storage.write_data(self._data.encode("utf-8"))
-        else:
-            if self._data == None:
-                msg = "No data found for '%s', did you reference a file that doesn't exist?"
-                raise dexy.exceptions.UserFeedback(msg % self.key)
-            self.storage.write_data(self._data)
 
     def set_data(self, data):
         """
@@ -323,6 +314,15 @@ class Generic(Data):
     """
     aliases = ['generic']
 
+    def save(self):
+        if isinstance(self._data, unicode):
+            self.storage.write_data(self._data.encode("utf-8"))
+        else:
+            if self._data == None:
+                msg = "No data found for '%s', did you reference a file that doesn't exist?"
+                raise dexy.exceptions.UserFeedback(msg % self.key)
+            self.storage.write_data(self._data)
+
     def __unicode__(self):
         if isinstance(self.data(), unicode):
             return self.data()
@@ -388,10 +388,10 @@ class SectionValue(object):
         self.parentindex = parentindex
 
     def __unicode__(self):
-        return self.data['contents']
+        return self.data['contents'] or u''
 
     def __str__(self):
-        return self.data['contents']
+        return self.data['contents'] or ''
 
     def __getitem__(self, key):
         return self.data[key]
@@ -419,8 +419,15 @@ class Sectioned(Data):
         self._data = [{}]
         self.transition('ready')
 
+    def save(self):
+        try:
+            self.storage.write_data(self._data)
+        except Exception as e:
+            msg = "Problem saving '%s': %s" % (self.key, str(e))
+            raise dexy.exceptions.InternalDexyProblem(msg)
+
     def __unicode__(self):
-        return u"\n".join(unicode(v) for v in self.values() if v != "")
+        return u"\n".join(unicode(v) for v in self.values() if unicode(v))
 
     def __len__(self):
         """
@@ -504,6 +511,12 @@ class KeyValue(Data):
             'storage-type' : 'sqlite3'
             }
 
+    def __unicode__(self):
+        return repr(self)
+
+    def data(self):
+        raise Exception("No data method for KeyValue type data.")
+
     def storage_class_alias(self, file_ext):
         if file_ext == '.sqlite3':
             return 'sqlite3'
@@ -549,7 +562,7 @@ class KeyValue(Data):
 
     def save(self):
         try:
-            self.storage.save()
+            self.storage.persist()
         except Exception as e:
             msg = u"Problem saving '%s': %s" % (self.key, unicode(e))
             raise dexy.exceptions.InternalDexyProblem(msg)

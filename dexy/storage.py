@@ -186,6 +186,9 @@ class JsonKeyValueStorage(GenericStorage):
             self._data = self.read_data()
         return self._data
 
+    def persist(self):
+        self.write_data(self._data)
+
     def write_data(self, data, filepath=None):
         if not filepath:
             filepath = self.data_file()
@@ -194,10 +197,6 @@ class JsonKeyValueStorage(GenericStorage):
 
         with open(filepath, "wb") as f:
             json.dump(data, f)
-
-    def save(self):
-        with open(self.data_file(read=False), "wb") as f:
-            json.dump(self._data, f)
 
 class Sqlite3KeyValueStorage(GenericStorage):
     """
@@ -289,7 +288,7 @@ class Sqlite3KeyValueStorage(GenericStorage):
     def __getitem__(self, key):
         return self.value(key)
 
-    def save(self):
+    def persist(self):
         if self.connected_to == 'existing':
             assert os.path.exists(self.data_file(read=False))
         elif self.connected_to == 'working':

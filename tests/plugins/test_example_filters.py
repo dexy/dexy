@@ -34,7 +34,8 @@ def test_key_value_example():
 
         wrapper.run_docs(doc)
 
-        assert str(doc.output_data()) == "foo: bar"
+        assert doc.output_data()["foo"] == "bar"
+        assert str(doc.output_data()) == "KeyValue('hello.txt|keyvalueexample')"
 
 def test_access_other_documents():
     with wrap() as wrapper:
