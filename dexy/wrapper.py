@@ -3,6 +3,7 @@ from dexy.exceptions import InternalDexyProblem
 from dexy.exceptions import UserFeedback
 from dexy.utils import file_exists
 from dexy.utils import s
+import chardet
 import dexy.batch
 import dexy.doc
 import dexy.parser
@@ -679,36 +680,27 @@ class Wrapper(object):
         Return an Abstract Syntax Tree with information about nodes to be
         processed.
         """
-        parser_aliases = sorted(dexy.parser.Parser.plugins.keys())
+        ast = dexy.parser.AbstractSyntaxTree(self)
 
-        # collect all doc config files in project dir
-        config_files = []
-        for alias in parser_aliases:
+        for alias in self.parsers.split():
+            parser = dexy.parser.Parser.create_instance(alias, self, ast)
+
             for filepath, fileinfo in self.filemap.iteritems():
                 if fileinfo['dir'] == '.' or self.recurse or self.is_explicit_config(filepath):
                     if os.path.split(filepath)[1] == alias:
                         self.log.info("using config file '%s'" % filepath)
-                        config_file_info = (fileinfo['ospath'], fileinfo['dir'], alias,)
-                        config_files.append(config_file_info)
 
-        # warn if we don't find any configs
-        if len(config_files) == 0:
-            msg = "didn't find any document config files (like %s)"
-            self.printmsg(msg % (", ".join(parser_aliases)))
+                        config_file = fileinfo['ospath']
+                        dirname = fileinfo['dir']
 
-        # parse each config file and add to ast
-        ast = dexy.parser.AbstractSyntaxTree(self)
+                        with open(config_file, "r") as f:
+                            config_text = f.read()
 
-        for config_file, dirname, alias in config_files:
-            with open(config_file, "r") as f:
-                config_text = f.read()
-
-            try:
-                parser = dexy.parser.Parser.create_instance(alias, self, ast)
-                parser.parse(dirname, config_text)
-            except UserFeedback:
-                sys.stderr.write("Problem occurred while parsing %s\n" % config_file)
-                raise
+                        try:
+                            parser.parse(dirname, config_text)
+                        except UserFeedback:
+                            sys.stderr.write("Problem occurred while parsing %s\n" % config_file)
+                            raise
 
         return ast
 

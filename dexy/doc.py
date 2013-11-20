@@ -42,6 +42,40 @@ class Doc(dexy.node.Node):
                 )
             }
 
+    def setup_output_name(self):
+        """
+        Applies string interpolation to %(foo)s settings in output name.
+        """
+        if not self.setting('output-name'):
+            return
+
+        name_args = self.setting_values()
+        name_args['name'] = self.name
+        name_args['dirname'] = os.path.dirname(self.name)
+        name_args.update(self.safe_setting('environment', {}))
+
+        output_name = self.setting('output-name')
+
+        if not "/" in output_name:
+            output_name = os.path.join(os.path.dirname(self.name), output_name)
+        elif output_name.startswith("/"):
+            output_name = output_name.lstrip("/")
+
+        try:
+            if '%' in output_name:
+                updated_output_name = output_name % name_args
+            elif '{' in self.setting('output-name'):
+                updated_output_name = output_name.format(**name_args)
+            else:
+                updated_output_name = output_name
+
+        except KeyError as e:
+            msg = "Trying to process %s but '%s' is not a valid key. Valid keys are: %s"
+            msgargs = (output_name, unicode(e), ", ".join(sorted(name_args)))
+            raise dexy.exceptions.UserFeedback(msg % msgargs)
+
+        self.update_settings({'output-name' : updated_output_name})
+
     def setup(self):
         self.update_settings(self.args)
 
@@ -50,17 +84,7 @@ class Doc(dexy.node.Node):
         self.filter_aliases = self.key.split("|")[1:]
         self.filters = []
 
-        name_args = self.setting_values()
-        name_args['name'] = self.name
-
-        if self.setting('output-name') and '%' in self.setting('output-name'):
-            try:
-                self.update_settings({'output-name' : self.setting('output-name') % name_args})
-            except KeyError as e:
-                msg = "'%s' is not a valid key. Valid keys are %s"
-                msgargs = (unicode(e), ", ".join(sorted(name_args)))
-                raise dexy.exceptions.UserFeedback(msg % msgargs)
-
+        self.setup_output_name()
         self.setup_initial_data()
 
         for alias in self.filter_aliases:

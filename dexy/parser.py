@@ -125,10 +125,13 @@ class AbstractSyntaxTree():
             """
             if not key in self.wrapper.nodes:
                 alias, pattern = self.wrapper.qualify_key(key)
+                node_environment = self.calculate_environment_for_directory(pattern)
                 
                 kwargs_with_defaults = self.calculate_default_args_for_directory(pattern)
                 kwargs_with_defaults.update(kwargs)
+                kwargs_with_defaults.update({'environment' : node_environment })
 
+                self.wrapper.log.debug("creating node %s" % alias)
                 node = dexy.node.Node.create_instance(
                         alias,
                         pattern,
@@ -136,10 +139,9 @@ class AbstractSyntaxTree():
                         inputs,
                         **kwargs_with_defaults)
 
-                self.wrapper.log.debug("creating node %s" % node.key)
                 if node.inputs:
                     self.wrapper.log.debug("inputs are %s" % ", ".join(i.key for i in node.inputs))
-                node.environment = self.calculate_environment_for_directory(pattern)
+
                 self.wrapper.nodes[key] = node
 
                 for child in node.children:

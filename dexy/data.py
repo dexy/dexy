@@ -250,15 +250,7 @@ class Data(dexy.plugin.Plugin):
 
         output_name = self.setting('output-name')
         if output_name:
-            if "/" in output_name:
-                if output_root in output_name:
-                    return relativize(output_name)
-                else:
-                    self.storage.assert_location_is_in_project_dir(output_name)
-                    return output_name
-            else:
-                output_dir = os.path.dirname(relativize(self.name))
-                return os.path.join(output_dir, output_name)
+            return relativize(output_name)
         else:
             return relativize(self.name)
 

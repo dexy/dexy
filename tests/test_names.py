@@ -1,7 +1,5 @@
-from dexy.exceptions import UserFeedback
 from dexy.doc import Doc
 from tests.utils import wrap
-from nose.tools import raises
 import os
 
 def test_output_name_with_filters():
@@ -21,7 +19,7 @@ def test_output_name_with_filters():
 def test_custom_name():
     with wrap() as wrapper:
         doc = Doc(
-                "data.txt",
+                "foo/data.txt",
                 wrapper,
                 [],
                 output_name="data.abc",
@@ -29,7 +27,7 @@ def test_custom_name():
                 )
         wrapper.run_docs(doc)
 
-        assert doc.output_data().output_name() == "data.abc"
+        assert doc.output_data().output_name() == "foo/data.abc"
 
 def test_custom_name_in_subdir():
     with wrap() as wrapper:
@@ -64,11 +62,10 @@ def test_custom_name_with_args():
         assert doc.output_data().parent_output_dir() == "baz"
         assert os.path.exists("output/baz/data-bar.abc")
 
-@raises(UserFeedback)
-def test_custom_name_with_evil_args():
+def test_custom_name_with_leading_slash():
     with wrap() as wrapper:
         doc = Doc(
-                "data.txt",
+                "foobarbaz/data.txt",
                 wrapper,
                 [],
                 output_name="/%(bar)s/data-%(foo)s.abc",
@@ -77,3 +74,4 @@ def test_custom_name_with_evil_args():
                 contents="12345.67"
                 )
         wrapper.run_docs(doc)
+        assert doc.output_data().output_name() == "baz/data-bar.abc"

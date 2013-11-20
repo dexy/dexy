@@ -170,3 +170,24 @@ def test_filters_text_single_alias_source_nocolor(stdout):
     text = stdout.getvalue()
     assert "pyg, pygments" in text
     assert "class PygmentsFilter" in text
+
+@patch.object(sys, 'argv', ['dexy', 'parsers'])
+@patch('sys.stdout', new_callable=StringIO)
+def test_parsers_text(stdout):
+    dexy.commands.run()
+    text = stdout.getvalue()
+    assert "Yaml Parser" in text
+
+@patch.object(sys, 'argv', ['dexy', 'nodes'])
+@patch('sys.stdout', new_callable=StringIO)
+def test_nodes_text(stdout):
+    dexy.commands.run()
+    text = stdout.getvalue()
+    assert "bundle" in text
+
+@patch.object(sys, 'argv', ['dexy', 'env'])
+@patch('sys.stdout', new_callable=StringIO)
+def test_env_text(stdout):
+    dexy.commands.run()
+    text = stdout.getvalue()
+    assert "uuid" in text

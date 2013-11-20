@@ -44,6 +44,7 @@ defaults = {
     'log_format' : "%(name)s - %(levelname)s - %(message)s",
     'log_level' : "INFO",
     'output_root' : '.',
+    'parsers' : "dexy-env.json dexy.txt dexy.yaml",
     'pickle' : 'c',
     'plugins': 'dexyplugins.py dexyplugin.py dexyplugins.yaml dexyplugin.yaml',
     'profile' : False,
