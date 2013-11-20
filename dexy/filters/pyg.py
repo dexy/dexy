@@ -229,9 +229,10 @@ class PygmentsFilter(DexyFilter):
         if self.ext in self.IMAGE_OUTPUT_EXTENSIONS:
             try:
                 import PIL
+                PIL # because pyflakes
             except ImportError:
-                msg = "Python Imaging Library (PIL) must be installed to create images from pygments."
-                raise dexy.exceptions.UserFeedback(msg)
+                print "python imaging library is required by pygments to create image output"
+                raise dexy.exceptions.InactivePlugin('pyg')
 
         ext = self.prev_ext
         if ext in [".css", ".sty"] and self.ext == ext:
