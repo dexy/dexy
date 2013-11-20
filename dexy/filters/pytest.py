@@ -40,7 +40,7 @@ class PythonTest(PythonIntrospection):
                 None),
             'nose-argv' : (
                 "Need to fake out argv since sys.argv will be args for dexy, not nose.",
-                ['nosetests'])
+                ['nosetests', '--stop', '--verbose'])
             }
 
     def is_active(self):
