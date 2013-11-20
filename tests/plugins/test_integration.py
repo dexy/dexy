@@ -42,7 +42,7 @@ def test_example_project():
         wrapper.report()
 
         for node in wrapper.nodes.values():
-            assert_node_state(node, 'ran')
+            assert_node_state(node, 'ran', "in first run")
 
         run_from_cache_a_bunch_of_times()
 
@@ -69,10 +69,10 @@ def test_example_project():
 
         for node in wrapper.nodes.values():
             if node.key in unaffected_keys:
-                assert_node_state(node, 'consolidated')
+                assert_node_state(node, 'consolidated', "after touching multiply.py")
             else:
                 assert node.key in affected_keys, node.key
-                assert_node_state(node, 'ran')
+                assert_node_state(node, 'ran', "after touchimg multiply.py")
 
         run_from_cache_a_bunch_of_times()
 
@@ -100,10 +100,10 @@ def test_example_project():
 
         for node in wrapper.nodes.values():
             if node.key in unaffected_keys:
-                assert_node_state(node, 'consolidated')
+                assert_node_state(node, 'consolidated', "after restoring old multiply.py content")
             else:
                 assert node.key in affected_keys, node.key
-                assert_node_state(node, 'ran')
+                assert_node_state(node, 'ran', "after restoring old multiply.py contnet")
 
         wrapper.remove_dexy_dirs()
         wrapper.remove_reports_dirs(keep_empty_dir=True)
