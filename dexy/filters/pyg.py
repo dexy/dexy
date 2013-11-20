@@ -4,19 +4,11 @@ from pygments import highlight
 from pygments.formatters import HtmlFormatter
 from pygments.formatters import LatexFormatter
 from pygments.formatters import get_formatter_for_filename
+from pygments.lexers import LEXERS as PYGMENTS_LEXERS
 from pygments.lexers import get_lexer_by_name
-from pygments.lexers.agile import PythonConsoleLexer
-from pygments.lexers.agile import RubyConsoleLexer
-from pygments.lexers.special import TextLexer
-from pygments.lexers.templates import DjangoLexer
-from pygments.lexers.text import MakefileLexer
-from pygments.lexers.text import TexLexer
-from pygments.lexers.web import JavascriptLexer
-from pygments.lexers.web import XmlLexer
 import dexy.commands
 import dexy.exceptions
 import pygments.lexers.web
-from pygments.lexers import LEXERS as PYGMENTS_LEXERS
 
 pygments_lexer_cache = {}
 
@@ -238,8 +230,8 @@ class PygmentsFilter(DexyFilter):
             try:
                 import PIL
             except ImportError:
-                print "python imaging library is required by pygments to create image output"
-                raise dexy.exceptions.InactivePlugin('pyg')
+                msg = "Python Imaging Library (PIL) must be installed to create images from pygments."
+                raise dexy.exceptions.UserFeedback(msg)
 
         ext = self.prev_ext
         if ext in [".css", ".sty"] and self.ext == ext:

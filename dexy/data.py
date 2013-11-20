@@ -1,11 +1,9 @@
 from dexy.exceptions import InternalDexyProblem
-from dexy.exceptions import UserFeedback
 import dexy.plugin
 import dexy.storage
 import dexy.utils
 import dexy.wrapper
 import inflection
-import inspect
 import os
 import posixpath
 import shutil
