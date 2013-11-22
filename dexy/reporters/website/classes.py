@@ -212,24 +212,12 @@ class Website(Output):
             self.log_debug("Env args:\n%s" % args)
             raise
 
-    def apply_and_render_template(self, doc):
-        template_info = self.template_file_and_path(doc)
-        template_file, template_path = template_info
-
-        env = self.jinja_environment(template_path)
-
-        self.log_debug("  loading template at %s" % template_path)
-        template = env.get_template(template_path)
-
-#        TODO write user-facing docs.
-#        TODO finsih writing dev docs on this section and cleaning up code.
-
+    def template_environment(self, doc, template_path):
         raw_env_data = self.run_plugins()
         raw_env_data.update(self.website_specific_template_environment(doc.output_data(), {
             'template_source' : ("The directory containing the template file used.",
                 template_path)
             }))
-
 
         env_data = dict((k, v[1]) for k, v in raw_env_data.iteritems())
 
@@ -237,17 +225,34 @@ class Website(Output):
             env_data['content'] = self.apply_jinja_to_page_content(doc, env_data)
         else:
             env_data['content'] = doc.output_data()
-        
-        fp = os.path.join(self.setting('dir'),
-                doc.output_data().output_name()).replace(".json", ".html")
+
+        return env_data
+
+    def fix_ext(self, filename):
+        basename, ext = os.path.splitext(filename)
+        return "%s.html" % basename
+
+    def apply_and_render_template(self, doc):
+        template_info = self.template_file_and_path(doc)
+        template_file, template_path = template_info
+        env_data = self.template_environment(doc, template_path)
+
+        self.log_debug("  creating jinja environment")
+        env = self.jinja_environment(template_path)
+
+        self.log_debug("  loading jinja template at %s" % template_path)
+        template = env.get_template(template_path)
+       
+        output_file = self.fix_ext(doc.output_data().output_name())
+        output_path = os.path.join(self.setting('dir'), output_file)
 
         try:
-            os.makedirs(os.path.dirname(fp))
+            os.makedirs(os.path.dirname(output_path))
         except os.error:
             pass
 
-        self.log_debug("  writing to %s" % (fp))
-        template.stream(env_data).dump(fp, encoding="utf-8")
+        self.log_debug("  writing to %s" % (output_path))
+        template.stream(env_data).dump(output_path, encoding="utf-8")
 
     def help(self, data):
         nodoc = ('navobj', 'navigation',)

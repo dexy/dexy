@@ -483,6 +483,7 @@ class Filter(dexy.plugin.Plugin):
         Populates the workspace directory with inputs to the filter, under
         their canonical names.
         """
+        self.log_debug("in populate_workspace method")
         already_created_dirs = set()
         wd = self.parent_work_dir()
 
@@ -500,6 +501,7 @@ class Filter(dexy.plugin.Plugin):
 
         self.makedirs()
 
+        self.log_debug("input docs %s" % list(self.doc.walk_input_docs()))
         for inpt in self.doc.walk_input_docs():
             if not self.include_input_in_workspace(inpt):
                 self.log_debug("not populating workspace with input '%s'" % inpt.key)

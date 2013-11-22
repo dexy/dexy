@@ -122,6 +122,20 @@ class FooterFilter(HeaderFilter):
         footer_data = self.find_input_in_parent_dir("_footer")
         return "%s\n%s" % (input_text, unicode(footer_data))
 
+class TemplateContentFilter(HeaderFilter):
+    """
+    Apply template to file. Template should specify %(content)s.
+    """
+    aliases = ['applytemplate']
+    _settings = {
+            'key-name' : 'template',
+            'template' : ("Document key of file to use as footer.", None)
+            }
+
+    def process_text(self, input_text):
+        template_data = self.find_input_in_parent_dir("_template")
+        return unicode(template_data) % { 'content' : input_text }
+
 class MarkupTagsFilter(DexyFilter):
     """
     Wrap text in specified HTML tags.

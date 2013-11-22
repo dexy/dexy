@@ -150,9 +150,11 @@ class AbstractSyntaxTree():
             return self.wrapper.nodes[key]
 
         def parse_item(key):
-            self.wrapper.log.debug("parsing item %s" % key)
             inputs = self.inputs_for_node(key)
             kwargs = self.args_for_node(key)
+            self.wrapper.log.debug("parsing item %s" % key)
+            self.wrapper.log.debug("  inputs: %s" % ", ".join("%r" % inpt for inpt in inputs))
+            self.wrapper.log.debug("  kwargs: %s" % ", ".join("%s: %r" % (k, v) for k, v in kwargs.iteritems()))
 
             if kwargs.get('inactive') or kwargs.get('disabled'):
                 return
