@@ -5,7 +5,7 @@ setup(
         author='Ana Nelson',
         author_email='ana@ananelson.com',
         classifiers=[
-            "Development Status :: 4 - Beta",
+            "Development Status :: 5 - Production/Stable",
             "Environment :: Console",
             "Intended Audience :: Developers",
             "Intended Audience :: Education",
