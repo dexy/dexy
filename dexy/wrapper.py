@@ -250,10 +250,12 @@ class Wrapper(object):
         self.batch.save_to_file()
         shutil.move(self.this_cache_dir(), self.last_cache_dir())
         self.empty_trash()
+        self.add_lookups()
 
-        for node in self.nodes.values():
-            node.add_to_lookup_sections()
-            node.add_to_lookup_nodes()
+    def add_lookups(self):
+        for data in self.batch:
+            data.add_to_lookup_sections()
+            data.add_to_lookup_nodes()
 
     def bundle_docs(self):
         from dexy.node import BundleNode
@@ -593,17 +595,17 @@ class Wrapper(object):
         key = node.key_with_class()
         self.nodes[key] = node
 
-    def add_node_to_lookup_nodes(self, key, node):
+    def add_data_to_lookup_nodes(self, key, data):
         if not key in self.lookup_nodes:
             self.lookup_nodes[key] = []
-        if not node in self.lookup_nodes[key]:
-            self.lookup_nodes[key].append(node)
+        if not data in self.lookup_nodes[key]:
+            self.lookup_nodes[key].append(data)
 
-    def add_node_to_lookup_sections(self, key, node):
+    def add_data_to_lookup_sections(self, key, data):
         if not key in self.lookup_sections:
             self.lookup_sections[key] = []
-        if not node in self.lookup_sections[key]:
-            self.lookup_sections[key].append(node)
+        if not data in self.lookup_sections[key]:
+            self.lookup_sections[key].append(data)
 
     def qualify_key(self, key):
         """

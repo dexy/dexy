@@ -1,1 +1,1 @@
-from dexy.reporters.website.classes import WebsiteReporter
+from dexy.reporters.website.classes import Website

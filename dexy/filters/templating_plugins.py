@@ -309,7 +309,7 @@ class PythonBuiltins(TemplatePlugin):
             float, format, hex, id, int, isinstance, issubclass, iter, len,
             list, locals, long, map, hasattr, max, min, oct, ord, pow, range,
             reduce, repr, reversed, round, set, slice, sorted, str, sum, tuple,
-            xrange, unicode, zip]
+            type, xrange, unicode, zip]
 
     def run(self):
         return dict((f.__name__, ("The python builtin function %s" % f.__name__, f,)) for f in self.PYTHON_BUILTINS)

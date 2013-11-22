@@ -55,7 +55,7 @@ def datas_command(
             'initialize_settings_from_parents', 'initialize_settings_from_raw_kwargs',
             'is_active', 'is_cached', 'args_to_data_init', 'json_as_dict', 'as_text',
             'load_data', 'save', 'setup', 'setup_storage', 'storage_class_alias',
-            'transition'
+            'transition', 'add_to_lookup_sections' ,'add_to_lookup_nodes'
             )
 
     print ""

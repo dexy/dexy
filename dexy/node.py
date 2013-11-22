@@ -263,12 +263,6 @@ class Node(dexy.plugin.Plugin):
         self.run()
         self.wrapper.current_task = None
 
-    def add_to_lookup_nodes(self):
-        pass
-
-    def add_to_lookup_sections(self):
-        pass
-
     def run(self):
         """
         Method which processes node's content if not cached, also responsible

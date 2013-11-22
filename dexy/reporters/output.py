@@ -1,7 +1,7 @@
 from dexy.reporter import Reporter
 import os
 
-class OutputReporter(Reporter):
+class Output(Reporter):
     """
     Creates canonical dexy output with files given short filenames.
     """
@@ -49,7 +49,7 @@ class OutputReporter(Reporter):
             if doc.output_data().is_canonical_output():
                 self.write_canonical_data(doc)
 
-class LongOutputReporter(Reporter):
+class LongOutput(Reporter):
     """
     Creates complete dexy output with files given long, unique filenames.
     """

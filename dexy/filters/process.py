@@ -142,6 +142,7 @@ class SubprocessFilter(Filter):
             add_new_files = [add_new_files]
 
         exclude = self.setting('exclude-add-new-files')
+        skip_dirs = self.setting('exclude-new-files-from-dir')
 
         if isinstance(exclude, basestring):
             raise dexy.exceptions.UserFeedback("exclude-add-new-files should be a list, not a string")
@@ -149,7 +150,7 @@ class SubprocessFilter(Filter):
         new_files_added = 0
         for dirpath, subdirs, filenames in os.walk(wd):
             # Prune subdirs which match exclude.
-            subdirs[:] = [d for d in subdirs if d not in exclude]
+            subdirs[:] = [d for d in subdirs if d not in skip_dirs]
 
             # Iterate over files in directory.
             for filename in filenames:

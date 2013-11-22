@@ -11,21 +11,37 @@ class Reporter(dexy.plugin.Plugin):
     __metaclass__ = dexy.plugin.PluginMeta
 
     _settings = {
-            "default" : ("Whether to run this report by default. Should be False for reports with side effects.", True),
-            "dir" : ("Top-level directory in which report will be stored", None),
-            'filename' : ("Name of file to generate (only used if report only generates a single file).", None),
-            "in-cache-dir" : ("Whether to write reports in the cache directory (instead of project root).", False),
-            'no-delete' : ("List of elements not to delete when resetting report dir (only effective if report dir is cleaned element-wise).", ['.git', '.nojekyll']),
-            'plugins' : ("List of template plugin aliases which should be included in jinja environment.",
-                ['debug', 'inflection', 'builtins', 'operator']
+            "default" : ("""Whether to run this report by default. Should be
+            False for reports with side effects.""", True),
+            "dir" : ("""Directory where report output will be written.""",
+                None),
+            'filename' : ("""Name of report file to generate (used when the
+                report consists of just a single file).""", None),
+            "in-cache-dir" : ("""Whether to create report dir in the cache
+                directory (instead of project root).""", False),
+            'no-delete' : ("""List of file names not to delete when resetting
+                report dir (only effective if report dir is cleaned
+                element-wise).""", ['.git', '.nojekyll']),
+            'plugins' : ("""List of template plugin aliases which should be
+                included in jinja environment.""",
+                ['debug', 'inflection', 'builtins', 'operator', 'datetime', 'pprint']
                 ),
-            "run-for-wrapper-states" : ("List of states in which this report can be run.", ["ran"]),
-            "readme-filename" : ("Name of README file. Set to None to not have a dexy boilerplate warning README.", "README"),
-            "safety-filename" : ("Name of a file which will be created in generated dir, and checked before generated dir is removed.", ".dexy-generated"),
-            }
+            "run-for-wrapper-states" : ("""Wrapper states for which report is
+                valid.""", ["ran"]),
+            "readme-filename" : ("Name of README file, or None to omit." ,
+                "README"),
+            "safety-filename" : ("""Name of a file which will be created in
+                generated dir to indicate it was created by dexy and is safe to
+                auto-remove.""", ".dexy-generated"), }
 
     def is_active(self):
         return True
+
+    def help(self):
+        """
+        Allow implementing custom help since reporters can have such different behavior.
+        """
+        pass
 
     def copy_template_files(self):
         # Copy template files (e.g. .css files)

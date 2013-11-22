@@ -29,6 +29,18 @@ class Data(dexy.plugin.Plugin):
             ('ready', 'ready')
             )
 
+    def add_to_lookup_nodes(self):
+        if self.setting('canonical-output'):
+            self.wrapper.add_data_to_lookup_nodes(self.key, self)
+            self.wrapper.add_data_to_lookup_nodes(self.output_name(), self)
+            self.wrapper.add_data_to_lookup_nodes(self.title(), self)
+
+    def add_to_lookup_sections(self):
+        if self.setting('canonical-output'):
+            for section_name in self.keys():
+                if not section_name == '1':
+                    self.wrapper.add_data_to_lookup_sections(section_name, self)
+
     def __init__(self, key, ext, storage_key, settings, wrapper):
         self.key = key
         self.ext = ext

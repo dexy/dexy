@@ -15,6 +15,7 @@ import warnings
 import dexy.load_plugins
 
 ### "import-all-commands"
+from dexy.commands.info import links_command
 from dexy.commands.cite import cite_command
 from dexy.commands.parsers import parsers_command
 from dexy.commands.conf import conf_command
@@ -94,7 +95,7 @@ def resolve_plugin_cmd(raw_command_name):
         cmd = dexy.plugin.Command.create_instance(alias)
     except cashew.exceptions.NoPlugin:
         msg = """No command '%s' available.
-        Run `dexy help` to see list of available commands."""
+        Run `dexy help --all` to see list of available commands."""
         msgargs = (alias)
         sys.stderr.write(inspect.cleandoc(msg) % msgargs)
         sys.stderr.write(os.linesep)
@@ -164,6 +165,7 @@ def help_command(
         print "  `dexy grep` search for documents and keys in documents"
         print "  `dexy info` list metadata about a particular document"
         print "  `dexy targets` list target names you can run"
+        print "  `dexy links` list all ways to refer to documents and sections"
         print ""
         print "Other commands:"
         print "  `dexy serve` start a local static web server to view generated docs"

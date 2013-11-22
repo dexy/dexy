@@ -11,6 +11,10 @@ docs/index.adoc|jinja|asciidoctor|customize:
         - idio: { ext : '.txt' }
     - dexy/commands/__init__.py|idio|asciisyn:
         - idio: { ext : '.txt' }
+    - dexy/commands/info.py|idio|asciisyn:
+        - idio: { ext : '.txt' }
+    - tests/test_commands.py|idio|asciisyn:
+        - idio: { ext : '.txt' }
     - tests/*.py|pydoc
     - modules.txt|pydoc:
         - contents: 'dexy'

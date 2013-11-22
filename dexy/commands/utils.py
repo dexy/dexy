@@ -2,6 +2,9 @@ from dexy.utils import defaults
 from dexy.utils import file_exists
 from dexy.utils import parse_json
 from dexy.utils import parse_yaml
+from textwrap import TextWrapper
+from textwrap import dedent
+from inspect import cleandoc
 import dexy.wrapper
 import logging
 import os
@@ -188,3 +191,29 @@ def dummy_wrapper():
     wrapper.log.addHandler(logging.NullHandler())
     wrapper.filemap = {}
     return wrapper
+
+def rewrap_text(text, spaces=None, **kwargs):
+    wrapper_args = {
+            }
+
+    if spaces:
+        wrapper_args['initial_indent'] = ' ' * spaces
+        wrapper_args['subsequent_indent'] = ' ' * spaces
+
+    wrapper_args.update(kwargs)
+
+    wrapper = TextWrapper(**wrapper_args)
+    return wrapper.fill(cleandoc(text))
+
+def indent_text(text, spaces):
+    indented = []
+    indent = " " * spaces
+    for line in dedent(text).splitlines():
+        indented.append("%s%s" % (indent, line))
+    return "\n".join(indented)
+
+def print_indented(text, spaces=0):
+    print indent_text(text, spaces)
+
+def print_rewrapped(text, spaces=0):
+    print rewrap_text(text, spaces)

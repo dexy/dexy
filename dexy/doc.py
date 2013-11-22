@@ -42,6 +42,13 @@ class Doc(dexy.node.Node):
                 )
             }
 
+    def name_args(self):
+        name_args = self.setting_values()
+        name_args['name'] = self.name
+        name_args['dirname'] = os.path.dirname(self.name)
+        name_args.update(self.safe_setting('environment', {}))
+        return name_args
+
     def setup_output_name(self):
         """
         Applies string interpolation to %(foo)s settings in output name.
@@ -49,12 +56,12 @@ class Doc(dexy.node.Node):
         if not self.setting('output-name'):
             return
 
-        name_args = self.setting_values()
-        name_args['name'] = self.name
-        name_args['dirname'] = os.path.dirname(self.name)
-        name_args.update(self.safe_setting('environment', {}))
-
+        name_args = self.name_args()
         output_name = self.setting('output-name')
+
+        self.log_debug("Name interpolation variables:")
+        for key, value in name_args.iteritems():
+            self.log_debug("%s: %s" % (key, value))
 
         if not "/" in output_name:
             output_name = os.path.join(os.path.dirname(self.name), output_name)
@@ -333,16 +340,6 @@ class Doc(dexy.node.Node):
             doc.check_is_cached()
             for task in doc:
                 task()
-
-    def add_to_lookup_nodes(self):
-        self.wrapper.add_node_to_lookup_nodes(self.key, self)
-        self.wrapper.add_node_to_lookup_nodes(self.output_data().output_name(), self)
-        self.wrapper.add_node_to_lookup_nodes(self.output_data().title(), self)
-
-    def add_to_lookup_sections(self):
-        # TODO we don't want this for all docs, just docs it makes sense to link to.
-        for section_name in self.output_data().keys():
-            self.wrapper.add_node_to_lookup_sections(section_name, self)
 
     def output_data(self):
         """

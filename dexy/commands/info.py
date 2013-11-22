@@ -1,8 +1,11 @@
 from dexy.batch import Batch
 from dexy.commands.utils import init_wrapper
+from dexy.commands.utils import print_indented
+from dexy.commands.utils import print_rewrapped
 from dexy.utils import defaults
 from operator import attrgetter
 import dexy.exceptions
+import sys
 
 ### "info-keys"
 info_attrs = [
@@ -22,12 +25,62 @@ info_methods = [
         ]
 
 storage_methods = []
+### @end
+
+def links_command(
+        **kwargs
+        ):
+    """
+    Print list of links and sections found in dexy documents.
+    """
+    artifactsdir = kwargs.get('artifactsdir', defaults['artifacts_dir'])
+    wrapper = init_wrapper(locals())
+    batch = Batch.load_most_recent(wrapper)
+
+    if not batch:
+        print "you need to run dexy first"
+        sys.exit(1)
+
+    wrapper.setup_log()
+    wrapper.batch = batch
+
+    wrapper.add_lookups()
+
+    if wrapper.lookup_nodes:
+        print_indented("Nodes:")
+    for label in sorted(wrapper.lookup_nodes):
+        nodes = wrapper.lookup_nodes[label]
+        if len(nodes) > 1:
+            print ''
+            print_indented("'%s'" % label, 2)
+            print_indented("Multiple nodes match %s:" % label, 4)
+            for node in nodes:
+                print_indented(">> %r" % node, 6)
+        elif len(nodes) == 0:
+            print_indented("'%s'" % label, 2)
+            print_indented("NO nodes match %s" % label, 4)
+        else:
+            node = nodes[0]
+            print_indented("'%s'" % label, 2)
+            print_indented("%r" % node, 4)
+        print ''
+
+    print ''
+
+    if wrapper.lookup_sections:
+        print_indented("Sections:")
+    for label in sorted(wrapper.lookup_sections):
+        node = wrapper.lookup_sections[label][0]
+        print_indented("'%s'" % label, 2)
+        print_indented("%r" % node, 4)
+        print ''
 
 ### "info-com"
 def info_command(
         __cli_options=False,
         expr="", # An expression partially matching document name.
         key="", # The exact document key.
+        ws=False, # Whether to print website reporter keys and values.
         **kwargs
         ):
     """
@@ -41,7 +94,9 @@ def info_command(
     """
     artifactsdir = kwargs.get('artifactsdir', defaults['artifacts_dir'])
     wrapper = init_wrapper(locals())
+    wrapper.setup_log()
     batch = Batch.load_most_recent(wrapper)
+    wrapper.batch = batch
 
     if expr:
         print "search expr:", expr
@@ -60,28 +115,45 @@ def info_command(
         print "  document output data type:", match.alias
         print ""
 
-        print "    settings:"
+        print_indented("settings:", 2)
         for k in sorted(match._instance_settings):
             if not k in ('aliases', 'help'):
-                print "      %s: %s" % (k, match.setting(k))
+                print_indented("%s: %s" % (k, match.setting(k)), 4)
 
         print ""
-        print "    attributes:"
+        print_indented("attributes:", 2)
         for fname in sorted(info_attrs):
-            print "      %s: %s" % (fname, getattr(match, fname))
+            print_indented("%s: %s" % (fname, getattr(match, fname)), 4)
         print ""
     
-        print "    methods:"
+        print_indented("methods:", 2)
         for fname in sorted(info_methods):
-            print "      %s(): %s" % (fname, getattr(match, fname)())
+            print_indented("%s(): %s" % (fname, getattr(match, fname)()), 4)
         print ""
 
         if storage_methods:
-            print "    storage methods:"
+            print_indented("storage methods:", 2)
             for fname in sorted(storage_methods):
-                print "      %s(): %s" % (fname, getattr(match.storage, fname)())
+                print_indented("%s(): %s" % (fname, getattr(match.storage, fname)), 4)
             print ''
 
-        print "    For more information about methods available on this data type"
-        print "    run `dexy datas -alias %s`" % match.alias
-        print ""
+        if ws:
+            print_indented("website reporter methods:", 2)
+            print ''
+            reporter = dexy.reporter.Reporter.create_instance('ws')
+            reporter.wrapper = wrapper
+            reporter.setup_navobj()
+            reporter.help(match)
+            print ''
+            print_indented("active template plugins are:", 2)
+            print_indented(", ".join(reporter.setting('plugins')), 4)
+            print ''
+
+
+        else:
+            print_indented("For website reporter tags, run this command with -ws option", 4)
+            print ''
+
+
+        print_rewrapped("""For more information about methods available on this
+        data type run `dexy datas -alias %s`""" % match.alias)

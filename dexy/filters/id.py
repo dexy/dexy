@@ -88,6 +88,8 @@ class Id(PygmentsFilter):
         if do_highlight is None:
             if self.alias in ('htmlsections',):
                 do_highlight = False
+                if self.output_data.setting('canonical-output') is None:
+                    self.output_data.update_settings({'canonical-output' : True})
             else:
                 do_highlight = True
 

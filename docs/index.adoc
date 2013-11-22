@@ -44,10 +44,7 @@ icon:github[size=3x,link="{{ issue_info.html_url }}"] Desired Feature: {{ issue_
 
 == Introduction
 
-This is developer documentation for Dexy. Its goal is to help you develop
-plugins for dexy or to hack on the dexy core.
-
-It includes sections on dexy's internals, and how to write plugins for dexy.
+This is developer documentation for Dexy.
 
 == Data and Storage
 
@@ -392,17 +389,71 @@ correct location on the file system or other form of storage, but sometimes
 they will handle queries and other methods in order to provide user
 transparency at the Data object leveel.
 
+== Filters
 
-{% if False %}
+== Wrapper & Batches
+
+== Parsers
+
+== Reporters
+
+=== Website Reporter
+
+The Website reporter publishes the same files as the Output reporter, but also
+provides utilities designed for websites, such as applying templates to HTML
+files and providing data to help users construct site navigation.
+
+It doesn't make sense to generate a website unless all dexy files are
+generated, so the website reporter doesn't run if a specific target is chosen
+(many links would likely be broken too):
+
+{{ src("dexy.reporters.website.classes.Website.run") }}
+
+The `setup` method initializes some instance variables we will use later:
+
+{{ src("dexy.reporters.website.classes.Website.setup") }}
+
+As we iterate over all the processed docs, the `should_process` method
+determines whether they are properly formed Doc objects which are "canonical":
+
+{{ src("dexy.reporters.website.classes.Website.should_process") }}
+
+Then `process_doc` runs the code which writes the document, with any templates
+applied, to the report output directory:
+
+{{ src("dexy.reporters.website.classes.Website.process_doc") }}
+
+In the case of a HTML file, we may want to apply a template. This will depend
+on whether the document already appears to have a HTML header, and the value
+of the `ws-template` setting which may be a boolean or the name of a template
+to apply.
+
+{{ src("dexy.reporters.website.classes.Website.process_html") }}
+
+The header check is rather rudimentary:
+
+{{ src("dexy.reporters.website.classes.Website.detect_html_header") }}
+
+The `write_canonical_data` method is inherited from the Output class, and is
+used when a document is not a HTML file or a setting determines that HTML
+templates should not be applied:
+
+{{ src("dexy.reporters.output.Output.write_canonical_data") }}
+
+In the other cases, the `apply_and_render_template` method is used:
+
+{{ src("dexy.reporters.website.classes.Website.apply_and_render_template") }}
+
+== Templates
+
+Templates are ways of creating dexy examples.
 
 == Command Line Interface
 
 The command line interface for dexy is driven by
 https://pypi.python.org/pypi/python-modargs[python-modargs].
 
-=== fix indents
-
-==== init.py
+=== init.py
 
 Any function ending with `_command` is automatically exposed as a command. To
 keep modules to a manageable size, the various dexy commands are defined in
@@ -417,11 +468,11 @@ The `run` method in `dexy.commands` is listed in `setup.py` as a console script 
 
 And this is the first method which will be called whenever a user enters a `dexy` command:
 
-{{ src('dexy/commands/__init__.py', 'run') }}
+{{ src('dexy.commands.run') }}
 
 The `capture_warnings` method just hides irrelevant warning messages from dexy users:
 
-{{ src('dexy/commands/__init__.py', 'capture_warnings') }}
+{{ src('dexy.commands.capture_warnings') }}
 
 Dexy can load a lot of different libraries as it runs various filters, and
 deprecation messages and similar warnings are confusing and annoying for end
@@ -429,7 +480,7 @@ users.
 
 The `resolve_argv` method is called next:
 
-{{ src('dexy/commands/__init__.py', 'resolve_argv') }}
+{{ src('dexy.commands.resolve_argv') }}
 
 It's possible for additional commands to be added to dexy via the plugin
 system.  For example, the `dexy-viewer` plugin defines a `ping` command which
@@ -442,45 +493,45 @@ can be called as follows:
 If necessary the `resolve_argv` command calls `resolve_plugin_command` to
 look in dexy plugins for the requested command:
 
-{{ src('dexy/commands/__init__.py', 'resolve_plugin_command') }}
+{{ src('dexy.commands.resolve_plugin_cmd') }}
 
 Returning to the `run` command we started with:
 
-{{ src('dexy/commands/__init__.py', 'run') }}
+{{ src('dexy.commands.run') }}
 
 The parsed arguments, module object and a default command are passed to
 `parse_and_run_cmd` which delegates to the modargs command of the same name,
 and wraps the call with error handling to provide nicer error messages if
 there's a problem:
 
-{{ src('dexy/commands/__init__.py', 'parse_and_run_cmd') }}
+{{ src('dexy.commands.parse_and_run_cmd') }}
 
 The `help` and `version` commands are also defined in the `__init__.py` file:
 
-{{ src('dexy/commands/__init__.py', 'help_command') }}
+{{ src('dexy.commands.help_command') }}
 
-{{ src('dexy/commands/__init__.py', 'version_command') }}
+{{ src('dexy.commands.version_command') }}
 
-==== cite.py
+=== cite.py
 
-The `dexy cite` command prints out an academic citation for dexy.
+The `dexy cite` command prints out a bibliographic citation for dexy.
 
-{{ src('dexy/commands/cite.py', 'cite_command') }}
+{{ src('dexy.commands.cite.cite_command') }}
 
 {{ d['commands.sh|idio|shint|asciisyn']['cite'] }}
 
 Currently the bibtex format is supported:
 
-{{ src('dexy/commands/cite.py', 'bibtex_text') }}
+{{ src('dexy.commands.cite.bibtex_text') }}
 
-==== conf.py
+=== conf.py
 
 The main dexy command has a lot of command line options, and for convenience
 you can save the option values in a `dexy.conf` file in your project so you
 don't have to remember and type them all the time. The `dexy conf` command
 generates an example file for you containing all the default dexy options:
 
-{{ src('dexy/commands/conf.py', 'conf_command') }}
+{{ src('dexy.commands.conf.conf_command') }}
 
 {{ d['commands.sh|idio|shint|asciisyn']['conf'] }}
 
@@ -489,27 +540,27 @@ options are written to stdout instead of written to a file.
 
 {{ d['/tests/test_commands.py|idio|asciisyn']['conf'] }}
 
-==== dirs.py
+=== dirs.py
 
 These commands expose methods for creating and removing dexy's working directories.
 
 The `setup` and `cleanup` command create and remove working directories respectively:
 
-{{ src('dexy/commands/dirs.py', 'setup_command') }}
+{{ src('dexy.commands.dirs.setup_command') }}
 
-{{ src('dexy/commands/dirs.py', 'cleanup_command') }}
+{{ src('dexy.commands.dirs.cleanup_command') }}
 
 The `reset` command cleans out any working files and leaves you with a fresh setup:
 
-{{ src('dexy/commands/dirs.py', 'reset_command') }}
+{{ src('dexy.commands.dirs.reset_command') }}
 
-==== fcmds.py
+=== fcmds.py
 
 Filter commands are intended to be a way for filters to expose some information
 to users. For example, filter commands could provide a way for an API to list
 available methods.
 
-{{ src('dexy/commands/fcmds.py', 'fcmds_command') }}
+{{ src('dexy.commands.fcmds.fcmds_command') }}
 
 The `fcmds_command` lists filter commands:
 
@@ -519,39 +570,39 @@ To run a filter command you need to pass the alias and the command name:
 
 {{ d['commands.sh|idio|shint|asciisyn']['run-fcmd'] }}
 
-{{ src('dexy/commands/fcmds.py', 'fcmd_command') }}
+{{ src('dexy.commands.fcmds.fcmd_command') }}
 
-==== filters.py
+=== filters.py
 
 The filters module contains dexy's command line reference for filters.
 
-{{ src('dexy/commands/filters.py', 'filters_command') }}
+{{ src('dexy.commands.filters.filters_command') }}
 
-{{ src('dexy/commands/filters.py', 'help_for_filter') }}
+{{ src('dexy.commands.filters.help_for_filter') }}
 
-{{ src('dexy/commands/filters.py', 'list_filters') }}
+{{ src('dexy.commands.filters.list_filters') }}
 
-==== grep.py
+=== grep.py
 
 The grep interface is a way to search on the command line for dexy docs and
 keys within docs.  (The dexy viewer plugin presents similar information in a
 web-based interface.)
 
-{{ src('dexy/commands/grep.py', 'grep_command') }}
+{{ src('dexy.commands.grep.grep_command') }}
 
 The grep command calls `print_match` for each match:
 
-{{ src('dexy/commands/grep.py', 'print_match') }}
+{{ src('dexy.commands.grep.print_match') }}
 
 Where it reaches a document which has keys, it may also print the keys (depending on options):
 
-{{ src('dexy/commands/grep.py', 'print_keys') }}
+{{ src('dexy.commands.grep.print_keys') }}
 
 And contents of files may also be printed:
 
-{{ src('dexy/commands/grep.py', 'print_contents') }}
+{{ src('dexy.commands.grep.print_contents') }}
 
-==== info.py
+=== info.py
 
 The info command lets you see where documents are cached and to get
 documentation about their available methods. You should know the doc key you
@@ -562,10 +613,8 @@ are displayed.
 
 {{ d['/dexy/commands/info.py|idio|asciisyn']['info-keys'] }}
 
-{{ src('dexy/commands/info.py', 'info_command') }}
+{{ src('dexy.commands.info.info_command') }}
 
-==== it.py
+=== it.py
 
-This is it! The main command which actually runs dexy.
-
-{% endif %}
+The main command which actually runs dexy.

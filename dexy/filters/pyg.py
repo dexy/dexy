@@ -155,6 +155,8 @@ class PygmentsFilter(DexyFilter):
         ext = self.prev_ext
         if ext in [".css", ".sty"] and self.ext == ext:
             return self.doc.name
+        elif self.alias == 'htmlsections':
+            return self.doc.name
         else:
             return "%s%s" % (self.doc.name, self.ext)
 

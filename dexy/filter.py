@@ -30,7 +30,10 @@ class Filter(dexy.plugin.Plugin):
                 "Boolean or list of extensions/patterns to match.",
                 False),
             'exclude-add-new-files' : (
-                "List of directories or patterns to skip even if they match add-new-files.",
+                "List of patterns to skip even if they match add-new-files.",
+                []),
+            'exclude-new-files-from-dir' : (
+                "List of directories to skip when adding new files.",
                 []),
             'additional-doc-filters' : (
                 "Filters to apply to additional documents created as side effects.",
