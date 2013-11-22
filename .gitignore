@@ -12,7 +12,6 @@ cover/
 .bugs.done
 .coverage
 bugs
-setup.cfg
 .dexy
 .trash
 Dockerfile

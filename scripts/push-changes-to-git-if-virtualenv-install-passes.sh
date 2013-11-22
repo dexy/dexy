@@ -15,9 +15,17 @@ source testenv/bin/activate
 git clone ~/dev/dexy $TEST_DIR/dexy
 cd dexy
 pip install .
-dexy --version
+dexy version
 git remote add github git@github.com:ananelson/dexy.git
 cd ..
+
+dexy help
+dexy help --all
+dexy filters
+dexy reporters
+dexy env
+dexy nodes
+dexy parsers
 
 #git clone ~/dev/dexy-filter-examples $TEST_DIR/dexy-filter-examples
 #cd dexy-filter-examples
@@ -49,6 +57,7 @@ cd ..
 cd dexy
 pip install mock
 pip install nose
+pip install coverage
 nosetests --stop
 cd ..
 #
