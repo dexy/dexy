@@ -44,7 +44,12 @@ icon:github[size=3x,link="{{ issue_info.html_url }}"] Desired Feature: {{ issue_
 
 == Introduction
 
-This is developer documentation for Dexy.
+This is developer documentation for Dexy. It is far from complete but is under active development.
+
+The sources for this documentation are part of the main dexy repository which
+is http://github.com/dexy/dexy
+
+Please visit http://dexy.it/docs/ for a list of all available documentation.
 
 == Data and Storage
 
