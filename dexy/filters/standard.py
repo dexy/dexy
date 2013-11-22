@@ -3,6 +3,29 @@ import copy
 import dexy.exceptions
 import json
 import os
+import re
+
+class Resub(DexyFilter):
+    """
+    Runs re.sub on each line of input.
+    """
+    aliases = ['resub']
+    _settings = {
+            'expressions' : ("Tuples of (regexp, replacement) to apply.", []),
+            }
+
+    def process_text(self, input_text):
+        for regexp, replacement in self.setting('expressions'):
+            self.log_debug("Applying %s" % regexp)
+            working_text = []
+
+            for line in input_text.splitlines():
+                working_text.append(re.sub(regexp, replacement, line))
+
+            input_text = "\n".join(working_text)
+
+        return input_text
+
 
 class PreserveDataClassFilter(DexyFilter):
     """

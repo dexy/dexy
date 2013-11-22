@@ -3,6 +3,7 @@ import dexy.exceptions
 import json
 import logging
 import markdown
+import re
 
 #safe_mode_docstring = """Whether to escape, remove or replace HTML blocks.
 #
@@ -67,6 +68,9 @@ class MarkdownSlidesFilter(MarkdownFilter):
             'extensions' : { 'nl2br' : {} },
             'added-in-version': "0.9.9.6",
             'examples' : ['slides'],
+            'comment-char' : (
+                "Lines starting with this comment char will not show up in slides.",
+                ';'),
             'split' : (
                 "String to use to split slides.",
                 "\n\n\n" # e.g. 2 blank lines.
@@ -86,7 +90,10 @@ class MarkdownSlidesFilter(MarkdownFilter):
         md = self.initialize_markdown()
 
         slides = ""
+        comment_regexp = "^%s(.*)$" % self.setting('comment-char')
+
         for counter, slide in enumerate(input_text.split(self.setting('split'))):
+            slide = re.sub(comment_regexp, "", slide, flags=re.MULTILINE)
             html = md.convert(slide)
 
             # Variables to make available for string interpolation in header and footer.

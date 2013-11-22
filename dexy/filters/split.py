@@ -55,7 +55,6 @@ class SplitHtmlFilter(DexyFilter):
 
                     new_page = self.add_doc(filepath, header + section_content + footer)
                     new_page.update_setting('title', re.sub("\s+\(.+\)\s*(<.*>\s*)*", "", section_label))
-                    print "title is '%s'" % new_page.setting('title')
 
                     apply_ws_to_content = self.doc.safe_setting("apply-ws-to-content")
                     apply_ws_to_content_variable_start_string = self.doc.safe_setting("apply-ws-to-content-variable-start-string")
