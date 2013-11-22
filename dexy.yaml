@@ -4,7 +4,10 @@ docs/index.adoc|jinja|asciidoctor|customize:
         scripts: ['jquery.js', 'view-result.js']
         }
     - docs/issues.py|py:
-        - py: { add-new-files: True }
+        - py: {
+            add-new-files: True,
+            additional-doc-settings: { output: False }
+            }
     - assets
     - docs/*.sh|idio|shint|asciisyn
     - setup.py|idio|asciisyn:
