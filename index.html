@@ -1665,39 +1665,24 @@ templates should not be applied:</p>
 <pre class="pygments highlight"><code class="python language-python">    <span class="tok-k">def</span> <span class="tok-nf">apply_and_render_template</span><span class="tok-p">(</span><span class="tok-bp">self</span><span class="tok-p">,</span> <span class="tok-n">doc</span><span class="tok-p">):</span>
         <span class="tok-n">template_info</span> <span class="tok-o">=</span> <span class="tok-bp">self</span><span class="tok-o">.</span><span class="tok-n">template_file_and_path</span><span class="tok-p">(</span><span class="tok-n">doc</span><span class="tok-p">)</span>
         <span class="tok-n">template_file</span><span class="tok-p">,</span> <span class="tok-n">template_path</span> <span class="tok-o">=</span> <span class="tok-n">template_info</span>
+        <span class="tok-n">env_data</span> <span class="tok-o">=</span> <span class="tok-bp">self</span><span class="tok-o">.</span><span class="tok-n">template_environment</span><span class="tok-p">(</span><span class="tok-n">doc</span><span class="tok-p">,</span> <span class="tok-n">template_path</span><span class="tok-p">)</span>
 
+        <span class="tok-bp">self</span><span class="tok-o">.</span><span class="tok-n">log_debug</span><span class="tok-p">(</span><span class="tok-s">"  creating jinja environment"</span><span class="tok-p">)</span>
         <span class="tok-n">env</span> <span class="tok-o">=</span> <span class="tok-bp">self</span><span class="tok-o">.</span><span class="tok-n">jinja_environment</span><span class="tok-p">(</span><span class="tok-n">template_path</span><span class="tok-p">)</span>
 
-        <span class="tok-bp">self</span><span class="tok-o">.</span><span class="tok-n">log_debug</span><span class="tok-p">(</span><span class="tok-s">"  loading template at </span><span class="tok-si">%s</span><span class="tok-s">"</span> <span class="tok-o">%</span> <span class="tok-n">template_path</span><span class="tok-p">)</span>
+        <span class="tok-bp">self</span><span class="tok-o">.</span><span class="tok-n">log_debug</span><span class="tok-p">(</span><span class="tok-s">"  loading jinja template at </span><span class="tok-si">%s</span><span class="tok-s">"</span> <span class="tok-o">%</span> <span class="tok-n">template_path</span><span class="tok-p">)</span>
         <span class="tok-n">template</span> <span class="tok-o">=</span> <span class="tok-n">env</span><span class="tok-o">.</span><span class="tok-n">get_template</span><span class="tok-p">(</span><span class="tok-n">template_path</span><span class="tok-p">)</span>
 
-<span class="tok-c">#        TODO write user-facing docs.</span>
-<span class="tok-c">#        TODO finsih writing dev docs on this section and cleaning up code.</span>
-
-        <span class="tok-n">raw_env_data</span> <span class="tok-o">=</span> <span class="tok-bp">self</span><span class="tok-o">.</span><span class="tok-n">run_plugins</span><span class="tok-p">()</span>
-        <span class="tok-n">raw_env_data</span><span class="tok-o">.</span><span class="tok-n">update</span><span class="tok-p">(</span><span class="tok-bp">self</span><span class="tok-o">.</span><span class="tok-n">website_specific_template_environment</span><span class="tok-p">(</span><span class="tok-n">doc</span><span class="tok-o">.</span><span class="tok-n">output_data</span><span class="tok-p">(),</span> <span class="tok-p">{</span>
-            <span class="tok-s">'template_source'</span> <span class="tok-p">:</span> <span class="tok-p">(</span><span class="tok-s">"The directory containing the template file used."</span><span class="tok-p">,</span>
-                <span class="tok-n">template_path</span><span class="tok-p">)</span>
-            <span class="tok-p">}))</span>
-
-
-        <span class="tok-n">env_data</span> <span class="tok-o">=</span> <span class="tok-nb">dict</span><span class="tok-p">((</span><span class="tok-n">k</span><span class="tok-p">,</span> <span class="tok-n">v</span><span class="tok-p">[</span><span class="tok-mi">1</span><span class="tok-p">])</span> <span class="tok-k">for</span> <span class="tok-n">k</span><span class="tok-p">,</span> <span class="tok-n">v</span> <span class="tok-ow">in</span> <span class="tok-n">raw_env_data</span><span class="tok-o">.</span><span class="tok-n">iteritems</span><span class="tok-p">())</span>
-
-        <span class="tok-k">if</span> <span class="tok-n">doc</span><span class="tok-o">.</span><span class="tok-n">safe_setting</span><span class="tok-p">(</span><span class="tok-s">'apply-ws-to-content'</span><span class="tok-p">):</span>
-            <span class="tok-n">env_data</span><span class="tok-p">[</span><span class="tok-s">'content'</span><span class="tok-p">]</span> <span class="tok-o">=</span> <span class="tok-bp">self</span><span class="tok-o">.</span><span class="tok-n">apply_jinja_to_page_content</span><span class="tok-p">(</span><span class="tok-n">doc</span><span class="tok-p">,</span> <span class="tok-n">env_data</span><span class="tok-p">)</span>
-        <span class="tok-k">else</span><span class="tok-p">:</span>
-            <span class="tok-n">env_data</span><span class="tok-p">[</span><span class="tok-s">'content'</span><span class="tok-p">]</span> <span class="tok-o">=</span> <span class="tok-n">doc</span><span class="tok-o">.</span><span class="tok-n">output_data</span><span class="tok-p">()</span>
-
-        <span class="tok-n">fp</span> <span class="tok-o">=</span> <span class="tok-n">os</span><span class="tok-o">.</span><span class="tok-n">path</span><span class="tok-o">.</span><span class="tok-n">join</span><span class="tok-p">(</span><span class="tok-bp">self</span><span class="tok-o">.</span><span class="tok-n">setting</span><span class="tok-p">(</span><span class="tok-s">'dir'</span><span class="tok-p">),</span>
-                <span class="tok-n">doc</span><span class="tok-o">.</span><span class="tok-n">output_data</span><span class="tok-p">()</span><span class="tok-o">.</span><span class="tok-n">output_name</span><span class="tok-p">())</span><span class="tok-o">.</span><span class="tok-n">replace</span><span class="tok-p">(</span><span class="tok-s">".json"</span><span class="tok-p">,</span> <span class="tok-s">".html"</span><span class="tok-p">)</span>
+        <span class="tok-n">output_file</span> <span class="tok-o">=</span> <span class="tok-bp">self</span><span class="tok-o">.</span><span class="tok-n">fix_ext</span><span class="tok-p">(</span><span class="tok-n">doc</span><span class="tok-o">.</span><span class="tok-n">output_data</span><span class="tok-p">()</span><span class="tok-o">.</span><span class="tok-n">output_name</span><span class="tok-p">())</span>
+        <span class="tok-n">output_path</span> <span class="tok-o">=</span> <span class="tok-n">os</span><span class="tok-o">.</span><span class="tok-n">path</span><span class="tok-o">.</span><span class="tok-n">join</span><span class="tok-p">(</span><span class="tok-bp">self</span><span class="tok-o">.</span><span class="tok-n">setting</span><span class="tok-p">(</span><span class="tok-s">'dir'</span><span class="tok-p">),</span> <span class="tok-n">output_file</span><span class="tok-p">)</span>
 
         <span class="tok-k">try</span><span class="tok-p">:</span>
-            <span class="tok-n">os</span><span class="tok-o">.</span><span class="tok-n">makedirs</span><span class="tok-p">(</span><span class="tok-n">os</span><span class="tok-o">.</span><span class="tok-n">path</span><span class="tok-o">.</span><span class="tok-n">dirname</span><span class="tok-p">(</span><span class="tok-n">fp</span><span class="tok-p">))</span>
+            <span class="tok-n">os</span><span class="tok-o">.</span><span class="tok-n">makedirs</span><span class="tok-p">(</span><span class="tok-n">os</span><span class="tok-o">.</span><span class="tok-n">path</span><span class="tok-o">.</span><span class="tok-n">dirname</span><span class="tok-p">(</span><span class="tok-n">output_path</span><span class="tok-p">))</span>
         <span class="tok-k">except</span> <span class="tok-n">os</span><span class="tok-o">.</span><span class="tok-n">error</span><span class="tok-p">:</span>
             <span class="tok-k">pass</span>
 
-        <span class="tok-bp">self</span><span class="tok-o">.</span><span class="tok-n">log_debug</span><span class="tok-p">(</span><span class="tok-s">"  writing to </span><span class="tok-si">%s</span><span class="tok-s">"</span> <span class="tok-o">%</span> <span class="tok-p">(</span><span class="tok-n">fp</span><span class="tok-p">))</span>
-        <span class="tok-n">template</span><span class="tok-o">.</span><span class="tok-n">stream</span><span class="tok-p">(</span><span class="tok-n">env_data</span><span class="tok-p">)</span><span class="tok-o">.</span><span class="tok-n">dump</span><span class="tok-p">(</span><span class="tok-n">fp</span><span class="tok-p">,</span> <span class="tok-n">encoding</span><span class="tok-o">=</span><span class="tok-s">"utf-8"</span><span class="tok-p">)</span>
+        <span class="tok-bp">self</span><span class="tok-o">.</span><span class="tok-n">log_debug</span><span class="tok-p">(</span><span class="tok-s">"  writing to </span><span class="tok-si">%s</span><span class="tok-s">"</span> <span class="tok-o">%</span> <span class="tok-p">(</span><span class="tok-n">output_path</span><span class="tok-p">))</span>
+        <span class="tok-n">template</span><span class="tok-o">.</span><span class="tok-n">stream</span><span class="tok-p">(</span><span class="tok-n">env_data</span><span class="tok-p">)</span><span class="tok-o">.</span><span class="tok-n">dump</span><span class="tok-p">(</span><span class="tok-n">output_path</span><span class="tok-p">,</span> <span class="tok-n">encoding</span><span class="tok-o">=</span><span class="tok-s">"utf-8"</span><span class="tok-p">)</span>
 </code></pre>
 </div>
 </div>
@@ -1973,6 +1958,7 @@ there’s a problem:</p>
         <span class="tok-k">print</span> <span class="tok-s">"  `dexy grep` search for documents and keys in documents"</span>
         <span class="tok-k">print</span> <span class="tok-s">"  `dexy info` list metadata about a particular document"</span>
         <span class="tok-k">print</span> <span class="tok-s">"  `dexy targets` list target names you can run"</span>
+        <span class="tok-k">print</span> <span class="tok-s">"  `dexy links` list all ways to refer to documents and sections"</span>
         <span class="tok-k">print</span> <span class="tok-s">""</span>
         <span class="tok-k">print</span> <span class="tok-s">"Other commands:"</span>
         <span class="tok-k">print</span> <span class="tok-s">"  `dexy serve` start a local static web server to view generated docs"</span>
@@ -2027,7 +2013,7 @@ there’s a problem:</p>
 <div class="content">
 <pre class="pygments highlight"><code class="console language-console"><span class="tok-gp">$</span> dexy cite
 <span class="tok-go">@misc{Dexy,</span>
-<span class="tok-go">    title = {Dexy: Reproducible Data Analysis and Document Automation Software, Version~0.9.9.8d},</span>
+<span class="tok-go">    title = {Dexy: Reproducible Data Analysis and Document Automation Software, Version~1.0.0d},</span>
 <span class="tok-go">    author = {{Nelson, Ana}},</span>
 <span class="tok-go">    year = {2013},</span>
 <span class="tok-go">    url = {http://www.dexy.it/},</span>
@@ -2759,7 +2745,7 @@ are displayed.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2013-11-21 22:07:29 EST
+Last updated 2013-11-22 16:51:03 EST
 </div>
 </div>
 </body>
