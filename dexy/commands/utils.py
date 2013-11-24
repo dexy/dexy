@@ -93,7 +93,12 @@ def config_args(modargs):
                 kwargs.update(conf_args)
 
     if cliargs: # cliargs may be False
-        for k in cliargs.keys(): kwargs[k] = modargs[k]
+        for k in cliargs.keys():
+            try:
+                kwargs[k] = modargs[k]
+            except KeyError:
+                msg = "This command does not take a '--%s' argument." % k
+                raise dexy.exceptions.UserFeedback(msg)
 
     # TODO allow updating from env variables, e.g. DEXY_ARTIFACTS_DIR
 
