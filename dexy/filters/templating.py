@@ -1,5 +1,5 @@
 from dexy.filter import DexyFilter
-from dexy.filters.templating_plugins import TemplatePlugin
+from dexy.plugin import TemplatePlugin
 from jinja2 import FileSystemLoader
 from jinja2.exceptions import TemplateNotFound
 from jinja2.exceptions import TemplateSyntaxError
@@ -77,7 +77,17 @@ class TemplateFilter(DexyFilter):
         return env
 
     def template_data(self):
-        return dict((k, v[1]) for k, v in self.run_plugins().iteritems())
+        plugin_output = self.run_plugins()
+
+        template_data = {}
+
+        for k, v in plugin_output.iteritems():
+            if not isinstance(v, tuple) or len(v) != 2:
+                msg = "Template plugin '%s' must return a tuple of length 2." % k
+                raise dexy.exceptions.InternalDexyProblem(msg)
+            template_data[k] = v[1]
+
+        return template_data
 
     def process_text(self, input_text):
         template_data = self.template_data()
@@ -98,13 +108,19 @@ class JinjaFilter(TemplateFilter):
             'comment-end-string' : ("Tag to indicate the start of a comment.", "#}"),
             'changetags' : ("Automatically change from { to < based tags for .tex and .wiki files.", True),
             'jinja-path' : ("List of additional directories to pass to jinja loader.", []),
-            'workspace-includes' : [".jinja"]
+            'workspace-includes' : [".jinja"],
+            'filters' : (
+                "List of template plugins to make into jinja filters.",
+                ['highlight', 'head', 'tail', 'rstcode', 'stripjavadochtml',
+                    'replacejinjafilters', 'bs4']
+                )
             }
 
     _not_jinja_settings = (
             'changetags',
             'jinja-path',
             'workspace-includes',
+            'filters',
             )
 
     TEX_TAGS = {
@@ -220,14 +236,19 @@ class JinjaFilter(TemplateFilter):
 
         self.log_debug("setting up jinja environment")
         env = self.setup_jinja_env(loader=loader)
+        
+        for alias in self.setting('filters'):
+            template_plugin = TemplatePlugin.create_instance(alias)
 
-        env.filters['pygmentize'] = dexy.filters.templating_plugins.PygmentsStylesheet.highlight
-        env.filters['rstcode'] = dexy.filters.templating_plugins.RstCode.rstcode
-        env.filters['indent'] = dexy.filters.templating_plugins.JinjaFilters.indent
-        env.filters['head'] = dexy.filters.templating_plugins.JinjaFilters.head
-        env.filters['javadoc2rst'] = dexy.filters.templating_plugins.JavadocToRst.javadoc2rst
-        if dexy.filters.templating_plugins.PrettyPrintHtml.is_active():
-            env.filters['prettify_html'] = dexy.filters.templating_plugins.PrettyPrintHtml.prettify_html
+            if not template_plugin.is_active():
+                continue
+        
+            methods = template_plugin.run()
+
+            for k, v in methods.iteritems():
+                if not k in template_plugin.setting('no-jinja-filter'):
+                    self.log_debug("Creating jinja filter for %s" % k)
+                    env.filters[k] = v[1]
 
         self.log_debug("initializing template")
 

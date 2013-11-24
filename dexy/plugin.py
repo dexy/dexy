@@ -57,7 +57,9 @@ class TemplatePlugin(Plugin):
     """
     __metaclass__ = PluginMeta
     aliases = []
-    _settings = {}
+    _settings = {
+            'no-jinja-filter' : ("Listed entries should not be made into jinja filters.")
+            }
 
     def is_active(klass):
         return True

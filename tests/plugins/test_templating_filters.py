@@ -58,12 +58,62 @@ def test_jinja_indent_function():
                         contents = "line one\nline two"
                         )
                     ],
-                contents = """lines are:\n   {{ d['lines.txt'] | indent(3) }}"""
+                contents = "lines are:\n   {{ d['lines.txt'] | indent(3) }}"
                 )
         wrapper.run_docs(node)
         assert str(node.output_data()) == """lines are:
    line one
    line two"""
+
+def run_jinja_filter(contents):
+    with wrap() as wrapper:
+        doc = Doc("hello.txt|jinja",
+                wrapper,
+                [],
+                contents = contents
+                )
+        wrapper.run_docs(doc)
+        data = doc.output_data()
+        data.data() # make sure is loaded
+        return data
+
+def test_jinja_filters_bs4():
+    data = run_jinja_filter("{{ '<p>foo</p>' | prettify_html }}")
+    assert unicode(data) == "<p>\n foo\n</p>"
+
+    try:
+        run_jinja_filter("{{ 'foo' | BeautifulSoup }}")
+        assert False
+    except UserFeedback as e:
+        assert "no filter named 'BeautifulSoup'" in str(e)
+
+def test_jinja_filters_head():
+    data = run_jinja_filter("{{ 'foo\nbar\nbaz' | head(1) }}")
+    assert unicode(data) == "foo"
+    data = run_jinja_filter("{{ 'foo\nbar\nbaz' | head(2) }}")
+    assert unicode(data) == "foo\nbar"
+
+def test_jinja_filters_tail():
+    data = run_jinja_filter("{{ 'foo\nbar\nbaz' | tail(1) }}")
+    assert unicode(data) == "baz"
+    data = run_jinja_filter("{{ 'foo\nbar\nbaz' | tail(2) }}")
+    assert unicode(data) == "bar\nbaz"
+
+def test_jinja_filters_highlight():
+    data = run_jinja_filter("{{ '<p>foo</p>' | highlight('html') }}")
+    assert unicode(data) == u"""<div class="highlight"><pre><a name="l-1"></a><span class="nt">&lt;p&gt;</span>foo<span class="nt">&lt;/p&gt;</span>\n</pre></div>\n"""
+
+def test_jinja_filters_pygmentize():
+    data = run_jinja_filter("{{ '<p>foo</p>' | pygmentize('html') }}")
+    assert unicode(data) == u"""<div class="highlight"><pre><a name="l-1"></a><span class="nt">&lt;p&gt;</span>foo<span class="nt">&lt;/p&gt;</span>\n</pre></div>\n"""
+
+def test_jinja_filters_combined():
+    data = run_jinja_filter("{{ '<p>foo</p>' | prettify_html | highlight('html') }}")
+    assert unicode(data) == u"""<div class="highlight"><pre><a name="l-1"></a><span class="nt">&lt;p&gt;</span>
+<a name="l-2"></a> foo
+<a name="l-3"></a><span class="nt">&lt;/p&gt;</span>
+</pre></div>
+"""
 
 def test_jinja_kv():
     with wrap() as wrapper:

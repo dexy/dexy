@@ -11,6 +11,7 @@ import dexy.data
 import dexy.exceptions
 import dexy.plugin
 import inflection
+import jinja2
 import json
 import markdown
 import operator
@@ -84,20 +85,22 @@ class PrettyPrintHtml(TemplatePlugin):
     Uses BeautifulSoup 4 to prettify HTML.
     """
     aliases = ['bs4']
+    _settings = {
+            'no-jinja-filter' : ['BeautifulSoup']
+            }
 
     @classmethod
     def is_active(klass):
         return BS4_AVAILABLE
 
-    @classmethod
-    def prettify_html(klass, html):
+    def prettify_html(self, html):
         soup = BeautifulSoup(unicode(html))
         return soup.prettify()
 
     def run(self):
         return {
-            'prettify_html' : ("Pretty-print HTML using BeautifulSoup", self.prettify_html,),
-            'BeautifulSoup' : ("The BeautifulSoup module.", BeautifulSoup,)
+            'prettify_html' : ("Pretty-print HTML using BeautifulSoup", self.prettify_html),
+            'BeautifulSoup' : ("The BeautifulSoup module.", BeautifulSoup)
             }
 
 class LoadYaml(TemplatePlugin):
@@ -169,21 +172,29 @@ class Inflection(TemplatePlugin):
     def run(self):
         return dict((method, ("The %s method from Python inflection module." % method, getattr(inflection, method),)) for method in self.setting('methods'))
 
-class JavadocToRst(TemplatePlugin):
+class StripJavadocHTML(TemplatePlugin):
     """
     Exposes javadoc2rst command which strips HTML tags from javadoc comments.
     """
+    aliases = ['stripjavadochtml']
+    _settings = {
+            'escape' : ("Escape characters.", ['\\']),
+            'remove' : ("Remove characters.", ['<p>', '<P>'])
+            }
 
-    ESCAPE = ['\\']
-    REMOVE = ['<p>', '<P>']
-
-    @classmethod
-    def javadoc2rst(klass, javadoc):
-        for x in klass.REMOVE:
-            javadoc = javadoc.replace(x, '\n')
-        for x in klass.ESCAPE:
-            javadoc = javadoc.replace(x, "\\%s" % x)
+    def strip_javadoc_html(self, javadoc):
+        for symbol in self.setting('escape'):
+            javadoc = javadoc.replace(symbol, '\n')
+        for word in self.setting('remove'):
+            javadoc = javadoc.replace(word, "\\%s" % symbol)
         return javadoc
+
+    def run(self):
+        h = "Replace escape character with newlines and remove paragraph tags."
+        return {
+                'javadoc2rst' : (h, self.strip_javadoc_html),
+                'strip_javadoc_html' : (h, self.strip_javadoc_html)
+                }
 
 class PrettyPrint(TemplatePlugin):
     """
@@ -212,45 +223,71 @@ class PrettyPrintJson(TemplatePlugin):
             'ppjson' : ("Pretty prints valid JSON.", self.ppjson,)
          }
 
-class JinjaFilters(TemplatePlugin):
+class ReplaceJinjaFilters(TemplatePlugin):
     """
-    Custom jinja filters which can be accessed using the | fn() syntax in jinja templates.
+    Replace some jinja filters so they call unicode() first.
     """
-    @classmethod
-    def indent(klass, s, width=4, indentfirst=False):
-        """
-        Replacement for jinja's indent method to ensure unicode() is called prior to splitlines().
-        """
-        output = []
-        for i, line in enumerate(unicode(s).splitlines()):
-            if indentfirst or i > 0:
-                output.append("%s%s" % (' ' * width, line))
-            else:
-                output.append(line)
-        return "\n".join(output)
+    aliases = ['replacejinjafilters']
 
-    @classmethod
-    def head(klass, s, n=15):
+    def do_indent(self, data, width=4, indentfirst=False):
+        return jinja2.filters.do_indent(unicode(data), width, indentfirst)
+
+    def run(self):
+        return {
+                'indent' : ("Jinja's indent function.", self.do_indent)
+                }
+
+class Head(TemplatePlugin):
+    """
+    Provides a 'head' method.
+    """
+    aliases = ['head']
+
+    def head(self, text, n=15):
         """
         Returns the first n lines of input string.
         """
-        lines = unicode(s).splitlines()[0:n]
-        return "\n".join(lines)
+        return "\n".join(unicode(text).splitlines()[0:n])
+
+    def run(self):
+        return {
+                'head' : ("Returns the first n lines of input string.", self.head)
+                }
+
+class Tail(TemplatePlugin):
+    """
+    Provides a 'tail' method.
+    """
+    aliases = ['tail']
+
+    def tail(self, text, n=15):
+        """
+        Returns the last n lines of input string.
+        """
+        return "\n".join(unicode(text).splitlines()[-n:])
+
+    def run(self):
+        return {
+                'tail' : ("Returns the last n lines of inptu string.", self.tail)
+                }
 
 class RstCode(TemplatePlugin):
     """
-    Indents code 4 spaces and wraps in .. code:: directive.
+    Indents code n spaces (defaults to 4) and wraps in .. code:: directive.
     """
-    @classmethod
-    def rstcode(klass, text, language='python'):
-        output = [
-            ".. code:: %s" % language,
-            '   :class: highlight',
-            '']
+    aliases = ['rstcode']
+
+    def rstcode(self, text, n=4, language='python'):
+        output = inspect.cleandoc("""
+            .. code:: %s
+            '   :class: highlight'
+            """ % language)
+
         for line in unicode(text).splitlines():
-            output.append("    %s" % line)
-        output.append('')
-        return os.linesep.join(output)
+            output += " " * n + line
+
+        output += "\n"
+        return output
 
 class PythonDatetime(TemplatePlugin):
     """
@@ -316,21 +353,14 @@ class PythonBuiltins(TemplatePlugin):
 
 class PygmentsStylesheet(TemplatePlugin):
     """
-    Generates pygments stylesheets.
+    Inserts pygments style codes.
     """
     aliases = ['pygments']
 
-    # TODO figure out default fmt based on document ext
-    @classmethod
-    def highlight(klass, text, lexer_name, fmt = 'html', noclasses = False, lineanchors = 'l'):
-        if text:
-            text = unicode(text)
-            formatter_options = { "lineanchors" : lineanchors, "noclasses" : noclasses }
-            lexer = pygments.lexers.get_lexer_by_name(lexer_name)
-            formatter = pygments.formatters.get_formatter_by_name(fmt, **formatter_options)
-            return pygments.highlight(text, lexer, formatter)
+    # TODO rewrite this so it's a function rather than pre-generating all
+    # of the stylesheets. Detect document format automatically.
 
-    def run(self):
+    def generate_stylesheets(self):
         pygments_stylesheets = {}
         if hasattr(self, 'filter_instance') and self.filter_instance.doc.args.has_key('pygments'):
             formatter_args = self.filter_instance.doc.args['pygments']
@@ -349,10 +379,36 @@ class PygmentsStylesheet(TemplatePlugin):
                         ext = 'css'
                     key = "%s.%s" % (style_name, ext)
                     pygments_stylesheets[key] = style_info
+
+        return pygments_stylesheets
+
+    def run(self):
         return {
-            'pygments' : ("Dictionary of pygments stylesheets.", pygments_stylesheets,),
-            'highlight' : ("Syntax highlights contents. Args are (text, lexer_name).", self.highlight)
-            }
+            'pygments' : (
+                "Dictionary of pygments stylesheets.",
+                self.generate_stylesheets()
+             )}
+
+class PygmentsHighlight(TemplatePlugin):
+    """
+    Provides a 'highlight' function for applying syntax highlighting.
+    """
+    aliases = ['highlight']
+    # TODO figure out default fmt based on document ext - document would need
+    # to implement a "final_ext()" method
+
+    def highlight(self, text, lexer_name, fmt='html', noclasses=False, lineanchors='l'):
+        text = unicode(text)
+        formatter_options = { "lineanchors" : lineanchors, "noclasses" : noclasses }
+        lexer = pygments.lexers.get_lexer_by_name(lexer_name)
+        formatter = pygments.formatters.get_formatter_by_name(fmt, **formatter_options)
+        return pygments.highlight(text, lexer, formatter)
+
+    def run(self):
+        return {
+                'highlight' : ("Pygments syntax highlighter.", self.highlight),
+                'pygmentize' : ("Pygments syntax highlighter.", self.highlight)
+                }
 
 class Subdirectories(TemplatePlugin):
     """
