@@ -109,6 +109,9 @@ class JinjaFilter(TemplateFilter):
             'changetags' : ("Automatically change from { to < based tags for .tex and .wiki files.", True),
             'jinja-path' : ("List of additional directories to pass to jinja loader.", []),
             'workspace-includes' : [".jinja"],
+            'assertion-passed-indicator' : (
+                "Extra text to return with a passed assertion.",
+                ""),
             'filters' : (
                 "List of template plugins to make into jinja filters.",
                 ['assertions', 'highlight', 'head', 'tail', 'rstcode', 'stripjavadochtml',
@@ -121,6 +124,7 @@ class JinjaFilter(TemplateFilter):
             'jinja-path',
             'workspace-includes',
             'filters',
+            'assertion-passed-indicator'
             )
 
     TEX_TAGS = {

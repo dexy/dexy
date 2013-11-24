@@ -244,19 +244,30 @@ class Assertions(TemplatePlugin):
     """
     aliases = ['assertions']
 
+    def decorate_response(self, doc):
+        if hasattr(self, 'filter_instance'):
+            indicator = self.filter_instance.setting('assertion-passed-indicator')
+        else:
+            indicator = None
+
+        if indicator:
+            return unicode(doc) + indicator
+        else:
+            return doc
+
     def do_assert_equals(self, doc, expected):
         """
         Assert that input equals expected value.
         """
         assert unicode(doc) == expected, "input text did not equal '%s'" % expected
-        return doc
+        return self.decorate_response(doc)
 
     def do_assert_contains(self, doc, contains):
         """
         Assert that input equals expected value.
         """
         assert contains in unicode(doc), "input text did not contain '%s'" % contains
-        return doc
+        return self.decorate_response(doc)
 
     def do_assert_does_not_contain(self, doc, shouldnt_contain):
         """
@@ -264,21 +275,21 @@ class Assertions(TemplatePlugin):
         """
         msg = "input text contained '%s'" % shouldnt_contain
         assert not shouldnt_contain in unicode(doc), msg
-        return doc
+        return self.decorate_response(doc)
 
     def do_assert_startswith(self, doc, startswith):
         """
         Assert that the input starts with the specified value.
         """
         assert unicode(doc).startswith(startswith), "input text did not start with '%s'" % startswith
-        return doc
+        return self.decorate_response(doc)
 
     def do_assert_matches(self, doc, regexp):
         """
         Assert that input matches the specified regular expressino.
         """
         assert re.match(regexp, unicode(doc)), "input text did not match regexp %s" % regexp
-        return doc
+        return self.decorate_response(doc)
 
     def make_soup(self, doc):
         if not BS4_AVAILABLE:
