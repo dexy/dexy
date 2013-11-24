@@ -111,7 +111,7 @@ class JinjaFilter(TemplateFilter):
             'workspace-includes' : [".jinja"],
             'filters' : (
                 "List of template plugins to make into jinja filters.",
-                ['highlight', 'head', 'tail', 'rstcode', 'stripjavadochtml',
+                ['assertions', 'highlight', 'head', 'tail', 'rstcode', 'stripjavadochtml',
                     'replacejinjafilters', 'bs4']
                 )
             }
@@ -224,6 +224,23 @@ class JinjaFilter(TemplateFilter):
 
         raise dexy.exceptions.UserFeedback("\n".join(result))
 
+    def jinja_template_filters(self):
+        filters = {}
+        for alias in self.setting('filters'):
+            template_plugin = TemplatePlugin.create_instance(alias)
+
+            if not template_plugin.is_active():
+                continue
+        
+            methods = template_plugin.run()
+
+            for k, v in methods.iteritems():
+                if not k in template_plugin.setting('no-jinja-filter'):
+                    self.log_debug("Creating jinja filter for %s" % k)
+                    filters[k] = v[1]
+
+        return filters
+
     def process(self):
         self.populate_workspace()
 
@@ -236,19 +253,7 @@ class JinjaFilter(TemplateFilter):
 
         self.log_debug("setting up jinja environment")
         env = self.setup_jinja_env(loader=loader)
-        
-        for alias in self.setting('filters'):
-            template_plugin = TemplatePlugin.create_instance(alias)
-
-            if not template_plugin.is_active():
-                continue
-        
-            methods = template_plugin.run()
-
-            for k, v in methods.iteritems():
-                if not k in template_plugin.setting('no-jinja-filter'):
-                    self.log_debug("Creating jinja filter for %s" % k)
-                    env.filters[k] = v[1]
+        env.filters.update(self.jinja_template_filters())
 
         self.log_debug("initializing template")
 

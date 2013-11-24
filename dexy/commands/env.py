@@ -6,10 +6,11 @@ def env_command():
     """
     Prints list of template plugins.
     """
-    f = dexy.filter.Filter.create_instance("template")
+    f = dexy.filter.Filter.create_instance("jinja")
     f.doc = dexy.doc.Doc('dummy', dummy_wrapper())
-    env = f.run_plugins()
+    jinja_template_filters = f.jinja_template_filters().keys()
 
+    env = f.run_plugins()
     for k in sorted(env):
         try:
             helpstring, value = env[k]
@@ -18,8 +19,14 @@ def env_command():
             print "Values should be a (docstring, value) tuple."
             raise
 
-        print "%s: %s" % (k, helpstring,)
+        if k in jinja_template_filters:
+            print "*%s: %s" % (k, helpstring,)
+        else:
+            print "%s: %s" % (k, helpstring,)
 
+    print ''
+    print "* indicates the method can be used as a jinja template filter"
+    print ''
 
 def plugins_command():
     """

@@ -11,6 +11,7 @@ import dexy.data
 import dexy.exceptions
 import dexy.plugin
 import inflection
+import inspect
 import jinja2
 import json
 import markdown
@@ -236,6 +237,95 @@ class ReplaceJinjaFilters(TemplatePlugin):
         return {
                 'indent' : ("Jinja's indent function.", self.do_indent)
                 }
+
+class Assertions(TemplatePlugin):
+    """
+    Allow making assertions in documents.
+    """
+    aliases = ['assertions']
+
+    def do_assert_equals(self, doc, expected):
+        """
+        Assert that input equals expected value.
+        """
+        assert unicode(doc) == expected, "input text did not equal '%s'" % expected
+        return doc
+
+    def do_assert_contains(self, doc, contains):
+        """
+        Assert that input equals expected value.
+        """
+        assert contains in unicode(doc), "input text did not contain '%s'" % contains
+        return doc
+
+    def do_assert_does_not_contain(self, doc, shouldnt_contain):
+        """
+        Assert that input equals expected value.
+        """
+        msg = "input text contained '%s'" % shouldnt_contain
+        assert not shouldnt_contain in unicode(doc), msg
+        return doc
+
+    def do_assert_startswith(self, doc, startswith):
+        """
+        Assert that the input starts with the specified value.
+        """
+        assert unicode(doc).startswith(startswith), "input text did not start with '%s'" % startswith
+        return doc
+
+    def do_assert_matches(self, doc, regexp):
+        """
+        Assert that input matches the specified regular expressino.
+        """
+        assert re.match(regexp, unicode(doc)), "input text did not match regexp %s" % regexp
+        return doc
+
+    def make_soup(self, doc):
+        if not BS4_AVAILABLE:
+            msg = "BeautifulSoup 4 must be installed to use assert_selector_text"
+            raise UserFeedback(msg)
+        return BeautifulSoup(unicode(doc))
+
+    def soup_select(self, doc, selector):
+        soup = self.make_soup(doc)
+        return soup.select(selector)
+
+    def soup_select_unique(self, doc, selector):
+        results = self.soup_select(doc, selector)
+
+        n = len(results)
+        if n == 0:
+            msg = "no results found matching selector '%s'"
+            msgargs = (selector,)
+            raise AssertionError(msg % msgargs)
+
+        elif n > 1:
+            msg = "%s results found matching selector '%s', must be unique"
+            msgargs = (n, selector,)
+            raise AssertionError(msg % msgargs)
+
+        return results[0]
+
+    def do_assert_selector_text(self, doc, selector, expected_text):
+        """
+        Asserts that the contents of CSS selector matches the expected text.
+        
+        Leading/trailing whitespace is stripped before comparison.
+        """
+        element = self.soup_select_unique(doc, selector)
+        err = "element '%s' did not contain '%s'" % (selector, expected_text)
+        assert element.get_text().strip() == expected_text, err
+
+    def run(self):
+        methods = {}
+        for name in dir(self):
+            if name.startswith("do_"):
+                method = getattr(self, name)
+                docs = inspect.getdoc(method).splitlines()[0].strip()
+                if not docs:
+                    raise InternalDexyProblem("You must define docstring for %s" % name)
+                methods[name.replace("do_", "")] = (docs, method)
+        return methods
 
 class Head(TemplatePlugin):
     """
