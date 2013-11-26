@@ -6,9 +6,20 @@ import inspect
 import json
 import os
 import pkgutil
-import sys
 import sqlite3
-from unittest.case import SkipTest
+import sys
+
+
+# from https://nose.readthedocs.org/en/latest/plugins/skip.html
+try:
+    # 2.7
+    from unittest.case import SkipTest
+except ImportError:
+    # 2.6 and below
+    class SkipTest(Exception):
+        """Raise this exception to mark a test as skipped.
+        """
+    pass
 
 class PythonIntrospection(DexyFilter):
     """
