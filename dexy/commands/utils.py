@@ -10,6 +10,10 @@ import logging
 import os
 import yaml
 
+class NullHandler(logging.Handler):
+    def emit(self, record):
+        pass
+
 RENAME_PARAMS = {
         'artifactsdir' : 'artifacts_dir',
         'conf' : 'config_file',
@@ -193,7 +197,7 @@ def template_text(template):
 def dummy_wrapper():
     wrapper = dexy.wrapper.Wrapper()
     wrapper.log = logging.getLogger('dexy')
-    wrapper.log.addHandler(logging.NullHandler())
+    wrapper.log.addHandler(NullHandler())
     wrapper.filemap = {}
     return wrapper
 
