@@ -81,6 +81,7 @@ def test_jinja_filters_bs4():
     data = run_jinja_filter("{{ '<p>foo</p>' | prettify_html }}")
     assert unicode(data) == "<p>\n foo\n</p>"
 
+def test_beautiful_soup_should_not_be_available_as_filter():
     try:
         run_jinja_filter("{{ 'foo' | BeautifulSoup }}")
         assert False

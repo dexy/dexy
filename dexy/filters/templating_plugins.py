@@ -547,7 +547,7 @@ class Globals(TemplatePlugin):
         for kvpair in raw_globals.split(","):
             if "=" in kvpair:
                 k, v = kvpair.split("=")
-                env[k] = v
+                env[k] = ("Global variable %s" % k, v)
         return env
 
 class Inputs(TemplatePlugin):

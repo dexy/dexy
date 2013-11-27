@@ -101,4 +101,4 @@ def test_globals():
 
         wrapper.run_docs(node)
         env = node.filters[-1].run_plugins()
-        assert env['foo'] == 'bar'
+        assert env['foo'][1] == 'bar'
