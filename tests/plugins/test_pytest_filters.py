@@ -1,7 +1,9 @@
 from tests.utils import wrap
 from dexy.doc import Doc
+from nose.exc import SkipTest
 
 def test_pytest_filter():
+    raise SkipTest() # this is running dexy's tests, not cashew's tests
     with wrap() as wrapper:
         doc = Doc(
                 "modules.txt|pytest",
