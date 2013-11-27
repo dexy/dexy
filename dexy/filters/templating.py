@@ -231,16 +231,18 @@ class JinjaFilter(TemplateFilter):
     def jinja_template_filters(self):
         filters = {}
         for alias in self.setting('filters'):
+            self.log_debug("  creating filters from template plugin %s" % alias)
             template_plugin = TemplatePlugin.create_instance(alias)
 
             if not template_plugin.is_active():
+                self.log_debug("    skipping %s - not active" % alias)
                 continue
         
             methods = template_plugin.run()
 
             for k, v in methods.iteritems():
                 if not k in template_plugin.setting('no-jinja-filter'):
-                    self.log_debug("Creating jinja filter for %s" % k)
+                    self.log_debug("    creating jinja filter for method %s" % k)
                     filters[k] = v[1]
 
         return filters
@@ -257,6 +259,7 @@ class JinjaFilter(TemplateFilter):
 
         self.log_debug("setting up jinja environment")
         env = self.setup_jinja_env(loader=loader)
+        self.log_debug("setting up jinja template filters")
         env.filters.update(self.jinja_template_filters())
 
         self.log_debug("initializing template")
