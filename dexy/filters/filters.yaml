@@ -1,3 +1,25 @@
+livescript:
+    added-in-version: "1.0.1"
+    class: SubprocessStdoutFilter
+    help: Runs LiveScript (.ls) files.
+    examples: [lsc]
+    executable: lsc
+    input-extensions: [.ls, .txt]
+    output-extensions: [.txt]
+    version-command: lsc -v
+    command-string: "%(prog)s -p %(args)s %(script_file)s %(scriptargs)s"
+
+elixir:
+    added-in-version: "1.0.1"
+    class: SubprocessStdoutFilter
+    help: Runs Elixir (.ex) files.
+    examples: [elixir]
+    executable: elixir
+    input-extensions: [.exs, .ex, .txt]
+    output-extensions: [.txt]
+    version-command: elixir -v
+    command-string: "%(prog)s %(args)s %(script_file)s %(scriptargs)s"
+
 make:
     added-in-version: "0.9.9.6"
     class: SubprocessStdoutFilter
@@ -38,7 +60,7 @@ gotest:
     command-string: "%(prog)s test %(args)s %(script_file)s"
     input-extensions: [.go, .txt]
     output-extensions: [.txt]
-    
+
 ditaa:
     added-in-version: "0.9.9.6"
     examples: [ditaa]
@@ -185,7 +207,7 @@ php:
     output-extensions: [.html, .txt]
     help: >
         Runs php file.
-        
+
         Php code must be included in <?php ... ?> tags.
 
 nodejs|node:
@@ -228,7 +250,7 @@ jirb:
     prompts : ['>>' ,'?>']
     version-command : jirb --version
 
-redcloth|textile: 
+redcloth|textile:
     class: SubprocessStdoutFilter
     help: Converts textile to HTML using Redcloth.
     executable: redcloth
@@ -237,7 +259,7 @@ redcloth|textile:
     output-extensions: ['.html']
     version-command: redcloth --version
 
-redclothl|latextile: 
+redclothl|latextile:
     class: SubprocessStdoutFilter
     help: Converts textile to LaTeX using Redcloth.
     tags: [text, markup]
@@ -343,7 +365,7 @@ calibre|ebook:
            - .pml
     help: >
        Runs `ebook-convert` command (part of calibre)
-       
+
        Generates various output formats (including .mobi for Kindle)
        http://manual.calibre-ebook.com/cli/ebook-convert.html
 
@@ -477,7 +499,7 @@ html2pdf|wkhtmltopdf:
 
 ps2pdf|pstopdf:
     class: SubprocessFilter
-    help: Converts a postscript file to PDF format. 
+    help: Converts a postscript file to PDF format.
     tags: [pdf]
     executable: ps2pdf
     input-extensions: [.ps, .txt]
