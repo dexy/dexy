@@ -1,12 +1,7 @@
+from bs4 import BeautifulSoup
 from dexy.filter import DexyFilter
 import inflection
 import re
-
-try:
-    from bs4 import BeautifulSoup
-    BS4_AVAILABLE = True
-except ImportError:
-    BS4_AVAILABLE = False
 
 class Customize(DexyFilter):
     """
@@ -20,9 +15,6 @@ class Customize(DexyFilter):
             'scripts' : ("Javascript files to add.", []),
             'stylesheets' : ("CSS files to add.", [])
             }
-
-    def is_active(self):
-        return BS4_AVAILABLE
 
     def process_text(self, input_text):
         soup = BeautifulSoup(input_text)
@@ -48,9 +40,6 @@ class SoupSections(DexyFilter):
             'html-parser' : ("Name of html parser BeautifulSoup should use.", 'html.parser'),
             'initial-section-name' : ("Name to use for the initial section which currently holds all the contents.", u"Actual Document Contents"),
             }
-
-    def is_active(self):
-        return BS4_AVAILABLE
 
     def append_current_section(self):
         section_dict = {

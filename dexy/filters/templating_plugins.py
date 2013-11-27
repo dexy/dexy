@@ -1,6 +1,7 @@
+from bs4 import BeautifulSoup
 from datetime import datetime
 from dexy.exceptions import UserFeedback
-from dexy.filters.soup import BS4_AVAILABLE
+from dexy.exceptions import InternalDexyProblem
 from dexy.plugin import TemplatePlugin
 from dexy.utils import levenshtein
 from dexy.version import DEXY_VERSION
@@ -24,7 +25,6 @@ import re
 import time
 import uuid
 import xml.etree.ElementTree as ET
-
 
 class Etree(TemplatePlugin):
     """
@@ -85,9 +85,6 @@ class PrettyPrintHtml(TemplatePlugin):
     _settings = {
             'no-jinja-filter' : ['BeautifulSoup']
             }
-
-    def is_active(klass):
-        return BS4_AVAILABLE
 
     def prettify_html(self, html):
         soup = BeautifulSoup(unicode(html))
@@ -286,9 +283,6 @@ class Assertions(TemplatePlugin):
         return self.decorate_response(doc)
 
     def make_soup(self, doc):
-        if not BS4_AVAILABLE:
-            msg = "BeautifulSoup 4 must be installed to use assert_selector_text"
-            raise UserFeedback(msg)
         return BeautifulSoup(unicode(doc))
 
     def soup_select(self, doc, selector):

@@ -48,7 +48,8 @@ setup(
             'dexy_viewer', ## TODO version
             # for convenience of running additional filters
             'Markdown',
-            'docutils'
+            'docutils',
+            'BeautifulSoup4'
             ],
         name='dexy',
         packages=find_packages(),
