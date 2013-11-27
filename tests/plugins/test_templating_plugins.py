@@ -36,7 +36,6 @@ def test_pygments():
         assert 'pastie.tex' in env['pygments'][1].keys()
         assert 'pastie.css' in env['pygments'][1].keys()
         assert 'pastie.html' in env['pygments'][1].keys()
-        assert hasattr(env['highlight'][1], '__call__')
 
 class TestSubdirectory(TemplateFilter):
     """
