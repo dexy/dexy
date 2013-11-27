@@ -61,7 +61,7 @@ class TemplatePlugin(Plugin):
             'no-jinja-filter' : ("Listed entries should not be made into jinja filters.")
             }
 
-    def is_active(klass):
+    def is_active(self):
         return True
 
     def __init__(self, filter_instance=None):

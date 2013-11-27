@@ -8,9 +8,9 @@ import urllib
 try:
     import boto
     from boto.s3.key import Key
-    AVAILABLE = True
+    BOTO_AVAILABLE = True
 except ImportError:
-    AVAILABLE = False
+    BOTO_AVAILABLE = False
 
 class BotoUploadFilter(ApiFilter):
     """
@@ -47,9 +47,8 @@ class BotoUploadFilter(ApiFilter):
             }
     API_KEY_KEYS = ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_BUCKET_NAME']
 
-    @classmethod
-    def is_active(klass):
-        return AVAILABLE
+    def is_active(self):
+        return BOTO_AVAILABLE
 
     def bucket_name(self):
         """

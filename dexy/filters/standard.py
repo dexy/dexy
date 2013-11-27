@@ -165,7 +165,6 @@ class StartSpaceFilter(DexyFilter):
             'data-type' : 'sectioned'
             }
 
-    @classmethod
     def add_spaces_at_start(self, text, n):
         spaces = " " * n
         return "\n".join("%s%s" % (spaces, line) for line in text.splitlines())

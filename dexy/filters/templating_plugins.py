@@ -1,5 +1,6 @@
 from datetime import datetime
 from dexy.exceptions import UserFeedback
+from dexy.filters.soup import BS4_AVAILABLE
 from dexy.plugin import TemplatePlugin
 from dexy.utils import levenshtein
 from dexy.version import DEXY_VERSION
@@ -24,11 +25,6 @@ import time
 import uuid
 import xml.etree.ElementTree as ET
 
-try:
-    from bs4 import BeautifulSoup
-    BS4_AVAILABLE = True
-except ImportError:
-    BS4_AVAILABLE = False
 
 class Etree(TemplatePlugin):
     """
@@ -90,7 +86,6 @@ class PrettyPrintHtml(TemplatePlugin):
             'no-jinja-filter' : ['BeautifulSoup']
             }
 
-    @classmethod
     def is_active(klass):
         return BS4_AVAILABLE
 
@@ -154,7 +149,6 @@ class Bibtex(TemplatePlugin):
     """
     Produces a bibtex entry for dexy.
     """
-    @classmethod
     def run(self):
         return { 'dexy_bibtex' : dexy.commands.cite.bibtex_text() }
 
