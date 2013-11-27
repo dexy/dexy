@@ -87,7 +87,7 @@ class PrettyPrintHtml(TemplatePlugin):
             }
 
     def prettify_html(self, html):
-        soup = BeautifulSoup(unicode(html))
+        soup = BeautifulSoup(unicode(html), 'html.parser')
         return soup.prettify()
 
     def run(self):
