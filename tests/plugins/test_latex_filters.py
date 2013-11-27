@@ -1,6 +1,5 @@
 from tests.utils import runfilter
 from tests.utils import wrap
-import dexy.exceptions
 from dexy.doc import Doc
 
 def test_latex():
@@ -15,11 +14,6 @@ def test_latex_dvi():
 
 def test_tikz():
     with runfilter('tikz', TIKZ) as doc:
-        assert ".pdf" in doc.output_data().name
-        assert doc.output_data().is_cached()
-
-def test_xetex():
-    with runfilter('xetex', LATEX) as doc:
         assert ".pdf" in doc.output_data().name
         assert doc.output_data().is_cached()
 
