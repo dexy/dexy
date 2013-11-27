@@ -1,5 +1,5 @@
 from dexy.filter import DexyFilter
-from dexy.filters.standard import StartSpaceFilter
+from dexy.utils import indent
 from pygments import highlight
 from pygments.formatters import HtmlFormatter
 from pygments.formatters import LatexFormatter
@@ -42,7 +42,7 @@ class SyntaxHighlightRstFilter(DexyFilter):
         lexer_alias = file_ext_to_lexer_alias_cache[self.input_data.ext]
 
         for section_name, section_input in self.input_data.iteritems():
-            with_spaces = StartSpaceFilter.add_spaces_at_start(section_input, n)
+            with_spaces = indent(section_input, n)
             section_output = ".. code:: %s\n\n%s" % (lexer_alias, with_spaces)
             self.output_data[section_name] = section_output
 

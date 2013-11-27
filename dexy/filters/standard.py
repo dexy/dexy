@@ -1,4 +1,5 @@
 from dexy.filter import DexyFilter
+from dexy.utils import indent
 import copy
 import dexy.exceptions
 import json
@@ -165,14 +166,10 @@ class StartSpaceFilter(DexyFilter):
             'data-type' : 'sectioned'
             }
 
-    def add_spaces_at_start(self, text, n):
-        spaces = " " * n
-        return "\n".join("%s%s" % (spaces, line) for line in text.splitlines())
-
     def process(self):
         n = self.setting('n')
         for section_name, section_input in self.input_data.iteritems():
-            self.output_data[section_name] = self.add_spaces_at_start(section_input, n)
+            self.output_data[section_name] = indent(section_input, n)
         self.output_data.save()
 
 class SectionsByLine(DexyFilter):
