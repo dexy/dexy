@@ -2,7 +2,6 @@ livescript:
     added-in-version: "1.0.1"
     class: SubprocessStdoutFilter
     help: Runs LiveScript (.ls) files.
-    examples: [lsc]
     executable: lsc
     input-extensions: [.ls, .txt]
     output-extensions: [.txt]
@@ -13,7 +12,6 @@ elixir:
     added-in-version: "1.0.1"
     class: SubprocessStdoutFilter
     help: Runs Elixir (.ex) files.
-    examples: [elixir]
     executable: elixir
     input-extensions: [.exs, .ex, .txt]
     output-extensions: [.txt]
