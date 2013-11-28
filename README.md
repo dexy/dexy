@@ -13,7 +13,7 @@ Dexy's Developer Guide http://dexy.github.io/dexy
 
 ## Source
 
-Dexy's source code is available from http://github.com/ananelson/dexy
+Dexy's source code is available from http://github.com/dexy/dexy
 
 The 'master' branch contains the most recent release of Dexy.
 The 'develop' branch contains the most recent development version of Dexy.
