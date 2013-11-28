@@ -4,20 +4,20 @@ from dexy.filters.process import SubprocessExtToFormatFilter
 from dexy.filters.process import SubprocessFilter
 import os
 
-class AsciidoctorFOPDF(SubprocessFilter):
+class AsciidoctorFOPUB(SubprocessFilter):
     """
-    Uses asciidoctor-fopdf to generate PDF.
+    Uses asciidoctor-fopub to generate PDF.
     """
-    aliases = ['fopdf']
+    aliases = ['fopub','fopdf']
 
     _settings = {
-            'fopdf-dir' : ("Absolute path on file system to asciidoctor-fopdf dir.", None)
+            'fopub-dir' : ("Absolute path on file system to asciidoctor-fopub dir.", None)
             }
 
     def process(self):
-        # make copy of fopdf-dir (use hardlinks?)
+        # make copy of fopub-dir (use hardlinks?)
         # copy working files including dependencies
-        # run fopdf
+        # run fopub
         # copy generated PDF
         pass
 
