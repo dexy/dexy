@@ -187,26 +187,50 @@ class SectionsByLine(DexyFilter):
             self.output_data["%s" % (i+1)] = line
         self.output_data.save()
 
-class SectionsByWhitespace(DexyFilter):
+class ClojureWhitespaceFilter(DexyFilter):
     """
-    Del
+    Parse clojure code into sections based on whitespace and try to guess a
+    useful name for each section by looking for def, defn, deftest or a
+    comment.
     """
-    aliases = ['sectionsbywhitespace']
+    aliases = ['cljws']
     _settings = {
-            'data-type' : 'sectioned'
+            'data-type' : 'sectioned',
+            'name-regex' : (
+                """List of regular expressions including a match group
+                representing the name of the section. Will be tried in
+                order.""",
+                [
+                    "\(def ([a-z\-]+)",
+                    "\(defn ([a-z\-]+)",
+                    "\(defn= ([a-z\-]+)",
+                    "\(deftest ([a-z\-]+)",
+                ])
             }
 
     def process(self):
         input_text = unicode(self.input_data)
         for i, section in enumerate(input_text.split("\n\n")):
-            self.output_data["%s" % (i+1)] = section
+            section_name = self.parse_section_name(section)
+            if section_name:
+                self.output_data[section_name] = section
+            else:
+                self.output_data["%s" % (i+1)] = section
+
         self.output_data.save()
 
     def parse_section_name(self, section_text):
         """
         Parse a section name out of the section text.
         """
-        return None
+        if not section_text:
+            return
+
+        firstline = section_text.splitlines()[0]
+        for regex in self.setting('name-regex'):
+            m = re.match(regex, firstline)
+            if m:
+                return m.groups()[0]
 
 class PrettyPrintJsonFilter(DexyFilter):
     """
