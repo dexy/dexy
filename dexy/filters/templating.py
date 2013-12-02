@@ -15,7 +15,7 @@ class PassThroughWhitelistUndefined(jinja2.StrictUndefined):
 
     def wrap_arg(self, arg):
         if isinstance(arg, basestring):
-            return "'%s'" % unicode(arg)
+            return "\"%s\"" % unicode(arg)
         else:
             return unicode(arg)
 
