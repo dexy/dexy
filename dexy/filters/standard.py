@@ -226,7 +226,11 @@ class ClojureWhitespaceFilter(DexyFilter):
         if not section_text:
             return
 
-        firstline = section_text.splitlines()[0]
+        for line in section_text.splitlines():
+            firstline = line
+            if not line.strip().startswith(';'):
+                break
+
         for regex in self.setting('name-regex'):
             m = re.match(regex, firstline)
             if m:
