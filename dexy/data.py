@@ -227,7 +227,7 @@ class Data(dexy.plugin.Plugin):
         Returns a relative path from this document to the passed other
         document.
         """
-        return posixpath.relpath(relative_to, self.parent_dir())
+        return posixpath.relpath(relative_to, self.output_parent_dir())
 
     def strip(self):
         """
@@ -266,6 +266,12 @@ class Data(dexy.plugin.Plugin):
         else:
             return relativize(self.name)
 
+    def output_parent_dir(self):
+        """
+        Canonical output directory, taking into account custom outputroot and document name.
+        """
+        return os.path.dirname(self.output_name())
+        
     def filesize(self, this=None):
         """
         Returns size of file stored on disk.

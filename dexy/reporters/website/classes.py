@@ -344,7 +344,7 @@ class Website(Output):
 
         return env_data
 
-    def section(self, data, section_name=None, url_base="/", link_text = None):
+    def section(self, data, section_name=None, url_base=None, link_text = None):
         """
         Returns an HTML link to section without needing to specify which
         document it is in (section name must be globally unique).
@@ -369,9 +369,9 @@ class Website(Output):
         if not link_text:
             link_text = section_name
 
-        return self.link_for(url_base, link_to_data.output_name(), link_text, anchor)
+        return self.link_for(url_base, data.relative_path_to(link_to_data.output_name()), link_text, anchor)
 
-    def link(self, data, doc_key, section_name=None, url_base="/", link_text = None, description=False):
+    def link(self, data, doc_key, section_name=None, url_base=None, link_text = None, description=False):
         """
         Returns an HTML link to document, optionally with an anchor linking to section.
         """
@@ -415,7 +415,10 @@ class Website(Output):
             return link_html
 
     def link_for(self, url_base, link, link_text, anchor=None):
-        url = urlparse.urljoin(url_base, link)
+        if url_base:
+            url = urlparse.urljoin(url_base, link)
+        else:
+            url = link
         if anchor:
             return """<a href="%s#%s">%s</a>""" % (url, anchor, link_text)
         else:
