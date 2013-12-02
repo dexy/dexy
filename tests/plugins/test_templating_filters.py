@@ -10,7 +10,7 @@ def test_jinja_pass_through():
             f.write("{{ content }}")
 
         wrapper.reports = 'ws'
-        contents = u"{{ link('input.txt') }}"
+        contents = u"{{ link(\"input.txt\") }}"
         doc = Doc("lines.html|jinja",
                     wrapper,
                     [
@@ -30,7 +30,7 @@ def test_jinja_pass_through():
 
         with open("output-site/lines.html", 'r') as f:
             lines_html = f.read()
-            assert lines_html == """<a href="/input.txt">Input</a>"""
+            assert lines_html == """<a href="input.txt">Input</a>"""
 
 def test_jinja_pass_through_fails_if_not_whitelisted():
     with wrap() as wrapper:
