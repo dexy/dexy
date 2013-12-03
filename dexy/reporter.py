@@ -152,7 +152,8 @@ class Reporter(dexy.plugin.Plugin):
             return False
 
         if file_exists(self.report_dir()) and not file_exists(self.safety_filepath()):
-            msg = "Please remove directory %s, Dexy wants to write a report here but there's already a file or directory in this location."
+            msg = """Please remove directory %s, Dexy wants to write a report
+            here but there's already a file or directory in this location."""
             msgargs = (os.path.abspath(self.report_dir()),)
             raise dexy.exceptions.UserFeedback(msg % msgargs)
         elif file_exists(self.report_dir()):

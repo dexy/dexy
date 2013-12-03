@@ -69,6 +69,10 @@ class Website(Output):
 
     def run(self, wrapper):
         self.wrapper=wrapper
+
+        self.remove_reports_dir(self.wrapper, keep_empty_dir=True)
+        self.create_reports_dir()
+
         self.setup()
 
         if self.wrapper.target:
