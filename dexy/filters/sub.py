@@ -9,6 +9,50 @@ import json
 import os
 import shutil
 
+class Redcarpet(SubprocessStdoutFilter):
+    """
+    Converts github-flavored markdown to HTML using redcarpet.
+    """
+    aliases = ['redcarpet', 'ghmd']
+    _settings = {
+            'added-in-version' : '1.0.1',
+            'executable' : 'redcarpet',
+            'input-extensions' : [".md", ".txt"],
+            'output-extensions' : [".html"],
+            # parse options
+            'parse-autolink' : ("autolink option from redcarpet", True),
+            'parse-disabled-indented-code-blocks' : ("disabled-indented-code-blocks option from redcarpet", False),
+            'parse-fenced-code-blocks' : ("fenced-code-blocks option from redcarpet", True),
+            'parse-highlight' : ("highlight option from redcarpet", True),
+            'parse-lax-spacing' : ("lax-spacing option from redcarpet", True),
+            'parse-no-intra-emphasis' : ("no-intra-emphasis option from redcarpet", True),
+            'parse-quotes' : ("quotes option from redcarpet", True),
+            'parse-space-after-headers' : ("space-after-headers option from redcarpet", True),
+            'parse-strikethrough' : ("strikethrough option from redcarpet", True),
+            'parse-subscript' : ("subscript option from redcarpet", True),
+            'parse-superscript' : ("superscript option from redcarpet", True),
+            'parse-tables' : ("tables option from redcarpet", True),
+            'parse-underline' : ("underline option from redcarpet", True),
+            # render options
+            'render-filter-html' : ("filter-html option from redcarpet", False),
+            'render-no-images' : ("no-images option from redcarpet", False),
+            'render-no-links' : ("no-links option from redcarpet", False),
+            'render-no-styles' : ("no-styles option from redcarpet", False),
+            'render-safe-links-only' : ("safe-links-only option from redcarpet", False),
+            'render-with-toc-data' : ("with-toc-data option from redcarpet", False),
+            'render-hard-wrap' : ("hard-wrap option from redcarpet", False),
+            'render-prettify' : ("prettify option from redcarpet", False),
+            'render-xhtml' : ("xhtml option from redcarpet", False)
+            }
+  
+    def command_string(self):
+        args = self.command_string_args()
+
+        args['parse_args'] = " ".join("--%s" % name for name in args if name.startswith("parse-") and args[name])
+        args['render_args'] = " ".join("--%s" % name for name in args if name.startswith("render-") and args[name])
+
+        return "%(prog)s %(parse_args)s %(render_args)s %(script_file)s" % args
+
 class TidyCheck(SubprocessFilter):
     """
     Runs `tidy` to check for valid HTML.
