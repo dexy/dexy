@@ -170,8 +170,14 @@ def import_extra_plugins(kwargs):
             else:
                 import_plugins_from_python_package(import_target)
 
-def init_wrapper(modargs):
-    kwargs = config_args(modargs)
+def init_wrapper(modargs, apply_defaults=False):
+    if apply_defaults:
+        modargs_with_defaults = defaults
+        modargs_with_defaults.update(modargs)
+    else:
+        modargs_with_defaults = modargs
+    
+    kwargs = config_args(modargs_with_defaults)
     import_extra_plugins(kwargs)
     kwargs = rename_params(kwargs)
     kwargs = skip_params(kwargs)

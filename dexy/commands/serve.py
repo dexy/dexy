@@ -5,6 +5,8 @@ import socket
 import os
 import sys
 from dexy.utils import file_exists
+from dexy.commands.utils import init_wrapper
+import dexy.load_plugins
 
 NO_OUTPUT_MSG = """Please run dexy first, or specify a directory to serve. \
 For help run 'dexy help -on serve'"""
@@ -75,7 +77,8 @@ def serve_command(
         username='', # http auth username to use (if provided)
         password='', # http auth password to use (if provided)
         realm='Dexy', # http auth realm to use (if username and password are provided)
-        directory=False # Custom directory to be served.
+        directory=False, # Custom directory to be served.
+        **kwargs
         ):
     """
     Runs a simple web server on dexy-generated files.
@@ -86,11 +89,15 @@ def serve_command(
     this can also be customized. If a username and password are provided, uses
     HTTP auth to access pages.
     """
+
     if not directory:
+        wrapper = init_wrapper(locals(), True)
+
         for alias in reporters:
-            reporter = dexy.reporter.Reporter.create_instance(alias)
-            if file_exists(reporter.setting('dir')):
-                directory = reporter.setting('dir')
+            report_dir = dexy.reporter.Reporter.create_instance(alias).setting("dir")
+            print "report dir", report_dir
+            if report_dir and file_exists(report_dir):
+                directory = report_dir
                 break
 
     if not directory:
