@@ -42,7 +42,9 @@ class Redcarpet(SubprocessStdoutFilter):
             'render-with-toc-data' : ("with-toc-data option from redcarpet", False),
             'render-hard-wrap' : ("hard-wrap option from redcarpet", False),
             'render-prettify' : ("prettify option from redcarpet", False),
-            'render-xhtml' : ("xhtml option from redcarpet", False)
+            'render-xhtml' : ("xhtml option from redcarpet", False),
+            # other options
+            'pygments' : ("Pygments syntax highlighting (requires ananelson/redcarpet fork).", False)
             }
   
     def command_string(self):
@@ -51,7 +53,10 @@ class Redcarpet(SubprocessStdoutFilter):
         args['parse_args'] = " ".join("--%s" % name for name in args if name.startswith("parse-") and args[name])
         args['render_args'] = " ".join("--%s" % name for name in args if name.startswith("render-") and args[name])
 
-        return "%(prog)s %(parse_args)s %(render_args)s %(script_file)s" % args
+        other_args = ['pygments']
+        args['other_args'] = " ".join("--%s" % name for name in other_args if args[name])
+
+        return "%(prog)s %(parse_args)s %(render_args)s %(other_args)s %(script_file)s" % args
 
 class TidyCheck(SubprocessFilter):
     """
