@@ -1,3 +1,15 @@
+pegdown:
+    added-in-version: "1.0.1"
+    class: SubprocessStdoutFilter
+    executable: pegdown
+    input-extensions: [.md, .txt]
+    output-extensions: [.html]
+    help: |
+        Converts extended markdown to HTML using pegdown.
+
+        Gist for how I configure the `pegdown` command:
+        https://gist.github.com/ananelson/7782324
+
 livescript:
     added-in-version: "1.0.1"
     class: SubprocessStdoutFilter
