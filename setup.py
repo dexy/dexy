@@ -33,14 +33,15 @@ setup(
         ### @end
         include_package_data = True,
         install_requires = [
-            # for internal dexy use or ubiquitous filters
+            # for internal dexy use or used in many common plugins
+            'BeautifulSoup4',
             'PyYAML',
-            'cashew>=0.2.3',
+            'cashew>=0.2.4',
             'chardet',
             'pexpect',
             'python-modargs>=1.7',
             'requests>=0.10.6',
-            'inflection>=0.0.2',
+            'inflection>=0.2.0',
             'ply>=3.4',
             'jinja2',
             'pygments',
@@ -48,8 +49,7 @@ setup(
             'dexy_viewer', ## TODO version
             # for convenience of running additional filters
             'Markdown',
-            'docutils',
-            'BeautifulSoup4'
+            'docutils'
             ],
         name='dexy',
         packages=find_packages(),
