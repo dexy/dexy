@@ -8,6 +8,7 @@ from pygments.lexers import LEXERS as PYGMENTS_LEXERS
 from pygments.lexers import get_lexer_by_name
 import dexy.commands
 import dexy.exceptions
+import posixpath
 import pygments.lexers.web
 
 pygments_lexer_cache = {}
@@ -156,7 +157,8 @@ class PygmentsFilter(DexyFilter):
         if ext in [".css", ".sty"] and self.ext == ext:
             return self.doc.name
         elif self.alias == 'htmlsections':
-            return self.doc.name
+            name_without_ext = posixpath.splitext(self.doc.name)[0]
+            return "%s%s" % (name_without_ext, self.ext)
         else:
             return "%s%s" % (self.doc.name, self.ext)
 
