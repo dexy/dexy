@@ -12,7 +12,17 @@ Main Title
 Foo
 ---
 
+:Author: J Random Hacker
+:Authors: Bert & Ernie
+:Contact: jrh@example.com
+:Date: 2002-08-18
+:Status: Work In Progress
+:Version: 1
+:Filename: $RCSfile$
+:Copyright: This document has been placed in the public domain.
+
 Here's some content.
+
 """
 def test_rst_meta():
     with wrap() as wrapper:
@@ -23,7 +33,14 @@ def test_rst_meta():
                 )
         wrapper.run_docs(node)
 
-        print node.output_data()
+        assert node.setting('author') == "J Random Hacker"
+        assert node.setting('authors') == "Bert & Ernie"
+        assert node.setting('subtitle') == "Foo"
+        assert node.setting('title') == "Main Title"
+        assert node.setting('date') == "2002-08-18"
+        assert node.setting('status') == "Work In Progress"
+        assert node.setting('version') == "1"
+        assert node.setting('copyright') == "This document has been placed in the public domain."
 
 RST = """
 * a bullet point using "*"

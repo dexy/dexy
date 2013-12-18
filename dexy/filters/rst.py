@@ -1,5 +1,9 @@
 from dexy.filter import DexyFilter
 from docutils import core
+from docutils.frontend import OptionParser
+from docutils.parsers.rst import Parser
+from docutils.transforms import Transformer, frontmatter
+from docutils.utils import new_document
 import StringIO
 import dexy.exceptions
 import docutils.writers
@@ -160,25 +164,47 @@ class RstMeta(RestructuredTextBase):
         settings_overrides = {}
         settings_overrides['warning_stream'] = warning_stream
 
-        writer_name = 'html'
+        # Parse the input text using default settings
+        settings = OptionParser(components=(Parser,)).get_default_values()
+        parser = Parser()
+        document = new_document('rstinfo', settings)
+        parser.parse(input_text, document)
 
-        if not 'template' in settings_overrides:
-            settings_overrides['template'] = default_template(writer_name)
+        # Transform the parse tree so that the bibliographic data is
+        # is promoted from a mere field list to a `docinfo` node
+        t = Transformer(document)
+        t.add_transforms([frontmatter.DocTitle, frontmatter.DocInfo])
+        t.apply_transforms()
 
-        parts = core.publish_parts(
-                input_text,
-                writer_name=writer_name,
-                settings_overrides=settings_overrides
-                )
+        info = {}
 
+        # Process individual nodes which are not part of docinfo.
+        single_nodes = [
+                docutils.nodes.title,
+                docutils.nodes.subtitle,
+                ]
+        for node in single_nodes:
+            for doc in document.traverse(node):
+                if not len(doc.children) == 1:
+                    msg = "Expected node %s to only have 1 child."
+                    raise dexy.exceptions.InternalDexyProblem(msg % node)
+                info[doc.tagname] = doc.children[0].astext()
 
-        biblio_keys = ['subtitle', 'version', 'title', 'docinfo', 'author',
-                'authors', 'organization', 'status', 'date', 'copyright',
-                'field', 'topic']
-       
-        biblio_args = dict((k, parts[k]) for k in biblio_keys if parts.has_key(k) and parts[k])
-        self.log_debug("found args:\n%s\n" % biblio_args)
-        self.update_all_args(biblio_args)
+        # Find the `docinfo` node and extract its children. Non-standard
+        # bibliographic fields will have the `tagname` 'field' and two
+        # children, the name and the value.  Standard fields simply keep
+        # the name as the `tagname`.
+        for doc in document.traverse(docutils.nodes.docinfo):
+            for element in doc.children:
+                if element.tagname == 'field':
+                    name, value = element.children
+                    name, value = name.astext(), value.astext()
+                else:
+                    name, value = element.tagname, element.astext()
+                info[name] = value
+
+        self.log_debug("found info:\n%s\n" % info)
+        self.update_all_args(info)
         self.log_debug("docutils warnings:\n%s\n" % warning_stream.getvalue())
 
         return input_text
