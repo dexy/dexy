@@ -104,6 +104,15 @@ class Data(dexy.plugin.Plugin):
     def __str__(self):
         return unicode(self).encode("utf-8", errors="strict")
 
+    def __getattr__(self, item):
+        """
+        Make setting values available as attributes.
+        """
+        try:
+            return self.setting(item)
+        except KeyError:
+            raise AttributeError(item)
+
     def data(self):
         if (not self._data) or self._data == [{}]:
             self.load_data()
