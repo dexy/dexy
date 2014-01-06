@@ -366,6 +366,8 @@ class Generic(Data):
             except TypeError:
                 if self.ext == '.json':
                     return self.from_json()[key]
+                elif self.ext == '.yaml':
+                    return self.from_yaml()[key]
                 else:
                     raise
 
@@ -381,6 +383,19 @@ class Generic(Data):
         else:
             with open(self.storage.data_file(), "r") as f:
                 return dexy.utils.parse_json_from_file(f)
+
+    def from_yaml(self):
+        """
+        Attempts to load data using a YAML parser, returning whatever objects
+        are defined in the YAML.
+        """
+        if self._data and isinstance(self._data, basestring):
+            return dexy.utils.parse_yaml(self._data)
+        elif self._data and not isinstance(self._data, basestring):
+            raise Exception(self._data.__class__.__name__)
+        else:
+            with open(self.storage.data_file(), "r") as f:
+                return dexy.utils.parse_yaml(f.read())
 
     def json_as_dict(self):
         """

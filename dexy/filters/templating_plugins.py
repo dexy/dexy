@@ -112,6 +112,21 @@ class LoadYaml(TemplatePlugin):
                 'load_yaml' : ("Safely load YAML from a file.", self.load_yaml,)
                 }
 
+class ParseYaml(TemplatePlugin):
+    """
+    Parse YAML from a string.
+    """
+    aliases = ['parseyaml']
+
+    def parse_yaml(self, yamltext):
+        import yaml
+        return yaml.safe_load(unicode(yamltext))
+
+    def run(self):
+        return {
+                'parse_yaml' : ("Safely load YAML from text.", self.parse_yaml,)
+                }
+
 class Debug(TemplatePlugin):
     """
     Adds debug() and throw() [a.k.a. raise()] methods to templates.
@@ -591,6 +606,9 @@ class D(object):
         self._input_doc_titles = ["title:%s" % d.output_data().title() for d in self._input_docs]
 
         self._ref_cache = {}
+
+    def keys(self):
+        return self._input_doc_keys
 
     def key_or_name_index(self, ref):
         if ref in self._input_doc_keys:
