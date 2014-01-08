@@ -41,9 +41,8 @@ def test_casperjs_stdout_filter():
 
         wrapper.run_docs(node)
 
-        assert 'doc:google.pdf' in wrapper.nodes
-
         try:
+            assert 'doc:google.pdf' in wrapper.nodes
             assert 'doc:cookies.txt' in wrapper.nodes
         except AssertionError:
             import urllib
