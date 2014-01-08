@@ -111,10 +111,7 @@ class Data(dexy.plugin.Plugin):
         try:
             return self._instance_settings[item]
         except KeyError:
-            try:
-                return self.__getitem__(item)
-            except KeyError:
-                raise AttributeError(item)
+            raise AttributeError
 
     def data(self):
         if (not self._data) or self._data == [{}]:

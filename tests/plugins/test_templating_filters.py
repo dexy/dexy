@@ -4,6 +4,35 @@ from dexy.filters.templating_plugins import TemplatePlugin
 from tests.utils import wrap
 from dexy.exceptions import UserFeedback
 
+def test_jinja_invalid_attribute():
+    def make_sections_doc(wrapper):
+        return Doc("sections.txt",
+                wrapper,
+                [],
+                contents = [{}, {"name" : "foo", "contents" : "This is foo."}]
+                )
+
+    with wrap() as wrapper:
+        node = Doc("ok.txt|jinja",
+                wrapper,
+                [make_sections_doc(wrapper)],
+                contents = """hello! foo contents are {{ d['sections.txt'].foo }}"""
+                )
+
+        wrapper.run_docs(node)
+        assert str(node.output_data()) == """hello! foo contents are This is foo."""
+
+    with wrap() as wrapper:
+        node = Doc("broken.txt|jinja",
+                wrapper,
+                [make_sections_doc(wrapper)],
+                contents = """There is no {{ d['sections.txt'].bar }}"""
+                )
+        try:
+            wrapper.run_docs(node)
+        except UserFeedback as e:
+            assert str(e) == "No value for bar available in sections or metadata."
+
 def test_jinja_pass_through():
     with wrap() as wrapper:
         with open("_template.html", "w") as f:
