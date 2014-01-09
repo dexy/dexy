@@ -411,7 +411,9 @@ class Website(Output):
                 link_text = link_to_data.title()
 
 
-        link_html = self.link_for(url_base, link_to_data.output_name(), link_text, anchor)
+        relative_link_to = data.relative_path_to(link_to_data.output_name())
+
+        link_html = self.link_for(url_base, relative_link_to, link_text, anchor)
 
         if description and link_to_data.safe_setting('description'):
             return "%s\n<p>%s</p>" % (link_html, link_to_data.setting('description'))
