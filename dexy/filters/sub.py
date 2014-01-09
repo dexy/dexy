@@ -9,6 +9,44 @@ import json
 import os
 import shutil
 
+class Kramdown(SubprocessStdoutFilter):
+    """
+    Runs the kramdown markdown converter.
+
+    http://kramdown.gettalong.org/
+    """
+    aliases = ['kramdown']
+    _settings = {
+            'added-in-version' : "1.0.5",
+            'class' : 'SubprocessExtToFormatFilter',
+            'executable' : 'kramdown',
+            'version-command' : 'kramdown -version',
+            'output' : True,
+            'format-specifier' : '-o ',
+            'ext-to-format' : {'.tex' : 'latex', '.html' : 'html', '.md' : 'kramdown', '.txt' : 'kramdown'},
+            'input-extensions' : [".*"],
+            'output-extensions' : [".html", ".tex", ".txt", ".md"],
+            'require-output' : True,
+            'command-string' : '%(prog)s %(format)s %(args)s "%(script_file)s"'
+            }
+
+    def command_string_args(self):
+        args = self.default_command_string_args()
+
+        fmt_specifier = self.setting('format-specifier')
+        if fmt_specifier and (fmt_specifier in args['args']):
+            # Already have specified the format manually.
+            fmt = ''
+        else:
+            fmt_setting = self.setting('ext-to-format')[self.ext]
+            if fmt_setting:
+                fmt = "%s%s" % (fmt_specifier, fmt_setting)
+            else:
+                fmt = ''
+
+        args['format'] = fmt
+        return args
+
 class Redcarpet(SubprocessStdoutFilter):
     """
     Converts github-flavored markdown to HTML using redcarpet.

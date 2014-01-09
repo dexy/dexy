@@ -1,0 +1,29 @@
+from tests.utils import TEST_DATA_DIR
+from dexy.doc import Doc
+from tests.utils import wrap
+import os
+
+markdown_file = os.path.join(TEST_DATA_DIR, "markdown-test.md")
+
+with open(markdown_file, 'r') as f:
+    MD = f.read()
+
+def run_kramdown(ext):
+    with wrap() as wrapper:
+        node = Doc("markdown.md|kramdown",
+                wrapper,
+                [],
+                kramdown = { 'ext' : ext },
+                contents = MD
+                )
+        wrapper.run_docs(node)
+        assert node.output_data().is_cached()
+        return node.output_data()
+
+def test_kramdown_html():
+    html = unicode(run_kramdown(".html"))
+    assert """<h2 id="download">""" in html
+
+def test_kramdown_tex():
+    tex = unicode(run_kramdown(".tex"))
+    assert u"\subsection" in tex
