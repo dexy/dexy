@@ -266,9 +266,9 @@ class IpythonPexpectReplFilter(PexpectReplFilter):
 
 class ClojureInteractiveFilter(PexpectReplFilter):
     """
-    Runs clojure.
+    Runs clojure in REPL.
     """
-    aliases = ['clj', 'cljint']
+    aliases = ['cljint']
     _settings = {
             'check-return-code' : False,
             'executable' : 'clojure -r',

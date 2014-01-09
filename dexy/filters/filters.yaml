@@ -1,3 +1,11 @@
+clj|clojure:
+    help: Runs clojure code, returning stdout.
+    class: SubprocessStdoutFilter
+    executable: clojure
+    tags: [code, clojure]
+    input-extensions: [.clj, .txt]
+    output-extensions: [.txt]
+
 pegdown:
     added-in-version: "1.0.1"
     class: SubprocessStdoutFilter
