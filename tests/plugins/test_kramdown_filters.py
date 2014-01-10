@@ -5,16 +5,16 @@ import os
 
 markdown_file = os.path.join(TEST_DATA_DIR, "markdown-test.md")
 
-with open(markdown_file, 'r') as f:
-    MD = f.read()
-
 def run_kramdown(ext):
+    with open(markdown_file, 'r') as f:
+        example_markdown = f.read()
+
     with wrap() as wrapper:
         node = Doc("markdown.md|kramdown",
                 wrapper,
                 [],
                 kramdown = { 'ext' : ext },
-                contents = MD
+                contents = example_markdown
                 )
         wrapper.run_docs(node)
         assert node.output_data().is_cached()
