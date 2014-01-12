@@ -1,10 +1,9 @@
 from dexy.commands.utils import template_text
 from pygments import highlight
-import pygments.formatters
 from pygments.lexers import PythonLexer
 import dexy.filter
 import inspect
-
+import pygments.formatters
 
 extra_nodoc_aliases = ('-',)
 
@@ -87,7 +86,7 @@ def help_for_filter(alias, run_example, show_source, nocolor):
                 print template_text(template)
 
     print ''
-    print "For online docs see http://dexy.it/ref/filters/%s" % alias
+    print "For online docs see http://dexy.it/filters/%s" % alias
     print ''
     print "If you have suggestions or feedback about this filter,"
     print "please contact info@dexy.it"
