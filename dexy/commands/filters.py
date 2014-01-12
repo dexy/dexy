@@ -129,7 +129,7 @@ def list_filters(versions):
                     version_message = ""
 
 
-            filter_help = "  " + filter_instance.alias + \
+            filter_help = "  " + filter_instance.standard_alias() + \
                     " : " + filter_instance.setting('help').splitlines()[0]
 
             if versions and version_message:
