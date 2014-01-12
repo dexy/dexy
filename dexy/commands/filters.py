@@ -6,7 +6,7 @@ import dexy.filter
 import inspect
 
 
-extra_nodoc_aliseas = ('-',)
+extra_nodoc_aliases = ('-',)
 
 def filters_command(
         alias="", # Print docs for this filter.
@@ -110,7 +110,7 @@ def list_filters(versions):
             no_aliases = not filter_instance.setting('aliases')
             no_doc = filter_instance.setting('nodoc')
             not_dexy = not filter_instance.__class__.__module__.startswith("dexy.")
-            exclude = filter_instance.alias in extra_nodoc_aliseas
+            exclude = filter_instance.alias in extra_nodoc_aliases
 
             if no_aliases or no_doc or not_dexy or exclude:
                 continue
