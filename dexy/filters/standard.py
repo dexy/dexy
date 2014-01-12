@@ -195,6 +195,7 @@ class ClojureWhitespaceFilter(DexyFilter):
     """
     aliases = ['cljws']
     _settings = {
+            'added-in-version' : '1.0.1',
             'data-type' : 'sectioned',
             'name-regex' : (
                 """List of regular expressions including a match group
