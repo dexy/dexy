@@ -36,7 +36,7 @@ setup(
             # for internal dexy use or used in many common plugins
             'BeautifulSoup4',
             'PyYAML',
-            'cashew>=0.2.5',
+            'cashew>=0.2.7',
             'chardet',
             'inflection>=0.2.0',
             'jinja2',
