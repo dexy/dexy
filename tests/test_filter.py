@@ -6,7 +6,7 @@ def test_filters_by_tag():
     assert 'latex' in tags_filters.keys()
 
 def test_filter_aliases_by_tag():
-    first_expected_tag = 'asciiart'
+    first_expected_tag = 'R'
     first_actual = dexy.filter.filter_aliases_by_tag()[0][0]
     assert first_actual == first_expected_tag, first_actual
 
