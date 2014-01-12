@@ -1,3 +1,13 @@
+sweave:
+    help: Runs Sweave, generating a .tex file.
+    class: SubprocessFilter
+    executable: "R"
+    version-command: R --version
+    command-string: "%(prog)s CMD Sweave %(args)s %(script_file)s"
+    tags: [R, sweave, literate]
+    input-extensions: [.Snw, .Rnw]
+    output-extensions: [.tex]
+
 clj|clojure:
     help: Runs clojure code, returning stdout.
     class: SubprocessStdoutFilter

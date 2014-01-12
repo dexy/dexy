@@ -1,0 +1,30 @@
+\documentclass[a4paper]{article}
+
+\SweaveOpts{echo=true}
+
+\begin{document}
+
+
+First we define a figure hook:
+<<results=hide>>=
+options(SweaveHooks = list(fig = function() par(mfrow=c(2,2))))
+@ 
+
+Then we setup variable definitions without actually evaluating them
+<<xydef,eval=false>>=
+x <- 1:10
+y <- rnorm(x)
+@ 
+
+
+Then we put the pieces together:
+\begin{center}
+<<fig=T>>=
+<<xydef>>
+lm1 <- lm(y~x)
+summary(lm1)
+plot(lm1)
+@ 
+\end{center}
+
+\end{document}
