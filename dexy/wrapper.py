@@ -560,7 +560,7 @@ class Wrapper(object):
         exclude = self.exclude_dirs()
         filemap = {}
 
-        for dirpath, dirnames, filenames in os.walk('.'):
+        for dirpath, dirnames, filenames in os.walk('.', followlinks=True):
             for x in exclude:
                 if x in dirnames and not x in self.include:
                     dirnames.remove(x)
