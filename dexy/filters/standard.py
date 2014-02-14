@@ -202,10 +202,10 @@ class ClojureWhitespaceFilter(DexyFilter):
                 representing the name of the section. Will be tried in
                 order.""",
                 [
-                    "\(def ([a-z\-]+)",
-                    "\(defn ([a-z\-]+)",
-                    "\(defn= ([a-z\-]+)",
-                    "\(deftest ([a-z\-]+)",
+                    "\(def ([a-z\-\?]+)",
+                    "\(defn ([a-z\-\?]+)",
+                    "\(defn= ([a-z\-\?]+)",
+                    "\(deftest ([a-z\-\?]+)",
                 ])
             }
 
