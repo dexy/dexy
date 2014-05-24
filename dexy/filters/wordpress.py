@@ -1,8 +1,15 @@
 from dexy.filters.api import ApiFilter
 import dexy.exceptions
 import json
-import mimetypes
 import xmlrpclib
+
+try:
+    import mimetypes
+    wp_aliases = ['wp', 'wordpress']
+except UnicodeDecodeError:
+    print "Unable to load mimetypes library. WordPressFilter will not work. See http://bugs.python.org/issue9291"
+    mimetypes = None
+    wp_aliases = []
 
 class WordPressFilter(ApiFilter):
     """
@@ -39,7 +46,7 @@ class WordPressFilter(ApiFilter):
     For now, we recommend using an external site to host your images and
     assets, such as Amazon S3.
     """
-    aliases = ['wp', 'wordpress']
+    aliases = wp_aliases
 
     _settings = {
             'blog-id' : ("The wordpress blog id.", 0),
