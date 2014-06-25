@@ -1,3 +1,4 @@
+from dexy.exceptions import UserFeedback
 from dexy.filters.process import SubprocessFilter
 import os
 
@@ -58,14 +59,24 @@ class PhantomJsRenderSubprocessFilter(SubprocessFilter):
     
     If the HTML relies on local assets such as CSS or image files, these should
     be specified as inputs.
+
+    See phantomjs documentation for paper sizing options.
+    http://phantomjs.org/api/webpage/property/paper-size.html
     """
     aliases = ['phrender']
     _settings = {
             'add-new-files' : True,
             'examples' : ['phrender'],
             'executable' :  'phantomjs',
-            "width" : ("Width of page to capture.", 1024),
-            "height" : ("Height of page to capture.", 768),
+            "paper-size" : ("Paper size (e.g. phantomjs 'pageSize.format' setting).", "A4"),
+            "orientation" : ("e.g. landscape or portrait orientation.", None),
+            "page-width" : ("Paper width for page.paperSize phantom setting.", None),
+            "page-height" : ("Paper height for page.paperSize phantom setting.", None),
+            "border" : ("Border around page.", None),
+            "page-header-height" : ("Height of header to print on each page.", None),
+            "page-header-contents" : ("Custom HTML header to print on each page.", None),
+            "page-footer-height" : ("Height of footer to print on each page.", None),
+            "page-footer-contents" : ("Custom HTML footer to print on each page.", None),
             'version-command' : 'phantomjs --version',
             'command-string' : "%(prog)s %(args)s script.js",
             'input-extensions' : [".html", ".htm", ".txt"],
@@ -73,9 +84,6 @@ class PhantomJsRenderSubprocessFilter(SubprocessFilter):
             }
 
     def custom_populate_workspace(self):
-        width = self.setting('width')
-        height = self.setting('height')
-
         timeout = self.setup_timeout()
         if not timeout:
             raise Exception("must have timeout")
@@ -83,10 +91,44 @@ class PhantomJsRenderSubprocessFilter(SubprocessFilter):
         args = {
                 'address' : self.work_input_filename(),
                 'output' : self.work_output_filename(),
-                'width' : width,
-                'height' : height,
-                'timeout' : timeout
+                'timeout' : timeout,
                 }
+
+        page_width = self.setting('page-width')
+        page_height = self.setting('page-height')
+        border = self.setting('border')
+        orientation = self.setting('orientation')
+
+        if page_width is not None and page_height is not None:
+            args['paper_size'] = "width: '%s',\nheight: '%s',\n" % (page_width, page_height)
+        else:
+            args['paper_size'] = "format: '%s',\n" % format
+            if orientation is not None:
+                args['paper_size'] += "orientation: '%s',\n" % orientation
+
+        if border is not None:
+            args['paper_size'] += "border: '%s',\n" % border
+
+        if self.setting('page-header-height') is not None:
+            args['paper_size'] += """header: {
+                height: "%s",
+                contents: phantom.callback(function(pageNum, numPages) {
+                    return %s
+                })
+                },
+            """ % (self.setting('page-header-height'), self.setting('page-header-contents'),)
+
+        if self.setting('page-footer-height') is not None:
+            args['paper_size'] += """footer: {
+                height: "%s",
+                contents: phantom.callback(function(pageNum, numPages) {
+                    return %s
+                })
+                },
+            """ % (self.setting('page-footer-height'), self.setting('page-footer-contents'),)
+
+        self.log_debug("args are: %s" % args)
+
 
         js = """
         address = '%(address)s'
@@ -94,7 +136,10 @@ class PhantomJsRenderSubprocessFilter(SubprocessFilter):
         var page = new WebPage(),
             address, output, size;
 
-        page.viewportSize = { width: %(width)s, height: %(height)s };
+        page.paperSize = {
+            %(paper_size)s
+        };
+
         page.open(address, function (status) {
             if (status !== 'success') {
                 console.log('Unable to load the address!');
