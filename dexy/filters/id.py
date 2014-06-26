@@ -47,7 +47,6 @@ class Id(PygmentsFilter):
             'highlight' : ("Whether to apply syntax highlighting to sectional output.", None),
             'skip-extensions' : ("Because |idio gets applied to *.*, need to make it easy to skip non-textual files.", (".odt")),
             'remove-leading' : ("If a document starts with empty section named '1', remove it.", False),
-            'ply-debug' : ("The 'debug' setting to pass to PLY. A setting of 1 will produce very verbose output.", 0),
             'ply-optimize' : ("Whether to use optimized mode for the lexer.", 1),
             'ply-write-tables' : ("Whether to generate parser table files (which will be stored in ply-outputdir and named ply-tabmodule).", 1),
             'ply-outputdir' : ("Location relative to where you run dexy in which ply will store table files. Defaults to dexy's log directory.", None),
