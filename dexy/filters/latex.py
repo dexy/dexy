@@ -19,7 +19,7 @@ class LatexFilter(SubprocessFilter):
             'run-bibtex' : ("Should we run bibtex if a .bib file is an input?", True),
             'times-to-run-latex' : ("""How many times to run latex? (Latex is
                 run one additional time if bibtex runs.)""", 2),
-            'command-string' : "%(prog)s -interaction=batchmode %(args)s %(script_file)s"
+            'command-string' : "%(prog)s -interaction=nonstopmode -halt-on-error %(args)s %(script_file)s"
             }
 
     def process(self):
