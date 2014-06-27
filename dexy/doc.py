@@ -45,6 +45,7 @@ class Doc(dexy.node.Node):
     def name_args(self):
         name_args = self.setting_values()
         name_args['name'] = self.name
+        name_args['rootname'] = os.path.splitext(self.name)[0]
         name_args['dirname'] = os.path.dirname(self.name)
         name_args.update(self.safe_setting('environment', {}))
         return name_args
