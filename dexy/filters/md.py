@@ -58,6 +58,8 @@ class MarkdownFilter(DexyFilter):
         md = self.initialize_markdown()
         return md.convert(input_text)
 
+
+
 class MarkdownSlidesFilter(MarkdownFilter):
     """
     Converts paragraphs to HTML and wrap each slide in a header and footer.
@@ -108,3 +110,28 @@ class MarkdownSlidesFilter(MarkdownFilter):
             slides += slide_text
 
         return slides
+
+
+class MarkdownSpeakerNotesFilter(MarkdownSlidesFilter):
+    """
+    Companion to slides filter which helps generate speaker notes.
+    """
+    aliases = ['speakernotes']
+
+    _settings = {
+            'added-in-version' : '1.0.7',
+            'comment-markdown' : ("Comment chars ; are replaced with this markdown. Use None to hide comments.", "> *")
+            }
+
+    def process_text(self, input_text):
+        self.capture_markdown_logger()
+        md = self.initialize_markdown()
+
+        if self.setting('comment-markdown') is None:
+            comment_regexp = "^%s(.*)$" % self.setting('comment-char')
+            comments_removed = re.sub(comment_regexp, "", input_text, flags=re.MULTILINE)
+        else:
+            comment_regexp = "^%s" % self.setting('comment-char')
+            comments_removed = re.sub(comment_regexp, self.setting('comment-markdown'), input_text, flags=re.MULTILINE)
+
+        return md.convert(comments_removed)
