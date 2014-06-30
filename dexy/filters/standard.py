@@ -130,12 +130,26 @@ class TemplateContentFilter(HeaderFilter):
     aliases = ['applytemplate']
     _settings = {
             'key-name' : 'template',
+            'template' : ("Document key of file to use as template.", None)
+            }
+
+    def process_text(self, input_text):
+        template_data = self.find_input_in_parent_dir("_template")
+        return unicode(template_data) % { 'content' : input_text, 'title' : self.input_data.title()}
+
+class FormatTemplateContentFilter(HeaderFilter):
+    """
+    Apply template to file. Template should specify {content}.
+    """
+    aliases = ['formattemplate']
+    _settings = {
+            'key-name' : 'template',
             'template' : ("Document key of file to use as footer.", None)
             }
 
     def process_text(self, input_text):
         template_data = self.find_input_in_parent_dir("_template")
-        return unicode(template_data) % { 'content' : input_text }
+        return unicode(template_data).format({ 'content' : input_text, 'title' : self.input_data.title()})
 
 class MarkupTagsFilter(DexyFilter):
     """
@@ -204,6 +218,7 @@ class ClojureWhitespaceFilter(DexyFilter):
                 [
                     "\(def ([a-z\-\?]+)",
                     "\(defn ([a-z\-\?]+)",
+                    "\(defn- ([a-z\-\?]+)",
                     "\(defn= ([a-z\-\?]+)",
                     "\(deftest ([a-z\-\?]+)",
                 ])
