@@ -1,4 +1,55 @@
+unoconv:
+    added-in-version: "1.0.7"
+    class: SubprocessExtToFormatFilter
+    help: http://dag.wiee.rs/home-made/unoconv/
+    tags: [image, office, pdf]
+    executable: unoconv
+    version-command: unoconv --version
+    input-extensions: [.*] # TODO what are valid extensions?
+    output-extensions: [.png, .pdf, .svg]
+    format-specifier: '-f '
+    ext-to-format:
+           .png: png
+           .pdf: pdf
+           .svg: svg
+    command-string: '%(prog)s %(format)s "%(script_file)s"'
+    output: True
+
+libreoffice:
+    added-in-version: "1.0.7"
+    class: SubprocessExtToFormatFilter
+    help: Converts libreoffice files to other formats.
+    tags: [image, pdf, office]
+    input-extensions: [.*] # TODO what are valid extensions?
+    output-extensions: [.png, .pdf, .svg]
+    executable: libreoffice
+    version-command: libreoffice --version
+    format-specifier: '--convert-to '
+    ext-to-format:
+           .png: png
+           .pdf: pdf
+           .svg: svg
+    command-string: '%(prog)s --headless %(format)s "%(script_file)s"'
+    output: True
+
+fdp:
+    added-in-version: "1.0.7"
+    class: SubprocessExtToFormatFilter
+    help: Renders .dot files to either PNG or PDF images using fdp.
+    tags: [dot, image, pdf]
+    input-extensions: [.dot]
+    output-extensions: [.png, .pdf]
+    executable: fdp
+    version-command: fdp -V
+    format-specifier: '-T'
+    ext-to-format:
+           .png: png
+           .pdf: pdf
+    command-string: '%(prog)s %(format)s -o"%(output_file)s" "%(script_file)s"'
+    output: True
+
 sweave:
+    added-in-version: "1.0.6"
     help: Runs Sweave, generating a .tex file.
     class: SubprocessFilter
     executable: "R"
@@ -411,7 +462,7 @@ pandoc:
     command-string: '%(prog)s %(args)s "%(script_file)s" -o "%(output_file)s"'
     help: Convert documents to various available output formats using pandoc.
     version-command: pandoc --version
-    output-extensions: ['.html', '.txt', '.tex', '.pdf', '.rtf', '.json', '.docx', '.odt', '.epub']
+    output-extensions: ['.html', '.txt', '.tex', '.pdf', '.rtf', '.json', '.docx', '.odt', '.epub', '.md', '.markdown']
 
 espeak:
     class: SubprocessFilter
@@ -495,21 +546,6 @@ dot|graphviz:
     output-extensions: [.png, .pdf]
     executable: dot
     version-command: dot -V
-    format-specifier: '-T'
-    ext-to-format:
-           .png: png
-           .pdf: pdf
-    command-string: '%(prog)s %(format)s -o"%(output_file)s" "%(script_file)s"'
-    output: True
-
-fdp:
-    class: SubprocessExtToFormatFilter
-    help: Renders .dot files to either PNG or PDF images using fdp.
-    tags: [dot, image, pdf]
-    input-extensions: [.dot]
-    output-extensions: [.png, .pdf]
-    executable: fdp
-    version-command: fdp -V
     format-specifier: '-T'
     ext-to-format:
            .png: png
@@ -802,6 +838,7 @@ matlabint:
     output-extensions: ['.mout']
     line-ending: "\r\n"
     prompt: ">>"
+    trim-prompt: ">>"
 
 jsint|rhinoint:
     class: PexpectReplFilter
