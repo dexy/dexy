@@ -50,18 +50,21 @@ class H5Storage(GenericStorage):
 if AVAILABLE:
     # Set custom exit hook so messages about closing files don't get printed to
     # stderr, per http://www.pytables.org/moin/UserDocuments/AtexitHooks
-    def my_close_open_files(verbose):
-        open_files = tables.file._open_files
-        are_open_files = len(open_files) > 0
-        if verbose and are_open_files:
-            print >> sys.stderr, "Closing remaining open files:",
-        for fileh in open_files.keys():
-            if verbose:
-                print >> sys.stderr, "%s..." % (open_files[fileh].filename,),
-            open_files[fileh].close()
-            if verbose:
-                print >> sys.stderr, "done",
-        if verbose and are_open_files:
-            print >> sys.stderr
-    import sys, atexit
-    atexit.register(my_close_open_files, False)
+    try:
+        def my_close_open_files(verbose):
+            open_files = tables.file._open_files
+            are_open_files = len(open_files) > 0
+            if verbose and are_open_files:
+                print >> sys.stderr, "Closing remaining open files:",
+            for fileh in open_files.keys():
+                if verbose:
+                    print >> sys.stderr, "%s..." % (open_files[fileh].filename,),
+                open_files[fileh].close()
+                if verbose:
+                    print >> sys.stderr, "done",
+            if verbose and are_open_files:
+                print >> sys.stderr
+        import sys, atexit
+        atexit.register(my_close_open_files, False)
+    except Exception as e:
+        print e
