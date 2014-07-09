@@ -22,6 +22,7 @@ import os
 import pygments
 import pygments.formatters
 import re
+import random
 import time
 import uuid
 import xml.etree.ElementTree as ET
@@ -63,6 +64,19 @@ class Time(TemplatePlugin):
     aliases = ['time']
     def run(self):
         return { 'time' : ("The Python time module.", time) }
+
+class Random(TemplatePlugin):
+    """
+    Exposes random module.
+    """
+    aliases = ['random']
+
+    def shuffle(self, input_array):
+        return sorted(input_array, key=lambda *args: random.random())
+
+    def run(self):
+        return { 'random' : ("The Python random module.", random),
+                'shuffle' : ("Random shuffle not in place.", self.shuffle) }
 
 class Operator(TemplatePlugin):
     """
