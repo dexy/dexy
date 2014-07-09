@@ -40,7 +40,6 @@ setup(
             'chardet',
             'inflection>=0.2.0',
             'jinja2',
-            'pexpect',
             'ply>=3.4',
             'pygments',
             'python-modargs>=1.7',
