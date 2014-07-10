@@ -115,7 +115,7 @@ class IPythonCasper(SubprocessFilter):
             self.log_debug(line)
 
             if "The IPython Notebook is running" in line:
-                m = re.search("([0-9\.]+):([0-9]{4})", line)
+                m = re.search("(localhost|[0-9\.]+):([0-9]{4})", line)
                 port = m.groups()[1]
 
             if "Use Control-C to stop this server" in line:
