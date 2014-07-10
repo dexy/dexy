@@ -9,7 +9,6 @@ try:
     import pexpect
     AVAILABLE = True
 except ImportError:
-    print "pexpect not found, try 'pip install pexpect' to install (on a non-windows environment)"
     AVAILABLE = False
 
 class DexyEOFException(UserFeedback):

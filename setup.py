@@ -1,6 +1,14 @@
 from setuptools import setup, find_packages
 from dexy.version import DEXY_VERSION
 
+import platform
+is_windows = platform.system() == 'Windows'
+
+if is_windows:
+    os_specific_requires = []
+else:
+    os_specific_requires = ['pexpect']
+
 setup(
         author='Ana Nelson',
         author_email='ana@ananelson.com',
@@ -32,7 +40,7 @@ setup(
             },
         ### @end
         include_package_data = True,
-        install_requires = [
+        install_requires = os_specific_requires + [
             # for internal dexy use or used in many common plugins
             'BeautifulSoup4',
             'PyYAML',
