@@ -22,6 +22,8 @@ def test_d_object():
         env = node.filters[0].run_plugins()
         d = env['d'][1]
         assert d.__class__.__name__ == 'D'
+        # items() method is created by DictMixin from __getitem__
+        assert len(d.items()) == 1
 
 def test_base():
     run(TemplatePlugin)
