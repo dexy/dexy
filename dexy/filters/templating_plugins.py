@@ -26,6 +26,7 @@ import random
 import time
 import uuid
 import xml.etree.ElementTree as ET
+from UserDict import DictMixin
 
 class Etree(TemplatePlugin):
     """
@@ -610,7 +611,7 @@ class Inputs(TemplatePlugin):
             'w' : ("The wrapper for the dexy run.", self.filter_instance.doc.wrapper)
             }
 
-class D(object):
+class D(DictMixin):
     def __init__(self, doc, input_docs):
         self._artifact = doc
         self._parent_dir = doc.output_data().parent_dir()

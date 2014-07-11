@@ -7,6 +7,22 @@ import dexy.filters.templating_plugins as plugin
 import inspect
 import os
 
+def test_d_object():
+    with wrap() as wrapper:
+        node = Doc("template.txt|jinja",
+                wrapper,
+                [Doc("input.txt",
+                    wrapper,
+                    [],
+                    contents = "I am the input.")
+                    ],
+                contents = "The input is '{{ d['input.txt'] }}'")
+
+        wrapper.run_docs(node)
+        env = node.filters[0].run_plugins()
+        d = env['d'][1]
+        assert d.__class__.__name__ == 'D'
+
 def test_base():
     run(TemplatePlugin)
 
