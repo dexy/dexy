@@ -11,20 +11,19 @@ class WebSequenceDiagrams(ApiFilter):
     Dexy filter to use WebSequenceDiagrams.com
     """
     aliases = ["wsd"]
-    NODOC = True
     _settings = {
         "version" : ("Version of the WebSequenceDiagrams API to address", "1"),
         "style" : ("Style to use, e.g. 'patent' or 'napkin'", "default"),
         "key" : ("Your WebSequenceDiagrams API Key if you have one", None),
-        "endpoint" : ( 
-            """Location of the WSD server to talk to; 
-            change if you have enterprise install""", "http://www.websequencediagrams.com/"),
+        "api-url" : "http://www.websequencediagrams.com/",
         "output-extensions" : ['.png','.svg','.img','.pdf'],
         "input-extensions" : ['.wsd'],
         "output" : True,
         'api-key-name' : "wsd",
-        "added-in-version" : "1.0.13"
+        "added-in-version" : "1.0.13",
+
     }
+    _unset = ['api-username', 'api-password']
 
     def process(self):
         request = {}
@@ -47,7 +46,7 @@ class WebSequenceDiagrams(ApiFilter):
 
         resource = urlencode(request)
         self.log_debug("Fetching from WebSequenceDiagrams")
-        response = urlopen(settings["endpoint"]+"index.php", resource)
+        response = urlopen(settings["api-url"]+"index.php", resource)
         line = response.readline()
         response.close()
 
@@ -61,7 +60,7 @@ class WebSequenceDiagrams(ApiFilter):
 
         self.log_debug("Writing WebSequenceDiagrams result to {0}".format(self.output_filepath()))
 
-        response = urlopen(settings["endpoint"] + match.group(0))
+        response = urlopen(settings["api-url"] + match.group(0))
         self.output_data.set_data(response.read())
         self.output_data.save()
         response.close()
