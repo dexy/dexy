@@ -1,4 +1,4 @@
-from ..exceptions import UserFeedback, InternalDexyProblem
+from dexy.exceptions import UserFeedback
 from api import ApiFilter
 
 from urllib2 import urlopen
@@ -54,7 +54,6 @@ class WebSequenceDiagrams(ApiFilter):
         if match is None:
             self.log_error("Problem fetching from WebSequenceDiagrams")
             raise UserFeedback("Invalid response from server.")
-            return
 
         self.log_debug("Writing WebSequenceDiagrams result to {0}".format(
             self.output_filepath()))
