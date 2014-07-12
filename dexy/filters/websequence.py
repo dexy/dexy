@@ -12,31 +12,31 @@ class WebSequenceDiagrams(ApiFilter):
     """
     aliases = ["wsd"]
     _settings = {
-        "version" : ("Version of the WebSequenceDiagrams API to address", "1"),
-        "style" : ("Style to use, e.g. 'patent' or 'napkin'", "default"),
-        "key" : ("Your WebSequenceDiagrams API Key if you have one", None),
-        "api-url" : "http://www.websequencediagrams.com/",
-        "output-extensions" : ['.png','.svg','.img','.pdf'],
-        "input-extensions" : ['.wsd'],
-        "output" : True,
-        'api-key-name' : "wsd",
-        "added-in-version" : "1.0.13",
+        "version": ("Version of the WebSequenceDiagrams API to address", "1"),
+        "style": ("Style to use, e.g. 'patent' or 'napkin'", "default"),
+        "key": ("Your WebSequenceDiagrams API Key if you have one", None),
+        "api-url": "http://www.websequencediagrams.com/",
+        "output-extensions": ['.png', '.svg', '.img', '.pdf'],
+        "input-extensions": ['.wsd'],
+        "output": True,
+        'api-key-name': "wsd",
+        "added-in-version": "1.0.13",
 
     }
     _unset = ['api-username', 'api-password']
 
     def process(self):
         request = {}
-        settings=self.setting_values()
+        settings = self.setting_values()
         request["message"] = self.input_data
         request["style"] = settings["style"]
         request["apiVersion"] = settings["version"]
         key = None
         try:
-            key= settings["key"] or self.read_param("key")
-        except Exception: # Need to modify filters.api.read_param to
-                          # throw a less general exception
-                          # probably IOError
+            key = settings["key"] or self.read_param("key")
+        except Exception:   # Need to modify filters.api.read_param to
+                            # throw a less general exception
+                            # probably IOError
             pass
         if key:
             request["apikey"] = key
@@ -58,10 +58,10 @@ class WebSequenceDiagrams(ApiFilter):
             raise UserFeedback("Invalid response from server.")
             return
 
-        self.log_debug("Writing WebSequenceDiagrams result to {0}".format(self.output_filepath()))
+        self.log_debug("Writing WebSequenceDiagrams result to {0}".format(
+            self.output_filepath()))
 
         response = urlopen(settings["api-url"] + match.group(0))
         self.output_data.set_data(response.read())
         self.output_data.save()
         response.close()
-
