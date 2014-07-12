@@ -34,9 +34,7 @@ class WebSequenceDiagrams(ApiFilter):
         key = None
         try:
             key = settings["key"] or self.read_param("key")
-        except Exception:   # Need to modify filters.api.read_param to
-                            # throw a less general exception
-                            # probably IOError
+        except KeyError:
             pass
         if key:
             request["apikey"] = key
