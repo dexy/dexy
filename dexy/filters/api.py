@@ -115,11 +115,11 @@ class ApiFilter(dexy.filter.DexyFilter):
             # need to get value of bash variable
             param_value_from_env = os.getenv(param_value.lstrip("$"))
             if not param_value_from_env:
-                raise Exception("Bash variable %s not defined in this environment!" % param_value)
+                raise KeyError("Bash variable %s not defined in this environment!" % param_value)
             param_value = param_value_from_env
 
         if param_value:
             return param_value
         else:
             msg = "Could not find %s for %s in: %s" % (param_name, self.setting('api-key-name'), ", ".join(self.api_key_locations()))
-            raise Exception(msg)
+            raise KeyError(msg)

@@ -29,6 +29,7 @@ import dexy.filters.split
 import dexy.filters.standard
 import dexy.filters.sub
 import dexy.filters.templating
+import dexy.filters.websequence
 import dexy.filters.wordpress
 import dexy.filters.yamlargs
 import dexy.filters.xxml
