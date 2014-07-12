@@ -542,7 +542,7 @@ dot|graphviz:
     class: SubprocessExtToFormatFilter
     help: Renders .dot files to either PNG or PDF images.
     tags: [dot, image, pdf]
-    input-extensions: [.dot]
+    input-extensions: [.dot, .nto]
     output-extensions: [.png, .pdf]
     executable: dot
     version-command: dot -V
@@ -550,7 +550,7 @@ dot|graphviz:
     ext-to-format:
            .png: png
            .pdf: pdf
-    command-string: '%(prog)s %(format)s -o"%(output_file)s" "%(script_file)s"'
+    command-string: '%(prog)s %(format)s %(args)s -o"%(output_file)s" "%(script_file)s"'
     output: True
 
 pdf2jpg:
