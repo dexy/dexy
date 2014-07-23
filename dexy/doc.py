@@ -363,3 +363,10 @@ class Doc(dexy.node.Node):
                 'elapsed' : self.elapsed_time,
                 'state' : self.state
                 }
+
+    def finalize_additional_doc(self):
+        """
+        Fixes 'contents' setting of additional docs where initial content is
+        set after creation.
+        """
+        self.update_settings({"contents" : self.output_data().data()})
