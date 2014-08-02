@@ -1,25 +1,7 @@
 from dexy.exceptions import InternalDexyProblem
 from dexy.exceptions import UserFeedback
 from dexy.filters.process import SubprocessExtToFormatFilter
-from dexy.filters.process import SubprocessFilter
 import os
-
-class AsciidoctorFOPUB(SubprocessFilter):
-    """
-    Uses asciidoctor-fopub to generate PDF.
-    """
-    aliases = ['fopub','fopdf']
-
-    _settings = {
-            'fopub-dir' : ("Absolute path on file system to asciidoctor-fopub dir.", None)
-            }
-
-    def process(self):
-        # make copy of fopub-dir (use hardlinks?)
-        # copy working files including dependencies
-        # run fopub
-        # copy generated PDF
-        pass
 
 class Asciidoctor(SubprocessExtToFormatFilter):
     """
@@ -36,9 +18,10 @@ class Asciidoctor(SubprocessExtToFormatFilter):
             'output-extensions': ['.html', '.xml', '.tex'],
             'stylesheet' : ("Custom asciidoctor stylesheet to use.", None),
             'format-specifier': '-b ',
+            'backend' : ("Asciidoctor backend to use (optional, only to override default).", None),
             'ext-to-format' : {
                 '.html' : 'html5',
-                '.xml': 'docbook45',
+                '.xml': 'docbook5',
                 '.tex' : 'latex'
                 },
             'command-string': '%(prog)s %(format)s %(args)s %(ss)s -o %(output_file)s %(script_file)s'
@@ -48,7 +31,7 @@ class Asciidoctor(SubprocessExtToFormatFilter):
         args = super(Asciidoctor, self).command_string_args()
 
         stylesheet = self.setting('stylesheet')
-        if stylesheet:
+        if stylesheet is not None:
             stylesdir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'asciidoctor'))
 
             if not os.path.exists(stylesdir):
@@ -64,4 +47,10 @@ class Asciidoctor(SubprocessExtToFormatFilter):
 
         else:
             args['ss'] = ''
+
+        backend = self.setting('backend')
+        if backend is not None:
+            format_specifier = self.setting('format-specifier')
+            args['format'] = "%s%s" % (format_specifier, backend)
+
         return args
