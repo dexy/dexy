@@ -18,15 +18,18 @@ class ConfluenceRESTAPI(DexyFilter):
             'space-key' : ("Confluence space in which to publish page.", None),
             'page-title' : ("Title of page to publish.", None),
             'page-id' : ("ID of existing Confluence page to update.", None),
-            'parent-page-id' : ("Page ID to use as parent (page will be moved or created under this parent).", None),
-            'parent-page-title' : ("Page title to use as parent (page will be moved or created under this parent).", None),
             'authstring' : ("base64-encoded username:password string.", "$CONFLUENCE_AUTHSTRING"),
             'username' : ("Confluence account username.", "$CONFLUENCE_USERNAME"),
             'password' : ("Confluence account password.", "$CONFLUENCE_PASSWORD")
             }
 
     def wiki_root_url(self):
-        return "%s%s" % (self.setting('url-base'), self.setting('wiki-path'))
+        url_base = self.setting('url-base')
+        if url_base is None:
+            raise UserFeedback("The url-base setting must be provided.")
+        if not url_base.startswith("http"):
+            raise UserFeedback("The url-base setting should start with https.")
+        return "%s%s" % (url_base, self.setting('wiki-path'))
 
     def url_for_path(self, path):
         if not path.startswith("/"):
@@ -117,9 +120,10 @@ class ConfluenceRESTAPI(DexyFilter):
         self.handle_response_code(response)
         return response.json()
 
-    def find_page_id_by_title(self):
+    def find_page_info_by_title(self, page_title=None):
         space_key = self.setting('space-key')
-        page_title = self.setting('page-title')
+        if page_title is None:
+            page_title = self.setting('page-title')
 
         if space_key is None:
             raise UserFeedback("A space-key must be provided.")
@@ -130,21 +134,17 @@ class ConfluenceRESTAPI(DexyFilter):
         matching_pages = self.get_path("content", params)
 
         if matching_pages['size'] == 1:
-            matching_page = matching_pages['results'][0]
-            page_id = matching_page['id']
-            print "Page found using title and space key, you should set page-id parameter to %s for greater robustness." % page_id
-            return page_id
-
+            return matching_pages['results'][0]
         elif matching_pages['size'] == 0:
             return None
-
-        elif matching_pages['size'] > 1:
-            # TODO Is this possible?
-            raise UserFeedback("multiple pages match %s" % params)
-
         else:
             print matching_pages
-            raise Exception("should not get here")
+            raise Exception("Should only be 0 or 1 matching pages.")
+
+    def find_page_id_by_title(self, page_title=None):
+        page_info = self.find_page_info_by_title(page_title)
+        print "Page found using title and space key, you should set page-id parameter to %s for greater robustness." % page_info['id']
+        return page_info['id']
 
     def create_new_page(self):
         data = {
@@ -211,14 +211,13 @@ class ConfluenceRESTAPI(DexyFilter):
 
             print attachment['_links']
 
-        self.fix_attchment_paths(page, attachments)
+        self.fix_attachment_paths(page, attachments)
 
-    def move_page_under_parent(self, page):
-        parent_page_id = self.setting('parent-page-id')
-        parent_page_title = self.setting('parent-page-title')
-
-        if parent_page_id or parent_page_title:
-            raise Exception("not implemented yet")
+    def find_page_id(self):
+        if self.setting('page-id') is not None:
+            return self.setting('page-id')
+        else:
+            return self.find_page_id_by_title()
 
     def save_result(self, page):
         result = {}
@@ -229,10 +228,7 @@ class ConfluenceRESTAPI(DexyFilter):
         self.output_data.set_data(json.dumps(result))
 
     def process(self):
-        if self.setting('page-id') is not None:
-            page_id = self.setting('page-id')
-        else:
-            page_id = self.find_page_id_by_title()
+        page_id = self.find_page_id()
 
         if page_id is None:
             page = self.create_new_page()
@@ -240,6 +236,5 @@ class ConfluenceRESTAPI(DexyFilter):
         else:
             page = self.update_existing_page(page_id)
 
-        self.upload_attachments(page)
-        self.move_page_under_parent(page)
+        #self.upload_attachments(page)
         self.save_result(page)
