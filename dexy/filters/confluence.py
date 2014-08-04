@@ -12,7 +12,6 @@ class ConfluenceRESTAPI(DexyFilter):
     _settings = {
             'input-extensions' : ['.html'],
             'output-extensions' : ['.json'],
-            'custom-mime-types' : ("Map from file extensions to custom MIME types not found in python mimetypes module.", None),
             'url-base' : ("Root of URL.", None),
             'wiki-path' : ("Path to wiki root.", "/wiki"),
             'api-path' : ("Path from wiki root to API endpoint.", "/rest/api"),
