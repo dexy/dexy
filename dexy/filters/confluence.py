@@ -1,6 +1,8 @@
 from dexy.exceptions import UserFeedback
 from dexy.filter import DexyFilter
 import json
+import mimetypes
+import os
 import requests
 
 class ConfluenceRESTAPI(DexyFilter):
@@ -13,6 +15,8 @@ class ConfluenceRESTAPI(DexyFilter):
             'input-extensions' : ['.html'],
             'output-extensions' : ['.json'],
             'url-base' : ("Root of URL.", None),
+            'upload-attachments' : ("If True, attachments will automatically be uploaded.", True),
+            'fix-attachment-paths' : ("If True, automatically replace attachement filenames with uploaded paths in document content.", True),
             'wiki-path' : ("Path to wiki root.", "/wiki"),
             'api-path' : ("Path from wiki root to API endpoint.", "/rest/api"),
             'space-key' : ("Confluence space in which to publish page.", None),
@@ -20,7 +24,8 @@ class ConfluenceRESTAPI(DexyFilter):
             'page-id' : ("ID of existing Confluence page to update.", None),
             'authstring' : ("base64-encoded username:password string.", "$CONFLUENCE_AUTHSTRING"),
             'username' : ("Confluence account username.", "$CONFLUENCE_USERNAME"),
-            'password' : ("Confluence account password.", "$CONFLUENCE_PASSWORD")
+            'password' : ("Confluence account password.", "$CONFLUENCE_PASSWORD"),
+            'custom-mime-types' : ("Map of file extensions to mime types to supplement the python mimetypes module.", None)
             }
 
     def wiki_root_url(self):
@@ -70,7 +75,7 @@ class ConfluenceRESTAPI(DexyFilter):
     def handle_response_code(self, response):
         if response.status_code in (200,):
             pass
-        elif response.status_code in (401,403,):
+        elif response.status_code in (400,401,403,):
             raise UserFeedback(response.json()['message'])
         elif response.status_code in (500,):
             raise Exception("\nServer error %s:\n%s" % (response.status_code, response.json()['message']))
@@ -86,10 +91,25 @@ class ConfluenceRESTAPI(DexyFilter):
         self.handle_response_code(response)
         return response.json()
 
+    def guess_mimetype(self, canonical_name):
+        custom_mimetypes = self.setting('custom-mime-types')
+        if custom_mimetypes is None:
+            custom_mimetypes = {}
+        ext = ".%s" % os.path.splitext(canonical_name)[1]
+        if ext in custom_mimetypes:
+            return custom_mimetypes[ext]
+        else:
+            mimetype, _ = mimetypes.guess_type(canonical_name)
+            return mimetype
+
     def post_file(self, path, canonical_name, filepath):
         no_check = {"X-Atlassian-Token" : "no-check"}
+        mimetype = self.guess_mimetype(canonical_name)
         with open(filepath, 'rb') as fileref:
-            files = {'file': (canonical_name, fileref,) }
+            files = {
+                    'file': (canonical_name, fileref, mimetype),
+                    'comment' : "Uploaded by Dexy confluence filter.",
+                    'minorEdit' : "false"}
             response = requests.post(
                     self.url_for_path(path),
                     files=files,
@@ -160,7 +180,7 @@ class ConfluenceRESTAPI(DexyFilter):
                 }
         return self.json_post_path("content", data)
 
-    def update_existing_page(self, page_id):
+    def update_existing_page(self, page_id, page_text):
         page_info_args = {"expand" : "version"}
         page_info = self.get_path("content/%s" % page_id, page_info_args)
         page_version = page_info['version']['number']
@@ -175,7 +195,7 @@ class ConfluenceRESTAPI(DexyFilter):
                 "body" : {
                     "storage" : {
                         "representation" : "storage",
-                        "value" : unicode(self.input_data)
+                        "value" : page_text
                     }
                   },
                 "version" : {
@@ -184,17 +204,14 @@ class ConfluenceRESTAPI(DexyFilter):
                 }
         return self.json_put_path("content/%s" % page_id, data)
 
-    def fix_attachment_paths(self, page, attachments):
-        print "fixing attachment paths not yet implemented."
-
-    def upload_attachments(self, page):
-        path = "content/%s/child/attachment" % page['id']
+    def upload_attachments(self, page_id):
+        path = "content/%s/child/attachment" % page_id
         existing_attachments = self.get_path(path)['results']
         attachment_ids = dict(
                 (att['title'], att['id'],)
                 for att in existing_attachments)
 
-        attachments = []
+        attachments = {}
         for input_doc in self.doc.walk_input_docs():
             if not input_doc.output_data().is_canonical_output():
                 self.log_debug("Not uploading %s, set output to True if you want it." % input_doc)
@@ -209,9 +226,9 @@ class ConfluenceRESTAPI(DexyFilter):
             else:
                 attachment = self.post_file(path, canonical_name, filepath)
 
-            print attachment['_links']
+            attachments[canonical_name] = attachment['_links']['download'].split("?")[0]
 
-        self.fix_attachment_paths(page, attachments)
+        return attachments
 
     def find_page_id(self):
         if self.setting('page-id') is not None:
@@ -227,6 +244,16 @@ class ConfluenceRESTAPI(DexyFilter):
         result['short-url'] = "%s%s" % (self.wiki_root_url(), page['_links']['tinyui'])
         self.output_data.set_data(json.dumps(result))
 
+    def fix_attachment_paths(self, page_id, attachments):
+        input_text = unicode(self.input_data)
+        fixed_text = input_text
+
+        for canonical_name, path in attachments.iteritems():
+            fullpath = self.wiki_root_url() + path
+            fixed_text = fixed_text.replace(canonical_name, fullpath)
+
+        return self.update_existing_page(page_id, fixed_text)
+
     def process(self):
         page_id = self.find_page_id()
 
@@ -234,7 +261,14 @@ class ConfluenceRESTAPI(DexyFilter):
             page = self.create_new_page()
             print "New page created. You should now set page-id parameter to %s." % page['id']
         else:
-            page = self.update_existing_page(page_id)
+            page = self.update_existing_page(page_id, unicode(self.input_data))
 
-        #self.upload_attachments(page)
+        if self.setting('upload-attachments'):
+            attachments = self.upload_attachments(page_id)
+        else:
+            attachments = {}
+
+        if self.setting('fix-attachment-paths'):
+            page = self.fix_attachment_paths(page['id'], attachments)
+
         self.save_result(page)
