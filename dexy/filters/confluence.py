@@ -15,8 +15,11 @@ class ConfluenceRESTAPI(DexyFilter):
             'input-extensions' : ['.html'],
             'output-extensions' : ['.json'],
             'url-base' : ("Root of URL.", None),
-            'upload-attachments' : ("If True, attachments will automatically be uploaded.", True),
+            'upload-attachments' : ("If True, attachments will automatically be uploaded. Can also be a list of file extensions.", True),
+            'skip-attachments' : ("A list of file extensions which should not be uploaded as attachments.", None),
             'fix-attachment-paths' : ("If True, automatically replace attachement filenames with uploaded paths in document content.", True),
+            'attachment-minor-edit' : ("Whether an attachment should be uploaded as a minor edit.", True),
+            'attachment-comment' : ("Comment for attachment.", "Uploaded by Dexy confluence filter."),
             'wiki-path' : ("Path to wiki root.", "/wiki"),
             'api-path' : ("Path from wiki root to API endpoint.", "/rest/api"),
             'space-key' : ("Confluence space in which to publish page.", None),
@@ -73,9 +76,9 @@ class ConfluenceRESTAPI(DexyFilter):
         return self.credentials_with_headers(json_content_type)
 
     def handle_response_code(self, response):
-        if response.status_code in (200,):
+        if response.status_code < 400:
             pass
-        elif response.status_code in (400,401,403,):
+        elif response.status_code in xrange(400,500):
             raise UserFeedback(response.json()['message'])
         elif response.status_code in (500,):
             raise Exception("\nServer error %s:\n%s" % (response.status_code, response.json()['message']))
@@ -102,14 +105,25 @@ class ConfluenceRESTAPI(DexyFilter):
             mimetype, _ = mimetypes.guess_type(canonical_name)
             return mimetype
 
+    def minor_edit_setting(self):
+        minor_edit = self.setting('attachment-minor-edit')
+        if isinstance(minor_edit, bool):
+            if minor_edit:
+                return "true"
+            else:
+                return "false"
+        else:
+            return minor_edit
+
     def post_file(self, path, canonical_name, filepath):
         no_check = {"X-Atlassian-Token" : "no-check"}
         mimetype = self.guess_mimetype(canonical_name)
         with open(filepath, 'rb') as fileref:
             files = {
                     'file': (canonical_name, fileref, mimetype),
-                    'comment' : "Uploaded by Dexy confluence filter.",
-                    'minorEdit' : "false"}
+                    'comment' : str(self.setting('attachment-comment')),
+                    'minorEdit' : self.minor_edit_setting()
+                    }
             response = requests.post(
                     self.url_for_path(path),
                     files=files,
@@ -163,8 +177,9 @@ class ConfluenceRESTAPI(DexyFilter):
 
     def find_page_id_by_title(self, page_title=None):
         page_info = self.find_page_info_by_title(page_title)
-        print "Page found using title and space key, you should set page-id parameter to %s for greater robustness." % page_info['id']
-        return page_info['id']
+        if page_info is not None:
+            print "Page found using title and space key, you should set page-id parameter to %s for greater robustness." % page_info['id']
+            return page_info['id']
 
     def create_new_page(self):
         data = {
@@ -212,21 +227,36 @@ class ConfluenceRESTAPI(DexyFilter):
                 for att in existing_attachments)
 
         attachments = {}
+
         for input_doc in self.doc.walk_input_docs():
             if not input_doc.output_data().is_canonical_output():
                 self.log_debug("Not uploading %s, set output to True if you want it." % input_doc)
                 continue
 
             canonical_name = input_doc.output_data().basename()
+            ext = ".%s" % os.path.splitext(canonical_name)[0]
+
+            if not isinstance(self.setting('upload-attachments'), bool):
+                if not ext in self.setting('upload-attachments'):
+                    print "skipping", canonical_name, "because not in", self.setting('upload-attachments')
+                    continue
+
+            if self.setting('skip-attachments') is not None:
+                if ext in self.setting('skip-attachments'):
+                    print "skipping", canonical_name, "because in", self.setting('skip-attachments')
+                    continue
+
             filepath = input_doc.output_data().storage.data_file()
 
             if canonical_name in attachment_ids:
                 update_path = "%s/%s/data" % (path, attachment_ids[canonical_name])
                 attachment = self.post_file(update_path, canonical_name, filepath)
+                links = attachment['_links']
             else:
                 attachment = self.post_file(path, canonical_name, filepath)
+                links = attachment['results'][0]['_links']
 
-            attachments[canonical_name] = attachment['_links']['download'].split("?")[0]
+            attachments[canonical_name] = links['download'].split("?")[0]
 
         return attachments
 
@@ -264,7 +294,7 @@ class ConfluenceRESTAPI(DexyFilter):
             page = self.update_existing_page(page_id, unicode(self.input_data))
 
         if self.setting('upload-attachments'):
-            attachments = self.upload_attachments(page_id)
+            attachments = self.upload_attachments(page['id'])
         else:
             attachments = {}
 
