@@ -33,6 +33,7 @@ class PythonIntrospection(DexyFilter):
                 False
                 ),
             'input-extensions' : ['.txt', '.py'],
+            'skip-setup-py' : ("Whether to skip files named setup.py", True),
             'data-type' : 'keyvalue',
             'output-extensions' : ['.sqlite3', '.json']
             }
@@ -61,6 +62,11 @@ class PythonIntrospection(DexyFilter):
 
         name = self.input_data.name
         target = os.path.join(self.workspace(), name)
+
+        if name == "setup.py" and self.setting('skip-setup-py'):
+            # FIXME maybe make this more specific, search for certain text in setup.py like "setuptools"
+            return None
+
         try:
             return imp.load_source("dummy", target)
         except (ImportError, SkipTest) as e:
