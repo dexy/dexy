@@ -63,8 +63,9 @@ class PythonIntrospection(DexyFilter):
         name = self.input_data.name
         target = os.path.join(self.workspace(), name)
 
+        # FIXME maybe make this more specific, search for certain text in setup.py like "setuptools"
         if name == "setup.py" and self.setting('skip-setup-py'):
-            # FIXME maybe make this more specific, search for certain text in setup.py like "setuptools"
+            self.log_info("Skipping file %s because skip-setup-py is true." % target)
             return None
 
         try:
