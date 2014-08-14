@@ -22,6 +22,7 @@ class ConfluenceRESTAPI(DexyFilter):
             'attachment-comment' : ("Comment for attachment.", "Uploaded by Dexy confluence filter."),
             'wiki-path' : ("Path to wiki root.", "/wiki"),
             'api-path' : ("Path from wiki root to API endpoint.", "/rest/api"),
+            'page-minor-edit' : ("Whether to mark page changes as a minor edit.", True),
             'space-key' : ("Confluence space in which to publish page.", None),
             'page-title' : ("Title of page to publish.", None),
             'page-id' : ("ID of existing Confluence page to update.", None),
@@ -105,15 +106,22 @@ class ConfluenceRESTAPI(DexyFilter):
             mimetype, _ = mimetypes.guess_type(canonical_name)
             return mimetype
 
-    def minor_edit_setting(self):
-        minor_edit = self.setting('attachment-minor-edit')
-        if isinstance(minor_edit, bool):
-            if minor_edit:
+    def attachment_minor_edit_setting(self):
+        return self.bool_setting_to_string(
+                self.setting('attachment-minor-edit'))
+
+    def page_minor_edit_setting(self):
+        return self.bool_setting_to_string(
+                self.setting('page-minor-edit'))
+
+    def bool_setting_to_string(self, setting):
+        if isinstance(setting, bool):
+            if setting:
                 return "true"
             else:
                 return "false"
         else:
-            return minor_edit
+            return setting
 
     def post_file(self, path, canonical_name, filepath):
         no_check = {"X-Atlassian-Token" : "no-check"}
@@ -122,7 +130,7 @@ class ConfluenceRESTAPI(DexyFilter):
             files = {
                     'file': (canonical_name, fileref, mimetype),
                     'comment' : str(self.setting('attachment-comment')),
-                    'minorEdit' : self.minor_edit_setting()
+                    'minorEdit' : self.attachment_minor_edit_setting()
                     }
             response = requests.post(
                     self.url_for_path(path),
@@ -213,8 +221,10 @@ class ConfluenceRESTAPI(DexyFilter):
                         "value" : page_text
                     }
                   },
-                "version" : {
-                    "number" : page_version + 1
+                'version' : {
+                    'number' : page_version + 1,
+                    'minorEdit' : self.bool_setting_to_string(
+                        self.setting('page-minor-edit'))
                     }
                 }
         return self.json_put_path("content/%s" % page_id, data)
@@ -298,7 +308,7 @@ class ConfluenceRESTAPI(DexyFilter):
         else:
             attachments = {}
 
-        if self.setting('fix-attachment-paths'):
+        if attachments and self.setting('fix-attachment-paths'):
             page = self.fix_attachment_paths(page['id'], attachments)
 
         self.save_result(page)
