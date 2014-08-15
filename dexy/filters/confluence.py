@@ -26,6 +26,7 @@ class ConfluenceRESTAPI(DexyFilter):
             'space-key' : ("Confluence space in which to publish page.", None),
             'page-title' : ("Title of page to publish.", None),
             'page-id' : ("ID of existing Confluence page to update.", None),
+            'parent-page-id': ("ID of page to use as parent.", None),
             'authstring' : ("base64-encoded username:password string.", "$CONFLUENCE_AUTHSTRING"),
             'username' : ("Confluence account username.", "$CONFLUENCE_USERNAME"),
             'password' : ("Confluence account password.", "$CONFLUENCE_PASSWORD"),
@@ -189,10 +190,17 @@ class ConfluenceRESTAPI(DexyFilter):
             print "Page found using title and space key, you should set page-id parameter to %s for greater robustness." % page_info['id']
             return page_info['id']
 
+    def ancestors(self):
+        if self.setting('parent-page-id') is not None:
+            return [{"type" : "page", "id" : self.setting('parent-page-id')}]
+        else:
+            return []
+
     def create_new_page(self):
         data = {
                 "type" : "page",
                 "title" : self.setting('page-title'),
+                "ancestors" : self.ancestors(),
                 "space" : {"key" : self.setting('space-key') },
                 "body" : {
                     "storage" : {
@@ -215,6 +223,7 @@ class ConfluenceRESTAPI(DexyFilter):
         data = {
                 "type" : "page",
                 "title" : page_title,
+                "ancestors" : self.ancestors(),
                 "body" : {
                     "storage" : {
                         "representation" : "storage",
