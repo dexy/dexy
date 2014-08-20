@@ -516,9 +516,9 @@ class PygmentsHighlight(TemplatePlugin):
     # TODO figure out default fmt based on document ext - document would need
     # to implement a "final_ext()" method
 
-    def highlight(self, text, lexer_name, fmt='html', noclasses=False, lineanchors='l'):
+    def highlight(self, text, lexer_name, fmt='html', noclasses=False, style=None, lineanchors='l'):
         text = unicode(text)
-        formatter_options = { "lineanchors" : lineanchors, "noclasses" : noclasses }
+        formatter_options = { "lineanchors" : lineanchors, "noclasses" : noclasses, "style" : style }
         lexer = pygments.lexers.get_lexer_by_name(lexer_name)
         formatter = pygments.formatters.get_formatter_by_name(fmt, **formatter_options)
         return pygments.highlight(text, lexer, formatter)
