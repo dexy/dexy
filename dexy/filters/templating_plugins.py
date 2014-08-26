@@ -646,6 +646,12 @@ class D(DictMixin):
         if ref in self._input_doc_titles:
             return self._input_doc_titles[ref]
 
+    def path_to(self, other):
+        if self._parent_dir:
+            return os.path.normpath(os.path.join(self._parent_dir, other))
+        else:
+            return other
+
     def __getitem__(self, ref):
         try:
             return self._ref_cache[ref]
@@ -664,11 +670,7 @@ class D(DictMixin):
             index = self.title_index(ref)
 
         else:
-            if self._parent_dir:
-                path_to_ref = os.path.normpath(os.path.join(self._parent_dir, ref))
-            else:
-                path_to_ref = ref
-
+            path_to_ref = self.path_to(ref)
             index = self.key_or_name_index(path_to_ref)
 
         if index is not None:
@@ -694,12 +696,13 @@ class D(DictMixin):
                 if lev < closest_match_lev:
                     closest_match = k
                     closest_match_lev = lev
-                self._artifact.log_warn("  %s" % k)
+                self._artifact.log_warn("  %s" % self.path_to(k))
 
             msg += "There are %s input documents available, their keys have been written to dexy's log.\n" % len(self._input_doc_keys)
            
             if closest_match:
-                msg += "Did you mean '%s'?" % closest_match
+                path_to_closest_match = self.path_to(closest_match)
+                msg += "Did you mean '%s'?" % path_to_closest_match
 
             msgargs = (ref, self._artifact.key)
             raise dexy.exceptions.UserFeedback(msg % msgargs)
