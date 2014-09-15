@@ -518,7 +518,9 @@ class PygmentsHighlight(TemplatePlugin):
 
     def highlight(self, text, lexer_name, fmt='html', noclasses=False, style=None, lineanchors='l'):
         text = unicode(text)
-        formatter_options = { "lineanchors" : lineanchors, "noclasses" : noclasses, "style" : style }
+        formatter_options = { "lineanchors" : lineanchors, "noclasses" : noclasses }
+        if style is not None:
+            formatter_options['style'] = style
         lexer = pygments.lexers.get_lexer_by_name(lexer_name)
         formatter = pygments.formatters.get_formatter_by_name(fmt, **formatter_options)
         return pygments.highlight(text, lexer, formatter)
