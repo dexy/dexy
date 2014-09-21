@@ -19,3 +19,11 @@ The 'master' branch contains the most recent release of Dexy.
 The 'develop' branch contains the most recent development version of Dexy.
 
 Dexy is tested on Python 2.6-Python 2.7.
+
+## Tests
+
+Dexy uses nose to run tests.
+
+Additional Python package requirements for tests are in test-requirements.txt
+
+pip install -r test-requirements.txt
