@@ -24,6 +24,6 @@ Dexy is tested on Python 2.6-Python 2.7.
 
 Dexy uses nose to run tests.
 
-Additional Python package requirements for tests are in test-requirements.txt
+Additional Python package requirements for tests are in dev-requirements.txt
 
-pip install -r test-requirements.txt
+pip install -r dev-requirements.txt
