@@ -122,7 +122,6 @@ def parse_and_run_cmd(argv, module, default_command):
             sys.stderr.write(u"Sorry, can't get text of error message.")
 
         sys.stderr.write(os.linesep)
-        sys.exit(1)
 
     except KeyboardInterrupt:
         sys.stderr.write("stopping...")
