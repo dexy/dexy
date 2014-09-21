@@ -1,6 +1,7 @@
 from tests.utils import runfilter
 from tests.utils import wrap
 from dexy.doc import Doc
+from nose.exc import SkipTest
 
 def test_latex():
     with runfilter('latex', LATEX) as doc:
@@ -13,6 +14,8 @@ def test_latex_dvi():
         assert doc.output_data().is_cached()
 
 def test_tikz():
+    # TODO fix for tikz not installed
+    raise SkipTest()
     with runfilter('tikz', TIKZ) as doc:
         assert ".pdf" in doc.output_data().name
         assert doc.output_data().is_cached()
