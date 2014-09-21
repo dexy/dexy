@@ -1,3 +1,4 @@
 nose
 mock
 dexy-filter-examples
+dexy-templates
