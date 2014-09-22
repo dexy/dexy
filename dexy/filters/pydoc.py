@@ -21,6 +21,18 @@ except ImportError:
         """
     pass
 
+class add_workspace_to_sys_path(object):
+    def __init__(self, *dirs):
+        self.additional_dirs = dirs
+
+    def __enter__(self):
+        for dirname in self.additional_dirs:
+            sys.path.append(dirname)
+
+    def __exit__(self, type, value, traceback):
+        for dirname in self.additional_dirs:
+            sys.path.remove(dirname)
+
 class PythonIntrospection(DexyFilter):
     """
     Base class for classes which use python introspection.
@@ -38,10 +50,6 @@ class PythonIntrospection(DexyFilter):
             'output-extensions' : ['.sqlite3', '.json']
             }
 
-    def add_workspace_to_sys_path(self):
-        sys.path.append(self.parent_work_dir())
-        sys.path.append(self.workspace())
-
     def handle_fail(self, name, e):
         msg = self.import_err_msg % (name, e)
         if self.setting('error-on-import-fail'):
@@ -58,20 +66,19 @@ class PythonIntrospection(DexyFilter):
 
     def load_source_file(self):
         self.populate_workspace()
-        self.add_workspace_to_sys_path()
+        with add_workspace_to_sys_path(self.workspace(), self.parent_work_dir()):
+            name = self.input_data.name
+            target = os.path.join(self.workspace(), name)
 
-        name = self.input_data.name
-        target = os.path.join(self.workspace(), name)
+            # FIXME maybe make this more specific, search for certain text in setup.py like "setuptools"
+            if name == "setup.py" and self.setting('skip-setup-py'):
+                self.log_info("Skipping file %s because skip-setup-py is true." % target)
+                return None
 
-        # FIXME maybe make this more specific, search for certain text in setup.py like "setuptools"
-        if name == "setup.py" and self.setting('skip-setup-py'):
-            self.log_info("Skipping file %s because skip-setup-py is true." % target)
-            return None
-
-        try:
-            return imp.load_source("dummy", target)
-        except (ImportError, SkipTest) as e:
-            self.handle_fail(name, e)
+            try:
+                return imp.load_source("dummy", target)
+            except (ImportError, SkipTest) as e:
+                self.handle_fail(name, e)
 
 class Pydoc(PythonIntrospection):
     """
