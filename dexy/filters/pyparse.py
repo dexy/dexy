@@ -1,4 +1,5 @@
 from dexy.filter import DexyFilter
+from lib2to3.pytree import Leaf
 import lib2to3.pgen2.driver
 import lib2to3.pytree
 import os
@@ -16,6 +17,7 @@ class PyParse(DexyFilter):
     _settings = {
             'data-type' : 'keyvalue',
             'whitespace-types' : ("Token types corresponding to whitespace.", (4, 5)),
+            'string-types' : ("Token types corresponding to strings.", (3,)),
             'grammar-file' : ("Name or full path to file specifying Python language grammar.", "Grammar.txt")
             }
 
@@ -42,45 +44,64 @@ class PyParse(DexyFilter):
     def type_of(self, node):
         return self.type_repr(node.type)
 
+    def eval_string(self, leaf):
+        return eval(leaf.value).strip()
+
     def first_simple_statement_after_any_whitespace(self, parent):
         for child in parent.children:
             if child.type in self.setting('whitespace-types'):
                 pass
-            elif child.type == 3:
+            elif child.type in self.setting('string-types'):
                 first_child = child
-                return eval(first_child.value).strip()
+                return self.eval_string(first_child)
             elif self.type_of(child) == "simple_stmt":
                 first_child = child.children[0]
-                return eval(first_child.value).strip()
-            else:
-                return
+                if isinstance(first_child, Leaf) and first_child.type in self.setting('string-types'):
+                    return self.eval_string(first_child)
 
     def process_node(self, node, prefix):
         node_type = self.type_of(node)
-        if node_type == "funcdef":
-            return self.process_function(node, prefix)
+
+        decorators = []
+        if node_type == 'decorated':
+            # are we a decorated function or a decorated class?
+            for child in node.children:
+                if self.type_of(child) == "decorator":
+                    decorators.append(str(child).rstrip())
+                elif self.type_of(child) == "decorators":
+                    for decorator in child.children:
+                        decorators.append(str(decorator).rstrip())
+                else:
+                    child_type = self.type_of(child)
+                    if child_type == "funcdef":
+                        self.process_function(node, prefix, decorators)
+                    elif child_type == "classdef":
+                        self.process_class(node, prefix, decorators)
+                    else:
+                        raise Exception(child_type)
+
+        elif node_type == 'funcdef':
+            return self.process_function(node, prefix, decorators)
         elif node_type == "classdef":
-            return self.process_class(node, prefix)
+            return self.process_class(node, prefix, decorators)
         else:
-            return (prefix, False)
+            return prefix
 
     def process_root(self, node, prefix):
         docstring = self.first_simple_statement_after_any_whitespace(node)
-
         if prefix is None:
             key = ":doc"
         elif "None" in prefix:
             key = ":doc"
         else:
             key = "%s:doc" % prefix
-    
-        if not key in self.output_data.keys():
+   
+        not_already_in_keys = not key in self.output_data.keys()
+        is_a_docstring = docstring is not None
+        if not_already_in_keys and is_a_docstring:
             self.output_data.append(key, docstring)
 
-        prefix, recurse = self.process_node(node, prefix)
-        if recurse:
-            for child in node.children:
-                self.process_root(child, prefix)
+        self.process_node(node, prefix)
 
     def process(self):
         self.func_name = None
@@ -101,20 +122,54 @@ class PyParse(DexyFilter):
         else:
             return "%s.%s" % (prefix, name)
 
-    def process_function(self, node, prefix):
-        state = "def"
-    
+    def process_function(self, node, prefix, decorators):
         def process_func_part(state, part):
             if state == "def":
-                if part.value == "def":
-                    return "funcname"
-                else:
-                    raise Exception("Was expecting 'def' got '%s'" % part.value)
+                assert isinstance(part, Leaf) and part.value == "def", part
+                return "funcname"
     
             elif state == "funcname":
+                assert isinstance(part, Leaf) and part.type == 1
                 self.func_name = part.value
-                source = "\n".join(decorators) + str(node).strip()
-                self.output_data.append("%s:source" % self.name_with_prefix(self.func_name, prefix), source)
+
+                name_with_prefix = self.name_with_prefix(self.func_name, prefix)
+                raw_source = str(node).rstrip().splitlines()
+
+                is_function_started = False
+                leading_comments = []
+                source_lines = []
+                indent = None
+                for line in raw_source:
+                    is_comment = line.lstrip().startswith("#")
+                    is_decorator = line.lstrip().startswith("@")
+                    has_def = "def" in line
+
+                    if has_def and indent is None:
+                        indent = len(line) - len(line.lstrip())
+
+                    if is_function_started:
+                        source_lines.append(line)
+
+                    elif not is_function_started and is_comment:
+                        leading_comments.append(line)
+
+                    elif not is_comment and (has_def or is_decorator):
+                        is_function_started = True
+                        source_lines.append(line)
+                  
+                # Strip trailing comments and empty lines.
+                while source_lines[-1].lstrip().startswith("#") or not source_lines[-1].lstrip():
+                    source_lines.pop()
+
+                # Fix decorator indent.
+                for i, line in enumerate(source_lines):
+                    if not line.startswith("@"):
+                        break
+                    if len(line) - len(line.lstrip()) == 0 and indent > 0:
+                        source_lines[i] = " " * indent + line
+
+                self.output_data.append("%s:source" % name_with_prefix, "\n".join(source_lines))
+                self.output_data.append("%s:decorators" % name_with_prefix, "\n".join(decorators))
                 return "parameters"
     
             elif state == "parameters":
@@ -136,10 +191,10 @@ class PyParse(DexyFilter):
             else:
                 raise Exception("invalid state '%s'" % state)
     
-        decorators = []
+        state = "def"
         for child in node.children:
-            if self.type_of(child) == "decorator":
-                decorators.append(str(child).strip())
+            if self.type_of(child) in ("decorator", "decorators",):
+                pass
             elif self.type_of(child) == "funcdef":
                 for grandchild in child.children:
                     state = process_func_part(state, grandchild)
@@ -150,52 +205,60 @@ class PyParse(DexyFilter):
                 if state is None:
                     break
     
-        if self.func_name is None:
-            raise Exception("func name is none")
-        else:
-            augmented_name = self.name_with_prefix(self.func_name, prefix)
-            self.func_name = None
-            return augmented_name, False
+        name_with_prefix = self.name_with_prefix(self.func_name, prefix)
+        self.func_name = None
+        return name_with_prefix
     
-    def process_class(self, node, prefix):
-        state = "class"
-    
+    def process_class(self, node, prefix, decorators):
         def process_class_part(state, part):
-            global class_name
             if state == "class":
-                if part.value == "class":
-                    return "classname"
-                else:
-                    raise Exception("Was expecting 'class' got '%s'" % part.value)
+                assert isinstance(part, Leaf) and part.value == "class"
+                return "classname"
     
             elif state == "classname":
-                class_name = part.value
-                self.output_data.append("%s:source" % self.name_with_prefix(class_name, prefix), str(node).strip())
+                assert isinstance(part, Leaf) and part.type == 1
+                self.class_name = part.value
+                name_with_prefix = self.name_with_prefix(self.class_name, prefix)
+                self.output_data.append("%s:source" % name_with_prefix, str(node).strip())
                 return "parameters"
     
             elif state == "parameters":
-                if part.value == ":":
+                if isinstance(part, Leaf) and part.value == ":":
                     return "body"
                 else:
+                    # continue processing parameters
                     return "parameters"
     
             elif state == "body":
                 assert self.type_of(part) == "suite"
-                self.output_data.append("%s:doc" % self.name_with_prefix(class_name, prefix), self.first_simple_statement_after_any_whitespace(part))
-    
+
+                # Parse any Class docstring
+                name_with_prefix = self.name_with_prefix(self.class_name, prefix)
+                docstring = self.first_simple_statement_after_any_whitespace(part)
+                self.output_data.append("%s:doc" % name_with_prefix, docstring)
+   
+                # Parse class and instance methods
                 for child in part.children:
-                    if self.type_of(child) in ("funcdef", "decorated"):
-                        self.process_function(child, self.name_with_prefix(class_name, prefix))
-    
-            elif state is None:
-                pass
+                    if self.type_of(child) in ('funcdef', 'decorated'):
+                        self.process_node(child, self.name_with_prefix(self.class_name, prefix))
     
             else:
                 raise Exception("invalid state '%s'" % state)
     
+        state = "class"
         for child in node.children:
-            state = process_class_part(state, child)
-            if state is None:
-                break
-    
-        return self.name_with_prefix(prefix, self.class_name), True
+            if self.type_of(child) in ("decorator", "decorators",):
+                pass
+            elif self.type_of(child) == "classdef":
+                for grandchild in child.children:
+                    state = process_class_part(state, grandchild)
+                    if state == None:
+                        break
+            else:
+                state = process_class_part(state, child)
+                if state is None:
+                    break
+   
+        name_with_prefix = self.name_with_prefix(self.class_name, prefix)
+        self.class_name = None
+        return name_with_prefix

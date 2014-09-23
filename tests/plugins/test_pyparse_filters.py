@@ -11,6 +11,7 @@ def foo():
     '''
     return True
 
+
 # Comment for bar
 def bar():
     '''
@@ -18,6 +19,28 @@ def bar():
     '''
     return False
 
+
+# Comment before decorator
+@decorator
+@another
+def decorated():
+    pass
+
+@decorator(some, args)
+def decorated_with_args():
+    pass
+
+
+class Foo(object):
+    @decorator
+    @another
+    def decorated(self):
+        pass
+
+
+@decorator
+class Decorated(object):
+    pass
 """
 
 def test_pyparse_filter_on_python_files():
@@ -32,7 +55,16 @@ def test_pyparse_filter_on_python_files():
         assert 'foo:source' in keys
         
         assert data['foo:doc'] == "docstring for foo"
-        #assert data['foo:comments'] == "# Comment for foo\n"
+        assert data['foo:source'].startswith("def foo():\n")
 
         assert data['bar:doc'] == "docstring for bar"
-        #assert data['bar:comments'] == "# Comment for bar\n"
+        assert data['bar:source'].startswith("def bar():\n")
+
+        assert data['decorated:doc'] is None
+        assert data['decorated:source'].startswith("@decorator\n@another\ndef decorated():\n")
+
+        assert data['Foo:doc'] is None
+        assert data['Foo:source'].startswith("class Foo(object):\n")
+
+        assert data['Foo.decorated:doc'] is None
+        assert data['Foo.decorated:source'].startswith("    @decorator\n    @another\n    def decorated(self):\n")
