@@ -60,7 +60,6 @@ class MarkdownJupyterFilter(DexyFilter):
         workbook_name = self.setting("name")
 
         for line in input_text.splitlines():
-            print state, line
             if state == "md" and line.lstrip().startswith("```"):
                 # save exististing prose block, if any
                 if proseblock:
