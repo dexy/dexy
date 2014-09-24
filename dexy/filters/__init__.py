@@ -8,6 +8,7 @@ import dexy.filters.deprecated
 import dexy.filters.easy
 import dexy.filters.example
 import dexy.filters.fluid_html
+import dexy.filters.genipynb
 import dexy.filters.git
 import dexy.filters.id
 import dexy.filters.ipynb
