@@ -2,69 +2,60 @@ from dexy.filter import DexyFilter
 import json
 import re
 
-class MarkdownJupyterFilter(DexyFilter):
+class MarkdownSections(DexyFilter):
     """
-    Converts a Markdown script with embedded source code to an IPython
-    notebook.
+    Base class for filters which divide markdown scripts into code/prose
+    sections.
     """
-    aliases = ['mdipynb', 'mdjup']
+
+    aliases = ['mdsections']
     _settings = {
             "input-extensions" : [".md"],
-            "output-extensions" : [".ipynb"],
+            "output-extensions" : [".json"],
             "output" : True,
-            "nbformat" : ("Setting to use for IPython nbformat setting", 3),
-            "nbformat_minor" : ("Setting to use for IPython nbformat_minor setting.", 0),
-            "name" : ("Name of notebook.", None),
-            "pprint"  : ("Whether to pretty print JSON.", True),
             "language" : ("Default programming language for code blocks.", "python"),
-            "collapsed" : ("Whether to collapse code blocks by default.", False),
-            'extensions' : ("Which Markdown extensions to enable.", {})
+            "pprint"  : ("Whether to pretty print JSON.", True),
             }
-    
-    def code_cell(self, source, language, metadata=None):
-        if language is None:
-            raise Exception("no language specified")
+
+
+    def process_code(self, source, language, metadata=None):
         return {
-                "cell_type" : "code",
-                "collapsed" : self.setting('collapsed'),
-                "metadata" : metadata or {},
+                "type" : "source",
                 "language" : language,
-                "input" : source,
-                "outputs" : [],
-                "prompt_number" : None
+                "source" : source,
+                "metadata" : metadata
                 }
 
-    def heading_cell(self, level, text, metadata = None):
+    def process_heading(self, level, text, metadata=None):
         return {
-                "cell_type" : "heading",
+                "type" : "heading",
                 "level" : level,
-                "metadata" : metadata or {},
-                "source" : [text]
+                "text" : text,
+                "metadata" : metadata
                 }
 
-    def markdown_cell(self, source):
+    def process_prose(self, source, metadata=None):
         return {
-                "cell_type" : "markdown",
-                "metadata" : {},
-                "source" : [
-                    "\n".join(source)
-                    ]
+                "type" : "markdown",
+                "text" : source,
+                "metadata" : metadata
                 }
 
-    def process_text(self, input_text):
-        cells = []
+    def process_sections(self, input_text):
+        blocks = []
+
         proseblock = []
         codeblock = None
+
         language = None
         state = "md"
-        workbook_name = self.setting("name")
 
         for line in input_text.splitlines():
             if state == "md" and line.lstrip().startswith("```"):
                 # save exististing prose block, if any
                 if proseblock:
-                    cell = self.markdown_cell(proseblock)
-                    cells.append(cell)
+                    block = self.process_prose(proseblock)
+                    blocks.append(block)
                     proseblock = []
 
                 # start new code block, skipping current line
@@ -79,8 +70,8 @@ class MarkdownJupyterFilter(DexyFilter):
 
                 codeblock = []
             elif state == "code" and line.lstrip().startswith("```"):
-                cell = self.code_cell(codeblock, language)
-                cells.append(cell)
+                block = self.process_code(codeblock, language)
+                blocks.append(block)
 
                 state = "md"
             elif state == "code":
@@ -89,15 +80,73 @@ class MarkdownJupyterFilter(DexyFilter):
                 m = re.match("^(#+)(\s*)(.*)$", line)
                 if m:
                     if proseblock:
-                        cell = self.markdown_cell(proseblock)
-                        cells.append(cell)
+                        block = self.process_prose(proseblock)
+                        blocks.append(block)
                         proseblock = []
 
                     level = len(m.groups()[0])
-                    cell = self.heading_cell(level, m.groups()[2])
-                    cells.append(cell)
+                    block = self.process_heading(level, m.groups()[2])
+                    blocks.append(block)
                 else:
                     proseblock.append(line)
+
+        return blocks
+        
+    def process_text(self, input_text):
+        blocks = self.process_sections(input_text)
+
+        if self.setting('pprint'):
+            return json.dumps(blocks, indent=4, sort_keys=True)
+        else:
+            return json.dumps(blocks)
+
+
+class MarkdownJupyter(MarkdownSections):
+    """
+    Generate a Jupyter (IPython) notebook from markdown with embedded code.
+    """
+    aliases = ['mdipynb', 'mdjup']
+    _settings = {
+            "output-extensions" : [".ipynb"],
+            "nbformat" : ("Setting to use for IPython nbformat setting", 3),
+            "nbformat_minor" : ("Setting to use for IPython nbformat_minor setting.", 0),
+            "name" : ("Name of notebook.", None),
+            "collapsed" : ("Whether to collapse code blocks by default.", False),
+            }
+    
+    def process_code(self, source, language, metadata=None):
+        if language is None:
+            raise Exception("no language specified")
+        return {
+                "cell_type" : "code",
+                "collapsed" : self.setting('collapsed'),
+                "metadata" : metadata or {},
+                "language" : language,
+                "input" : source,
+                "outputs" : [],
+                "prompt_number" : None
+                }
+
+    def process_heading(self, level, text, metadata = None):
+        return {
+                "cell_type" : "heading",
+                "level" : level,
+                "metadata" : metadata or {},
+                "source" : [text]
+                }
+
+    def process_prose(self, source):
+        return {
+                "cell_type" : "markdown",
+                "metadata" : {},
+                "source" : [
+                    "\n".join(source)
+                    ]
+                }
+
+    def process_text(self, input_text):
+        workbook_name = self.setting("name")
+        cells = self.process_sections(input_text)
 
         notebook = {
             "nbformat" : self.setting('nbformat'),
