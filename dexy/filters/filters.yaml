@@ -1,3 +1,21 @@
+plantuml:
+    added-in-version: "1.0.15"
+    tags: [uml]
+    class: SubprocessExtToFormatFilter
+    help: Runs plantuml and generates an image file.
+    executable: java
+    input-extensions: [.uml]
+    output-extensions: [.png, .svg]
+    add-new-files: True
+    make-dummy-output: True
+    format-specifier: '-T'
+    ext-to-format:
+           .png: png
+           .svg: svg
+    jar: ["Path from project root to JAR file or absolute path to JAR file.", plantuml.jar]
+    command-string: '%(prog)s -jar "%(jar)s" %(format)s %(args)s "%(script_file)s"'
+    output: True
+
 perl:
     added-in-version: "1.0.15"
     tags: [perl, code]

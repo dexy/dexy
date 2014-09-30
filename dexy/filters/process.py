@@ -16,6 +16,7 @@ class SubprocessFilter(Filter):
             'check-return-code' : ("Whether to look for nonzero return code.", True),
             'clargs' : ("Arguments to be passed to the executable (same as 'args').", ''),
             'command-string' : ("The full command string.", """%(prog)s %(args)s "%(script_file)s" %(scriptargs)s "%(output_file)s" """),
+            'make-dummy-output' : ("Whether to make a dummy output file when one is not generated and add-new-files is True.", False),
             'env' : ("Dictionary of key-value pairs to be added to environment for runs.", {}),
             'executable' : ('The executable to be run', None),
             'initial-timeout' : ('', 10),
@@ -257,12 +258,18 @@ class SubprocessFilter(Filter):
         if stderr:
             self.log_debug(u"stderr is '%s'" % stderr.decode('utf-8'))
 
+
         return (proc, stdout)
 
     def copy_canonical_file(self):
         canonical_file = os.path.join(self.workspace(), self.output_data.name)
         if not self.output_data.is_cached() and file_exists(canonical_file):
             self.output_data.copy_from_file(canonical_file)
+
+        if self.setting('add-new-files') and self.setting('make-dummy-output'):
+            if not self.output_data.is_cached():
+                self.output_data.set_data("ok")
+                self.output_data.update_settings({"canonical-output": False})
 
 class SubprocessStdoutFilter(SubprocessFilter):
     """
