@@ -4,7 +4,7 @@ plantuml:
     class: SubprocessExtToFormatFilter
     help: Runs plantuml and generates an image file.
     executable: java
-    input-extensions: [.uml]
+    input-extensions: [.uml, .plantuml]
     output-extensions: [.png, .svg]
     add-new-files: True
     make-dummy-output: True
