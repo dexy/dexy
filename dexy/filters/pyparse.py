@@ -109,12 +109,16 @@ class PyParse(DexyFilter):
         self.setup_driver()
 
         text = unicode(self.input_data)
-        root = self.driver.parse_string(text)
-        
-        for node in root.children:
-            self.process_root(node, None)
 
-        self.output_data.save()
+        if text == "None":
+            self.output_data.set_data({})
+        else:
+            root = self.driver.parse_string(text)
+
+            for node in root.children:
+                self.process_root(node, None)
+
+            self.output_data.save()
 
     def name_with_prefix(self, name, prefix):
         if prefix is None:
