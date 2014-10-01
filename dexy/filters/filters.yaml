@@ -1,3 +1,18 @@
+inkscape:
+    added-in-version: "1.0.15"
+    tags: [image, pdf]
+    class: SubprocessExtToFormatFilter
+    help: Runs inkscape in batch mode.
+    executable: inkscape
+    format-specifier: ''
+    ext-to-format:
+        .eps: --export-eps
+        .pdf: --export-pdf
+        .png: --export-png
+        .ps: --export-ps
+    output: True
+    command-string: '%(prog)s -z %(format)s="%(output_file)s" %(args)s "%(script_file)s"'
+
 plantuml:
     added-in-version: "1.0.15"
     tags: [uml]
