@@ -253,16 +253,16 @@ class ConfluenceRESTAPI(DexyFilter):
                 continue
 
             canonical_name = input_doc.output_data().basename()
-            ext = ".%s" % os.path.splitext(canonical_name)[0]
+            ext = os.path.splitext(canonical_name)[1]
 
             if not isinstance(self.setting('upload-attachments'), bool):
                 if not ext in self.setting('upload-attachments'):
-                    print "skipping", canonical_name, "because not in", self.setting('upload-attachments')
+                    self.log_info("Skipping %s because %s not in %s" % (canonical_name, ext, self.setting('upload-attachments'),))
                     continue
 
             if self.setting('skip-attachments') is not None:
                 if ext in self.setting('skip-attachments'):
-                    print "skipping", canonical_name, "because in", self.setting('skip-attachments')
+                    self.log_info("Skipping %s because %s in %s" % (canonical_name, ext, self.setting('skip-attachments'),))
                     continue
 
             filepath = input_doc.output_data().storage.data_file()
