@@ -1,7 +1,11 @@
 from bs4 import BeautifulSoup
 from dexy.filter import DexyFilter
+from dexy.utils import chdir
+import base64
 import inflection
+import mimetypes
 import re
+import urllib
 
 class Customize(DexyFilter):
     """
@@ -28,6 +32,57 @@ class Customize(DexyFilter):
             soup.head.append(css_tag)
 
         return unicode(soup)
+
+class InlineAssets(DexyFilter):
+    """
+    Imports any referenced images as data URIs.
+    """
+    aliases = ['inliner']
+
+    _settings = {
+            'html-parser' : ("Name of html parser BeautifulSoup should use.", 'html.parser'),
+            'inline-images' : ("Whether to inline images using the data uri scheme.", True),
+            'inline-styles' : ("Whether to embed referenced CSS in the page header.", True)
+            }
+
+    def inline_images(self, soup):
+        for tag in soup.find_all("img"):
+            path = tag.get('src')
+
+            f = urllib.urlopen(path)
+            data = f.read()
+            f.close()
+
+            mime, _ = mimetypes.guess_type(path)
+            data64 = base64.encodestring(data)
+            dataURI = u'data:%s;base64,%s' % (mime, data64)
+            tag['src'] = dataURI
+
+    def inline_styles(self, soup):
+        for tag in soup.find_all("link"):
+            path = tag.get('href')
+
+            f = urllib.urlopen(path)
+            data = f.read()
+            f.close()
+
+            style = soup.new_tag('style')
+            style.string = data
+
+            tag.replace_with(style)
+
+    def process(self):
+        soup = BeautifulSoup(unicode(self.input_data), self.setting('html-parser'))
+        self.populate_workspace()
+
+        with chdir(self.parent_work_dir()):
+            if self.setting('inline-images'):
+                self.inline_images(soup)
+    
+            if self.setting('inline-styles'):
+                self.inline_styles(soup)
+    
+        self.output_data.set_data(unicode(soup))
 
 class SoupSections(DexyFilter):
     """

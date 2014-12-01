@@ -194,6 +194,17 @@ class tempdir(object):
         if not isinstance(value, Exception):
             self.remove_temp_dir()
 
+class chdir(object):
+    def __init__(self, newdir):
+        self.newdir = newdir
+        self.location = os.path.abspath(os.curdir)
+
+    def __enter__(self):
+        os.chdir(self.newdir)
+
+    def __exit__(self, type, value, traceback):
+        os.chdir(self.location)
+
 def value_for_hyphenated_or_underscored_arg(arg_dict, arg_name_hyphen, default=None):
     if not "-" in arg_name_hyphen and "_" in arg_name_hyphen:
         raise dexy.exceptions.InternalDexyProblem("arg_name_hyphen %s has underscores!" % arg_name_hyphen)

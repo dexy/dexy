@@ -208,6 +208,7 @@ class SubprocessFilter(Filter):
                 if not is_valid_file_extension:
                     raise Exception("Should not get here unless is_valid_file_extension")
 
+                self.log_debug("Adding %s" % filepath)
                 with open(filepath, 'rb') as f:
                     contents = f.read()
                 self.add_doc(relpath, contents)

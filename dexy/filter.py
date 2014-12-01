@@ -501,8 +501,11 @@ class Filter(dexy.plugin.Plugin):
 
         self.makedirs()
 
-        self.log_debug("input docs %s" % list(self.doc.walk_input_docs()))
-        for inpt in self.doc.walk_input_docs():
+        traditional_input_docs = list(self.doc.walk_input_docs())
+        input_docs = traditional_input_docs + self.doc.additional_docs
+        self.log_debug("input docs %s" % input_docs)
+
+        for i, inpt in enumerate(input_docs):
             if not self.include_input_in_workspace(inpt):
                 self.log_debug("not populating workspace with input '%s'" % inpt.key)
                 continue
@@ -525,7 +528,11 @@ class Filter(dexy.plugin.Plugin):
             file_dest = os.path.join(self.workspace(), filepath)
 
             try:
-                copy_or_link(data, file_dest)
+                if i > len(traditional_input_docs)-1:
+                    contents = inpt.setting('contents')
+                    data.storage.write_data(contents, file_dest)
+                else:
+                    copy_or_link(data, file_dest)
 
             except Exception as e:
                 self.log_debug("problem populating working dir with input %s" % data.key)
