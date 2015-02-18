@@ -265,7 +265,7 @@ def idiostart_abort(t):
     return t
 
 def t_idiostart_COMMENT(t):
-    r'\#|%|;|/'
+    r'\#|%|;|/|C|!'
     return idiostart_incr_comment(t)
 
 def t_idiostart_SPACE(t):
@@ -305,7 +305,7 @@ def t_IDIOOPEN(t):
         return t
 
 def t_COMMENT(t):
-    r'\#|%|;|/'
+    r'\#|%|;|/|C|!'
     return start_idiostart(t)
 
 def t_NEWLINE(t):
