@@ -276,7 +276,18 @@ class PygmentsFilter(DexyFilter):
                 formatter = self.create_formatter_instance()
                 for section_name, section_input in self.input_data.iteritems():
                     try:
-                        section_output = highlight(unicode(section_input).decode("utf-8"), lexer, formatter)
+                        if isinstance(section_input, str):
+                            # If section_input is a 'str' instance we
+                            # assume it is encoded with UTF-8 and then we
+                            # convert it to a unicode string
+                            section_input = unicode(section_input, 'utf-8')
+                        else:
+                            # If section_input is an instance of
+                            # SectionValue then calling 'unicode' on this
+                            # instance will call the __unicode__ method of
+                            # SectionValue.
+                            section_input = unicode(section_input)
+                        section_output = highlight(section_input, lexer, formatter)
                     except UnicodeDecodeError:
                         if self.setting('allow-unprintable-input'):
                             section_input = self.setting('unprintable-input-text')
