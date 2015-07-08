@@ -532,7 +532,7 @@ class Filter(dexy.plugin.Plugin):
                     contents = inpt.setting('contents')
                     data.storage.write_data(contents, file_dest)
                 else:
-                    copy_or_link(data, file_dest)
+                    copy_or_link(data, file_dest, use_links=False)
 
             except Exception as e:
                 self.log_debug("problem populating working dir with input %s" % data.key)

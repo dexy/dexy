@@ -203,7 +203,9 @@ class Wrapper(object):
         try:
             shutil.rmtree(self.trash_dir())
         except OSError as e:
-            if not "No such file or directory" in unicode(e):
+            no_such_dir = "No such file or directory" in unicode(e)
+            dir_not_empty = "Directory not empty" in unicode(e)
+            if not no_such_dir and not dir_not_empty:
                 raise
 
     def reset_work_cache_dir(self):
