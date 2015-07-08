@@ -14,7 +14,7 @@ import yaml
 
 is_windows = platform.system() in ('Windows',)
 
-def copy_or_link(data, destination, use_links=True, read_only_links=True):
+def copy_or_link(data, destination, use_links=False, read_only_links=True):
     """
     Copies or makes a hard link. Will copy if on windows or if use_links is False.
     """
