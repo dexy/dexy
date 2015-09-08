@@ -5,13 +5,6 @@ import logging
 import markdown
 import re
 
-#safe_mode_docstring = """Whether to escape, remove or replace HTML blocks.
-#
-#Set to True or 'escape' to escape HTML, 'remove' to remove HTML, 'replace' to replace with replacement-text.
-#"""
-#            'safe-mode' : (safe_mode_docstring, False),
-#            'replacement-text' : ("Text to replace HTML blocks if safe-mode is 'replace'.", None),
-
 class MarkdownFilter(DexyFilter):
     """
     Runs a Markdown processor to convert markdown to HTML.
@@ -31,7 +24,7 @@ class MarkdownFilter(DexyFilter):
         markdown_logger = logging.getLogger('MARKDOWN')
         markdown_logger.addHandler(self.doc.wrapper.log.handlers[-1])
 
-    def initialize_markdown(self):
+    def initialize_markdown(self, *additional_extensions):
         extension_configs = self.setting('extensions')
         extensions = extension_configs.keys()
 
@@ -40,7 +33,7 @@ class MarkdownFilter(DexyFilter):
 
         try:
             md = markdown.Markdown(
-                    extensions=extensions,
+                    extensions=extensions + list(additional_extensions),
                     extension_configs=extension_configs)
         except ValueError as e:
             self.log_debug(e.message)
@@ -57,8 +50,6 @@ class MarkdownFilter(DexyFilter):
         self.capture_markdown_logger()
         md = self.initialize_markdown()
         return md.convert(input_text)
-
-
 
 class MarkdownSlidesFilter(MarkdownFilter):
     """
@@ -110,7 +101,6 @@ class MarkdownSlidesFilter(MarkdownFilter):
             slides += slide_text
 
         return slides
-
 
 class MarkdownSpeakerNotesFilter(MarkdownSlidesFilter):
     """
