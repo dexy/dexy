@@ -6,6 +6,7 @@ from jinja2.exceptions import TemplateSyntaxError
 from jinja2.exceptions import UndefinedError
 import dexy.exceptions
 import jinja2
+import jinja2.ext
 import os
 import re
 import traceback
@@ -108,6 +109,7 @@ class JinjaFilter(TemplateFilter):
             'comment-end-string' : ("Tag to indicate the start of a comment.", "#}"),
             'changetags' : ("Automatically change from { to < based tags for .tex and .wiki files.", True),
             'jinja-path' : ("List of additional directories to pass to jinja loader.", []),
+            'jinja-extensions' : ("List of jinja extensions to activate.", ['jinja2.ext.do']),
             'workspace-includes' : [".jinja"],
             'assertion-passed-indicator' : (
                 "Extra text to return with a passed assertion.",
@@ -124,7 +126,8 @@ class JinjaFilter(TemplateFilter):
             'jinja-path',
             'workspace-includes',
             'filters',
-            'assertion-passed-indicator'
+            'assertion-passed-indicator',
+            'jinja-extensions'
             )
 
     TEX_TAGS = {
@@ -172,6 +175,14 @@ class JinjaFilter(TemplateFilter):
         if loader:
             env_attrs['loader'] = loader
 
+        extensions = []
+        for ext in self.setting('jinja-extensions'):
+            self.log_debug("attempting to activate %s" % ext)
+            if ext.startswith("jinja2.ext"):
+                ref = jinja2.ext.__dict__[ext.lstrip("jinja2.ext")]
+                extensions.append(ref)
+        env_attrs['extensions'] = extensions
+
         debug_attr_string = ", ".join("%s: %r" % (k, v) for k, v in env_attrs.iteritems())
         self.log_debug("creating jinja2 environment with: %s" % debug_attr_string)
         return jinja2.Environment(**env_attrs)
@@ -187,6 +198,7 @@ class JinjaFilter(TemplateFilter):
             if m:
                 e.lineno = int(m.groups()[0])
             else:
+                print traceback.format_exc()
                 e.lineno = 0
                 self.log_warn("unable to parse line number from traceback")
 
