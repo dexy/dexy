@@ -495,7 +495,7 @@ class Sectioned(Data):
         except ValueError:
             return -1
 
-    def value(self, key):
+    def value(self, key, throwException=True):
         index = self.keyindex(key)
         if index > -1:
             return self.values()[index]
@@ -505,7 +505,8 @@ class Sectioned(Data):
             except KeyError:
                 msg = "No value for %s available in sections or metadata."
                 msgargs = (key)
-                raise dexy.exceptions.UserFeedback(msg % msgargs)
+                if throwException:
+                    raise dexy.exceptions.UserFeedback(msg % msgargs)
 
     def __getitem__(self, key):
         try:
@@ -548,8 +549,12 @@ class KeyValue(Data):
         else:
             return self.setting('storage-type')
 
-    def value(self, key):
-        return self.storage[key]
+    def value(self, key, throwException=True):
+        try:
+            return self.storage[key]
+        except Exception:
+            if throwException:
+                raise
 
     def like(self, key):
         try:
