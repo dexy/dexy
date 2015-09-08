@@ -1,5 +1,6 @@
 from dexy.filter import DexyFilter
 from lib2to3.pytree import Leaf
+import inspect
 import lib2to3.pgen2.driver
 import lib2to3.pytree
 import os
@@ -78,12 +79,14 @@ class PyParse(DexyFilter):
                     elif child_type == "classdef":
                         self.process_class(node, prefix, decorators)
                     else:
-                        raise Exception(child_type)
+                        raise Exception("unknown decorated child type '%s'" % child_type)
 
         elif node_type == 'funcdef':
             return self.process_function(node, prefix, decorators)
         elif node_type == "classdef":
             return self.process_class(node, prefix, decorators)
+        elif node_type == 'simple_stmt':
+            return self.process_simple_stmt(node, prefix, decorators)
         else:
             return prefix
 
@@ -99,7 +102,7 @@ class PyParse(DexyFilter):
         not_already_in_keys = not key in self.output_data.keys()
         is_a_docstring = docstring is not None
         if not_already_in_keys and is_a_docstring:
-            self.output_data.append(key, docstring)
+            self.output_data.append(key, inspect.cleandoc(docstring))
 
         self.process_node(node, prefix)
 
@@ -187,7 +190,8 @@ class PyParse(DexyFilter):
             elif state == "body":
                 assert self.type_of(part) == "suite"
                 docstring = self.first_simple_statement_after_any_whitespace(part)
-                self.output_data.append("%s:doc" % self.name_with_prefix(self.func_name, prefix), docstring)
+                if docstring is not None:
+                    self.output_data.append("%s:doc" % self.name_with_prefix(self.func_name, prefix), inspect.cleandoc(docstring))
     
             elif state is None:
                 pass
@@ -239,7 +243,8 @@ class PyParse(DexyFilter):
                 # Parse any Class docstring
                 name_with_prefix = self.name_with_prefix(self.class_name, prefix)
                 docstring = self.first_simple_statement_after_any_whitespace(part)
-                self.output_data.append("%s:doc" % name_with_prefix, docstring)
+                if docstring is not None:
+                    self.output_data.append("%s:doc" % name_with_prefix, inspect.cleandoc(docstring))
    
                 # Parse class and instance methods
                 for child in part.children:
@@ -266,3 +271,18 @@ class PyParse(DexyFilter):
         name_with_prefix = self.name_with_prefix(self.class_name, prefix)
         self.class_name = None
         return name_with_prefix
+
+    def process_simple_stmt(self, node, prefix, decorators):
+        for child in node.children:
+            child_type = self.type_of(child)
+            if child_type == "expr_stmt":
+                if isinstance(child.children[0], Leaf):
+                    name_leaf = child.children[0]
+                    name = name_leaf.value
+                    self.output_data.append("%s:source" % name, str(child))
+                else:
+                    # print "complex expr_stmt"
+                    pass
+            else:
+                #print "unknown child type '%s'" % child_type
+                pass
