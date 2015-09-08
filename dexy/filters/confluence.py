@@ -12,8 +12,9 @@ class ConfluenceRESTAPI(DexyFilter):
     aliases = ['cfl', 'confluence']
 
     _settings = {
+            'publish' : False,
             'input-extensions' : ['.html'],
-            'output-extensions' : ['.json'],
+            'output-extensions' : ['.json', '.html'],
             'url-base' : ("Root of URL.", None),
             'upload-attachments' : ("If True, attachments will automatically be uploaded. Can also be a list of file extensions.", True),
             'skip-attachments' : ("A list of file extensions which should not be uploaded as attachments.", None),
@@ -291,7 +292,12 @@ class ConfluenceRESTAPI(DexyFilter):
         result['version'] = page['version']['number']
         result['url'] = "%s%s" % (self.wiki_root_url(), page['_links']['webui'])
         result['short-url'] = "%s%s" % (self.wiki_root_url(), page['_links']['tinyui'])
-        self.output_data.set_data(json.dumps(result))
+        try:
+            self.output_data.set_data(json.dumps(result))
+        except Exception as e:
+            self.log_debug(e)
+            self.log_debug(e.__class__.__name__)
+            self.log_debug(result)
 
     def fix_attachment_paths(self, page_id, attachments):
         input_text = unicode(self.input_data)
@@ -304,6 +310,13 @@ class ConfluenceRESTAPI(DexyFilter):
         return self.update_existing_page(page_id, fixed_text)
 
     def process(self):
+        if not self.setting('publish'):
+            self.output_data.set_data(unicode(self.input_data))
+            print "not publishing", self.setting('space-key'), self.setting('page-title')
+            return
+        else:
+            print "uploading", self.setting('space-key'), self.setting('page-title')
+
         page_id = self.find_page_id()
 
         if page_id is None:
