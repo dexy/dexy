@@ -15,10 +15,11 @@ Dexy's Developer Guide http://dexy.github.io/dexy
 
 Dexy's source code is available from http://github.com/dexy/dexy
 
-The 'master' branch contains the most recent release of Dexy.
+The 'stable' branch contains the most recent release of Dexy.
 The 'develop' branch contains the most recent development version of Dexy.
 
-Dexy is tested on Python 2.6-Python 2.7.
+From version 1.1 and up, Dexy will only run under Python 3.
+(However Dexy can be used to document almost any programming language.)
 
 ## Tests
 
