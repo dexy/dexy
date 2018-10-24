@@ -44,16 +44,14 @@ setup(
             # for internal dexy use or used in many common plugins
             'BeautifulSoup4',
             'PyYAML',
-            'cashew>=0.2.7',
+            'cashew',
             'chardet',
             'inflection>=0.2.0',
             'jinja2',
             'ply>=3.4',
             'pygments',
-            'python-modargs>=1.7',
+            'python-modargs',
             'requests>=0.10.6',
-            # dexy utilities
-            'dexy_viewer', ## TODO version
             # for convenience of running additional filters
             'Markdown',
             'docutils'
