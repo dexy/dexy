@@ -15,8 +15,8 @@ def conf_command(
     Write a config file containing dexy's defaults.
     """
     if file_exists(conf) and not p:
-        print inspect.cleandoc("""Config file %s already exists,
-        will print conf to stdout instead...""" % conf)
+        print(inspect.cleandoc("""Config file %s already exists,
+        will print conf to stdout instead...""" % conf))
         p = True
 
     config = default_config()
@@ -31,9 +31,9 @@ def conf_command(
         """)
 
     if p:
-        print yaml.dump(config, default_flow_style=False)
+        print(yaml.dump(config, default_flow_style=False))
     else:
-        with open(conf, "wb") as f:
+        with open(conf, "w") as f:
             if conf.endswith(".yaml") or conf.endswith(".conf"):
                 f.write(yaml_help)
                 f.write(os.linesep)
@@ -44,4 +44,4 @@ def conf_command(
                 msg = "Don't know how to write config file '%s'"
                 raise dexy.exceptions.UserFeedback(msg % conf)
 
-        print "Config file has been written to '%s'" % conf
+        print("Config file has been written to '%s'" % conf)

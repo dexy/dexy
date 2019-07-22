@@ -38,7 +38,7 @@ def links_command(
     batch = Batch.load_most_recent(wrapper)
 
     if not batch:
-        print "you need to run dexy first"
+        print("you need to run dexy first")
         sys.exit(1)
 
     wrapper.setup_log()
@@ -51,7 +51,7 @@ def links_command(
     for label in sorted(wrapper.lookup_nodes):
         nodes = wrapper.lookup_nodes[label]
         if len(nodes) > 1:
-            print ''
+            print('')
             print_indented("'%s'" % label, 2)
             print_indented("Multiple nodes match %s:" % label, 4)
             for node in nodes:
@@ -63,9 +63,9 @@ def links_command(
             node = nodes[0]
             print_indented("'%s'" % label, 2)
             print_indented("%r" % node, 4)
-        print ''
+        print('')
 
-    print ''
+    print('')
 
     if wrapper.lookup_sections:
         print_indented("Sections:")
@@ -73,7 +73,7 @@ def links_command(
         node = wrapper.lookup_sections[label][0]
         print_indented("'%s'" % label, 2)
         print_indented("%r" % node, 4)
-        print ''
+        print('')
 
 ### "info-com"
 def info_command(
@@ -99,7 +99,7 @@ def info_command(
     wrapper.batch = batch
 
     if expr:
-        print "search expr:", expr
+        print("search expr:", expr)
         matches = sorted([data for data in batch if expr in data.key],
                 key=attrgetter('key'))
     elif key:
@@ -109,50 +109,50 @@ def info_command(
         raise dexy.exceptions.UserFeedback("Must specify either expr or key")
 
     for match in matches:
-        print ""
-        print "  Info for Document '%s'" % match.key
-        print ""
-        print "  document output data type:", match.alias
-        print ""
+        print("")
+        print("  Info for Document '%s'" % match.key)
+        print("")
+        print("  document output data type:", match.alias)
+        print("")
 
         print_indented("settings:", 2)
         for k in sorted(match._instance_settings):
             if not k in ('aliases', 'help'):
                 print_indented("%s: %s" % (k, match.setting(k)), 4)
 
-        print ""
+        print("")
         print_indented("attributes:", 2)
         for fname in sorted(info_attrs):
             print_indented("%s: %s" % (fname, getattr(match, fname)), 4)
-        print ""
+        print("")
     
         print_indented("methods:", 2)
         for fname in sorted(info_methods):
             print_indented("%s(): %s" % (fname, getattr(match, fname)()), 4)
-        print ""
+        print("")
 
         if storage_methods:
             print_indented("storage methods:", 2)
             for fname in sorted(storage_methods):
                 print_indented("%s(): %s" % (fname, getattr(match.storage, fname)), 4)
-            print ''
+            print('')
 
         if ws:
             print_indented("website reporter methods:", 2)
-            print ''
+            print('')
             reporter = dexy.reporter.Reporter.create_instance('ws')
             reporter.wrapper = wrapper
             reporter.setup_navobj()
             reporter.help(match)
-            print ''
+            print('')
             print_indented("active template plugins are:", 2)
             print_indented(", ".join(reporter.setting('plugins')), 4)
-            print ''
+            print('')
 
 
         else:
             print_indented("For website reporter tags, run this command with -ws option", 4)
-            print ''
+            print('')
 
 
         print_rewrapped("""For more information about methods available on this

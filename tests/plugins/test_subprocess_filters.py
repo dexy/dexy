@@ -47,7 +47,7 @@ while True:
     line = sys.stdin.readline()
     if not line:
         break
-    print "line %s has %s chars" % (i, len(line))
+    print("line %s has %s chars" % (i, len(line)))
 """
 
 def test_scalac():
@@ -106,7 +106,7 @@ def test_pandoc_filter_txt():
         wrapper.run_docs(node)
         wrapper.report()
         assert os.path.exists("output/hello.txt")
-        assert str(node.output_data()) == 'hello\n'
+        assert str(node.output_data()) == 'hello\n\n'
 
 R_SECTIONS = """\
 ### @export "assign-vars"
@@ -127,8 +127,8 @@ def test_rint_mock():
 
         wrapper.run_docs(node)
         assert node.output_data().is_cached()
-        assert unicode(node.output_data()['assign-vars']) == u"> x <- 6\n> y <- 7\n> \n"
-        assert unicode(node.output_data()['multiply']) == u"> x * y\n[1] 42\n> \n"
+        assert str(node.output_data()['assign-vars']) == "> x <- 6\n> y <- 7\n> \n"
+        assert str(node.output_data()['multiply']) == "> x * y\n[1] 42\n> \n"
 
 def test_ht_latex():
     assert_output_cached("htlatex", LATEX, ext=".tex")

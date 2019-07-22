@@ -58,7 +58,7 @@ def dexy_command(
         dexy.commands.dirs.reset_command(artifactsdir=artifactsdir, logdir=logdir)
 
     if silent:
-        print "sorry, -silent option not implemented yet https://github.com/ananelson/dexy/issues/33"
+        print("sorry, -silent option not implemented yet https://github.com/ananelson/dexy/issues/33")
 
     wrapper = init_wrapper(locals())
     wrapper.assert_dexy_dirs_exist()
@@ -76,7 +76,7 @@ def dexy_command(
             start = time.time()
             wrapper.run_from_new()
             elapsed = time.time() - start
-            print "dexy run finished in %0.3f%s" % (elapsed, wrapper.state_message())
+            print("dexy run finished in %0.3f%s" % (elapsed, wrapper.state_message()))
 
     except dexy.exceptions.UserFeedback as e:
         handle_user_feedback_exception(wrapper, e)
@@ -91,7 +91,7 @@ def dexy_command(
     if run_reports and hasattr(wrapper, 'batch'):
         start_time = time.time()
         wrapper.report()
-        print "dexy reports finished in %0.3f" % (time.time() - start_time)
+        print("dexy reports finished in %0.3f" % (time.time() - start_time))
 
 it_command = dexy_command
 
@@ -128,7 +128,7 @@ def run_dexy_in_profiler(wrapper, profile):
 
     # run dexy in profiler
     import cProfile
-    print "running dexy with cProfile, writing profile data to %s" % profile_filename
+    print("running dexy with cProfile, writing profile data to %s" % profile_filename)
     cProfile.runctx("wrapper.run_from_new()", None, locals(), profile_filename)
 
     # print report
@@ -140,7 +140,7 @@ def run_dexy_in_profiler(wrapper, profile):
         stat.sort_stats("cumulative")
         stat.print_stats()
 
-    print "Report is in %s, profile data is in %s." % (stats_output_file, profile_filename)
+    print("Report is in %s, profile data is in %s." % (stats_output_file, profile_filename))
 
 def run_dexy_in_strace(wrapper, strace):
     if isinstance(strace, bool):
@@ -156,7 +156,7 @@ def run_dexy_in_strace(wrapper, strace):
                    stderr=subprocess.PIPE
                    )
         stdout, stderr = proc.communicate()
-        print stdout
+        print(stdout)
 
     commands = ( 
             "strace dexy --reports \"\" 2> %s" % strace_filename, # TODO pass command line args except for --strace option
@@ -182,18 +182,18 @@ def targets_command(
     wrapper.to_valid()
     wrapper.to_walked()
 
-    print "Targets you can pass to -target option:"
+    print("Targets you can pass to -target option:")
     for doc in sorted(wrapper.bundle_docs(), key=attrgetter('key')):
-        print "  ", doc.key
+        print("  ", doc.key)
 
     if full:
-        print
-        print "These targets are also available, with lower priority:"
+        print()
+        print("These targets are also available, with lower priority:")
         for doc in sorted(wrapper.non_bundle_docs(), key=attrgetter('key')):
-            print "  ", doc.key
-        print
-        print """Target names can be matched exactly or with the first few characters,
-in which case all matching targets will be run."""
+            print("  ", doc.key)
+        print()
+        print("""Target names can be matched exactly or with the first few characters,
+in which case all matching targets will be run.""")
     else:
-        print
-        print "Run this command with --full option for additional available target names."
+        print()
+        print("Run this command with --full option for additional available target names.")

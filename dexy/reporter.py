@@ -4,11 +4,10 @@ import os
 import shutil
 import sys
 
-class Reporter(dexy.plugin.Plugin):
+class Reporter(dexy.plugin.Plugin, metaclass=dexy.plugin.PluginMeta):
     """
     Base class for types of reporter.
     """
-    __metaclass__ = dexy.plugin.PluginMeta
 
     _settings = {
             "default" : ("""Whether to run this report by default. Should be
@@ -65,10 +64,10 @@ class Reporter(dexy.plugin.Plugin):
             try:
                 new_env_vars = plugin.run()
             except Exception:
-                print "error occurred processing template plugin '%s'" % alias
+                print(("error occurred processing template plugin '%s'" % alias))
                 raise
 
-            if any(v in env.keys() for v in new_env_vars):
+            if any(v in list(env.keys()) for v in new_env_vars):
                 new_keys = ", ".join(sorted(new_env_vars))
                 existing_keys = ", ".join(sorted(env))
                 msg = "plugin class '%s' is trying to add new keys '%s', already have '%s'"
@@ -77,7 +76,7 @@ class Reporter(dexy.plugin.Plugin):
         return env
 
     def template_data(self):
-        return dict((k, v[1]) for k, v in self.run_plugins().iteritems())
+        return dict((k, v[1]) for k, v in self.run_plugins().items())
 
     def cache_reports_dir(self):
         return os.path.join(self.wrapper.artifacts_dir, "reports")

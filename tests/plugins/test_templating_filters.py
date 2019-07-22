@@ -1,4 +1,5 @@
 from dexy.doc import Doc
+#from dexy.utils import char_diff
 from dexy.filters.templating import TemplateFilter
 from dexy.filters.templating_plugins import TemplatePlugin
 from tests.utils import wrap
@@ -16,11 +17,11 @@ def test_jinja_invalid_attribute():
         node = Doc("ok.txt|jinja",
                 wrapper,
                 [make_sections_doc(wrapper)],
-                contents = """hello! foo contents are {{ d['sections.txt'].foo }}"""
+                contents = """hello! foo contents are: {{ d['sections.txt'].foo }}"""
                 )
 
         wrapper.run_docs(node)
-        assert str(node.output_data()) == """hello! foo contents are This is foo."""
+        assert str(node.output_data()) == """hello! foo contents are: This is foo."""
 
     with wrap() as wrapper:
         node = Doc("broken.txt|jinja",
@@ -39,7 +40,7 @@ def test_jinja_pass_through():
             f.write("{{ content }}")
 
         wrapper.reports = 'ws'
-        contents = u"{{ link(\"input.txt\") }}"
+        contents = "{{ link(\"input.txt\") }}"
         doc = Doc("lines.html|jinja",
                     wrapper,
                     [
@@ -53,7 +54,7 @@ def test_jinja_pass_through():
                     apply_ws_to_content = True
                     )
         wrapper.run_docs(doc)
-        assert unicode(doc.output_data()) == contents
+        assert str(doc.output_data()) == contents
 
         wrapper.report()
 
@@ -63,7 +64,7 @@ def test_jinja_pass_through():
 
 def test_jinja_pass_through_fails_if_not_whitelisted():
     with wrap() as wrapper:
-        contents = u"{{ linxxx('foo') }}"
+        contents = "{{ linxxx('foo') }}"
         doc = Doc("lines.txt|jinja",
                     wrapper,
                     [],
@@ -108,7 +109,7 @@ def run_jinja_filter(contents):
 
 def test_jinja_filters_bs4():
     data = run_jinja_filter("{{ '<p>foo</p>' | prettify_html }}")
-    assert unicode(data) == "<p>\n foo\n</p>"
+    assert str(data) == "<p>\n foo\n</p>"
 
 def test_beautiful_soup_should_not_be_available_as_filter():
     try:
@@ -119,29 +120,31 @@ def test_beautiful_soup_should_not_be_available_as_filter():
 
 def test_jinja_filters_head():
     data = run_jinja_filter("{{ 'foo\nbar\nbaz' | head(1) }}")
-    assert unicode(data) == "foo"
+    assert str(data) == "foo"
     data = run_jinja_filter("{{ 'foo\nbar\nbaz' | head(2) }}")
-    assert unicode(data) == "foo\nbar"
+    assert str(data) == "foo\nbar"
 
 def test_jinja_filters_tail():
     data = run_jinja_filter("{{ 'foo\nbar\nbaz' | tail(1) }}")
-    assert unicode(data) == "baz"
+    assert str(data) == "baz"
     data = run_jinja_filter("{{ 'foo\nbar\nbaz' | tail(2) }}")
-    assert unicode(data) == "bar\nbaz"
+    assert str(data) == "bar\nbaz"
 
 def test_jinja_filters_highlight():
     data = run_jinja_filter("{{ '<p>foo</p>' | highlight('html') }}")
-    assert unicode(data) == u"""<div class="highlight"><pre><a name="l-1"></a><span class="nt">&lt;p&gt;</span>foo<span class="nt">&lt;/p&gt;</span>\n</pre></div>\n"""
-
+    assert str(data) == """<div class="highlight"><pre><span></span><a name="l-1"></a><span class="p">&lt;</span><span class="nt">p</span><span class="p">&gt;</span>foo<span class="p">&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
+</pre></div>\n"""
+    
 def test_jinja_filters_pygmentize():
     data = run_jinja_filter("{{ '<p>foo</p>' | pygmentize('html') }}")
-    assert unicode(data) == u"""<div class="highlight"><pre><a name="l-1"></a><span class="nt">&lt;p&gt;</span>foo<span class="nt">&lt;/p&gt;</span>\n</pre></div>\n"""
+    assert str(data)=="""<div class="highlight"><pre><span></span><a name="l-1"></a><span class="p">&lt;</span><span class="nt">p</span><span class="p">&gt;</span>foo<span class="p">&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
+</pre></div>\n"""
 
 def test_jinja_filters_combined():
     data = run_jinja_filter("{{ '<p>foo</p>' | prettify_html | highlight('html') }}")
-    assert unicode(data) == u"""<div class="highlight"><pre><a name="l-1"></a><span class="nt">&lt;p&gt;</span>
+    assert str(data) == """<div class="highlight"><pre><span></span><a name="l-1"></a><span class="p">&lt;</span><span class="nt">p</span><span class="p">&gt;</span>
 <a name="l-2"></a> foo
-<a name="l-3"></a><span class="nt">&lt;/p&gt;</span>
+<a name="l-3"></a><span class="p">&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
 </pre></div>
 """
 
@@ -172,7 +175,7 @@ def test_jinja_sectioned_invalid_section():
                         contents = "line one\nline two"
                         )
                     ],
-                contents = """first line is '{{ d['lines.txt|lines']['3'] }}'"""
+                contents = """first line is '{{ d['lines.txt|lines'][3] }}'"""
                 )
         wrapper.run_docs(doc)
         assert wrapper.state == 'error'

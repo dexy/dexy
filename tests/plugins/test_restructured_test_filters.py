@@ -109,5 +109,5 @@ def test_rstbody_latex():
                 contents = RST
                 )
         wrapper.run_docs(node)
-        output = unicode(node.output_data())
+        output = str(node.output_data())
         assert "\\begin{itemize}" in output

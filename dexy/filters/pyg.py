@@ -22,7 +22,7 @@ file_ext_to_lexer_alias_cache = {
         }
 
 # Add all pygments standard mappings.
-for module_name, name, aliases, file_extensions, _ in PYGMENTS_LEXERS.itervalues():
+for module_name, name, aliases, file_extensions, _ in list(PYGMENTS_LEXERS.values()):
     alias = aliases[0]
     for ext in file_extensions:
         ext = ext.lstrip("*")
@@ -42,7 +42,7 @@ class SyntaxHighlightRstFilter(DexyFilter):
         n = self.setting('n')
         lexer_alias = file_ext_to_lexer_alias_cache[self.input_data.ext]
 
-        for section_name, section_input in self.input_data.iteritems():
+        for section_name, section_input in self.input_data.items():
             with_spaces = indent(section_input, n)
             section_output = ".. code:: %s\n\n%s" % (lexer_alias, with_spaces)
             self.output_data[section_name] = section_output
@@ -67,7 +67,7 @@ class SyntaxHighlightAsciidoctor(DexyFilter):
         else:
             lexer_alias = file_ext_to_lexer_alias_cache[self.input_data.ext]
 
-        for section_name, section_input in self.input_data.iteritems():
+        for section_name, section_input in self.input_data.items():
             section_output = "[source,%s]\n----\n%s\n----\n" % (lexer_alias, section_input)
             self.output_data[section_name] = section_output
 
@@ -136,13 +136,13 @@ class PygmentsFilter(DexyFilter):
         """
         Prints out CSS for the specified style.
         """
-        print klass.generate_css(style)
+        print(klass.generate_css(style))
 
     def docmd_sty(klass, style='default'):
         """
         Prints out .sty file (latex) for the specified style.
         """
-        print klass.generate_sty(style)
+        print(klass.generate_sty(style))
 
     def generate_css(self, style='default'):
         formatter = HtmlFormatter(style=style)
@@ -235,7 +235,7 @@ class PygmentsFilter(DexyFilter):
                 import PIL
                 PIL # because pyflakes
             except ImportError:
-                print "python imaging library is required by pygments to create image output"
+                print("python imaging library is required by pygments to create image output")
                 raise dexy.exceptions.InactivePlugin('pyg')
 
         ext = self.prev_ext
@@ -260,9 +260,9 @@ class PygmentsFilter(DexyFilter):
 
             if self.ext in self.IMAGE_OUTPUT_EXTENSIONS:
                 # Place each section into an image.
-                for k, v in self.input_data.iteritems():
+                for k, v in self.input_data.items():
                     formatter = self.create_formatter_instance()
-                    output_for_section = highlight(unicode(v).decode("utf-8"), lexer, formatter)
+                    output_for_section = highlight(str(v).decode("utf-8"), lexer, formatter)
                     new_doc_name = "%s--%s%s" % (self.doc.key.replace("|", "--"), k, self.ext)
                     self.add_doc(new_doc_name, output_for_section)
 
@@ -270,23 +270,20 @@ class PygmentsFilter(DexyFilter):
                 formatter = self.create_formatter_instance()
                 self.update_all_args({'override-workspace-exclude-filters' : True })
                 with open(self.output_filepath(), 'wb') as f:
-                    f.write(highlight(unicode(self.input_data), lexer, formatter))
+                    f.write(highlight(str(self.input_data), lexer, formatter))
 
             else:
                 formatter = self.create_formatter_instance()
-                for section_name, section_input in self.input_data.iteritems():
+                for section_name, section_input in self.input_data.items():
                     try:
                         if isinstance(section_input, str):
-                            # If section_input is a 'str' instance we
-                            # assume it is encoded with UTF-8 and then we
-                            # convert it to a unicode string
-                            section_input = unicode(section_input, 'utf-8')
+                            section_input = section_input
                         else:
                             # If section_input is an instance of
-                            # SectionValue then calling 'unicode' on this
-                            # instance will call the __unicode__ method of
+                            # SectionValue then calling 'str' on this
+                            # instance will call the __str__ method of
                             # SectionValue.
-                            section_input = unicode(section_input)
+                            section_input = str(section_input)
                         section_output = highlight(section_input, lexer, formatter)
                     except UnicodeDecodeError:
                         if self.setting('allow-unprintable-input'):

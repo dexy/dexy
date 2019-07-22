@@ -6,11 +6,10 @@ import fnmatch
 import json
 import re
 
-class Node(dexy.plugin.Plugin):
+class Node(dexy.plugin.Plugin, metaclass=dexy.plugin.PluginMeta):
     """
     base class for Nodes
     """
-    __metaclass__ = dexy.plugin.PluginMeta
     _settings = {}
     aliases = ['node']
     state_transitions = (
@@ -139,7 +138,7 @@ class Node(dexy.plugin.Plugin):
         """
         Returns a string representation of args in sorted order.
         """
-        return unicode(json.dumps(self.sorted_args()))
+        return str(json.dumps(self.sorted_args()))
 
     def additional_doc_info(self):
         additional_doc_info = []
@@ -320,7 +319,7 @@ class PatternNode(Node):
         file_pattern = self.key.split("|")[0]
         filter_aliases = self.key.split("|")[1:]
 
-        for filepath, fileinfo in self.wrapper.filemap.iteritems():
+        for filepath, fileinfo in self.wrapper.filemap.items():
             if fnmatch.fnmatch(filepath, file_pattern):
                 except_p = self.args.get('except')
                 if except_p and re.search(except_p, filepath):

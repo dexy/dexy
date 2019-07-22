@@ -25,23 +25,23 @@ def filters_command(
 def help_for_filter(alias, run_example, show_source, nocolor):
     instance = dexy.filter.Filter.create_instance(alias)
 
-    print ''
-    print instance.setting('help')
+    print('')
+    print(instance.setting('help'))
 
-    print ''
-    print "aliases: %s" % ", ".join(instance.setting('aliases'))
-    print "tags: %s" % ", ".join(instance.setting('tags'))
-    print ''
+    print('')
+    print("aliases: %s" % ", ".join(instance.setting('aliases')))
+    print("tags: %s" % ", ".join(instance.setting('tags')))
+    print('')
 
-    print "Converts from file formats:"
+    print("Converts from file formats:")
     for ext in instance.setting('input-extensions'):
-        print "   %s" % ext
-    print ''
+        print("   %s" % ext)
+    print('')
 
-    print "Converts to file formats:"
+    print("Converts to file formats:")
     for ext in instance.setting('output-extensions'):
-        print "   %s" % ext
-    print ''
+        print("   %s" % ext)
+    print('')
 
     print('Settings:')
     for k in sorted(instance._instance_settings):
@@ -51,13 +51,13 @@ def help_for_filter(alias, run_example, show_source, nocolor):
             continue
 
         tup = instance._instance_settings[k]
-        print "    %s" % k
+        print("    %s" % k)
 
         for line in inspect.cleandoc(tup[0]).splitlines():
-            print "        %s" % line
+            print("        %s" % line)
 
-        print "        default value: %s" % tup[1]
-        print ''
+        print("        default value: %s" % tup[1])
+        print('')
 
     examples = instance.setting('examples')
     example_templates = {}
@@ -69,41 +69,41 @@ def help_for_filter(alias, run_example, show_source, nocolor):
             pass
 
     if examples:
-        print ''
-        print "Examples for this filter:"
-        for alias, template in example_templates.iteritems():
-            print ''
-            print "  %s" % alias
-            print "            %s" % inspect.getdoc(template.__class__)
+        print('')
+        print("Examples for this filter:")
+        for alias, template in example_templates.items():
+            print('')
+            print("  %s" % alias)
+            print("            %s" % inspect.getdoc(template.__class__))
 
         if run_example:
-            for alias, template in example_templates.iteritems():
-                print ''
-                print ''
-                print "Running example: %s" % template.setting('help')
-                print ''
-                print ''
-                print template_text(template)
+            for alias, template in example_templates.items():
+                print('')
+                print('')
+                print("Running example: %s" % template.setting('help'))
+                print('')
+                print('')
+                print(template_text(template))
 
-    print ''
-    print "For online docs see http://dexy.it/filters/%s" % alias
-    print ''
-    print "If you have suggestions or feedback about this filter,"
-    print "please contact info@dexy.it"
-    print ''
+    print('')
+    print("For online docs see http://dexy.it/filters/%s" % alias)
+    print('')
+    print("If you have suggestions or feedback about this filter,")
+    print("please contact info@dexy.it")
+    print('')
 
     if show_source:
-        print ''
+        print('')
         source_code = inspect.getsource(instance.__class__)
         if nocolor:
-            print source_code
+            print(source_code)
         else:
             formatter = pygments.formatters.TerminalFormatter()
             lexer = PythonLexer()
-            print highlight(source_code, lexer, formatter)
+            print(highlight(source_code, lexer, formatter))
 
 def list_filters(versions):
-        print "Installed filters:"
+        print("Installed filters:")
         for filter_instance in dexy.filter.Filter:
             # Should we show this filter?
             no_aliases = not filter_instance.setting('aliases')
@@ -134,10 +134,10 @@ def list_filters(versions):
             if versions and version_message:
                 filter_help += " %s" % version_message
 
-            print filter_help
+            print(filter_help)
 
-        print ''
-        print "For more information about a particular filter,"
-        print "use the -alias flag and specify the filter alias."
-        print ''
+        print('')
+        print("For more information about a particular filter,")
+        print("use the -alias flag and specify the filter alias.")
+        print('')
 

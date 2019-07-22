@@ -17,7 +17,7 @@ def test_rd():
        \code{save}.
      }
     """
-    expected = u"Reload the datasets written to a file with the function \u2018save\u2019."
+    expected = "Reload the datasets written to a file with the function \u2018save\u2019."
     assert_in_output('rdconv', rd, expected, ext=".Rd")
 
 def test_redcloth():
@@ -56,7 +56,7 @@ def test_ragel_ruby_dot():
     assert_in_output('ragelrubydot', ragel, "digraph hello_and_welcome", ext=".rl")
 
 def test_python():
-    assert_output('py', 'print 1+1', "2" + os.linesep)
+    assert_output('py', 'print(1+1)', "2" + os.linesep)
 
 def test_bash():
     assert_output('bash', 'echo "hello"', "hello\n")

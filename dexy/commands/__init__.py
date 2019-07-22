@@ -1,7 +1,7 @@
 ### "imports"
 from dexy.plugin import Command
 from dexy.version import DEXY_VERSION
-from modargs import args
+import dexy.modargs as args
 import cashew.exceptions
 import dexy.exceptions
 import dexy.wrapper
@@ -16,7 +16,7 @@ import dexy.load_plugins
 
 ### "import-all-commands"
 from dexy.commands.info import links_command
-from dexy.commands.cite import cite_command
+#from dexy.commands.cite import cite_command
 from dexy.commands.parsers import parsers_command
 from dexy.commands.conf import conf_command
 from dexy.commands.dirs import cleanup_command
@@ -92,7 +92,7 @@ def resolve_plugin_cmd(raw_command_name):
         alias, subcommand = raw_command_name, ''
 
     try:
-        cmd = dexy.plugin.Command.create_instance(alias)
+        cmd = Command.create_instance(alias)
     except cashew.exceptions.NoPlugin:
         msg = """No command '%s' available.
         Run `dexy help --all` to see list of available commands."""
@@ -110,16 +110,17 @@ def parse_and_run_cmd(argv, module, default_command):
     try:
         args.parse_and_run_command(argv, module, default_command)
     except (dexy.exceptions.UserFeedback, cashew.exceptions.UserFeedback) as e:
-        msg = u"""Oops, there's a problem running your command.
+        # nice output for UserFeedback errors
+        msg = """Oops, there's a problem running your command.
         Here is some more information:"""
         sys.stderr.write(inspect.cleandoc(msg))
         sys.stderr.write(os.linesep)
 
-        err_msg = unicode(e)
+        err_msg = str(e)
         if err_msg:
-            sys.stderr.write(u"'%s'" % unicode(e))
+            sys.stderr.write("'%s'" % str(e))
         else:
-            sys.stderr.write(u"Sorry, can't get text of error message.")
+            sys.stderr.write("Sorry, can't get text of error message.")
 
         sys.stderr.write(os.linesep)
 
@@ -134,43 +135,43 @@ def help_command(
     ):
 
     if all and not on:
-        print ""
+        print("")
         args.help_command(prog, dexy_cmd_mod, dexy_default_cmd, on)
-        print ""
+        print("")
 
     elif not on:
-        print ""
-        print "For help on the main `dexy` command, run `dexy help -on dexy`."
-        print ""
-        print "The dexy tool includes several different commands:"
-        print "  `dexy help --all` lists all available commands"
-        print "  `dexy help --on XXX` provides help on a specific command"
-        print ""
-        print "Commands for running dexy:"
-        print "  `dexy` runs dexy"
-        print "  `dexy setup` makes directories dexy needs"
-        print "  `dexy cleanup` removes directories dexy has created"
-        print "  `dexy reset` empties and resets dexy's working directories"
-        print ""
-        print "Commands which print lists of dexy features:"
-        print "  `dexy filters` filters like |jinja |py |javac"
-        print "  `dexy reports` reporters like `output` and `run`"
-        print "  `dexy nodes` node types and their document settings"
-        print "  `dexy datas` data types and available methods"
-        print "  `dexy env` elements available in document templates"
-        print ""
-        print "Commands which print information about your project:"
-        print "  (you need to be in the project dir and have run dexy already)"
-        print "  `dexy grep` search for documents and keys in documents"
-        print "  `dexy info` list metadata about a particular document"
-        print "  `dexy targets` list target names you can run"
-        print "  `dexy links` list all ways to refer to documents and sections"
-        print ""
-        print "Other commands:"
-        print "  `dexy serve` start a local static web server to view generated docs"
-        print "  `dexy help` you're reading it"
-        print "  `dexy version` print the version of dexy software which is installed"
-        print ""
+        print("""
+        For help on the main `dexy` command, run `dexy help -on dexy`.
+
+        The dexy tool includes several different commands:
+          `dexy help --all` lists all available commands
+          `dexy help --on XXX` provides help on a specific command
+        
+        Commands for running dexy:
+          `dexy` runs dexy
+          `dexy setup` makes directories dexy needs
+          `dexy cleanup` removes directories dexy has created
+          `dexy reset` empties and resets dexy's working directories
+        
+        Commands which print lists of dexy features:
+          `dexy filters` filters like |jinja |py |javac
+          `dexy reports` reporters like `output` and `run`
+          `dexy nodes` node types and their document settings
+          `dexy datas` data types and available methods
+          `dexy env` elements available in document templates
+        
+        Commands which print information about your project:
+          (you need to be in the project dir and have run dexy already)
+          `dexy grep` search for documents and keys in documents
+          `dexy info` list metadata about a particular document
+          `dexy targets` list target names you can run
+          `dexy links` list all ways to refer to documents and sections
+        
+        Other commands:
+          `dexy serve` start a local static web server to view generated docs
+          `dexy help` you're reading it
+          `dexy version` print the version of dexy software which is installed
+        """)
 
     else:
         try:
@@ -186,4 +187,4 @@ def version_command():
     """
     Print the version number of dexy.
     """
-    print "%s version %s" % (prog, DEXY_VERSION)
+    print(f"{prog} version {DEXY_VERSION}")

@@ -69,7 +69,7 @@ class ConfluenceRESTAPI(DexyFilter):
 
     def credentials_with_headers(self, headers):
         credentials = self.credentials()
-        if not credentials.has_key('headers'):
+        if 'headers' in credentials:
             credentials['headers'] = {}
         credentials['headers'].update(headers)
         return credentials
@@ -81,12 +81,12 @@ class ConfluenceRESTAPI(DexyFilter):
     def handle_response_code(self, response):
         if response.status_code < 400:
             pass
-        elif response.status_code in xrange(400,500):
+        elif response.status_code in range(400,500):
             raise UserFeedback(response.json()['message'])
         elif response.status_code in (500,):
             raise Exception("\nServer error %s:\n%s" % (response.status_code, response.json()['message']))
         else:
-            print response.text
+            print(response.text)
             raise Exception("Not set up to handle status code %s" % response.status_code)
 
     def get_path(self, path, params=None):
@@ -182,13 +182,13 @@ class ConfluenceRESTAPI(DexyFilter):
         elif matching_pages['size'] == 0:
             return None
         else:
-            print matching_pages
+            print(matching_pages)
             raise Exception("Should only be 0 or 1 matching pages.")
 
     def find_page_id_by_title(self, page_title=None):
         page_info = self.find_page_info_by_title(page_title)
         if page_info is not None:
-            print "Page found using title and space key, you should set page-id parameter to %s for greater robustness." % page_info['id']
+            print("Page found using title and space key, you should set page-id parameter to %s for greater robustness." % page_info['id'])
             return page_info['id']
 
     def ancestors(self):
@@ -206,7 +206,7 @@ class ConfluenceRESTAPI(DexyFilter):
                 "body" : {
                     "storage" : {
                         "representation" : "storage",
-                        "value" : unicode(self.input_data)
+                        "value" : str(self.input_data)
                     }
                   }
                 }
@@ -300,10 +300,10 @@ class ConfluenceRESTAPI(DexyFilter):
             self.log_debug(result)
 
     def fix_attachment_paths(self, page_id, attachments):
-        input_text = unicode(self.input_data)
+        input_text = str(self.input_data)
         fixed_text = input_text
 
-        for canonical_name, path in attachments.iteritems():
+        for canonical_name, path in attachments.items():
             fullpath = self.wiki_root_url() + path
             fixed_text = fixed_text.replace(canonical_name, fullpath)
 
@@ -311,19 +311,19 @@ class ConfluenceRESTAPI(DexyFilter):
 
     def process(self):
         if not self.setting('publish'):
-            self.output_data.set_data(unicode(self.input_data))
-            print "not publishing", self.setting('space-key'), self.setting('page-title')
+            self.output_data.set_data(str(self.input_data))
+            print("not publishing", self.setting('space-key'), self.setting('page-title'))
             return
         else:
-            print "uploading", self.setting('space-key'), self.setting('page-title')
+            print("uploading", self.setting('space-key'), self.setting('page-title'))
 
         page_id = self.find_page_id()
 
         if page_id is None:
             page = self.create_new_page()
-            print "New page created. You should now set page-id parameter to %s." % page['id']
+            print("New page created. You should now set page-id parameter to %s." % page['id'])
         else:
-            page = self.update_existing_page(page_id, unicode(self.input_data))
+            page = self.update_existing_page(page_id, str(self.input_data))
 
         if self.setting('upload-attachments'):
             attachments = self.upload_attachments(page['id'])

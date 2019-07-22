@@ -15,15 +15,15 @@ def fcmds_command(
     for filter_instance in filter_instances:
         cmds = filter_instance.filter_commands()
         if cmds:
-            print "filter alias:", filter_instance.alias
+            print("filter alias:", filter_instance.alias)
             for command_name in sorted(cmds):
                 docs = inspect.getdoc(cmds[command_name])
                 if docs:
                     doc = docs.splitlines()[0]
-                    print "    %s   # %s" % (command_name, doc)
+                    print("    %s   # %s" % (command_name, doc))
                 else:
-                    print "    %s" % command_name
-            print ''
+                    print("    %s" % command_name)
+            print('')
 
 def fcmd_command(
         alias=None, # The alias of the filter which defines the custom command
@@ -48,9 +48,9 @@ def fcmd_command(
             try:
                 instance_method.__func__(filter_instance, **kwargs)
             except TypeError as e:
-                print e.message
-                print inspect.getargspec(instance_method.__func__)
-                print inspect.getdoc(instance_method.__func__)
+                print(e.message)
+                print(inspect.getargspec(instance_method.__func__))
+                print(inspect.getdoc(instance_method.__func__))
                 raise
 
         else:

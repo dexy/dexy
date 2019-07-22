@@ -21,7 +21,7 @@ def run_filter(alias):
 
 
 def test_markdown_to_ipynb():
-    print run_filter("mdjup")
+    print(run_filter("mdjup"))
 
 def test_markdown_to_generic():
-    print run_filter("mdsections")
+    print(run_filter("mdsections"))

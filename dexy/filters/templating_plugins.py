@@ -1,7 +1,8 @@
 from bs4 import BeautifulSoup
+from collections import UserDict
 from datetime import datetime
-from dexy.exceptions import UserFeedback
 from dexy.exceptions import InternalDexyProblem
+from dexy.exceptions import UserFeedback
 from dexy.plugin import TemplatePlugin
 from dexy.utils import levenshtein
 from dexy.version import DEXY_VERSION
@@ -21,12 +22,11 @@ import operator
 import os
 import pygments
 import pygments.formatters
-import re
 import random
+import re
 import time
 import uuid
 import xml.etree.ElementTree as ET
-from UserDict import DictMixin
 
 class Etree(TemplatePlugin):
     """
@@ -102,7 +102,7 @@ class PrettyPrintHtml(TemplatePlugin):
             }
 
     def prettify_html(self, html):
-        soup = BeautifulSoup(unicode(html), 'html.parser')
+        soup = BeautifulSoup(str(html), 'html.parser')
         return soup.prettify()
 
     def run(self):
@@ -135,7 +135,7 @@ class ParseYaml(TemplatePlugin):
 
     def parse_yaml(self, yamltext):
         import yaml
-        return yaml.safe_load(unicode(yamltext))
+        return yaml.safe_load(str(yamltext))
 
     def run(self):
         return {
@@ -150,9 +150,9 @@ class Debug(TemplatePlugin):
 
     def debug(self, debug_text, echo=True):
         if hasattr(self, 'filter_instance'):
-            print "template debug from '%s': %s" % (self.filter_instance.key, debug_text)
+            print("template debug from '%s': %s" % (self.filter_instance.key, debug_text))
         else:
-            print "template debug: %s" % (debug_text)
+            print("template debug: %s" % (debug_text))
 
         if echo:
             return debug_text
@@ -252,7 +252,7 @@ class ReplaceJinjaFilters(TemplatePlugin):
     aliases = ['replacejinjafilters']
 
     def do_indent(self, data, width=4, indentfirst=False):
-        return jinja2.filters.do_indent(unicode(data), width, indentfirst)
+        return jinja2.filters.do_indent(str(data), width, indentfirst)
 
     def run(self):
         return {
@@ -272,7 +272,7 @@ class Assertions(TemplatePlugin):
             indicator = None
 
         if indicator:
-            return unicode(doc) + indicator
+            return str(doc) + indicator
         else:
             return doc
 
@@ -280,14 +280,14 @@ class Assertions(TemplatePlugin):
         """
         Assert that input equals expected value.
         """
-        assert unicode(doc) == expected, "input text did not equal '%s'" % expected
+        assert str(doc) == expected, "input text did not equal '%s'" % expected
         return self.decorate_response(doc)
 
     def do_assert_contains(self, doc, contains):
         """
         Assert that input equals expected value.
         """
-        assert contains in unicode(doc), "input text did not contain '%s'" % contains
+        assert contains in str(doc), "input text did not contain '%s'" % contains
         return self.decorate_response(doc)
 
     def do_assert_does_not_contain(self, doc, shouldnt_contain):
@@ -295,25 +295,25 @@ class Assertions(TemplatePlugin):
         Assert that input equals expected value.
         """
         msg = "input text contained '%s'" % shouldnt_contain
-        assert not shouldnt_contain in unicode(doc), msg
+        assert not shouldnt_contain in str(doc), msg
         return self.decorate_response(doc)
 
     def do_assert_startswith(self, doc, startswith):
         """
         Assert that the input starts with the specified value.
         """
-        assert unicode(doc).startswith(startswith), "input text did not start with '%s'" % startswith
+        assert str(doc).startswith(startswith), "input text did not start with '%s'" % startswith
         return self.decorate_response(doc)
 
     def do_assert_matches(self, doc, regexp):
         """
         Assert that input matches the specified regular expressino.
         """
-        assert re.match(regexp, unicode(doc)), "input text did not match regexp %s" % regexp
+        assert re.match(regexp, str(doc)), "input text did not match regexp %s" % regexp
         return self.decorate_response(doc)
 
     def make_soup(self, doc):
-        return BeautifulSoup(unicode(doc))
+        return BeautifulSoup(str(doc))
 
     def soup_select(self, doc, selector):
         soup = self.make_soup(doc)
@@ -366,7 +366,7 @@ class Head(TemplatePlugin):
         """
         Returns the first n lines of input string.
         """
-        return "\n".join(unicode(text).splitlines()[0:n])
+        return "\n".join(str(text).splitlines()[0:n])
 
     def run(self):
         return {
@@ -383,7 +383,7 @@ class Tail(TemplatePlugin):
         """
         Returns the last n lines of input string.
         """
-        return "\n".join(unicode(text).splitlines()[-n:])
+        return "\n".join(str(text).splitlines()[-n:])
 
     def run(self):
         return {
@@ -402,7 +402,7 @@ class RstCode(TemplatePlugin):
             '   :class: highlight'
             """ % language)
 
-        for line in unicode(text).splitlines():
+        for line in str(text).splitlines():
             output += " " * n + line
 
         output += "\n"
@@ -460,12 +460,12 @@ class PythonBuiltins(TemplatePlugin):
     """
     aliases = ['builtins']
     # Intended to be all builtins that make sense to run within a document.
-    PYTHON_BUILTINS = [abs, all, any, basestring, bin, bool, bytearray,
-            callable, chr, cmp, complex, dict, dir, divmod, enumerate, filter,
+    PYTHON_BUILTINS = [abs, all, any, bin, bool, bytearray,
+            callable, chr, complex, dict, dir, divmod, enumerate, filter,
             float, format, hex, id, int, isinstance, issubclass, iter, len,
-            list, locals, long, map, hasattr, max, min, oct, ord, pow, range,
-            reduce, repr, reversed, round, set, slice, sorted, str, sum, tuple,
-            type, xrange, unicode, zip]
+            list, locals, map, hasattr, max, min, oct, ord, pow, range,
+            repr, reversed, round, set, slice, sorted, str, sum, tuple,
+            type, str, zip]
 
     def run(self):
         return dict((f.__name__, ("The python builtin function %s" % f.__name__, f,)) for f in self.PYTHON_BUILTINS)
@@ -481,7 +481,7 @@ class PygmentsStylesheet(TemplatePlugin):
 
     def generate_stylesheets(self):
         pygments_stylesheets = {}
-        if hasattr(self, 'filter_instance') and self.filter_instance.doc.args.has_key('pygments'):
+        if hasattr(self, 'filter_instance') and 'pygments' in self.filter_instance.doc.args:
             formatter_args = self.filter_instance.doc.args['pygments']
         else:
             formatter_args = {}
@@ -517,7 +517,7 @@ class PygmentsHighlight(TemplatePlugin):
     # to implement a "final_ext()" method
 
     def highlight(self, text, lexer_name, fmt='html', noclasses=False, style=None, lineanchors='l'):
-        text = unicode(text)
+        text = str(text)
         formatter_options = { "lineanchors" : lineanchors, "noclasses" : noclasses }
         if style is not None:
             formatter_options['style'] = style
@@ -558,7 +558,7 @@ class Variables(TemplatePlugin):
         variables.update(self.filter_instance.setting('vars'))
 
         formatted_variables = {}
-        for k, v in variables.iteritems():
+        for k, v in variables.items():
             if isinstance(v, tuple):
                 formatted_variables[k] = v
             elif isinstance(v, list) and len(v) == 2:
@@ -595,6 +595,7 @@ class Inputs(TemplatePlugin):
         input_docs = {}
 
         for doc in self.input_tasks():
+            self.filter_instance.log_debug("adding input doc %s" % doc.key)
             input_docs[doc.key] = doc
 
         d = D(self.filter_instance.doc, input_docs)
@@ -613,12 +614,13 @@ class Inputs(TemplatePlugin):
             'w' : ("The wrapper for the dexy run.", self.filter_instance.doc.wrapper)
             }
 
-class D(DictMixin):
+class D(UserDict):
     def __init__(self, doc, input_docs):
         self._artifact = doc
         self._parent_dir = doc.output_data().parent_dir()
-        self._input_docs = input_docs.values()
-        self._input_doc_keys = [d.key for d in self._input_docs]
+        self._input_docs_dict = input_docs
+        self._input_docs = list(input_docs.values())
+        self._input_doc_keys = list(input_docs.keys())
         self._input_doc_names = [d.output_data().long_name() for d in self._input_docs]
         self._input_doc_titles = ["title:%s" % d.output_data().title() for d in self._input_docs]
 
@@ -626,6 +628,9 @@ class D(DictMixin):
 
     def keys(self):
         return self._input_doc_keys
+
+    def items(self):
+        return self._input_docs_dict.items()
 
     def key_or_name_index(self, ref):
         if ref in self._input_doc_keys:

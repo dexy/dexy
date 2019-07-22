@@ -18,7 +18,7 @@ ls
                 contents = src)
         wrapper.run_docs(doc)
 
-        assert doc.output_data().keys() == ['1', 'touch', 'ls']
+        assert list(doc.output_data().keys()) == ['1', 'touch', 'ls']
 
 SCALA = """object HelloWorld {
     def main(args: Array[String]) {
@@ -125,7 +125,7 @@ x*y
 
         wrapper.run_docs(node)
 
-        assert node.output_data().keys() == ['1', 'vars', 'multiply']
+        assert list(node.output_data().keys()) == ['1', 'vars', 'multiply']
         assert str(node.output_data()['vars']) == """
 >>> x = 6
 >>> y = 7"""

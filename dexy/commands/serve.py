@@ -1,17 +1,17 @@
-import SimpleHTTPServer
-import SocketServer
-import dexy.reporter
-import socket
-import os
-import sys
-from dexy.utils import file_exists
 from dexy.commands.utils import init_wrapper
+from dexy.utils import file_exists
 import dexy.load_plugins
+import dexy.reporter
+import http.server
+import os
+import socket
+import socketserver
+import sys
 
 NO_OUTPUT_MSG = """Please run dexy first, or specify a directory to serve. \
 For help run 'dexy help -on serve'"""
 
-class SimpleHTTPAuthRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
+class SimpleHTTPAuthRequestHandler(http.server.SimpleHTTPRequestHandler):
     def send_head(self):
         """Common code for GET and HEAD commands.
 
@@ -95,13 +95,13 @@ def serve_command(
 
         for alias in reporters:
             report_dir = dexy.reporter.Reporter.create_instance(alias).setting("dir")
-            print "report dir", report_dir
+            print("report dir", report_dir)
             if report_dir and file_exists(report_dir):
                 directory = report_dir
                 break
 
     if not directory:
-        print NO_OUTPUT_MSG
+        print(NO_OUTPUT_MSG)
         sys.exit(1)
 
     os.chdir(directory)
@@ -121,23 +121,23 @@ def serve_command(
                 Handler.authcode = authcode
                 Handler.realm = realm
             else:
-                Handler = SimpleHTTPServer.SimpleHTTPRequestHandler
-            httpd = SocketServer.TCPServer(("", p), Handler)
+                Handler = http.server.SimpleHTTPRequestHandler
+            httpd = socketserver.TCPServer(("", p), Handler)
         except socket.error:
-            print "port %s already in use" % p
+            print("port %s already in use" % p)
             p = None
         else:
             break
 
     if p:
-        print "serving contents of %s on http://localhost:%s" % (directory, p)
+        print("serving contents of %s on http://localhost:%s" % (directory, p))
         if username and password and Handler.authcode:
-            print "username '%s' and password '%s' are required to access contents" % (username, password)
-        print "type ctrl+c to stop"
+            print("username '%s' and password '%s' are required to access contents" % (username, password))
+        print("type ctrl+c to stop")
         try:
             httpd.serve_forever()
         except KeyboardInterrupt:
             sys.exit(1)
     else:
-        print "could not find a free port to serve on, tried", ports
+        print("could not find a free port to serve on, tried", ports)
         sys.exit(1)

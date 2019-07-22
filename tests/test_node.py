@@ -1,8 +1,8 @@
 from dexy.doc import Doc
 from dexy.node import Node
 from dexy.node import PatternNode
-from tests.utils import wrap
 from dexy.wrapper import Wrapper
+from tests.utils import wrap
 import dexy.doc
 import dexy.node
 import os
@@ -74,13 +74,13 @@ def test_script_node_caching__slow():
         wrapper1 = Wrapper(log_level="DEBUG")
         wrapper1.run_from_new()
 
-        for node in wrapper1.nodes.values():
+        for node in list(wrapper1.nodes.values()):
             assert node.state == 'ran'
 
         wrapper2 = Wrapper()
         wrapper2.run_from_new()
 
-        for node in wrapper2.nodes.values():
+        for node in list(wrapper2.nodes.values()):
             assert node.state == 'consolidated'
 
         time.sleep(1.1)
@@ -90,7 +90,7 @@ def test_script_node_caching__slow():
         wrapper3 = Wrapper()
         wrapper3.run_from_new()
 
-        for node in wrapper1.nodes.values():
+        for node in list(wrapper1.nodes.values()):
             assert node.state == 'ran'
 
 # TODO mock out os.stat to get different mtimes without having to sleep?
@@ -98,7 +98,7 @@ def test_script_node_caching__slow():
 def test_node_caching__slow():
     with wrap() as wrapper:
         with open("hello.py", "w") as f:
-            f.write("print 1+2\n")
+            f.write("print(1+2)\n")
 
         with open("doc.txt", "w") as f:
             f.write("1 + 1 = {{ d['hello.py|py'] }}")
@@ -146,7 +146,7 @@ def test_node_caching__slow():
 
         time.sleep(1.1)
         with open("hello.py", "w") as f:
-            f.write("print 1+1\n")
+            f.write("print(1+1)\n")
 
         wrapper = Wrapper(log_level='DEBUG')
         hello_py = Doc("hello.py|py", wrapper)

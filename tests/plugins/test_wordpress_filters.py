@@ -29,7 +29,7 @@ def test_docmd_create_keyfile_if_exists():
 
 def test_api_url_with_php_ending():
     with wrap():
-        with open(".dexyapis", "wb") as f:
+        with open(".dexyapis", "w") as f:
             json.dump({
                     "wordpress" : {"url" : "http://example.com/api/xmlrpc.php"}
                     }, f)
@@ -39,7 +39,7 @@ def test_api_url_with_php_ending():
 
 def test_api_url_without_php_ending():
     with wrap():
-        with open(".dexyapis", "wb") as f:
+        with open(".dexyapis", "w") as f:
             json.dump({ "wordpress" : {"url" : "http://example.com/api"} }, f)
 
         url = dexy.filter.Filter.create_instance("wp").api_url()
@@ -47,7 +47,7 @@ def test_api_url_without_php_ending():
 
 def test_api_url_without_php_ending_with_trailing_slash():
     with wrap():
-        with open(".dexyapis", "wb") as f:
+        with open(".dexyapis", "w") as f:
             json.dump({ "wordpress" : {"url" : "http://example.com/api/"} }, f)
 
         url = dexy.filter.Filter.create_instance("wp").api_url()
@@ -88,13 +88,13 @@ ATTRS = {
             }
         }
 
-@patch('xmlrpclib.ServerProxy', **ATTRS)
+@patch('xmlrpc.client.ServerProxy', **ATTRS)
 def test_wordpress(MockXmlrpclib):
     with wrap():
-        with open("wordpress.json", "wb") as f:
+        with open("wordpress.json", "w") as f:
             json.dump({}, f)
 
-        with open(".dexyapis", "wb") as f:
+        with open(".dexyapis", "w") as f:
             json.dump({
                 'wordpress' : {
                     'url' : 'http://example.com',
@@ -107,7 +107,7 @@ def test_wordpress(MockXmlrpclib):
         doc = mk_wp_doc(wrapper)
         wrapper.run_docs(doc)
 
-        with open("wordpress.json", "rb") as f:
+        with open("wordpress.json", "r") as f:
             result = json.load(f)
 
         assert result['postid'] == 42
@@ -117,10 +117,10 @@ def test_wordpress(MockXmlrpclib):
         wrapper = dexy.wrapper.Wrapper()
         doc = mk_wp_doc(wrapper)
         wrapper.run_docs(doc)
-        assert doc.output_data().json_as_dict().keys() == ['permaLink']
+        assert list(doc.output_data().json_as_dict().keys()) == ['permaLink']
 
         result['publish'] = True
-        with open("wordpress.json", "wb") as f:
+        with open("wordpress.json", "w") as f:
             json.dump(result, f)
 
         # Publish existing draft
@@ -137,7 +137,7 @@ def test_wordpress(MockXmlrpclib):
         doc = Doc("example.pdf|wp",
                 wrapper=wrapper)
 
-        with open(".dexyapis", "wb") as f:
+        with open(".dexyapis", "w") as f:
             json.dump({
                 'wordpress' : {
                     'url' : 'http://example.com',

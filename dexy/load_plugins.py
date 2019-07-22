@@ -11,4 +11,4 @@ for dist in pkg_resources.working_set:
         try:
             __import__(import_pkg)
         except ImportError as e:
-            print "plugin", import_pkg, "not registered because", e
+            print(("plugin", import_pkg, "not registered because", e))

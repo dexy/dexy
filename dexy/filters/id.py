@@ -57,7 +57,7 @@ class Id(PygmentsFilter):
 
     def process(self):
         try:
-            input_text = unicode(self.input_data)
+            input_text = str(self.input_data)
         except UnicodeDecodeError:
             self.output_data['1'] = "non textual"
             self.output_data.save()
@@ -102,9 +102,9 @@ def t_error(t):
     raise LexError("Problem lexing at position %s." % t.lexpos)
 
 def t_idio_error(t):
-    print "comment '%s'" % t.lexer.lexdata[t.lexer.comment_start_pos:]
-    print "all '%s'" % t.lexer.lexdata
-    print "char '%s'" % t.lexer.lexdata[t.lexpos-1:t.lexer.lexpos]
+    print("comment '%s'" % t.lexer.lexdata[t.lexer.comment_start_pos:])
+    print("all '%s'" % t.lexer.lexdata)
+    print("char '%s'" % t.lexer.lexdata[t.lexpos-1:t.lexer.lexpos])
     raise LexError("Problem lexing in 'idio' state at position %s." % t.lexpos)
 
 def t_idiostart_error(t):
@@ -138,19 +138,19 @@ def start_new_section(lexer, position, lineno, new_level, name=None):
                 lexer.sections = []
     else:
         # Generate anonymous section name.
-        name = unicode(len(lexer.sections)+1)
+        name = str(len(lexer.sections)+1)
 
     try:
         change_level(lexer, new_level)
     except Exception:
-        print name
+        print(name)
         raise
 
     lexer.sections.append({
             'name' : name.rstrip(),
             'position' : position,
             'lineno' : lineno,
-            'contents' : u'',
+            'contents' : '',
             'level' : lexer.level
             })
 

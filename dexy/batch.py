@@ -1,4 +1,5 @@
 import uuid
+import pickle
 import os
 import dexy.data
 
@@ -96,18 +97,16 @@ class Batch(object):
         except OSError:
             pass
 
-        with open(self.filepath(), 'w') as f:
-            pickle = dexy.utils.pickle_lib(self.wrapper)
+        with open(self.filepath(), 'wb') as f:
             pickle.dump(self.to_dict(), f)
 
         with open(self.most_recent_filename(), 'w') as f:
             f.write(self.uuid)
 
     def load_from_file(self):
-        pickle = dexy.utils.pickle_lib(self.wrapper)
-        with open(self.filepath(), 'r') as f:
+        with open(self.filepath(), 'rb') as f:
             d = pickle.load(f)
-            for k, v in d.iteritems():
+            for k, v in d.items():
                 setattr(self, k, v)
 
     @classmethod

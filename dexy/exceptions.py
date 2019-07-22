@@ -1,8 +1,8 @@
+from cashew.exceptions import InactivePlugin
+from cashew.exceptions import UserFeedback
 from dexy.version import DEXY_VERSION
 import dexy.utils
 import platform
-from cashew.exceptions import UserFeedback
-from cashew.exceptions import InactivePlugin
 
 class NoFilterOutput(UserFeedback):
     pass

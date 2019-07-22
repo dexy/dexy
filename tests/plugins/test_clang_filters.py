@@ -1,6 +1,7 @@
+from dexy.doc import Doc
+from nose import SkipTest
 from tests.utils import assert_output
 from tests.utils import wrap
-from dexy.doc import Doc
 
 FORTRAN_HELLO_WORLD = """program hello
    print *, "Hello World!"
@@ -63,6 +64,7 @@ def test_c_filter():
     assert_output('gcc', C_FUSSY_HELLO_WORLD, "HELLO, world\n", ext=".c")
 
 def test_cfussy_filter():
+    raise SkipTest()
     assert_output('cfussy', C_FUSSY_HELLO_WORLD, "HELLO, world\n", ext=".c")
     with wrap() as wrapper:
         wrapper.debug = False
@@ -115,5 +117,5 @@ def test_clang_multiple_inputs():
                 wrapper=wrapper)
 
         wrapper.run_docs(node)
-        assert unicode(node.output_data()['input1.txt']) == u'hello, c'
-        assert unicode(node.output_data()['input2.txt']) == u'more data'
+        assert str(node.output_data()['input1.txt']) == 'hello, c'
+        assert str(node.output_data()['input2.txt']) == 'more data'

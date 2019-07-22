@@ -23,6 +23,6 @@ def test_xxml_no_pygments():
                 )
         wrapper.run_docs(doc)
 
-        assert "foo:source" in doc.output_data().keys()
-        assert not "foo:html-source" in doc.output_data().keys()
-        assert not "foo:latex-source" in doc.output_data().keys()
+        assert "foo:source" in list(doc.output_data().keys())
+        assert not "foo:html-source" in list(doc.output_data().keys())
+        assert not "foo:latex-source" in list(doc.output_data().keys())

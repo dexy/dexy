@@ -41,21 +41,19 @@ class PluginMeta(cashew.PluginMeta):
             alias = '-'
         return alias
 
-class Command(Plugin):
+class Command(Plugin, metaclass=PluginMeta):
     """
     Parent class for custom dexy commands.
     """
-    __metaclass__ = PluginMeta
     _settings = {}
     aliases = []
     default_cmd = None
     namespace = None
 
-class TemplatePlugin(Plugin):
+class TemplatePlugin(Plugin, metaclass=PluginMeta):
     """
     Parent class for template plugins.
     """
-    __metaclass__ = PluginMeta
     aliases = []
     _settings = {
             'no-jinja-filter' : ("Listed entries should not be made into jinja filters.")

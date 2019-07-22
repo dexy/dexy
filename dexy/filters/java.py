@@ -84,10 +84,10 @@ class JythonInteractiveFilter(PexpectReplFilter):
         if platform.system() in ('Linux', 'Windows'):
             return True
         elif platform.system() in ('Darwin'):
-            print "The jythoni dexy filter should not be run on MacOS due to a serious bug. This filter is being disabled."
+            print("The jythoni dexy filter should not be run on MacOS due to a serious bug. This filter is being disabled.")
             return False
         else:
-            print """Can't detect your system. If you see this message please report this to the dexy project maintainer, your platform.system() value is '%s'. The jythoni dexy filter should not be run on MacOS due to a serious bug.""" % platform.system()
+            print("""Can't detect your system. If you see this message please report this to the dexy project maintainer, your platform.system() value is '%s'. The jythoni dexy filter should not be run on MacOS due to a serious bug.""" % platform.system())
             return True
 
 class JavaFilter(SubprocessCompileFilter):
@@ -134,7 +134,7 @@ class JavaFilter(SubprocessCompileFilter):
                 classpath_elements.append(x)
 
         env = self.setup_env()
-        if env and env.has_key("CLASSPATH"):
+        if env and 'CLASSPATH' in env:
             for x in env['CLASSPATH'].split(":"):
                 classpath_elements.append(x)
 

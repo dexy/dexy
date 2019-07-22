@@ -34,9 +34,9 @@ class PythonEnvironment(Environment):
         env = {}
         skip = ('env', 'skip', 'self', 'parent_dir', 'env_text')
 
-        exec text
+        exec(text)
 
-        for k, v in locals().iteritems():
+        for k, v in locals().items():
             if not k in skip:
                 env[k] = v
         return env

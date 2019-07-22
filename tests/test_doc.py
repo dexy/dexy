@@ -1,8 +1,8 @@
 from dexy.data import Data
 from dexy.doc import Doc
 from dexy.exceptions import UserFeedback
-from tests.utils import wrap
 from nose.tools import raises
+from tests.utils import wrap
 
 def test_create_doc_with_one_filter():
     with wrap() as wrapper:

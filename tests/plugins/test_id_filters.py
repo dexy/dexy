@@ -120,8 +120,8 @@ def test_more_accidental_comments():
     for comment in ('###",', '%%%",', '"###",', '"%%%"', '"### (%%%)",'):
         text = "   %s foo bar %s\n" % (comment, comment)
         output = parse(text)
-        print "INPUT IS", text
-        print "OUTPUT IS", output[0]['contents']
+        print("INPUT IS", text)
+        print("OUTPUT IS", output[0]['contents'])
         assert output[0]['contents'] == text
 
 def test_malformatted_comment_does_not_throw_error():
@@ -156,7 +156,7 @@ x*y
                 contents=src)
 
         wrapper.run_docs(doc)
-        assert doc.output_data().keys() == ['1', 'vars', 'multiply']
+        assert list(doc.output_data().keys()) == ['1', 'vars', 'multiply']
 
 def uest_force_latex():
     with wrap() as wrapper:

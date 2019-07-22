@@ -3,7 +3,7 @@ from dexy.exceptions import UserFeedback
 from tests.utils import wrap
 import os
 
-def test_create_new_sectioned_dat():
+def test_create_new_sectioned_data():
     with wrap() as wrapper:
         settings = {
                 'canonical-name' : "doc.txt"
@@ -25,7 +25,7 @@ def test_create_new_sectioned_dat():
 
         data['gamma'] = "This is the third section."
         del data['beta']
-        assert data.keys() == ['alpha', 'gamma']
+        assert list(data.keys()) == ['alpha', 'gamma']
 
 def test_load_json():
     with wrap() as wrapper:
@@ -45,17 +45,17 @@ def test_load_json():
         data = Sectioned("doc.txt", ".txt", "def123", settings, wrapper)
         data.setup_storage()
 
-        assert data.keys() == ["alpha", "beta"]
+        assert list(data.keys()) == ["alpha", "beta"]
         assert str(data) == "This is the first section.\nThis is the second section."
-        assert unicode(data) == u"This is the first section.\nThis is the second section."
+        assert str(data) == "This is the first section.\nThis is the second section."
         assert data.keyindex("alpha") == 0
         assert data.keyindex("beta") == 1
         assert data.keyindex("gamma") == -1
 
         assert str(data["alpha"]) == "This is the first section."
         assert str(data["beta"]) == "This is the second section."
-        assert unicode(data["alpha"]) == u"This is the first section."
-        assert unicode(data["beta"]) == u"This is the second section."
+        assert str(data["alpha"]) == "This is the first section."
+        assert str(data["beta"]) == "This is the second section."
 
         assert data["foo"] == "bar"
 

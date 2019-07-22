@@ -1,5 +1,5 @@
 from dexy.filters.pydoc import PythonIntrospection
-import StringIO
+import io
 import dexy.exceptions
 import inspect
 import os
@@ -89,11 +89,11 @@ class PythonTest(PythonIntrospection):
                 self.output_data.append("%s:source" % qualified_test_name, source)
                 self.output_data.append("%s:name" % qualified_test_name, member.func_name)
                 self.output_data.append("%s:comments" % qualified_test_name, comments)
-                self.output_data.append("%s:passed" % qualified_test_name, unicode(test_passed))
+                self.output_data.append("%s:passed" % qualified_test_name, str(test_passed))
 
     def run_test(self, test):
         # TODO This isn't working... maybe because we're running this in a test
-        noselogs = StringIO.StringIO()
+        noselogs = io.StringIO()
         config = nose.config.Config(
                 logStream = noselogs
                 )
@@ -112,7 +112,7 @@ class PythonTest(PythonIntrospection):
         return test_passed
 
     def process(self):
-        module_names = unicode(self.input_data).split()
+        module_names = str(self.input_data).split()
         self.mod_file_dir = None
         orig_wd = os.path.abspath(".")
         chdir = self.setting('chdir')

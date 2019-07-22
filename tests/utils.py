@@ -1,4 +1,4 @@
-from StringIO import StringIO
+from io import StringIO
 from dexy.data import Sectioned
 from dexy.doc import Doc
 from dexy.exceptions import InactivePlugin
@@ -33,7 +33,7 @@ class wrap(tempdir):
     def __exit__(self, type, value, traceback):
         self.remove_temp_dir()
         if isinstance(value, InactivePlugin):
-            print value.message
+            print(value.message)
             raise SkipTest
             return True # swallow InactivePlugin error
 
@@ -53,7 +53,7 @@ class runfilter(wrap):
         def run_example(doc_key, doc_contents):
             wrapper = make_wrapper()
 
-            if isinstance(doc_contents, basestring):
+            if isinstance(doc_contents, str):
                 data_class = 'generic'
             else:
                 data_class = 'sectioned'
@@ -96,19 +96,19 @@ def assert_output(filter_alias, doc_contents, expected_output, ext=".txt", basen
     with runfilter(filter_alias, doc_contents, ext=ext, basename=basename) as doc:
         actual_output_data = doc.output_data()
         if isinstance(actual_output_data, Sectioned):
-            for section_name, expected_section_contents in expected_output.iteritems():
+            for section_name, expected_section_contents in expected_output.items():
                 try:
-                    actual_section_contents = unicode(actual_output_data[section_name])
+                    actual_section_contents = str(actual_output_data[section_name])
                     assert actual_section_contents == expected_section_contents
                 except AssertionError:
-                    print "Sections %s are not the same" % section_name
-                    print char_diff(actual_section_contents, expected_section_contents)
+                    print("Sections %s are not the same" % section_name)
+                    print(char_diff(actual_section_contents, expected_section_contents))
         else:
-            actual_output_data = unicode(doc.output_data())
+            actual_output_data = str(doc.output_data())
             try:
                 assert actual_output_data == expected_output
             except AssertionError:
-                print char_diff(actual_output_data, expected_output)
+                print(char_diff(actual_output_data, expected_output))
 
 def assert_output_matches(filter_alias, doc_contents, expected_regex, ext=".txt"):
     if not ext.startswith("."):
@@ -116,9 +116,9 @@ def assert_output_matches(filter_alias, doc_contents, expected_regex, ext=".txt"
 
     with runfilter(filter_alias, doc_contents, ext=ext) as doc:
         if expected_regex:
-            assert re.match(expected_regex, unicode(doc.output_data()))
+            assert re.match(expected_regex, str(doc.output_data()))
         else:
-            raise Exception(unicode(doc.output_data()))
+            raise Exception(str(doc.output_data()))
 
 def assert_output_cached(filter_alias, doc_contents, ext=".txt", min_filesize=None):
     if not ext.startswith("."):
@@ -143,11 +143,11 @@ def assert_in_output(filter_alias, doc_contents, expected_output, ext=".txt"):
 
     with runfilter(filter_alias, doc_contents, ext=ext) as doc:
         if expected_output:
-            actual_output = unicode(doc.output_data())
+            actual_output = str(doc.output_data())
             msg = "did not find expected '%s' in actual output '%s'"
             assert expected_output in actual_output, msg % (expected_output, actual_output)
         else:
-            raise Exception(unicode(doc.output_data()))
+            raise Exception(str(doc.output_data()))
 
 class capture_stdout():
     def __enter__(self):

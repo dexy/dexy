@@ -22,8 +22,7 @@ def test_d_object():
         env = node.filters[0].run_plugins()
         d = env['d'][1]
         assert d.__class__.__name__ == 'D'
-        # items() method is created by DictMixin from __getitem__
-        assert len(d.items()) == 1
+        assert len(list(d.items())) == 1
 
 def test_base():
     run(TemplatePlugin)
@@ -51,9 +50,9 @@ def test_python_builtins():
 
 def test_pygments():
     with run(plugin.PygmentsStylesheet) as env:
-        assert 'pastie.tex' in env['pygments'][1].keys()
-        assert 'pastie.css' in env['pygments'][1].keys()
-        assert 'pastie.html' in env['pygments'][1].keys()
+        assert 'pastie.tex' in list(env['pygments'][1].keys())
+        assert 'pastie.css' in list(env['pygments'][1].keys())
+        assert 'pastie.html' in list(env['pygments'][1].keys())
 
 class TestSubdirectory(TemplateFilter):
     """

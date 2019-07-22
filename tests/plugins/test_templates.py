@@ -11,4 +11,4 @@ raise SkipTest() # TODO fixme
 def test_cowsay():
     with tempdir():
         for batch in Cowsay().dexy():
-            print batch
+            print(batch)

@@ -21,9 +21,9 @@ def run_kramdown(ext):
         return node.output_data()
 
 def test_kramdown_html():
-    html = unicode(run_kramdown(".html"))
+    html = str(run_kramdown(".html"))
     assert """<h2 id="download">""" in html
 
 def test_kramdown_tex():
-    tex = unicode(run_kramdown(".tex"))
-    assert u"\subsection" in tex
+    tex = str(run_kramdown(".tex"))
+    assert "\subsection" in tex

@@ -8,32 +8,32 @@ def env_command():
     """
     f = dexy.filter.Filter.create_instance("jinja")
     f.doc = dexy.doc.Doc('dummy', dummy_wrapper())
-    jinja_template_filters = f.jinja_template_filters().keys()
+    jinja_template_filters = list(f.jinja_template_filters().keys())
 
     env = f.run_plugins()
     for k in sorted(env):
         try:
             helpstring, value = env[k]
         except Exception:
-            print k
-            print "Values should be a (docstring, value) tuple."
+            print(k)
+            print("Values should be a (docstring, value) tuple.")
             raise
 
         if k in jinja_template_filters:
-            print "*%s: %s" % (k, helpstring,)
+            print("*%s: %s" % (k, helpstring,))
         else:
-            print "%s: %s" % (k, helpstring,)
+            print("%s: %s" % (k, helpstring,))
 
-    print ''
-    print "* indicates the method can be used as a jinja template filter"
-    print ''
+    print('')
+    print("* indicates the method can be used as a jinja template filter")
+    print('')
 
 def plugins_command():
     """
     Prints list of plugin-able classes.
     """
     for plugin_class in sorted(dexy.plugin.Plugin.__subclasses__()):
-        print plugin_class.__name__
+        print(plugin_class.__name__)
 
 from pygments import highlight
 from pygments.lexers import PythonLexer
@@ -65,53 +65,53 @@ def datas_command(
             'transition', 'add_to_lookup_sections' ,'add_to_lookup_nodes'
             )
 
-    print ""
+    print("")
 
     if not alias:
         for d in dexy.data.Data.__iter__("foo", ".txt", "foo", settings, wrapper):
-            print d.alias
+            print(d.alias)
 
-        print ""
-        print "For more information about a particular data type,"
-        print "use the -alias flag and specify the data type alias."
-        print ""
+        print("")
+        print("For more information about a particular data type,")
+        print("use the -alias flag and specify the data type alias.")
+        print("")
     else:
         d = dexy.data.Data.create_instance(alias, "foo", ".txt", "foo", settings, wrapper)
 
-        print alias
-        print ""
-        print d.setting('help')
-        print ""
+        print(alias)
+        print("")
+        print(d.setting('help'))
+        print("")
 
-        print "Methods:"
+        print("Methods:")
         for k, v in inspect.getmembers(d):
             if k.startswith('_'):
                 continue
 
             if inspect.ismethod(v) and not k in nodoc_methods:
-                print "    %s" % k
+                print("    %s" % k)
 
                 docs = inspect.getdoc(v)
                 if not docs:
                     raise dexy.exceptions.InternalDexyProblem("Must provide docstring for %s" % k)
 
-                print ""
-                print indent(docs, 8)
-                print ""
+                print("")
+                print(indent(docs, 8))
+                print("")
 
                 args, varargs, keywords, defaults = inspect.getargspec(v)
 
                 if not source and len(args) > 1:
-                    print "        Takes arguments. Run with -source option to see source code."
+                    print("        Takes arguments. Run with -source option to see source code.")
 
 
                 if source:
                     source_code = textwrap.dedent(inspect.getsource(v))
                     if nocolor:
-                        print indent(source_code, 8)
+                        print(indent(source_code, 8))
                     else:
                         formatter = pygments.formatters.TerminalFormatter()
                         lexer = PythonLexer()
-                        print indent(highlight(source_code, lexer, formatter), 8)
+                        print(indent(highlight(source_code, lexer, formatter), 8))
 
-                print ""
+                print("")

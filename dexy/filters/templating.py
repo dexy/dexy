@@ -15,10 +15,10 @@ class PassThroughWhitelistUndefined(jinja2.StrictUndefined):
     call_whitelist = ('link', 'section',)
 
     def wrap_arg(self, arg):
-        if isinstance(arg, basestring):
-            return "\"%s\"" % unicode(arg)
+        if isinstance(arg, str):
+            return "\"%s\"" % str(arg)
         else:
-            return unicode(arg)
+            return str(arg)
 
     def __call__(self, *args, **kwargs):
         name = self._undefined_name
@@ -68,7 +68,7 @@ class TemplateFilter(DexyFilter):
             if new_env_vars is None:
                 msg = "%s did not return any values"
                 raise dexy.exceptions.InternalDexyProblem(msg % plugin.alias)
-            if any(v in env.keys() for v in new_env_vars):
+            if any(v in list(env.keys()) for v in new_env_vars):
                 new_keys = ", ".join(sorted(new_env_vars))
                 existing_keys = ", ".join(sorted(env))
                 msg = "plugin class '%s' is trying to add new keys '%s', already have '%s'"
@@ -82,7 +82,7 @@ class TemplateFilter(DexyFilter):
 
         template_data = {}
 
-        for k, v in plugin_output.iteritems():
+        for k, v in plugin_output.items():
             if not isinstance(v, tuple) or len(v) != 2:
                 msg = "Template plugin '%s' must return a tuple of length 2." % k
                 raise dexy.exceptions.InternalDexyProblem(msg)
@@ -151,7 +151,7 @@ class JinjaFilter(TemplateFilter):
     def setup_jinja_env(self, loader=None):
         env_attrs = {}
 
-        for k, v in self.setting_values().iteritems():
+        for k, v in self.setting_values().items():
             underscore_k = k.replace("-", "_")
             if k in self.__class__._settings and not k in self._not_jinja_settings:
                 env_attrs[underscore_k] = v
@@ -166,7 +166,7 @@ class JinjaFilter(TemplateFilter):
 
             self.log_debug("Changing tags to latex/wiki format: %s" % ' '.join(tags))
 
-            for underscore_k, v in tags.iteritems():
+            for underscore_k, v in tags.items():
                 hyphen_k = underscore_k.replace("_", "-")
                 if env_attrs[underscore_k] == self.__class__._settings[hyphen_k][1]:
                     self.log_debug("setting %s to %s" % (underscore_k, v))
@@ -183,7 +183,7 @@ class JinjaFilter(TemplateFilter):
                 extensions.append(ref)
         env_attrs['extensions'] = extensions
 
-        debug_attr_string = ", ".join("%s: %r" % (k, v) for k, v in env_attrs.iteritems())
+        debug_attr_string = ", ".join("%s: %r" % (k, v) for k, v in env_attrs.items())
         self.log_debug("creating jinja2 environment with: %s" % debug_attr_string)
         return jinja2.Environment(**env_attrs)
 
@@ -198,7 +198,7 @@ class JinjaFilter(TemplateFilter):
             if m:
                 e.lineno = int(m.groups()[0])
             else:
-                print traceback.format_exc()
+                print((traceback.format_exc()))
                 e.lineno = 0
                 self.log_warn("unable to parse line number from traceback")
 
@@ -252,7 +252,7 @@ class JinjaFilter(TemplateFilter):
         
             methods = template_plugin.run()
 
-            for k, v in methods.iteritems():
+            for k, v in methods.items():
                 if not k in template_plugin.setting('no-jinja-filter'):
                     self.log_debug("    creating jinja filter for method %s" % k)
                     filters[k] = v[1]
@@ -285,12 +285,13 @@ class JinjaFilter(TemplateFilter):
             self.log_debug("about to process jinja template")
             template.stream(template_data).dump(self.output_filepath(), encoding="utf-8")
         except (TemplateSyntaxError, UndefinedError, TypeError) as e:
+            self.log_debug("%s error while running jinja... %s" % (e.__class__.__name__, str(e)))
             try:
                 self.log_debug("removing %s since jinja had an error" % self.output_filepath())
                 os.remove(self.output_filepath())
             except os.error:
                 pass
-            self.handle_jinja_exception(e, unicode(self.input_data), template_data)
+            self.handle_jinja_exception(e, str(self.input_data), template_data)
         except TemplateNotFound as e:
             msg = "Jinja couldn't find the template '%s', make sure this file is an input to %s" 
             msgargs = (e.message, self.doc.key)
@@ -301,5 +302,5 @@ class JinjaFilter(TemplateFilter):
                 os.remove(self.output_filepath())
             except os.error:
                 pass
-            self.log_debug(unicode(e))
+            self.log_debug(str(e))
             raise

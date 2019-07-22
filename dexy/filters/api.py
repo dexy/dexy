@@ -1,7 +1,7 @@
+from dexy.utils import file_exists
 import dexy.filter
 import json
 import os
-from dexy.utils import file_exists
 
 class ApiFilter(dexy.filter.DexyFilter):
     """
@@ -67,11 +67,11 @@ class ApiFilter(dexy.filter.DexyFilter):
                 keyfile_content[api_key_name] = {}
 
                 # Get all the entries we want in the keyfile.
-                for k, v in filter_instance.setting_values().iteritems():
+                for k, v in filter_instance.setting_values().items():
                     if k.startswith("api_"):
                         keyfile_content[api_key_name][k.replace("api_", "")] = "TODO"
 
-        with open(key_filename, "wb") as f:
+        with open(key_filename, "w") as f:
             json.dump(keyfile_content, f, sort_keys = True, indent=4)
 
     def document_config_file(self):
@@ -105,13 +105,13 @@ class ApiFilter(dexy.filter.DexyFilter):
             if file_exists(filename):
                 with open(filename, "r") as f:
                     params = json.load(f)
-                    if params.has_key(self.setting('api-key-name')):
+                    if self.setting('api-key-name') in params:
                         param_value = params[self.setting('api-key-name')].get(param_name)
 
             if param_value:
                 break
 
-        if param_value and isinstance(param_value, basestring) and param_value.startswith("$"):
+        if param_value and isinstance(param_value, str) and param_value.startswith("$"):
             # need to get value of bash variable
             param_value_from_env = os.getenv(param_value.lstrip("$"))
             if not param_value_from_env:

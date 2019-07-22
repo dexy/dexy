@@ -51,7 +51,7 @@ class SubprocessFilter(Filter):
             if proc.returncode > 0:
                 return False
             else:
-                return stdout.strip().split("\n")[0]
+                return stdout.decode('utf-8').strip().split("\n")[0]
 
     def process(self):
         command = self.command_string()
@@ -87,11 +87,11 @@ class SubprocessFilter(Filter):
         self.output_data.clear_cache()
 
     def handle_subprocess_proc_return(self, command, exitcode, stderr, compiled=False):
-        self.log_debug("exit code is '%s'" % exitcode)
+        self.log_debug("exit code is: %s" % exitcode)
         if exitcode is None:
             raise dexy.exceptions.InternalDexyProblem("no return code, proc not finished!")
         elif exitcode == 127 and not compiled:
-            raise dexy.exceptions.InactivePlugin(self)
+            raise dexy.exceptions.InactivePlugin(self.alias)
         elif exitcode != 0 and self.setting('check-return-code'):
             if self.ignore_nonzero_exit():
                 self.log_warn("Nonzero exit status %s" % exitcode)
@@ -118,7 +118,7 @@ class SubprocessFilter(Filter):
 
         # Add parameters in wrapper's env dict
         if self.is_part_of_script_bundle():
-            for key, value in self.script_storage().iteritems():
+            for key, value in self.script_storage().items():
                 if key.startswith("DEXY_"):
                     self.log_debug("Adding %s to env value is %s" % (key, value))
                     env[key] = value
@@ -139,13 +139,13 @@ class SubprocessFilter(Filter):
         self.log_debug("adding new files found in %s for %s" % (wd, self.key))
 
         add_new_files = self.setting('add-new-files')
-        if isinstance(add_new_files, basestring):
+        if isinstance(add_new_files, str):
             add_new_files = [add_new_files]
 
         exclude = self.setting('exclude-add-new-files')
         skip_dirs = self.setting('exclude-new-files-from-dir')
 
-        if isinstance(exclude, basestring):
+        if isinstance(exclude, str):
             raise dexy.exceptions.UserFeedback("exclude-add-new-files should be a list, not a string")
 
         new_files_added = 0
@@ -210,7 +210,13 @@ class SubprocessFilter(Filter):
 
                 self.log_debug("Adding %s" % filepath)
                 with open(filepath, 'rb') as f:
-                    contents = f.read()
+                    raw_contents = f.read()
+
+                try:
+                    contents = raw_contents.decode('utf-8')
+                except UnicodeDecodeError:
+                    contents = raw_contents
+
                 self.add_doc(relpath, contents)
                 new_files_added += 1
 
@@ -252,15 +258,16 @@ class SubprocessFilter(Filter):
 
         if input_text:
             self.log_debug("about to send input_text '%s'" % input_text)
+            stdout, stderr = proc.communicate(input_text.encode())
+        else:
+            stdout, stderr = proc.communicate()
 
-        stdout, stderr = proc.communicate(input_text)
-        self.log_debug(u"stdout is '%s'" % stdout.decode('utf-8'))
+        self.log_debug("stdout is '%s'" % stdout.decode('utf-8'))
 
         if stderr:
-            self.log_debug(u"stderr is '%s'" % stderr.decode('utf-8'))
+            self.log_debug("stderr is '%s'" % stderr.decode('utf-8'))
 
-
-        return (proc, stdout)
+        return (proc, stdout.decode('utf-8'))
 
     def copy_canonical_file(self):
         canonical_file = os.path.join(self.workspace(), self.output_data.name)
@@ -364,12 +371,12 @@ class SubprocessInputFilter(SubprocessFilter):
 
         if len(inputs) == 1:
             doc = inputs[0]
-            for section_name, section_input in doc.output_data().iteritems():
-                proc, stdout = self.run_command(command, self.setup_env(), unicode(section_input))
+            for section_name, section_input in doc.output_data().items():
+                proc, stdout = self.run_command(command, self.setup_env(), str(section_input))
                 self.output_data[section_name] = stdout
         else:
             for doc in inputs:
-                proc, stdout = self.run_command(command, self.setup_env(), unicode(doc.output_data()))
+                proc, stdout = self.run_command(command, self.setup_env(), str(doc.output_data()))
                 self.handle_subprocess_proc_return(command, proc.returncode, stdout)
                 self.output_data[doc.key] = stdout
 
@@ -427,13 +434,13 @@ class SubprocessCompileInputFilter(SubprocessCompileFilter):
 
         if len(inputs) == 1:
             doc = inputs[0]
-            for section_name, section_input in doc.output_data().iteritems():
+            for section_name, section_input in doc.output_data().items():
                 proc, stdout = self.run_command(command, self.setup_env(), section_input)
                 self.handle_subprocess_proc_return(command, proc.returncode, stdout)
                 self.output_data[section_name] = stdout
         else:
             for doc in inputs:
-                proc, stdout = self.run_command(command, self.setup_env(), unicode(doc.output_data()))
+                proc, stdout = self.run_command(command, self.setup_env(), str(doc.output_data()))
                 self.handle_subprocess_proc_return(command, proc.returncode, stdout)
                 self.output_data[doc.key] = stdout
 
@@ -501,5 +508,5 @@ class SubprocessStdoutTextFilter(SubprocessStdoutFilter):
 
     def command_string_args(self):
         args = self.default_command_string_args()
-        args['text'] = unicode(self.input_data)
+        args['text'] = str(self.input_data)
         return args

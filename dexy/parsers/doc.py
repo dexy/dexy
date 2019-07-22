@@ -12,7 +12,7 @@ class Yaml(Parser):
 
     def parse(self, directory, input_text):
         def parse_key_mapping(mapping):
-            for original_node_key, v in mapping.iteritems():
+            for original_node_key, v in mapping.items():
                 # handle things which aren't nodes
                 if original_node_key == 'defaults':
                     self.ast.default_args_for_directory.append((directory, v,))
@@ -44,7 +44,7 @@ class Yaml(Parser):
                 for element in v:
                     if hasattr(element, 'keys'):
                         # This is a dict of length 1
-                        kk = element.keys()[0]
+                        kk = list(element.keys())[0]
                         vv = element[kk]
 
                         if isinstance(vv, list):
@@ -86,7 +86,7 @@ class Yaml(Parser):
         def parse_keys(data, top=False):
             if hasattr(data, 'keys'):
                 parse_key_mapping(data)
-            elif isinstance(data, basestring):
+            elif isinstance(data, str):
                 self.ast.add_node(self.wrapper.join_dir(directory, data))
             elif isinstance(data, list):
                 if top:
@@ -129,7 +129,7 @@ class TextFile(Parser):
                 node_key = self.wrapper.join_dir(directory, key)
                 self.ast.add_node(node_key, **kwargs)
                 # all tasks already in the ast are children
-                for child_key in self.ast.lookup_table.keys():
+                for child_key in list(self.ast.lookup_table.keys()):
                     child_node_key = self.wrapper.join_dir(directory, child_key)
                     self.ast.add_dependency(node_key, child_node_key)
 
@@ -142,10 +142,10 @@ class Original(Parser):
     def parse(self, directory, input_text):
         data = parse_json(input_text)
 
-        for task_key, v in data.iteritems():
+        for task_key, v in data.items():
             self.ast.add_node(self.wrapper.join_dir(directory, task_key))
 
-            for kk, vv in v.iteritems():
+            for kk, vv in v.items():
                 if kk == 'depends':
                     for child_key in vv:
                         self.ast.add_dependency(self.wrapper.join_dir(directory, task_key), self.wrapper.join_dir(directory, child_key))
@@ -155,7 +155,7 @@ class Original(Parser):
 
         def children_for_allinputs(priority=None):
             children = []
-            for k, v in self.ast.lookup_table.iteritems():
+            for k, v in self.ast.lookup_table.items():
                 if 'allinputs' in v:
                     if priority:
                         k_priority = v.get('priority', 10)
@@ -166,7 +166,7 @@ class Original(Parser):
             return children
 
         # Make another pass to implement 'allinputs'
-        for task_key, kwargs in self.ast.lookup_table.iteritems():
+        for task_key, kwargs in self.ast.lookup_table.items():
             if kwargs.get('allinputs', False):
                 priority = kwargs.get('priority')
                 for child_key in children_for_allinputs(priority):

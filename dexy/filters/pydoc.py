@@ -183,7 +183,7 @@ class Pydoc(PythonIntrospection):
                 self.process_module(package_name, name)
 
     def process_packages(self):
-        package_names = unicode(self.input_data).split()
+        package_names = str(self.input_data).split()
         packages = [__import__(name) for name in package_names]
 
         for package in packages:

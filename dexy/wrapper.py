@@ -12,11 +12,13 @@ import dexy.utils
 import logging
 import logging.handlers
 import os
+import pickle
 import posixpath
 import shutil
 import sys
 import textwrap
 import time
+import traceback
 import uuid
 
 class Wrapper(object):
@@ -41,7 +43,7 @@ class Wrapper(object):
         if self.silent:
             self.log.warn(msg)
         else:
-            print msg
+            print(msg)
 
     def validate_state(self, state=None):
         """
@@ -200,13 +202,21 @@ class Wrapper(object):
             pass
 
     def empty_trash(self):
-        try:
-            shutil.rmtree(self.trash_dir())
-        except OSError as e:
-            no_such_dir = "No such file or directory" in unicode(e)
-            dir_not_empty = "Directory not empty" in unicode(e)
-            if not no_such_dir and not dir_not_empty:
-                raise
+        for dirpath, dirnames, filenames in os.walk(self.trash_dir(), topdown=False):
+            for f in filenames:
+                filepath = os.path.join(dirpath, f)
+                os.remove(filepath)
+
+            try:
+                os.rmdir(dirpath)
+            except OSError as e:
+                print("error removing dir")
+                print(e)
+                print(dirpath)
+                print((os.listdir(dirpath)))
+                print((os.stat(dirpath)))
+                print((os.lstat(dirpath)))
+                shutil.rmtree(dirpath)
 
     def reset_work_cache_dir(self):
         # remove work/ dir leftover from previous run (if any) and create a new
@@ -237,10 +247,11 @@ class Wrapper(object):
                 raise
             else:
                 if self.current_task:
-                    msg = u"ERROR while running %s: %s\n" % (self.current_task.key, unicode(e))
+                    msg = "ERROR while running %s: %s\n" % (self.current_task.key, str(e))
                 else:
-                    msg = u"ERROR: %s\n" % unicode(e)
+                    msg = "ERROR: %s\n" % str(e)
                 sys.stderr.write(msg)
+                sys.stderr.write(traceback.format_exc())
                 self.log.warn(msg)
 
         else:
@@ -314,7 +325,7 @@ class Wrapper(object):
         """
         Applies the values in defaults dict to this wrapper instance.
         """
-        for name, value in dexy.utils.defaults.iteritems():
+        for name, value in dexy.utils.defaults.items():
             setattr(self, name, value)
 
     def update_attributes_from_kwargs(self, kwargs):
@@ -322,15 +333,11 @@ class Wrapper(object):
         Updates instance values from a dictionary of kwargs, checking that the
         attribute names are also present in defaults dict.
         """
-        for key, value in kwargs.iteritems():
+        for key, value in kwargs.items():
             if not key in dexy.utils.defaults:
                 msg = "invalid kwarg '%s' being passed to wrapper, not defined in defaults dict" 
                 raise InternalDexyProblem(msg % key)
             setattr(self, key, value)
-
-    # Store Args
-    def pickle_lib(self):
-        return dexy.utils.pickle_lib(self)
 
     def node_argstrings_filename(self):
         return os.path.join(self.artifacts_dir, 'batch.args.pickle')
@@ -345,7 +352,6 @@ class Wrapper(object):
             arg_info[node.key_with_class()] = node.sorted_arg_string()
 
         with open(self.node_argstrings_filename(), 'wb') as f:
-            pickle = self.pickle_lib()
             pickle.dump(arg_info, f)
 
     def load_node_argstrings(self):
@@ -355,7 +361,6 @@ class Wrapper(object):
         """
         try:
             with open(self.node_argstrings_filename(), 'rb') as f:
-                pickle = self.pickle_lib()
                 self.saved_args = pickle.load(f)
         except IOError:
             self.saved_args = {}
@@ -447,7 +452,7 @@ class Wrapper(object):
             can leave your config in place and this message will disappear in a
             future dexy version.
             """
-            print textwrap.dedent(msg)
+            print((textwrap.dedent(msg)))
 
         elif os.path.exists(old_cache_dir) and os.path.isdir(old_cache_dir) and os.path.exists(safety_file):
             if os.path.exists(self.artifacts_dir):
@@ -459,7 +464,7 @@ class Wrapper(object):
                     msg = "'%s' is not a dir!" % (self.artifacts_dir,)
                     raise dexy.exceptions.InternalDexyProblem(msg)
 
-            print "Moving directory '%s' to new location '%s'" % (old_cache_dir, self.artifacts_dir)
+            print(("Moving directory '%s' to new location '%s'" % (old_cache_dir, self.artifacts_dir)))
             shutil.move(old_cache_dir, self.artifacts_dir)
 
     def deprecate_logs_directory(self):
@@ -691,7 +696,7 @@ class Wrapper(object):
         for alias in self.parsers.split():
             parser = dexy.parser.Parser.create_instance(alias, self, ast)
 
-            for filepath, fileinfo in self.filemap.iteritems():
+            for filepath, fileinfo in self.filemap.items():
                 if fileinfo['dir'] == '.' or self.recurse or self.is_explicit_config(filepath):
                     if os.path.split(filepath)[1] == alias:
                         self.log.info("using config file '%s'" % filepath)

@@ -26,7 +26,7 @@ class MarkdownFilter(DexyFilter):
 
     def initialize_markdown(self, *additional_extensions):
         extension_configs = self.setting('extensions')
-        extensions = extension_configs.keys()
+        extensions = list(extension_configs.keys())
 
         dbg = "Initializing Markdown with extensions: %s and extension configs: %s"
         self.log_debug(dbg % (json.dumps(extensions), json.dumps(extension_configs)))

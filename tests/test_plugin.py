@@ -1,10 +1,9 @@
 import dexy.plugin
 
-class WidgetBase(dexy.plugin.Plugin):
+class WidgetBase(dexy.plugin.Plugin, metaclass=dexy.plugin.PluginMeta):
     """
     Example of plugin.
     """
-    __metaclass__ = dexy.plugin.PluginMeta
     _settings = {
             'foo' : ("Default value for foo", "bar"),
             'abc' : ("Default value for abc", 123)
@@ -25,15 +24,13 @@ class SubWidget(Widget):
             'foo' : 'baz'
             }
 
-class Fruit(dexy.plugin.Plugin):
+class Fruit(dexy.plugin.Plugin, metaclass=dexy.plugin.PluginMeta):
     '''fruit class'''
-    __metaclass__ = dexy.plugin.PluginMeta
     aliases = ['fruit']
     _settings = {}
 
-class Starch(dexy.plugin.Plugin):
+class Starch(dexy.plugin.Plugin, metaclass=dexy.plugin.PluginMeta):
     '''starch class'''
-    __metaclass__ = dexy.plugin.PluginMeta
     aliases = ['starch']
     _settings = {}
     _other_class_settings = {

@@ -155,7 +155,7 @@ class PdfToCairo(SubprocessFormatFlagFilter):
                 basename = os.path.join(self.workspace(), self.output_data.name)
                 first_page_file = "%s-%s.png" % (basename, pagenum)
                 if file_exists(first_page_file):
-                    print "Copy from '%s'" % first_page_file
+                    print("Copy from '%s'" % first_page_file)
                     self.output_data.copy_from_file(first_page_file)
                     break
 
@@ -230,8 +230,8 @@ class RIntBatchSectionsFilter(SubprocessFilter):
 
         work_filepath = os.path.join(wd, args['script_file'])
 
-        with open(work_filepath, "wb") as f:
-            f.write(unicode(section_text))
+        with open(work_filepath, "w") as f:
+            f.write(str(section_text))
 
         command = self.setting('command-string') %  args
         return command, args['output_file']
@@ -240,12 +240,12 @@ class RIntBatchSectionsFilter(SubprocessFilter):
         self.populate_workspace()
         wd = self.parent_work_dir()
 
-        for section_name, section_text in self.input_data.iteritems():
+        for section_name, section_text in self.input_data.items():
             command, outfile = self.command_string(section_name, section_text, wd)
             proc, stdout = self.run_command(command, self.setup_env())
             self.handle_subprocess_proc_return(command, proc.returncode, stdout)
 
-            with open(os.path.join(wd, outfile), "rb") as f:
+            with open(os.path.join(wd, outfile), "r") as f:
                 self.output_data[section_name] = f.read()
 
         if self.setting('add-new-files'):
@@ -415,7 +415,7 @@ class ManPage(SubprocessStdoutFilter):
 
     def process(self):
         man_info = {}
-        for prog_name in unicode(self.input_data).split():
+        for prog_name in str(self.input_data).split():
             command = self.command_string(prog_name)
             proc, stdout = self.run_command(command, self.setup_env())
             self.handle_subprocess_proc_return(command, proc.returncode, stdout)
@@ -444,9 +444,9 @@ class ApplySed(SubprocessInputFilter):
         if not command:
             raise dexy.exceptions.UserFeedback("A .sed file must be passed as an input to %s" % self.key)
 
-        proc, stdout = self.run_command(command, self.setup_env(), unicode(self.input_data))
+        proc, stdout = self.run_command(command, self.setup_env(), str(self.input_data))
         self.handle_subprocess_proc_return(command, proc.returncode, stdout)
-        self.output_data.set_data(stdout)
+        self.output_data.set_data(stdout.rstrip("\n"))
 
 class Sed(SubprocessInputFilter):
     """

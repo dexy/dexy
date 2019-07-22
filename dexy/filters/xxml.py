@@ -40,7 +40,7 @@ class XmlSectionFilter(DexyFilter):
         self.output_data.append("%s:inner-html" % element_key, inner_html)
 
         safe_attrib = {}
-        for k, v in element.attrib.iteritems():
+        for k, v in element.attrib.items():
             try:
                 json.dumps(v)
                 safe_attrib[k] = v
@@ -74,10 +74,10 @@ class XmlSectionFilter(DexyFilter):
             element_keys = []
            
             for attribute_name in self.setting('unique-attributes'):
-                if element.attrib.has_key(attribute_name):
+                if attribute_name in element.attrib:
                     element_keys.append(element.attrib[attribute_name])
             for attribute_name in self.setting('qualified-attributes'):
-                if element.attrib.has_key(attribute_name):
+                if attribute_name in element.attrib:
                     element_keys.append(element.attrib[attribute_name])
                     element_keys.append("%s:%s" % (element.tag, element.attrib[attribute_name]))
 

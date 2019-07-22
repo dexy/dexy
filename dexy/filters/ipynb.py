@@ -66,7 +66,7 @@ class IPythonExport(IPythonBase):
                     elif cell_output_type in ('pyout', 'pyerr',):
                         pass
                     elif cell_output_type == 'display_data':
-                        for fmt, contents in cell_output.iteritems():
+                        for fmt, contents in cell_output.items():
                             if fmt == "png":
                                 cell_output_image_file = "cell-%s-output-%s.%s" % (j, k, fmt)
                                 d = self.add_doc(cell_output_image_file, base64.decodestring(contents))
@@ -153,7 +153,7 @@ class IPythonNotebook(IPythonBase):
                     del cell_output['output_type']
 
                     if cell_output_type == 'stream':
-                        assert sorted(cell_output.keys()) == [u"stream", u"text"], "stream output keys"
+                        assert sorted(cell_output.keys()) == ["stream", "text"], "stream output keys"
                         d = self.add_doc(
                                 "%s-output-%s.txt" % (cell_key, k),
                                 cell_output['text'],
@@ -168,7 +168,7 @@ class IPythonNotebook(IPythonBase):
                         pass
 
                     elif cell_output_type == 'display_data':
-                        for fmt, contents in cell_output.iteritems():
+                        for fmt, contents in cell_output.items():
                             if fmt == "png":
                                 d = self.add_doc(
                                         "%s-output-%s.%s" % (cell_key, k, fmt),
@@ -196,7 +196,7 @@ class IPythonNotebook(IPythonBase):
         output["nbformat"] = nb_fmt_string
         output["cells"] = cells
         output["documents"] = documents
-        for k, v in nb['metadata'].iteritems():
+        for k, v in nb['metadata'].items():
             output[k] = v
 
         self.output_data.set_data(json.dumps(output))

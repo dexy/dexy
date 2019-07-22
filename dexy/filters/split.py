@@ -18,7 +18,7 @@ class SplitHtmlFilter(DexyFilter):
             }
 
     def process(self):
-        input_text = unicode(self.input_data)
+        input_text = str(self.input_data)
 
         if input_text.find("<!-- endsplit -->") > 0:
             rawbody, footer = re.split("<!-- endsplit -->", input_text, maxsplit=1)

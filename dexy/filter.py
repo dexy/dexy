@@ -11,11 +11,10 @@ import posixpath
 class FilterException(Exception):
     pass
 
-class Filter(dexy.plugin.Plugin):
+class Filter(dexy.plugin.Plugin, metaclass=dexy.plugin.PluginMeta):
     """
     Base class for types of filter.
     """
-    __metaclass__ = dexy.plugin.PluginMeta
 
     TAGS = []
     _class_settings = {'max-docstring-length' : 75}
@@ -291,6 +290,7 @@ class Filter(dexy.plugin.Plugin):
         """
         Creates a new Doc object for an on-the-fly document.
         """
+        self.log_debug("adding doc with contents type %s" % doc_contents.__class__.__name__)
         doc_name = os_to_posix(doc_name)
         if not posixpath.sep in doc_name:
             doc_name = posixpath.join(self.input_data.parent_dir(), doc_name)
@@ -346,7 +346,7 @@ class Filter(dexy.plugin.Plugin):
 
         doc = None
 
-        if isinstance(additional_doc_filters, basestring):
+        if isinstance(additional_doc_filters, str):
             doc = create_doc(doc_name,
                     additional_doc_filters, doc_contents, settings)
 
@@ -359,7 +359,7 @@ class Filter(dexy.plugin.Plugin):
             if isinstance(filters, list):
                 for f in filters:
                     doc = create_doc(doc_name, f, doc_contents, settings)
-            elif isinstance(filters, basestring):
+            elif isinstance(filters, str):
                 doc = create_doc(doc_name, filters, doc_contents, settings)
             elif filters is None:
                 pass
@@ -468,7 +468,7 @@ class Filter(dexy.plugin.Plugin):
         # mkdir should be a string, but handle either string or list
         mkdir = self.setting('mkdir')
         if mkdir:
-            if isinstance(mkdir, basestring):
+            if isinstance(mkdir, str):
                 mkdirs.append(mkdir)
             else:
                 mkdirs.extend(mkdir)
@@ -583,7 +583,7 @@ class DexyFilter(Filter):
 
     def process(self):
         if hasattr(self, "process_text"):
-            output = self.process_text(unicode(self.input_data))
+            output = self.process_text(str(self.input_data))
             self.output_data.set_data(output)
         else:
             self.output_data.copy_from_file(self.input_data.storage.data_file())
@@ -610,7 +610,7 @@ def filters_by_tag():
             continue
 
         for tag in filter_instance.setting('tags'):
-            if not tags_filters.has_key(tag):
+            if not tag in tags_filters:
                 tags_filters[tag] = []
             tags_filters[tag].append(filter_instance)
 

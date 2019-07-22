@@ -49,7 +49,7 @@ def test_pyparse_filter_on_python_files():
         wrapper.run_docs(doc)
 
         data = doc.output_data()
-        keys = data.keys()
+        keys = list(data.keys())
 
         assert 'bar:source' in keys
         assert 'foo:source' in keys
@@ -60,11 +60,8 @@ def test_pyparse_filter_on_python_files():
         assert data['bar:doc'] == "docstring for bar"
         assert data['bar:source'].startswith("def bar():\n")
 
-        assert data['decorated:doc'] is None
         assert data['decorated:source'].startswith("@decorator\n@another\ndef decorated():\n")
 
-        assert data['Foo:doc'] is None
         assert data['Foo:source'].startswith("class Foo(object):\n")
 
-        assert data['Foo.decorated:doc'] is None
         assert data['Foo.decorated:source'].startswith("    @decorator\n    @another\n    def decorated(self):\n")

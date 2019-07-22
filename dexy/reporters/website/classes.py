@@ -13,7 +13,7 @@ import inspect
 import jinja2
 import os
 import posixpath
-import urlparse
+import urllib
 
 class Website(Output):
     """
@@ -80,7 +80,7 @@ class Website(Output):
             self.log_warn(msg)
             return
 
-        for doc in wrapper.nodes.values():
+        for doc in list(wrapper.nodes.values()):
             if self.should_process(doc):
                 self.process_doc(doc)
 
@@ -141,7 +141,7 @@ class Website(Output):
     def detect_html_header(self, doc):
         fragments = ('<html', '<body', '<head')
         return any(html_fragment
-                      in unicode(doc.output_data())
+                      in str(doc.output_data())
                       for html_fragment in fragments)
 
     def create_navobj(self):
@@ -209,10 +209,10 @@ class Website(Output):
 
         self.log_debug("Applying jinja to doc content %s" % doc.key)
         try:
-            content_template = env.from_string(unicode(doc.output_data()))
+            content_template = env.from_string(str(doc.output_data()))
             return content_template.render(env_data)
         except Exception:
-            self.log_debug("Template:\n%s" % unicode(doc.output_data()))
+            self.log_debug("Template:\n%s" % str(doc.output_data()))
             self.log_debug("Env args:\n%s" % args)
             raise
 
@@ -223,7 +223,7 @@ class Website(Output):
                 template_path)
             }))
 
-        env_data = dict((k, v[1]) for k, v in raw_env_data.iteritems())
+        env_data = dict((k, v[1]) for k, v in raw_env_data.items())
 
         if doc.safe_setting('apply-ws-to-content'):
             env_data['content'] = self.apply_jinja_to_page_content(doc, env_data)
@@ -261,7 +261,7 @@ class Website(Output):
     def help(self, data):
         nodoc = ('navobj', 'navigation',)
         print_indented("Website Template Environment Variables:", 4)
-        print ''
+        print('')
         print_indented("Navigation and Content Related:", 6)
         env = self.website_specific_template_environment(data)
         for k in sorted(env):
@@ -270,37 +270,37 @@ class Website(Output):
             docs, value = env[k]
             print_indented("%s: %s" % (k, docs), 8)
 
-        print ''
+        print('')
         navobj = env['navobj'][1]
         root = navobj.nodes['/']
         members = [(name, obj) for name, obj in inspect.getmembers(root)
                 if not name.startswith('__')]
 
         print_indented("navobj Node attributes (using root node):", 6)
-        print ''
+        print('')
         for member_name, member_obj in members:
             if not inspect.ismethod(member_obj):
                 print_indented("%s: %r" % (member_name, member_obj), 8)
        
-        print ''
+        print('')
 
         print_indented("navobj Node methods (using root node):", 6)
-        print ''
+        print('')
         for member_name, member_obj in members:
             if inspect.ismethod(member_obj):
                 print_indented("%s()" % (member_name), 8)
                 print_indented("%s" % inspect.getdoc(member_obj), 10)
                 print_indented("%s" % member_obj(), 10)
-                print ''
+                print('')
 
-        print ''
+        print('')
         print_indented("Variables From Plugins:", 6)
         env = self.run_plugins()
         for k in sorted(env):
             docs, value = env[k]
             print_indented("%s: %s" % (k, docs), 8)
 
-        print ''
+        print('')
         print_indented("navobj Nodes:", 4)
         print_indented(navobj.debug(), 6)
 
@@ -397,7 +397,7 @@ class Website(Output):
         anchor = None
 
         if section_name:
-            if section_name in link_to_data.keys():
+            if section_name in list(link_to_data.keys()):
                 section = link_to_data[section_name]
                 anchor = section['id']
                 if not link_text:
@@ -422,7 +422,7 @@ class Website(Output):
 
     def link_for(self, url_base, link, link_text, anchor=None):
         if url_base:
-            url = urlparse.urljoin(url_base, link)
+            url = urllib.parse.urljoin(url_base, link)
         else:
             url = link
         if anchor:
@@ -442,7 +442,7 @@ class Navigation(object):
                 continue
 
             parent_dir = "/" + os.path.dirname(data.output_name())
-            if not self.lookup_table.has_key(parent_dir):
+            if not parent_dir in self.lookup_table:
                 self.lookup_table[parent_dir] = {'docs' : []}
 
             if data.is_canonical_output():
@@ -455,12 +455,12 @@ class Navigation(object):
         """
         Build nodes dict from already-populated lookup table.
         """
-        for path, info in self.lookup_table.iteritems():
+        for path, info in self.lookup_table.items():
             parent = None
             ancestors = []
             level = 0
             for parent_path in iter_paths(path):
-                if not self.nodes.has_key(parent_path):
+                if not parent_path in self.nodes:
                     node = Node(parent_path, parent, [])
                     node.level = level
                     self.nodes[parent_path] = node
@@ -477,7 +477,7 @@ class Navigation(object):
             assert parent.location == path
             parent.ancestors = ancestors
             parent.docs = info['docs']
-            if info.has_key('index-page'):
+            if 'index-page' in info:
                 parent.index_page = info['index-page']
 
     def debug(self):

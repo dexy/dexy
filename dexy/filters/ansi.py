@@ -21,7 +21,7 @@ class Ansi2HTMLTemplatePlugin(TemplatePlugin):
 
     def convert(self, doc, font_size='normal'):
         conv = Ansi2HTMLConverter(inline=True, font_size=font_size)
-        return conv.convert(unicode(doc), full=False)
+        return conv.convert(str(doc), full=False)
 
     def run(self):
         return { 'ansi2html' : ("The convert method from ansi2html module.", self.convert) }
@@ -49,7 +49,7 @@ class Ansi2HTMLFilter(DexyFilter):
         else:
             s = "%s\n"
 
-        for k, v in self.input_data.iteritems():
-            self.output_data[k] = s % conv.convert(unicode(v), full=False)
+        for k, v in self.input_data.items():
+            self.output_data[k] = s % conv.convert(str(v), full=False)
         self.output_data.save()
 

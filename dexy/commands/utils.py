@@ -35,12 +35,12 @@ def default_config():
     wrapper = dexy.wrapper.Wrapper()
     conf = wrapper.__dict__.copy()
 
-    for k in conf.keys():
-        if not k in defaults.keys():
+    for k in list(conf.keys()):
+        if not k in list(defaults.keys()):
             del conf[k]
 
-    reverse_rename = dict((v,k) for k, v in RENAME_PARAMS.iteritems())
-    for k in conf.keys():
+    reverse_rename = dict((v,k) for k, v in RENAME_PARAMS.items())
+    for k in list(conf.keys()):
         renamed_key = reverse_rename.get(k, k)
         if renamed_key != k:
             conf[renamed_key] = conf[k]
@@ -50,15 +50,15 @@ def default_config():
 
 def rename_params(kwargs):
     renamed_args = {}
-    for k, v in kwargs.iteritems():
+    for k, v in kwargs.items():
         renamed_key = RENAME_PARAMS.get(k, k)
         renamed_args[renamed_key] = v
     return renamed_args
 
 def skip_params(kwargs):
     ok_params = {}
-    for k, v in kwargs.iteritems():
-        if k in defaults.keys():
+    for k, v in kwargs.items():
+        if k in list(defaults.keys()):
             ok_params[k] = v
     return ok_params
 
@@ -70,7 +70,7 @@ def config_args(modargs):
 
     # Update from config file
     if file_exists(config_file):
-        with open(config_file, "rb") as f:
+        with open(config_file, "r") as f:
             if config_file.endswith(".conf"):
                 try:
                     conf_args = parse_yaml(f.read())
@@ -78,13 +78,13 @@ def config_args(modargs):
                     try:
                         conf_args = parse_json(f.read())
                     except dexy.exceptions.UserFeedback as json_exception:
-                        print "--------------------------------------------------"
-                        print "Tried to parse YAML:"
-                        print yaml_exception
-                        print "--------------------------------------------------"
-                        print "Tried to parse JSON:"
-                        print json_exception
-                        print "--------------------------------------------------"
+                        print("--------------------------------------------------")
+                        print("Tried to parse YAML:")
+                        print(yaml_exception)
+                        print("--------------------------------------------------")
+                        print("Tried to parse JSON:")
+                        print(json_exception)
+                        print("--------------------------------------------------")
                         raise dexy.exceptions.UserFeedback("Unable to parse config file '%s' as YAML or as JSON." % config_file)
 
             elif config_file.endswith(".yaml"):
@@ -94,10 +94,11 @@ def config_args(modargs):
             else:
                 raise dexy.exceptions.UserFeedback("Don't know how to load config from '%s'" % config_file)
             if conf_args:
+                # TODO raise error if 
                 kwargs.update(conf_args)
 
     if cliargs: # cliargs may be False
-        for k in cliargs.keys():
+        for k in list(cliargs.keys()):
             try:
                 kwargs[k] = modargs[k]
             except KeyError:
@@ -113,7 +114,7 @@ def import_plugins_from_local_yaml_file(import_target):
         with open(import_target, 'rb') as f:
             yaml_content = yaml.safe_load(f.read())
 
-        for alias, info_dict in yaml_content.iteritems():
+        for alias, info_dict in yaml_content.items():
             if ":" in alias:
                 prefix, alias = alias.split(":")
             else:
@@ -124,7 +125,7 @@ def import_plugins_from_local_yaml_file(import_target):
 
             if not prefix in plugin_classes:
                 msg = "'%s' not found, available aliases are %s"
-                args = (prefix, ", ".join(plugin_classes.keys()))
+                args = (prefix, ", ".join(list(plugin_classes.keys())))
                 raise dexy.exceptions.UserFeedback(msg % args)
 
             cls = plugin_classes[prefix]
@@ -228,7 +229,7 @@ def indent_text(text, spaces):
     return "\n".join(indented)
 
 def print_indented(text, spaces=0):
-    print indent_text(text, spaces)
+    print(indent_text(text, spaces))
 
 def print_rewrapped(text, spaces=0):
-    print rewrap_text(text, spaces)
+    print(rewrap_text(text, spaces))

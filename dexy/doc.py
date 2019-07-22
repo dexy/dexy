@@ -2,6 +2,7 @@ import dexy.exceptions
 import dexy.filter
 import dexy.node
 import os
+import pickle
 import shutil
 import stat
 import time
@@ -63,7 +64,7 @@ class Doc(dexy.node.Node):
         output_name = self.setting('output-name')
 
         self.log_debug("Name interpolation variables:")
-        for key, value in name_args.iteritems():
+        for key, value in name_args.items():
             self.log_debug("%s: %s" % (key, value))
 
         if not "/" in output_name:
@@ -81,7 +82,7 @@ class Doc(dexy.node.Node):
 
         except KeyError as e:
             msg = "Trying to process %s but '%s' is not a valid key. Valid keys are: %s"
-            msgargs = (output_name, unicode(e), ", ".join(sorted(name_args)))
+            msgargs = (output_name, str(e), ", ".join(sorted(name_args)))
             raise dexy.exceptions.UserFeedback(msg % msgargs)
 
         self.update_settings({'output-name' : updated_output_name})
@@ -163,8 +164,11 @@ class Doc(dexy.node.Node):
             # move cache files to new cache
             for d in self.datas():
                 if os.path.exists(d.storage.last_data_file()):
-                    shutil.move(d.storage.last_data_file(), d.storage.this_data_file())
-                    self.log_debug("Moving %s from %s to %s" % (d.key, d.storage.last_data_file(), d.storage.this_data_file()))
+                    last_loc = d.storage.last_data_file()
+                    this_loc = d.storage.this_data_file()
+
+                    self.log_debug("moving %s from %s to %s..." % (d.key, last_loc, this_loc))
+                    shutil.move(last_loc, this_loc)
 
             if os.path.exists(self.runtime_info_filename(False)):
                 shutil.move(self.runtime_info_filename(False), self.runtime_info_filename(True))
@@ -279,7 +283,6 @@ class Doc(dexy.node.Node):
             }
 
         with open(self.runtime_info_filename(), 'wb') as f:
-            pickle = self.wrapper.pickle_lib()
             pickle.dump(info, f)
 
     def load_runtime_info(self):
@@ -288,7 +291,6 @@ class Doc(dexy.node.Node):
         # Load from 'this' first
         try:
             with open(self.runtime_info_filename(), 'rb') as f:
-                pickle = self.wrapper.pickle_lib()
                 info = pickle.load(f)
         except IOError:
             pass
@@ -297,7 +299,6 @@ class Doc(dexy.node.Node):
         if not info:
             try:
                 with open(self.runtime_info_filename(False), 'rb') as f:
-                    pickle = self.wrapper.pickle_lib()
                     info = pickle.load(f)
             except IOError:
                 pass
@@ -307,7 +308,7 @@ class Doc(dexy.node.Node):
     def run(self):
         if self.wrapper.directory != '.':
             if not self.wrapper.directory in self.name:
-                print "skipping", self.name, "not in", self.wrapper.directory
+                print(("skipping", self.name, "not in", self.wrapper.directory))
                 return
 
         self.start_time = time.time()

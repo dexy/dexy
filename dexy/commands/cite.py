@@ -1,20 +1,22 @@
 from dexy.version import DEXY_VERSION
 import datetime
-import dexy.exceptions
+
+citation_formats = ['bibtex']
+
+def build_cite_parser(parser):
+    parser.set_defaults(cmd=cite_command)
+    parser.add_argument('-f', '--fmt', default=citation_formats[0], help="Desired format of citation.")
 
 # TODO list available citation types
 
-def cite_command(
-        fmt='bibtex' # desired format of citation
-        ):
-    """
-    How to cite dexy in papers.
-    """
+def cite_command(args):
+    fmt = args.fmt
     if fmt == 'bibtex':
         cite_bibtex()
     else:
-        msg = "Don't know how to provide citation in '%s' format"
-        raise dexy.exceptions.UserFeedback(msg % fmt)
+        msg = f"Don't know how to provide citation in '%{fmt}' format"
+        print(msg)
+        # raise dexy.exceptions.UserFeedback(msg % fmt)
 
 def bibtex_text():
     args = {
@@ -31,4 +33,4 @@ def bibtex_text():
 }""" % args
 
 def cite_bibtex():
-    print bibtex_text()
+    print((bibtex_text()))

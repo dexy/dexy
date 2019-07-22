@@ -1,8 +1,7 @@
 from dexy.exceptions import UserFeedback
-from api import ApiFilter
+from dexy.filters.api import ApiFilter
 
-from urllib2 import urlopen
-from urllib import urlencode
+import urllib
 import re
 
 
@@ -42,9 +41,9 @@ class WebSequenceDiagrams(ApiFilter):
         else:
             self.log_debug("Accessing WebSequenceDiagrams without API key")
 
-        resource = urlencode(request)
+        resource = urllib.parse.urlencode(request)
         self.log_debug("Fetching from WebSequenceDiagrams")
-        response = urlopen(settings["api-url"]+"index.php", resource)
+        response = urllib.urlopen(settings["api-url"]+"index.php", resource)
         line = response.readline()
         response.close()
 
@@ -58,7 +57,7 @@ class WebSequenceDiagrams(ApiFilter):
         self.log_debug("Writing WebSequenceDiagrams result to {0}".format(
             self.output_filepath()))
 
-        response = urlopen(settings["api-url"] + match.group(0))
+        response = urllib.urlopen(settings["api-url"] + match.group(0))
         self.output_data.set_data(response.read())
         self.output_data.save()
         response.close()

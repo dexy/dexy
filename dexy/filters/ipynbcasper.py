@@ -130,10 +130,10 @@ class IPythonCasper(SubprocessFilter):
     def parse_additional_ipython_args(self):
         raw_ipython_args = self.setting('ipython-args')
         if raw_ipython_args:
-            if isinstance(raw_ipython_args, basestring):
+            if isinstance(raw_ipython_args, str):
                 user_ipython_args = raw_ipython_args.split()
             elif isinstance(raw_ipython_args, list):
-                assert isinstance(raw_ipython_args[0], basestring)
+                assert isinstance(raw_ipython_args[0], str)
                 user_ipython_args = raw_ipython_args
             else:
                 raise UserFeedback("ipython-args must be a string or list of strings")
@@ -191,7 +191,7 @@ class IPythonCasper(SubprocessFilter):
                 assert i == int(m.groups()[0])
                 output['cellimages'].append(doc.key)
                 cellmeta_for_image = output['cellmetas'][i]
-                if cellmeta_for_image.has_key('name'):
+                if 'name' in cellmeta_for_image:
                     cellname = cellmeta_for_image['name']
                     output['images-by-name'][cellname] = doc.key
                 i += 1

@@ -84,9 +84,9 @@ class TikzPdfFilter(LatexFilter):
 
         # TODO allow setting tikz libraries per-document, or just include all of them?
         # TODO how to create a page size that just includes the content
-        latex_header = """\documentclass[tikz]{standalone}
+        latex_header = r"""\documentclass[tikz]{standalone}
 \usetikzlibrary{shapes.multipart}
-\\begin{document}
+\begin{document}
         """
         latex_footer = "\n\end{document}"
 
@@ -97,7 +97,7 @@ class TikzPdfFilter(LatexFilter):
         self.log_debug("writing latex header + tikz content to %s" % work_path)
         with codecs.open(work_path, "w", encoding="utf-8") as f:
             f.write(latex_header)
-            f.write(unicode(self.input_data))
+            f.write(str(self.input_data))
             f.write(latex_footer)
 
         latex_command = "%s -interaction=batchmode %s" % (self.setting('executable'), latex_filename)

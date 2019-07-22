@@ -18,17 +18,17 @@ def parsers_command():
         for alias in parser.aliases:
             processed_aliases.add(alias)
 
-        print "%s Parser" % parser.__class__.__name__
-        print ''
-        print parser.setting('help')
-        print ''
-        print "aliases:"
+        print("%s Parser" % parser.__class__.__name__)
+        print('')
+        print(parser.setting('help'))
+        print('')
+        print("aliases:")
         for alias in parser.aliases:
-            print "  %s" % alias
-        print ''
+            print("  %s" % alias)
+        print('')
 
-    print "Default parsers are: " + defaults['parsers']
-    print ''
-    print "Dexy will only look for config files to parse in the root directory"
-    print "of your project unless --recurse is specified."
-    print ''
+    print("Default parsers are: " + defaults['parsers'])
+    print('')
+    print("Dexy will only look for config files to parse in the root directory")
+    print("of your project unless --recurse is specified.")
+    print('')

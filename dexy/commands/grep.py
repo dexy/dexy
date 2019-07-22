@@ -47,7 +47,7 @@ def grep_command(
     batch = Batch.load_most_recent(wrapper)
    
     if not batch:
-        print "you need to run dexy first"
+        print("you need to run dexy first")
         sys.exit(1)
     else:
         if expr:
@@ -61,36 +61,36 @@ def grep_command(
 
         n = len(matches)
         if n > limit:
-            print "only printing first %s of %s total matches" % (limit, n)
+            print("only printing first %s of %s total matches" % (limit, n))
             matches = matches[0:limit]
 
         for match in matches:
             print_match(match, keys, keyexpr, contents, keylimit, lines)
 
 def print_match(match, keys, keyexpr, contents, keylimit, lines):
-    print match.key, "\tcache key:", match.storage_key
+    print(match.key, "\tcache key:", match.storage_key)
 
     if hasattr(match, 'keys'):
         if keyexpr:
-            print_keys([key for key in match.keys() if keyexpr in key], keylimit, lines)
+            print_keys([key for key in list(match.keys()) if keyexpr in key], keylimit, lines)
         elif keys:
-            print_keys(match.keys(), keylimit, lines)
+            print_keys(list(match.keys()), keylimit, lines)
 
     if contents:
         if isinstance(match, Sectioned):
-            for section_name, section_contents in match.data().iteritems():
-                print "  section: %s" % section_name
-                print
+            for section_name, section_contents in match.data().items():
+                print("  section: %s" % section_name)
+                print()
                 print_contents(section_contents, lines)
-                print
+                print()
         elif isinstance(match, KeyValue):
             pass
         elif isinstance(match, Generic):
             try:
-                json.dumps(unicode(match))
-                print_contents(unicode(match), lines)
+                json.dumps(str(match))
+                print_contents(str(match), lines)
             except UnicodeDecodeError:
-                print "  not printable"
+                print("  not printable")
 
 def print_keys(pkeys, keylimit, lines):
     n = len(pkeys)
@@ -98,17 +98,17 @@ def print_keys(pkeys, keylimit, lines):
         pkeys = pkeys[0:keylimit]
     
     for key in pkeys:
-        print '  ', key
+        print('  ', key)
 
     if n > keylimit:
-        print "  only printed first %s of %s total keys" % (keylimit, n)
+        print("  only printed first %s of %s total keys" % (keylimit, n))
 
 def print_contents(text, lines):
     text_lines = text.splitlines()
     for i, line in enumerate(text_lines):
         if lines and i > lines-1:
             continue
-        print "  ", line
+        print("  ", line)
 
     if lines and lines < len(text_lines):
-        print "   only printed first %s of %s total lines" % (lines, len(text_lines))
+        print("   only printed first %s of %s total lines" % (lines, len(text_lines)))

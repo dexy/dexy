@@ -143,7 +143,7 @@ class PexpectReplFilter(SubprocessFilter):
                     cwd=wd,
                     env=env)
         except pexpect.ExceptionPexpect as e:
-            if "The command was not found" in unicode(e):
+            if "The command was not found" in str(e):
                 raise InactivePlugin(self)
             else:
                 raise
@@ -167,15 +167,14 @@ class PexpectReplFilter(SubprocessFilter):
             msg = "%s failed at matching initial prompt within %s seconds. " % (self.__class__.__name__, initial_timeout)
             msg += "Received '%s', tried to match with '%s'" % (proc.before, match)
             msg += "\nExact characters received:\n"
-            for i, c in enumerate(proc.before):
+            for i, c in enumerate(str(proc.before)):
                 msg += "chr %02d: %s\n" % (i, ord(c))
             msg += "The developer might need to set a longer initial prompt timeout or the regexp may be wrong."
             raise InternalDexyProblem(msg)
 
-        start = proc.before + proc.after
+        start = proc.before.decode('utf-8') + proc.after.decode('utf-8')
 
-        self.log_debug(u"Initial prompt captured!")
-        self.log_debug(unicode(start))
+        self.log_debug("Initial prompt captured!")
 
         for section_key, section_text in input_sections:
             section_transcript = start
@@ -183,7 +182,7 @@ class PexpectReplFilter(SubprocessFilter):
 
             lines = self.lines_for_section(section_text)
             for l in lines:
-                self.log_debug(u"Sending '%s'" % l)
+                self.log_debug("Sending '%s'" % l)
                 section_transcript += start
                 proc.send(l.rstrip() + self.setting('send-line-ending'))
                 try:
@@ -192,25 +191,27 @@ class PexpectReplFilter(SubprocessFilter):
                     else:
                         proc.expect_exact(search_terms, timeout=timeout)
 
-                    self.log_debug(u"Received '%s'" % unicode(proc.before, errors='replace'))
+                    self.log_debug("Received '%s'" % (proc.before.decode('utf-8')))
 
-                    section_transcript += self.strip_newlines(proc.before)
-                    start = proc.after
+                    section_transcript += self.strip_newlines(proc.before.decode('utf-8'))
+                    start = proc.after.decode('utf-8')
+                except Exception:
+                    raise
                 except pexpect.EOF:
                     self.log_debug("EOF occurred!")
                     raise DexyEOFException()
-                except pexpect.TIMEOUT as e:
-                    for c in proc.before:
-                        print ord(c), ":", c
+                except pexpect.TIMEOUT:
+                    for c in str(proc.before):
+                        print(ord(c), ":", c)
                     msg = "pexpect timeout error. failed at matching prompt within %s seconds. " % timeout
                     msg += "received '%s', tried to match with '%s'" % (proc.before, search_terms)
                     msg += "something may have gone wrong, or you may need to set a longer timeout"
                     self.log_warn(msg)
                     raise UserFeedback(msg)
                 except pexpect.ExceptionPexpect as e:
-                    raise UserFeedback(unicode(e))
+                    raise UserFeedback(str(e))
                 except pexpect.EOF as e:
-                    raise UserFeedback(unicode(e))
+                    raise UserFeedback(str(e))
 
             if self.setting('strip-regex'):
                 section_transcript = re.sub(self.setting('strip-regex'), "", section_transcript)
@@ -235,14 +236,15 @@ class PexpectReplFilter(SubprocessFilter):
         self.populate_workspace()
 
         for section_name, section_transcript in self.section_output():
-            raw = self.strip_trailing_prompts(section_transcript)
+            text = self.strip_trailing_prompts(section_transcript)
             self.log_debug("About to append section %s" % section_name)
-            self.output_data[section_name] = self.doc.wrapper.decode_encoded(raw)
+            self.output_data[section_name] = text
 
         self.output_data.save()
 
 try:
     import IPython
+    IPython
     IPYTHON_AVAILABLE = True
 except ImportError:
     IPYTHON_AVAILABLE = False

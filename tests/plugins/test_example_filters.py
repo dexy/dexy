@@ -34,6 +34,8 @@ def test_key_value_example():
 
         wrapper.run_docs(doc)
 
+        print(str(doc.output_data()))
+
         assert doc.output_data()["foo"] == "bar"
         assert str(doc.output_data()) == "KeyValue('hello.txt|keyvalueexample')"
 
@@ -53,7 +55,7 @@ def test_access_other_documents():
             "hello.txt|newdoc (1 children, 0 inputs, length 19)"
             ]
 
-        output = unicode(parent.output_data())
+        output = str(parent.output_data())
 
         for item in expected_items:
             assert item in output

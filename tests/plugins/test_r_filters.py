@@ -17,4 +17,4 @@ def test_sweave_filter():
               )
         wrapper.run_docs(node)
         assert node.output_data().is_cached()
-        assert "Coefficients:" in unicode(node.output_data())
+        assert "Coefficients:" in str(node.output_data())

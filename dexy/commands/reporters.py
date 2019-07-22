@@ -11,7 +11,7 @@ def reporters_command(
     """
     if simple:
         for reporter in dexy.reporter.Reporter:
-            print reporter.alias
+            print(reporter.alias)
 
     elif alias:
         nodoc_settings = ('aliases', 'help',)
@@ -19,10 +19,10 @@ def reporters_command(
         reporter = dexy.reporter.Reporter.create_instance(alias)
 
         print_indented("%s Reporter" % reporter.__class__.__name__)
-        print ''
+        print('')
 
         print_indented("settings:")
-        print ''
+        print('')
         for name in sorted(reporter._instance_settings):
             if name in nodoc_settings:
                 continue
@@ -31,17 +31,17 @@ def reporters_command(
             print_indented(name, 2)
             print_rewrapped(docs, 4)
             print_indented("(default: %r)" % default_value, 4)
-            print ''
+            print('')
 
         reporter.help()
 
-        print ''
+        print('')
 
     else:
         FMT = "%-15s %-9s %s"
     
-        print FMT % ('alias', 'default', 'info')
+        print(FMT % ('alias', 'default', 'info'))
         for reporter in dexy.reporter.Reporter:
             help_text = reporter.setting('help').splitlines()[0]
             default_text = reporter.setting('default') and 'true' or 'false'
-            print FMT % (reporter.alias, default_text, help_text)
+            print(FMT % (reporter.alias, default_text, help_text))

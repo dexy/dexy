@@ -23,7 +23,7 @@ class AbstractSyntaxTree():
         element.
         """
         all_inputs = set()
-        for kwargs in self.lookup_table.values():
+        for kwargs in list(self.lookup_table.values()):
             inputs = kwargs['inputs']
             all_inputs.update(inputs)
         return all_inputs
@@ -48,12 +48,12 @@ class AbstractSyntaxTree():
         if not node_key in self.tree:
             self.tree.append(node_key)
 
-        if not self.lookup_table.has_key(node_key):
+        if not node_key in self.lookup_table:
             self.lookup_table[node_key] = {}
 
         self.lookup_table[node_key].update(kwargs)
 
-        if not self.lookup_table[node_key].has_key('inputs'):
+        if not 'inputs' in self.lookup_table[node_key]:
             self.lookup_table[node_key]['inputs'] = []
 
         self.clean_tree()
@@ -154,7 +154,7 @@ class AbstractSyntaxTree():
             kwargs = self.args_for_node(key)
             self.wrapper.log.debug("parsing item %s" % key)
             self.wrapper.log.debug("  inputs: %s" % ", ".join("%r" % inpt for inpt in inputs))
-            self.wrapper.log.debug("  kwargs: %s" % ", ".join("%s: %r" % (k, v) for k, v in kwargs.iteritems()))
+            self.wrapper.log.debug("  kwargs: %s" % ", ".join("%s: %r" % (k, v) for k, v in kwargs.items()))
 
             if kwargs.get('inactive') or kwargs.get('disabled'):
                 return
@@ -173,13 +173,12 @@ class AbstractSyntaxTree():
             if root_node:
                 self.wrapper.roots.append(root_node)
 
-class Parser(dexy.plugin.Plugin):
+class Parser(dexy.plugin.Plugin, metaclass=dexy.plugin.PluginMeta):
     """
     Parse various types of config file.
     """
     aliases = []
     _settings = {}
-    __metaclass__ = dexy.plugin.PluginMeta
 
     def __init__(self, wrapper, ast):
         self.wrapper = wrapper

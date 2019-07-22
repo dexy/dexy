@@ -1,2 +1,2 @@
-for i in xrange(5):
-    print i
+for i in range(5):
+    print(i)

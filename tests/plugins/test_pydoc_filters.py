@@ -6,7 +6,7 @@ def test_pydoc_filter_on_module_names():
         doc = Doc("modules.txt|pydoc", wrapper, [], contents="os math")
         wrapper.run_docs(doc)
         data = doc.output_data()
-        assert len(data.keys()) > 100
+        assert len(list(data.keys())) > 100
         assert data['math.e:value'].startswith("2.71828")
 
 python_file_content = """
@@ -34,7 +34,7 @@ def test_pydoc_filter_on_python_files():
         wrapper.run_docs(doc)
 
         data = doc.output_data()
-        keys = data.keys()
+        keys = list(data.keys())
 
         assert 'bar:source' in keys
         assert 'foo:source' in keys

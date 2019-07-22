@@ -4,7 +4,7 @@ if __name__ == '__main__':
     y = 7
     
     ### @export "multiply"
-    print x*y
+    print(x*y)
     
     
     ### @export "make-new-file"

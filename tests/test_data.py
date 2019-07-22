@@ -1,5 +1,4 @@
 from dexy.doc import Doc
-from dexy.data import Data
 from tests.utils import wrap
 import dexy.data
 import dexy.exceptions
@@ -33,38 +32,37 @@ def test_sectioned_data_setitem_delitem():
 
         assert len(data) == 2
         
-        assert unicode(data['Welcome']) == "This is the first section."
-        assert unicode(data["Conclusions"]) == "This is the final section."
+        assert str(data['Welcome']) == "This is the first section."
+        assert str(data["Conclusions"]) == "This is the final section."
 
         # Modify an existing section
         data["Welcome"] = "This is the initial section."
 
         assert len(data) == 2
 
-        assert unicode(data['Welcome']) == "This is the initial section."
-        assert unicode(data["Conclusions"]) == "This is the final section."
+        assert str(data['Welcome']) == "This is the initial section."
+        assert str(data["Conclusions"]) == "This is the final section."
 
         del data["Conclusions"]
 
         assert len(data) == 1
-        assert data.keys() == ["Welcome"]
+        assert list(data.keys()) == ["Welcome"]
 
 def test_generic_data_unicode():
     with wrap() as wrapper:
         doc = Doc("hello.txt",
                 wrapper,
                 [],
-                contents=u"\u2042 we know\n"
+                contents="\u2042 we know\n"
                 )
 
         wrapper.run_docs(doc)
         data = doc.output_data()
 
         assert data.alias == 'generic'
-        assert unicode(data) == u"\u2042 we know\n"
+        assert str(data) == "\u2042 we know\n"
 
         assert isinstance(str(data), str)
-        assert isinstance(unicode(data), unicode)
 
 def test_generic_data_stores_string():
     with wrap() as wrapper:
@@ -118,7 +116,7 @@ def test_keyvalue_data_stores_dict():
         data = doc.output_data()
 
         assert data.alias == 'keyvalue'
-        assert data.keys() == []
+        assert list(data.keys()) == []
 
         data.append("foo", 123)
         data.append("bar", 456)
@@ -149,7 +147,7 @@ def test_attempt_write_outside_project_root():
             doc.setup_datas()
             assert False, 'should raise UserFeedback'
         except dexy.exceptions.UserFeedback as e:
-            print str(e)
+            print(str(e))
             assert 'trying to write' in str(e)
 
 def test_key_value_data():
@@ -166,7 +164,7 @@ def test_key_value_data():
 
         # We use the append method to add key-value pairs.
         data.append('foo', 'bar')
-        assert len(data.keys()) == 1
+        assert len(list(data.keys())) == 1
 
         assert data.value('foo') == 'bar'
         assert data.storage['foo'] == 'bar'
@@ -185,10 +183,10 @@ def test_key_value_data_sqlite():
         data.storage.connect()
 
         data.append('foo', 'bar')
-        assert len(data.keys()) == 1
+        assert len(list(data.keys())) == 1
 
         assert data.value('foo') == 'bar'
-        assert ["%s: %s" % (k, v) for k, v in data.storage.iteritems()][0] == "foo: bar"
+        assert ["%s: %s" % (k, v) for k, v in data.items()][0] == "foo: bar"
 
 def test_generic_data():
     with wrap() as wrapper:

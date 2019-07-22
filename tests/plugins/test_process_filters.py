@@ -38,7 +38,7 @@ def test_command_line_args():
                 wrapper,
                 [],
                 py={"args" : "-B"},
-                contents="print 'hello'"
+                contents="print('hello')"
                 )
         wrapper.run_docs(node)
 
@@ -53,7 +53,7 @@ def test_scriptargs():
                 wrapper,
                 [],
                 py={"scriptargs" : "--foo"},
-                contents="""import sys\nprint "args are: '%s'" % sys.argv[1]"""
+                contents="""import sys\nprint("args are: '%s'" % sys.argv[1])"""
                 )
         wrapper.run_docs(node)
 
@@ -68,7 +68,7 @@ def test_custom_env_in_args():
                 wrapper,
                 [],
                 py={"env" : {"FOO" : "bar" }},
-                contents="import os\nprint os.environ['FOO']"
+                contents="import os\nprint(os.environ['FOO'])"
                 )
         wrapper.run_docs(node)
 

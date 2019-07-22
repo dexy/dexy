@@ -30,7 +30,7 @@ class Graphviz(Reporter):
 
         graph = []
         graph.append("digraph G {")
-        for node in wrapper.nodes.values():
+        for node in list(wrapper.nodes.values()):
             graph.extend(print_inputs(node))
         graph.append("}")
 

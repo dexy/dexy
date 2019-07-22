@@ -3,14 +3,14 @@ from tests.utils import runfilter
 def test_nested_html():
     with runfilter('soups', nested_html) as doc:
         data = doc.output_data()
-        assert unicode(data) == expected
-        assert data.keys() == [u'First', u'Second', u'Actual Document Contents']
+        assert str(data) == expected
+        assert list(data.keys()) == ['First', 'Second', 'Actual Document Contents']
 
 def test_markdown_output():
     with runfilter('markdown|soups', md) as doc:
         data = doc.output_data()
 
-        assert data.keys() == [u'foo', u'bar', u'barbaz', u'Actual Document Contents']
+        assert list(data.keys()) == ['foo', 'bar', 'barbaz', 'Actual Document Contents']
 
         assert data['foo']['level'] == 1
         assert data['bar']['level'] == 1
@@ -24,9 +24,9 @@ def test_soup_sections_filter():
     with runfilter('soups', html, ext='.html') as doc:
         data = doc.output_data()
 
-        assert data.keys() == [u'The First Named Section',
-                u'Nested In First Section', u'The 2nd Section',
-                u'Actual Document Contents']
+        assert list(data.keys()) == ['The First Named Section',
+                'Nested In First Section', 'The 2nd Section',
+                'Actual Document Contents']
 
         first_section = data["The First Named Section"]
         assert first_section['contents'] == None
@@ -45,7 +45,7 @@ def test_soup_sections_filter():
 
 def test_no_blank_anonymous_first_section():
     with runfilter('soups', "<h1>first</h1><p>foo</p><h1>second</h1>", ext=".html") as doc:
-        assert doc.output_data().keys() == [u'first', u'second', u'Actual Document Contents']
+        assert list(doc.output_data().keys()) == ['first', 'second', 'Actual Document Contents']
 
 nested_html = """<div>
 <h1>First</h1>
@@ -54,7 +54,7 @@ nested_html = """<div>
 </div>
 </div>"""
 
-expected = u"""<div>
+expected = """<div>
 <h1 id="first">First</h1>
 <div>
 <h2 id="second">Second</h2>

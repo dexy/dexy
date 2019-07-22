@@ -37,7 +37,7 @@ class PyParse(DexyFilter):
         if not hasattr(self, "_type_reprs"):
             from lib2to3.pygram import python_symbols
             self._type_reprs = {}
-            for name, val in python_symbols.__dict__.iteritems():
+            for name, val in python_symbols.__dict__.items():
                 if type(val) == int:
                     self._type_reprs[val] = name
         return self._type_reprs.setdefault(type_num, type_num)
@@ -99,7 +99,7 @@ class PyParse(DexyFilter):
         else:
             key = "%s:doc" % prefix
    
-        not_already_in_keys = not key in self.output_data.keys()
+        not_already_in_keys = not key in list(self.output_data.keys())
         is_a_docstring = docstring is not None
         if not_already_in_keys and is_a_docstring:
             self.output_data.append(key, inspect.cleandoc(docstring))
@@ -111,7 +111,7 @@ class PyParse(DexyFilter):
         self.class_name = None
         self.setup_driver()
 
-        text = unicode(self.input_data)
+        text = str(self.input_data)
 
         if text == "None":
             self.output_data.set_data({})

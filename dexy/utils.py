@@ -89,18 +89,6 @@ def transition(obj, new_state):
     obj.time_entered_current_state = time.time()
     obj.state = new_state
 
-def pickle_lib(wrapper):
-    if wrapper.pickle == 'c':
-        import cPickle as pickle
-        return pickle
-    elif wrapper.pickle == 'py':
-        import pickle
-        return pickle
-    else:
-        msg = "'%s' is not a valid value for pickle" % wrapper.pickle
-        raise dexy.exceptions.UserFeedback(msg)
-
-
 def logging_log_level(log_level):
     try:
         return log_levels[log_level.upper()]
@@ -109,7 +97,7 @@ def logging_log_level(log_level):
         raise dexy.exceptions.UserFeedback(msg % log_level)
 
 def md5_hash(text):
-    return hashlib.md5(text).hexdigest()
+    return hashlib.md5(text.encode('utf-8')).hexdigest()
 
 def dict_from_string(text):
     """
@@ -124,10 +112,10 @@ def dict_from_string(text):
 
 def file_exists(filepath, debug=False):
     if debug:
-        print "calling file_exists on %s" % filepath
+        print(("calling file_exists on %s" % filepath))
         frame = inspect.currentframe()
         for f in inspect.getouterframes(frame):
-            print "   ", f[1], f[2], f[3]
+            print(("   ", f[1], f[2], f[3]))
         del frame
         del f
     return os.path.exists(filepath)
@@ -184,8 +172,8 @@ class tempdir(object):
         try:
             shutil.rmtree(self.tempdir)
         except Exception as e:
-            print e
-            print "was not able to remove tempdir '%s'" % self.tempdir
+            print(e)
+            print(("was not able to remove tempdir '%s'" % self.tempdir))
 
     def __enter__(self):
         self.make_temp_dir()
@@ -241,20 +229,20 @@ def parse_json(input_text):
     try:
         return json.loads(input_text)
     except ValueError as e:
-        msg = inspect.cleandoc(u"""Was unable to parse the JSON you supplied.
+        msg = inspect.cleandoc("""Was unable to parse the JSON you supplied.
         Here is information from the JSON parser:""")
-        msg += u"\n"
-        msg += unicode(e)
+        msg += "\n"
+        msg += str(e)
         raise dexy.exceptions.UserFeedback(msg)
 
 def parse_json_from_file(f):
     try:
         return json.load(f)
     except ValueError as e:
-        msg = inspect.cleandoc(u"""Was unable to parse the JSON you supplied.
+        msg = inspect.cleandoc("""Was unable to parse the JSON you supplied.
         Here is information from the JSON parser:""")
-        msg += u"\n"
-        msg += unicode(e)
+        msg += "\n"
+        msg += str(e)
         raise dexy.exceptions.UserFeedback(msg)
 
 def parse_yaml(input_text):
@@ -264,14 +252,14 @@ def parse_yaml(input_text):
     try:
         return yaml.safe_load(input_text)
     except (yaml.scanner.ScannerError, yaml.parser.ParserError) as e:
-        if "found character '\\t'" in unicode(e):
+        if "found character '\\t'" in str(e):
             msg = "You appear to have hard tabs in your yaml, this is not supported. Please change to using soft tabs instead (your text editor should have this option)."
             raise dexy.exceptions.UserFeedback(msg)
         else:
-            msg = inspect.cleandoc(u"""Was unable to parse the YAML you supplied.
+            msg = inspect.cleandoc("""Was unable to parse the YAML you supplied.
             Here is information from the YAML parser:""")
-            msg += u"\n"
-            msg += unicode(e)
+            msg += "\n"
+            msg += str(e)
             raise dexy.exceptions.UserFeedback(msg)
 
 def parse_yamls(input_text):
@@ -281,10 +269,10 @@ def parse_yamls(input_text):
     try:
         return yaml.safe_load_all(input_text)
     except (yaml.scanner.ScannerError, yaml.parser.ParserError) as e:
-        msg = inspect.cleandoc(u"""Was unable to parse the YAML you supplied.
+        msg = inspect.cleandoc("""Was unable to parse the YAML you supplied.
         Here is information from the YAML parser:""")
-        msg += u"\n"
-        msg += unicode(e)
+        msg += "\n"
+        msg += str(e)
         raise dexy.exceptions.UserFeedback(msg)
 
 def printable_for_char(c):

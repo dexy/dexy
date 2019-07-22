@@ -75,7 +75,7 @@ class ConvertDict(Example):
     aliases = ['dict']
 
     def process(self, input_text):
-        self.output_data['1'] = unicode(self.input_data)
+        self.output_data['1'] = str(self.input_data)
         self.output_data.save()
 
 class ExampleProcessTextMethod(Example):
@@ -106,7 +106,7 @@ class ExampleProcessMethodManualWrite(Example):
     def process(self):
         input_data = self.input_data
         output = "Dexy processed the text '%s'" % input_data
-        with open(self.output_filepath(), "wb") as f:
+        with open(self.output_filepath(), "w") as f:
             f.write(output)
 
 class ExampleProcessWithDictMethod(Example):

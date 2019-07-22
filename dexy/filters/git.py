@@ -115,7 +115,7 @@ class GitBaseKeyValue(GitBase):
             }
 
     def process(self):
-        input_text = unicode(self.input_data)
+        input_text = str(self.input_data)
         if self.is_url(input_text):
             repo, remote = repo_from_url(input_text)
         else:
@@ -148,7 +148,7 @@ class GitRepo(GitBase):
     def work(self, repo, remote, ref):
         parent_dir = self.output_data.parent_dir()
 
-        print dir(ref)
+        print(dir(ref))
         commit = repo[ref.target]
         tree = commit.tree
 
@@ -179,7 +179,7 @@ class GitCommit(GitBaseKeyValue):
         commit = repo[ref.target]
         commit_info = generate_commit_info(commit)
 
-        for k, v in commit_info.iteritems():
+        for k, v in commit_info.items():
             self.output_data.append(k, v)
 
 class GitLog(GitBase):

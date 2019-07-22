@@ -14,6 +14,10 @@ def reset_command(
     wrapper.remove_reports_dirs(keep_empty_dir=True)
     wrapper.create_dexy_dirs()
 
+def build_reset_parser(parser):
+    parser.set_defaults(cmd=reset_command)
+    parser.add_argument('--artifacts_dir', defaults['artifacts_dir'])
+
 def cleanup_command(
         __cli_options=False,
         artifactsdir=defaults['artifacts_dir'], # Where dexy should store working files.

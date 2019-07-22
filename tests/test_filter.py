@@ -3,7 +3,7 @@ import dexy.filter
 
 def test_filters_by_tag():
     tags_filters = dexy.filter.filters_by_tag()
-    assert 'latex' in tags_filters.keys()
+    assert 'latex' in list(tags_filters.keys())
 
 def test_filter_aliases_by_tag():
     first_expected_tag = 'R'
@@ -28,7 +28,7 @@ def test_filter_args():
 
         wrapper.run_docs(doc)
 
-        result = unicode(doc.output_data())
+        result = str(doc.output_data())
 
         assert "Here are the filter settings:" in result
         assert "abc: 123" in result

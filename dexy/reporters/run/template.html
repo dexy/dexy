@@ -76,7 +76,7 @@
 {% set v = args[k] -%}
 {% if isinstance(v, dict) -%}
 {{ k }}:
-{% for kk, vv in v.iteritems() -%}
+{% for kk, vv in v.items() -%}
 &nbsp;&nbsp;&nbsp;&nbsp;{{ kk }}: {{ vv }}
 {% endfor -%}
 {% else -%}

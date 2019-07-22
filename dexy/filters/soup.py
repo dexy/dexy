@@ -31,7 +31,7 @@ class Customize(DexyFilter):
             css_tag = soup.new_tag("link", rel="stylesheet", type="text/css", href=css)
             soup.head.append(css_tag)
 
-        return unicode(soup)
+        return str(soup)
 
 class InlineAssets(DexyFilter):
     """
@@ -55,7 +55,7 @@ class InlineAssets(DexyFilter):
 
             mime, _ = mimetypes.guess_type(path)
             data64 = base64.encodestring(data)
-            dataURI = u'data:%s;base64,%s' % (mime, data64)
+            dataURI = 'data:%s;base64,%s' % (mime, data64)
             tag['src'] = dataURI
 
     def inline_styles(self, soup):
@@ -72,7 +72,7 @@ class InlineAssets(DexyFilter):
             tag.replace_with(style)
 
     def process(self):
-        soup = BeautifulSoup(unicode(self.input_data), self.setting('html-parser'))
+        soup = BeautifulSoup(str(self.input_data), self.setting('html-parser'))
         self.populate_workspace()
 
         with chdir(self.parent_work_dir()):
@@ -82,7 +82,7 @@ class InlineAssets(DexyFilter):
             if self.setting('inline-styles'):
                 self.inline_styles(soup)
     
-        self.output_data.set_data(unicode(soup))
+        self.output_data.set_data(str(soup))
 
 class SoupSections(DexyFilter):
     """
@@ -93,7 +93,7 @@ class SoupSections(DexyFilter):
     _settings = {
             'data-type' : 'sectioned',
             'html-parser' : ("Name of html parser BeautifulSoup should use.", 'html.parser'),
-            'initial-section-name' : ("Name to use for the initial section which currently holds all the contents.", u"Actual Document Contents"),
+            'initial-section-name' : ("Name to use for the initial section which currently holds all the contents.", "Actual Document Contents"),
             }
 
     def append_current_section(self):
@@ -106,13 +106,13 @@ class SoupSections(DexyFilter):
         self.output_data._data.append(section_dict)
 
     def process(self):
-        soup = BeautifulSoup(unicode(self.input_data), self.setting('html-parser'))
+        soup = BeautifulSoup(str(self.input_data), self.setting('html-parser'))
 
         for tag in soup.find_all(re.compile("^h[0-6]")):
             name = tag.text
             m = re.match("^h([0-6])$", tag.name)
 
-            if not tag.attrs.has_key('id'):
+            if not 'id' in tag.attrs:
                 tag.attrs['id'] = inflection.parameterize(name)
 
             self.current_section_anchor = tag.attrs['id']
@@ -122,7 +122,7 @@ class SoupSections(DexyFilter):
 
             self.append_current_section()
 
-        self.current_section_text = unicode(soup)
+        self.current_section_text = str(soup)
         self.current_section_name = self.setting('initial-section-name')
         self.current_section_level = 1
         self.current_section_anchor = None

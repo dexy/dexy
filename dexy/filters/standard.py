@@ -5,6 +5,7 @@ import dexy.exceptions
 import json
 import os
 import re
+import textwrap
 
 class Resub(DexyFilter):
     """
@@ -87,7 +88,7 @@ class HeaderFilter(DexyFilter):
         key_name = self.setting('key-name')
         requested = self.setting(key_name)
         if requested:
-            if docs_d.has_key(requested):
+            if requested in docs_d:
                 matched_key = requested
             else:
                 msg = "Couldn't find the %s file %s you requested" % (self.setting(key_name), requested)
@@ -107,7 +108,7 @@ class HeaderFilter(DexyFilter):
 
     def process_text(self, input_text):
         header_data = self.find_input_in_parent_dir("_header")
-        return "%s\n%s" % (unicode(header_data), input_text)
+        return "%s\n%s" % (str(header_data), input_text)
 
 class FooterFilter(HeaderFilter):
     """
@@ -121,7 +122,7 @@ class FooterFilter(HeaderFilter):
 
     def process_text(self, input_text):
         footer_data = self.find_input_in_parent_dir("_footer")
-        return "%s\n%s" % (input_text, unicode(footer_data))
+        return "%s\n%s" % (input_text, str(footer_data))
 
 class TemplateContentFilter(HeaderFilter):
     """
@@ -135,7 +136,7 @@ class TemplateContentFilter(HeaderFilter):
 
     def process_text(self, input_text):
         template_data = self.find_input_in_parent_dir("_template")
-        return unicode(template_data) % { 'content' : input_text, 'title' : self.input_data.title()}
+        return str(template_data) % { 'content' : input_text, 'title' : self.input_data.title()}
 
 class FormatTemplateContentFilter(HeaderFilter):
     """
@@ -149,7 +150,7 @@ class FormatTemplateContentFilter(HeaderFilter):
 
     def process_text(self, input_text):
         template_data = self.find_input_in_parent_dir("_template")
-        return unicode(template_data).format({ 'content' : input_text, 'title' : self.input_data.title()})
+        return str(template_data).format({ 'content' : input_text, 'title' : self.input_data.title()})
 
 class MarkupTagsFilter(DexyFilter):
     """
@@ -182,7 +183,7 @@ class StartSpaceFilter(DexyFilter):
 
     def process(self):
         n = self.setting('n')
-        for section_name, section_input in self.input_data.iteritems():
+        for section_name, section_input in self.input_data.items():
             self.output_data[section_name] = indent(section_input, n)
         self.output_data.save()
 
@@ -196,7 +197,7 @@ class SectionsByLine(DexyFilter):
             }
 
     def process(self):
-        input_text = unicode(self.input_data)
+        input_text = str(self.input_data)
         for i, line in enumerate(input_text.splitlines()):
             self.output_data["%s" % (i+1)] = line
         self.output_data.save()
@@ -225,7 +226,7 @@ class ClojureWhitespaceFilter(DexyFilter):
             }
 
     def process(self):
-        input_text = unicode(self.input_data)
+        input_text = str(self.input_data)
         for i, section in enumerate(input_text.split("\n\n")):
             section_name = self.parse_section_name(section)
             if section_name:
@@ -275,8 +276,8 @@ class JoinFilter(DexyFilter):
     aliases = ['join']
 
     def process(self):
-        joined_data = "\n".join(unicode(v) for v in self.input_data.values())
-        print "joined data is", joined_data
+        joined_data = "\n".join(str(v) for v in list(self.input_data.values()))
+        print("joined data is", joined_data)
         self.output_data.set_data(joined_data)
 
 class HeadFilter(DexyFilter):
@@ -298,21 +299,13 @@ class WordWrapFilter(DexyFilter):
             'width' : ("Width of text to wrap to.", 79)
             }
 
-    #http://code.activestate.com/recipes/148061-one-liner-word-wrap-function/
     def wrap_text(self, text, width):
         """
         A word-wrap function that preserves existing line breaks
         and most spaces in the text. Expects that existing line
         breaks are posix newlines (\n).
         """
-        return reduce(lambda line, word, width=width: '%s%s%s' %
-                 (line,
-                   ' \n'[(len(line)-line.rfind('\n')-1
-                         + len(word.split('\n',1)[0]
-                              ) >= width)],
-                   word),
-                  text.split(' ')
-                 )
+        return "\n".join(textwrap.wrap(text, width))
 
     def process_text(self, input_text):
         return self.wrap_text(input_text, self.setting('width'))

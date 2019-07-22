@@ -6,11 +6,10 @@ import os
 import shutil
 import sys
 
-class Template(dexy.plugin.Plugin):
+class Template(dexy.plugin.Plugin, metaclass=dexy.plugin.PluginMeta):
     """
     Parent class for templates.
     """
-    __metaclass__ = dexy.plugin.PluginMeta
     _settings = {
             'contents-dir' : ("Directory containing contents of template.", None),
             'nodoc' : ("Whether to not document this template.", False),
@@ -99,7 +98,7 @@ class Template(dexy.plugin.Plugin):
                 for doc_key in meta_doc_keys:
                     ast.add_node(doc_key)
                     if 'jinja' in doc_key:
-                        for task in ast.lookup_table.keys():
+                        for task in list(ast.lookup_table.keys()):
                             if not task in meta_doc_keys:
                                 ast.add_dependency(doc_key, task)
 
@@ -111,9 +110,9 @@ class Template(dexy.plugin.Plugin):
             try:
                 wrapper.run()
             except (Exception, SystemExit,) as e:
-                error = unicode(e)
+                error = str(e)
                 template_dir = os.path.abspath(".")
-                msg = u"%s\npushd %s" % (error, template_dir)
+                msg = "%s\npushd %s" % (error, template_dir)
                 raise dexy.exceptions.TemplateException(msg)
 
             if wrapper.state == 'error':
@@ -144,6 +143,6 @@ class Template(dexy.plugin.Plugin):
                             'template' : self.__class__.__name__,
                             'list'  : ", ".join("'%s'" % f for f in filters_used)
                             }
-                    print msg % msgargs
+                    print((msg % msgargs))
 
             return wrapper.state == 'ran'

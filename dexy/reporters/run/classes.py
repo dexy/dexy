@@ -51,7 +51,7 @@ class RunReporter(Reporter):
         env_data['log_contents'] = log_contents
 
         def printable_args(args):
-            return dict((k, v) for k, v in args.iteritems() if not k in ('contents', 'wrapper'))
+            return dict((k, v) for k, v in args.items() if not k in ('contents', 'wrapper'))
 
         def print_children(node, indent=0, extra=""):
             rand_id = random.randint(10000000,99999999)

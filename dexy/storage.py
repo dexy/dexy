@@ -7,11 +7,10 @@ import os
 import shutil
 import sqlite3
 
-class Storage(dexy.plugin.Plugin):
+class Storage(dexy.plugin.Plugin, metaclass=dexy.plugin.PluginMeta):
     """
     Base class for types of Storage.
     """
-    __metaclass__ = dexy.plugin.PluginMeta
     _settings = {}
 
     def assert_location_is_in_project_dir(self, filepath):
@@ -97,13 +96,13 @@ class GenericStorage(Storage):
             shutil.copyfile(self.this_data_file(), filepath)
         else:
              with open(filepath, "wb") as f:
-                 if not isinstance(data, unicode):
+                 if not isinstance(data, str):
                      f.write(data)
                  else:
-                     f.write(unicode(data).encode("utf-8"))
+                     f.write(data.decode("utf-8"))
 
     def read_data(self):
-        with open(self.data_file(read=True), "rb") as f:
+        with open(self.data_file(read=True), "r") as f:
             return f.read()
 
     def copy_file(self, filepath):
@@ -127,7 +126,7 @@ class JsonSectionedStorage(GenericStorage):
     aliases = ['jsonsectioned']
 
     def read_data(self, this=True):
-        with open(self.data_file(this), "rb") as f:
+        with open(self.data_file(this), "r") as f:
             data = json.load(f)
             if hasattr(data, 'keys'):
                 msg = "Data storage format has changed. Please clear your dexy cache by running dexy with '-r' option."
@@ -140,7 +139,7 @@ class JsonSectionedStorage(GenericStorage):
 
         self.assert_location_is_in_project_dir(filepath)
 
-        with open(filepath, "wb") as f:
+        with open(filepath, "w") as f:
             json.dump(data, f)
 
 # Key Value Data
@@ -157,7 +156,7 @@ class JsonKeyValueStorage(GenericStorage):
         self._data[key] = value
 
     def keys(self):
-        return self.data().keys()
+        return list(self.data().keys())
 
     def value(self, key):
         return self.data()[key]
@@ -166,13 +165,13 @@ class JsonKeyValueStorage(GenericStorage):
         return self.value(key)
 
     def items(self):
-        return self.data().items()
+        return list(self.data().items())
 
     def iteritems(self):
-        return self.data().iteritems()
+        return iter(self.data().items())
 
     def read_data(self, this=True):
-        with open(self.data_file(this), "rb") as f:
+        with open(self.data_file(this), "r") as f:
             return json.load(f)
 
     def data(self):
@@ -189,7 +188,7 @@ class JsonKeyValueStorage(GenericStorage):
 
         self.assert_location_is_in_project_dir(filepath)
 
-        with open(filepath, "wb") as f:
+        with open(filepath, "w") as f:
             json.dump(data, f)
 
 class Sqlite3KeyValueStorage(GenericStorage):
@@ -247,15 +246,12 @@ class Sqlite3KeyValueStorage(GenericStorage):
 
     def keys(self):
         self._cursor.execute("SELECT key from kvstore")
-        return [unicode(k[0]) for k in self._cursor.fetchall()]
-
-    def iteritems(self):
-        self._cursor.execute("SELECT key, value from kvstore")
-        for k in self._cursor.fetchall():
-            yield (unicode(k[0]), k[1])
+        return [str(k[0]) for k in self._cursor.fetchall()]
 
     def items(self):
-        return [(key, value) for (key, value) in self.iteritems()]
+        self._cursor.execute("SELECT key, value from kvstore")
+        for k in self._cursor.fetchall():
+            yield (str(k[0]), k[1])
 
     def value(self, key):
         self._cursor.execute("SELECT value from kvstore where key = ?", (key,))

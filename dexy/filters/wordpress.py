@@ -1,13 +1,13 @@
 from dexy.filters.api import ApiFilter
 import dexy.exceptions
 import json
-import xmlrpclib
+import xmlrpc.client
 
 try:
     import mimetypes
     wp_aliases = ['wp', 'wordpress']
 except UnicodeDecodeError:
-    print "Unable to load mimetypes library. WordPressFilter will not work. See http://bugs.python.org/issue9291"
+    print("Unable to load mimetypes library. WordPressFilter will not work. See http://bugs.python.org/issue9291")
     mimetypes = None
     wp_aliases = []
 
@@ -73,7 +73,7 @@ class WordPressFilter(ApiFilter):
 
     def api(klass):
         if not hasattr(klass, "_api"):
-            klass._api = xmlrpclib.ServerProxy(klass.api_url())
+            klass._api = xmlrpc.client.ServerProxy(klass.api_url())
         return klass._api
 
     def docmd_list_methods(klass):
@@ -81,7 +81,7 @@ class WordPressFilter(ApiFilter):
         List API methods exposed by WordPress API.
         """
         for method in sorted(klass.api().system.listMethods()):
-            print method
+            print(method)
 
     def docmd_list_categories(self):
         """
@@ -90,19 +90,19 @@ class WordPressFilter(ApiFilter):
         username = self.read_param('username')
         password = self.read_param('password')
         headers = ['categoryName']
-        print "\t".join(headers)
+        print("\t".join(headers))
         for category_info in self.api().wp.getCategories(self.setting('blog-id'), username, password):
-            print "\t".join(category_info[h] for h in headers)
+            print("\t".join(category_info[h] for h in headers))
 
     def upload_page_content(self):
-        input_text = unicode(self.input_data)
+        input_text = str(self.input_data)
         document_config = self.read_document_config()
 
         document_config['description'] = input_text
         post_id = document_config.get('postid')
         publish = document_config.get('publish', False)
 
-        for key, value in document_config.iteritems():
+        for key, value in document_config.items():
             if not key == "description":
                 self.log_debug("%s: %s" % (key, value))
 
@@ -133,7 +133,7 @@ class WordPressFilter(ApiFilter):
                 self.read_param('password')
                 )
 
-        for key, value in post_info.iteritems():
+        for key, value in post_info.items():
             if key in ('date_modified_gmt', 'dateCreated', 'date_modified', 'date_created_gmt',):
                 post_info[key] = value.value
 
@@ -151,7 +151,7 @@ class WordPressFilter(ApiFilter):
 
     def upload_image_content(self):
         with open(self.input_data.storage.data_file(), 'rb') as f:
-            image_base_64 = xmlrpclib.Binary(f.read())
+            image_base_64 = xmlrpc.client.Binary(f.read())
 
             upload_file = {
                      'name' : self.work_input_filename(),
@@ -180,5 +180,5 @@ class WordPressFilter(ApiFilter):
             else:
                 self.upload_image_content()
 
-        except xmlrpclib.Fault as e:
-            raise dexy.exceptions.UserFeedback(unicode(e))
+        except xmlrpc.client.Fault as e:
+            raise dexy.exceptions.UserFeedback(str(e))

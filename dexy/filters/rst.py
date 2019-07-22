@@ -4,7 +4,7 @@ from docutils.frontend import OptionParser
 from docutils.parsers.rst import Parser
 from docutils.transforms import Transformer, frontmatter
 from docutils.utils import new_document
-import StringIO
+import io
 import dexy.exceptions
 import docutils.writers
 import os
@@ -71,10 +71,10 @@ class RestructuredText(RestructuredTextBase):
             in_skip = key in self.setting(self.skip_settings) or key == self.skip_settings
             return in_base_filter or in_skip
 
-        settings_overrides = dict((k.replace("-", "_"), v) for k, v in self.setting_values().iteritems() if v and not skip_setting(k))
+        settings_overrides = dict((k.replace("-", "_"), v) for k, v in self.setting_values().items() if v and not skip_setting(k))
         writer_name = self.docutils_writer_name()
 
-        warning_stream = StringIO.StringIO()
+        warning_stream = io.StringIO()
         settings_overrides['warning_stream'] = warning_stream
 
         self.log_debug("settings for rst: %r" % settings_overrides)
@@ -104,7 +104,7 @@ class RestructuredText(RestructuredTextBase):
             if "Invalid placeholder in string" in e.message and 'template' in settings_overrides:
                 self.log_warn("you are using template '%s'. is this correct?" % settings_overrides['template'])
             raise
-        except Exception as e:
+        except Exception:
             self.log_warn("An error occurred while generating reStructuredText.")
             self.log_warn("source file %s" % (self.input_data.storage.data_file()))
             self.log_warn("settings for rst: %r" % settings_overrides)
@@ -124,7 +124,7 @@ class RstBody(RestructuredTextBase):
             }
 
     def process_text(self, input_text):
-        warning_stream = StringIO.StringIO()
+        warning_stream = io.StringIO()
         settings_overrides = {}
         settings_overrides['warning_stream'] = warning_stream
 
@@ -141,9 +141,9 @@ class RstBody(RestructuredTextBase):
                 settings_overrides=settings_overrides
                 )
         except AttributeError as e:
-            raise dexy.exceptions.InternalDexyProblem(unicode(e))
+            raise dexy.exceptions.InternalDexyProblem(str(e))
 
-        if self.setting('set-title') and parts.has_key('title') and parts['title']:
+        if self.setting('set-title') and ('title' in parts) and parts['title']:
             self.update_all_args({'title' : parts['title']})
 
         self.log_debug("docutils warnings:\n%s\n" % warning_stream.getvalue())
@@ -160,7 +160,7 @@ class RstMeta(RestructuredTextBase):
             }
 
     def process_text(self, input_text):
-        warning_stream = StringIO.StringIO()
+        warning_stream = io.StringIO()
         settings_overrides = {}
         settings_overrides['warning_stream'] = warning_stream
 
@@ -222,9 +222,9 @@ class RstDocParts(DexyFilter):
             }
 
     def process(self):
-        input_text = unicode(self.input_data)
+        input_text = str(self.input_data)
 
-        warning_stream = StringIO.StringIO()
+        warning_stream = io.StringIO()
         settings_overrides = {}
         settings_overrides['warning_stream'] = warning_stream
 
@@ -241,6 +241,6 @@ class RstDocParts(DexyFilter):
 
         self.log_debug("docutils warnings:\n%s\n" % warning_stream.getvalue())
 
-        for k, v in parts.iteritems():
+        for k, v in parts.items():
             self.output_data.append(k, v)
         self.output_data.save()

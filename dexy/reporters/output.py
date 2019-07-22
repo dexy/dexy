@@ -38,7 +38,7 @@ class Output(Reporter):
 
         self.remove_reports_dir(self.wrapper, keep_empty_dir=True)
         self.create_reports_dir()
-        for doc in wrapper.nodes.values():
+        for doc in list(wrapper.nodes.values()):
             if not doc.key_with_class() in wrapper.batch.docs:
                 continue
             if not doc.state in ('ran', 'consolidated'):
@@ -62,7 +62,7 @@ class LongOutput(Reporter):
     def run(self, wrapper):
         self.wrapper=wrapper
         self.create_reports_dir()
-        for doc in wrapper.nodes.values():
+        for doc in list(wrapper.nodes.values()):
             if not doc.key_with_class() in wrapper.batch.docs:
                 continue
             if not doc.state in ('ran', 'consolidated'):

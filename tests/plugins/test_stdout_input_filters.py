@@ -73,7 +73,7 @@ def test_sed_filter_single_simple_input_file():
                 contents="s/e/E/g")
 
         wrapper.run_docs(node)
-        assert str(node.output_data()) == "hEllo"
+        assert str(node.output_data()) == "hEllo\n"
 
 def test_sed_filter_single_input_file_with_sections():
     contents = json.loads("""[{},
@@ -95,8 +95,8 @@ def test_sed_filter_single_input_file_with_sections():
                 contents="s/e/E/g")
 
         wrapper.run_docs(node)
-        assert str(node.output_data()['foo']) == 'hEllo'
-        assert str(node.output_data()['bar']) == 'tElEphonE'
+        assert str(node.output_data()['foo']) == 'hEllo\n'
+        assert str(node.output_data()['bar']) == 'tElEphonE\n'
 
 def test_sed_filter_multiple_inputs():
     with wrap() as wrapper:
@@ -115,5 +115,5 @@ def test_sed_filter_multiple_inputs():
                 contents="s/e/E/g")
 
         wrapper.run_docs(node)
-        assert str(node.output_data()['foo.txt']) == 'hEllo'
-        assert str(node.output_data()['bar.txt']) == 'tElEphonE'
+        assert str(node.output_data()['foo.txt']) == 'hEllo\n'
+        assert str(node.output_data()['bar.txt']) == 'tElEphonE\n'

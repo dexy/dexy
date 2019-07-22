@@ -55,15 +55,15 @@ if AVAILABLE:
             open_files = tables.file._open_files
             are_open_files = len(open_files) > 0
             if verbose and are_open_files:
-                print >> sys.stderr, "Closing remaining open files:",
+                print("Closing remaining open files:", end=' ', file=sys.stderr)
             for fileh in open_files.keys():
                 if verbose:
-                    print >> sys.stderr, "%s..." % (open_files[fileh].filename,),
+                    print("%s..." % (open_files[fileh].filename,), end=' ', file=sys.stderr)
                 open_files[fileh].close()
                 if verbose:
-                    print >> sys.stderr, "done",
+                    print("done", end=' ', file=sys.stderr)
             if verbose and are_open_files:
-                print >> sys.stderr
+                print(file=sys.stderr)
         except Exception:
             pass
 

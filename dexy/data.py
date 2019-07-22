@@ -9,11 +9,10 @@ import posixpath
 import shutil
 import urllib
 
-class Data(dexy.plugin.Plugin):
+class Data(dexy.plugin.Plugin, metaclass=dexy.plugin.PluginMeta):
     """
     Base class for types of Data.
     """
-    __metaclass__ = dexy.plugin.PluginMeta
     _settings = {
             'shortcut' : ("A shortcut to refer to a file.", None),
             'storage-type' : ("Type of storage to use.", 'generic'),
@@ -101,9 +100,6 @@ class Data(dexy.plugin.Plugin):
         """
         return self.output_name() < other.output_name()
 
-    def __str__(self):
-        return unicode(self).encode("utf-8", errors="strict")
-
     def __getattr__(self, item):
         """
         Make setting values available as attributes.
@@ -111,7 +107,7 @@ class Data(dexy.plugin.Plugin):
         try:
             return self._instance_settings[item]
         except KeyError:
-            raise AttributeError
+            raise AttributeError(item)
 
     def data(self):
         if (not self._data) or self._data == [{}]:
@@ -135,7 +131,7 @@ class Data(dexy.plugin.Plugin):
         try:
             os.remove(self.storage.data_file())
         except os.error as e:
-            self.wrapper.log.warn(unicode(e))
+            self.wrapper.log.warn(str(e))
 
     def copy_from_file(self, filename):
         shutil.copyfile(filename, self.storage.data_file())
@@ -242,13 +238,13 @@ class Data(dexy.plugin.Plugin):
         """
         Returns contents stripped of leading and trailing whitespace.
         """
-        return unicode(self).strip()
+        return str(self).strip()
     
     def splitlines(self, arg=None):
         """
         Returns a list of lines split at newlines or custom split.
         """
-        return unicode(self).splitlines(arg)
+        return str(self).splitlines(arg)
 
     def url_quoted_name(self):
         """
@@ -314,7 +310,7 @@ class Data(dexy.plugin.Plugin):
         """
         DEPRECATED. Instead call unicode.
         """
-        return unicode(self)
+        return str(self)
 
 class Generic(Data):
     """
@@ -323,7 +319,7 @@ class Generic(Data):
     aliases = ['generic']
 
     def save(self):
-        if isinstance(self._data, unicode):
+        if isinstance(self._data, str):
             self.storage.write_data(self._data.encode("utf-8"))
         else:
             if self._data == None:
@@ -331,11 +327,11 @@ class Generic(Data):
                 raise dexy.exceptions.UserFeedback(msg % self.key)
             self.storage.write_data(self._data)
 
-    def __unicode__(self):
-        if isinstance(self.data(), unicode):
+    def __str__(self):
+        if isinstance(self.data(), str):
             return self.data()
         elif not self.data():
-            return unicode(None)
+            return str(None)
         else:
             return self.wrapper.decode_encoded(self.data())
 
@@ -376,9 +372,9 @@ class Generic(Data):
         Attempts to load data using a JSON parser, returning whatever objects
         are defined in the JSON.
         """
-        if self._data and isinstance(self._data, basestring):
+        if self._data and isinstance(self._data, str):
             return dexy.utils.parse_json(self._data)
-        elif self._data and not isinstance(self._data, basestring):
+        elif self._data and not isinstance(self._data, str):
             raise Exception(self._data.__class__.__name__)
         else:
             with open(self.storage.data_file(), "r") as f:
@@ -389,9 +385,9 @@ class Generic(Data):
         Attempts to load data using a YAML parser, returning whatever objects
         are defined in the YAML.
         """
-        if self._data and isinstance(self._data, basestring):
+        if self._data and isinstance(self._data, str):
             return dexy.utils.parse_yaml(self._data)
-        elif self._data and not isinstance(self._data, basestring):
+        elif self._data and not isinstance(self._data, str):
             raise Exception(self._data.__class__.__name__)
         else:
             with open(self.storage.data_file(), "r") as f:
@@ -410,9 +406,6 @@ class SectionValue(object):
         self.parent = parent
         self.parentindex = parentindex
 
-    def __unicode__(self):
-        return self.data['contents'] or u''
-
     def __str__(self):
         return self.data['contents'] or ''
 
@@ -423,7 +416,7 @@ class SectionValue(object):
         self.parent.data()[self.parentindex+1][key] = value
 
     def splitlines(self):
-        return unicode(self).splitlines()
+        return str(self).splitlines()
 
 class Sectioned(Data):
     """
@@ -446,11 +439,12 @@ class Sectioned(Data):
         try:
             self.storage.write_data(self._data)
         except Exception as e:
+            print(self._data)
             msg = "Problem saving '%s': %s" % (self.key, str(e))
             raise dexy.exceptions.InternalDexyProblem(msg)
 
-    def __unicode__(self):
-        return u"\n".join(unicode(v) for v in self.values() if unicode(v))
+    def __str__(self):
+        return "\n".join(str(v) for v in list(self.values()) if str(v))
 
     def __len__(self):
         """
@@ -484,21 +478,21 @@ class Sectioned(Data):
         Write canonical (not structured) output to a file.
         """
         with open(filepath, "wb") as f:
-            f.write(unicode(self).encode("utf-8"))
+            f.write(str(self).encode("utf-8"))
 
     def keyindex(self, key):
         if self._data == [{}]:
             return -1
 
         try:
-            return self.keys().index(key)
+            return list(self.keys()).index(key)
         except ValueError:
             return -1
 
     def value(self, key, throwException=True):
         index = self.keyindex(key)
         if index > -1:
-            return self.values()[index]
+            return list(self.values())[index]
         else:
             try:
                 return self.data()[0][key]
@@ -511,10 +505,10 @@ class Sectioned(Data):
     def __getitem__(self, key):
         try:
             return self.data()[key+1]
-        except TypeError:
+        except (TypeError, KeyError):
             return self.value(key)
 
-    def iteritems(self):
+    def items(self):
         """
         Iterable list of sections in document.
         """
@@ -522,9 +516,6 @@ class Sectioned(Data):
         values = self.values()
         for i in range(len(keys)):
             yield (keys[i], values[i])
-
-    def items(self):
-        return [(key, value) for (key, value) in self.iteritems()]
 
 class KeyValue(Data):
     """
@@ -568,6 +559,7 @@ class KeyValue(Data):
         return self.value(key)
 
     def append(self, key, value):
+        print("appending key %s" % key)
         self.storage.append(key, value)
 
     def query(self, query):
@@ -582,15 +574,10 @@ class KeyValue(Data):
         """
         return self.storage.items()
 
-    def iteritems(self):
-        """
-        Iterable list of available keys.
-        """
-        return self.storage.iteritems()
-
     def save(self):
         try:
             self.storage.persist()
         except Exception as e:
-            msg = u"Problem saving '%s': %s" % (self.key, unicode(e))
+            raise
+            msg = "Problem saving '%s': %s" % (self.key, str(e))
             raise dexy.exceptions.InternalDexyProblem(msg)
