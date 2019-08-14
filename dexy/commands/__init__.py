@@ -1,7 +1,7 @@
 ### "imports"
 from dexy.plugin import Command
 from dexy.version import DEXY_VERSION
-import dexy.modargs as args
+import python3_modargs as args
 import cashew.exceptions
 import dexy.exceptions
 import dexy.wrapper
@@ -188,3 +188,6 @@ def version_command():
     Print the version number of dexy.
     """
     print(f"{prog} version {DEXY_VERSION}")
+
+def completion_command(on):
+    args.completion_command(prog, dexy_cmd_mod, dexy_default_cmd, on)

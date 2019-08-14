@@ -456,7 +456,7 @@ Templates are ways of creating dexy examples.
 == Command Line Interface
 
 The command line interface for dexy is driven by
-https://pypi.python.org/pypi/python-modargs[python-modargs].
+https://pypi.python.org/pypi/python3-modargs[python3-modargs].
 
 === init.py
 

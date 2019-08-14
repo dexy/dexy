@@ -50,6 +50,7 @@ setup(
             'jinja2',
             'ply>=3.4',
             'pygments',
+            'python3_modargs',
             'requests>=0.10.6',
             # for convenience of running additional filters
             'Markdown',
