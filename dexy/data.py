@@ -559,7 +559,6 @@ class KeyValue(Data):
         return self.value(key)
 
     def append(self, key, value):
-        print("appending key %s" % key)
         self.storage.append(key, value)
 
     def query(self, query):
