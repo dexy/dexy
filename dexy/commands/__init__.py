@@ -1,7 +1,7 @@
 ### "imports"
 from dexy.plugin import Command
 from dexy.version import DEXY_VERSION
-import python3_modargs as args
+import modargs.args as args
 import cashew.exceptions
 import dexy.exceptions
 import dexy.wrapper
