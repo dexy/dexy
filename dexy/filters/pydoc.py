@@ -42,7 +42,7 @@ class PythonIntrospection(DexyFilter):
     _settings = {
             'error-on-import-fail' : (
                 "Should an exception be raised if importing a specified module or file fails?",
-                False
+                True
                 ),
             'input-extensions' : ['.txt', '.py'],
             'skip-setup-py' : ("Whether to skip files named setup.py", True),
@@ -53,9 +53,10 @@ class PythonIntrospection(DexyFilter):
     def handle_fail(self, name, e):
         msg = self.import_err_msg % (name, e)
         if self.setting('error-on-import-fail'):
+            msg += "\nYou can set error-on-import-fail to False in pydoc args to log this instead."
             raise UserFeedback(msg)
         else:
-            self.log_debug(e)
+            self.log_warn(e)
 
     def load_module(self, name):
         try:
