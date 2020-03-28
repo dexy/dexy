@@ -40,7 +40,7 @@ async def main_nio(homeserver, user, password, room_id, ext, mimetype, data_prov
 
 class MatrixFilter(ApiFilter):
     """
-    Filter for posting text, files, or images to a matrix room. Uses matrix-nio.
+    Filter for posting text, files, or images to a matrix room. Uses matrix-nio
 
     Create a .dexyapis JSON file in your HOME dir with format:
 
