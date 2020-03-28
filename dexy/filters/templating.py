@@ -206,7 +206,7 @@ class JinjaFilter(TemplateFilter):
                 'error_type' : e.__class__.__name__,
                 'key' : self.key,
                 'lineno' : e.lineno,
-                'message' : e.message,
+                'message' : getattr(e, 'message', str(e)),
                 'name' : self.output_data.name,
                 'workfile' : self.input_data.storage.data_file()
                 }

@@ -14,7 +14,7 @@ class ApiFilter(dexy.filter.DexyFilter):
     key for authentication.
 
     Also need to read config for the particular task/document being uploaded.
-    This could be stored in the .dexy config entry, but this has two drawbacks.
+    This could be stored in the dexy config entry, but this has two drawbacks.
     First, it makes it difficult to bulk define documents according to a
     pattern. Secondly, it makes it very difficult for dexy to modify this
     configuration to add additional information, such as the returned id for a
@@ -95,13 +95,13 @@ class ApiFilter(dexy.filter.DexyFilter):
         with open(document_config, "w") as f:
             json.dump(config, f, sort_keys=True, indent=4)
 
-    def read_param(self, param_name):
+    def read_param(self, param_name, default=False):
         param_value = None
 
         for filename in self.api_key_locations():
             if "~" in filename:
                 filename = os.path.expanduser(filename)
-
+    
             if file_exists(filename):
                 with open(filename, "r") as f:
                     params = json.load(f)
@@ -120,6 +120,8 @@ class ApiFilter(dexy.filter.DexyFilter):
 
         if param_value:
             return param_value
+        elif default:
+            return default
         else:
             msg = "Could not find %s for %s in: %s" % (param_name, self.setting('api-key-name'), ", ".join(self.api_key_locations()))
             raise KeyError(msg)

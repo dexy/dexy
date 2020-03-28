@@ -225,6 +225,8 @@ class PygmentsFilter(DexyFilter):
 
         formatter_args = self.constructor_args('formatter', {
             'lineanchors' : self.output_data.web_safe_document_key() })
+        if self.setting('style') and not 'style' in formatter_args:
+            formatter_args['style'] = self.setting('style')
         self.log_debug("creating pygments formatter with args %s" % (formatter_args))
 
         return get_formatter_for_filename(self.output_data.name, **formatter_args)

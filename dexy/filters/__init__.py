@@ -16,6 +16,7 @@ import dexy.filters.ipynbcasper
 import dexy.filters.java
 import dexy.filters.latex
 import dexy.filters.lyx
+import dexy.filters.matrix
 import dexy.filters.md
 import dexy.filters.org
 import dexy.filters.pexp

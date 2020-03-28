@@ -390,6 +390,28 @@ class Tail(TemplatePlugin):
                 'tail' : ("Returns the last n lines of inptu string.", self.tail)
                 }
 
+class Trunc(TemplatePlugin):
+    """
+    Provides a 'trunc[ate]' method.
+    """
+    aliases = ['trunc']
+
+    def trunc(self, text, n=80, cont="..."):
+        """
+        Returns the first n characters of each line, indicating with cont (...) if it has been truncated.
+        """
+        def truncate_line(line):
+            if len(line) < n:
+                return line
+            else:
+                return line[0:n-len(cont)] + cont
+        return "\n".join(truncate_line(line) for line in str(text).splitlines())
+
+    def run(self):
+        return {
+                'trunc' : ("Returns the first n characters of each line, indicating with cont if it has been truncated", self.trunc)
+                }
+
 class RstCode(TemplatePlugin):
     """
     Indents code n spaces (defaults to 4) and wraps in .. code:: directive.
