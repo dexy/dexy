@@ -40,6 +40,10 @@ class Doc(dexy.node.Node):
             'output' : (
                 "Whether document should be included in output/ and output-site/",
                 None
+                ),
+            'dirty' : (
+                'Whether document should always be regenerared.',
+                False
                 )
             }
 
@@ -219,7 +223,9 @@ class Doc(dexy.node.Node):
                 for d in self.datas())
 
     def check_doc_changed(self):
-        if self.name in self.wrapper.filemap:
+        if self.setting('dirty'):
+            return True
+        elif self.name in self.wrapper.filemap:
             live_stat = self.wrapper.filemap[self.name]['stat']
 
             self.initial_data.setup()

@@ -3,6 +3,7 @@ from dexy.filters.api import ApiFilter
 import asyncio
 import json
 import mimetypes
+import markdown
 
 try:
     from nio import AsyncClient
@@ -84,6 +85,20 @@ class MatrixFilter(ApiFilter):
                     'format' : 'org.matrix.custom.html',
                     'body' : soup.get_text(),
                     'formatted_body' : modified_html
+                    }
+
+        elif self.input_data.ext in ('.md'):
+            text = str(self.input_data)
+            html = markdown.markdown(text, extensions=['fenced_code'])
+            soup = BeautifulSoup(html, 'html.parser')
+            for code_block in soup.find_all("code"):
+                code_block['class'] = "language-%s" % code_block['class'][0]
+                code_block.string = code_block.string.lstrip()
+            content = {
+                    'msgtype' : 'm.text',
+                    'format' : 'org.matrix.custom.html',
+                    'body' : soup.get_text(),
+                    'formatted_body' : str(soup)
                     }
 
         elif self.input_data.ext in ('.txt'):

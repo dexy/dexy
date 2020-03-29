@@ -37,6 +37,7 @@ import dexy.filters.websequence
 import dexy.filters.wordpress
 import dexy.filters.yamlargs
 import dexy.filters.xxml
+import dexy.filters.zulip
 
 import dexy.filter
 import os

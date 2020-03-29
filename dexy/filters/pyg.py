@@ -28,6 +28,27 @@ for module_name, name, aliases, file_extensions, _ in list(PYGMENTS_LEXERS.value
         ext = ext.lstrip("*")
         file_ext_to_lexer_alias_cache[ext] = alias
 
+class SyntaxHighlightMarkdownFilter(DexyFilter):
+    """
+    Surrounds code with highlighting instructions for Markdown
+    """
+    aliases = ['pyg4md']
+    _settings = {
+            'n' : ("Number of chars to indent.", 0),
+            'data-type' : 'sectioned'
+            }
+
+    def process(self):
+        n = self.setting('n')
+        lexer_alias = file_ext_to_lexer_alias_cache[self.input_data.ext]
+
+        for section_name, section_input in self.input_data.items():
+            with_spaces = indent(section_input, n)
+            section_output = "```%s %s\n```" % (lexer_alias, with_spaces)
+            self.output_data[section_name] = section_output
+
+        self.output_data.save()
+
 class SyntaxHighlightRstFilter(DexyFilter):
     """
     Surrounds code with highlighting instructions for ReST
@@ -55,7 +76,7 @@ class SyntaxHighlightAsciidoctor(DexyFilter):
     """
     aliases = ['asciisyn']
     _settings = {
-            'lexer' : ("Specify lexer if can't be detected fro mfilename.", None),
+            'lexer' : ("Specify lexer if can't be detected from filename.", None),
             'data-type' : 'sectioned'
             }
 
