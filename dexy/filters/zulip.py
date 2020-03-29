@@ -18,6 +18,8 @@ class ZulipFilter(ApiFilter):
     """
     aliases = ['zulip']
 
+    message_extensions = ('.txt', '.md')
+
     _settings = {
             'config-file' : '~/.zuliprc',
             'input-extensions' : ['.*'],
@@ -30,17 +32,24 @@ class ZulipFilter(ApiFilter):
     def process(self):
         client = zulip.Client(config_file=self.setting('config-file'))
 
-        if self.input_data.ext in ('.txt', '.md'):
+        if self.input_data.ext in self.message_extensions:
             content = str(self.input_data)
             request = {
-                 "type": "stream",
-                 "to": self.setting('stream'),
-                 "topic": self.setting('topic'),
-                 "content": content
-                 }
+                    "type": "stream",
+                    "to": self.setting('stream'),
+                    "topic": self.setting('topic'),
+                    "content": content
+                    }
             response = client.send_message(request)
 
         else:
-            pass
+            with open(self.input_data.storage.data_file(), 'rb') as f:
+                response = client.call_endpoint(
+                        'user_uploads',
+                        method='POST',
+                        files=[f]
+                        )
+                # alias uri to url
+                response['url'] = response['uri']
 
         self.output_data.set_data(json.dumps(response))
