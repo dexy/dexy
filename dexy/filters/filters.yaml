@@ -1173,3 +1173,10 @@ cj:
     help: Changes file extension to .json
     input-extensions : [.*]
     output-extensions : [.json]
+
+fpy|forcepy:
+    class: PreserveDataClassFilter
+    tags: [file-extensions]
+    help: Changes file extension to .py
+    input-extensions : [.txt, .py]
+    output-extensions : [.py]

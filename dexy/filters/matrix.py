@@ -87,6 +87,7 @@ class MatrixFilter(ApiFilter):
                     'formatted_body' : modified_html
                     }
 
+        ### "matrix-markdown"
         elif self.input_data.ext in ('.md'):
             text = str(self.input_data)
             html = markdown.markdown(text, extensions=['fenced_code'])
@@ -100,6 +101,7 @@ class MatrixFilter(ApiFilter):
                     'body' : soup.get_text(),
                     'formatted_body' : str(soup)
                     }
+        ### @end
 
         elif self.input_data.ext in ('.txt'):
             text = str(self.input_data)
