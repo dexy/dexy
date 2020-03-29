@@ -99,7 +99,10 @@ def log_and_print_exception(wrapper, e):
     if hasattr(wrapper, 'log'):
         wrapper.log.error("An error has occurred.")
         wrapper.log.error(e)
-        wrapper.log.error(e.message)
+        if hasattr(e, 'message'):
+            wrapper.log.error(e.message)
+        else:
+            wrapper.log.error(str(e))
     import traceback
     traceback.print_exc()
 

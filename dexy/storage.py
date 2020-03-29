@@ -102,8 +102,12 @@ class GenericStorage(Storage):
                      f.write(data.decode("utf-8"))
 
     def read_data(self):
-        with open(self.data_file(read=True), "r") as f:
-            return f.read()
+        with open(self.data_file(read=True), "rb") as f:
+            raw = f.read()
+            try:
+                return raw.decode('utf-8')
+            except UnicodeDecodeError:
+                return raw
 
     def copy_file(self, filepath):
         """
