@@ -44,7 +44,7 @@ class SyntaxHighlightMarkdownFilter(DexyFilter):
 
         for section_name, section_input in self.input_data.items():
             with_spaces = indent(section_input, n)
-            section_output = "```%s %s\n```" % (lexer_alias, with_spaces)
+            section_output = "```%s\n%s\n```" % (lexer_alias, with_spaces)
             self.output_data[section_name] = section_output
 
         self.output_data.save()
