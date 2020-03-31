@@ -212,7 +212,7 @@ julia:
     help: Runs julia (.jl) files.
     input-extensions: [.jl, .txt]
     output-extensions: [.txt]
-    command-string: "%(prog)s -q --no-history --no-startup %(script_file)s %(scriptargs)s"
+    command-string: "%(prog)s -q --history-file=no --startup-file=no %(script_file)s %(scriptargs)s"
     version-command: "julia -v"
 
 jlcon:
