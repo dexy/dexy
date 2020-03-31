@@ -219,7 +219,7 @@ jlcon:
     added-in-version: "0.9.9.5"
     examples: [julia]
     class: PexpectReplFilter
-    executable: "julia -q --no-history --no-startup"
+    executable: "julia -q --history-file=no --startup-file=no"
     prompt: "julia>"
     initial-prompt: "julia>"
     help: Runs julia (.jl) files in the repl.

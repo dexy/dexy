@@ -285,7 +285,7 @@ class PygmentsFilter(DexyFilter):
                 # Place each section into an image.
                 for k, v in self.input_data.items():
                     formatter = self.create_formatter_instance()
-                    output_for_section = highlight(str(v).decode("utf-8"), lexer, formatter)
+                    output_for_section = highlight(str(v), lexer, formatter)
                     new_doc_name = "%s--%s%s" % (self.doc.key.replace("|", "--"), k, self.ext)
                     self.add_doc(new_doc_name, output_for_section)
 

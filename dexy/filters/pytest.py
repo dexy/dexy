@@ -73,21 +73,20 @@ class PythonTest(PythonIntrospection):
             raise dexy.exceptions.UserFeedback(msg)
 
     def append_source(self, test, test_passed):
-        for key in dir(test.context):
-            member = test.context.__dict__[key]
-
+        for key, member in test.context.__dict__.items():
             if inspect.ismethod(member) or inspect.isfunction(member):
                 qualified_test_name = "%s.%s" % (test.context.__name__, member.__name__)
                 source = inspect.getsource(member.__code__)
 
-                if member.func_doc:
-                    doc = inspect.cleandoc(member.func_doc)
+                doc = inspect.getdoc(member)
+                if doc:
+                    doc = inspect.cleandoc(doc)
                     self.output_data.append("%s:doc" % qualified_test_name, doc)
 
                 comments = inspect.getcomments(member.__code__)
 
                 self.output_data.append("%s:source" % qualified_test_name, source)
-                self.output_data.append("%s:name" % qualified_test_name, member.func_name)
+                self.output_data.append("%s:name" % qualified_test_name, member.__name__)
                 self.output_data.append("%s:comments" % qualified_test_name, comments)
                 self.output_data.append("%s:passed" % qualified_test_name, str(test_passed))
 
