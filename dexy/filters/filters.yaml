@@ -638,6 +638,14 @@ ps2pdf|pstopdf:
     input-extensions: [.ps, .txt]
     output-extensions: [.pdf]
 
+weasy|weasyprint:
+    class: SubprocessFilter
+    help: Converts a HTML file to PDF using weasyprint processor.
+    tags: [pdf]
+    executable: weasyprint
+    input-extensions: [.html, .txt]
+    output-extensions: [.pdf]
+
 ragel|rlrb|ragelruby:
     class: SubprocessFormatFlagFilter
     help: Generates ruby source code from a ragel file.
