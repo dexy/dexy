@@ -17,7 +17,12 @@ import dexy.filters.latex
 import dexy.filters.lyx
 import dexy.filters.matrix
 import dexy.filters.md
-import dexy.filters.md_mistune
+
+try:
+    import dexy.filters.md_mistune
+except (ImportError, NameError):
+    pass
+
 import dexy.filters.org
 import dexy.filters.pexp
 import dexy.filters.phantomjs
