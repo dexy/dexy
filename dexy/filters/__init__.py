@@ -12,12 +12,12 @@ import dexy.filters.genipynb
 import dexy.filters.git
 import dexy.filters.id
 import dexy.filters.ipynb
-import dexy.filters.ipynbcasper
 import dexy.filters.java
 import dexy.filters.latex
 import dexy.filters.lyx
 import dexy.filters.matrix
 import dexy.filters.md
+import dexy.filters.md_mistune
 import dexy.filters.org
 import dexy.filters.pexp
 import dexy.filters.phantomjs

@@ -5,7 +5,7 @@ import json
 import urllib
 
 try:
-    import IPython.nbformat.current
+    import nbformat
     AVAILABLE = True
 except ImportError:
     AVAILABLE = False
@@ -22,15 +22,13 @@ class IPythonBase(DexyFilter):
     def load_notebook(self):
         nb = None
         with open(self.input_data.storage.data_file(), "r") as f:
-            nb_fmt = self.input_data.ext.replace(".","")
-            nb = IPython.nbformat.current.read(f, nb_fmt)
+            nb = nbformat.read(f, as_version=4)
         return nb
 
     def enumerate_cells(self, nb=None):
         if not nb:
             nb = self.load_notebook()
-        worksheet = nb['worksheets'][0]
-        for j, cell in enumerate(worksheet['cells']):
+        for j, cell in enumerate(nb.cells):
             yield(j, cell)
 
 class IPythonExport(IPythonBase):
@@ -47,7 +45,7 @@ class IPythonExport(IPythonBase):
             }
 
     def process_html(self):
-        nb = self.load_notebook()
+        self.load_notebook()
 
     def process_md(self):
         output = ""
@@ -69,7 +67,7 @@ class IPythonExport(IPythonBase):
                         for fmt, contents in cell_output.items():
                             if fmt == "png":
                                 cell_output_image_file = "cell-%s-output-%s.%s" % (j, k, fmt)
-                                d = self.add_doc(cell_output_image_file, base64.decodestring(contents))
+                                self.add_doc(cell_output_image_file, base64.decodestring(contents))
                                 output += "\n![Description](%s)\n" % urllib.quote(cell_output_image_file)
                             elif fmt in ('metadata','text',):
                                 pass
